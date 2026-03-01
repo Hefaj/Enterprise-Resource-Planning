@@ -1,0 +1,210 @@
+{
+  "id": "inventory",
+  "name": "inventory",
+  "metaData": {
+    "name": "inventory",
+    "type": "app",
+    "buildInfo": {
+      "buildVersion": "1.0.0",
+      "buildName": "Enterprise-Resource-Planning"
+    },
+    "remoteEntry": {
+      "name": "remoteEntry.mjs",
+      "path": "",
+      "type": "module"
+    },
+    "types": {
+      "path": "",
+      "name": "",
+      "zip": "",
+      "api": ""
+    },
+    "globalName": "inventory",
+    "pluginVersion": "0.21.6",
+    "prefetchInterface": false,
+    "publicPath": "auto"
+  },
+  "shared": [
+    {
+      "singleton": true,
+      "requiredVersion": "~21.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/common/http",
+      "version": "21.1.6",
+      "eager": false,
+      "id": "inventory:@angular/common/http",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "default-node_modules_pnpm_angular_common_21_1_6__ang_704103b2f01265384ddcc1aa1fafba67_node_mo-b163fd.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": []
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~21.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/common",
+      "version": "21.1.6",
+      "eager": false,
+      "id": "inventory:@angular/common",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "default-node_modules_pnpm_angular_common_21_1_6__ang_704103b2f01265384ddcc1aa1fafba67_node_mo-2cd482.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": []
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~21.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/core/primitives/di",
+      "version": "21.1.6",
+      "eager": false,
+      "id": "inventory:@angular/core/primitives/di",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "common.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": []
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~21.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/core/primitives/signals",
+      "version": "21.1.6",
+      "eager": false,
+      "id": "inventory:@angular/core/primitives/signals",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "common.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": []
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~21.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/core",
+      "version": "21.1.6",
+      "eager": false,
+      "id": "inventory:@angular/core",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "node_modules_pnpm_angular_core_21_1_6__angular_compiler_21_1_6_rxjs_7_8_2_node_modules_angula-99acab.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": []
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~21.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/platform-browser",
+      "version": "21.1.6",
+      "eager": false,
+      "id": "inventory:@angular/platform-browser",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "default-node_modules_pnpm_angular_platform-browser_2_34c8c37b3f5caab11077329d18020f0f_node_mo-c19511.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": []
+    },
+    {
+      "singleton": true,
+      "requiredVersion": "~21.1.0",
+      "shareScope": "default",
+      "strictVersion": true,
+      "name": "@angular/router",
+      "version": "21.1.6",
+      "eager": false,
+      "id": "inventory:@angular/router",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "default-node_modules_pnpm_angular_router_21_1_6__ang_af4d22c5760c8cd30802a31450bb7c62_node_mo-315497.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      },
+      "usedIn": []
+    }
+  ],
+  "remotes": [],
+  "exposes": [
+    {
+      "path": "./Routes",
+      "id": "inventory:Routes",
+      "name": "Routes",
+      "requires": [],
+      "file": "frontend\\apps\\modules\\inventory\\src\\app\\remote-entry\\entry.routes.ts",
+      "assets": {
+        "js": {
+          "sync": [],
+          "async": []
+        },
+        "css": {
+          "sync": [],
+          "async": []
+        }
+      }
+    }
+  ]
+}

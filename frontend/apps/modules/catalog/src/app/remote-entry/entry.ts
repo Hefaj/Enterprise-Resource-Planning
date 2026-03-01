@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
-import { NxWelcome } from './nx-welcome';
+import { Component, inject } from '@angular/core';
 
+import { AuthService } from '@auth';
 @Component({
-  imports: [NxWelcome],
+  imports: [],
   selector: 'app-catalog-entry',
-  template: `<app-nx-welcome></app-nx-welcome>`,
+  template: `catalog works!`,
 })
-export class RemoteEntry {}
+export class RemoteEntry {
+  private _authService = inject(AuthService);
+}

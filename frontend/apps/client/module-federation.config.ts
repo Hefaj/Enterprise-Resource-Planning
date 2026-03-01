@@ -15,6 +15,16 @@ const config: ModuleFederationConfig = {
    *
    */
   remotes: [],
+  additionalShared: [
+    {
+      libraryName: '@auth',
+      sharedConfig: {
+        singleton: true,
+        strictVersion: true,
+        requiredVersion: 'auto',
+      },
+    },
+  ],
 };
 
 /**

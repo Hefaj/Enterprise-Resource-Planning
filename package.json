@@ -48,6 +48,7 @@
     "eslint-plugin-playwright": "^1.6.2",
     "jsdom": "^27.1.0",
     "nx": "22.5.3",
+    "postcss": "^8.5.6",
     "prettier": "~3.6.2",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
@@ -65,8 +66,11 @@
     "@angular/router": "~21.1.0",
     "@nx/angular": "22.5.3",
     "@primeuix/themes": "^2.0.3",
+    "@tailwindcss/postcss": "^4.2.1",
     "primeicons": "^7.0.0",
     "primeng": "^21.1.1",
-    "rxjs": "~7.8.0"
+    "rxjs": "~7.8.0",
+    "tailwindcss": "^4.2.1",
+    "tailwindcss-primeui": "^0.6.1"
   }
 }

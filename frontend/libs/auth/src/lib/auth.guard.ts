@@ -6,11 +6,9 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  console.log('Checking auth guard:', authService.$token());
   if (authService.$token()) {
-    return true; // Użytkownik ma token, wpuszczamy do Remote
+    return true;
   }
 
-  // Brak tokena - wyrzucamy do strony logowania w Host (Shell)
   return router.parseUrl('/login');
 };

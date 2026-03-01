@@ -1,8 +1,11 @@
-import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
-import { AuthService } from '@auth';
-import { ErpBreadcrumbComponent } from '@shared-ui';
+import { Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { AuthService } from '@erp/auth';
+import { ErpBreadcrumbComponent } from '@erp/shared-ui';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { filter, map } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-main-layout',
@@ -12,14 +15,49 @@ import { ButtonModule } from 'primeng/button';
   styleUrl: './main-layout.component.scss',
 })
 export class MainLayoutComponent {
+  private _router = inject(Router);
   private _authService = inject(AuthService);
+
+  public $home = signal<MenuItem>({ label: 'Dashboard', routerLink: '/dashboard' });
+
+  public $items = toSignal(
+    this._router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => this._buildBreadcrumbs(this._router.routerState.root)),
+    ),
+  );
+
+  private _buildBreadcrumbs(route: ActivatedRoute, url = '', breadcrumbs: MenuItem[] = []): MenuItem[] | undefined {
+    // Pobieramy rzeczywiste segmenty URL (np. 'products', '123' zamiast ':id')
+    const path = route.snapshot.url.map((segment: any) => segment.path).join('/');
+
+    const nextUrl = path ? `${url}/${path}` : url;
+
+    const label = route.snapshot.data['breadcrumb'];
+
+    const newBreadcrumbs = [...breadcrumbs];
+
+    if (label) {
+      const isDuplicate = newBreadcrumbs.some((b) => b.label === label && b.routerLink === nextUrl);
+
+      if (!isDuplicate) {
+        newBreadcrumbs.push({
+          label: label,
+          routerLink: nextUrl,
+        });
+      }
+    }
+
+    if (route.firstChild) {
+      return this._buildBreadcrumbs(route.firstChild, nextUrl, newBreadcrumbs);
+    }
+
+    return newBreadcrumbs.length > 0 ? newBreadcrumbs : undefined;
+  }
 
   public logout(): void {
     this._authService.logout();
   }
-
-  private _router = inject(Router);
-
   public nav(path: string): void {
     this._router.navigate([path]);
   }

@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { authGuard, guestGuard } from '@auth';
+import { authGuard, guestGuard } from '@erp/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 
 export const appRoutes: Route[] = [
@@ -24,21 +24,24 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'sales',
+        data: { breadcrumb: 'Sprzedaż' },
         loadChildren: () => loadRemote<typeof import('sales/Routes')>('sales/Routes').then((m) => m!.remoteRoutes),
       },
       {
         path: 'inventory',
+        data: { breadcrumb: 'Magazyn' },
         loadChildren: () =>
           loadRemote<typeof import('inventory/Routes')>('inventory/Routes').then((m) => m!.remoteRoutes),
       },
       {
         path: 'catalog',
+        data: { breadcrumb: 'Katalog' },
         loadChildren: () => loadRemote<typeof import('catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
       },
     ],
   },
   {
     path: '**',
-    redirectTo: 'dashboard', // Nieznane ścieżki niech też kierują na dashboard (authGuard wyrzuci na login, jeśli trzeba)
+    redirectTo: 'dashboard',
   },
 ];

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 
-import { AuthService } from '@auth';
+import { AuthService } from '@erp/auth';
 @Component({
   imports: [],
   selector: 'app-catalog-entry',

@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 
-import { AuthService } from '@auth';
+import { AuthService } from '@erp/auth';
 import { Router } from '@angular/router';
 
 @Component({

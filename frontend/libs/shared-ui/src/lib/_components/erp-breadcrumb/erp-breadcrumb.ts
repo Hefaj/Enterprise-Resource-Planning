@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { MenuItem } from 'primeng/api';
 
@@ -8,19 +8,9 @@ import { MenuItem } from 'primeng/api';
   styleUrls: ['./erp-breadcrumb.scss'],
   standalone: true,
   imports: [BreadcrumbModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ErpBreadcrumbComponent implements OnInit {
-  public items: MenuItem[] | undefined;
-  public home: MenuItem | undefined;
-
-  public ngOnInit(): void {
-    this.items = [
-      { label: 'Electronics' },
-      { label: 'Computer' },
-      { label: 'Accessories' },
-      { label: 'Keyboard' },
-      { label: 'Wireless' },
-    ];
-    this.home = { icon: 'pi pi-home' };
-  }
+export class ErpBreadcrumbComponent {
+  public readonly $home = input.required<MenuItem>();
+  public readonly $items = input.required<MenuItem[] | undefined>();
 }

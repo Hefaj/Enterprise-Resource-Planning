@@ -1,15 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NxWelcome } from './nx-welcome';
 
-import { SharedUi } from '@shared-ui';
+import { AuthService } from '@auth';
 
 @Component({
-  imports: [NxWelcome, SharedUi, RouterModule],
+  imports: [NxWelcome, RouterModule],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
   protected title = 'client';
+
+  private _authService = inject(AuthService);
 }

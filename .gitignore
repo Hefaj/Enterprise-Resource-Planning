@@ -2,7 +2,9 @@
 .nx/cache
 .nx/workspace-data
 node_modules
+dist
 
 .angular
 
 vitest.config.*.timestamp*
+

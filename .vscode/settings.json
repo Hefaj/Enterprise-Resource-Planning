@@ -1,3 +1,20 @@
 {
-    "nxConsole.nxWorkspacePath": ""
+  "nxConsole.nxWorkspacePath": "",
+
+  // Ustawienie Prettiera jako domyślnego formatera
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Formatowanie przy zapisie (Prettier)
+  "editor.formatOnSave": true,
+
+  // Specyficzne ustawienia dla plików Angulara i TS
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

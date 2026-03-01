@@ -22,7 +22,7 @@ export default [
             },
           ],
         },
-      ],
+      ]
     },
   },
   {
@@ -37,6 +37,18 @@ export default [
       '**/*.mjs',
     ],
     // Override or add rules here
-    rules: {},
+    rules: {
+      "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "explicit" }],
+      "@typescript-eslint/explicit-function-return-type": ["error"],
+      "@typescript-eslint/naming-convention": [
+        "error",
+        {
+          "selector": "memberLike",
+          "modifiers": ["private"],
+          "format": ["camelCase"],
+          "leadingUnderscore": "require"
+        }
+      ]
+    },
   },
 ];

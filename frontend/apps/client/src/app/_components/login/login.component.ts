@@ -1,9 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
+
+import { AuthService } from '@auth';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -14,10 +17,15 @@ import { InputTextModule } from 'primeng/inputtext';
 })
 export class LoginComponent {
   public checked1 = signal<boolean>(true);
-   
+
   // private _fb = inject(FormBuilder);
-  // private _authService = inject(AuthService);
-  // private _router = inject(Router);
+  private _authService = inject(AuthService);
+  private _router = inject(Router);
+
+  public onClick(): void {
+    this._authService.setToken('ey...przykladowy.token.jwt...');
+    this._router.navigate(['/dashboard']);
+  }
 
   // // Zmienna do obsługi stanu ładowania przycisku (możesz ją podpiąć pod p-button [loading]="isLoading")
   // public isLoading = false;

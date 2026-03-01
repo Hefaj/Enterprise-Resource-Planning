@@ -1,0 +1,31 @@
+<div class="min-h-screen flex flex-col bg-gray-100">
+  <p-button
+    (click)="logout()"
+    label="Wyloguj"
+  />
+
+  <p-button
+    (click)="nav('dashboard')"
+    label="Dashboard"
+  />
+  <p-button
+    (click)="nav('catalog')"
+    label="Katalog"
+  />
+  <p-button
+    (click)="nav('sales')"
+    label="Sprzedaż"
+  />
+  <p-button
+    (click)="nav('inventory')"
+    label="Magazyn"
+  />
+
+  <erp-breadcrumb></erp-breadcrumb>
+
+  <main class="flex-grow p-6">
+    <div class="bg-white rounded-lg shadow p-4 min-h-full">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

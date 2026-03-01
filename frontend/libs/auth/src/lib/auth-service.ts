@@ -1,4 +1,5 @@
-import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { Router } from '@angular/router';
 
 export interface User {
   id: number;
@@ -12,6 +13,7 @@ export interface User {
 export class AuthService {
   private _$currentUser: WritableSignal<User | null> = signal(null);
   public $currentUser = this._$currentUser.asReadonly();
+  private _router = inject(Router);
 
   public login(user: User): void {
     this._$currentUser.set(user);
@@ -38,6 +40,6 @@ export class AuthService {
   public logout(): void {
     this._$token.set(null);
     localStorage.removeItem('access_token');
-    // tutaj np. przekierowanie do /login
+    this._router.navigate(['/login']);
   }
 }

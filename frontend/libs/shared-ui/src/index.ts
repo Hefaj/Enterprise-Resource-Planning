@@ -13,3 +13,5 @@ export const sharedPrimeNGConfig = providePrimeNG({
 export * from './lib/_components/erp-breadcrumb/erp-breadcrumb';
 
 export * from './lib/_components/erp-menu/erp-menu';
+
+export * from './lib/_components/erp-notification/erp-notification';

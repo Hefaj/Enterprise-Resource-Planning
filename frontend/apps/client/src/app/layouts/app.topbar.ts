@@ -1,15 +1,18 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
 import { LayoutService } from './layout.service';
 import { AppConfigurator } from './app.configurator';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator],
+  imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator, BreadcrumbModule],
   template: ` <div class="layout-topbar">
     <div class="layout-topbar-logo-container">
       <button
@@ -54,9 +57,14 @@ import { AppConfigurator } from './app.configurator';
             />
           </g>
         </svg>
-        <span>SAKAI</span>
+        <span>ERP</span>
       </a>
     </div>
+
+    <p-breadcrumb
+      [model]="$items()"
+      [home]="$home()"
+    ></p-breadcrumb>
 
     <div class="layout-topbar-actions">
       <div class="layout-config-menu">
@@ -126,7 +134,44 @@ import { AppConfigurator } from './app.configurator';
   </div>`,
 })
 export class AppTopbar {
-  public items!: MenuItem[];
+  private _router = inject(Router);
+
+  public $home = signal<MenuItem>({ label: 'Dashboard', routerLink: '/dashboard' });
+
+  public $items = toSignal(
+    this._router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => this._buildBreadcrumbs(this._router.routerState.root)),
+    ),
+  );
+
+  private _buildBreadcrumbs(route: ActivatedRoute, url = '', breadcrumbs: MenuItem[] = []): MenuItem[] | undefined {
+    // Pobieramy rzeczywiste segmenty URL (np. 'products', '123' zamiast ':id')
+    const path = route.snapshot.url.map((segment: any) => segment.path).join('/');
+
+    const nextUrl = path ? `${url}/${path}` : url;
+
+    const label = route.snapshot.data['breadcrumb'];
+
+    const newBreadcrumbs = [...breadcrumbs];
+
+    if (label) {
+      const isDuplicate = newBreadcrumbs.some((b) => b.label === label && b.routerLink === nextUrl);
+
+      if (!isDuplicate) {
+        newBreadcrumbs.push({
+          label: label,
+          routerLink: nextUrl,
+        });
+      }
+    }
+
+    if (route.firstChild) {
+      return this._buildBreadcrumbs(route.firstChild, nextUrl, newBreadcrumbs);
+    }
+
+    return newBreadcrumbs.length > 0 ? newBreadcrumbs : undefined;
+  }
 
   public layoutService = inject(LayoutService);
 

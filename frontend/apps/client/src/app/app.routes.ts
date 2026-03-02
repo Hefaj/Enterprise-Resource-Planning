@@ -41,8 +41,8 @@ export const appRoutes: Route[] = [
       },
     ],
   },
-  // {
-  //   path: '**',
-  //   redirectTo: 'dashboard',
-  // },
+  {
+    path: '**',
+    redirectTo: 'dashboard',
+  },
 ];

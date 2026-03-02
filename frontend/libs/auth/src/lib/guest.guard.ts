@@ -8,7 +8,6 @@ export const guestGuard: CanActivateFn = () => {
 
   authService.loadTokenFromStorage();
 
-  console.log('Checking guest guard:', authService.$token());
   if (authService.$token()) {
     return router.navigate(['/dashboard']);
   }

@@ -75,7 +75,14 @@ export class MainLayoutComponent {
         {
           label: 'Katalog',
           icon: 'pi pi-th-large',
-          url: '/catalog',
+          // url: '/catalog',
+          items: [
+            {
+              label: 'Produkty',
+              icon: 'pi pi-box',
+              url: '/catalog/product',
+            },
+          ],
         },
         {
           label: 'Sprzedaż',

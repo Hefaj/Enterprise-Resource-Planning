@@ -1,13 +1,9 @@
 import { Route } from '@angular/router';
 import { authGuard, guestGuard } from '@erp/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
+import { AppLayout } from './layouts/app.layout';
 
 export const appRoutes: Route[] = [
-  {
-    path: '',
-    redirectTo: 'dashboard',
-    pathMatch: 'full',
-  },
   {
     path: 'login',
     canActivate: [guestGuard],
@@ -16,8 +12,17 @@ export const appRoutes: Route[] = [
   {
     path: '',
     canActivate: [authGuard],
-    loadComponent: () => import('./_layouts/main-layout/main-layout.component').then((m) => m.MainLayoutComponent),
+    component: AppLayout,
     children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard',
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./_components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
       {
         path: 'sales',
         data: { breadcrumb: 'Sprzedaż' },
@@ -34,14 +39,10 @@ export const appRoutes: Route[] = [
         data: { breadcrumb: 'Katalog' },
         loadChildren: () => loadRemote<typeof import('catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
       },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./_components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-      },
     ],
   },
-  {
-    path: '**',
-    redirectTo: 'dashboard',
-  },
+  // {
+  //   path: '**',
+  //   redirectTo: 'dashboard',
+  // },
 ];

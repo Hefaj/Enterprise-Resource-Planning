@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { AuthService } from '@erp/auth';
-import { ErpBreadcrumbComponent } from '@erp/shared-ui';
+import { ErpBreadcrumbComponent, ErpMenuComponent } from '@erp/shared-ui';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { filter, map } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, ErpBreadcrumbComponent, ButtonModule],
+  imports: [RouterOutlet, ErpBreadcrumbComponent, ErpMenuComponent, ButtonModule],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
 })

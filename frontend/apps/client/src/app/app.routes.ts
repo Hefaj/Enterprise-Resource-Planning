@@ -19,10 +19,6 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./_layouts/main-layout/main-layout.component').then((m) => m.MainLayoutComponent),
     children: [
       {
-        path: 'dashboard',
-        loadComponent: () => import('./_components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-      },
-      {
         path: 'sales',
         data: { breadcrumb: 'Sprzedaż' },
         loadChildren: () => loadRemote<typeof import('sales/Routes')>('sales/Routes').then((m) => m!.remoteRoutes),
@@ -37,6 +33,10 @@ export const appRoutes: Route[] = [
         path: 'catalog',
         data: { breadcrumb: 'Katalog' },
         loadChildren: () => loadRemote<typeof import('catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./_components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
     ],
   },

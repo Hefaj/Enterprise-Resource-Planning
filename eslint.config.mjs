@@ -22,33 +22,24 @@ export default [
             },
           ],
         },
-      ]
+      ],
     },
   },
   {
-    files: [
-      '**/*.ts',
-      '**/*.tsx',
-      '**/*.cts',
-      '**/*.mts',
-      '**/*.js',
-      '**/*.jsx',
-      '**/*.cjs',
-      '**/*.mjs',
-    ],
+    files: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts', '**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
     // Override or add rules here
     rules: {
-      "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "explicit" }],
-      "@typescript-eslint/explicit-function-return-type": ["error"],
-      "@typescript-eslint/naming-convention": [
-        "error",
+      '@typescript-eslint/explicit-member-accessibility': ['error', { accessibility: 'explicit' }],
+      '@typescript-eslint/explicit-function-return-type': ['error'],
+      '@typescript-eslint/naming-convention': [
+        'error',
         {
-          "selector": "memberLike",
-          "modifiers": ["private"],
-          "format": ["camelCase"],
-          "leadingUnderscore": "require"
-        }
-      ]
+          selector: 'memberLike',
+          modifiers: ['private'],
+          format: ['camelCase'],
+          leadingUnderscore: 'require',
+        },
+      ],
     },
   },
 ];

@@ -1,0 +1,29 @@
+@let _config = config();
+@let _activeControl = activeControl;
+@let _errorMsg = getErrorMessage();
+
+<div class="flex flex-col gap-2">
+  <p-floatlabel variant="on">
+    <input
+      id="on_label"
+      pInputText
+      [formControl]="_activeControl"
+      (blur)="onTouched()"
+      aria-describedby="hint"
+      [invalid]="!!_errorMsg"
+      [pAutoFocus]="true"
+    />
+    <label for="on_label">{{ _config.placeholder || '' }}</label>
+  </p-floatlabel>
+  @if (_config.hint) {
+    <small id="hint">{{ _config.hint }}</small>
+  }
+  @if (_errorMsg) {
+    <p-message
+      severity="error"
+      size="small"
+      variant="simple"
+      >{{ _errorMsg }}</p-message
+    >
+  }
+</div>

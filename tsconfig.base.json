@@ -22,7 +22,8 @@
       "inventory/Routes": ["frontend/apps/modules/inventory/src/app/remote-entry/entry.routes.ts"],
       "sales/Routes": ["frontend/apps/modules/sales/src/app/remote-entry/entry.routes.ts"],
       "@erp/shared-ui": ["frontend/libs/shared-ui/src/index.ts"],
-      "@erp/auth": ["frontend/libs/auth/src/index.ts"]
+      "@erp/auth": ["frontend/libs/auth/src/index.ts"],
+      "@erp/shared/ui": ["frontend/libs/shared/ui/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

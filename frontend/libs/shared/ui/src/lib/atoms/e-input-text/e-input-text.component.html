@@ -7,12 +7,13 @@
     <input
       id="on_label"
       pInputText
+      fluid
       [formControl]="_activeControl"
       (blur)="onTouched()"
       aria-describedby="hint"
       [invalid]="!!_errorMsg"
-      [pAutoFocus]="true"
     />
+    <!-- [pAutoFocus]="true" -->
     <label for="on_label">{{ _config.placeholder || '' }}</label>
   </p-floatlabel>
   @if (_config.hint) {

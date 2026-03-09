@@ -1,13 +1,25 @@
-<!-- <div class="flex flex-col gap-4">
-  <e-input-text
-    [config]="textConfig"
-    [control]="control"
-  />
+<form
+  [formGroup]="myDynamicForm"
+  (ngSubmit)="save()"
+>
+  <div class="flex flex-col gap-4">
+    <e-input-text
+      [config]="textConfig"
+      [control]="control"
+    />
 
-  <e-input-text
-    [config]="textConfig2"
-    [control]="control2"
-  />
-</div> -->
+    <e-input-text
+      [config]="textConfig2"
+      [control]="control2"
+    />
+  </div>
 
-<e-two-section-layout> </e-two-section-layout>
+  <e-button
+    [config]="saveBtn"
+    (click)="save()"
+    [loading]="isLoading()"
+    >Save</e-button
+  >
+</form>
+
+<!-- <e-two-section-layout> </e-two-section-layout> -->

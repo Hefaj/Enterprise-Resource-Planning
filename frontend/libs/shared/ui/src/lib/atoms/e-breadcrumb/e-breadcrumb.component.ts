@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { EBreadcrumbBuilder } from './e-breadcrumb.builder';
+
+export { EBreadcrumbBuilder };
 
 export type EMenuItem = MenuItem;
 

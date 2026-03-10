@@ -21,12 +21,7 @@
             "input": "frontend/apps/client/public"
           }
         ],
-        "styles": [
-          "frontend/apps/client/src/styles.css",
-          "node_modules/primeicons/primeicons.css",
-          "frontend/apps/client/src/assets/styles.scss",
-          "frontend/apps/client/src/assets/tailwind.css"
-        ],
+        "styles": ["frontend/apps/client/src/styles.css", "node_modules/primeicons/primeicons.css"],
         "customWebpackConfig": {
           "path": "frontend/apps/client/webpack.config.ts"
         }

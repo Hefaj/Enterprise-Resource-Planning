@@ -1,7 +1,6 @@
 import { Route } from '@angular/router';
 import { authGuard, guestGuard } from '@erp/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
-import { AppLayout } from './layouts/app.layout';
 import { TilewindLayout } from './_layouts/tilewind/tilewind';
 
 export const appRoutes: Route[] = [
@@ -38,7 +37,8 @@ export const appRoutes: Route[] = [
       {
         path: 'catalog',
         data: { breadcrumb: 'Katalog' },
-        loadChildren: () => loadRemote<typeof import('@erp/catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
+        loadChildren: () =>
+          loadRemote<typeof import('@erp/catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
       },
     ],
   },

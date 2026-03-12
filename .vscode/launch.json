@@ -1,0 +1,62 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // ==========================================
+    // 1. FRONTEND: ANGULAR v21 (Nx Client)
+    // ==========================================
+    {
+      "name": "Frontend: Debug Edge (Client)",
+      "request": "launch",
+      "type": "msedge",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      // Nowoczesny debugger w VS Code świetnie radzi sobie z mapowaniem ścieżek Nx,
+      // ale dodajemy to dla absolutnej pewności przy lazy loadingu z remotów:
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${webRoot}/*",
+        "webpack:///src/*": "${webRoot}/*",
+        "webpack:///*": "*",
+        "webpack:///./~/*": "${webRoot}/node_modules/*"
+      }
+    },
+    {
+      "name": "Frontend: Debug Chrome (Client)",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true
+    },
+
+    // ==========================================
+    // 2. BACKEND: .NET 10 MINIMAL API (Placeholder)
+    // ==========================================
+    {
+      "name": "Backend: Debug .NET 10 API",
+      "type": "coreclr",
+      "request": "launch",
+      // Ścieżkę do .dll zaktualizujemy, gdy utworzymy projekt w C#
+      "program": "${workspaceFolder}/backend/bin/Debug/net10.0/BackendApi.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/backend",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    // ==========================================
+    // 3. FULLSTACK: URUCHOM WSZYSTKO NARAZ
+    // ==========================================
+    {
+      "name": "Fullstack: Angular + .NET 10",
+      "configurations": ["Backend: Debug .NET 10 API", "Frontend: Debug Edge (Client)"]
+    }
+  ]
+}

@@ -9,3 +9,9 @@ export * from './lib/atoms/core-breadcrumb/core-breadcrumb.component';
 export * from './lib/layouts/core-two-section-layout/core-two-section-layout.component';
 
 export * from './lib/atoms/core-empty-card/core-empty-card.component';
+
+export * from './lib/layouts/core-host-layout/core-host-layout';
+
+export * from './lib/atoms/core-drawer/core-drawer.component';
+
+export * from './lib/atoms/core-panel-menu/core-panel-menu.component';

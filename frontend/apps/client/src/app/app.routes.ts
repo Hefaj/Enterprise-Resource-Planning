@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
 import { authGuard, guestGuard } from '@erp/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
-import { TilewindLayout } from './_layouts/tilewind/tilewind';
+import { ShellLayout } from './_layouts/shell/shell.component';
 
 export const appRoutes: Route[] = [
   {
@@ -12,7 +12,7 @@ export const appRoutes: Route[] = [
   {
     path: '',
     canActivate: [authGuard],
-    component: TilewindLayout,
+    component: ShellLayout,
     children: [
       {
         path: '',

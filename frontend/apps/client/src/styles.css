@@ -2,8 +2,14 @@
 @import 'tailwindcss';
 @import 'tailwindcss-primeui';
 
+/* Reset domyślnych marginesów */
+@layer base {
+  html,
+  body {
+    @apply m-0 p-0 h-full w-full overflow-hidden;
+  }
+}
 /* Integracja z PrimeNG */
-
 @layer tailwind-base, primeng, tailwind-utilities;
 
 /* @layer tailwind-base {

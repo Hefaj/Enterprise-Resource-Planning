@@ -25,7 +25,7 @@ import { AppMenuitem } from './app.menuitem';
 export class AppMenu {
   public model: MenuItem[] = [];
 
-  public ngOnInit() {
+  public ngOnInit(): void {
     // this.model = [
     //   {
     //     label: 'Home',

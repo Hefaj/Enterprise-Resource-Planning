@@ -45,7 +45,7 @@ export class AppSidebar implements OnInit, OnDestroy {
     });
   }
 
-  public ngOnInit() {
+  public ngOnInit(): void {
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationEnd),
@@ -59,7 +59,7 @@ export class AppSidebar implements OnInit, OnDestroy {
     this._onRouteChange(this.router.url);
   }
 
-  public ngOnDestroy() {
+  public ngOnDestroy(): void {
     this._destroy$.next();
     this._destroy$.complete();
     this._unbindOutsideClickListener();
@@ -78,7 +78,7 @@ export class AppSidebar implements OnInit, OnDestroy {
 
   private _bindOutsideClickListener(): void {
     if (!this._outsideClickListener) {
-      this._outsideClickListener = (event: MouseEvent) => {
+      this._outsideClickListener = (event: MouseEvent): void => {
         if (this._isOutsideClicked(event)) {
           this.layoutService.layoutState.update((val) => ({
             ...val,

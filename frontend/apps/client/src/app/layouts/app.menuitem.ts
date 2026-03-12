@@ -167,13 +167,13 @@ export class AppMenuitem {
     });
   }
 
-  public ngOnInit() {
+  public ngOnInit(): void {
     if (this.item()?.routerLink) {
       this.updateActiveStateFromRoute();
     }
   }
 
-  public ngAfterViewInit() {
+  public ngAfterViewInit(): void {
     setTimeout(() => {
       this.initialized.set(true);
     });

@@ -1,7 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-
-import { AuthService } from '@erp/auth';
 @Component({
   imports: [RouterModule],
   selector: 'app-catalog-entry',
@@ -9,7 +7,6 @@ import { AuthService } from '@erp/auth';
     <router-outlet></router-outlet> `,
 })
 export class RemoteEntry {
-  private _authService = inject(AuthService);
   private _router = inject(Router);
   private _route = inject(ActivatedRoute);
   public nav(path: string): void {

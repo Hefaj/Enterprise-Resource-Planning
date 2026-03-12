@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { EBreadcrumb, EBreadcrumbComponent } from '@erp/shared/ui';
+import {
+  CoreBreadcrumb,
+  CoreBreadcrumbComponent,
+  CoreButtonComponent,
+  CoreEmptyCardComponent,
+  EButtonBuilder,
+} from '@erp/shared/ui';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { EButtonBuilder, EButtonComponent } from '@erp/shared-ui';
 import { DrawerModule } from 'primeng/drawer';
 import { ToolbarModule } from 'primeng/toolbar';
 import { AvatarModule } from 'primeng/avatar';
@@ -10,22 +15,21 @@ import { PopoverModule } from 'primeng/popover';
 import { MenuModule } from 'primeng/menu';
 import { BadgeModule } from 'primeng/badge';
 import { MenuItem } from 'primeng/api';
-import { EmptyCardComponent } from '@erp/shared/ui';
 
 @Component({
   selector: 'app-tilewind',
   imports: [
     ButtonModule,
     CardModule,
-    EBreadcrumbComponent,
-    EButtonComponent,
+    CoreBreadcrumbComponent,
+    CoreButtonComponent,
     DrawerModule,
     ToolbarModule,
     AvatarModule,
     PopoverModule,
     MenuModule,
     BadgeModule,
-    EmptyCardComponent,
+    CoreEmptyCardComponent,
   ],
   templateUrl: './tilewind.html',
 })
@@ -40,7 +44,7 @@ export class TilewindLayout implements OnInit {
         label: 'B',
       },
     ],
-  } as EBreadcrumb;
+  } as CoreBreadcrumb;
 
   public filterBtn = EButtonBuilder.create((b) => b.setIcon('pi pi-bars'));
 

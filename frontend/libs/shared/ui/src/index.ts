@@ -1,16 +1,11 @@
-import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeuix/themes/aura';
+export * from './lib/_base/shared-prime-ng-config';
 
-export const sharedPrimeNGConfig = providePrimeNG({
-  theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } },
-});
+export * from './lib/atoms/core-button/core-button.component';
 
-export * from './lib/atoms/e-button/e-button.component';
+export * from './lib/atoms/core-input-text/core-input-text.component';
 
-export * from './lib/atoms/e-input-text/e-input-text.component';
+export * from './lib/atoms/core-breadcrumb/core-breadcrumb.component';
 
-export * from './lib/atoms/e-breadcrumb/e-breadcrumb.component';
+export * from './lib/layouts/core-two-section-layout/core-two-section-layout.component';
 
-export * from './lib/layouts/e-two-section-layout/e-two-section-layout.component';
-
-export * from './lib/atoms/empty-card/empty-card.component';
+export * from './lib/atoms/core-empty-card/core-empty-card.component';

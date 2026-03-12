@@ -134,7 +134,7 @@ export class AppConfigurator {
     { label: 'Overlay', value: 'overlay' },
   ];
 
-  public ngOnInit() {
+  public ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.onPresetChange(this.layoutService.layoutConfig().preset);
     }

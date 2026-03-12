@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { AuthService } from '@erp/auth';
-import { ErpBreadcrumbComponent, ErpMenuComponent, ErpMenuItem, ErpNotificationComponent } from '@erp/shared-ui';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { filter, map } from 'rxjs/operators';
@@ -10,9 +9,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, ErpBreadcrumbComponent, ErpMenuComponent, ButtonModule, ErpNotificationComponent],
+  imports: [RouterOutlet, ButtonModule],
   templateUrl: './main-layout.component.html',
-  styleUrl: './main-layout.component.scss',
 })
 export class MainLayoutComponent {
   private _router = inject(Router);
@@ -62,69 +60,69 @@ export class MainLayoutComponent {
     this._router.navigate([path]);
   }
 
-  public menuItems: ErpMenuItem[] = [
-    {
-      label: 'Dashboard',
-      icon: 'pi pi-home',
-      url: '/dashboard',
-    },
-    {
-      label: 'Moje',
-      icon: 'pi pi-th-large',
-      items: [
-        {
-          label: 'Katalog',
-          icon: 'pi pi-th-large',
-          // url: '/catalog',
-          items: [
-            {
-              label: 'Produkty',
-              icon: 'pi pi-box',
-              url: '/catalog/product',
-            },
-          ],
-        },
-        {
-          label: 'Sprzedaż',
-          icon: 'pi pi-shopping-cart',
-          url: '/sales',
-        },
-        {
-          label: 'Magazyn',
-          icon: 'pi pi-warehouse',
-          url: '/inventory',
-        },
-      ],
-    },
+  // public menuItems: ErpMenuItem[] = [
+  //   {
+  //     label: 'Dashboard',
+  //     icon: 'pi pi-home',
+  //     url: '/dashboard',
+  //   },
+  //   {
+  //     label: 'Moje',
+  //     icon: 'pi pi-th-large',
+  //     items: [
+  //       {
+  //         label: 'Katalog',
+  //         icon: 'pi pi-th-large',
+  //         // url: '/catalog',
+  //         items: [
+  //           {
+  //             label: 'Produkty',
+  //             icon: 'pi pi-box',
+  //             url: '/catalog/product',
+  //           },
+  //         ],
+  //       },
+  //       {
+  //         label: 'Sprzedaż',
+  //         icon: 'pi pi-shopping-cart',
+  //         url: '/sales',
+  //       },
+  //       {
+  //         label: 'Magazyn',
+  //         icon: 'pi pi-warehouse',
+  //         url: '/inventory',
+  //       },
+  //     ],
+  //   },
 
-    {
-      label: 'Reports',
-      icon: 'pi pi-chart-line',
-      items: [
-        {
-          label: 'Revenue',
-          icon: 'pi pi-money-bill',
-          items: [
-            { label: 'View', icon: 'pi pi-table', url: '/reports/revenue/view' },
-            { label: 'Search', icon: 'pi pi-search', url: '/reports/revenue/search' },
-          ],
-        },
-        { label: 'Expenses', icon: 'pi pi-wallet', url: '/reports/expenses' },
-      ],
-    },
-    {
-      label: 'Messages',
-      icon: 'pi pi-comments',
-      badge: 3,
-      url: '/messages',
-    },
-    {
-      label: 'Settings',
-      icon: 'pi pi-cog',
-      items: [
-        { label: 'Profile', icon: 'pi pi-user', url: '/settings/profile' },
-        { label: 'Security', icon: 'pi pi-shield', url: '/settings/security' },
-      ],
-    },
-  ];
+  //   {
+  //     label: 'Reports',
+  //     icon: 'pi pi-chart-line',
+  //     items: [
+  //       {
+  //         label: 'Revenue',
+  //         icon: 'pi pi-money-bill',
+  //         items: [
+  //           { label: 'View', icon: 'pi pi-table', url: '/reports/revenue/view' },
+  //           { label: 'Search', icon: 'pi pi-search', url: '/reports/revenue/search' },
+  //         ],
+  //       },
+  //       { label: 'Expenses', icon: 'pi pi-wallet', url: '/reports/expenses' },
+  //     ],
+  //   },
+  //   {
+  //     label: 'Messages',
+  //     icon: 'pi pi-comments',
+  //     badge: 3,
+  //     url: '/messages',
+  //   },
+  //   {
+  //     label: 'Settings',
+  //     icon: 'pi pi-cog',
+  //     items: [
+  //       { label: 'Profile', icon: 'pi pi-user', url: '/settings/profile' },
+  //       { label: 'Security', icon: 'pi pi-shield', url: '/settings/security' },
+  //     ],
+  //   },
+  // ];
 }

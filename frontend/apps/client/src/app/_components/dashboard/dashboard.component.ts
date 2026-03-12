@@ -4,7 +4,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { EInputTextBuilder, EInputTextComponent, ETwoSectionLayoutComponent } from '@erp/shared/ui';
+import { EInputTextBuilder, CoreInputTextComponent, CoreTwoSectionLayoutComponent } from '@erp/shared/ui';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,11 +14,10 @@ import { EInputTextBuilder, EInputTextComponent, ETwoSectionLayoutComponent } fr
     CheckboxModule,
     InputTextModule,
     ButtonModule,
-    EInputTextComponent,
-    ETwoSectionLayoutComponent,
+    CoreInputTextComponent,
+    CoreTwoSectionLayoutComponent,
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
   public myDynamicForm = new FormGroup({

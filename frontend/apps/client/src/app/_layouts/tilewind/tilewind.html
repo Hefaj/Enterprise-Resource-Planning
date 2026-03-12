@@ -2,17 +2,17 @@
   [(visible)]="filter"
   header="Menu"
 >
-  <e-empty-card />
+  <core-empty-card />
 </p-drawer>
 
 <div class="w-full h-dvh flex flex-col">
   <p-toolbar>
     <ng-template #start>
-      <e-button
+      <core-button
         [config]="filterBtn"
         (click)="filter = !filter"
       />
-      <e-breadcrumb [config]="breadcrums" />
+      <core-breadcrumb [config]="breadcrums" />
     </ng-template>
     <ng-template #end>
       <div class="flex items-center gap-2">
@@ -166,7 +166,7 @@
 
   <div class="m-4">
     <ng-content>
-      <e-empty-card />
+      <core-empty-card />
     </ng-content>
   </div>
 </div>

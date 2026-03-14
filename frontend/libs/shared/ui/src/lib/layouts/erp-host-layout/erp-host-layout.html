@@ -1,4 +1,4 @@
-@let _menuConfig = menuConfig();
+@let _menuConfig = menuConfig(); @let _breadcrumbConfig = breadcrumbConfig();
 
 <erp-drawer #drawer>
   <erp-panel-menu [config]="_menuConfig" />
@@ -10,7 +10,7 @@
       [config]="menuBtn"
       (click)="drawer.show()"
     />
-    <h1 class="text-xl font-bold text-slate-800 dark:text-white">Enterprise Shell</h1>
+    <erp-breadcrumb [config]="_breadcrumbConfig" />
   </div>
   <main class="flex-1 overflow-auto p-4">
     <ng-content>

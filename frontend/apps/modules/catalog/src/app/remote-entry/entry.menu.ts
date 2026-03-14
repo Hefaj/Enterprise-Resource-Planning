@@ -1,6 +1,6 @@
-import { NavigationItem } from '@erp/shared/data-access';
+import { ErpNavigationItem } from '@erp/shared/data-access';
 
-export const remoteMenu: NavigationItem[] = [
+export const remoteMenu: ErpNavigationItem[] = [
   {
     label: 'Produkty',
     iconId: 'box',

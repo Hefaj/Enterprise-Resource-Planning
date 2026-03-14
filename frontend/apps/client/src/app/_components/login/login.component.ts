@@ -13,7 +13,6 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule, CheckboxModule, InputTextModule, ButtonModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   public checked1 = signal<boolean>(true);

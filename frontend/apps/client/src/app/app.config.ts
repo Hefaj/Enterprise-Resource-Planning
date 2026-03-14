@@ -1,7 +1,7 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import { appRoutes } from './app.routes';
-import { NavigationItem, NavRegistryService } from '@erp/shared/data-access';
+import { ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
 import { provideHttpClient, withFetch } from '@angular/common/http';
@@ -24,17 +24,17 @@ export const appConfig: ApplicationConfig = {
 };
 
 async function STARTUP(): Promise<void | Observable<unknown> | Promise<unknown>> {
-  const menuRegistry = inject(NavRegistryService);
+  const menuRegistry = inject(ErpNavRegistryService);
   const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadMenuFromRemote(config, menuRegistry));
 
   return Promise.all(loadPromises);
 }
 
 interface EntryMenuModule {
-  remoteMenu: NavigationItem[];
+  remoteMenu: ErpNavigationItem[];
 }
 
-async function loadMenuFromRemote(config: RemoteModuleConfig, menuRegistry: NavRegistryService): Promise<void> {
+async function loadMenuFromRemote(config: RemoteModuleConfig, menuRegistry: ErpNavRegistryService): Promise<void> {
   try {
     const module = await loadRemote<EntryMenuModule>(config.path);
     if (module?.remoteMenu) {
@@ -51,7 +51,7 @@ async function loadMenuFromRemote(config: RemoteModuleConfig, menuRegistry: NavR
   }
 }
 
-function applyRoutePrefixToMenu(items: NavigationItem[], prefix: string): NavigationItem[] {
+function applyRoutePrefixToMenu(items: ErpNavigationItem[], prefix: string): ErpNavigationItem[] {
   return items.map((item) => {
     const newItem = { ...item };
 
@@ -66,7 +66,7 @@ function applyRoutePrefixToMenu(items: NavigationItem[], prefix: string): Naviga
     }
 
     if (newItem.children && Array.isArray(newItem.children)) {
-      newItem.children = applyRoutePrefixToMenu(newItem.children as NavigationItem[], prefix);
+      newItem.children = applyRoutePrefixToMenu(newItem.children as ErpNavigationItem[], prefix);
     }
 
     return newItem;

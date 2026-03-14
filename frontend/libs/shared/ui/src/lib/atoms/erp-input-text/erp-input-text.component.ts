@@ -41,7 +41,6 @@ export class ErpInputTextComponent implements ControlValueAccessor {
   }
 
   public getErrorMessage(): string | null {
-    console.log('err');
     const ctrl = this.activeControl;
     const errorMessages = this.config().errorMessages || {};
 

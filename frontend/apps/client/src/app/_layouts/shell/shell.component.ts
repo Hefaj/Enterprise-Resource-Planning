@@ -1,28 +1,32 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { ErpHostLayoutComponent, ErpPanelMenu } from '@erp/shared/ui';
+import { Component, computed, inject } from '@angular/core';
+import { ErpBreadcrumb, ErpHostLayoutComponent } from '@erp/shared/ui';
 import { RouterModule } from '@angular/router';
-import { NavigationItem, NavRegistryService } from '@erp/shared/data-access';
+import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';
-import { ErpButtonComponent } from '@erp/shared/ui';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-shell',
-  imports: [ErpHostLayoutComponent, RouterModule],
+  imports: [CommonModule, ErpHostLayoutComponent, RouterModule],
   templateUrl: './shell.component.html',
 })
-export class ShellLayoutComponent implements OnInit {
-  protected menuConfig!: ErpPanelMenu;
+export class ShellLayoutComponent {
+  private _erpNavRegistryService = inject(ErpNavRegistryService);
+  private _erpBreadcrumbService = inject(ErpBreadcrumbService);
 
-  private _navRegistryService = inject(NavRegistryService);
-
-  public ngOnInit(): void {
-    const navMenu = this._navRegistryService.$navMenu();
-    this.menuConfig = {
+  protected $navMenu = computed(() => {
+    const navMenu = this._erpNavRegistryService.$navMenu();
+    return {
       items: this._mapToPrimeNg(navMenu),
     };
-  }
+  });
 
-  private _mapToPrimeNg(items: NavigationItem[]): MenuItem[] {
+  protected $breadcrumbConfig = computed(() => {
+    const { home, items } = this._erpBreadcrumbService.breadcrumb();
+    return { home, items } as ErpBreadcrumb;
+  });
+
+  private _mapToPrimeNg(items: ErpNavigationItem[]): MenuItem[] {
     return items.map((item) => ({
       label: item.label,
       icon: item.iconId ? `pi pi-${item.iconId}` : undefined,

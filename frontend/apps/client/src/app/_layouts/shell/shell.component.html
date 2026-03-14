@@ -1,3 +1,9 @@
-<erp-host-layout [menuConfig]="menuConfig">
+@let navMenu = $navMenu();
+@let breadcrumbConfig = $breadcrumbConfig();
+
+<erp-host-layout
+  [menuConfig]="navMenu"
+  [breadcrumbConfig]="breadcrumbConfig"
+>
   <router-outlet></router-outlet>
 </erp-host-layout>

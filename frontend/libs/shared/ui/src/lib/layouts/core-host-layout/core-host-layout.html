@@ -1,5 +1,7 @@
+@let _menuConfig = menuConfig();
+
 <core-drawer #drawer>
-  <core-panel-menu [config]="$panelMenuConfig()" />
+  <core-panel-menu [config]="_menuConfig" />
 </core-drawer>
 
 <div class="flex flex-col h-svh w-svw bg-slate-50 dark:bg-slate-900">

@@ -3,8 +3,8 @@ import { ModuleFederationConfig } from '@nx/module-federation';
 const config: ModuleFederationConfig = {
   name: 'sales',
   exposes: {
-    './Routes':
-      'frontend/apps/modules/sales/src/app/remote-entry/entry.routes.ts',
+    './Routes': 'frontend/apps/modules/sales/src/app/remote-entry/entry.routes.ts',
+    './MenuDefinition': 'frontend/apps/modules/sales/src/app/remote-entry/entry.menu.ts',
   },
 };
 

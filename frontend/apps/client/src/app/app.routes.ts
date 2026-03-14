@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
 import { authGuard, guestGuard } from '@erp/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
-import { ShellLayout } from './_layouts/shell/shell.component';
+import { ShellLayoutComponent } from './_layouts/shell/shell.component';
 
 export const appRoutes: Route[] = [
   {
@@ -12,7 +12,7 @@ export const appRoutes: Route[] = [
   {
     path: '',
     canActivate: [authGuard],
-    component: ShellLayout,
+    component: ShellLayoutComponent,
     children: [
       {
         path: '',
@@ -25,18 +25,15 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'sales',
-        data: { breadcrumb: 'Sprzedaż' },
         loadChildren: () => loadRemote<typeof import('@erp/sales/Routes')>('sales/Routes').then((m) => m!.remoteRoutes),
       },
       {
         path: 'inventory',
-        data: { breadcrumb: 'Magazyn' },
         loadChildren: () =>
           loadRemote<typeof import('@erp/inventory/Routes')>('inventory/Routes').then((m) => m!.remoteRoutes),
       },
       {
         path: 'catalog',
-        data: { breadcrumb: 'Katalog' },
         loadChildren: () =>
           loadRemote<typeof import('@erp/catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
       },

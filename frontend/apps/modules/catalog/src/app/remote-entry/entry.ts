@@ -8,7 +8,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 })
 export class RemoteEntry {
   private _router = inject(Router);
-  private _route = inject(ActivatedRoute);
   public nav(path: string): void {
     this._router.navigate(['catalog', path]);
   }

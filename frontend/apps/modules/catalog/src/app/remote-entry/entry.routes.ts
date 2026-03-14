@@ -10,7 +10,7 @@ export const remoteRoutes: Route[] = [
     component: RemoteEntry,
     children: [
       {
-        path: 'product',
+        path: 'products',
         loadComponent: () => import('./_components/product/product').then((m) => m.ProductComponent),
       },
     ],

@@ -23,8 +23,8 @@
       "@erp/sales/Routes": ["frontend/apps/modules/sales/src/app/remote-entry/entry.routes.ts"],
       "@erp/sales/MenuDefinition": ["frontend/apps/modules/sales/src/app/remote-entry/entry.menu.ts"],
       "@erp/shared/ui": ["frontend/libs/shared/ui/src/index.ts"],
-      "@erp/shared/data-access-navigation": ["frontend/libs/shared/data-access-navigation/src/index.ts"],
-      "@erp/shared/auth": ["frontend/libs/shared/auth/src/index.ts"]
+      "@erp/shared/auth": ["frontend/libs/shared/auth/src/index.ts"],
+      "@erp/shared/data-access": ["frontend/libs/shared/data-access/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

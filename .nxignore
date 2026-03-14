@@ -1,0 +1,10 @@
+# .NET
+**/bin
+**/obj
+**/.vs
+
+# Inne
+dist
+tmp
+out-tsc
+.angular

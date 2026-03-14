@@ -6,14 +6,14 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../../../node_modules/.vite/frontend/libs/shared/data-access-navigation',
+  cacheDir: '../../../../node_modules/.vite/frontend/libs/shared/data-access',
   plugins: [angular(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   // Uncomment this if you are using workers.
   // worker: {
   //   plugins: () => [ nxViteTsPaths() ],
   // },
   test: {
-    name: 'data-access-navigation',
+    name: 'data-access',
     watch: false,
     globals: true,
     environment: 'jsdom',
@@ -21,7 +21,7 @@ export default defineConfig(() => ({
     setupFiles: ['src/test-setup.ts'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: '../../../../coverage/frontend/libs/shared/data-access-navigation',
+      reportsDirectory: '../../../../coverage/frontend/libs/shared/data-access',
       provider: 'v8' as const,
     },
   },

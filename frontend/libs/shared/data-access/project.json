@@ -1,8 +1,8 @@
 {
-  "name": "data-access-navigation",
+  "name": "data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "frontend/libs/shared/data-access-navigation/src",
-  "prefix": "erp",
+  "sourceRoot": "frontend/libs/shared/data-access/src",
+  "prefix": "lib",
   "projectType": "library",
   "tags": [],
   "targets": {
@@ -10,7 +10,7 @@
       "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"],
       "options": {
-        "reportsDirectory": "../../../../coverage/frontend/libs/shared/data-access-navigation"
+        "reportsDirectory": "../../../../coverage/frontend/libs/shared/data-access"
       }
     },
     "lint": {

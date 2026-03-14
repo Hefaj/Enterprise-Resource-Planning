@@ -2,10 +2,10 @@ import { Directive, Input, OnInit, OnDestroy, ViewContainerRef, ComponentRef, Ty
 import { Subscription } from 'rxjs';
 
 @Directive({
-  selector: '[coreDynamicOutlet]',
+  selector: '[erpDynamicOutlet]',
   standalone: true,
 })
-export class CoreDynamicOutletDirective implements OnInit, OnDestroy {
+export class ErpDynamicOutletDirective implements OnInit, OnDestroy {
   @Input() public component!: Type<any>;
   @Input() public inputs?: Record<string, any>;
   @Input() public outputs?: Record<string, (event: any) => void>;

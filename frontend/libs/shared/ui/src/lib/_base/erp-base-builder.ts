@@ -1,4 +1,4 @@
-export abstract class CoreBaseBuilder<T> {
+export abstract class ErpBaseBuilder<T> {
   protected _data: Partial<T> = {};
   /**
    * @internal Metoda używana tylko wewnętrznie przez klasę bazową.
@@ -8,7 +8,7 @@ export abstract class CoreBaseBuilder<T> {
     return this._data as T;
   }
 
-  public static create<TBuilder extends CoreBaseBuilder<ReturnType<TBuilder['build']>>>(
+  public static create<TBuilder extends ErpBaseBuilder<ReturnType<TBuilder['build']>>>(
     this: new () => TBuilder,
     configure: (builder: TBuilder) => void,
   ): ReturnType<TBuilder['build']> {

@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { DrawerModule } from 'primeng/drawer';
 
 @Component({
-  selector: 'core-drawer',
+  selector: 'erp-drawer',
   imports: [DrawerModule],
-  templateUrl: './core-drawer.component.html',
+  templateUrl: './erp-drawer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CoreDrawerComponent {
+export class ErpDrawerComponent {
   protected readonly visible = signal(false);
 
   public toggle(): void {

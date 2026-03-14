@@ -1,21 +1,21 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, Type } from '@angular/core';
-import { EComponentSignalInputs as CoreComponentSignalInputs } from '../../_base/core-component-signal-inputs';
+import { ErpComponentSignalInputs as CoreComponentSignalInputs } from '../../_base/erp-component-signal-inputs';
 
 @Component({
-  selector: 'core-two-section-layout',
+  selector: 'erp-two-section-layout',
   imports: [CommonModule],
-  templateUrl: './core-two-section-layout.component.html',
+  templateUrl: './erp-two-section-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CoreTwoSectionLayoutComponent {
+export class ErpTwoSectionLayoutComponent {
   public test2 = input<boolean>();
   public onSortChange = input<(field: string, order: number) => void>();
 
   public constructor() {
     const magia = new SuperDuper();
 
-    magia.create(CoreTwoSectionLayoutComponent, {
+    magia.create(ErpTwoSectionLayoutComponent, {
       onSortChange(field, order) {
         console.log();
       },

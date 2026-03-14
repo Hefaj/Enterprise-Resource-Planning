@@ -1,12 +1,12 @@
 @let _menuConfig = menuConfig();
 
-<core-drawer #drawer>
-  <core-panel-menu [config]="_menuConfig" />
-</core-drawer>
+<erp-drawer #drawer>
+  <erp-panel-menu [config]="_menuConfig" />
+</erp-drawer>
 
 <div class="flex flex-col h-svh w-svw bg-slate-50 dark:bg-slate-900">
   <div class="h-16 flex items-center px-6 bg-white dark:bg-slate-900 shadow-xl">
-    <core-button
+    <erp-button
       [config]="menuBtn"
       (click)="drawer.show()"
     />
@@ -14,7 +14,7 @@
   </div>
   <main class="flex-1 overflow-auto p-4">
     <ng-content>
-      <core-empty-card />
+      <erp-empty-card />
     </ng-content>
   </main>
 </div>

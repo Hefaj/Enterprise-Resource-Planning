@@ -1,7 +1,7 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import { appRoutes } from './app.routes';
-import { ErpNavigationItem, NavRegistryService } from '@erp/shared/data-access-navigation';
+import { NavigationItem, NavRegistryService } from '@erp/shared/data-access-navigation';
 
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
 import { provideHttpClient, withFetch } from '@angular/common/http';
@@ -31,7 +31,7 @@ async function STARTUP(): Promise<void | Observable<unknown> | Promise<unknown>>
 }
 
 interface EntryMenuModule {
-  remoteMenu: ErpNavigationItem[];
+  remoteMenu: NavigationItem[];
 }
 
 async function loadMenuFromRemote(config: RemoteModuleConfig, menuRegistry: NavRegistryService): Promise<void> {
@@ -51,7 +51,7 @@ async function loadMenuFromRemote(config: RemoteModuleConfig, menuRegistry: NavR
   }
 }
 
-function applyRoutePrefixToMenu(items: ErpNavigationItem[], prefix: string): ErpNavigationItem[] {
+function applyRoutePrefixToMenu(items: NavigationItem[], prefix: string): NavigationItem[] {
   return items.map((item) => {
     const newItem = { ...item };
 
@@ -66,7 +66,7 @@ function applyRoutePrefixToMenu(items: ErpNavigationItem[], prefix: string): Erp
     }
 
     if (newItem.children && Array.isArray(newItem.children)) {
-      newItem.children = applyRoutePrefixToMenu(newItem.children as ErpNavigationItem[], prefix);
+      newItem.children = applyRoutePrefixToMenu(newItem.children as NavigationItem[], prefix);
     }
 
     return newItem;

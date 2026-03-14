@@ -1,22 +1,22 @@
-import { CoreBaseBuilder } from '../../_base/core-base-builder';
-import { CoreButton, EButtonIconPosition, EButtonSeverity, EButtonVariant } from './core-button.component';
+import { ErpBaseBuilder } from '../../_base/erp-base-builder';
+import { CoreButton, ErpButtonIconPosition, ErpButtonSeverity, ErpButtonVariant } from './erp-button.component';
 
-export function CoreButtonSave(builder: CoreButtonBuilder): CoreButtonBuilder {
+export function ErpButtonSave(builder: ErpButtonBuilder): ErpButtonBuilder {
   return builder.setLabel('Save').setSeverity('success').setIcon('pi pi-save');
 }
 
-export function CoreButtonRemove(builder: CoreButtonBuilder): CoreButtonBuilder {
+export function ErpButtonRemove(builder: ErpButtonBuilder): ErpButtonBuilder {
   return builder.setLabel('Remove').setSeverity('danger').setIcon('pi pi-trash');
 }
 
-export function CoreButtonCancel(builder: CoreButtonBuilder): CoreButtonBuilder {
+export function ErpButtonCancel(builder: ErpButtonBuilder): ErpButtonBuilder {
   return builder.setLabel('Cancel').setSeverity('secondary').setIcon('pi pi-times');
 }
 
 /**
  * https://primeng.org/button#api.button.props.label
  */
-export class CoreButtonBuilder extends CoreBaseBuilder<CoreButton> {
+export class ErpButtonBuilder extends ErpBaseBuilder<CoreButton> {
   public setLabel(label: string): this {
     this._data.label = label;
     return this;
@@ -26,7 +26,7 @@ export class CoreButtonBuilder extends CoreBaseBuilder<CoreButton> {
    * https://primeng.org/button#api.button.props.icon
    * https://primeng.org/button#api.button.props.iconPos
    */
-  public setIcon(icon: string, iconPos?: EButtonIconPosition): this {
+  public setIcon(icon: string, iconPos?: ErpButtonIconPosition): this {
     this._data.icon = icon;
     this._data.iconPos = iconPos;
     return this;
@@ -35,7 +35,7 @@ export class CoreButtonBuilder extends CoreBaseBuilder<CoreButton> {
   /**
    * https://primeng.org/button#api.button.props.severity
    */
-  public setSeverity(severity: EButtonSeverity): this {
+  public setSeverity(severity: ErpButtonSeverity): this {
     this._data.severity = severity;
     return this;
   }
@@ -51,7 +51,7 @@ export class CoreButtonBuilder extends CoreBaseBuilder<CoreButton> {
   /**
    * https://primeng.org/button#api.button.props.variant
    */
-  public setVariant(variant: EButtonVariant): this {
+  public setVariant(variant: ErpButtonVariant): this {
     this._data.variant = variant;
     return this;
   }

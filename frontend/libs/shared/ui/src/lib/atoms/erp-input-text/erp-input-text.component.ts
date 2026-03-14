@@ -1,34 +1,34 @@
 import { ChangeDetectionStrategy, Component, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, ReactiveFormsModule, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
-import { CoreInputBase } from '../../_base/core-input-base';
+import { ErpInputBase } from '../../_base/erp-input-base';
 import { noop } from 'rxjs';
-import { EInputTextBuilder } from './core-input-text.builder';
+import { ErpInputTextBuilder } from './erp-input-text.builder';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
 import { AutoFocusModule } from 'primeng/autofocus';
 
-export { EInputTextBuilder };
+export { ErpInputTextBuilder };
 
-export interface CoreInputText extends CoreInputBase {
+export interface ErpInputText extends ErpInputBase {
   icon?: string;
 }
 
 @Component({
-  selector: 'core-input-text',
+  selector: 'erp-input-text',
   imports: [InputTextModule, ReactiveFormsModule, FloatLabelModule, MessageModule, AutoFocusModule],
-  templateUrl: './core-input-text.component.html',
+  templateUrl: './erp-input-text.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CoreInputTextComponent),
+      useExisting: forwardRef(() => ErpInputTextComponent),
       multi: true,
     },
   ],
 })
-export class CoreInputTextComponent implements ControlValueAccessor {
-  public config = input.required<CoreInputText>();
+export class ErpInputTextComponent implements ControlValueAccessor {
+  public config = input.required<ErpInputText>();
 
   // Opcjonalna kontrolka wstrzykiwana z zewnątrz (dla dynamicznych widoków)
   public control = input<FormControl | null>(null);

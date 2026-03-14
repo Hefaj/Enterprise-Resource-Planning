@@ -1,12 +1,12 @@
-import { CoreBaseBuilder } from './core-base-builder';
+import { ErpBaseBuilder } from './erp-base-builder';
 
-export interface CoreInputBase {
+export interface ErpInputBase {
   placeholder?: string;
   hint?: string;
   errorMessages?: Record<string, string>;
 }
 
-export class CoreInputBaseBuilder<T extends CoreInputBase> extends CoreBaseBuilder<T> {
+export class ErpInputBaseBuilder<T extends ErpInputBase> extends ErpBaseBuilder<T> {
   public setPlaceholser(placeholder: string): this {
     this._data.placeholder = placeholder;
     return this;

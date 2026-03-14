@@ -1,7 +1,7 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import { appRoutes } from './app.routes';
-import { NavigationItem, NavRegistryService } from '@erp/shared/data-access-navigation';
+import { NavigationItem, NavRegistryService } from '@erp/shared/data-access';
 
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
 import { provideHttpClient, withFetch } from '@angular/common/http';

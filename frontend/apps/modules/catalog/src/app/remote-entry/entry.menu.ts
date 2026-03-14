@@ -1,4 +1,4 @@
-import { NavigationItem } from '@erp/shared/data-access-navigation';
+import { NavigationItem } from '@erp/shared/data-access';
 
 export const remoteMenu: NavigationItem[] = [
   {

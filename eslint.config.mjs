@@ -14,11 +14,67 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
+          // Pozwalamy linterowi na swobodne importy w plikach konfiguracyjnych
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+
           depConstraints: [
+            // --- 1. ZASADY DOMENOWE (SCOPE) ---
             {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
+              sourceTag: 'scope:host',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:host'],
+            },
+            {
+              sourceTag: 'scope:catalog',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:catalog'],
+            },
+            {
+              sourceTag: 'scope:inventory',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:inventory'],
+            },
+            {
+              sourceTag: 'scope:sales',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:sales'],
+            },
+            {
+              sourceTag: 'scope:shared',
+              onlyDependOnLibsWithTags: ['scope:shared'],
+            },
+
+            // --- 2. ZASADY WARSTW TECHNICZNYCH (TYPE) ---
+            {
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: [
+                'type:feature',
+                'type:ui',
+                'type:auth',
+                'type:data-access',
+                'type:util',
+                'type:env',
+              ],
+            },
+            {
+              sourceTag: 'type:feature',
+              onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util'],
+            },
+            {
+              sourceTag: 'type:data-access',
+              onlyDependOnLibsWithTags: ['type:data-access', 'type:util'],
+            },
+            {
+              sourceTag: 'type:ui',
+              onlyDependOnLibsWithTags: ['type:ui', 'type:util'],
+            },
+            {
+              sourceTag: 'type:util',
+              onlyDependOnLibsWithTags: ['type:util'],
+            },
+            {
+              sourceTag: 'type:auth',
+              onlyDependOnLibsWithTags: ['type:auth'],
+            },
+            {
+              sourceTag: 'type:env',
+              onlyDependOnLibsWithTags: ['type:env'],
             },
           ],
         },

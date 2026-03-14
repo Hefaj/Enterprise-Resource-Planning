@@ -4,7 +4,7 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "frontend/apps/modules/catalog/src",
-  "tags": [],
+  "tags": ["scope:catalog", "type:app"],
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",

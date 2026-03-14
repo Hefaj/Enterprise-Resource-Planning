@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ErpHostLayoutComponent, ErpPanelMenu } from '@erp/shared/ui';
 import { RouterModule } from '@angular/router';
-import { NavigationItem, NavRegistryService } from '@erp/shared/data-access-navigation';
+import { NavigationItem, NavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';
 import { ErpButtonComponent } from '@erp/shared/ui';
 

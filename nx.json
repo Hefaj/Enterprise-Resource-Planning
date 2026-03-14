@@ -1,7 +1,5 @@
 {
-  "installation": {
-    "version": "22.5.4"
-  },
+  "installation": { "version": "22.5.4" },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "@angular-devkit/build-angular:browser": {
@@ -18,35 +16,16 @@
         "{workspaceRoot}/eslint.config.mjs"
       ]
     },
-    "@nx/vitest:test": {
-      "cache": true,
-      "inputs": ["default", "^default"]
-    },
+    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^default"] },
     "@nx/angular:webpack-browser": {
       "cache": true,
       "dependsOn": ["^build"],
-      "inputs": [
-        "default",
-        "^default",
-        {
-          "env": "NX_MF_DEV_REMOTES"
-        }
-      ]
+      "inputs": ["default", "^default", { "env": "NX_MF_DEV_REMOTES" }]
     }
   },
   "plugins": [
-    {
-      "plugin": "@nx/playwright/plugin",
-      "options": {
-        "targetName": "e2e"
-      }
-    },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    }
+    { "plugin": "@nx/playwright/plugin", "options": { "targetName": "e2e" } },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } }
   ],
   "generators": {
     "@nx/angular:application": {
@@ -55,12 +34,7 @@
       "style": "scss",
       "unitTestRunner": "vitest-analog"
     },
-    "@nx/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "vitest-analog"
-    },
-    "@nx/angular:component": {
-      "style": "scss"
-    }
+    "@nx/angular:library": { "linter": "eslint", "unitTestRunner": "vitest-analog" },
+    "@nx/angular:component": { "style": "scss" }
   }
 }

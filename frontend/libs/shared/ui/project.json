@@ -4,7 +4,7 @@
   "sourceRoot": "frontend/libs/shared/ui/src",
   "prefix": "erp",
   "projectType": "library",
-  "tags": ["shared/ui"],
+  "tags": ["scope:shared", "type:ui"],
   "targets": {
     "test": {
       "executor": "@nx/vitest:test",

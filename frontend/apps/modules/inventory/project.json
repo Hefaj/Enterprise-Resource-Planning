@@ -4,7 +4,7 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "frontend/apps/modules/inventory/src",
-  "tags": [],
+  "tags": ["scope:inventory", "type:app"],
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",

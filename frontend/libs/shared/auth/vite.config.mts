@@ -6,7 +6,7 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../../node_modules/.vite/frontend/libs/auth',
+  cacheDir: '../../../../node_modules/.vite/frontend/libs/shared/auth',
   plugins: [angular(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   // Uncomment this if you are using workers.
   // worker: {
@@ -21,7 +21,7 @@ export default defineConfig(() => ({
     setupFiles: ['src/test-setup.ts'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: '../../../coverage/frontend/libs/auth',
+      reportsDirectory: '../../../../coverage/frontend/libs/shared/auth',
       provider: 'v8' as const,
     },
   },

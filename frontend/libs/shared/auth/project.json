@@ -1,16 +1,16 @@
 {
   "name": "auth",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "frontend/libs/auth/src",
-  "prefix": "erp",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/libs/shared/auth/src",
+  "prefix": "lib",
   "projectType": "library",
-  "tags": ["auth"],
+  "tags": [],
   "targets": {
     "test": {
       "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"],
       "options": {
-        "reportsDirectory": "../../../coverage/frontend/libs/auth"
+        "reportsDirectory": "../../../../coverage/frontend/libs/shared/auth"
       }
     },
     "lint": {

@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { authGuard, guestGuard } from '@erp/auth';
+import { authGuard, guestGuard } from '@erp/shared/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 import { ShellLayoutComponent } from './_layouts/shell/shell.component';
 

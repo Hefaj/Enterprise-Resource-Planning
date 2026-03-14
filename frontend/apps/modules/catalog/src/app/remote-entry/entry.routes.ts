@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 import { RemoteEntry } from './entry';
-import { authGuard } from '@erp/auth';
+import { authGuard } from '@erp/shared/auth';
 import { ProductComponent } from './_components/product/product';
 
 export const remoteRoutes: Route[] = [

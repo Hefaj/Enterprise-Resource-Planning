@@ -8,3 +8,7 @@ dist
 tmp
 out-tsc
 .angular
+node_modules
+.nx
+*.suo
+*.user

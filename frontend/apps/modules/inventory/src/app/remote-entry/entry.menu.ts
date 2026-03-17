@@ -2,23 +2,33 @@ import { ErpNavigationItem } from '@erp/shared/data-access';
 
 export const remoteMenu: ErpNavigationItem[] = [
   {
-    label: 'Produkty2',
-    iconId: 'box',
+    // Mapa Magazynu (Digital Twin): Wizualizacja sektorów i regałów. Wykorzystanie Canvas lub SVG do podglądu obłożenia miejsc składowych.
+    label: 'Mapa Magazynu',
+    iconId: 'map',
     route: 'products2',
   },
   {
-    label: 'Producenci2',
-    iconId: 'crown',
+    // (Inbound): Proces skanowania dostaw, weryfikacja zgodności z zamówieniem i generowanie etykiet logistycznych.
+    label: 'Przyjęcia Zewnętrzne',
+    iconId: 'download',
     route: 'producers2',
   },
   {
-    label: 'Modele2',
-    iconId: 'at',
+    // (Picking): Widok zoptymalizowany pod urządzenia mobilne (Tailwind v4 Mobile-first) dla magazynierów.
+    label: 'Panel Kompletacji Zamówień',
+    iconId: 'check-square',
     route: 'models2',
   },
   {
-    label: 'Kategorie2',
-    iconId: 'asterisk',
+    // Moduł do cyklicznych spisów z natury i automatycznego rozliczania różnic.
+    label: 'Zarządzanie Inwentaryzacją',
+    iconId: 'calculator',
+    route: 'categories2',
+  },
+  {
+    // (Outbound): Zarządzanie pakowaniem, integracja z kurierami i generowanie listów przewozowych.
+    label: 'Kolejka Wysyłek',
+    iconId: 'send',
     route: 'categories2',
   },
 ];

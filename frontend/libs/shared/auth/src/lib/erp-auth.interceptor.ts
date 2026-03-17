@@ -1,9 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from './auth-service';
+import { ErpAuthService } from './erp-auth-service';
 
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
+export const erpAuthInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(ErpAuthService);
   const token = authService.$token();
 
   if (token) {

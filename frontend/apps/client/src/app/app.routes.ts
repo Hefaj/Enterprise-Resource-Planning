@@ -1,17 +1,18 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Route } from '@angular/router';
-import { authGuard, guestGuard } from '@erp/shared/auth';
+import { erpAuthGuard, erpGuestGuard } from '@erp/shared/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 import { ShellLayoutComponent } from './_layouts/shell/shell.component';
 
 export const appRoutes: Route[] = [
   {
     path: 'login',
-    canActivate: [guestGuard],
+    canActivate: [erpGuestGuard],
     loadComponent: () => import('./_components/login/login.component').then((m) => m.LoginComponent),
   },
   {
     path: '',
-    canActivate: [authGuard],
+    canActivate: [erpAuthGuard],
     component: ShellLayoutComponent,
     children: [
       {

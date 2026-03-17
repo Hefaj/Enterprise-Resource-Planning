@@ -1,0 +1,23 @@
+/* Stylizacja natywnych animacji przejścia */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: var(--ease-soft);
+}
+
+/* Możesz też dodać delikatne przesunięcie (transform), 
+   aby strona nie tylko się pojawiała, ale też lekko "wjeżdżała" */
+::view-transition-new(root) {
+  animation: fade-in 0.5s var(--ease-soft);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

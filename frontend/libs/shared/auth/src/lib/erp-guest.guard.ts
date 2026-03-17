@@ -1,10 +1,10 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from './auth-service';
+import { ErpAuthService } from './erp-auth-service';
 
-export const guestGuard: CanActivateFn = () => {
+export const erpGuestGuard: CanActivateFn = () => {
   const router = inject(Router);
-  const authService = inject(AuthService);
+  const authService = inject(ErpAuthService);
 
   authService.loadTokenFromStorage();
 

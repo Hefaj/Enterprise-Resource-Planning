@@ -1,5 +1,10 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
+import {
+  provideRouter,
+  withEnabledBlockingInitialNavigation,
+  withInMemoryScrolling,
+  withViewTransitions,
+} from '@angular/router';
 import { appRoutes } from './app.routes';
 import { ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 
@@ -15,6 +20,9 @@ export const appConfig: ApplicationConfig = {
       appRoutes,
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
       withEnabledBlockingInitialNavigation(),
+      withViewTransitions({
+        skipInitialTransition: true, // Opcjonalne: pomija animację przy pierwszym ładowaniu
+      }),
     ),
     provideHttpClient(withFetch()),
     provideZonelessChangeDetection(),
@@ -25,6 +33,14 @@ export const appConfig: ApplicationConfig = {
 
 async function STARTUP(): Promise<void | Observable<unknown> | Promise<unknown>> {
   const menuRegistry = inject(ErpNavRegistryService);
+
+  menuRegistry.register({
+    id: 'dashbord',
+    label: 'Home',
+    iconId: 'home',
+    route: 'dashbord',
+  });
+
   const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadMenuFromRemote(config, menuRegistry));
 
   return Promise.all(loadPromises);

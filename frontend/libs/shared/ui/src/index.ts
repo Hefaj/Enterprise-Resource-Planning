@@ -15,3 +15,7 @@ export * from './lib/layouts/erp-host-layout/erp-host-layout';
 export * from './lib/atoms/erp-drawer/erp-drawer.component';
 
 export * from './lib/atoms/erp-panel-menu/erp-panel-menu.component';
+
+export * from './lib/atoms/erp-avatar/erp-avatar.component';
+
+export * from './lib/atoms/erp-user-menu/erp-user-menu.component';

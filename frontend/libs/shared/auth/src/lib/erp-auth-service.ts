@@ -1,21 +1,23 @@
 import { inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { Router } from '@angular/router';
 
-export interface User {
-  id: number;
-  name: string;
+export interface ErpUserProfile {
+  id: string;
+  fullName: string;
   email: string;
+  role: 'Admin' | 'WarehouseManager' | 'SalesRep';
+  avatarUrl?: string;
 }
 
 @Injectable({
   providedIn: 'root',
 })
-export class AuthService {
-  private _$currentUser: WritableSignal<User | null> = signal(null);
+export class ErpAuthService {
+  private _$currentUser: WritableSignal<ErpUserProfile | null> = signal(null);
   public $currentUser = this._$currentUser.asReadonly();
   private _router = inject(Router);
 
-  public login(user: User): void {
+  public login(user: ErpUserProfile): void {
     this._$currentUser.set(user);
   }
 

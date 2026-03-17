@@ -1,9 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
-import { ErpBreadcrumb, ErpHostLayoutComponent } from '@erp/shared/ui';
+import { ErpBreadcrumb, ErpHostLayoutComponent, ErpUserMenu } from '@erp/shared/ui';
 import { RouterModule } from '@angular/router';
 import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';
 import { CommonModule } from '@angular/common';
+import { noop } from 'rxjs';
+import { ErpAuthService } from '@erp/shared/auth';
 
 @Component({
   selector: 'app-shell',
@@ -11,18 +13,36 @@ import { CommonModule } from '@angular/common';
   templateUrl: './shell.component.html',
 })
 export class ShellLayoutComponent {
-  private _erpNavRegistryService = inject(ErpNavRegistryService);
-  private _erpBreadcrumbService = inject(ErpBreadcrumbService);
+  private _navRegistryService = inject(ErpNavRegistryService);
+  private _breadcrumbService = inject(ErpBreadcrumbService);
+  private _authService = inject(ErpAuthService);
+
+  protected $userMenuConfig = computed(() => {
+    return {
+      items: [
+        { label: 'Twój Profil', icon: 'pi pi-user', command: noop },
+        { label: 'Ustawienia', icon: 'pi pi-cog', command: noop },
+        { separator: true },
+        {
+          label: 'Wyloguj',
+          icon: 'pi pi-sign-out',
+          command: (): void => this._authService.logout(),
+          linkClass: '!text-red-500 dark:!text-red-400',
+        },
+        { separator: true },
+      ],
+    } as ErpUserMenu;
+  });
 
   protected $navMenu = computed(() => {
-    const navMenu = this._erpNavRegistryService.$navMenu();
+    const navMenu = this._navRegistryService.$navMenu();
     return {
       items: this._mapToPrimeNg(navMenu),
     };
   });
 
   protected $breadcrumbConfig = computed(() => {
-    const { home, items } = this._erpBreadcrumbService.breadcrumb();
+    const { home, items } = this._breadcrumbService.breadcrumb();
     return { home, items } as ErpBreadcrumb;
   });
 

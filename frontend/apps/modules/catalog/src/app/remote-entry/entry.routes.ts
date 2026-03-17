@@ -1,13 +1,13 @@
 import { Route } from '@angular/router';
 import { RemoteEntry } from './entry';
-import { authGuard } from '@erp/shared/auth';
+import { erpAuthGuard } from '@erp/shared/auth';
 import { ProductComponent } from './_components/product/product';
 
 export const remoteRoutes: Route[] = [
   {
     path: '',
     data: { breadcrumb: 'Katalog' },
-    canActivate: [authGuard],
+    canActivate: [erpAuthGuard],
     component: RemoteEntry,
     children: [
       {

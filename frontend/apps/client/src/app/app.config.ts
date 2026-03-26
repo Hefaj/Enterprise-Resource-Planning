@@ -10,7 +10,6 @@ import { ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-acces
 
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
 import { provideHttpClient, withFetch } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from './configuration/REMOTE_MODULES_CONFIG';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 
@@ -31,7 +30,7 @@ export const appConfig: ApplicationConfig = {
   ],
 };
 
-async function STARTUP(): Promise<void | Observable<unknown> | Promise<unknown>> {
+async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
 
   menuRegistry.register({
@@ -41,29 +40,38 @@ async function STARTUP(): Promise<void | Observable<unknown> | Promise<unknown>>
     route: 'dashbord',
   });
 
-  const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadMenuFromRemote(config, menuRegistry));
+  const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadMenuFromRemote(config));
+  const remoteMenus = await Promise.all(loadPromises);
 
-  return Promise.all(loadPromises);
+  for (const menu of remoteMenus) {
+    if (menu) {
+      menuRegistry.register(menu);
+    }
+  }
 }
 
 interface EntryMenuModule {
   remoteMenu: ErpNavigationItem[];
 }
 
-async function loadMenuFromRemote(config: RemoteModuleConfig, menuRegistry: ErpNavRegistryService): Promise<void> {
+async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNavigationItem | null> {
   try {
     const module = await loadRemote<EntryMenuModule>(config.path);
+
     if (module?.remoteMenu) {
       const prefixedMenu = applyRoutePrefixToMenu(module.remoteMenu, config.routePrefix);
 
-      menuRegistry.register({
+      return {
         id: config.id,
         label: config.label,
         children: prefixedMenu,
-      });
+      };
     }
+
+    return null;
   } catch (error) {
-    console.warn(`Nie udało się załadować lekkiego manifestu menu z ${config.path}.`, error);
+    console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.path}.`, error);
+    return null;
   }
 }
 

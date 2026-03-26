@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { ErpBreadcrumb, ErpHostLayoutComponent, ErpUserMenu } from '@erp/shared/ui';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';
 import { CommonModule } from '@angular/common';
@@ -16,12 +16,19 @@ export class ShellLayoutComponent {
   private _navRegistryService = inject(ErpNavRegistryService);
   private _breadcrumbService = inject(ErpBreadcrumbService);
   private _authService = inject(ErpAuthService);
+  private _router = inject(Router);
 
   protected $userMenuConfig = computed(() => {
     return {
       items: [
         { label: 'Twój Profil', icon: 'pi pi-user', command: noop },
-        { label: 'Ustawienia', icon: 'pi pi-cog', command: noop },
+        {
+          label: 'Ustawienia',
+          icon: 'pi pi-cog',
+          command: (): void => {
+            this._router.navigate(['settings']);
+          },
+        },
         { separator: true },
         {
           label: 'Wyloguj',

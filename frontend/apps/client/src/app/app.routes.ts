@@ -3,6 +3,7 @@ import { Route } from '@angular/router';
 import { erpAuthGuard, erpGuestGuard } from '@erp/shared/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 import { ShellLayoutComponent } from './_layouts/shell/shell.component';
+import { SettingsComponent } from './_components/settings/settings.component';
 
 export const appRoutes: Route[] = [
   {
@@ -19,6 +20,11 @@ export const appRoutes: Route[] = [
         path: '',
         pathMatch: 'full',
         redirectTo: 'dashboard',
+      },
+      {
+        path: 'settings',
+        data: { breadcrumb: 'Ustawienia' },
+        component: SettingsComponent,
       },
       {
         path: 'dashboard',

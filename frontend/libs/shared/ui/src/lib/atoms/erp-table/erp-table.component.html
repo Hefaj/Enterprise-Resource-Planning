@@ -1,0 +1,47 @@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <p-table
+    [value]="data()"
+    [columns]="columns()"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="true"
+    [rows]="10"
+    [totalRecords]="totalRecords()"
+    [loading]="loading()"
+    styleClass="p-datatable-striped"
+    responsiveLayout="scroll"
+  >
+    <ng-template
+      pTemplate="header"
+      let-columns
+    >
+      <tr class="bg-slate-50 text-slate-700 text-sm uppercase tracking-wider">
+        @for (col of columns; track col.field) {
+          <th
+            [pSortableColumn]="col.sortable ? col.field : undefined"
+            class="px-6 py-4 font-semibold border-b border-slate-200"
+          >
+            {{ col.header }}
+            @if (col.sortable) {
+              <p-sortIcon [field]="col.field"></p-sortIcon>
+            }
+          </th>
+        }
+      </tr>
+    </ng-template>
+
+    <ng-template
+      pTemplate="body"
+      let-rowData
+      let-columns="columns"
+    >
+      <tr class="hover:bg-slate-50 transition-colors duration-150">
+        @for (col of columns; track col.field) {
+          <td class="px-6 py-4 border-b border-slate-100 text-slate-600 text-sm">
+            {{ rowData[col.field] }}
+          </td>
+        }
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

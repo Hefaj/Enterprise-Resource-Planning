@@ -6,7 +6,6 @@
     "types": ["node"],
     "sourceMap": true,
     "declaration": false,
-    "ignoreDeprecations": "6.0",
     "moduleResolution": "bundler",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

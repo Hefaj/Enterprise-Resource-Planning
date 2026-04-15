@@ -29,7 +29,7 @@ interface EntryMenuModule {
 
 async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNavigationItem | null> {
   try {
-    const module = await loadRemote<EntryMenuModule>(config.path);
+    const module = await loadRemote<EntryMenuModule>(config.routePrefix + '/contract');
 
     if (module?.remoteMenu) {
       const prefixedMenu = applyRoutePrefixToMenu(module.remoteMenu, config.routePrefix);
@@ -43,7 +43,7 @@ async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNaviga
 
     return null;
   } catch (error) {
-    console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.path}.`, error);
+    console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.id}.`, error);
     return null;
   }
 }

@@ -16,19 +16,27 @@
     "lib": ["es2022", "dom"],
     "baseUrl": ".",
     "paths": {
-      "@erp/catalog/Routes": ["frontend/apps/modules/catalog/src/app/remote-entry/entry.routes.ts"],
-      "@erp/catalog/MenuDefinition": ["frontend/apps/modules/catalog/src/app/remote-entry/entry.menu.ts"],
-      "@erp/inventory/Routes": ["frontend/apps/modules/inventory/src/app/remote-entry/entry.routes.ts"],
-      "@erp/inventory/MenuDefinition": ["frontend/apps/modules/inventory/src/app/remote-entry/entry.menu.ts"],
-      "@erp/sales/Routes": ["frontend/apps/modules/sales/src/app/remote-entry/entry.routes.ts"],
-      "@erp/sales/MenuDefinition": ["frontend/apps/modules/sales/src/app/remote-entry/entry.menu.ts"],
-      "@erp/shared/ui": ["frontend/libs/shared/ui/src/index.ts"],
-      "@erp/shared/auth": ["frontend/libs/shared/auth/src/index.ts"],
-      "@erp/shared/data-access": ["frontend/libs/shared/data-access/src/index.ts"],
       "@erp/client/ui": ["frontend/libs/client/ui/src/index.ts"],
       "@erp/client/feature": ["frontend/libs/client/feature/src/index.ts"],
       "@erp/client/contract": ["frontend/libs/client/contract/src/index.ts"],
-      "@erp/client/utils": ["frontend/libs/client/utils/src/index.ts"]
+      "@erp/client/util": ["frontend/libs/client/util/src/index.ts"],
+
+      "@erp/shared/ui": ["frontend/libs/shared/ui/src/index.ts"],
+      "@erp/shared/auth": ["frontend/libs/shared/auth/src/index.ts"],
+      "@erp/shared/data-access": ["frontend/libs/shared/data-access/src/index.ts"],
+
+      "@erp/catalog/ui": ["frontend/libs/modules/catalog/ui/src/index.ts"],
+      "@erp/catalog/util": ["frontend/libs/modules/catalog/util/src/index.ts"],
+      "@erp/catalog/feature": ["frontend/libs/modules/catalog/feature/src/index.ts"],
+      "@erp/catalog/contract": ["frontend/libs/modules/catalog/contract/src/index.ts"],
+
+      "@erp/sales/contract": ["frontend/libs/modules/sales/contract/src/index.ts"],
+      "@erp/sales/feature": ["frontend/libs/modules/sales/feature/src/index.ts"],
+
+      "@erp/inventory/contract": ["frontend/libs/modules/inventory/contract/src/index.ts"],
+      "@erp/inventory/feature": ["frontend/libs/modules/inventory/feature/src/index.ts"],
+
+      "@erp/dms/contract": ["frontend/libs/modules/dms/contract/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

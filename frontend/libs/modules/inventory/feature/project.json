@@ -1,0 +1,20 @@
+{
+  "name": "inventory-feature",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/libs/modules/inventory/feature/src",
+  "prefix": "erp",
+  "projectType": "library",
+  "tags": ["scope:inventory", "type:feature"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../../../coverage/frontend/libs/modules/inventory/feature"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

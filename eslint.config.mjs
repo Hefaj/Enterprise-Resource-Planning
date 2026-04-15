@@ -43,7 +43,7 @@ export default [
             // --- 2. ZASADY WARSTW TECHNICZNYCH (TYPE) ---
             {
               sourceTag: 'type:app',
-              onlyDependOnLibsWithTags: ['type:contract', 'type:ui', 'type:data-access'],
+              onlyDependOnLibsWithTags: ['type:feature', 'type:contract', 'type:ui', 'type:data-access'],
             },
             {
               sourceTag: 'type:contract',
@@ -63,7 +63,7 @@ export default [
             },
             {
               sourceTag: 'type:util',
-              onlyDependOnLibsWithTags: ['type:util'],
+              onlyDependOnLibsWithTags: ['type:util', 'type:data-access'],
             },
             {
               sourceTag: 'type:auth',

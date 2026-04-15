@@ -1,5 +1,5 @@
 {
-  "name": "contract",
+  "name": "client-contract",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "frontend/libs/client/contract/src",
   "prefix": "lib",

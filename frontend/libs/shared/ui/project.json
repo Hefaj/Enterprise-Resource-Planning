@@ -1,5 +1,5 @@
 {
-  "name": "shared/ui",
+  "name": "shared-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "frontend/libs/shared/ui/src",
   "prefix": "erp",

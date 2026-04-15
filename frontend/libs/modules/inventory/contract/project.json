@@ -1,0 +1,20 @@
+{
+  "name": "inventory-contract",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/libs/modules/inventory/contract/src",
+  "prefix": "erp",
+  "projectType": "library",
+  "tags": ["scope:inventory", "type:contract"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../../../coverage/frontend/libs/modules/inventory/contract"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

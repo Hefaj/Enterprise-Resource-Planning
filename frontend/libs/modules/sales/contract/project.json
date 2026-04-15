@@ -1,0 +1,20 @@
+{
+  "name": "sales-contract",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/libs/modules/sales/contract/src",
+  "prefix": "erp",
+  "projectType": "library",
+  "tags": ["scope:sales", "type:contract"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../../../coverage/frontend/libs/modules/sales/contract"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

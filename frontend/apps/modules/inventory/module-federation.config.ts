@@ -3,8 +3,7 @@ import { ModuleFederationConfig } from '@nx/module-federation';
 const config: ModuleFederationConfig = {
   name: 'inventory',
   exposes: {
-    './Routes': 'frontend/apps/modules/inventory/src/app/remote-entry/entry.routes.ts',
-    './MenuDefinition': 'frontend/apps/modules/inventory/src/app/remote-entry/entry.menu.ts',
+    './contract': 'frontend/libs/modules/inventory/contract/src/index.ts',
   },
 };
 

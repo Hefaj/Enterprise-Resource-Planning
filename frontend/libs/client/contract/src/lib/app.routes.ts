@@ -28,14 +28,14 @@ export const appRoutes: Route[] = [
         path: 'dashboard',
         loadComponent: () => import('@erp/client/feature').then((m) => m.DashboardComponent),
       },
-      // {
-      //   path: 'sales',
-      //   loadChildren: () => loadRemote<typeof import('@erp/sales/Routes')>('sales/Routes').then((m) => m!.remoteRoutes),
-      // },
-      // {
-      //   path: 'inventory',
-      //   loadChildren: () => loadRemote<typeof import('@erp/inventory/Routes')>('inventory/Routes').then((m) => m!.remoteRoutes),
-      // },
+      {
+        path: 'sales',
+        loadChildren: () => loadRemote<typeof import('@erp/sales/contract')>('sales/contract').then((m) => m!.remoteRoutes),
+      },
+      {
+        path: 'inventory',
+        loadChildren: () => loadRemote<typeof import('@erp/inventory/contract')>('inventory/contract').then((m) => m!.remoteRoutes),
+      },
       {
         path: 'catalog',
         loadChildren: () => loadRemote<typeof import('@erp/catalog/contract')>('catalog/contract').then((m) => m!.remoteRoutes),

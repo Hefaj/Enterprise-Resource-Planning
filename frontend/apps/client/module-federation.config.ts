@@ -2,12 +2,12 @@ import { ModuleFederationConfig } from '@nx/module-federation';
 
 const config: ModuleFederationConfig = {
   name: 'client',
-  
+
   // 1. DEFINICJA REMOTÓW
   // Jeśli ładujesz mikrofrontendy statycznie w Nx, musisz je tu wymienić.
-  // UWAGA: W dojrzałych systemach Enterprise zostawiamy to puste (remotes: []) 
+  // UWAGA: W dojrzałych systemach Enterprise zostawiamy to puste (remotes: [])
   // i ładujemy aplikacje DYNAMICZNIE z pliku manifest.json (tzw. Dynamic Module Federation).
-  remotes: ['catalog', 'inventory', 'sales'], 
+  remotes: [],
 
   additionalShared: [
     // 2. AUTORYZACJA I STAN GLOBALNY
@@ -21,7 +21,7 @@ const config: ModuleFederationConfig = {
     },
 
     // 3. WSPÓŁDZIELONE KOMPONENTY UI
-    // Gwarantuje, że nasze dynamiczne zakładki, wrappery i layouty nie będą 
+    // Gwarantuje, że nasze dynamiczne zakładki, wrappery i layouty nie będą
     // duplikowane w paczkach dla każdego mikrofrontendu (oszczędność KB!).
     {
       libraryName: '@erp/shared/ui',
@@ -33,8 +33,8 @@ const config: ModuleFederationConfig = {
     },
 
     // 4. PRIMENG (KRYTYCZNE!)
-    // Bez tego serwisy PrimeNG takie jak DialogService (dla modali), 
-    // MessageService (dla toastów) i ConfirmationService będą miały 
+    // Bez tego serwisy PrimeNG takie jak DialogService (dla modali),
+    // MessageService (dla toastów) i ConfirmationService będą miały
     // osobną instancję w każdym MFE. To powoduje zepsucie UI.
     {
       libraryName: 'primeng',
@@ -43,7 +43,7 @@ const config: ModuleFederationConfig = {
         strictVersion: true,
         requiredVersion: 'auto',
       },
-    }
+    },
   ],
 };
 

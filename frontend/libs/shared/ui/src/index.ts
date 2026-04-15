@@ -20,4 +20,6 @@ export * from './lib/atoms/erp-avatar/erp-avatar.component';
 
 export * from './lib/atoms/erp-user-menu/erp-user-menu.component';
 
-export * from './lib/atoms/erp-table/erp-table.component';
+// export * from './lib/atoms/erp-table/erp-table.component';
+
+export * from './lib/auth/login/login.component';

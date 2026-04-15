@@ -2,19 +2,17 @@
 import { Route } from '@angular/router';
 import { erpAuthGuard, erpGuestGuard } from '@erp/shared/auth';
 import { loadRemote } from '@module-federation/enhanced/runtime';
-import { ShellLayoutComponent } from './_layouts/shell/shell.component';
-import { SettingsComponent } from './_components/settings/settings.component';
 
 export const appRoutes: Route[] = [
   {
     path: 'login',
     canActivate: [erpGuestGuard],
-    loadComponent: () => import('./_components/login/login.component').then((m) => m.LoginComponent),
+    loadComponent: () => import('@erp/shared/ui').then((m) => m.LoginComponent),
   },
   {
     path: '',
     canActivate: [erpAuthGuard],
-    component: ShellLayoutComponent,
+    loadComponent: () => import('@erp/client/feature').then((m) => m.ShellLayoutComponent),
     children: [
       {
         path: '',
@@ -24,11 +22,11 @@ export const appRoutes: Route[] = [
       {
         path: 'settings',
         data: { breadcrumb: 'Ustawienia' },
-        component: SettingsComponent,
+        loadComponent: () => import('@erp/client/feature').then((m) => m.SettingsComponent),
       },
       {
         path: 'dashboard',
-        loadComponent: () => import('./_components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+        loadComponent: () => import('@erp/client/feature').then((m) => m.DashboardComponent),
       },
       {
         path: 'sales',
@@ -36,13 +34,11 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'inventory',
-        loadChildren: () =>
-          loadRemote<typeof import('@erp/inventory/Routes')>('inventory/Routes').then((m) => m!.remoteRoutes),
+        loadChildren: () => loadRemote<typeof import('@erp/inventory/Routes')>('inventory/Routes').then((m) => m!.remoteRoutes),
       },
       {
         path: 'catalog',
-        loadChildren: () =>
-          loadRemote<typeof import('@erp/catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
+        loadChildren: () => loadRemote<typeof import('@erp/catalog/Routes')>('catalog/Routes').then((m) => m!.remoteRoutes),
       },
     ],
   },

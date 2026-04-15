@@ -7,7 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ErpInputTextBuilder, ErpInputTextComponent, ErpTwoSectionLayoutComponent } from '@erp/shared/ui';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'erp-dashboard',
   standalone: true,
   imports: [
     CommonModule,

@@ -1,16 +1,9 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
-import {
-  provideRouter,
-  withEnabledBlockingInitialNavigation,
-  withInMemoryScrolling,
-  withViewTransitions,
-} from '@angular/router';
-import { appRoutes } from './app.routes';
+import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withViewTransitions } from '@angular/router';
+import { appRoutes, REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
 import { ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
-
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
 import { provideHttpClient, withFetch } from '@angular/common/http';
-import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from './configuration/REMOTE_MODULES_CONFIG';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 
 export const appConfig: ApplicationConfig = {

@@ -24,7 +24,11 @@
       "@erp/sales/MenuDefinition": ["frontend/apps/modules/sales/src/app/remote-entry/entry.menu.ts"],
       "@erp/shared/ui": ["frontend/libs/shared/ui/src/index.ts"],
       "@erp/shared/auth": ["frontend/libs/shared/auth/src/index.ts"],
-      "@erp/shared/data-access": ["frontend/libs/shared/data-access/src/index.ts"]
+      "@erp/shared/data-access": ["frontend/libs/shared/data-access/src/index.ts"],
+      "@erp/client/ui": ["frontend/libs/client/ui/src/index.ts"],
+      "@erp/client/feature": ["frontend/libs/client/feature/src/index.ts"],
+      "@erp/client/contract": ["frontend/libs/client/contract/src/index.ts"],
+      "@erp/client/utils": ["frontend/libs/client/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

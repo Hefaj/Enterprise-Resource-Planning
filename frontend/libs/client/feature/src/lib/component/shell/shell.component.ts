@@ -8,7 +8,7 @@ import { noop } from 'rxjs';
 import { ErpAuthService } from '@erp/shared/auth';
 
 @Component({
-  selector: 'app-shell',
+  selector: 'erp-shell',
   imports: [CommonModule, ErpHostLayoutComponent, RouterModule],
   templateUrl: './shell.component.html',
 })

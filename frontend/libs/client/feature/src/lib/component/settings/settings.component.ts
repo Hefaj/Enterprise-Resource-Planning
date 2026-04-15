@@ -6,12 +6,10 @@ import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
   standalone: true,
-  selector: 'app-user-settings',
+  selector: 'erp-user-settings',
   imports: [ReactiveFormsModule, ToggleButtonModule, ButtonModule, InputTextModule],
   template: `
-    <div
-      class="p-6 bg-surface-0 dark:bg-surface-900 rounded-xl shadow-sm border border-surface-200 dark:border-surface-700"
-    >
+    <div class="p-6 bg-surface-0 dark:bg-surface-900 rounded-xl shadow-sm border border-surface-200 dark:border-surface-700">
       <h2 class="text-2xl font-bold mb-6 text-surface-900 dark:text-surface-0">Ustawienia Konta</h2>
 
       <form

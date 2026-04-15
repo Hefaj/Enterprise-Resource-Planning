@@ -1,10 +1,9 @@
 import { Route } from '@angular/router';
-import { RemoteEntry } from './entry';
 
 export const remoteRoutes: Route[] = [
   {
     path: '',
     data: { breadcrumb: 'WMS' },
-    component: RemoteEntry,
+    loadComponent: () => import('@erp/inventory/feature').then((m) => m.RemoteEntry),
   },
 ];

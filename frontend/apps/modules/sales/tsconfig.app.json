@@ -5,7 +5,7 @@
     "types": [],
     "target": "es2022"
   },
-  "include": ["src/**/*.ts", "../../../libs/modules/sales/contract/src/lib/entry.menu.ts", "../../../libs/modules/sales/contract/src/lib/entry.routes.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",

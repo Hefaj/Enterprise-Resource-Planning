@@ -66,10 +66,6 @@ export default [
               onlyDependOnLibsWithTags: ['type:util'],
             },
             {
-              sourceTag: 'type:contract',
-              onlyDependOnLibsWithTags: ['type:contract'],
-            },
-            {
               sourceTag: 'type:auth',
               onlyDependOnLibsWithTags: ['type:auth'],
             },

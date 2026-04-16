@@ -15,7 +15,7 @@ export default [
         {
           enforceBuildableLibDependency: true,
           // Pozwalamy linterowi na swobodne importy w plikach konfiguracyjnych
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$', '@ngrx/.*'],
 
           depConstraints: [
             // --- 1. ZASADY DOMENOWE (SCOPE) ---

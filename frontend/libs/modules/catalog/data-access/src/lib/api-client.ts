@@ -22,7 +22,7 @@ export interface ICatalogBffClient {
     /**
      * @return OK
      */
-    catalogBffModelQueryGetModel(body: GetModelRequest): Observable<ModelDto[]>;
+    getModel(body: GetModelRequest): Observable<ModelDto[]>;
 }
 
 @Injectable()
@@ -93,7 +93,7 @@ export class CatalogBffClient implements ICatalogBffClient {
     /**
      * @return OK
      */
-    catalogBffModelQueryGetModel(body: GetModelRequest): Observable<ModelDto[]> {
+    getModel(body: GetModelRequest): Observable<ModelDto[]> {
         let url_ = this.baseUrl + "/model";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -110,11 +110,11 @@ export class CatalogBffClient implements ICatalogBffClient {
         };
 
         return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processCatalogBffModelQueryGetModel(response_);
+            return this.processGetModel(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processCatalogBffModelQueryGetModel(response_ as any);
+                    return this.processGetModel(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<ModelDto[]>;
                 }
@@ -123,7 +123,7 @@ export class CatalogBffClient implements ICatalogBffClient {
         }));
     }
 
-    protected processCatalogBffModelQueryGetModel(response: HttpResponseBase): Observable<ModelDto[]> {
+    protected processGetModel(response: HttpResponseBase): Observable<ModelDto[]> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :

@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs'; // Nowość w PrimeNG 18+
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import { Catalog } from '@erp/catalog/data-access';
+import { Catalog, ProductStore } from '@erp/catalog/data-access';
 
 @Component({
   standalone: true,
@@ -89,7 +89,7 @@ export class ProductComponent {
   }
 
   public constructor() {
-    const api = inject(Catalog.ProductClient);
-    api.catalogBffProductQueryGetProductEndpoint({});
+    const store = inject(ProductStore);
+    store.load();
   }
 }

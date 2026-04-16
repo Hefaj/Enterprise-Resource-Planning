@@ -8,3 +8,7 @@ dist
 
 vitest.config.*.timestamp*
 
+# .NET
+**/bin/
+**/obj/
+/artifacts/

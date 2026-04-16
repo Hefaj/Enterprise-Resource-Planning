@@ -1,11 +1,12 @@
 // apps/catalog/src/app/remote-entry/product-editor.component.ts
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs'; // Nowość w PrimeNG 18+
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { Catalog } from '@erp/catalog/data-access';
 
 @Component({
   standalone: true,
@@ -52,9 +53,7 @@ import { MessageModule } from 'primeng/message';
                     />
                   </div>
                   <div class="grid grid-cols-2 gap-4">
-                    <div class="p-4 rounded-lg bg-blue-50 border border-blue-100 italic">
-                      Wskazówka: Użyj słów kluczowych dla lepszego SEO.
-                    </div>
+                    <div class="p-4 rounded-lg bg-blue-50 border border-blue-100 italic">Wskazówka: Użyj słów kluczowych dla lepszego SEO.</div>
                   </div>
                 </div>
               </p-tabpanel>
@@ -67,9 +66,7 @@ import { MessageModule } from 'primeng/message';
             <h3 class="font-bold mb-4">Status</h3>
             <div class="flex items-center gap-2 text-green-600">
               <span class="relative flex h-3 w-3">
-                <span
-                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
-                ></span>
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
               </span>
               Aktywny w sklepie

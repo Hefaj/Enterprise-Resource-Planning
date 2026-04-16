@@ -1,0 +1,24 @@
+{
+  "runtime": "Net100",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "https://localhost:7254/openapi/v1.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToTypeScriptClient": {
+      "className": "{controller}Client",
+      "template": "Angular",
+      "httpClass": "HttpClient",
+      "injectionTokenType": "InjectionToken",
+      "generateClientInterfaces": true,
+      "generateSignals": true,
+      "typeStyle": "Interface",
+      "enumStyle": "Enum",
+      "dateTimeType": "Date",
+      "output": "src/lib/api-client.ts"
+    }
+  }
+}

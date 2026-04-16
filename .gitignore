@@ -12,3 +12,10 @@ vitest.config.*.timestamp*
 **/bin/
 **/obj/
 /artifacts/
+
+.vs/
+[Bb]in/
+[Oo]bj/
+node_modules/
+dist/
+.nx/

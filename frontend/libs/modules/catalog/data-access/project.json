@@ -1,0 +1,26 @@
+{
+  "name": "catalog-data-access",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/libs/modules/catalog/data-access/src",
+  "prefix": "erp",
+  "projectType": "library",
+  "tags": ["scope:catalog", "type:data-access"],
+  "targets": {
+    "generate-api": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotnet nswag run frontend/libs/modules/catalog/data-access/nswag.json"
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../../../coverage/frontend/libs/modules/catalog/data-access"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

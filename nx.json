@@ -41,7 +41,9 @@
       "options": {
         "targetName": "lint"
       }
-    }
+    },
+    "@nx/dotnet",
+    "@nx-dotnet/core"
   ],
   "generators": {
     "@nx/angular:application": {
@@ -57,5 +59,16 @@
     "@nx/angular:component": {
       "style": "scss"
     }
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.Tests/**/*",
+      "!{projectRoot}/**/bin/**/*",
+      "!{projectRoot}/**/obj/**/*",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json"
+    ]
   }
 }

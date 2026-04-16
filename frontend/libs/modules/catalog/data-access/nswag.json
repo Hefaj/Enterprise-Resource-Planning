@@ -3,12 +3,15 @@
   "defaultVariables": null,
   "documentGenerator": {
     "fromDocument": {
-      "url": "https://localhost:7254/openapi/v1.json",
+      "url": "http://localhost:5149/openapi/v1.json",
       "output": null
     }
   },
   "codeGenerators": {
     "openApiToTypeScriptClient": {
+      "operationGenerationMode": "MultipleClientsFromFirstTagAndOperationId",
+      "generateOptionalParameters": true,
+      "useTransformOptionsMethod": false,
       "className": "{controller}Client",
       "template": "Angular",
       "httpClass": "HttpClient",

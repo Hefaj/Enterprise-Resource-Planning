@@ -87,4 +87,9 @@ export class ProductComponent {
     // Logika zapisu przez serwis
     setTimeout(() => this.isSaving.set(false), 1500);
   }
+
+  public constructor() {
+    const api = inject(Catalog.ProductClient);
+    api.catalogBffProductQueryGetProductEndpoint({});
+  }
 }

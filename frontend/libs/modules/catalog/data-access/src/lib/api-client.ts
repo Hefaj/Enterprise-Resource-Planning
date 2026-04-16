@@ -14,54 +14,62 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
-export interface IClient {
+export interface ICatalogBffClient {
     /**
      * @return OK
      */
-    getWeatherForecast(): Observable<WeatherForecast[]>;
+    getProduct(body: GetProductRequest): Observable<ProductDto[]>;
+    /**
+     * @return OK
+     */
+    catalogBffModelQueryGetModel(body: GetModelRequest): Observable<ModelDto[]>;
 }
 
 @Injectable()
-export class Client implements IClient {
+export class CatalogBffClient implements ICatalogBffClient {
     private http: HttpClient;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
-        this.baseUrl = baseUrl ?? "https://localhost:7254/";
+        this.baseUrl = baseUrl ?? "http://localhost:5149/";
     }
 
     /**
      * @return OK
      */
-    getWeatherForecast(): Observable<WeatherForecast[]> {
-        let url_ = this.baseUrl + "/weatherforecast";
+    getProduct(body: GetProductRequest): Observable<ProductDto[]> {
+        let url_ = this.baseUrl + "/product";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(body);
+
         let options_ : any = {
+            body: content_,
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Content-Type": "*/*",
                 "Accept": "application/json"
             })
         };
 
         return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetWeatherForecast(response_);
+            return this.processGetProduct(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processGetWeatherForecast(response_ as any);
+                    return this.processGetProduct(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<WeatherForecast[]>;
+                    return _observableThrow(e) as any as Observable<ProductDto[]>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<WeatherForecast[]>;
+                return _observableThrow(response_) as any as Observable<ProductDto[]>;
         }));
     }
 
-    protected processGetWeatherForecast(response: HttpResponseBase): Observable<WeatherForecast[]> {
+    protected processGetProduct(response: HttpResponseBase): Observable<ProductDto[]> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -71,7 +79,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WeatherForecast[];
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductDto[];
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -79,15 +87,84 @@ export class Client implements IClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<WeatherForecast[]>(null as any);
+        return _observableOf<ProductDto[]>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    catalogBffModelQueryGetModel(body: GetModelRequest): Observable<ModelDto[]> {
+        let url_ = this.baseUrl + "/model";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "*/*",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCatalogBffModelQueryGetModel(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCatalogBffModelQueryGetModel(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ModelDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ModelDto[]>;
+        }));
+    }
+
+    protected processCatalogBffModelQueryGetModel(response: HttpResponseBase): Observable<ModelDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ModelDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ModelDto[]>(null as any);
     }
 }
 
-export interface WeatherForecast {
-    date: Date;
-    temperatureC: number;
-    summary: string | undefined;
-    temperatureF?: number;
+export interface GetModelRequest {
+    uuids?: string[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface GetProductRequest {
+    uuids?: string[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface ModelDto {
+    uuid: string;
+
+    [key: string]: any;
+}
+
+export interface ProductDto {
+    uuid: string;
 
     [key: string]: any;
 }

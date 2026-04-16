@@ -1,41 +1,35 @@
+using FastEndpoints;
+using FastEndpoints.Swagger;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddFastEndpoints();
+builder.Services.SwaggerDocument();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
-
-var summaries = new[]
+app.UseFastEndpoints(c =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
+    SetEndpointName(c);
+});
+app.UseSwaggerGen();
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+
+// potrzebne zeby NSwag wygenerował dobrze nazwy endpointów
+static void SetEndpointName(Config c)
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    c.Endpoints.Configurator = ep =>
+    {
+        var name = ep.EndpointType.Name;
+        if (name.EndsWith("Endpoint")) name = name.Replace("Endpoint", "");
+        ep.Description(d => d.WithName(name));
+    };
 }

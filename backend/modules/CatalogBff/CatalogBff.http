@@ -1,0 +1,6 @@
+@CatalogBff_HostAddress = http://localhost:5149
+
+GET {{CatalogBff_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

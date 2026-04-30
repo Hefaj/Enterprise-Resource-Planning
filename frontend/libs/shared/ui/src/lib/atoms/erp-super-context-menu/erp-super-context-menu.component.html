@@ -1,0 +1,87 @@
+<p-popover
+  #popover
+  [dismissable]="true"
+>
+  <div class="flex flex-col w-72 h-[400px] bg-surface-0 dark:bg-surface-900 rounded-xl">
+    @if (navigationStack().length > 0) {
+      <div class="flex items-center p-2 border-b border-surface-200 dark:border-surface-700">
+        <p-button
+          icon="pi pi-arrow-left"
+          text
+          (onClick)="goBack()"
+          size="small"
+        />
+        <span class="ml-2 font-semibold text-sm">Wróć</span>
+      </div>
+    }
+
+    @if (navigationStack().length === 0 && favorites().length > 0) {
+      <div class="p-2 border-b border-surface-200 dark:border-surface-700">
+        <span class="text-xs font-bold text-surface-500 uppercase tracking-wider mb-2 block">Ulubione</span>
+        <div class="flex flex-col gap-1">
+          @for (fav of favorites(); track fav.id) {
+            <button
+              class="flex items-center w-full p-2 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-md text-left text-sm transition-colors"
+              (click)="executeAction(fav)"
+            >
+              <i [class]="fav.icon + ' mr-2'"></i> {{ fav.label }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (currentLevelConfig().showSearch) {
+      <div class="p-2 border-b border-surface-200 dark:border-surface-700">
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input
+            type="text"
+            pInputText
+            placeholder="Szukaj..."
+            class="w-full text-sm"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+          />
+        </span>
+      </div>
+    }
+
+    <div class="flex-1 overflow-hidden">
+      <p-virtualScroller
+        [value]="filteredItems()"
+        scrollHeight="100%"
+        [itemSize]="46"
+      >
+        <ng-template
+          pTemplate="item"
+          let-item
+        >
+          <div
+            class="flex items-center justify-between w-full p-3 hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer text-sm border-b border-surface-50 dark:border-surface-800"
+            (click)="handleItemClick(item)"
+          >
+            <div class="flex items-center gap-2">
+              <i [class]="item.icon"></i>
+              <span>{{ item.label }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              @if (navigationStack().length === 0) {
+                <i
+                  class="pi"
+                  [class.pi-star-fill]="item.isFavorite"
+                  [class.pi-star]="!item.isFavorite"
+                  [class.text-yellow-500]="item.isFavorite"
+                  (click)="toggleFavorite($event, item)"
+                ></i>
+              }
+              @if (item.children?.length) {
+                <i class="pi pi-chevron-right text-surface-400"></i>
+              }
+            </div>
+          </div>
+        </ng-template>
+      </p-virtualScroller>
+    </div>
+  </div>
+</p-popover>

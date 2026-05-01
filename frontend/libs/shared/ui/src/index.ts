@@ -7,6 +7,7 @@ export * from './lib/atoms/erp-input-text/erp-input-text.component';
 export * from './lib/atoms/erp-breadcrumb/erp-breadcrumb.component';
 
 export * from './lib/layouts/erp-two-section-layout/erp-two-section-layout.component';
+export * from './lib/layouts/erp-page-layout/erp-page-layout.component';
 
 export * from './lib/atoms/erp-empty-card/erp-empty-card.component';
 

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ButtonIconPosition, ButtonModule } from 'primeng/button';
 import { ErpButtonBuilder, ErpButtonSave, ErpButtonCancel, ErpButtonRemove } from './erp-button.builder';
 
-export { ErpButtonBuilder as EButtonBuilder };
+export { ErpButtonBuilder };
 export { ErpButtonSave, ErpButtonCancel, ErpButtonRemove };
 
 export type ErpButtonSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'help' | 'danger' | 'contrast';

@@ -1,5 +1,3 @@
-import { ErpInputText } from '../../atoms/erp-input-text/erp-input-text.component';
-
 export type ErpFilterType = 'text' | 'select' | 'switch' | 'date' | 'list';
 
 export interface ErpFilterItem {

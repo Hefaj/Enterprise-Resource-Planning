@@ -6,6 +6,8 @@ export const erpAuthGuard: CanActivateFn = () => {
   const authService = inject(ErpAuthService);
   const router = inject(Router);
 
+  authService.loadTokenFromStorage();
+
   if (authService.$token()) {
     return true;
   }

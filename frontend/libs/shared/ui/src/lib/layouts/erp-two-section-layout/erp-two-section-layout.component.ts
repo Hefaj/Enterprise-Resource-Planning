@@ -5,7 +5,17 @@ import { ErpComponentSignalInputs as CoreComponentSignalInputs } from '../../bas
 @Component({
   selector: 'erp-two-section-layout',
   imports: [CommonModule],
-  templateUrl: './erp-two-section-layout.component.html',
+  template: `
+    <div class="h-100 flex flex-row">
+      <aside class="e-layout-sidebar">
+        <ng-content select="[e-sidebar]"></ng-content>
+      </aside>
+
+      <main class="grow">
+        <ng-content select="[e-main]"></ng-content>
+      </main>
+    </div>
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpTwoSectionLayoutComponent {
@@ -16,7 +26,7 @@ export class ErpTwoSectionLayoutComponent {
     const magia = new SuperDuper();
 
     magia.create(ErpTwoSectionLayoutComponent, {
-      onSortChange(field, order) {
+      onSortChange(_field, _order) {
         console.log();
       },
     });
@@ -24,7 +34,7 @@ export class ErpTwoSectionLayoutComponent {
 }
 
 export class SuperDuper {
-  public create<C>(component: Type<C>, inputs?: CoreComponentSignalInputs<C>): void {
+  public create<C>(_component: Type<C>, _inputs?: CoreComponentSignalInputs<C>): void {
     return;
   }
 }

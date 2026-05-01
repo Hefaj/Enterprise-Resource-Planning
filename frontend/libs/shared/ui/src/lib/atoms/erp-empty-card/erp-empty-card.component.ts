@@ -3,6 +3,23 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'erp-empty-card',
   imports: [],
-  templateUrl: './erp-empty-card.component.html',
+  template: `
+    <div
+      class="h-full flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-slate-400 select-none"
+    >
+      <div class="size-10 p-4 bg-white rounded-full shadow-sm flex items-center justify-center">
+        <i class="pi pi-box"></i>
+      </div>
+
+      <h3 class="font-semibold text-slate-600">Brak zawartości</h3>
+      <p class="text-sm text-center max-w-50">To miejsce czeka na Twoje dane. Przekaż komponent, aby go wypełnić.</p>
+
+      <div class="mt-4 flex gap-2">
+        <div class="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></div>
+        <div class="w-2 h-2 rounded-full bg-slate-500 animate-pulse delay-50"></div>
+        <div class="w-2 h-2 rounded-full bg-slate-500 animate-pulse delay-100"></div>
+      </div>
+    </div>
+  `,
 })
 export class ErpEmptyCardComponent {}

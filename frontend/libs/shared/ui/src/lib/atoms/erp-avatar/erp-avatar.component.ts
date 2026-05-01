@@ -12,7 +12,17 @@ export interface ErpAvatar {
 @Component({
   selector: 'erp-avatar',
   imports: [AvatarModule],
-  templateUrl: './erp-avatar.component.html',
+  template: `
+    @let _config = config();
+
+    <p-avatar
+      [label]="_config.label"
+      [icon]="_config.icon"
+      [image]="_config.image"
+      [size]="_config.size"
+      [shape]="_config.shape"
+    />
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpAvatarComponent {

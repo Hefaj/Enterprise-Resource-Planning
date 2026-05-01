@@ -11,7 +11,14 @@ export interface ErpPanelMenu {
 @Component({
   selector: 'erp-panel-menu',
   imports: [PanelMenu],
-  templateUrl: './erp-panel-menu.component.html',
+  template: `
+    @let _config = config();
+
+    <p-panelmenu
+      [model]="_config.items"
+      class="w-full"
+    />
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpPanelMenuComponent {

@@ -15,7 +15,14 @@ export interface ErpBreadcrumb {
 @Component({
   selector: 'erp-breadcrumb',
   imports: [BreadcrumbModule],
-  templateUrl: './erp-breadcrumb.component.html',
+  template: `
+    @let _config = config();
+
+    <p-breadcrumb
+      [home]="_config.home"
+      [model]="_config.items"
+    />
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpBreadcrumbComponent {

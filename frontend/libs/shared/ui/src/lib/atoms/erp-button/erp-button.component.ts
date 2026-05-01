@@ -22,7 +22,24 @@ export interface CoreButton {
 @Component({
   selector: 'erp-button',
   imports: [ButtonModule],
-  templateUrl: './erp-button.component.html',
+  template: `
+    @let _config = config();
+    @let _loading = loading();
+    @let _disabled = disabled();
+    @let _badge = badge();
+
+    <p-button
+      [label]="_config.label"
+      [severity]="_config.severity"
+      [rounded]="_config.rounded"
+      [variant]="_config.variant"
+      [icon]="_config.icon"
+      [iconPos]="_config.iconPos ?? 'left'"
+      [badge]="_badge"
+      [loading]="_loading"
+      [disabled]="_disabled"
+    />
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpButtonComponent {

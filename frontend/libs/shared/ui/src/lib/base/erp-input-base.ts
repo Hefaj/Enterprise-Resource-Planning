@@ -7,7 +7,7 @@ export interface ErpInputBase {
 }
 
 export class ErpInputBaseBuilder<T extends ErpInputBase> extends ErpBaseBuilder<T> {
-  public setPlaceholser(placeholder: string): this {
+  public setPlaceholder(placeholder: string): this {
     this._data.placeholder = placeholder;
     return this;
   }

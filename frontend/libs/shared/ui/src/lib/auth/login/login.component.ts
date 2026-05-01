@@ -54,7 +54,7 @@ interface Ripple {
 }
 
 @Component({
-  selector: 'app-login',
+  selector: 'erp-login',
   standalone: true,
   imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, PasswordModule, CheckboxModule, MessageModule],
   template: `
@@ -139,7 +139,9 @@ interface Ripple {
             [loading]="isLoading()"
             label="EXECUTE LOGIN"
             class="w-full !mt-3 !py-6 !rounded-2xl !bg-cyan-600 hover:!bg-cyan-500 !text-white !border-none !font-black !text-xs !tracking-[0.45em] !shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] !transition-colors active:scale-95"
-          ></button>
+          >
+            EXECUTE LOGIN
+          </button>
         </form>
       </div>
 

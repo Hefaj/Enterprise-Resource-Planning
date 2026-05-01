@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, ReactiveFormsModule, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ErpInputBase } from '../../base/erp-input-base';
@@ -17,7 +17,38 @@ export interface ErpInputText extends ErpInputBase {
 @Component({
   selector: 'erp-input-text',
   imports: [InputTextModule, ReactiveFormsModule, FloatLabelModule, MessageModule, AutoFocusModule],
-  templateUrl: './erp-input-text.component.html',
+  template: `
+    @let _config = config();
+    @let _activeControl = activeControl();
+    @let _errorMsg = getErrorMessage();
+
+    <div class="flex flex-col gap-2">
+      <p-floatlabel variant="on">
+        <input
+          id="on_label"
+          pInputText
+          [formControl]="_activeControl"
+          (blur)="onTouched()"
+          aria-describedby="hint"
+          [invalid]="!!_errorMsg"
+          [pAutoFocus]="true"
+        />
+        <label for="on_label">{{ _config.placeholder || '' }}</label>
+      </p-floatlabel>
+      @if (_config.hint) {
+        <small id="hint">{{ _config.hint }}</small>
+      }
+      @if (_errorMsg) {
+        <p-message
+          severity="error"
+          size="small"
+          variant="simple"
+        >
+          {{ _errorMsg }}
+        </p-message>
+      }
+    </div>
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
@@ -36,12 +67,10 @@ export class ErpInputTextComponent implements ControlValueAccessor {
   // Nasz wewnętrzny "zapasowy" kontroler, jeśli ktoś używa podejścia statycznego z CVA
   public internalControl = new FormControl();
 
-  public get activeControl(): FormControl {
-    return this.control() || this.internalControl;
-  }
+  public activeControl = computed(() => this.control() || this.internalControl);
 
   public getErrorMessage(): string | null {
-    const ctrl = this.activeControl;
+    const ctrl = this.activeControl();
     const errorMessages = this.config().errorMessages || {};
 
     // Jeśli pole jest poprawne, albo użytkownik go jeszcze nie dotknął - nie pokazuj błędu
@@ -85,9 +114,8 @@ export class ErpInputTextComponent implements ControlValueAccessor {
   }
 
   // Angular mówi: "Zablokuj/odblokuj to pole (np. formularz.disable())"
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public setDisabledState(isDisabled: boolean): void {
-    // this.isDisabled = isDisabled;
+  public setDisabledState(_isDisabled: boolean): void {
+    // Implementacja opcjonalna
   }
 
   // --- WEWNĘTRZNE METODY DLA HTML ---

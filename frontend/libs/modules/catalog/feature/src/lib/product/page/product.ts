@@ -1,21 +1,25 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
-import { ErpPageLayoutComponent, ErpInputTextBuilder, ErpInputTextComponent, ErpButtonBuilder, ErpButtonComponent } from '@erp/shared/ui';
+import { 
+  ErpPageLayoutComponent, 
+  ErpFiltersComponent, 
+  ErpFiltersBuilder, 
+  ErpInputTextBuilder, 
+  ErpSelectBuilder, 
+  ErpToggleSwitchBuilder, 
+  ErpDatePickerBuilder, 
+  ErpListFilterBuilder 
+} from '@erp/shared/ui';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpInputTextComponent, ErpButtonComponent, TabsModule],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpFiltersComponent, TabsModule],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
-      <div filters class="flex flex-col gap-6">
-        <erp-input-text [config]="searchFilter" />
-        <erp-input-text [config]="categoryFilter" />
-
-        <div class="mt-4 pt-6 border-t border-slate-100">
-          <erp-button [config]="applyBtn" class="w-full" />
-        </div>
+      <div filters>
+        <erp-filters [config]="filtersConfig" (filterSubmit)="onFilter($event)" />
       </div>
 
       <!-- Nagłówek: Zakładki -->
@@ -57,8 +61,61 @@ import { ErpPageLayoutComponent, ErpInputTextBuilder, ErpInputTextComponent, Erp
 export class ProductComponent {
   public activeTab = signal<string | number | undefined>('0');
 
-  protected readonly searchFilter = ErpInputTextBuilder.create((b) => b.setPlaceholder('Szukaj produktu...').setHint('Nazwa, SKU lub EAN'));
+  protected readonly filtersConfig = ErpFiltersBuilder.create((b) => {
+    b.addFilter(
+      'search',
+      'Szukaj',
+      'text',
+      ErpInputTextBuilder.create((i) => i.setPlaceholder('Szukaj produktu...').setHint('Nazwa, SKU lub EAN'))
+    );
 
-  protected readonly categoryFilter = ErpInputTextBuilder.create((b) => b.setPlaceholder('Kategoria').setHint('Wybierz grupę'));
-  protected readonly applyBtn = ErpButtonBuilder.create((b) => b.setLabel('Filtruj').setSeverity('info'));
+    b.addFilter(
+      'category',
+      'Kategoria',
+      'select',
+      ErpSelectBuilder.create((s) =>
+        s
+          .setPlaceholder('Wybierz kategorię')
+          .setOptions([
+            { label: 'Elektronika', value: 'elec' },
+            { label: 'Dom i Ogród', value: 'home' },
+            { label: 'Moda', value: 'fashion' },
+          ])
+      )
+    );
+
+    b.addFilter(
+      'status',
+      'Status',
+      'list',
+      ErpListFilterBuilder.create((l) =>
+        l
+          .setPlaceholder('Status produktu')
+          .setOptions([
+            { label: 'Aktywny', value: 'active' },
+            { label: 'Draft', value: 'draft' },
+            { label: 'Archiwalny', value: 'archived' },
+          ])
+          .setMultiple(true)
+      )
+    );
+
+    b.addFilter(
+      'isFeatured',
+      'Wyróżniony',
+      'switch',
+      ErpToggleSwitchBuilder.create((t) => t.setPlaceholder('Tylko wyróżnione'))
+    );
+
+    b.addFilter(
+      'createdAt',
+      'Data utworzenia',
+      'date',
+      ErpDatePickerBuilder.create((d) => d.setPlaceholder('Od daty').setShowIcon(true))
+    );
+  });
+
+  protected onFilter(filters: any): void {
+    console.log('Applied filters:', filters);
+  }
 }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, ReactiveFormsModule, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
-import { ErpInputBase } from '../../_base/erp-input-base';
+import { ErpInputBase } from '../../base/erp-input-base';
 import { noop } from 'rxjs';
 import { ErpInputTextBuilder } from './erp-input-text.builder';
 import { FloatLabelModule } from 'primeng/floatlabel';

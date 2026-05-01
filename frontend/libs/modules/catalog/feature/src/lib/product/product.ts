@@ -7,12 +7,11 @@ import { TabsModule } from 'primeng/tabs'; // Nowość w PrimeNG 18+
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 // import { Catalog, ProductStore } from '@erp/catalog/data-access';
-import { ProductTableComponent } from './product-table/product-table.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ProductTableComponent],
-  template: ` <erp-product-table /> `,
+  imports: [CommonModule],
+  template: `ProductComponent`,
 })
 export class ProductComponent {
   // public productName = signal('Laptop Pro X1');

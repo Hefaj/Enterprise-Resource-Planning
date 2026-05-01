@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, Type } from '@angular/core';
-import { ErpComponentSignalInputs as CoreComponentSignalInputs } from '../../_base/erp-component-signal-inputs';
+import { ErpComponentSignalInputs as CoreComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 
 @Component({
   selector: 'erp-two-section-layout',

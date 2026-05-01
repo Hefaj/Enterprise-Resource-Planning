@@ -1,4 +1,4 @@
-import { ErpBaseBuilder } from '../../_base/erp-base-builder';
+import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { CoreButton, ErpButtonIconPosition, ErpButtonSeverity, ErpButtonVariant } from './erp-button.component';
 
 export function ErpButtonSave(builder: ErpButtonBuilder): ErpButtonBuilder {

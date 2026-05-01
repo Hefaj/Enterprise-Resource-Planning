@@ -1,5 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { SelectionState, SelectionType, CellCoord } from '../models/selection.models';
+import { Injectable, signal } from '@angular/core';
+import { SelectionState, SelectionType } from '../models/selection.models';
 
 @Injectable()
 export class SelectionService {
@@ -11,40 +11,42 @@ export class SelectionService {
 
   public readonly selection = this._state.asReadonly();
 
-  public select(rowId: string, type: SelectionType, field?: string, isCtrl = false): void {
+  public select(rowId: string, type: SelectionType, field?: string, isMulti = false, isRange = false): void {
     this._state.update((curr) => {
-      let newState = { ...curr };
-
-      // Jeśli zmieniamy typ zaznaczenia, czyścimy poprzednie
-      if (curr.type !== type) {
-        newState = { type, rowIds: new Set(), cells: new Set() };
-      } else if (!isCtrl) {
-        // Jeśli nie ctrl, czyścimy
-        newState.rowIds = new Set();
-        newState.cells = new Set();
-      }
+      // Create new sets to ensure reactivity
+      let nextRowIds = (curr.type !== type || (!isMulti && !isRange)) ? new Set<string>() : new Set<string>(curr.rowIds);
+      let nextCells = (curr.type !== type || (!isMulti && !isRange)) ? new Set<string>() : new Set<string>(curr.cells);
 
       if (type === 'row') {
-        if (newState.rowIds.has(rowId)) {
-          newState.rowIds.delete(rowId);
+        if (isMulti && nextRowIds.has(rowId)) {
+          nextRowIds.delete(rowId);
         } else {
-          newState.rowIds.add(rowId);
+          nextRowIds.add(rowId);
         }
       } else if (type === 'cell' && field) {
         const coordKey = `${rowId}|${field}`;
-        if (newState.cells.has(coordKey)) {
-          newState.cells.delete(coordKey);
+        if (isMulti && nextCells.has(coordKey)) {
+          nextCells.delete(coordKey);
         } else {
-          newState.cells.add(coordKey);
+          nextCells.add(coordKey);
         }
       }
 
-      // Jeśli puste, czyścimy typ
-      if (newState.rowIds.size === 0 && newState.cells.size === 0) {
-        newState.type = null;
-      }
+      const nextType = nextRowIds.size === 0 && nextCells.size === 0 ? null : type;
 
-      return newState;
+      return {
+        type: nextType,
+        rowIds: nextRowIds,
+        cells: nextCells
+      };
+    });
+  }
+
+  public clearSelection(): void {
+    this._state.set({
+      type: null,
+      rowIds: new Set<string>(),
+      cells: new Set<string>(),
     });
   }
 

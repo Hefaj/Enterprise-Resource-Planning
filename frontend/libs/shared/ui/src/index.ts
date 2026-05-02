@@ -30,5 +30,8 @@ export * from './lib/atoms/erp-datepicker/erp-datepicker.component';
 export * from './lib/atoms/erp-list-filter/erp-list-filter.component';
 
 // Molecules
-export * from './lib/molecules/erp-filters/erp-filters.component';
-export * from './lib/molecules/erp-filters/erp-filters.types';
+export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.component';
+export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.types';
+
+export * from './lib/molecules/erp-tree-select/erp-tree-select.component';
+export * from './lib/molecules/erp-tree-select/erp-tree-select.types';

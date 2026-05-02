@@ -3,23 +3,30 @@ import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
 import { 
   ErpPageLayoutComponent, 
-  ErpFiltersComponent, 
-  ErpFiltersBuilder, 
+  ErpDynamicFilterComponent, 
+  ErpDynamicFilterBuilder, 
+  ErpInputTextComponent,
   ErpInputTextBuilder, 
+  ErpSelectComponent,
   ErpSelectBuilder, 
+  ErpToggleSwitchComponent,
   ErpToggleSwitchBuilder, 
+  ErpDatePickerComponent,
   ErpDatePickerBuilder, 
-  ErpListFilterBuilder 
+  ErpListFilterComponent,
+  ErpListFilterBuilder,
+  ErpTreeSelectComponent,
+  ErpTreeSelectBuilder
 } from '@erp/shared/ui';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpFiltersComponent, TabsModule],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
       <div filters>
-        <erp-filters [config]="filtersConfig" (filterSubmit)="onFilter($event)" />
+        <erp-dynamic-filter [config]="filtersConfig" (filterSubmit)="onFilter()" />
       </div>
 
       <!-- Nagłówek: Zakładki -->
@@ -61,61 +68,109 @@ import {
 export class ProductComponent {
   public activeTab = signal<string | number | undefined>('0');
 
-  protected readonly filtersConfig = ErpFiltersBuilder.create((b) => {
-    b.addFilter(
-      'search',
-      'Szukaj',
-      'text',
-      ErpInputTextBuilder.create((i) => i.setPlaceholder('Szukaj produktu...').setHint('Nazwa, SKU lub EAN'))
-    );
+  private rootPage = 0;
+  private childrenPageMap = new Map<string, number>();
 
-    b.addFilter(
-      'category',
-      'Kategoria',
-      'select',
-      ErpSelectBuilder.create((s) =>
-        s
-          .setPlaceholder('Wybierz kategorię')
-          .setOptions([
-            { label: 'Elektronika', value: 'elec' },
-            { label: 'Dom i Ogród', value: 'home' },
-            { label: 'Moda', value: 'fashion' },
-          ])
-      )
-    );
+  private loadMoreNode(parentNode: import('primeng/api').TreeNode | null): import('primeng/api').TreeNode {
+    return { 
+      key: parentNode ? `${parentNode.key}-load-more` : 'root-load-more', 
+      data: { isLoadMore: true, parentNode: parentNode }, 
+      selectable: false 
+    };
+  }
 
-    b.addFilter(
-      'status',
-      'Status',
-      'list',
-      ErpListFilterBuilder.create((l) =>
-        l
-          .setPlaceholder('Status produktu')
-          .setOptions([
-            { label: 'Aktywny', value: 'active' },
-            { label: 'Draft', value: 'draft' },
-            { label: 'Archiwalny', value: 'archived' },
-          ])
-          .setMultiple(true)
-      )
-    );
+  private generateRootPage(page: number): import('primeng/api').TreeNode[] {
+    const nodes: import('primeng/api').TreeNode[] = [];
+    for (let i = 0; i < 15; i++) {
+      nodes.push({
+        key: `root-${page}-${i}`,
+        label: `Zewnętrzny węzeł z API (Strona ${page + 1}, Nr ${i + 1})`,
+        leaf: false,
+      });
+    }
+    return nodes;
+  }
 
-    b.addFilter(
-      'isFeatured',
-      'Wyróżniony',
-      'switch',
-      ErpToggleSwitchBuilder.create((t) => t.setPlaceholder('Tylko wyróżnione'))
-    );
+  private generateChildrenPage(parentKey: string, page: number): import('primeng/api').TreeNode[] {
+    const nodes: import('primeng/api').TreeNode[] = [];
+    for (let i = 0; i < 10; i++) {
+      nodes.push({
+        key: `${parentKey}-child-${page}-${i}`,
+        label: `Dziecko (Strona ${page + 1}, Nr ${i + 1})`,
+        leaf: false
+      });
+    }
+    return nodes;
+  }
 
-    b.addFilter(
-      'createdAt',
-      'Data utworzenia',
-      'date',
-      ErpDatePickerBuilder.create((d) => d.setPlaceholder('Od daty').setShowIcon(true))
-    );
+  protected treeConfig = ErpTreeSelectBuilder.create((t) => 
+    t.setPlaceholder('Wybierz kategorie z drzewa')
+     .setOptions([
+       ...this.generateRootPage(0),
+       this.loadMoreNode(null)
+     ])
+     .setOnNodeExpand((node) => {
+       // Pierwsze pobranie dzieci dla węzła
+       if (!node.children || node.children.length === 0) {
+         return new Promise<void>((resolve) => {
+           setTimeout(() => {
+             this.childrenPageMap.set(node.key!, 0);
+             node.children = [
+               ...this.generateChildrenPage(node.key!, 0),
+               this.loadMoreNode(node)
+             ];
+             resolve();
+           }, 800);
+         });
+       }
+       return;
+     })
+     .setOnLoadMore((parentNode) => {
+       // Doczytywanie kolejnych stron (Infinite Scroll po wejściu w viewport)
+       return new Promise<void>((resolve) => {
+         setTimeout(() => {
+           if (parentNode === null) {
+             // Doczytywanie korzeni (Root)
+             this.rootPage++;
+             const currentOptions = this.treeConfig.options.filter(n => !n.data?.isLoadMore);
+             const newNodes = this.generateRootPage(this.rootPage);
+             
+             // Po 3 stronach nie dodajemy już 'load-more' by zamknąć listę
+             if (this.rootPage < 3) {
+               newNodes.push(this.loadMoreNode(null));
+             }
+             
+             // Mutacja tablicy, aby PrimeNG wykryło zmiany (IterableDiffers)
+             this.treeConfig.options.length = 0;
+             this.treeConfig.options.push(...currentOptions, ...newNodes);
+             
+           } else {
+             // Doczytywanie dzieci
+             const currentPage = this.childrenPageMap.get(parentNode.key!) || 0;
+             const nextPage = currentPage + 1;
+             this.childrenPageMap.set(parentNode.key!, nextPage);
+             
+             const currentChildren = (parentNode.children || []).filter(n => !n.data?.isLoadMore);
+             const newNodes = this.generateChildrenPage(parentNode.key!, nextPage);
+             
+             if (nextPage < 3) {
+               newNodes.push(this.loadMoreNode(parentNode));
+             }
+             
+             parentNode.children = [...currentChildren, ...newNodes];
+           }
+           resolve();
+         }, 800);
+       });
+     })
+  );
+
+  protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {
+    // ... tutaj inne filtry (zakomentowane)
+    b.addFilter('Kategoria zaawansowana', ErpTreeSelectComponent, { config: this.treeConfig });
   });
 
-  protected onFilter(filters: any): void {
-    console.log('Applied filters:', filters);
+  protected onFilter(): void {
+    console.log('Applied filters - submit triggered');
   }
 }

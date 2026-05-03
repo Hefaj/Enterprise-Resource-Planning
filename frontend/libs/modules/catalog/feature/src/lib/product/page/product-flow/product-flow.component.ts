@@ -23,6 +23,13 @@ import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, W
               <span class="font-medium">{{ node.metadata.assignedTo }}</span>
             </div>
           }
+
+           @if (node.metadata?.nettoPrice) {
+            <div class="mx-4 mb-4 mt-2 p-2 bg-surface-100 dark:bg-surface-800 rounded-lg text-sm border border-surface-200 dark:border-surface-700 flex items-center gap-2">
+              <i class="pi pi-tag text-primary-500"></i>
+              <span class="font-medium">{{ node.metadata.nettoPrice }}</span>
+            </div>
+           }
         </ng-template>
       </erp-workflow>
     </div>
@@ -68,12 +75,33 @@ export class ProductFlowComponent {
         {
           label: 'Pobierz zdjęcie',
           icon: 'pi pi-download',
-          command: () => alert('Pobieranie wygenerowanego zdjęcia...')
+          command: ({ node }) => alert('Pobieranie wygenerowanego zdjęcia...')
         }
       ]
     },
     { id: 'action-2', type: 'action', label: 'Pisanie Opisu', position: { x: 600, y: 350 }, width: 200, status: 'completed' },
-    { id: 'condition-1', type: 'condition', label: 'Zdjecie Poprawne?', position: { x: 200, y: 500 }, width: 200, status: 'error' },
+    { 
+      id: 'condition-1', 
+      type: 'condition', 
+      label: 'Zdjecie Poprawne?', 
+      position: { x: 200, y: 500 }, 
+      width: 200, 
+      status: 'error', 
+      metadata: { nettoPrice: 'Kwota netto > 1000' },
+      actions: [
+        {
+          label: 'Ustaw nettoPrice na 1000',
+          icon: 'pi pi-tag',
+          command: ({ node }) => {
+            this.nodes.update(ns => ns.map(n => 
+              n.id === node.id 
+                ? { ...n, metadata: { ...n.metadata, nettoPrice: 1000 } } 
+                : n
+            ));
+          }
+        }
+      ]
+    },
     { id: 'loop-1', type: 'loop', label: 'Retusz (Pętla)', position: { x: -50, y: 425 }, width: 150 },
     { id: 'or-1', type: 'or', label: '', position: { x: 470, y: 650 }, width: 60 },
     { id: 'action-3', status: 'in-progress', type: 'action', label: 'Akceptacja Marketingu', position: { x: 400, y: 800 }, width: 200 },
@@ -103,4 +131,30 @@ export class ProductFlowComponent {
       }
     }
   ]);
+
+  /**
+   * Przykład pobrania danych do wysyłki na backend.
+   * Ponieważ używamy sygnałów i Two-Way Binding, 'nodes' i 'edges' są zawsze aktualne.
+   */
+  saveFlow() {
+    // 1. Pobieramy wartości z sygnałów
+    const currentNodes = this.nodes();
+    const currentEdges = this.edges();
+
+    // 2. Przygotowujemy dane do wysyłki (tzw. DTO)
+    // Ważne: usuwamy pole 'actions', ponieważ zawiera ono funkcje (JS), 
+    // których nie da się zamienić na JSON.
+    const nodesToSave = currentNodes.map(({ actions, ...nodeData }) => nodeData);
+
+    const payload = {
+      nodes: nodesToSave,
+      edges: currentEdges
+    };
+
+    // 3. Wysyłamy na backend (przykład logowania)
+    console.log('Dane gotowe do POST:', payload);
+    alert('Dane zostały przygotowane. Szczegóły w konsoli (F12).');
+    
+    // return this.http.post('/api/workflow', payload);
+  }
 }

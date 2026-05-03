@@ -35,3 +35,9 @@ export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.types';
 
 export * from './lib/molecules/erp-tree-select/erp-tree-select.component';
 export * from './lib/molecules/erp-tree-select/erp-tree-select.types';
+
+// Organisms
+export * from './lib/organisms/erp-workflow/erp-workflow.component';
+export * from './lib/organisms/erp-workflow/erp-workflow-node.component';
+export * from './lib/organisms/erp-workflow/erp-workflow.types';
+

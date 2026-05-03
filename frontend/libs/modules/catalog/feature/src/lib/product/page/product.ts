@@ -5,23 +5,15 @@ import {
   ErpPageLayoutComponent, 
   ErpDynamicFilterComponent, 
   ErpDynamicFilterBuilder, 
-  ErpInputTextComponent,
-  ErpInputTextBuilder, 
-  ErpSelectComponent,
-  ErpSelectBuilder, 
-  ErpToggleSwitchComponent,
-  ErpToggleSwitchBuilder, 
-  ErpDatePickerComponent,
-  ErpDatePickerBuilder, 
-  ErpListFilterComponent,
-  ErpListFilterBuilder,
   ErpTreeSelectComponent,
   ErpTreeSelectBuilder
 } from '@erp/shared/ui';
 
+import { ProductFlowComponent } from './product-flow/product-flow.component';
+
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule, ProductFlowComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
@@ -48,8 +40,8 @@ import {
             Tabela z produktami (Zakładka 0)
           </div>
         } @else if (activeTab() === '1') {
-          <div class="h-full flex items-center justify-center border-2 border-dashed border-cyan-200 rounded-2xl bg-cyan-50/50 text-cyan-400">
-            Sekcja Multimedia (Zakładka 1)
+          <div class="h-full bg-white dark:bg-surface-900 rounded-2xl overflow-hidden shadow-sm border border-surface-200">
+            <erp-product-flow />
           </div>
         } @else if (activeTab() === '2') {
           <div class="h-full flex items-center justify-center border-2 border-dashed border-orange-200 rounded-2xl bg-orange-50/50 text-orange-400">

@@ -1,22 +1,40 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType } from '@erp/shared/ui';
+import { DialogModule } from 'primeng/dialog';
+import { TableModule } from 'primeng/table';
+import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'erp-product-flow',
   standalone: true,
-  imports: [CommonModule, ErpWorkflowComponent],
+  imports: [
+    CommonModule, 
+    FormsModule,
+    ErpWorkflowComponent,
+    DialogModule,
+    TableModule,
+    SelectModule,
+    InputNumberModule,
+    ButtonModule,
+    TooltipModule
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="h-full w-full">
       <erp-workflow
         [(nodes)]="nodes"
         [(edges)]="edges"
-        [readonlyMode]="true"
+        [readonlyMode]="readonlyMode()"
         [actions]="actions()"
         [availableNodeTypes]="availableNodeTypes()"
       >
         <ng-template let-node>
+          <!-- Metadata: Assigned To -->
           @if (node.metadata?.assignedTo) {
             <div class="mx-4 mb-4 mt-2 p-2 bg-surface-100 dark:bg-surface-800 rounded-lg text-sm border border-surface-200 dark:border-surface-700 flex items-center gap-2">
               <i class="pi pi-user text-primary-500"></i>
@@ -24,14 +42,136 @@ import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, W
             </div>
           }
 
-           @if (node.metadata?.nettoPrice) {
-            <div class="mx-4 mb-4 mt-2 p-2 bg-surface-100 dark:bg-surface-800 rounded-lg text-sm border border-surface-200 dark:border-surface-700 flex items-center gap-2">
-              <i class="pi pi-tag text-primary-500"></i>
-              <span class="font-medium">{{ node.metadata.nettoPrice }}</span>
+          <!-- Metadata: Conditions (IF block) -->
+          @if (node.type === 'condition' && node.metadata?.conditions?.length) {
+            <div class="mx-4 mb-4 mt-2 flex flex-col gap-2">
+              @for (cond of node.metadata.conditions; track cond.id) {
+                <div class="p-2 bg-surface-100 dark:bg-surface-800 rounded-lg text-xs border border-surface-200 dark:border-surface-700 flex flex-wrap items-center gap-1">
+                  <span class="text-surface-500">{{ cond.fieldLabel }}</span>
+                  <span class="font-bold text-primary-500">{{ cond.operator }}</span>
+                  <span class="font-medium">{{ cond.value | number:'1.2-2' }}</span>
+                </div>
+              }
             </div>
-           }
+          } @else if (node.type === 'condition') {
+            <div class="mx-4 mb-4 mt-2 p-3 border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-lg text-center text-xs text-surface-400">
+              Brak zdefiniowanych warunków
+            </div>
+          }
         </ng-template>
       </erp-workflow>
+
+      <!-- Condition Editor Dialog -->
+      <p-dialog 
+        [header]="'Zarządzaj warunkami: ' + (selectedNode()?.label || '')" 
+        [(visible)]="displayConditionEditor" 
+        [modal]="true" 
+        [style]="{ width: '600px' }"
+        [draggable]="false"
+        [resizable]="false"
+      >
+        <div class="flex flex-col gap-4">
+          <p-table [value]="tempConditions()" [responsiveLayout]="'scroll'" class="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Pole</th>
+                <th>Operator</th>
+                <th>Wartość</th>
+                <th style="width: 3rem"></th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-cond let-rowIndex="rowIndex">
+              <tr>
+                <td>
+                  <p-select 
+                    [options]="fieldOptions" 
+                    [(ngModel)]="cond.field" 
+                    optionLabel="label" 
+                    optionValue="value"
+                    placeholder="Wybierz pole"
+                    appendTo="body"
+                    (onChange)="onFieldChange(cond)"
+                    [style]="{ width: '100%' }"
+                  />
+                </td>
+                <td>
+                  <p-select 
+                    [options]="operatorOptions" 
+                    [(ngModel)]="cond.operator" 
+                    placeholder="Operator"
+                    appendTo="body"
+                    [style]="{ width: '100%' }"
+                  />
+                </td>
+                <td>
+                  <p-inputNumber 
+                    [(ngModel)]="cond.value" 
+                    [minFractionDigits]="2"
+                    [maxFractionDigits]="2"
+                    placeholder="Kwota"
+                    [style]="{ width: '100%' }"
+                  />
+                </td>
+                <td>
+                  <p-button 
+                    icon="pi pi-trash" 
+                    [text]="true" 
+                    severity="danger" 
+                    (onClick)="removeCondition(rowIndex)" 
+                  />
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="4" class="text-center p-4 text-surface-500">
+                  Brak warunków. Dodaj pierwszy warunek poniżej.
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+
+          <p-button 
+            label="Dodaj warunek" 
+            icon="pi pi-plus" 
+            [text]="true" 
+            (onClick)="addCondition()" 
+          />
+        </div>
+
+        <ng-template pTemplate="footer">
+          <p-button label="Anuluj" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="displayConditionEditor = false" />
+          <p-button label="Zapisz" icon="pi pi-check" (onClick)="saveConditions()" />
+        </ng-template>
+      </p-dialog>
+
+      <!-- Approval Editor Dialog -->
+      <p-dialog 
+        [header]="'Przypisz osobę akceptującą: ' + (selectedApprovalNode()?.label || '')" 
+        [(visible)]="displayApprovalEditor" 
+        [modal]="true" 
+        [style]="{ width: '400px' }"
+        [draggable]="false"
+        [resizable]="false"
+      >
+        <div class="flex flex-col gap-4 py-4">
+          <label class="font-medium text-sm">Wybierz osobę z listy:</label>
+          <p-select 
+            [options]="userOptions" 
+            [(ngModel)]="selectedUser" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Wybierz osobę"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+          />
+        </div>
+
+        <ng-template pTemplate="footer">
+          <p-button label="Anuluj" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="displayApprovalEditor = false" />
+          <p-button label="Przypisz" icon="pi pi-check" (onClick)="saveApproval()" />
+        </ng-template>
+      </p-dialog>
     </div>
   `
 })
@@ -56,6 +196,18 @@ export class ProductFlowComponent {
             }
           ]
         },
+        { 
+          type: 'approval', 
+          label: 'Akceptacja (Zatwierdzenie)', 
+          defaultWidth: 200,
+          actions: [
+            {
+              label: 'Przypisz osobę',
+              icon: 'pi pi-user-plus',
+              command: ({ node }) => this.openApprovalEditor(node)
+            }
+          ]
+        },
         { type: 'end', label: 'Koniec (Zakończenie)', defaultWidth: 200 }
       ]
     },
@@ -69,15 +221,9 @@ export class ProductFlowComponent {
           defaultWidth: 200,
           actions: [
             {
-              label: 'Ustaw nettoPrice na 1000',
-              icon: 'pi pi-tag',
-              command: ({ node }) => {
-                this.nodes.update(ns => ns.map(n => 
-                  n.id === node.id 
-                    ? { ...n, metadata: { ...n.metadata, nettoPrice: 1000 } } 
-                    : n
-                ));
-              }
+              label: 'Zarządzaj warunkami',
+              icon: 'pi pi-filter',
+              command: ({ node }) => this.openConditionEditor(node)
             }
           ]
         },
@@ -108,7 +254,11 @@ export class ProductFlowComponent {
       position: { x: 200, y: 500 }, 
       width: 200, 
       status: 'error', 
-      metadata: { nettoPrice: 'Kwota netto > 1000' }
+      metadata: { 
+        conditions: [
+          { id: 1, field: 'netto_price', fieldLabel: 'Cena netto', operator: '>', value: 1000 }
+        ] 
+      }
     },
     { id: 'loop-1', type: 'loop', label: 'Retusz (Pętla)', position: { x: -50, y: 425 }, width: 150 },
     { id: 'or-1', type: 'or', label: '', position: { x: 470, y: 650 }, width: 60 },
@@ -131,14 +281,101 @@ export class ProductFlowComponent {
 
   actions = signal<WorkflowNodeAction[]>([
     {
-      label: 'Edytuj Metadane',
+      label: 'Edytuj Nazwę',
       icon: 'pi pi-pencil',
       command: ({ node }) => {
-        alert(`Otwieranie modala dla węzła: ${node.label}`);
-        console.log('Metadane:', node.metadata);
+        const newLabel = prompt('Nowa nazwa węzła:', node.label);
+        if (newLabel !== null) {
+          this.nodes.update(ns => ns.map(n => n.id === node.id ? { ...n, label: newLabel } : n));
+        }
       }
     }
   ]);
+
+  // --- Condition Logic ---
+
+  displayConditionEditor = false;
+  selectedNode = signal<WorkflowNode | null>(null);
+  tempConditions = signal<any[]>([]);
+
+  fieldOptions = [
+    { label: 'Wartość faktury', value: 'invoice_value' },
+    { label: 'Kwota VAT', value: 'vat_amount' },
+    { label: 'Cena netto', value: 'netto_price' },
+    { label: 'Koszt dostawy', value: 'shipping_cost' }
+  ];
+
+  operatorOptions = ['==', '!=', '>', '<', '>=', '<='];
+
+  openConditionEditor(node: WorkflowNode) {
+    this.selectedNode.set(node);
+    // Clone existing conditions or start with empty array
+    const existing = node.metadata?.['conditions'] || [];
+    this.tempConditions.set(JSON.parse(JSON.stringify(existing)));
+    this.displayConditionEditor = true;
+  }
+
+  addCondition() {
+    this.tempConditions.update(current => [
+      ...current,
+      { id: Date.now(), field: 'invoice_value', fieldLabel: 'Wartość faktury', operator: '>', value: 0 }
+    ]);
+  }
+
+  removeCondition(index: number) {
+    this.tempConditions.update(current => current.filter((_, i) => i !== index));
+  }
+
+  onFieldChange(cond: any) {
+    const option = this.fieldOptions.find(o => o.value === cond.field);
+    if (option) {
+      cond.fieldLabel = option.label;
+    }
+  }
+
+  saveConditions() {
+    const node = this.selectedNode();
+    if (!node) return;
+
+    this.nodes.update(ns => ns.map(n => 
+      n.id === node.id 
+        ? { ...n, metadata: { ...n.metadata, conditions: [...this.tempConditions()] } } 
+        : n
+    ));
+
+    this.displayConditionEditor = false;
+  }
+
+  // --- Approval Logic ---
+
+  displayApprovalEditor = false;
+  selectedApprovalNode = signal<WorkflowNode | null>(null);
+  selectedUser: string | null = null;
+
+  userOptions = [
+    { label: 'Jan Kowalski (Manager)', value: 'Jan Kowalski' },
+    { label: 'Anna Nowak (Dyrektor)', value: 'Anna Nowak' },
+    { label: 'Piotr Wiśniewski (Lead)', value: 'Piotr Wiśniewski' },
+    { label: 'Maria Zielińska (Marketing)', value: 'Maria Zielińska' }
+  ];
+
+  openApprovalEditor(node: WorkflowNode) {
+    this.selectedApprovalNode.set(node);
+    this.selectedUser = (node.metadata?.['assignedTo'] as string) || null;
+    this.displayApprovalEditor = true;
+  }
+
+  saveApproval() {
+    const node = this.selectedApprovalNode();
+    if (node) {
+      this.nodes.update(ns => ns.map(n => 
+        n.id === node.id 
+          ? { ...n, metadata: { ...n.metadata, assignedTo: this.selectedUser } } 
+          : n
+      ));
+    }
+    this.displayApprovalEditor = false;
+  }
 
   /**
    * Przykład pobrania danych do wysyłki na backend.

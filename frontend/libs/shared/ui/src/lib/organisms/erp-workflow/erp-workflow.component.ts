@@ -24,7 +24,7 @@ import { ContextMenuModule } from 'primeng/contextmenu';
            [style.transform]="transformStyle()">
         
         <!-- SVG Layer for Edges -->
-        <svg class="absolute inset-0 pointer-events-none w-[10000px] h-[10000px] overflow-visible">
+        <svg class="absolute inset-0 pointer-events-none w-2500 h-2500 overflow-visible">
           <!-- Render existing edges -->
           @for (edge of edges(); track edge.id) {
             <g class="group" 

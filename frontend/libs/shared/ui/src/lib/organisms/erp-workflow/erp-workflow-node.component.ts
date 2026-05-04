@@ -60,7 +60,7 @@ import { TemplateRef } from '@angular/core';
         (mousedown)="onMouseDown($event)"
       >
         <!-- Header -->
-        <div class="px-4 py-2 flex justify-between items-center rounded-t-xl"
+        <div class="px-4 py-2 flex justify-between items-center rounded-xl"
              [ngClass]="headerBgClass()">
           <div class="flex items-center gap-2 flex-1 overflow-hidden">
             @if (node().status === 'completed') {

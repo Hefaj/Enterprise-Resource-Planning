@@ -128,6 +128,7 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
   node = input.required<WorkflowNode>();
   readonlyMode = input<boolean>(false);
   actions = input<WorkflowNodeAction[]>([]);
+  typeActions = input<WorkflowNodeAction[]>([]);
   customTemplate = input<TemplateRef<any> | undefined>();
   
   dragStart = output<MouseEvent>();
@@ -198,7 +199,16 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
       command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() })
     }));
 
-    // 2. Node-specific actions
+    // 2. Type-specific actions
+    this.typeActions().forEach(action => {
+      items.push({
+        label: action.label,
+        icon: action.icon,
+        command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() })
+      });
+    });
+
+    // 3. Node-specific actions (overrides or instance-specific)
     const nodeActions = this.node().actions || [];
     nodeActions.forEach(action => {
       items.push({
@@ -208,7 +218,7 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
       });
     });
 
-    // 3. Delete action
+    // 4. Delete action
     if (!this.readonlyMode()) {
       if (items.length > 0) {
         items.push({ separator: true });

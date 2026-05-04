@@ -12,7 +12,7 @@ import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, W
       <erp-workflow
         [(nodes)]="nodes"
         [(edges)]="edges"
-        [readonlyMode]="readonlyMode()"
+        [readonlyMode]="true"
         [actions]="actions()"
         [availableNodeTypes]="availableNodeTypes()"
       >
@@ -44,7 +44,18 @@ export class ProductFlowComponent {
       icon: 'pi pi-briefcase',
       items: [
         { type: 'start', label: 'Start (Początek)', defaultWidth: 200 },
-        { type: 'action', label: 'Akcja (Zadanie)', defaultWidth: 200 },
+        { 
+          type: 'action', 
+          label: 'Akcja (Zadanie)', 
+          defaultWidth: 200,
+          actions: [
+            {
+              label: 'Pobierz zdjęcie',
+              icon: 'pi pi-download',
+              command: ({ node }) => alert('Pobieranie wygenerowanego zdjęcia...')
+            }
+          ]
+        },
         { type: 'end', label: 'Koniec (Zakończenie)', defaultWidth: 200 }
       ]
     },
@@ -52,7 +63,24 @@ export class ProductFlowComponent {
       label: 'Bloki Techniczne',
       icon: 'pi pi-cog',
       items: [
-        { type: 'condition', label: 'Warunek (Bramka decyzyjna)', defaultWidth: 200 },
+        { 
+          type: 'condition', 
+          label: 'Warunek (Bramka decyzyjna)', 
+          defaultWidth: 200,
+          actions: [
+            {
+              label: 'Ustaw nettoPrice na 1000',
+              icon: 'pi pi-tag',
+              command: ({ node }) => {
+                this.nodes.update(ns => ns.map(n => 
+                  n.id === node.id 
+                    ? { ...n, metadata: { ...n.metadata, nettoPrice: 1000 } } 
+                    : n
+                ));
+              }
+            }
+          ]
+        },
         { type: 'loop', label: 'Pętla (Cykl)', defaultWidth: 200 },
         { type: 'and', label: 'Rozwidlenie AND', defaultWidth: 60 },
         { type: 'or', label: 'Bramka OR (XOR)', defaultWidth: 60 }
@@ -70,14 +98,7 @@ export class ProductFlowComponent {
       position: { x: 200, y: 350 }, 
       width: 200, 
       status: 'in-progress', 
-      metadata: { assignedTo: 'Fotograf' },
-      actions: [
-        {
-          label: 'Pobierz zdjęcie',
-          icon: 'pi pi-download',
-          command: ({ node }) => alert('Pobieranie wygenerowanego zdjęcia...')
-        }
-      ]
+      metadata: { assignedTo: 'Fotograf' }
     },
     { id: 'action-2', type: 'action', label: 'Pisanie Opisu', position: { x: 600, y: 350 }, width: 200, status: 'completed' },
     { 
@@ -87,20 +108,7 @@ export class ProductFlowComponent {
       position: { x: 200, y: 500 }, 
       width: 200, 
       status: 'error', 
-      metadata: { nettoPrice: 'Kwota netto > 1000' },
-      actions: [
-        {
-          label: 'Ustaw nettoPrice na 1000',
-          icon: 'pi pi-tag',
-          command: ({ node }) => {
-            this.nodes.update(ns => ns.map(n => 
-              n.id === node.id 
-                ? { ...n, metadata: { ...n.metadata, nettoPrice: 1000 } } 
-                : n
-            ));
-          }
-        }
-      ]
+      metadata: { nettoPrice: 'Kwota netto > 1000' }
     },
     { id: 'loop-1', type: 'loop', label: 'Retusz (Pętla)', position: { x: -50, y: 425 }, width: 150 },
     { id: 'or-1', type: 'or', label: '', position: { x: 470, y: 650 }, width: 60 },

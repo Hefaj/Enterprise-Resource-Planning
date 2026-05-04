@@ -77,6 +77,7 @@ import { ContextMenuModule } from 'primeng/contextmenu';
             [node]="node"
             [readonlyMode]="readonlyMode()"
             [actions]="actions()"
+            [typeActions]="nodeTypeActions(node)"
             [customTemplate]="nodeTemplate()"
             (dragStart)="onNodeDragStart($event, node)"
             (connectionStart)="onConnectionStart($event, node)"
@@ -114,6 +115,28 @@ export class ErpWorkflowComponent implements AfterViewInit {
   nodeTemplate = contentChild(TemplateRef);
   
   availableNodeTypes = input<WorkflowNodeType[]>([]);
+  
+  private nodeTypeActionsMap = computed(() => {
+    const map = new Map<string, WorkflowNodeAction[]>();
+    
+    const flatten = (items: WorkflowNodeType[]) => {
+      items.forEach(item => {
+        if (item.type && item.actions) {
+          map.set(item.type, item.actions);
+        }
+        if (item.items) {
+          flatten(item.items);
+        }
+      });
+    };
+    
+    flatten(this.availableNodeTypes());
+    return map;
+  });
+
+  nodeTypeActions(node: WorkflowNode): WorkflowNodeAction[] {
+    return this.nodeTypeActionsMap().get(node.type) || [];
+  }
 
   private buildNodeMenuItems(types: WorkflowNodeType[], x?: number, y?: number): MenuItem[] {
     return types.map(nt => {

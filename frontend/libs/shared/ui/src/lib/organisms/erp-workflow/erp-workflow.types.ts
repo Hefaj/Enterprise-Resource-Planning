@@ -31,4 +31,5 @@ export interface WorkflowNodeType {
   defaultWidth?: number;
   icon?: string;
   items?: WorkflowNodeType[];
+  actions?: WorkflowNodeAction[];
 }

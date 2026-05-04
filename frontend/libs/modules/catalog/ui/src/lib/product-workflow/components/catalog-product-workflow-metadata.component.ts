@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { WorkflowNode } from '@erp/shared/ui';
 
 @Component({
-  selector: 'erp-product-flow-metadata',
+  selector: 'erp-catalog-product-workflow-metadata',
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,8 +34,7 @@ import { WorkflowNode } from '@erp/shared/ui';
     }
   `
 })
-export class ProductFlowMetadataComponent {
+export class CatalogProductWorkflowMetadataComponent {
   node = input.required<WorkflowNode>();
-
   conditions = computed(() => (this.node().metadata?.['conditions'] as any[]) || []);
 }

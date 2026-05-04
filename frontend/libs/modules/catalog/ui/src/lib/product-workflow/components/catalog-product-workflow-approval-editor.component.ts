@@ -7,7 +7,7 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
-  selector: 'erp-product-flow-approval-editor',
+  selector: 'erp-catalog-product-workflow-approval-editor',
   standalone: true,
   imports: [
     CommonModule,
@@ -46,7 +46,7 @@ import { ButtonModule } from 'primeng/button';
     </p-dialog>
   `
 })
-export class ProductFlowApprovalEditorComponent {
+export class CatalogProductWorkflowApprovalEditorComponent {
   visible = model<boolean>(false);
   node = signal<WorkflowNode | null>(null);
   

@@ -9,7 +9,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
-  selector: 'erp-product-flow-condition-editor',
+  selector: 'erp-catalog-product-workflow-condition-editor',
   standalone: true,
   imports: [
     CommonModule,
@@ -106,7 +106,7 @@ import { ButtonModule } from 'primeng/button';
     </p-dialog>
   `
 })
-export class ProductFlowConditionEditorComponent {
+export class CatalogProductWorkflowConditionEditorComponent {
   visible = model<boolean>(false);
   node = signal<WorkflowNode | null>(null);
   

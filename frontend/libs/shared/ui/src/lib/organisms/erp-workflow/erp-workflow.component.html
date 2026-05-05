@@ -1,0 +1,85 @@
+<div class="relative w-full h-full overflow-hidden bg-surface-50 dark:bg-surface-950 border border-surface-200 rounded-2xl outline-none cursor-grab active:cursor-grabbing"
+    tabindex="0"
+    (mousedown)="onCanvasMouseDown($event)"
+    (contextmenu)="onContextMenu($event)"
+    (wheel)="onWheel($event)"
+    #canvasContainer>
+        
+    <!-- Canvas Wrapper for Pan and Zoom -->
+<div class="absolute inset-0 origin-top-left"
+        [style.transform]="transformStyle()">
+    
+    <!-- SVG Layer for Edges -->
+    <svg class="absolute inset-0 pointer-events-none w-2500 h-2500 overflow-visible">
+        <!-- Render existing edges -->
+        @for (edge of edges(); track edge.id) {
+        <g class="group" 
+            [class.cursor-pointer]="!readonlyMode()" 
+            (mousedown)="!readonlyMode() && $event.stopPropagation()"
+            (click)="!readonlyMode() && deleteEdge(edge.id)">
+            <path
+            [attr.d]="calculateEdgePath(edge)"
+            fill="none"
+            stroke="transparent"
+            stroke-width="15"
+            class="pointer-events-auto"
+            />
+            <path
+            [attr.d]="calculateEdgePath(edge)"
+            fill="none"
+            stroke-width="2"
+            class="stroke-surface-400 dark:stroke-surface-600 transition-colors pointer-events-none"
+            style="transition-property: stroke, stroke-width; transition-duration: 200ms;"
+            [ngClass]="{'group-hover:stroke-red-500 dark:group-hover:stroke-red-500 group-hover:stroke-[4px]': !readonlyMode()}"
+            marker-end="url(#arrowhead)"
+            />
+        </g>
+        }
+        
+        <!-- Render active drawing edge -->
+        @if (drawingEdge()) {
+        <path
+            [attr.d]="calculateDrawingEdgePath()"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-dasharray="5,5"
+            class="text-primary-500"
+            marker-end="url(#arrowhead)"
+        />
+        }
+
+        <!-- Defs for arrowheads -->
+        <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" class="text-surface-400 dark:text-surface-600" />
+        </marker>
+        </defs>
+    </svg>
+
+    <!-- HTML Layer for Nodes -->
+    @for (node of nodes(); track node.id) {
+        <erp-workflow-node
+        [node]="node"
+        [readonlyMode]="readonlyMode()"
+        [actions]="actions()"
+        [typeActions]="nodeTypeActions(node)"
+        [customTemplate]="nodeTemplate()"
+        (dragStart)="onNodeDragStart($event, node)"
+        (connectionStart)="onConnectionStart($event, node)"
+        (deleteRequest)="deleteNode($event)"
+        (heightChange)="onNodeHeightChange($event)"
+        >
+        <!-- Here we could pass templates if we want dynamic content per node -->
+        </erp-workflow-node>
+    }
+    </div>
+    
+    <!-- Toolbar Menubar -->
+    <div class="absolute top-4 left-4 z-10 shadow-md rounded-lg" (mousedown)="$event.stopPropagation()">
+    <erp-menubar [config]="menubarConfig()" />
+    </div>
+
+    <!-- Context Menu -->
+    <erp-context-menu #canvasContextMenu [config]="contextMenuConfig()" />
+</div>

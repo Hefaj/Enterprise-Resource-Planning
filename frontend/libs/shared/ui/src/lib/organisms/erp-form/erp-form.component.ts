@@ -91,6 +91,7 @@ export interface ErpFormConfig {
 })
 export class ErpFormComponent {
   public config = input.required<ErpFormConfig>();
+  public tabValue = input<string | number>();
 
   public getControl(key: string): FormControl {
     return this.config().formGroup.get(key) as FormControl;

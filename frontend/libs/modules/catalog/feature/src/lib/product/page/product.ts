@@ -24,7 +24,7 @@ import { TreeNode } from 'primeng/api';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, ErpTabsComponent, ProductFlowComponent, ErpCardComponent],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, ErpTabsComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
@@ -155,16 +155,6 @@ export class ProductComponent {
      })
   );
 
-  protected readonly tabsConfig = ErpTabsBuilder.create(b => b
-    .addItem('Lista produktów', '0') // Możemy tu później dodać ErpTableComponent
-    .addItem('Multimedia', '1', ProductFlowComponent)
-    .addItem('Magazyn', '2')
-    .addItem('Historia zmian', '3')
-    .addItem('Dodaj produkt (Test Form)', '4', ErpCardComponent, { config: this.formCardConfig })
-    .setInitialValue('0')
-    .onTabChange(val => this.activeTab.set(val))
-  );
-
   protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {
     // ... tutaj inne filtry (zakomentowane)
     b.addFilter('Kategoria zaawansowana', ErpTreeSelectComponent, { config: this.treeConfig });
@@ -197,6 +187,16 @@ export class ProductComponent {
         ]
       }
     })
+  );
+
+  protected readonly tabsConfig = ErpTabsBuilder.create(b => b
+    .addItem('Lista produktów', '0') // Możemy tu później dodać ErpTableComponent
+    .addItem('Multimedia', '1', ProductFlowComponent)
+    .addItem('Magazyn', '2')
+    .addItem('Historia zmian', '3')
+    .addItem('Dodaj produkt (Test Form)', '4', ErpCardComponent, { config: this.formCardConfig })
+    .setInitialValue('0')
+    .onTabChange(val => this.activeTab.set(val))
   );
 
   protected saveProduct(): void {

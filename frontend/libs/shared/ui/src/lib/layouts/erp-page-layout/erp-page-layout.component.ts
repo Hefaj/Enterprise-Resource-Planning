@@ -9,19 +9,31 @@ import { ButtonModule } from 'primeng/button';
     <div class="flex h-full w-full bg-surface-50 dark:bg-surface-950 overflow-hidden">
       <!-- Lewy panel: Filtry -->
       <aside
-        class="relative h-full border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 flex flex-col transition-all duration-300 ease-in-out z-20"
+        class="group relative h-full border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 flex flex-col transition-all duration-300 ease-in-out z-20"
         [class.w-80]="isSidebarVisible()"
         [class.w-0]="!isSidebarVisible()"
       >
+        <!-- Hot Zone (Strefa łapania hovera, gdy zamknięte) -->
+        @if (!isSidebarVisible()) {
+          <div class="absolute top-0 -right-10 w-14 h-full z-10 cursor-pointer"></div>
+          
+          <!-- Wizualny sygnał (Cienka linia/glow na krawędzi) -->
+          <div class="absolute inset-y-0 right-0 w-0.75 bg-primary-500/20 group-hover:bg-primary-500/50 transition-all duration-300 blur-[1px]"></div>
+        }
+
         <!-- Toggle Button (Uchwyt) -->
         <div 
-          class="absolute top-10 z-30 transition-all duration-300"
-          [style.right]="isSidebarVisible() ? '-1rem' : '-2rem'"
+          class="absolute top-10 z-30 transition-all duration-300 pointer-events-auto"
+          [style.right]="isSidebarVisible() ? '-1rem' : '-1.5rem'"
+          [class.opacity-0]="!isSidebarVisible()"
+          [class.group-hover:opacity-100]="!isSidebarVisible()"
+          [class.scale-75]="!isSidebarVisible()"
+          [class.group-hover:scale-100]="!isSidebarVisible()"
         >
           <button
             pButton
-            [icon]="isSidebarVisible() ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"
-            class="!w-8 !h-8 !rounded-full !shadow-lg !border !border-surface-200 dark:!border-surface-700 !bg-surface-0 dark:!bg-surface-900 !text-surface-600 dark:!text-surface-400 hover:!text-primary-500 transition-all"
+            [icon]="isSidebarVisible() ? 'pi pi-chevron-left' : 'pi pi-filter'"
+            class="w-8! h-8! rounded-full! shadow-lg! border! border-primary-200! dark:border-primary-800! bg-surface-0! dark:bg-surface-900! text-primary-600! dark:text-primary-400! hover:bg-primary-50! dark:hover:bg-primary-900! transition-all"
             (click)="toggleSidebar()"
           >
           </button>

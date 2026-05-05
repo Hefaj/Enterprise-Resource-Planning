@@ -13,11 +13,32 @@ export abstract class ErpBaseBuilder<T> {
    * Pomocnik do wyciągania danych z Buildera lub bezpośredniego obiektu.
    * Ułatwia zagnieżdżanie builderów.
    */
-  protected _extract<TC>(value: TC | { build: () => TC } | undefined): TC | undefined {
-    if (value && typeof value === 'object' && 'build' in value && typeof value.build === 'function') {
-      return value.build();
+  protected _extract(val: any): any {
+    if (!val) return val;
+
+    // Jeśli sam obiekt jest builderem
+    if (typeof val === 'object' && 'build' in val && typeof val.build === 'function') {
+      return val.build();
     }
-    return value as TC;
+
+    // Jeśli obiekt ma właściwości, które są builderami (np. { config: builder })
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      const extracted: any = {};
+      let hasBuilder = false;
+
+      for (const key in val) {
+        const item = val[key];
+        if (item && typeof item === 'object' && 'build' in item && typeof item.build === 'function') {
+          extracted[key] = item.build();
+          hasBuilder = true;
+        } else {
+          extracted[key] = item;
+        }
+      }
+      return hasBuilder ? extracted : val;
+    }
+
+    return val;
   }
 
   public static create<TBuilder extends ErpBaseBuilder<any>>(

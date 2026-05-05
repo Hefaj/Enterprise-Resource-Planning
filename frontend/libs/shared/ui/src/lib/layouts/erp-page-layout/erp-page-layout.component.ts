@@ -6,15 +6,35 @@ import { ButtonModule } from 'primeng/button';
   selector: 'erp-page-layout',
   imports: [CommonModule, ButtonModule],
   template: `
-    <div class="flex h-full w-full bg-surface-50 dark:bg-surface-950">
+    <div class="flex h-full w-full bg-surface-50 dark:bg-surface-950 overflow-hidden">
       <!-- Lewy panel: Filtry -->
       <aside
-        class="border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 flex flex-col transition-all duration-300 ease-in-out overflow-hidden"
+        class="relative h-full border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 flex flex-col transition-all duration-300 ease-in-out z-20"
         [class.w-80]="isSidebarVisible()"
         [class.w-0]="!isSidebarVisible()"
-        [class.border-none]="!isSidebarVisible()"
       >
-        <div class="w-80 flex flex-col h-full overflow-hidden">
+        <!-- Toggle Button (Uchwyt) -->
+        <div 
+          class="absolute top-10 z-30 transition-all duration-300"
+          [style.right]="isSidebarVisible() ? '-1rem' : '-2rem'"
+        >
+          <button
+            pButton
+            [icon]="isSidebarVisible() ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"
+            class="!w-8 !h-8 !rounded-full !shadow-lg !border !border-surface-200 dark:!border-surface-700 !bg-surface-0 dark:!bg-surface-900 !text-surface-600 dark:!text-surface-400 hover:!text-primary-500 transition-all"
+            (click)="toggleSidebar()"
+          >
+          </button>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div 
+          class="w-80 flex flex-col h-full overflow-hidden transition-all duration-200"
+          [class.opacity-100]="isSidebarVisible()"
+          [class.opacity-0]="!isSidebarVisible()"
+          [class.pointer-events-none]="!isSidebarVisible()"
+          [style.transition-delay]="isSidebarVisible() ? '150ms' : '0ms'"
+        >
           <div class="p-5 border-b border-surface-100 dark:border-surface-800 font-black text-[10px] tracking-[0.2em] uppercase text-surface-400 dark:text-surface-500 whitespace-nowrap">
             Filtrowanie
           </div>
@@ -24,25 +44,8 @@ import { ButtonModule } from 'primeng/button';
         </div>
       </aside>
 
-
       <!-- Prawy panel: Kontent -->
-      <div class="flex-1 flex flex-col min-w-0">
-        <!-- Opcjonalne nagłówki / zakładki -->
-        <header class="bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800 px-4 py-2 flex items-center gap-2">
-          <button
-            pButton
-            [icon]="isSidebarVisible() ? 'pi pi-align-left' : 'pi pi-filter'"
-            class="!bg-transparent !border-none !text-surface-500 hover:!bg-surface-100 dark:hover:!bg-surface-800 !p-3 !rounded-xl transition-colors"
-            (click)="toggleSidebar()"
-          >
-            <span class="sr-only">Przełącz filtry</span>
-          </button>
-
-          <div class="flex-1">
-            <ng-content select="[header]"></ng-content>
-          </div>
-        </header>
-
+      <div class="flex-1 flex flex-col min-w-0 relative">
         <!-- Główna zawartość -->
         <main class="flex-1 p-6 overflow-auto bg-surface-50 dark:bg-surface-950">
           <ng-content></ng-content>

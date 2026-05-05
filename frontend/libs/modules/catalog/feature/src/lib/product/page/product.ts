@@ -24,18 +24,13 @@ import { TreeNode } from 'primeng/api';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, ErpTabsComponent],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, ErpTabsComponent, ProductFlowComponent, ErpCardComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
       <div filters>
         <erp-dynamic-filter [config]="filtersConfig" (filterSubmit)="onFilter()" />
       </div>
-
-      <!-- Nagłówek: Zakładki (Headless) -->
-      <!-- <div header class="w-full">
-        <erp-tabs [config]="tabsConfig" [(value)]="activeTab" [headless]="true" />
-      </div> -->
 
       <!-- Kontent -->
       <div class="h-full">

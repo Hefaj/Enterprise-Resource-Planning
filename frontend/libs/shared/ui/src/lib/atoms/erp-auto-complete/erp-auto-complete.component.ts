@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output, Type } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -16,12 +17,15 @@ export interface ErpAutoComplete extends ErpInputBase {
   multiple?: boolean;
   fluid?: boolean;
   forceSelection?: boolean;
+  itemComponent?: Type<any>;
+  headerComponent?: Type<any>;
+  footerComponent?: Type<any>;
 }
 
 @Component({
   selector: 'erp-auto-complete',
   standalone: true,
-  imports: [AutoCompleteModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
+  imports: [CommonModule, AutoCompleteModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
   template: `
     @let _config = config();
     @let _activeControl = activeControl();
@@ -40,7 +44,27 @@ export interface ErpAutoComplete extends ErpInputBase {
           (completeMethod)="onComplete($event)"
           (onBlur)="onTouched()"
           [appendTo]="'body'"
-        />
+        >
+          <ng-template let-item #item>
+            @if (_config.itemComponent) {
+              <ng-container *ngComponentOutlet="_config.itemComponent; inputs: { item: item }" />
+            } @else {
+              {{ item[_config.optionLabel || 'label'] }}
+            }
+          </ng-template>
+
+          <ng-template #header>
+             @if (_config.headerComponent) {
+               <ng-container *ngComponentOutlet="_config.headerComponent" />
+             }
+          </ng-template>
+
+          <ng-template #footer>
+             @if (_config.footerComponent) {
+               <ng-container *ngComponentOutlet="_config.footerComponent" />
+             }
+          </ng-template>
+        </p-autocomplete>
         <label>{{ _config.placeholder || '' }}</label>
       </p-floatlabel>
       

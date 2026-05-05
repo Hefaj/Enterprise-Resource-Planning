@@ -34,9 +34,11 @@ export * from './lib/atoms/erp-tabs/erp-tabs.component';
 export * from './lib/atoms/erp-menu/erp-menu.component';
 export * from './lib/atoms/erp-menubar/erp-menubar.component';
 export * from './lib/atoms/erp-context-menu/erp-context-menu.component';
+export * from './lib/atoms/erp-card/erp-card.component';
 
 // Molecules
 export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.component';
+export * from './lib/molecules/erp-action-buttons/erp-action-buttons.component';
 export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.types';
 
 export * from './lib/molecules/erp-tree-select/erp-tree-select.component';

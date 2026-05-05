@@ -6,24 +6,36 @@ import { ErpInputTextComponent } from '../../atoms/erp-input-text/erp-input-text
 import { ErpSelectComponent } from '../../atoms/erp-select/erp-select.component';
 import { ErpDatePickerComponent } from '../../atoms/erp-datepicker/erp-datepicker.component';
 import { ErpMultiSelectComponent } from '../../atoms/erp-multi-select/erp-multi-select.component';
-import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete/erp-auto-complete.component';
 import { ErpListboxComponent } from '../../atoms/erp-listbox/erp-listbox.component';
 import { ErpToggleSwitchComponent } from '../../atoms/erp-toggle-switch/erp-toggle-switch.component';
+import { Type } from '@angular/core';
+import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
+import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete/erp-auto-complete.component';
 
 export { ErpFormBuilder };
 
-export type ErpFormFieldType = 'text' | 'select' | 'datepicker' | 'multiselect' | 'autocomplete' | 'listbox' | 'toggle';
+/**
+ * Kontrakt dla dowolnego komponentu, który ma być użyty w ErpForm.
+ */
+export interface ErpFormAtom<TComp = any> {
+  config: ErpComponentSignalInputs<TComp>;
+  control: FormControl;
+}
+
+export type ErpFormFieldType = 'text' | 'select' | 'datepicker' | 'multiselect' | 'autocomplete' | 'listbox' | 'toggle' | 'custom';
 
 export interface ErpFormField {
   key: string;
   type: ErpFormFieldType;
   config: any;
-  colSpan?: number; // Tailwind grid-cols-X
+  colSpan?: number;
+  component?: Type<any>; // Używane tylko dla typu 'custom'
 }
 
 export interface ErpFormConfig {
   fields: ErpFormField[];
   gridCols?: number;
+  formGroup: FormGroup;
 }
 
 @Component({
@@ -41,8 +53,9 @@ export interface ErpFormConfig {
     ErpToggleSwitchComponent
   ],
   template: `
-    <form [formGroup]="formGroup()" class="grid gap-6" [class]="'grid-cols-' + (config().gridCols || 1)">
-      @for (field of config().fields; track field.key) {
+    @let _config = config();
+    <form [formGroup]="_config.formGroup" class="grid gap-6" [class]="'grid-cols-' + (_config.gridCols || 1)">
+      @for (field of _config.fields; track field.key) {
         <div [class]="field.colSpan ? 'col-span-' + field.colSpan : 'col-span-1'">
           @switch (field.type) {
             @case ('text') {
@@ -66,6 +79,9 @@ export interface ErpFormConfig {
             @case ('toggle') {
               <erp-toggle-switch [config]="field.config" [control]="getControl(field.key)" />
             }
+            @case ('custom') {
+              <ng-container *ngComponentOutlet="field.component!; inputs: { config: field.config, control: getControl(field.key) }" />
+            }
           }
         </div>
       }
@@ -75,9 +91,8 @@ export interface ErpFormConfig {
 })
 export class ErpFormComponent {
   public config = input.required<ErpFormConfig>();
-  public formGroup = input.required<FormGroup>();
 
   public getControl(key: string): FormControl {
-    return this.formGroup().get(key) as FormControl;
+    return this.config().formGroup.get(key) as FormControl;
   }
 }

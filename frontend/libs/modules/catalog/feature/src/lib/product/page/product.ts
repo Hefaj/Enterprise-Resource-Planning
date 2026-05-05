@@ -6,23 +6,24 @@ import {
   ErpDynamicFilterComponent, 
   ErpDynamicFilterBuilder, 
   ErpTreeSelectComponent,
-  ErpTreeSelectBuilder,
-  ErpFormComponent,
-  ErpFormBuilder,
-  ErpInputTextBuilder,
-  ErpSelectBuilder,
-  ErpDatePickerBuilder,
-  ErpEmptyCardComponent,
-  ErpEmptyCardBuilder,
+  ErpFormBuilder, 
+  ErpInputTextBuilder, 
+  ErpSelectBuilder, 
+  ErpDatePickerBuilder, 
+  ErpCardComponent, 
+  ErpCardBuilder,
   ErpButtonComponent,
-  ErpButtonBuilder
+  ErpButtonBuilder,
+  ErpActionButtonsComponent,
+  ErpFormComponent,
+  ErpTreeSelectBuilder
 } from '@erp/shared/ui';
 
 import { ProductFlowComponent } from './product-flow/product-flow.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule, ProductFlowComponent, ErpFormComponent, ErpEmptyCardComponent, ErpButtonComponent],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule, ProductFlowComponent, ErpCardComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
@@ -63,13 +64,7 @@ import { ProductFlowComponent } from './product-flow/product-flow.component';
           </div>
         } @else if (activeTab() === '4') {
           <div class="p-6">
-            <erp-empty-card [config]="formCardConfig">
-               <erp-form [config]="testFormConfig" [formGroup]="testFormGroup" />
-               <div class="mt-6 flex justify-end gap-2">
-                  <erp-button [config]="cancelBtnConfig" />
-                  <erp-button [config]="saveBtnConfig" (click)="saveProduct()" />
-               </div>
-            </erp-empty-card>
+            <erp-card [config]="formCardConfig" />
           </div>
         }
       </div>
@@ -182,30 +177,37 @@ export class ProductComponent {
     b.addFilter('Kategoria zaawansowana', ErpTreeSelectComponent, { config: this.treeConfig });
   });
 
-  protected readonly formCardConfig = ErpEmptyCardBuilder.create(b => b
-    .setTitle('Informacje o produkcie')
-    .setSubtitle('Wprowadź podstawowe dane techniczne i handlowe')
-  );
-
-  private readonly formBuilder = new ErpFormBuilder()
+  protected readonly testFormConfig = ErpFormBuilder.create(f => f
     .setGridCols(2)
-    .addField('sku', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Kod SKU').setHint('Unikalny identyfikator produktu')))
+    .addField('sku', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Kod SKU').setHint('Unikalny identyfikator produktu')), {colSpan:2 })
     .addField('name', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Nazwa produktu')), { colSpan: 1 })
     .addField('category', 'select', ErpSelectBuilder.create(b => b.setPlaceholder('Kategoria').setOptions([
       { label: 'Elektronika', value: 'ele' },
       { label: 'Dom i Ogród', value: 'home' }
     ])))
     .addField('price', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Cena netto').setIcon('pi pi-money-bill')))
-    .addField('availableFrom', 'datepicker', ErpDatePickerBuilder.create(b => b.setPlaceholder('Dostępny od')), { colSpan: 2 });
-
-  protected readonly testFormConfig = this.formBuilder.build();
-  protected readonly testFormGroup = this.formBuilder.buildFormGroup();
+    .addField('availableFrom', 'datepicker', ErpDatePickerBuilder.create(b => b.setPlaceholder('Dostępny od')), { colSpan: 2 })
+  );
 
   protected readonly cancelBtnConfig = ErpButtonBuilder.create(b => b.setLabel('Anuluj').setVariant('text').setSeverity('secondary'));
-  protected readonly saveBtnConfig = ErpButtonBuilder.create(b => b.setLabel('Zapisz produkt').setSeverity('secondary'));
+  protected readonly saveBtnConfig = ErpButtonBuilder.create(b => b.setLabel('Zapisz produkt').setSeverity('secondary').setOnClick(() => this.saveProduct()));
+
+  protected readonly formCardConfig = ErpCardBuilder.create(b => b
+    .setTitle('Informacje o produkcie')
+    .setSubtitle('Wprowadź podstawowe dane techniczne i handlowe')
+    .setContentComponent(ErpFormComponent, { config: this.testFormConfig })
+    .setFooterComponent(ErpActionButtonsComponent, {
+      config: {
+        buttons: [
+          { ...this.cancelBtnConfig, id: 'cancel' },
+          { ...this.saveBtnConfig, id: 'save' }
+        ]
+      }
+    })
+  );
 
   protected saveProduct(): void {
-    console.log('Product Data:', this.testFormGroup.value);
+    console.log('Product Data:', this.testFormConfig.formGroup.value);
   }
 
   protected onFilter(): void {

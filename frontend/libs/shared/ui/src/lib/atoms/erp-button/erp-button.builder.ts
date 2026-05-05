@@ -1,5 +1,5 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { CoreButton, ErpButtonIconPosition, ErpButtonSeverity, ErpButtonVariant } from './erp-button.component';
+import { ErpButtonConfig, ErpButtonIconPosition, ErpButtonSeverity, ErpButtonVariant } from './erp-button.component';
 
 export function ErpButtonSave(builder: ErpButtonBuilder): ErpButtonBuilder {
   return builder.setLabel('Save').setSeverity('success').setIcon('pi pi-save');
@@ -16,7 +16,7 @@ export function ErpButtonCancel(builder: ErpButtonBuilder): ErpButtonBuilder {
 /**
  * https://primeng.org/button#api.button.props.label
  */
-export class ErpButtonBuilder extends ErpBaseBuilder<CoreButton> {
+export class ErpButtonBuilder extends ErpBaseBuilder<ErpButtonConfig> {
   public setLabel(label: string): this {
     this._data.label = label;
     return this;
@@ -56,8 +56,13 @@ export class ErpButtonBuilder extends ErpBaseBuilder<CoreButton> {
     return this;
   }
 
-  public setSize(size: 'small' | 'large'): this {
+  public setSize(size: 'small' | 'large' | undefined): this {
     this._data.size = size;
+    return this;
+  }
+
+  public setOnClick(callback: () => void): this {
+    this._data.onClick = callback;
     return this;
   }
 }

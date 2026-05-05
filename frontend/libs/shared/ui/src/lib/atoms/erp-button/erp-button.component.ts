@@ -10,7 +10,7 @@ export type ErpButtonSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'hel
 export type ErpButtonVariant = 'outlined' | 'text';
 export type ErpButtonIconPosition = ButtonIconPosition;
 
-export interface CoreButton {
+export interface ErpButtonConfig {
   label?: string;
   icon?: string;
   iconPos?: ErpButtonIconPosition;
@@ -18,6 +18,7 @@ export interface CoreButton {
   rounded?: boolean;
   variant?: ErpButtonVariant;
   size?: "small" | "large" | undefined;
+  onClick?: () => void;
 }
 
 @Component({
@@ -40,12 +41,13 @@ export interface CoreButton {
       [loading]="_loading"
       [disabled]="_disabled"
       [size]="_config.size"
+      (onClick)="handleClick()"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpButtonComponent {
-  public config = input.required<CoreButton>();
+  public config = input.required<ErpButtonConfig>();
   public loading = input<boolean>(false);
 
   /**
@@ -57,4 +59,11 @@ export class ErpButtonComponent {
    * https://primeng.org/button#api.button.props.badge
    */
   public badge = input<string>();
+
+  protected handleClick(): void {
+    const callback = this.config().onClick;
+    if (callback) {
+      callback();
+    }
+  }
 }

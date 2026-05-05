@@ -30,6 +30,10 @@ export * from './lib/atoms/erp-datepicker/erp-datepicker.component';
 export * from './lib/atoms/erp-multi-select/erp-multi-select.component';
 export * from './lib/atoms/erp-auto-complete/erp-auto-complete.component';
 export * from './lib/atoms/erp-listbox/erp-listbox.component';
+export * from './lib/atoms/erp-tabs/erp-tabs.component';
+export * from './lib/atoms/erp-menu/erp-menu.component';
+export * from './lib/atoms/erp-menubar/erp-menubar.component';
+export * from './lib/atoms/erp-context-menu/erp-context-menu.component';
 
 // Molecules
 export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.component';

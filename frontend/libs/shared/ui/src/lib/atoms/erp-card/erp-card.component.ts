@@ -26,20 +26,22 @@ export interface ErpCardConfig {
   template: `
     @let _config = config();
     <p-card 
-      [header]="_config.header || ''" 
-      [subheader]="_config.subtitle || ''"
-      [class]="(_config.styleClass || '') + ' shadow-sm border border-surface-200 dark:border-surface-800 rounded-2xl overflow-hidden bg-surface-0 dark:bg-surface-900'"
+      [header]="_config?.header || ''" 
+      [subheader]="_config?.subtitle || ''"
+      [styleClass]="(_config?.styleClass || '') + ' shadow-sm border border-surface-200 dark:border-surface-800 rounded-2xl overflow-hidden bg-surface-0 dark:bg-surface-900'"
     >
       <ng-template #title>
-        @if (_config.title) {
-          <div class="text-xl font-bold text-surface-900 dark:text-surface-0">{{ _config.title }}</div>
+        @if (_config?.title) {
+          <div class="text-xl font-bold text-surface-900 dark:text-surface-0">{{ _config?.title }}</div>
         }
       </ng-template>
 
       <!-- Main Content -->
-      <div [class]="(_config.contentStyleClass || '') + ' text-surface-600 dark:text-surface-400'">
-        @if (_config.contentComponent) {
-          <ng-container *ngComponentOutlet="_config.contentComponent; inputs: _config.contentConfig" />
+      <div [class]="(_config?.contentStyleClass || '') + ' text-surface-600 dark:text-surface-400'">
+        @if (_config?.contentComponent) {
+          <ng-container 
+            *ngComponentOutlet="_config!.contentComponent!; inputs: { ..._config!.contentConfig, tabValue: tabValue() }" 
+          />
         }
         <ng-content></ng-content>
       </div>
@@ -47,8 +49,10 @@ export interface ErpCardConfig {
       <!-- Footer -->
       <ng-template #footer>
         <div class="pt-4 border-t border-surface-100 dark:border-surface-800">
-          @if (_config.footerComponent) {
-            <ng-container *ngComponentOutlet="_config.footerComponent; inputs: _config.footerConfig" />
+          @if (_config?.footerComponent) {
+            <ng-container 
+              *ngComponentOutlet="_config!.footerComponent!; inputs: { ..._config!.footerConfig, tabValue: tabValue() }" 
+            />
           }
           <ng-content select="[footer]"></ng-content>
         </div>
@@ -56,8 +60,10 @@ export interface ErpCardConfig {
 
       <!-- Custom Header Template -->
       <ng-template #header>
-        @if (_config.headerComponent) {
-          <ng-container *ngComponentOutlet="_config.headerComponent; inputs: _config.headerConfig" />
+        @if (_config?.headerComponent) {
+          <ng-container 
+            *ngComponentOutlet="_config!.headerComponent!; inputs: { ..._config!.headerConfig, tabValue: tabValue() }" 
+          />
         }
         <ng-content select="[header]"></ng-content>
       </ng-template>
@@ -86,4 +92,5 @@ export interface ErpCardConfig {
 })
 export class ErpCardComponent {
   public config = input<ErpCardConfig>({});
+  public tabValue = input<string | number>();
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkflowEdge, WorkflowNode, WorkflowNodeAction } from '@erp/shared/ui';
 import { CatalogProductWorkflowComponent } from '@erp/catalog/ui';
@@ -20,6 +20,7 @@ import { CatalogProductWorkflowComponent } from '@erp/catalog/ui';
   `
 })
 export class ProductFlowComponent {
+  public tabValue = input<string | number>();
   readonlyMode = signal(false);
 
   nodes = signal<WorkflowNode[]>([

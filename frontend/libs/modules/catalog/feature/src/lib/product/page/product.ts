@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TabsModule } from 'primeng/tabs';
 import { 
   ErpPageLayoutComponent, 
   ErpDynamicFilterComponent, 
@@ -12,18 +11,20 @@ import {
   ErpDatePickerBuilder, 
   ErpCardComponent, 
   ErpCardBuilder,
-  ErpButtonComponent,
   ErpButtonBuilder,
   ErpActionButtonsComponent,
   ErpFormComponent,
-  ErpTreeSelectBuilder
+  ErpTreeSelectBuilder,
+  ErpTabsComponent,
+  ErpTabsBuilder
 } from '@erp/shared/ui';
 
 import { ProductFlowComponent } from './product-flow/product-flow.component';
+import { TreeNode } from 'primeng/api';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule, ProductFlowComponent, ErpCardComponent],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, ErpTabsComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
@@ -31,42 +32,29 @@ import { ProductFlowComponent } from './product-flow/product-flow.component';
         <erp-dynamic-filter [config]="filtersConfig" (filterSubmit)="onFilter()" />
       </div>
 
-      <!-- Nagłówek: Zakładki -->
-      <div header>
-        <p-tabs [value]="activeTab()" (valueChange)="activeTab.set($event)">
-          <p-tablist>
-            <p-tab value="0">Lista produktów</p-tab>
-            <p-tab value="1">Multimedia</p-tab>
-            <p-tab value="2">Magazyn</p-tab>
-            <p-tab value="3">Historia zmian</p-tab>
-            <p-tab value="4">Dodaj produkt (Test Form)</p-tab>
-          </p-tablist>
-        </p-tabs>
-      </div>
+      <!-- Nagłówek: Zakładki (Headless) -->
+      <!-- <div header class="w-full">
+        <erp-tabs [config]="tabsConfig" [(value)]="activeTab" [headless]="true" />
+      </div> -->
 
       <!-- Kontent -->
       <div class="h-full">
-        @if (activeTab() === '0') {
-          <div class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500">
-            Tabela z produktami (Zakładka 0)
-          </div>
-        } @else if (activeTab() === '1') {
-          <div class="h-full bg-surface-0 dark:bg-surface-900 rounded-2xl overflow-hidden shadow-sm border border-surface-200 dark:border-surface-700">
-            <erp-product-flow />
-          </div>
-        } @else if (activeTab() === '2') {
-          <div class="h-full flex items-center justify-center border-2 border-dashed border-orange-200 dark:border-orange-900/50 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 text-orange-400 dark:text-orange-500">
-            Stany Magazynowe (Zakładka 2)
-          </div>
-        } @else if (activeTab() === '3') {
-          <div class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500">
-            Historia zmian (Zakładka 3)
-          </div>
-        } @else if (activeTab() === '4') {
-          <div class="p-6">
-            <erp-card [config]="formCardConfig" />
-          </div>
-        }
+        <erp-tabs [config]="tabsConfig" [(value)]="activeTab">
+          <!-- Placeholdery dla zakładek bez komponentów (opcjonalne) -->
+          @if (activeTab() === '0') {
+            <div class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500">
+              Tabela z produktami (Zakładka 0)
+            </div>
+          } @else if (activeTab() === '2') {
+            <div class="h-full flex items-center justify-center border-2 border-dashed border-orange-200 dark:border-orange-900/50 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 text-orange-400 dark:text-orange-500">
+              Stany Magazynowe (Zakładka 2)
+            </div>
+          } @else if (activeTab() === '3') {
+            <div class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500">
+              Historia zmian (Zakładka 3)
+            </div>
+          }
+        </erp-tabs>
       </div>
     </erp-page-layout>
   `,
@@ -78,7 +66,7 @@ export class ProductComponent {
   private rootPage = 0;
   private childrenPageMap = new Map<string, number>();
 
-  private loadMoreNode(parentNode: import('primeng/api').TreeNode | null): import('primeng/api').TreeNode {
+  private loadMoreNode(parentNode: TreeNode | null): TreeNode {
     return { 
       key: parentNode ? `${parentNode.key}-load-more` : 'root-load-more', 
       data: { isLoadMore: true, parentNode: parentNode }, 
@@ -86,8 +74,8 @@ export class ProductComponent {
     };
   }
 
-  private generateRootPage(page: number): import('primeng/api').TreeNode[] {
-    const nodes: import('primeng/api').TreeNode[] = [];
+  private generateRootPage(page: number): TreeNode[] {
+    const nodes: TreeNode[] = [];
     for (let i = 0; i < 15; i++) {
       nodes.push({
         key: `root-${page}-${i}`,
@@ -98,8 +86,8 @@ export class ProductComponent {
     return nodes;
   }
 
-  private generateChildrenPage(parentKey: string, page: number): import('primeng/api').TreeNode[] {
-    const nodes: import('primeng/api').TreeNode[] = [];
+  private generateChildrenPage(parentKey: string, page: number): TreeNode[] {
+    const nodes: TreeNode[] = [];
     for (let i = 0; i < 10; i++) {
       nodes.push({
         key: `${parentKey}-child-${page}-${i}`,
@@ -172,6 +160,16 @@ export class ProductComponent {
      })
   );
 
+  protected readonly tabsConfig = ErpTabsBuilder.create(b => b
+    .addItem('Lista produktów', '0') // Możemy tu później dodać ErpTableComponent
+    .addItem('Multimedia', '1', ProductFlowComponent)
+    .addItem('Magazyn', '2')
+    .addItem('Historia zmian', '3')
+    .addItem('Dodaj produkt (Test Form)', '4', ErpCardComponent, { config: this.formCardConfig })
+    .setInitialValue('0')
+    .onTabChange(val => this.activeTab.set(val))
+  );
+
   protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {
     // ... tutaj inne filtry (zakomentowane)
     b.addFilter('Kategoria zaawansowana', ErpTreeSelectComponent, { config: this.treeConfig });
@@ -179,7 +177,7 @@ export class ProductComponent {
 
   protected readonly testFormConfig = ErpFormBuilder.create(f => f
     .setGridCols(2)
-    .addField('sku', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Kod SKU').setHint('Unikalny identyfikator produktu')), {colSpan:2 })
+    .addField('sku', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Kod SKU').setHint('Unikalny identyfikator produktu')), { colSpan:2 })
     .addField('name', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Nazwa produktu')), { colSpan: 1 })
     .addField('category', 'select', ErpSelectBuilder.create(b => b.setPlaceholder('Kategoria').setOptions([
       { label: 'Elektronika', value: 'ele' },

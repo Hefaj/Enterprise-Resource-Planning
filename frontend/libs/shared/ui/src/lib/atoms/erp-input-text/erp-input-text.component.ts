@@ -36,8 +36,9 @@ export interface ErpInputText extends ErpInputBase {
           [invalid]="!!_errorMsg"
           [pAutoFocus]="true"
           [fluid]="_config.fluid"
-          [size]="_config.size"
           [variant]="_config.variant"
+          [class.p-inputtext-sm]="_config.size === 'small'"
+          [class.p-inputtext-lg]="_config.size === 'large'"
         />
         <label for="on_label">{{ _config.placeholder || '' }}</label>
       </p-floatlabel>

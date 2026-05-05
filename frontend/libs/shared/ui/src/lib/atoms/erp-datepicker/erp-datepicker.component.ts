@@ -13,6 +13,10 @@ export { ErpDatePickerBuilder };
 export interface ErpDatePicker extends ErpInputBase {
   showIcon?: boolean;
   dateFormat?: string;
+  selectionMode?: 'single' | 'multiple' | 'range';
+  view?: 'date' | 'month' | 'year';
+  showTime?: boolean;
+  hourFormat?: '12' | '24';
 }
 
 @Component({
@@ -30,6 +34,10 @@ export interface ErpDatePicker extends ErpInputBase {
           [formControl]="_activeControl"
           [showIcon]="_config.showIcon"
           [dateFormat]="_config.dateFormat || 'dd/mm/yy'"
+          [selectionMode]="_config.selectionMode || 'single'"
+          [view]="_config.view || 'date'"
+          [showTime]="_config.showTime || false"
+          [hourFormat]="_config.hourFormat || '24'"
           [fluid]="true"
           (onBlur)="onTouched()"
           [appendTo]="'body'"

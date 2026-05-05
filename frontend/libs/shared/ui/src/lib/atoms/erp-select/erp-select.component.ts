@@ -11,10 +11,12 @@ import { ErpSelectBuilder } from './erp-select.builder';
 export { ErpSelectBuilder };
 
 export interface ErpSelect extends ErpInputBase {
-  options: { label: string; value: any }[];
+  options: any[];
   optionLabel?: string;
   optionValue?: string;
   filter?: boolean;
+  showClear?: boolean;
+  fluid?: boolean;
 }
 
 @Component({
@@ -34,7 +36,8 @@ export interface ErpSelect extends ErpInputBase {
           [optionLabel]="_config.optionLabel || 'label'"
           [optionValue]="_config.optionValue || 'value'"
           [filter]="_config.filter"
-          [fluid]="true"
+          [showClear]="_config.showClear"
+          [fluid]="_config.fluid ?? true"
           (onBlur)="onTouched()"
           [appendTo]="'body'"
         />

@@ -12,6 +12,9 @@ export { ErpInputTextBuilder };
 
 export interface ErpInputText extends ErpInputBase {
   icon?: string;
+  fluid?: boolean;
+  size?: 'small' | 'large';
+  variant?: 'filled' | 'outlined';
 }
 
 @Component({
@@ -32,6 +35,9 @@ export interface ErpInputText extends ErpInputBase {
           aria-describedby="hint"
           [invalid]="!!_errorMsg"
           [pAutoFocus]="true"
+          [fluid]="_config.fluid"
+          [size]="_config.size"
+          [variant]="_config.variant"
         />
         <label for="on_label">{{ _config.placeholder || '' }}</label>
       </p-floatlabel>

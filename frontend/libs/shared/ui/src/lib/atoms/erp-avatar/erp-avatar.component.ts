@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
+import { ErpAvatarBuilder } from './erp-avatar.builder';
+
+export { ErpAvatarBuilder };
 
 export interface ErpAvatar {
   shape?: 'square' | 'circle';

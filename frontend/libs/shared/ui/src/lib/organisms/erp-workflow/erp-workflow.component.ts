@@ -2,14 +2,19 @@ import { ChangeDetectionStrategy, Component, computed, ElementRef, HostListener,
 import { CommonModule } from '@angular/common';
 import { ErpWorkflowNodeComponent } from './erp-workflow-node.component';
 import { WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType } from './erp-workflow.types';
-import { MenubarModule } from 'primeng/menubar';
 import { MenuItem } from 'primeng/api';
-import { ContextMenuModule } from 'primeng/contextmenu';
+import { ErpWorkflowBuilder } from './erp-workflow.builder';
+import { ErpContextMenuBuilder } from '../../atoms/erp-context-menu/erp-context-menu.builder';
+import { ErpContextMenuComponent } from '../../atoms/erp-context-menu/erp-context-menu.component';
+import { ErpMenubarBuilder } from '../../atoms/erp-menubar/erp-menubar.builder';
+import { ErpMenubarComponent } from '../../atoms/erp-menubar/erp-menubar.component';
+
+export { ErpWorkflowBuilder };
 
 @Component({
   selector: 'erp-workflow',
   standalone: true,
-  imports: [CommonModule, ErpWorkflowNodeComponent, MenubarModule, ContextMenuModule],
+  imports: [CommonModule, ErpWorkflowNodeComponent, ErpMenubarComponent, ErpContextMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="relative w-full h-full overflow-hidden bg-surface-50 dark:bg-surface-950 border border-surface-200 rounded-lg outline-none cursor-grab active:cursor-grabbing"
@@ -91,11 +96,11 @@ import { ContextMenuModule } from 'primeng/contextmenu';
       
       <!-- Toolbar Menubar -->
       <div class="absolute top-4 left-4 z-10 shadow-md rounded-lg" (mousedown)="$event.stopPropagation()">
-        <p-menubar [model]="menubarItems()" />
+        <erp-menubar [config]="menubarConfig()" />
       </div>
-
+ 
       <!-- Context Menu -->
-      <p-contextMenu #canvasContextMenu [model]="contextMenuItems()" appendTo="body" />
+      <erp-context-menu #canvasContextMenu [config]="contextMenuConfig()" />
     </div>
   `,
   styles: [`
@@ -162,6 +167,16 @@ export class ErpWorkflowComponent implements AfterViewInit {
     });
   }
 
+  menubarConfig = computed(() => 
+    ErpMenubarBuilder.create(b => b.setItems(this.menubarItems()))
+  );
+  
+  contextMenuConfig = computed(() => 
+    ErpContextMenuBuilder.create(b => b.setItems(this.contextMenuItems()))
+  );
+
+  @ViewChild('canvasContextMenu') canvasContextMenu!: ErpContextMenuComponent;
+
   menubarItems = computed<MenuItem[]>(() => {
     const items: MenuItem[] = [];
     
@@ -178,11 +193,10 @@ export class ErpWorkflowComponent implements AfterViewInit {
       icon: 'pi pi-search-minus',
       command: () => this.resetZoom()
     });
-
+ 
     return items;
   });
 
-  @ViewChild('canvasContextMenu') canvasContextMenu: any;
   contextMenuPosition = signal<{x: number, y: number} | null>(null);
 
   onContextMenu(event: MouseEvent): void {

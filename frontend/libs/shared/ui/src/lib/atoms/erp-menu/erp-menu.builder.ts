@@ -28,4 +28,9 @@ export class ErpMenuBuilder extends ErpBaseBuilder<ErpMenuConfig> {
     this._data.popup = popup;
     return this;
   }
+
+  public setItems(items: MenuItem[]): this {
+    this._data.items = items;
+    return this;
+  }
 }

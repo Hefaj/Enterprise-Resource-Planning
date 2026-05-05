@@ -43,7 +43,7 @@ export class ErpButtonBuilder extends ErpBaseBuilder<CoreButton> {
   /**
    * https://primeng.org/button#api.buttondirective.props.rounded
    */
-  public withRounded(rounded = true): this {
+  public setRounded(rounded = true): this {
     this._data.rounded = rounded;
     return this;
   }
@@ -53,6 +53,11 @@ export class ErpButtonBuilder extends ErpBaseBuilder<CoreButton> {
    */
   public setVariant(variant: ErpButtonVariant): this {
     this._data.variant = variant;
+    return this;
+  }
+
+  public setSize(size: 'small' | 'large'): this {
+    this._data.size = size;
     return this;
   }
 }

@@ -2,6 +2,9 @@ import { ChangeDetectionStrategy, Component, input, viewChild } from '@angular/c
 import { CommonModule } from '@angular/common';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { MenuItem } from 'primeng/api';
+import { ErpContextMenuBuilder } from './erp-context-menu.builder';
+
+export { ErpContextMenuBuilder };
 
 export interface ErpContextMenuConfig {
   items: MenuItem[];

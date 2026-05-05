@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkflowNode, WorkflowNodeAction } from './erp-workflow.types';
-import { MenuModule } from 'primeng/menu';
-import { ButtonModule } from 'primeng/button';
-import { MenuItem } from 'primeng/api';
 import { TemplateRef } from '@angular/core';
+import { ErpButtonBuilder } from '../../atoms/erp-button/erp-button.builder';
+import { ErpButtonComponent } from '../../atoms/erp-button/erp-button.component';
+import { ErpMenuBuilder } from '../../atoms/erp-menu/erp-menu.builder';
+import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
 
 @Component({
   selector: 'erp-workflow-node',
   standalone: true,
-  imports: [CommonModule, MenuModule, ButtonModule],
+  imports: [CommonModule, ErpButtonComponent, ErpMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (isGateway()) {
@@ -37,8 +38,8 @@ import { TemplateRef } from '@angular/core';
         <!-- Actions Menu -->
         @if (!readonlyMode() && menuItems().length > 0) {
           <div class="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
-            <p-button icon="pi pi-ellipsis-v" [text]="true" [rounded]="true" severity="secondary" size="small" (onClick)="menuGateway.toggle($event); $event.stopPropagation()" />
-            <p-menu #menuGateway [model]="menuItems()" [popup]="true" appendTo="body" />
+            <erp-button [config]="actionButtonConfig" (onClick)="menuGateway.toggle($event); $event.stopPropagation()" />
+            <erp-menu #menuGateway [config]="menuConfig()" />
           </div>
         }
 
@@ -78,15 +79,11 @@ import { TemplateRef } from '@angular/core';
           <!-- Actions Menu -->
           @if (!readonlyMode() && menuItems().length > 0) {
             <div class="ml-2">
-              <p-button 
-                icon="pi pi-ellipsis-v" 
-                [text]="true" 
-                [rounded]="true" 
-                severity="secondary" 
-                size="small"
+              <erp-button 
+                [config]="actionButtonConfig" 
                 (onClick)="menu.toggle($event); $event.stopPropagation()"
               />
-              <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body" />
+              <erp-menu #menu [config]="menuConfig()" />
             </div>
           }
         </div>
@@ -191,9 +188,9 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
     }
   });
 
-  menuItems = computed<MenuItem[]>(() => {
+  menuItems = computed(() => {
     // 1. Global actions
-    const items: MenuItem[] = this.actions().map(action => ({
+    const items: any[] = this.actions().map(action => ({
       label: action.label,
       icon: action.icon,
       command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() })
@@ -208,7 +205,7 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
       });
     });
 
-    // 3. Node-specific actions (overrides or instance-specific)
+    // 3. Node-specific actions
     const nodeActions = this.node().actions || [];
     nodeActions.forEach(action => {
       items.push({
@@ -232,6 +229,18 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
 
     return items;
   });
+
+  menuConfig = computed(() => 
+    ErpMenuBuilder.create(b => b.setItems(this.menuItems()))
+  );
+
+  protected readonly actionButtonConfig = ErpButtonBuilder.create(b => b
+    .setIcon('pi pi-ellipsis-v')
+    .setVariant('text')
+    .setRounded(true)
+    .setSeverity('secondary')
+    .setSize('small')
+  );
 
   headerBgClass = computed(() => {
     const type = this.node().type;

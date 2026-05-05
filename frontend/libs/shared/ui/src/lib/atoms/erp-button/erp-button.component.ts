@@ -17,6 +17,7 @@ export interface CoreButton {
   severity?: ErpButtonSeverity;
   rounded?: boolean;
   variant?: ErpButtonVariant;
+  size?: "small" | "large" | undefined;
 }
 
 @Component({
@@ -38,6 +39,7 @@ export interface CoreButton {
       [badge]="_badge"
       [loading]="_loading"
       [disabled]="_disabled"
+      [size]="_config.size"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

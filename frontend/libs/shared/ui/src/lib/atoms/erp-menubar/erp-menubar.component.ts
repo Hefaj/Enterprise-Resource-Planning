@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, input, TemplateRef } from '@angular
 import { CommonModule } from '@angular/common';
 import { MenubarModule } from 'primeng/menubar';
 import { MenuItem } from 'primeng/api';
-import { ErpMenuBuilder } from '../erp-menu/erp-menu.builder';
+import { ErpMenubarBuilder } from './erp-menubar.builder';
+
+export { ErpMenubarBuilder };
 
 export interface ErpMenubarConfig {
   items: MenuItem[];

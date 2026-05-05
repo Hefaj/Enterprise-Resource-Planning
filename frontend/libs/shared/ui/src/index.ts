@@ -28,6 +28,8 @@ export * from './lib/atoms/erp-select/erp-select.component';
 export * from './lib/atoms/erp-toggle-switch/erp-toggle-switch.component';
 export * from './lib/atoms/erp-datepicker/erp-datepicker.component';
 export * from './lib/atoms/erp-list-filter/erp-list-filter.component';
+export * from './lib/atoms/erp-multi-select/erp-multi-select.component';
+export * from './lib/atoms/erp-auto-complete/erp-auto-complete.component';
 
 // Molecules
 export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.component';

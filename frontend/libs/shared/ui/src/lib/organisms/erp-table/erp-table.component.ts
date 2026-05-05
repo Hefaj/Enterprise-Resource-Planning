@@ -1,14 +1,76 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, model, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, Type, ViewChild } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe, PercentPipe } from '@angular/common';
 import { TableModule, Table } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { TagModule } from 'primeng/tag';
 import { ErpTableBuilder } from './erp-table.builder';
 
 export { ErpTableBuilder };
 
-// ── Interfejsy ──────────────────────────────────────────
+// ── Cell Renderer Configs ───────────────────────────────
+
+export interface ErpCellImageConfig {
+  /** Szerokość obrazka (np. '40px') */
+  width?: string;
+  /** Wysokość obrazka (np. '40px') */
+  height?: string;
+  /** Zaokrąglony kształt (avatar) */
+  rounded?: boolean;
+  /** Ikona fallback gdy brak obrazka */
+  fallbackIcon?: string;
+}
+
+export interface ErpCellBadgeConfig {
+  /** Mapowanie wartości → severity PrimeNG (np. { 'Aktywny': 'success' }) */
+  severityMap: Record<string, 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'>;
+}
+
+export interface ErpCellTagConfig {
+  /** Mapowanie wartości → severity */
+  severityMap?: Record<string, string>;
+  /** Zaokrąglone rogi */
+  rounded?: boolean;
+}
+
+export interface ErpCellBooleanConfig {
+  /** Ikona dla wartości true */
+  trueIcon?: string;
+  /** Ikona dla wartości false */
+  falseIcon?: string;
+  /** Klasa CSS dla wartości true */
+  trueClass?: string;
+  /** Klasa CSS dla wartości false */
+  falseClass?: string;
+}
+
+export interface ErpCellLinkConfig {
+  /** Pole z obiektu wiersza użyte jako href */
+  hrefField?: string;
+  /** Callback po kliknięciu linku */
+  onClick?: (row: any) => void;
+}
+
+export interface ErpCellCustomConfig {
+  /** Komponent Angular wstrzykiwany w komórkę */
+  component: Type<any>;
+  /** Dodatkowe inputy przekazywane do komponentu */
+  inputs?: Record<string, any>;
+}
+
+export type ErpCellRendererConfig =
+  | ErpCellImageConfig
+  | ErpCellBadgeConfig
+  | ErpCellTagConfig
+  | ErpCellBooleanConfig
+  | ErpCellLinkConfig
+  | ErpCellCustomConfig;
+
+/** Typ renderera komórki */
+export type ErpCellType = 'text' | 'image' | 'badge' | 'tag' | 'boolean' | 'link' | 'custom';
+
+// ── Table Interfaces ────────────────────────────────────
 
 export interface ErpTableColumn {
   field: string;
@@ -17,12 +79,17 @@ export interface ErpTableColumn {
   width?: string;
   minWidth?: string;
   align?: 'left' | 'center' | 'right';
+  /** Pipe formatujący (dla typu 'text') */
   pipe?: 'currency' | 'date' | 'number' | 'percent';
   pipeArgs?: string;
   frozen?: boolean;
   /** Włącza wbudowany filtr kolumnowy */
   filterable?: boolean;
   filterType?: 'text' | 'numeric' | 'date';
+  /** Typ renderera komórki (domyślnie 'text') */
+  type?: ErpCellType;
+  /** Konfiguracja specyficzna dla danego typu renderera */
+  typeConfig?: ErpCellRendererConfig;
 }
 
 export interface ErpTableConfig {
@@ -43,7 +110,7 @@ export interface ErpTableConfig {
 
 export type ErpTableFilters = Record<string, any>;
 
-// ── Komponent ───────────────────────────────────────────
+// ── Component ───────────────────────────────────────────
 
 @Component({
   selector: 'erp-table',
@@ -54,6 +121,7 @@ export type ErpTableFilters = Record<string, any>;
     InputTextModule,
     IconFieldModule,
     InputIconModule,
+    TagModule,
   ],
   template: `
     @let _config = config();
@@ -163,10 +231,91 @@ export type ErpTableFilters = Record<string, any>;
               </td>
             }
             @for (col of _config.columns; track col.field) {
-              <td
-                [style.text-align]="col.align || 'left'"
-              >
-                {{ formatValue(row[col.field], col) }}
+              <td [style.text-align]="col.align || 'left'">
+                @switch (col.type) {
+                  <!-- Image Renderer -->
+                  @case ('image') {
+                    @if (row[col.field]) {
+                      <img 
+                        [src]="row[col.field]" 
+                        [alt]="col.header"
+                        [style.width]="$any(col.typeConfig)?.width || '40px'"
+                        [style.height]="$any(col.typeConfig)?.height || '40px'"
+                        class="object-cover"
+                        [class.rounded-full]="$any(col.typeConfig)?.rounded"
+                        [class.rounded-lg]="!$any(col.typeConfig)?.rounded"
+                      />
+                    } @else {
+                      <div
+                        class="flex items-center justify-center bg-surface-100 dark:bg-surface-800 text-surface-400 dark:text-surface-500"
+                        [style.width]="$any(col.typeConfig)?.width || '40px'"
+                        [style.height]="$any(col.typeConfig)?.height || '40px'"
+                        [class.rounded-full]="$any(col.typeConfig)?.rounded"
+                        [class.rounded-lg]="!$any(col.typeConfig)?.rounded"
+                      >
+                        <i [class]="$any(col.typeConfig)?.fallbackIcon || 'pi pi-image'"></i>
+                      </div>
+                    }
+                  }
+
+                  <!-- Badge Renderer -->
+                  @case ('badge') {
+                    @if (row[col.field] !== null && row[col.field] !== undefined) {
+                      <p-tag 
+                        [value]="row[col.field]" 
+                        [severity]="getBadgeSeverity(row[col.field], col)"
+                        [rounded]="true"
+                      />
+                    }
+                  }
+
+                  <!-- Tag Renderer -->
+                  @case ('tag') {
+                    @if (row[col.field] !== null && row[col.field] !== undefined) {
+                      <p-tag 
+                        [value]="row[col.field]" 
+                        [severity]="getTagSeverity(row[col.field], col)"
+                        [rounded]="$any(col.typeConfig)?.rounded ?? false"
+                      />
+                    }
+                  }
+
+                  <!-- Boolean Renderer -->
+                  @case ('boolean') {
+                    <i 
+                      [class]="row[col.field] 
+                        ? ($any(col.typeConfig)?.trueIcon || 'pi pi-check-circle') 
+                        : ($any(col.typeConfig)?.falseIcon || 'pi pi-times-circle')"
+                      [ngClass]="row[col.field] 
+                        ? ($any(col.typeConfig)?.trueClass || 'text-green-500') 
+                        : ($any(col.typeConfig)?.falseClass || 'text-red-400')"
+                    ></i>
+                  }
+
+                  <!-- Link Renderer -->
+                  @case ('link') {
+                    <a 
+                      class="text-primary-500 hover:text-primary-700 hover:underline cursor-pointer transition-colors"
+                      (click)="handleLinkClick(row, col, $event)"
+                    >
+                      {{ row[col.field] }}
+                    </a>
+                  }
+
+                  <!-- Custom Renderer -->
+                  @case ('custom') {
+                    @if ($any(col.typeConfig)?.component) {
+                      <ng-container 
+                        *ngComponentOutlet="$any(col.typeConfig).component; inputs: getCustomInputs(row, col)" 
+                      />
+                    }
+                  }
+
+                  <!-- Default: Text Renderer -->
+                  @default {
+                    {{ formatValue(row[col.field], col) }}
+                  }
+                }
               </td>
             }
           </tr>
@@ -286,12 +435,10 @@ export class ErpTableComponent {
           return false;
         }
 
-        // Filtrowanie po wartości (string contains / exact match dla reszty)
         if (typeof filterValue === 'string') {
           return String(cellValue).toLowerCase().includes(filterValue.toLowerCase());
         }
 
-        // Tablice (np. multi-select) — sprawdź, czy cellValue jest wśród wybranych
         if (Array.isArray(filterValue)) {
           return filterValue.includes(cellValue);
         }
@@ -300,6 +447,8 @@ export class ErpTableComponent {
       });
     });
   });
+
+  // ── Event Handlers ──
 
   protected onGlobalFilter(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
@@ -314,6 +463,14 @@ export class ErpTableComponent {
     this.config().onRowUnselect?.(event.data);
   }
 
+  protected handleLinkClick(row: any, col: ErpTableColumn, event: Event): void {
+    event.preventDefault();
+    const linkConfig = col.typeConfig as ErpCellLinkConfig;
+    linkConfig?.onClick?.(row);
+  }
+
+  // ── Cell Renderer Helpers ──
+
   protected hasColumnFilters(config: ErpTableConfig): boolean {
     return config.columns.some(c => c.filterable);
   }
@@ -323,6 +480,26 @@ export class ErpTableComponent {
     if (config.size === 'small') classes.push('p-datatable-sm');
     if (config.size === 'large') classes.push('p-datatable-lg');
     return classes.join(' ');
+  }
+
+  protected getBadgeSeverity(value: any, col: ErpTableColumn): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+    const config = col.typeConfig as ErpCellBadgeConfig;
+    return config?.severityMap?.[String(value)] || 'info';
+  }
+
+  protected getTagSeverity(value: any, col: ErpTableColumn): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+    const config = col.typeConfig as ErpCellTagConfig;
+    return (config?.severityMap?.[String(value)] as any) || 'info';
+  }
+
+  protected getCustomInputs(row: any, col: ErpTableColumn): Record<string, any> {
+    const config = col.typeConfig as ErpCellCustomConfig;
+    return {
+      ...config?.inputs,
+      row,
+      field: col.field,
+      value: row[col.field],
+    };
   }
 
   protected formatValue(value: any, col: ErpTableColumn): string {

@@ -6,14 +6,23 @@ import {
   ErpDynamicFilterComponent, 
   ErpDynamicFilterBuilder, 
   ErpTreeSelectComponent,
-  ErpTreeSelectBuilder
+  ErpTreeSelectBuilder,
+  ErpFormComponent,
+  ErpFormBuilder,
+  ErpInputTextBuilder,
+  ErpSelectBuilder,
+  ErpDatePickerBuilder,
+  ErpEmptyCardComponent,
+  ErpEmptyCardBuilder,
+  ErpButtonComponent,
+  ErpButtonBuilder
 } from '@erp/shared/ui';
 
 import { ProductFlowComponent } from './product-flow/product-flow.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule, ProductFlowComponent],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, TabsModule, ProductFlowComponent, ErpFormComponent, ErpEmptyCardComponent, ErpButtonComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
@@ -29,6 +38,7 @@ import { ProductFlowComponent } from './product-flow/product-flow.component';
             <p-tab value="1">Multimedia</p-tab>
             <p-tab value="2">Magazyn</p-tab>
             <p-tab value="3">Historia zmian</p-tab>
+            <p-tab value="4">Dodaj produkt (Test Form)</p-tab>
           </p-tablist>
         </p-tabs>
       </div>
@@ -47,9 +57,19 @@ import { ProductFlowComponent } from './product-flow/product-flow.component';
           <div class="h-full flex items-center justify-center border-2 border-dashed border-orange-200 dark:border-orange-900/50 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 text-orange-400 dark:text-orange-500">
             Stany Magazynowe (Zakładka 2)
           </div>
-        } @else {
+        } @else if (activeTab() === '3') {
           <div class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500">
             Historia zmian (Zakładka 3)
+          </div>
+        } @else if (activeTab() === '4') {
+          <div class="p-6">
+            <erp-empty-card [config]="formCardConfig">
+               <erp-form [config]="testFormConfig" [formGroup]="testFormGroup" />
+               <div class="mt-6 flex justify-end gap-2">
+                  <erp-button [config]="cancelBtnConfig" />
+                  <erp-button [config]="saveBtnConfig" (onClick)="saveProduct()" />
+               </div>
+            </erp-empty-card>
           </div>
         }
       </div>
@@ -161,6 +181,32 @@ export class ProductComponent {
     // ... tutaj inne filtry (zakomentowane)
     b.addFilter('Kategoria zaawansowana', ErpTreeSelectComponent, { config: this.treeConfig });
   });
+
+  protected readonly formCardConfig = ErpEmptyCardBuilder.create(b => b
+    .setTitle('Informacje o produkcie')
+    .setSubtitle('Wprowadź podstawowe dane techniczne i handlowe')
+  );
+
+  private readonly formBuilder = new ErpFormBuilder()
+    .setGridCols(2)
+    .addField('sku', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Kod SKU').setHint('Unikalny identyfikator produktu')))
+    .addField('name', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Nazwa produktu')), { colSpan: 1 })
+    .addField('category', 'select', ErpSelectBuilder.create(b => b.setPlaceholder('Kategoria').setOptions([
+      { label: 'Elektronika', value: 'ele' },
+      { label: 'Dom i Ogród', value: 'home' }
+    ])))
+    .addField('price', 'text', ErpInputTextBuilder.create(b => b.setPlaceholder('Cena netto').setIcon('pi pi-money-bill')))
+    .addField('availableFrom', 'datepicker', ErpDatePickerBuilder.create(b => b.setPlaceholder('Dostępny od')), { colSpan: 2 });
+
+  protected readonly testFormConfig = this.formBuilder.build();
+  protected readonly testFormGroup = this.formBuilder.buildFormGroup();
+
+  protected readonly cancelBtnConfig = ErpButtonBuilder.create(b => b.setLabel('Anuluj').setVariant('text').setSeverity('secondary'));
+  protected readonly saveBtnConfig = ErpButtonBuilder.create(b => b.setLabel('Zapisz produkt').setSeverity('secondary'));
+
+  protected saveProduct(): void {
+    console.log('Product Data:', this.testFormGroup.value);
+  }
 
   protected onFilter(): void {
     console.log('Applied filters - submit triggered');

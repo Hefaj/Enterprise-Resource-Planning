@@ -12,6 +12,11 @@ export class ErpEmptyCardBuilder extends ErpBaseBuilder<ErpEmptyCardConfig> {
     return this;
   }
 
+  public setSubtitle(subtitle: string): this {
+    this._data.subtitle = subtitle;
+    return this;
+  }
+
   public setDescription(description: string): this {
     this._data.description = description;
     return this;

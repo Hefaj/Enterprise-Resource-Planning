@@ -40,4 +40,5 @@ export * from './lib/molecules/erp-tree-select/erp-tree-select.types';
 export * from './lib/organisms/erp-workflow/erp-workflow.component';
 export * from './lib/organisms/erp-workflow/erp-workflow-node.component';
 export * from './lib/organisms/erp-workflow/erp-workflow.types';
+export * from './lib/organisms/erp-workflow/erp-workflow.utils';
 

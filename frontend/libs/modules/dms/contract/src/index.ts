@@ -1,1 +1,3 @@
-export * from './lib/dms-contract/dms-contract';
+export * from './lib/entry.menu';
+
+export * from './lib/entry.routes';

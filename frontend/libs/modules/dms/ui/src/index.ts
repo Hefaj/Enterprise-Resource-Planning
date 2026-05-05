@@ -1,0 +1,1 @@
+export * from './lib/document-workflow/dms-document-workflow.component';

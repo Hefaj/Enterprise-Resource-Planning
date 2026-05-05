@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'erp',
+  selector: 'lib-dms-data-access',
   imports: [],
-  templateUrl: './dms-contract.html',
+  templateUrl: './dms-data-access.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DmsContract {}
+export class DmsDataAccess {}

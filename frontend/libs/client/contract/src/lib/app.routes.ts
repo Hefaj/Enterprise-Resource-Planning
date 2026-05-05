@@ -40,6 +40,10 @@ export const appRoutes: Route[] = [
         path: 'catalog',
         loadChildren: () => loadRemote<typeof import('@erp/catalog/contract')>('catalog/contract').then((m) => m!.remoteRoutes),
       },
+      {
+        path: 'dms',
+        loadChildren: () => loadRemote<typeof import('@erp/dms/contract')>('dms/contract').then((m) => m!.remoteRoutes),
+      },
     ],
   },
   {

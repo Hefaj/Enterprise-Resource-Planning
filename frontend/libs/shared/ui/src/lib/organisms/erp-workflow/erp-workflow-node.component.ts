@@ -43,11 +43,11 @@ import { TemplateRef } from '@angular/core';
         }
 
         <!-- Output Handle -->
-        <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-white cursor-pointer hover:scale-125 transition-transform shadow-sm z-20"
+        <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm z-20"
              (mousedown)="onHandleMouseDown($event, 'default')"></div>
              
         <!-- Input Handle -->
-        <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-surface-400 rounded-full border-2 border-white z-20"></div>
+        <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-surface-400 rounded-full border-2 border-surface-0 dark:border-surface-900 z-20"></div>
       </div>
     } @else {
       <div 
@@ -105,20 +105,20 @@ import { TemplateRef } from '@angular/core';
 
         <!-- Output Handles (Dots) -->
         @if (node().type === 'condition') {
-          <div class="absolute -bottom-2 left-1/4 w-4 h-4 bg-red-500 rounded-full border-2 border-white cursor-pointer hover:scale-125 transition-transform shadow-sm"
+          <div class="absolute -bottom-2 left-1/4 w-4 h-4 bg-red-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
                title="False"
                (mousedown)="onHandleMouseDown($event, 'false')"></div>
-          <div class="absolute -bottom-2 right-1/4 w-4 h-4 bg-green-500 rounded-full border-2 border-white cursor-pointer hover:scale-125 transition-transform shadow-sm"
+          <div class="absolute -bottom-2 right-1/4 w-4 h-4 bg-green-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
                title="True"
                (mousedown)="onHandleMouseDown($event, 'true')"></div>
         } @else if (node().type !== 'end') {
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-white cursor-pointer hover:scale-125 transition-transform shadow-sm"
+          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
                (mousedown)="onHandleMouseDown($event, 'default')"></div>
         }
         
         <!-- Input Handle (Dot) -->
         @if (node().type !== 'start') {
-          <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-surface-400 rounded-full border-2 border-white"></div>
+          <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-surface-400 rounded-full border-2 border-surface-0 dark:border-surface-900"></div>
         }
       </div>
     }

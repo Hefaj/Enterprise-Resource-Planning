@@ -36,19 +36,19 @@ import { ProductFlowComponent } from './product-flow/product-flow.component';
       <!-- Kontent -->
       <div class="h-full">
         @if (activeTab() === '0') {
-          <div class="h-full flex items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl bg-white/50 text-slate-400">
+          <div class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500">
             Tabela z produktami (Zakładka 0)
           </div>
         } @else if (activeTab() === '1') {
-          <div class="h-full bg-white dark:bg-surface-900 rounded-2xl overflow-hidden shadow-sm border border-surface-200">
+          <div class="h-full bg-surface-0 dark:bg-surface-900 rounded-2xl overflow-hidden shadow-sm border border-surface-200 dark:border-surface-700">
             <erp-product-flow />
           </div>
         } @else if (activeTab() === '2') {
-          <div class="h-full flex items-center justify-center border-2 border-dashed border-orange-200 rounded-2xl bg-orange-50/50 text-orange-400">
+          <div class="h-full flex items-center justify-center border-2 border-dashed border-orange-200 dark:border-orange-900/50 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 text-orange-400 dark:text-orange-500">
             Stany Magazynowe (Zakładka 2)
           </div>
         } @else {
-          <div class="h-full flex items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl bg-white/50 text-slate-400">
+          <div class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500">
             Historia zmian (Zakładka 3)
           </div>
         }

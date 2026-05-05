@@ -20,14 +20,14 @@ export { ErpDynamicFilterBuilder };
       @for (item of config().items; track $index) {
         <div class="flex flex-col gap-2">
           @if (item.label) {
-            <label class="text-sm font-medium text-slate-700">{{ item.label }}</label>
+            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ item.label }}</label>
           }
           <ng-container *ngComponentOutlet="item.component; inputs: item.inputs" />
         </div>
       }
 
       @if (config().showSubmitButton !== false) {
-        <div class="mt-4 pt-6 border-t border-slate-100">
+        <div class="mt-4 pt-6 border-t border-surface-100 dark:border-surface-800">
           <erp-button 
             [config]="submitBtnConfig()" 
             class="w-full" 

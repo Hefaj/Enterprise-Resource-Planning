@@ -44,15 +44,15 @@ export { ErpTreeSelectBuilder };
   imports: [CommonModule, PopoverModule, TreeModule, CheckboxModule, FormsModule, ErpIntersectDirective],
   template: `
     <div 
-      class="border border-slate-300 rounded-md px-3 py-2 cursor-pointer flex justify-between items-center bg-white hover:border-slate-400"
+      class="border border-surface-300 dark:border-surface-700 rounded-md px-3 py-2 cursor-pointer flex justify-between items-center bg-surface-0 dark:bg-surface-900 hover:border-surface-400 dark:hover:border-surface-600"
       (click)="!disabled && op.toggle($event)"
       [class.opacity-50]="disabled"
       [class.cursor-not-allowed]="disabled"
     >
-      <span class="text-slate-700 truncate">
+      <span class="text-surface-700 dark:text-surface-200 truncate">
         {{ displayText() }}
       </span>
-      <i class="pi pi-chevron-down text-slate-500 text-sm"></i>
+      <i class="pi pi-chevron-down text-surface-500 dark:text-surface-400 text-sm"></i>
     </div>
 
     <p-popover #op [style]="{'min-width': '350px', 'max-width': '600px'}">
@@ -65,7 +65,7 @@ export { ErpTreeSelectBuilder };
         >
           <ng-template let-node pTemplate="default">
             @if (node.data?.isLoadMore) {
-              <div class="flex items-center justify-center w-full py-2 text-slate-500 gap-2 select-none cursor-pointer" (erpIntersect)="triggerLoadMore(node)" (click)="triggerLoadMore(node)">
+              <div class="flex items-center justify-center w-full py-2 text-surface-500 dark:text-surface-400 gap-2 select-none cursor-pointer" (erpIntersect)="triggerLoadMore(node)" (click)="triggerLoadMore(node)">
                 <i class="pi pi-spinner pi-spin"></i>
                 <span class="text-sm">Doczytywanie...</span>
               </div>
@@ -76,11 +76,11 @@ export { ErpTreeSelectBuilder };
                 <div class="flex items-center gap-2 flex-1" (click)="$event.stopPropagation()">
                   
                   @if (node.children?.length || node.leaf === false) {
-                    <div class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors cursor-pointer" (click)="toggleExpand(node, $event)">
+                    <div class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer" (click)="toggleExpand(node, $event)">
                       @if (isLoading(node)) {
-                        <i class="pi pi-spinner pi-spin text-slate-400 text-sm"></i>
+                        <i class="pi pi-spinner pi-spin text-surface-400 dark:text-surface-600 text-sm"></i>
                       } @else {
-                        <i class="pi text-slate-500 text-sm" [ngClass]="node.expanded ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                        <i class="pi text-surface-500 dark:text-surface-400 text-sm" [ngClass]="node.expanded ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
                       }
                     </div>
                   } @else {
@@ -95,7 +95,7 @@ export { ErpTreeSelectBuilder };
                   />
                   <!-- Klikalny obszar tekstu -->
                   <div class="flex-1 py-1" (click)="toggleNode(node, !isNodeChecked(node))">
-                    <span [class.text-slate-400]="isNodeDisabled(node)">{{ node.label }}</span>
+                    <span [class.text-surface-400]="isNodeDisabled(node)" [class.dark:text-surface-600]="isNodeDisabled(node)">{{ node.label }}</span>
                   </div>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export { ErpTreeSelectBuilder };
                       (ngModelChange)="toggleAllChildren(node, $event)" 
                     />
                     <div class="flex-1 py-1 cursor-pointer" (click)="toggleAllChildren(node, !isAllChildrenChecked(node))">
-                      <span class="text-sm text-slate-600 hover:underline whitespace-nowrap">
+                      <span class="text-sm text-surface-600 dark:text-surface-400 hover:underline whitespace-nowrap">
                         Wszystkie dzieci
                       </span>
                     </div>

@@ -77,6 +77,7 @@ import { DmsDocumentWorkflowComponent, DocumentTableComponent, DmsDocument } fro
                   <!-- Workflow Engine -->
                   <div class="flex-1 bg-surface-0 dark:bg-surface-950 rounded-2xl border border-surface-200 dark:border-surface-800 overflow-hidden relative">
                     <erp-dms-document-workflow
+                    class="h-full w-full"
                       [nodes]="currentDocumentNodes()"
                       [edges]="currentDocumentEdges()"
                       [readonlyMode]="true"

@@ -34,9 +34,6 @@ export class ProductTableComponent {
   /** Stan ładowania */
   public loading = input<boolean>(false);
 
-  /** Kompatybilność z ErpTabs (kontekst zakładki) */
-  public tabValue = input<string | number>();
-
   /** Konfiguracja tabeli z predefiniowanymi kolumnami produktowymi */
   protected readonly tableConfig = ErpTableBuilder.create(b => b
     // Miniatura produktu

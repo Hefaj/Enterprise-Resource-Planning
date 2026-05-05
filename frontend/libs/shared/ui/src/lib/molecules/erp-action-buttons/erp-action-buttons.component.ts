@@ -33,6 +33,5 @@ export interface ErpActionButtonsConfig {
 })
 export class ErpActionButtonsComponent {
   public config = input.required<ErpActionButtonsConfig>();
-  public tabValue = input<string | number>();
   public buttonClick = output<string>();
 }

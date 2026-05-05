@@ -40,7 +40,7 @@ export interface ErpCardConfig {
       <div [class]="(_config?.contentStyleClass || '') + ' text-surface-600 dark:text-surface-400'">
         @if (_config?.contentComponent) {
           <ng-container 
-            *ngComponentOutlet="_config!.contentComponent!; inputs: { ..._config!.contentConfig, tabValue: tabValue() }" 
+            *ngComponentOutlet="_config!.contentComponent!; inputs: { ..._config!.contentConfig }" 
           />
         }
         <ng-content></ng-content>
@@ -51,7 +51,7 @@ export interface ErpCardConfig {
         <div class="pt-4 border-t border-surface-100 dark:border-surface-800">
           @if (_config?.footerComponent) {
             <ng-container 
-              *ngComponentOutlet="_config!.footerComponent!; inputs: { ..._config!.footerConfig, tabValue: tabValue() }" 
+              *ngComponentOutlet="_config!.footerComponent!; inputs: { ..._config!.footerConfig }" 
             />
           }
           <ng-content select="[footer]"></ng-content>
@@ -62,7 +62,7 @@ export interface ErpCardConfig {
       <ng-template #header>
         @if (_config?.headerComponent) {
           <ng-container 
-            *ngComponentOutlet="_config!.headerComponent!; inputs: { ..._config!.headerConfig, tabValue: tabValue() }" 
+            *ngComponentOutlet="_config!.headerComponent!; inputs: { ..._config!.headerConfig }" 
           />
         }
         <ng-content select="[header]"></ng-content>
@@ -92,5 +92,4 @@ export interface ErpCardConfig {
 })
 export class ErpCardComponent {
   public config = input<ErpCardConfig>({});
-  public tabValue = input<string | number>();
 }

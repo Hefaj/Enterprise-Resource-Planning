@@ -400,9 +400,6 @@ export class ErpTableComponent {
   /** Stan ładowania */
   public loading = input<boolean>(false);
 
-  /** Kompatybilność z ErpTabs (kontekst zakładki) */
-  public tabValue = input<string | number>();
-
   /** Selekcja wierszy (two-way binding) */
   public selection = model<any>(null);
 

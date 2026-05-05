@@ -55,7 +55,7 @@ export interface ErpTabsConfig {
         <div class="flex-1 mt-4">
           @if (activeTab?.component) {
             <ng-container 
-              *ngComponentOutlet="activeTab!.component!; inputs: { ...activeTab!.config, tabValue: _value }" 
+              *ngComponentOutlet="activeTab!.component!; inputs: activeTab!.config" 
             />
           }
           <ng-content></ng-content>

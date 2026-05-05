@@ -67,7 +67,7 @@ import { ProductFlowComponent } from './product-flow/product-flow.component';
                <erp-form [config]="testFormConfig" [formGroup]="testFormGroup" />
                <div class="mt-6 flex justify-end gap-2">
                   <erp-button [config]="cancelBtnConfig" />
-                  <erp-button [config]="saveBtnConfig" (onClick)="saveProduct()" />
+                  <erp-button [config]="saveBtnConfig" (click)="saveProduct()" />
                </div>
             </erp-empty-card>
           </div>

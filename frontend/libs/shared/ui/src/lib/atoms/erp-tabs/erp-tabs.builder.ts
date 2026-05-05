@@ -9,6 +9,14 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
     this._data.items = [];
   }
 
+  /**
+   * Dodaje zakładkę. Opcjonalnie przypisuje komponent renderowany po wybraniu.
+   * @param label — Tekst wyświetlany na zakładce
+   * @param value — Unikalna wartość identyfikująca zakładkę
+   * @param component — Komponent Angular wstrzykiwany jako treść zakładki
+   * @param config — Konfiguracja (inputy) przekazywana do komponentu
+   * @param options — Opcje dodatkowe: ikona, wyłączenie zakładki
+   */
   public addItem<TComp>(
     label: string, 
     value: string | number, 
@@ -27,21 +35,25 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
     return this;
   }
 
+  /** Ustawia zakładkę aktywną na starcie. */
   public setInitialValue(value: string | number): this {
     this._data.initialValue = value;
     return this;
   }
 
+  /** Callback wywoływany przy każdej zmianie aktywnej zakładki. */
   public onTabChange(callback: (value: string | number) => void): this {
     this._data.onTabChange = callback;
     return this;
   }
 
+  /** Tryb 'headless' — renderuje tylko listę zakładek, bez obszaru treści. */
   public setHeadless(headless = true): this {
     this._data.headless = headless;
     return this;
   }
 
+  /** Ustawia zakładki z gotowej tablicy (zastępuje addItem). */
   public setItems(items: ErpTabItem[]): this {
     this._data.items = items;
     return this;

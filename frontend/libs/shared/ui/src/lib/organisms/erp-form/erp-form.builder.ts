@@ -13,11 +13,19 @@ export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
     this._data.gridCols = 1;
   }
 
+  /** Ustawia ilość kolumn w siatce formularza (CSS grid). */
   public setGridCols(cols: number): this {
     this._data.gridCols = cols;
     return this;
   }
 
+  /**
+   * Dodaje pole formularza z wbudowanym typem (text, select, datepicker, itp.).
+   * @param key — Nazwa pola (klucz w FormGroup)
+   * @param type — Typ atomu formularza
+   * @param config — Konfiguracja komponentu atomu (lub builder)
+   * @param options — Opcje: rozpiętość kolumn, wartość domyślna, walidatory
+   */
   public addField(
     key: string, 
     type: ErpFormFieldType, 
@@ -38,6 +46,13 @@ export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
     return this;
   }
 
+  /**
+   * Dodaje pole z niestandardowym komponentem (typ 'custom').
+   * @param key — Nazwa pola (klucz w FormGroup)
+   * @param component — Klasa komponentu Angular
+   * @param config — Inputy komponentu
+   * @param options — Opcje: rozpiętość kolumn, wartość domyślna, walidatory
+   */
   public addCustomField<TComp>(
     key: string,
     component: Type<TComp>,

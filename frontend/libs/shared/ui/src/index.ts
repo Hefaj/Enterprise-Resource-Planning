@@ -50,4 +50,5 @@ export * from './lib/organisms/erp-workflow/erp-workflow-node.component';
 export * from './lib/organisms/erp-workflow/erp-workflow.types';
 export * from './lib/organisms/erp-workflow/erp-workflow.utils';
 export * from './lib/organisms/erp-form/erp-form.component';
+export * from './lib/organisms/erp-table/erp-table.component';
 

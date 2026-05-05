@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { ThemeService } from '@erp/client/util';
 
 @Component({
   standalone: true,
@@ -57,15 +58,32 @@ export class SettingsComponent {
   public isSaving = signal(false);
 
   private _fb = inject(FormBuilder);
+  private _themeService = inject(ThemeService);
 
   public settingsForm = this._fb.group({
     username: ['Amy Elsner', [Validators.required]],
-    darkMode: [true],
+    darkMode: [this._themeService.isDarkMode()],
   });
+
+  constructor() {
+    // Reaktywne przełączanie motywu przy zmianie w formularzu
+    this.settingsForm.controls.darkMode.valueChanges.subscribe((isDark) => {
+      if (isDark !== null) {
+        this._themeService.setDarkMode(isDark);
+      }
+    });
+  }
 
   public saveSettings(): void {
     this.isSaving.set(true);
+    const isDark = this.settingsForm.value.darkMode ?? false;
+    
+    // Zastosowanie motywu
+    this._themeService.setDarkMode(isDark);
+
     // Logika zapisu przez Backend API (.NET 10)
-    setTimeout(() => this.isSaving.set(false), 1000);
+    setTimeout(() => {
+      this.isSaving.set(false);
+    }, 1000);
   }
 }

@@ -1,0 +1,20 @@
+{
+  "name": "task-management-data-access",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/libs/modules/task-management/data-access/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:task-management", "type:data-access"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../../../coverage/frontend/libs/modules/task-management/data-access"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

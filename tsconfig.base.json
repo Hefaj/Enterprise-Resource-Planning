@@ -36,7 +36,13 @@
       "@erp/dms/ui": ["frontend/libs/modules/dms/ui/src/index.ts"],
       "@erp/dms/feature": ["frontend/libs/modules/dms/feature/src/index.ts"],
       "@erp/dms/data-access": ["frontend/libs/modules/dms/data-access/src/index.ts"],
-      "@erp/dms/util": ["frontend/libs/modules/dms/util/src/index.ts"]
+      "@erp/dms/util": ["frontend/libs/modules/dms/util/src/index.ts"],
+      "@erp/task-management/contract": ["frontend/libs/modules/task-management/contract/src/index.ts"],
+      "@erp/task-management/data-access": ["frontend/libs/modules/task-management/data-access/src/index.ts"],
+      "@erp/task-management/feature": ["frontend/libs/modules/task-management/feature/src/index.ts"],
+      "@erp/task-management/ui": ["frontend/libs/modules/task-management/ui/src/index.ts"],
+      "@erp/task-management/util": ["frontend/libs/modules/task-management/util/src/index.ts"],
+      "taskManagement/Routes": ["frontend/apps/modules/task-management/src/app/remote-entry/entry.routes.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

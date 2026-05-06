@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../../../../dist/out-tsc",
     "types": [],
-    "target": "ES2020"
+    "target": "es2022"
   },
   "include": ["src/**/*.ts"],
   "exclude": [
@@ -21,5 +21,5 @@
     "src/**/*.spec.jsx",
     "src/test-setup.ts"
   ],
-  "files": ["src/app/remote-entry/entry.routes.ts"]
+  "files": []
 }

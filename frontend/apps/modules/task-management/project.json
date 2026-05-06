@@ -1,5 +1,5 @@
 {
-  "name": "taskManagement",
+  "name": "task-management",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "app",
@@ -64,10 +64,10 @@
       },
       "configurations": {
         "production": {
-          "buildTarget": "taskManagement:build:production"
+          "buildTarget": "task-management:build:production"
         },
         "development": {
-          "buildTarget": "taskManagement:build:development"
+          "buildTarget": "task-management:build:development"
         }
       },
       "defaultConfiguration": "development",
@@ -76,7 +76,7 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "buildTarget": "taskManagement:build"
+        "buildTarget": "task-management:build"
       }
     },
     "lint": {
@@ -94,16 +94,16 @@
       "executor": "@nx/web:file-server",
       "defaultConfiguration": "production",
       "options": {
-        "buildTarget": "taskManagement:build",
+        "buildTarget": "task-management:build",
         "port": 4205,
         "watch": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "taskManagement:build:development"
+          "buildTarget": "task-management:build:development"
         },
         "production": {
-          "buildTarget": "taskManagement:build:production"
+          "buildTarget": "task-management:build:production"
         }
       }
     }

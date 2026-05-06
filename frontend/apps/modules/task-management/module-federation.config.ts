@@ -1,9 +1,9 @@
 import { ModuleFederationConfig } from '@nx/module-federation';
 
 const config: ModuleFederationConfig = {
-  name: 'taskManagement',
+  name: 'task-management',
   exposes: {
-    './Routes': 'frontend/apps/modules/task-management/src/app/remote-entry/entry.routes.ts',
+    './contract': 'frontend/libs/modules/task-management/contract/src/index.ts',
   },
 };
 

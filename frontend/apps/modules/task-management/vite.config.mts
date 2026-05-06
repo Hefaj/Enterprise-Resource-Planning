@@ -13,7 +13,7 @@ export default defineConfig(() => ({
   //   plugins: () => [ nxViteTsPaths() ],
   // },
   test: {
-    name: 'taskManagement',
+    name: 'task-management',
     watch: false,
     globals: true,
     environment: 'jsdom',

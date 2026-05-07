@@ -38,7 +38,11 @@ import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
         <!-- Actions Menu -->
         @if (!readonlyMode() && menuItems().length > 0) {
           <div class="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
-            <erp-button [config]="actionButtonConfig" (onClick)="menuGateway.toggle($event); $event.stopPropagation()" />
+            <erp-button 
+              [config]="actionButtonConfig" 
+              (onClick)="menuGateway.toggle($event); $event.stopPropagation()" 
+              (mousedown)="$event.stopPropagation()"
+            />
             <erp-menu #menuGateway [config]="menuConfig()" />
           </div>
         }
@@ -82,6 +86,7 @@ import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
               <erp-button 
                 [config]="actionButtonConfig" 
                 (onClick)="menu.toggle($event); $event.stopPropagation()"
+                (mousedown)="$event.stopPropagation()"
               />
               <erp-menu #menu [config]="menuConfig()" />
             </div>

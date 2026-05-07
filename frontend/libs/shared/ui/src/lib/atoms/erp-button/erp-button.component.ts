@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 import { ButtonIconPosition, ButtonModule } from 'primeng/button';
 import { ErpButtonBuilder, ErpButtonSave, ErpButtonCancel, ErpButtonRemove } from './erp-button.builder';
@@ -41,7 +41,7 @@ export interface ErpButtonConfig {
       [loading]="_loading"
       [disabled]="_disabled"
       [size]="_config.size"
-      (onClick)="handleClick()"
+      (onClick)="handleClick($event)"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,8 +59,12 @@ export class ErpButtonComponent {
    * https://primeng.org/button#api.button.props.badge
    */
   public badge = input<string>();
+  
+  public onClick = output<MouseEvent>();
 
-  protected handleClick(): void {
+  protected handleClick(event: MouseEvent): void {
+    this.onClick.emit(event);
+    
     const callback = this.config().onClick;
     if (callback) {
       callback();

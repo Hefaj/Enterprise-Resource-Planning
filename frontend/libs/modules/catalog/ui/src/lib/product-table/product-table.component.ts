@@ -17,9 +17,6 @@ import {
   template: `
     <erp-table 
       [config]="tableConfig" 
-      [data]="data()" 
-      [externalFilters]="externalFilters()" 
-      [loading]="loading()"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -98,5 +95,8 @@ export class ProductTableComponent {
     .setEmptyMessage('Nie znaleziono produktów')
     .setSize('small')
     .setSelectionMode('multiple')
+    .setData(this.data)
+    .setExternalFilters(this.externalFilters)
+    .setLoading(this.loading)
   );
 }

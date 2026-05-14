@@ -8,7 +8,7 @@ import {
   ErpCellBooleanConfig,
   ErpCellLinkConfig,
   ErpCellCustomConfig 
-} from './erp-table.component';
+} from './erp-table.types';
 
 export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
   constructor() {
@@ -21,6 +21,26 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
     this._data.scrollable = true;
     this._data.scrollHeight = 'flex';
     this._data.emptyMessage = 'Brak danych do wyświetlenia';
+  }
+
+  public setData(data: any): this {
+    this._data.data = data;
+    return this;
+  }
+
+  public setExternalFilters(filters: any): this {
+    this._data.externalFilters = filters;
+    return this;
+  }
+
+  public setLoading(loading: any): this {
+    this._data.loading = loading;
+    return this;
+  }
+
+  public setSelection(selection: any): this {
+    this._data.selection = selection;
+    return this;
   }
 
   // ── Kolumny ──

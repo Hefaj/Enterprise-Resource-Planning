@@ -1,116 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, Type, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, ViewChild } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe, PercentPipe } from '@angular/common';
 import { TableModule, Table } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { TagModule } from 'primeng/tag';
-import { ErpTableBuilder } from './erp-table.builder';
 
-export { ErpTableBuilder };
 
-// ── Cell Renderer Configs ───────────────────────────────
-
-export interface ErpCellImageConfig {
-  /** Szerokość obrazka (np. '40px') */
-  width?: string;
-  /** Wysokość obrazka (np. '40px') */
-  height?: string;
-  /** Zaokrąglony kształt (avatar) */
-  rounded?: boolean;
-  /** Ikona fallback gdy brak obrazka */
-  fallbackIcon?: string;
-}
-
-export interface ErpCellBadgeConfig {
-  /** Mapowanie wartości → severity PrimeNG (np. { 'Aktywny': 'success' }) */
-  severityMap: Record<string, 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'>;
-}
-
-export interface ErpCellTagConfig {
-  /** Mapowanie wartości → severity */
-  severityMap?: Record<string, string>;
-  /** Zaokrąglone rogi */
-  rounded?: boolean;
-}
-
-export interface ErpCellBooleanConfig {
-  /** Ikona dla wartości true */
-  trueIcon?: string;
-  /** Ikona dla wartości false */
-  falseIcon?: string;
-  /** Klasa CSS dla wartości true */
-  trueClass?: string;
-  /** Klasa CSS dla wartości false */
-  falseClass?: string;
-}
-
-export interface ErpCellLinkConfig {
-  /** Pole z obiektu wiersza użyte jako href */
-  hrefField?: string;
-  /** Callback po kliknięciu linku */
-  onClick?: (row: any) => void;
-}
-
-export interface ErpCellCustomConfig {
-  /** Komponent Angular wstrzykiwany w komórkę */
-  component: Type<any>;
-  /** Dodatkowe inputy przekazywane do komponentu */
-  inputs?: Record<string, any>;
-}
-
-export type ErpCellRendererConfig =
-  | ErpCellImageConfig
-  | ErpCellBadgeConfig
-  | ErpCellTagConfig
-  | ErpCellBooleanConfig
-  | ErpCellLinkConfig
-  | ErpCellCustomConfig;
-
-/** Typ renderera komórki */
-export type ErpCellType = 'text' | 'image' | 'badge' | 'tag' | 'boolean' | 'link' | 'custom';
-
-// ── Table Interfaces ────────────────────────────────────
-
-export interface ErpTableColumn {
-  field: string;
-  header: string;
-  sortable?: boolean;
-  width?: string;
-  minWidth?: string;
-  align?: 'left' | 'center' | 'right';
-  /** Pipe formatujący (dla typu 'text') */
-  pipe?: 'currency' | 'date' | 'number' | 'percent';
-  pipeArgs?: string;
-  frozen?: boolean;
-  /** Włącza wbudowany filtr kolumnowy */
-  filterable?: boolean;
-  filterType?: 'text' | 'numeric' | 'date';
-  /** Typ renderera komórki (domyślnie 'text') */
-  type?: ErpCellType;
-  /** Konfiguracja specyficzna dla danego typu renderera */
-  typeConfig?: ErpCellRendererConfig;
-}
-
-export interface ErpTableConfig {
-  columns: ErpTableColumn[];
-  rows?: number;
-  rowsPerPageOptions?: number[];
-  paginator?: boolean;
-  selectionMode?: 'single' | 'multiple';
-  globalFilterFields?: string[];
-  emptyMessage?: string;
-  striped?: boolean;
-  scrollable?: boolean;
-  scrollHeight?: string;
-  size?: 'small' | 'normal' | 'large';
-  onRowSelect?: (row: any) => void;
-  onRowUnselect?: (row: any) => void;
-}
-
-export type ErpTableFilters = Record<string, any>;
-
-// ── Component ───────────────────────────────────────────
+import { 
+  ErpTableConfig, 
+  ErpTableColumn, 
+  ErpCellBadgeConfig,
+  ErpCellTagConfig,
+  ErpCellLinkConfig,
+  ErpCellCustomConfig} from './erp-table.types';
 
 @Component({
   selector: 'erp-table',
@@ -156,8 +59,9 @@ export type ErpTableFilters = Record<string, any>;
         [scrollHeight]="_config.scrollHeight ?? 'flex'"
         [stripedRows]="_config.striped ?? true"
         [selectionMode]="_config.selectionMode ?? null"
-        [(selection)]="selection"
-        [loading]="loading()"
+        [selection]="currentSelection"
+        (selectionChange)="handleSelectionChange($event)"
+        [loading]="loadingSignal()"
         [tableStyle]="{ 'min-width': '50rem' }"
         (onRowSelect)="handleRowSelect($event)"
         (onRowUnselect)="handleRowUnselect($event)"
@@ -391,17 +295,28 @@ export class ErpTableComponent {
   /** Konfiguracja tabeli (kolumny, paginacja, sortowanie itp.) */
   public config = input.required<ErpTableConfig>();
 
-  /** Dane do wyświetlenia */
-  public data = input<any[]>([]);
+  protected dataSignal = computed(() => {
+    const rawData = this.config().data;
+    return typeof rawData === 'function' ? rawData() : (rawData || []);
+  });
 
-  /** Filtry zewnętrzne (np. z globalnego panelu ErpDynamicFilter) */
-  public externalFilters = input<ErpTableFilters>({});
+  protected externalFiltersSignal = computed(() => {
+    const rawFilters = this.config().externalFilters;
+    return typeof rawFilters === 'function' ? rawFilters() : (rawFilters || {});
+  });
 
-  /** Stan ładowania */
-  public loading = input<boolean>(false);
+  protected loadingSignal = computed(() => {
+    const rawLoading = this.config().loading;
+    return typeof rawLoading === 'function' ? rawLoading() : !!rawLoading;
+  });
 
-  /** Selekcja wierszy (two-way binding) */
-  public selection = model<any>(null);
+  get currentSelection() {
+    return this.config().selection?.() ?? null;
+  }
+
+  handleSelectionChange(event: any) {
+    this.config().selection?.set(event);
+  }
 
   // ── Pipe instances ──
   private currencyPipe = new CurrencyPipe('pl-PL');
@@ -414,14 +329,14 @@ export class ErpTableComponent {
    * Filtry kolumnowe (wbudowane w p-table) działają niezależnie, na warstwie PrimeNG.
    */
   protected filteredData = computed(() => {
-    const raw = this.data();
-    const filters = this.externalFilters();
+    const raw = this.dataSignal();
+    const filters = this.externalFiltersSignal();
 
     if (!filters || Object.keys(filters).length === 0) {
       return raw;
     }
 
-    return raw.filter(row => {
+    return raw.filter((row: any) => {
       return Object.entries(filters).every(([key, filterValue]) => {
         if (filterValue === null || filterValue === undefined || filterValue === '') {
           return true;

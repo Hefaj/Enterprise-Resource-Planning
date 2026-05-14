@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
-import { ErpTabsConfig, ErpTabItem } from './erp-tabs.types';
+import { ErpTabsConfig } from './erp-tabs.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
@@ -9,7 +9,6 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   standalone: true,
   imports: [CommonModule, TabsModule],
   template: `
-    @let _config = config();
     @let _value = activeValue();
     @let _items = unwrappedItems();
     @let activeTab = getActiveTab(_items, _value);
@@ -30,7 +29,6 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
         </p-tablist>
       </p-tabs>
 
-      <!-- Tab Content Area -->
       <div class="flex-1 mt-4">
         @if (activeTab?.component) {
           <ng-container 

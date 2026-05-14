@@ -19,10 +19,6 @@ export interface DmsDocument {
   template: `
     <erp-table 
       [config]="tableConfig"
-      [data]="data()"
-      [externalFilters]="externalFilters()"
-      [loading]="loading()"
-      [(selection)]="selection"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,5 +55,9 @@ export class DocumentTableComponent {
     .setEmptyMessage('Brak dokumentów')
     .setSize('small')
     .setSelectionMode('multiple')
+    .setData(this.data)
+    .setExternalFilters(this.externalFilters)
+    .setLoading(this.loading)
+    .setSelection(this.selection)
   );
 }

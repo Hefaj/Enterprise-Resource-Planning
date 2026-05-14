@@ -2,15 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/c
 import { ErpPageLayoutComponent } from '@erp/shared/ui';
 import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
 import { ErpEmptyCardBuilder } from '@erp/shared/ui/erp-empty-card';
-import { ErpCardComponent } from '@erp/shared/ui/erp-card';
-import { DmsDocumentWorkflowComponent, DocumentTableComponent, DmsDocument } from '@erp/dms/ui';
+import { DmsDocument } from '@erp/dms/ui';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 
 @Component({
   selector: 'erp-document',
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpTabsComponent, DocumentTableComponent, DmsDocumentWorkflowComponent, ErpCardComponent],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpTabsComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->

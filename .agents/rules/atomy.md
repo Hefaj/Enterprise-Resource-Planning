@@ -1,5 +1,5 @@
 ---
-trigger: always_on
+trigger: manual
 ---
 
 ROLE: Expert Fullstack Architect (Angular v21+, Nx Monorepo, .NET 10).

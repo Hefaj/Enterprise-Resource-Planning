@@ -32,7 +32,7 @@ import { ErpUserMenuConfig, ErpUserMenuComponent } from '@erp/shared/ui/erp-user
 
         <erp-user-menu [config]="_userMenuConfig" />
       </div>
-      <main class="flex-1 overflow-auto p-4">
+      <main class="flex-1 overflow-auto p-2">
         <ng-content>
           <erp-empty-card />
         </ng-content>

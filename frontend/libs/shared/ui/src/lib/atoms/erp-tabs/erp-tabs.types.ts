@@ -8,7 +8,7 @@ export interface ErpTabItem<TComp = any> {
   icon?: MaybeSignal<string | undefined>;
   disabled?: MaybeSignal<boolean | undefined>;
   component?: MaybeSignal<Type<TComp>>;
-  config?: ErpComponentSignalInputs<TComp> | any;
+  config?: MaybeSignal<ErpComponentSignalInputs<TComp> | any>;
 }
 
 export interface ErpTabsConfig {

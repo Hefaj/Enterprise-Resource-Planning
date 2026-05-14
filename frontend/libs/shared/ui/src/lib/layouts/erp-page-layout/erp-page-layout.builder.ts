@@ -12,7 +12,7 @@ export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
 
   public setMain<T = any>(
     component: MaybeSignal<Type<T>>,
-    config?: ErpComponentSignalInputs<T> | any
+    config?: MaybeSignal<ErpComponentSignalInputs<T> | any>
   ): this {
     this._data.main = { component, config };
     return this;
@@ -20,7 +20,7 @@ export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
 
   public setLeftSidebar<T = any>(
     component: MaybeSignal<Type<T>>,
-    config?: ErpComponentSignalInputs<T> | any
+    config?: MaybeSignal<ErpComponentSignalInputs<T> | any>
   ): this {
     this._data.leftSidebar = { component, config };
     return this;

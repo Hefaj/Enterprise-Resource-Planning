@@ -23,7 +23,7 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
       icon?: MaybeSignal<string | undefined>;
       disabled?: MaybeSignal<boolean | undefined>;
       component?: MaybeSignal<Type<T>>;
-      config?: ErpComponentSignalInputs<T> | any;
+      config?: MaybeSignal<ErpComponentSignalInputs<T> | any>;
     }
   ): this {
     const tab: ErpTabItem = {

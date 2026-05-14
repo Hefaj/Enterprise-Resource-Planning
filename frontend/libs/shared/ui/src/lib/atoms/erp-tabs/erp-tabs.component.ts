@@ -53,7 +53,8 @@ export class ErpTabsComponent {
       value: unwrapSignal(item.value),
       icon: unwrapSignal(item.icon),
       disabled: unwrapSignal(item.disabled),
-      component: unwrapSignal(item.component)
+      component: unwrapSignal(item.component),
+      config: unwrapSignal(item.config)
     }));
   });
 

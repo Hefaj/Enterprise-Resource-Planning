@@ -4,7 +4,7 @@ import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export interface ErpPageRegion<TComp = any> {
   component: MaybeSignal<Type<TComp>>;
-  config?: ErpComponentSignalInputs<TComp> | any;
+  config?: MaybeSignal<ErpComponentSignalInputs<TComp> | any>;
 }
 
 export interface ErpPageLayoutConfig {

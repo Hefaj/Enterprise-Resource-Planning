@@ -12,9 +12,10 @@ import { ErpPageLayoutConfig, ErpPageRegion } from './erp-page-layout.types';
     @let leftSidebarComponent = getComponent(_config.leftSidebar);
     @let mainComponent = getComponent(_config.main);
     
-    <div class="flex h-full w-full bg-surface-50 dark:bg-surface-950 overflow-hidden">
+    <div class="flex h-full w-full bg-surface-50 dark:bg-surface-950 overflow-hidden rounded-md">
       <!-- Lewy panel: Filtry -->
       @if (leftSidebarComponent) {
+        @let leftSidebarConfig = getConfig(_config.leftSidebar);
         <aside
         class="group relative h-full border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 flex flex-col transition-all duration-300 ease-in-out z-20"
         [class.w-80]="isSidebarVisible()"
@@ -59,7 +60,7 @@ import { ErpPageLayoutConfig, ErpPageRegion } from './erp-page-layout.types';
           </div>
           <div class="flex-1 overflow-y-auto p-6 min-w-80">
             <ng-container
-              *ngComponentOutlet="leftSidebarComponent; inputs: _config.leftSidebar?.config"
+              *ngComponentOutlet="leftSidebarComponent; inputs: leftSidebarConfig"
             ></ng-container>
           </div>
         </div>
@@ -71,8 +72,9 @@ import { ErpPageLayoutConfig, ErpPageRegion } from './erp-page-layout.types';
         <!-- Główna zawartość -->
         <main class="flex-1 p-6 overflow-auto bg-surface-50 dark:bg-surface-950">
           @if (mainComponent) {
+            @let mainConfig = getConfig(_config.main);
             <ng-container
-              *ngComponentOutlet="mainComponent; inputs: _config.main?.config"
+              *ngComponentOutlet="mainComponent; inputs: mainConfig"
             ></ng-container>
           }
         </main>
@@ -93,6 +95,11 @@ export class ErpPageLayoutComponent {
   protected getComponent(region: ErpPageRegion | undefined) {
     if (!region) return null;
     return unwrapSignal(region.component);
+  }
+
+  protected getConfig(region: ErpPageRegion | undefined) {
+    if (!region) return undefined;
+    return unwrapSignal(region.config);
   }
 }
 

@@ -1,18 +1,20 @@
 import { ChangeDetectionStrategy, Component, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
-
-import { ErpPageLayoutConfig } from './erp-page-layout.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
+import { ErpPageLayoutConfig, ErpPageRegion } from './erp-page-layout.types';
 
 @Component({
   selector: 'erp-page-layout',
   imports: [CommonModule, ButtonModule],
   template: `
     @let _config = config();
+    @let leftSidebarComponent = getComponent(_config.leftSidebar);
+    @let mainComponent = getComponent(_config.main);
     
     <div class="flex h-full w-full bg-surface-50 dark:bg-surface-950 overflow-hidden">
       <!-- Lewy panel: Filtry -->
-      @if (_config.leftSidebar) {
+      @if (leftSidebarComponent) {
         <aside
         class="group relative h-full border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 flex flex-col transition-all duration-300 ease-in-out z-20"
         [class.w-80]="isSidebarVisible()"
@@ -57,7 +59,7 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
           </div>
           <div class="flex-1 overflow-y-auto p-6 min-w-80">
             <ng-container
-              *ngComponentOutlet="_config.leftSidebar.component; inputs: _config.leftSidebar.config"
+              *ngComponentOutlet="leftSidebarComponent; inputs: _config.leftSidebar?.config"
             ></ng-container>
           </div>
         </div>
@@ -68,9 +70,9 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
       <div class="flex-1 flex flex-col min-w-0 relative">
         <!-- Główna zawartość -->
         <main class="flex-1 p-6 overflow-auto bg-surface-50 dark:bg-surface-950">
-          @if (_config.main) {
+          @if (mainComponent) {
             <ng-container
-              *ngComponentOutlet="_config.main.component; inputs: _config.main.config"
+              *ngComponentOutlet="mainComponent; inputs: _config.main?.config"
             ></ng-container>
           }
         </main>
@@ -86,6 +88,11 @@ export class ErpPageLayoutComponent {
 
   public toggleSidebar(): void {
     this.isSidebarVisible.update((v) => !v);
+  }
+
+  protected getComponent(region: ErpPageRegion | undefined) {
+    if (!region) return null;
+    return unwrapSignal(region.component);
   }
 }
 

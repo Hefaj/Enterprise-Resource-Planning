@@ -2,6 +2,7 @@ import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpPageLayoutConfig, ErpPageRegion } from './erp-page-layout.types';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
   constructor() {
@@ -10,7 +11,7 @@ export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
   }
 
   public setMain<T = any>(
-    component: Type<T>,
+    component: MaybeSignal<Type<T>>,
     config?: ErpComponentSignalInputs<T> | any
   ): this {
     this._data.main = { component, config };
@@ -18,7 +19,7 @@ export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
   }
 
   public setLeftSidebar<T = any>(
-    component: Type<T>,
+    component: MaybeSignal<Type<T>>,
     config?: ErpComponentSignalInputs<T> | any
   ): this {
     this._data.leftSidebar = { component, config };

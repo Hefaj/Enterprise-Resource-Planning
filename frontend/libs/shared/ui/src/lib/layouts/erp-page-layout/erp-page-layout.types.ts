@@ -1,8 +1,9 @@
 import { Type } from '@angular/core';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export interface ErpPageRegion<TComp = any> {
-  component: Type<TComp>;
+  component: MaybeSignal<Type<TComp>>;
   config?: ErpComponentSignalInputs<TComp> | any;
 }
 

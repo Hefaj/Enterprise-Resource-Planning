@@ -1,25 +1,8 @@
-import { ErpBaseBuilder } from '../../base/erp-base-builder';
+import { ErpInputBaseBuilder } from '../../base/erp-input-base';
 import { ErpInputTextConfig } from './erp-input-text.types';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 
-export class ErpInputTextBuilder extends ErpBaseBuilder<ErpInputTextConfig> {
-
-
-  public setPlaceholder(placeholder: MaybeSignal<string | undefined>): this {
-    this._data.placeholder = placeholder;
-    return this;
-  }
-
-  public setHint(hint: MaybeSignal<string | undefined>): this {
-    this._data.hint = hint;
-    return this;
-  }
-
-  public setErrorMessages(messages: MaybeSignal<Record<string, string> | undefined>): this {
-    this._data.errorMessages = messages;
-    return this;
-  }
-
+export class ErpInputTextBuilder extends ErpInputBaseBuilder<ErpInputTextConfig> {
   public setIcon(icon: MaybeSignal<string | undefined>): this {
     this._data.icon = icon;
     return this;

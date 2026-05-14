@@ -1,17 +1,12 @@
-import { ErpBaseBuilder } from '../../base/erp-base-builder';
+import { ErpInputBaseBuilder } from '../../base/erp-input-base';
 import { ErpTreeSelectConfig } from './erp-tree-select.types';
 import { TreeNode } from 'primeng/api';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
-export class ErpTreeSelectBuilder extends ErpBaseBuilder<ErpTreeSelectConfig> {
+export class ErpTreeSelectBuilder extends ErpInputBaseBuilder<ErpTreeSelectConfig> {
   /** Ustawia dostępne węzły drzewa. */
-  public setOptions(options: TreeNode[]): this {
+  public setOptions(options: MaybeSignal<TreeNode[]>): this {
     this._data.options = options;
-    return this;
-  }
-
-  /** Tekst zastępczy wyświetlany, gdy nic nie jest zaznaczone. */
-  public setPlaceholder(placeholder: string): this {
-    this._data.placeholder = placeholder;
     return this;
   }
 

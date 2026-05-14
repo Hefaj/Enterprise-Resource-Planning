@@ -1,15 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  ErpPageLayoutComponent,
-  ErpDynamicFilterComponent,
-  ErpDynamicFilterBuilder,
-  ErpTreeSelectComponent,
-  ErpFormBuilder,
-  ErpActionButtonsComponent,
-  ErpFormComponent,
-  ErpTreeSelectBuilder,
-} from '@erp/shared/ui';
+import { ErpPageLayoutComponent } from '@erp/shared/ui';
+import { ErpDynamicFilterComponent, ErpDynamicFilterBuilder } from '@erp/shared/ui/erp-dynamic-filter';
+import { ErpTreeSelectComponent, ErpTreeSelectBuilder } from '@erp/shared/ui/erp-tree-select';
+import { ErpActionButtonsComponent } from '@erp/shared/ui/erp-action-buttons';
+import { ErpFormComponent, ErpFormBuilder } from '@erp/shared/ui';
 import { ErpInputTextBuilder } from '@erp/shared/ui/erp-input-text';
 import { ErpSelectBuilder } from '@erp/shared/ui/erp-select';
 import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
@@ -83,6 +78,8 @@ export class ProductComponent {
   private rootPage = 0;
   private childrenPageMap = new Map<string, number>();
 
+  private _treeOptions = signal<TreeNode[]>([...this.generateRootPage(0), this.loadMoreNode(null)]);
+
   private loadMoreNode(parentNode: TreeNode | null): TreeNode {
     return {
       key: parentNode ? `${parentNode.key}-load-more` : 'root-load-more',
@@ -118,7 +115,7 @@ export class ProductComponent {
   protected treeConfig = ErpTreeSelectBuilder.create((t) =>
     t
       .setPlaceholder('Wybierz kategorie z drzewa')
-      .setOptions([...this.generateRootPage(0), this.loadMoreNode(null)])
+      .setOptions(this._treeOptions)
       .setOnNodeExpand((node) => {
         // Pierwsze pobranie dzieci dla węzła
         if (!node.children || node.children.length === 0) {
@@ -139,7 +136,7 @@ export class ProductComponent {
             if (parentNode === null) {
               // Doczytywanie korzeni (Root)
               this.rootPage++;
-              const currentOptions = this.treeConfig.options.filter((n) => !n.data?.isLoadMore);
+              const currentOptions = this._treeOptions().filter((n: TreeNode) => !n.data?.isLoadMore);
               const newNodes = this.generateRootPage(this.rootPage);
 
               // Po 3 stronach nie dodajemy już 'load-more' by zamknąć listę
@@ -147,9 +144,8 @@ export class ProductComponent {
                 newNodes.push(this.loadMoreNode(null));
               }
 
-              // Mutacja tablicy, aby PrimeNG wykryło zmiany (IterableDiffers)
-              this.treeConfig.options.length = 0;
-              this.treeConfig.options.push(...currentOptions, ...newNodes);
+              // Aktualizacja sygnału zamiast mutacji tablicy
+              this._treeOptions.set([...currentOptions, ...newNodes]);
             } else {
               // Doczytywanie dzieci
               const currentPage = this.childrenPageMap.get(parentNode.key!) || 0;

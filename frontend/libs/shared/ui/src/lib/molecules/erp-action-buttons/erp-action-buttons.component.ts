@@ -1,33 +1,31 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpButtonComponent, ErpButtonConfig } from '../../atoms/erp-button';
-
-export interface ErpActionButtonsConfig {
-  buttons: (ErpButtonConfig & { id: string })[];
-  alignment?: 'start' | 'end' | 'center' | 'between';
-  gap?: number;
-}
+import { ErpButtonComponent } from '../../atoms/erp-button';
+import { ErpActionButtonsConfig } from './erp-action-buttons.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-action-buttons',
   standalone: true,
   imports: [CommonModule, ErpButtonComponent],
   template: `
-    @let _config = config();
+    @let _buttons = buttons();
+    @let _alignment = alignment();
+    @let _gap = gap();
+
     <div
       class="flex items-center"
       [ngClass]="{
-        'justify-start': _config.alignment === 'start',
-        'justify-end': _config.alignment === 'end' || !_config.alignment,
-        'justify-center': _config.alignment === 'center',
-        'justify-between': _config.alignment === 'between',
+        'justify-start': _alignment === 'start',
+        'justify-end': _alignment === 'end' || !_alignment,
+        'justify-center': _alignment === 'center',
+        'justify-between': _alignment === 'between'
       }"
-      [style.gap.rem]="_config.gap || 0.5"
+      [style.gap.rem]="_gap ?? 0.5"
     >
-      @for (btn of _config.buttons; track btn.id) {
+      @for (btn of _buttons; track btn.id) {
         <erp-button
           [config]="btn"
-          (onClick)="buttonClick.emit(btn.id)"
         />
       }
     </div>
@@ -37,4 +35,14 @@ export interface ErpActionButtonsConfig {
 export class ErpActionButtonsComponent {
   public config = input.required<ErpActionButtonsConfig>();
   public buttonClick = output<string>();
+
+  protected buttons = computed(() => {
+    const rawButtons = unwrapSignal(this.config().buttons) ?? [];
+    return rawButtons.map((btn) => ({
+      ...btn,
+      onClick: () => this.buttonClick.emit(btn.id),
+    }));
+  });
+  protected alignment = computed(() => unwrapSignal(this.config().alignment));
+  protected gap = computed(() => unwrapSignal(this.config().gap));
 }

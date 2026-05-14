@@ -37,8 +37,6 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 })
 export class ErpButtonComponent {
   public config = input.required<ErpButtonConfig>();
-  public onClick = output<MouseEvent>();
-
   protected internalLoading = signal(false);
 
   protected label = computed(() => unwrapSignal(this.config().label));
@@ -56,8 +54,6 @@ export class ErpButtonComponent {
   protected isDisabled = computed(() => !!this.disabled() || this.internalLoading());
 
   protected async handleClick(event: MouseEvent): Promise<void> {
-    this.onClick.emit(event);
-
     const callback = this.config().onClick;
     if (callback) {
       const result = callback(event);

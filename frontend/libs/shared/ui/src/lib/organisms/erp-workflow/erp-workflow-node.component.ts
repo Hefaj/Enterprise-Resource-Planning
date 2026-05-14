@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, AfterViewInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, AfterViewInit, OnDestroy, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkflowNode, WorkflowNodeAction } from './erp-workflow.types';
 import { TemplateRef } from '@angular/core';
@@ -42,8 +42,7 @@ import { ErpMenuBuilder, ErpMenuComponent } from '@erp/shared/ui/erp-menu';
         @if (!readonlyMode() && menuItems().length > 0) {
           <div class="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
             <erp-button
-              [config]="actionButtonConfig"
-              (onClick)="menuGateway.toggle($event); $event.stopPropagation()"
+              [config]="actionButtonConfigGateway()"
               (mousedown)="$event.stopPropagation()"
             />
             <erp-menu
@@ -94,8 +93,7 @@ import { ErpMenuBuilder, ErpMenuComponent } from '@erp/shared/ui/erp-menu';
           @if (!readonlyMode() && menuItems().length > 0) {
             <div class="ml-2">
               <erp-button
-                [config]="actionButtonConfig"
-                (onClick)="menu.toggle($event); $event.stopPropagation()"
+                [config]="actionButtonConfigNode()"
                 (mousedown)="$event.stopPropagation()"
               />
               <erp-menu
@@ -260,7 +258,38 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
 
   menuConfig = computed(() => ErpMenuBuilder.create((b) => b.setItems(this.menuItems())));
 
-  protected readonly actionButtonConfig = ErpButtonBuilder.create((b) => b.setIcon('pi pi-ellipsis-v').setVariant('text').setRounded(true).setSeverity('secondary').setSize('small'));
+  protected menuGatewayRef = viewChild<ErpMenuComponent>('menuGateway');
+  protected menuRef = viewChild<ErpMenuComponent>('menu');
+
+  protected actionButtonConfigGateway = computed(() =>
+    ErpButtonBuilder.create((b) =>
+      b
+        .setIcon('pi pi-ellipsis-v')
+        .setVariant('text')
+        .setRounded(true)
+        .setSeverity('secondary')
+        .setSize('small')
+        .setOnClick((e) => {
+          this.menuGatewayRef()?.toggle(e);
+          e.stopPropagation();
+        }),
+    ),
+  );
+
+  protected actionButtonConfigNode = computed(() =>
+    ErpButtonBuilder.create((b) =>
+      b
+        .setIcon('pi pi-ellipsis-v')
+        .setVariant('text')
+        .setRounded(true)
+        .setSeverity('secondary')
+        .setSize('small')
+        .setOnClick((e) => {
+          this.menuRef()?.toggle(e);
+          e.stopPropagation();
+        }),
+    ),
+  );
 
   headerBgClass = computed(() => {
     const type = this.node().type;

@@ -1,25 +1,8 @@
-import { ErpBaseBuilder } from '../../base/erp-base-builder';
+import { ErpInputBaseBuilder } from '../../base/erp-input-base';
 import { ErpSelectConfig } from './erp-select.types';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 
-export class ErpSelectBuilder extends ErpBaseBuilder<ErpSelectConfig> {
-
-
-  public setPlaceholder(placeholder: MaybeSignal<string | undefined>): this {
-    this._data.placeholder = placeholder;
-    return this;
-  }
-
-  public setHint(hint: MaybeSignal<string | undefined>): this {
-    this._data.hint = hint;
-    return this;
-  }
-
-  public setErrorMessages(messages: MaybeSignal<Record<string, string> | undefined>): this {
-    this._data.errorMessages = messages;
-    return this;
-  }
-
+export class ErpSelectBuilder extends ErpInputBaseBuilder<ErpSelectConfig> {
   public setOptions(options: MaybeSignal<any[] | undefined>): this {
     this._data.options = options;
     return this;

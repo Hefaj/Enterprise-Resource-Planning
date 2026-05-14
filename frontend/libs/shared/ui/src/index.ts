@@ -8,12 +8,7 @@ export * from './lib/layouts/erp-host-layout/erp-host-layout';
 export * from './lib/auth/login/login.component';
 
 // Molecules
-export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.component';
-export * from './lib/molecules/erp-action-buttons/erp-action-buttons.component';
-export * from './lib/molecules/erp-dynamic-filter/erp-dynamic-filter.types';
-
-export * from './lib/molecules/erp-tree-select/erp-tree-select.component';
-export * from './lib/molecules/erp-tree-select/erp-tree-select.types';
+// SEPs exported via tsconfig path aliases
 
 // Organisms
 export * from './lib/organisms/erp-workflow/erp-workflow.component';

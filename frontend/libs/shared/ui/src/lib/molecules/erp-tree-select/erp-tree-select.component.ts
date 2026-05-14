@@ -10,6 +10,8 @@ import { noop } from 'rxjs';
 import { ErpTreeSelectBuilder } from './erp-tree-select.builder';
 import { Directive, ElementRef, EventEmitter, OnDestroy, OnInit, Output, NgZone } from '@angular/core';
 
+import { unwrapSignal } from '../../base/erp-signal-utils';
+
 @Directive({
   selector: '[erpIntersect]',
   standalone: true
@@ -155,9 +157,11 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
   private onTouched: () => void = noop;
   private onChange: (value: ErpTreeSelection) => void = noop;
 
+  protected placeholder = computed(() => unwrapSignal(this.config().placeholder) || 'Wybierz...');
+
   public optionsWithParents = computed(() => {
     this._refreshTrigger(); // Wymusza przeliczenie przy każdej zmianie
-    const opts = this.config().options || [];
+    const opts = unwrapSignal(this.config().options) || [];
     const attach = (nodes: TreeNode[], parent?: TreeNode) => {
       nodes.forEach(n => {
         n.parent = parent;
@@ -172,7 +176,7 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
   public displayText = computed(() => {
     const sel = this._selection();
     const countItems = new Set([...sel.selectedItems, ...sel.selectedChildrenOf]).size;
-    return countItems > 0 ? `Wybrano: ${countItems}` : (this.config().placeholder || 'Wybierz...');
+    return countItems > 0 ? `Wybrano: ${countItems}` : this.placeholder();
   });
 
   public writeValue(val: any): void {

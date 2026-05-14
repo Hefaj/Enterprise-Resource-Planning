@@ -1,9 +1,7 @@
+import { ErpInputBase } from '../../base/erp-input-base';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 
-export interface ErpSelectConfig {
-  placeholder?: MaybeSignal<string | undefined>;
-  hint?: MaybeSignal<string | undefined>;
-  errorMessages?: MaybeSignal<Record<string, string> | undefined>;
+export interface ErpSelectConfig extends ErpInputBase {
   options?: MaybeSignal<any[] | undefined>;
   optionLabel?: MaybeSignal<string | undefined>;
   optionValue?: MaybeSignal<string | undefined>;

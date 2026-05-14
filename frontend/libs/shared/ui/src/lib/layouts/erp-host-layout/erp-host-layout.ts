@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, viewChild, computed } from '@angular/core';
 import { ErpEmptyCardComponent } from '@erp/shared/ui/erp-empty-card';
 import { ErpDrawerComponent } from '@erp/shared/ui/erp-drawer';
 import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button';
@@ -14,6 +14,7 @@ import { ErpUserMenuConfig, ErpUserMenuComponent } from '@erp/shared/ui/erp-user
     @let _menuConfig = menuConfig();
     @let _breadcrumbConfig = breadcrumbConfig();
     @let _userMenuConfig = userMenuConfig();
+    @let _menuBtnConfig = menuBtnConfig();
 
     <erp-drawer #drawer>
       <erp-panel-menu [config]="_menuConfig" />
@@ -22,8 +23,7 @@ import { ErpUserMenuConfig, ErpUserMenuComponent } from '@erp/shared/ui/erp-user
     <div class="flex flex-col h-svh w-svw bg-slate-50 dark:bg-slate-900">
       <div class="h-16 flex items-center px-2 bg-white dark:bg-slate-900 shadow-xl">
         <erp-button
-          [config]="menuBtn"
-          (onClick)="drawer.show()"
+          [config]="_menuBtnConfig"
         />
         <erp-breadcrumb
           class="w-full"
@@ -45,5 +45,14 @@ export class ErpHostLayoutComponent {
   public userMenuConfig = input.required<ErpUserMenuConfig>();
   public menuConfig = input.required<ErpPanelMenuConfig>();
   public breadcrumbConfig = input.required<ErpBreadcrumbConfig>();
-  protected readonly menuBtn = ErpButtonBuilder.create((b) => b.setSeverity('info').setIcon('pi pi-bars'));
+
+  protected drawer = viewChild.required<ErpDrawerComponent>('drawer');
+
+  protected menuBtnConfig = computed(() =>
+    ErpButtonBuilder.create((b) =>
+      b.setSeverity('info')
+       .setIcon('pi pi-bars')
+       .setOnClick(() => this.drawer().show())
+    )
+  );
 }

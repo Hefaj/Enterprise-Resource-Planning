@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { ErpPageLayoutComponent } from '@erp/shared/ui';
+import { ErpPageLayoutComponent, ErpPageLayoutBuilder } from '@erp/shared/ui';
 import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
 import { ErpEmptyCardBuilder } from '@erp/shared/ui/erp-empty-card';
 import { DmsDocument } from '@erp/dms/ui';
@@ -7,42 +7,38 @@ import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 
 @Component({
-  selector: 'erp-document',
+  selector: 'erp-document-status-sidebar',
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpTabsComponent],
   template: `
-    <erp-page-layout>
-      <!-- Lewy panel: Filtry -->
-      <div filters>
-        <div class="p-4 bg-surface-50 dark:bg-surface-900/50 rounded-xl border border-surface-200 dark:border-surface-800">
-          <div class="text-sm font-bold uppercase tracking-wider text-surface-500 mb-4">Statusy Dokumentów</div>
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span class="text-sm">W obiegu</span>
-              </div>
-              <span class="text-xs font-mono text-surface-400">12</span>
-            </div>
-            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <span class="text-sm">Zatwierdzone</span>
-              </div>
-              <span class="text-xs font-mono text-surface-400">45</span>
-            </div>
+    <div class="p-4 bg-surface-50 dark:bg-surface-900/50 rounded-xl border border-surface-200 dark:border-surface-800">
+      <div class="text-sm font-bold uppercase tracking-wider text-surface-500 mb-4">Statusy Dokumentów</div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="text-sm">W obiegu</span>
           </div>
+          <span class="text-xs font-mono text-surface-400">12</span>
+        </div>
+        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="text-sm">Zatwierdzone</span>
+          </div>
+          <span class="text-xs font-mono text-surface-400">45</span>
         </div>
       </div>
+    </div>
+  `
+})
+export class DocumentStatusSidebarComponent {}
 
-      <!-- Główne Zakładki -->
-      <div class="h-full flex flex-col">
-        <erp-tabs
-          [config]="tabsConfig"
-        >
-        </erp-tabs>
-      </div>
-    </erp-page-layout>
+@Component({
+  selector: 'erp-document',
+  standalone: true,
+  imports: [CommonModule, ErpPageLayoutComponent],
+  template: `
+    <erp-page-layout [config]="pageConfig" />
   `,
   styles: [
     `
@@ -83,6 +79,11 @@ export class DocumentComponent {
       .addTab('Workflow obiegu', 'workflow', { icon: 'pi pi-sitemap' })
       .setInitialValue('list')
       .setOnTabChange(noop),
+  );
+
+  protected readonly pageConfig = ErpPageLayoutBuilder.create(b => b
+    .setLeftSidebar(DocumentStatusSidebarComponent)
+    .setMain(ErpTabsComponent, { config: this.tabsConfig })
   );
 
   /** Karta stanu pustego dla Workflow */

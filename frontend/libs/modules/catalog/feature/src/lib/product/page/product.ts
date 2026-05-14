@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpPageLayoutComponent } from '@erp/shared/ui';
+import { ErpPageLayoutComponent, ErpPageLayoutBuilder } from '@erp/shared/ui';
 import { ErpDynamicFilterComponent, ErpDynamicFilterBuilder } from '@erp/shared/ui/erp-dynamic-filter';
 import { ErpTreeSelectComponent, ErpTreeSelectBuilder } from '@erp/shared/ui/erp-tree-select';
 import { ErpActionButtonsBuilder, ErpActionButtonsComponent } from '@erp/shared/ui/erp-action-buttons';
@@ -20,23 +20,9 @@ import { noop } from 'rxjs';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, ErpDynamicFilterComponent, ErpTabsComponent],
+  imports: [CommonModule, ErpPageLayoutComponent],
   template: `
-    <erp-page-layout>
-      <!-- Lewy panel: Filtry -->
-      <div filters>
-        <erp-dynamic-filter
-          [config]="filtersConfig"
-        />
-      </div>
-
-      <!-- Kontent -->
-      <div class="h-full">
-        <erp-tabs
-          [config]="tabsConfig"
-        />
-      </div>
-    </erp-page-layout>
+    <erp-page-layout [config]="pageConfig" />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -223,6 +209,11 @@ export class ProductComponent {
       .addTab('Dodaj produkt (Test Form)', '4', { component: ErpCardComponent, config: { config: this.formCardConfig } })
       .setInitialValue('0')
       .setOnTabChange(noop),
+  );
+
+  protected readonly pageConfig = ErpPageLayoutBuilder.create(b => b
+    .setLeftSidebar(ErpDynamicFilterComponent, { config: this.filtersConfig })
+    .setMain(ErpTabsComponent, { config: this.tabsConfig })
   );
 
   protected saveProduct(): void {

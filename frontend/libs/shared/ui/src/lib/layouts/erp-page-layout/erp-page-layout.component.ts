@@ -1,14 +1,19 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+
+import { ErpPageLayoutConfig } from './erp-page-layout.types';
 
 @Component({
   selector: 'erp-page-layout',
   imports: [CommonModule, ButtonModule],
   template: `
+    @let _config = config();
+    
     <div class="flex h-full w-full bg-surface-50 dark:bg-surface-950 overflow-hidden">
       <!-- Lewy panel: Filtry -->
-      <aside
+      @if (_config.leftSidebar) {
+        <aside
         class="group relative h-full border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 flex flex-col transition-all duration-300 ease-in-out z-20"
         [class.w-80]="isSidebarVisible()"
         [class.w-0]="!isSidebarVisible()"
@@ -51,16 +56,23 @@ import { ButtonModule } from 'primeng/button';
             Filtrowanie
           </div>
           <div class="flex-1 overflow-y-auto p-6 min-w-80">
-            <ng-content select="[filters]"></ng-content>
+            <ng-container
+              *ngComponentOutlet="_config.leftSidebar.component; inputs: _config.leftSidebar.config"
+            ></ng-container>
           </div>
         </div>
       </aside>
+      }
 
       <!-- Prawy panel: Kontent -->
       <div class="flex-1 flex flex-col min-w-0 relative">
         <!-- Główna zawartość -->
         <main class="flex-1 p-6 overflow-auto bg-surface-50 dark:bg-surface-950">
-          <ng-content></ng-content>
+          @if (_config.main) {
+            <ng-container
+              *ngComponentOutlet="_config.main.component; inputs: _config.main.config"
+            ></ng-container>
+          }
         </main>
       </div>
     </div>
@@ -68,6 +80,8 @@ import { ButtonModule } from 'primeng/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpPageLayoutComponent {
+  public config = input.required<ErpPageLayoutConfig>();
+
   public isSidebarVisible = signal(true);
 
   public toggleSidebar(): void {

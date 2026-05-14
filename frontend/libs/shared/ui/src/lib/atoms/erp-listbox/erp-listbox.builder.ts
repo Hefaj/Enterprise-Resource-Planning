@@ -56,7 +56,7 @@ export class ErpListboxBuilder extends ErpBaseBuilder<ErpListboxConfig> {
     return this;
   }
 
-  public setItemComponent(component: Type<any>): this {
+  public setItemComponent<T>(component: MaybeSignal<Type<T>>): this {
     this._data.itemComponent = component;
     return this;
   }

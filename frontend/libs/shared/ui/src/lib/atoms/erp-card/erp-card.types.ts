@@ -8,13 +8,13 @@ export interface ErpCardConfig {
   subtitle?: MaybeSignal<string | undefined>;
   styleClass?: MaybeSignal<string | undefined>;
   contentStyleClass?: MaybeSignal<string | undefined>;
-  contentComponent?: Type<any>;
+  contentComponent?: MaybeSignal<Type<any>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   contentConfig?: ErpComponentSignalInputs<any>;
-  footerComponent?: Type<any>;
+  footerComponent?: MaybeSignal<Type<any>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   footerConfig?: ErpComponentSignalInputs<any>;
-  headerComponent?: Type<any>;
+  headerComponent?: MaybeSignal<Type<any>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   headerConfig?: ErpComponentSignalInputs<any>;
 }

@@ -200,6 +200,7 @@ export class ProductComponent {
       }),
   );
 
+
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
       .addTab('Lista produktów', '0', { component: ProductTableComponent, config: { data: this.products() } })

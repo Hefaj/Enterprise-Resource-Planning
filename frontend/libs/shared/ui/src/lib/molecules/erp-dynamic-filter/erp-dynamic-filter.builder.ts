@@ -18,7 +18,7 @@ export class ErpDynamicFilterBuilder extends ErpBaseBuilder<ErpDynamicFilterConf
    */
   public addFilter<T>(
     label: MaybeSignal<string | undefined>,
-    component: Type<T>,
+    component: MaybeSignal<Type<T>>,
     inputs: ErpComponentSignalInputs<T>
   ): this {
     if (Array.isArray(this._data.items)) {

@@ -46,16 +46,19 @@ export class ErpTabsComponent {
   protected internalValue = signal<string | number | undefined>(undefined);
 
   protected unwrappedItems = computed(() => {
-    return this.config().items.map(item => ({
+    const rawItems = unwrapSignal(this.config().items) || [];
+    return rawItems.map(item => ({
       ...item,
       label: unwrapSignal(item.label),
+      value: unwrapSignal(item.value),
       icon: unwrapSignal(item.icon),
-      disabled: unwrapSignal(item.disabled)
+      disabled: unwrapSignal(item.disabled),
+      component: unwrapSignal(item.component)
     }));
   });
 
   protected activeValue = computed(() => {
-    return this.internalValue() ?? this.config().initialValue;
+    return this.internalValue() ?? unwrapSignal(this.config().initialValue);
   });
 
   protected getActiveTab(items: any[], activeVal: any): any | undefined {

@@ -20,7 +20,7 @@ export interface ErpFormField {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: any;
   colSpan?: MaybeSignal<number | undefined>;
-  component?: Type<any>; // Używane tylko dla typu 'custom'
+  component?: MaybeSignal<Type<any>>; // Używane tylko dla typu 'custom'
 }
 
 export interface ErpFormConfig {

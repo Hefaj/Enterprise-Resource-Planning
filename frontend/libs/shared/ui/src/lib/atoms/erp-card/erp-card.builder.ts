@@ -40,9 +40,12 @@ export class ErpCardBuilder extends ErpBaseBuilder<ErpCardConfig> {
    * @param component — Klasa komponentu do renderowania
    * @param config — Inputy przekazywane do komponentu (lub builder)
    */
-  public setContentComponent<TComp>(component: Type<TComp>, config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }): this {
+  public setContentComponent<T = any>(
+    component: MaybeSignal<Type<T>>,
+    config?: ErpComponentSignalInputs<T> | any
+  ): this {
     this._data.contentComponent = component;
-    this._data.contentConfig = this._extract(config);
+    this._data.contentConfig = config;
     return this;
   }
 
@@ -51,9 +54,12 @@ export class ErpCardBuilder extends ErpBaseBuilder<ErpCardConfig> {
    * @param component — Klasa komponentu do renderowania
    * @param config — Inputy przekazywane do komponentu
    */
-  public setFooterComponent<TComp>(component: Type<TComp>, config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }): this {
+  public setFooterComponent<T = any>(
+    component: MaybeSignal<Type<T>>,
+    config?: ErpComponentSignalInputs<T> | any
+  ): this {
     this._data.footerComponent = component;
-    this._data.footerConfig = this._extract(config);
+    this._data.footerConfig = config;
     return this;
   }
 
@@ -62,9 +68,12 @@ export class ErpCardBuilder extends ErpBaseBuilder<ErpCardConfig> {
    * @param component — Klasa komponentu do renderowania
    * @param config — Inputy przekazywane do komponentu
    */
-  public setHeaderComponent<TComp>(component: Type<TComp>, config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }): this {
+  public setHeaderComponent<T = any>(
+    component: MaybeSignal<Type<T>>,
+    config?: ErpComponentSignalInputs<T> | any
+  ): this {
     this._data.headerComponent = component;
-    this._data.headerConfig = this._extract(config);
+    this._data.headerConfig = config;
     return this;
   }
 }

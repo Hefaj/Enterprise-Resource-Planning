@@ -51,17 +51,17 @@ export class ErpAutoCompleteBuilder extends ErpBaseBuilder<ErpAutoCompleteConfig
     return this;
   }
 
-  public setItemComponent(component: Type<any>): this {
+  public setItemComponent<T>(component: MaybeSignal<Type<T>>): this {
     this._data.itemComponent = component;
     return this;
   }
 
-  public setHeaderComponent(component: Type<any>): this {
+  public setHeaderComponent<T>(component: MaybeSignal<Type<T>>): this {
     this._data.headerComponent = component;
     return this;
   }
 
-  public setFooterComponent(component: Type<any>): this {
+  public setFooterComponent<T>(component: MaybeSignal<Type<T>>): this {
     this._data.footerComponent = component;
     return this;
   }

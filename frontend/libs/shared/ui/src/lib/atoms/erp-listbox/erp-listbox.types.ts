@@ -12,5 +12,5 @@ export interface ErpListboxConfig {
   checkbox?: MaybeSignal<boolean | undefined>;
   filter?: MaybeSignal<boolean | undefined>;
   scrollHeight?: MaybeSignal<string | undefined>;
-  itemComponent?: Type<any>;
+  itemComponent?: MaybeSignal<Type<any>>;
 }

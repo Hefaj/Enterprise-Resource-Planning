@@ -4,15 +4,15 @@ import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export interface ErpTabItem<TComp = any> {
   label: MaybeSignal<string>;
-  value: string | number;
+  value: MaybeSignal<string | number>;
   icon?: MaybeSignal<string | undefined>;
   disabled?: MaybeSignal<boolean | undefined>;
-  component?: Type<TComp>;
+  component?: MaybeSignal<Type<TComp>>;
   config?: ErpComponentSignalInputs<TComp> | any;
 }
 
 export interface ErpTabsConfig {
-  items: ErpTabItem[];
-  initialValue?: string | number;
+  items: MaybeSignal<ErpTabItem[]>;
+  initialValue?: MaybeSignal<string | number | undefined>;
   onTabChange?: (value: string | number) => void;
 }

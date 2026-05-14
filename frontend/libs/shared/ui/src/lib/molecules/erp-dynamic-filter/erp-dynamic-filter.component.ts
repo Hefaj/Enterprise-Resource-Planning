@@ -43,6 +43,7 @@ export class ErpDynamicFilterComponent {
     return rawItems.map((item) => ({
       ...item,
       resolvedLabel: unwrapSignal(item.label),
+      component: unwrapSignal(item.component) ?? null,
     }));
   });
 

@@ -14,6 +14,9 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     @let _subtitle = subtitle();
     @let _styleClass = styleClass();
     @let _contentStyleClass = contentStyleClass();
+    @let _contentComponent = unwrapComponent(config().contentComponent);
+    @let _footerComponent = unwrapComponent(config().footerComponent);
+    @let _headerComponent = unwrapComponent(config().headerComponent);
 
     <p-card
       [header]="_header || ''"
@@ -28,8 +31,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 
       <!-- Main Content -->
       <div [class]="(_contentStyleClass || '') + ' text-surface-600 dark:text-surface-400'">
-        @if (config().contentComponent) {
-          <ng-container *ngComponentOutlet="config().contentComponent!; inputs: config().contentConfig" />
+        @if (_contentComponent) {
+          <ng-container *ngComponentOutlet="_contentComponent!; inputs: config().contentConfig" />
         }
         <ng-content></ng-content>
       </div>
@@ -37,8 +40,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       <!-- Footer -->
       <ng-template #footer>
         <div class="pt-4 border-t border-surface-100 dark:border-surface-800">
-          @if (config().footerComponent) {
-            <ng-container *ngComponentOutlet="config().footerComponent!; inputs: config().footerConfig" />
+          @if (_footerComponent) {
+            <ng-container *ngComponentOutlet="_footerComponent!; inputs: config().footerConfig" />
           }
           <ng-content select="[footer]"></ng-content>
         </div>
@@ -46,8 +49,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 
       <!-- Custom Header Template -->
       <ng-template #header>
-        @if (config().headerComponent) {
-          <ng-container *ngComponentOutlet="config().headerComponent!; inputs: config().headerConfig" />
+        @if (_headerComponent) {
+          <ng-container *ngComponentOutlet="_headerComponent!; inputs: config().headerConfig" />
         }
         <ng-content select="[header]"></ng-content>
       </ng-template>
@@ -84,4 +87,9 @@ export class ErpCardComponent {
   protected subtitle = computed(() => unwrapSignal(this.config().subtitle));
   protected styleClass = computed(() => unwrapSignal(this.config().styleClass));
   protected contentStyleClass = computed(() => unwrapSignal(this.config().contentStyleClass));
+
+  protected unwrapComponent(componentSignal: any) {
+    if (!componentSignal) return null;
+    return unwrapSignal(componentSignal);
+  }
 }

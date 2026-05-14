@@ -40,22 +40,25 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           [appendTo]="'body'"
         >
           <ng-template let-item #item>
-            @if (config().itemComponent) {
-              <ng-container *ngComponentOutlet="config().itemComponent!; inputs: { item: item }" />
+            @let _itemComponent = unwrapComponent(config().itemComponent);
+            @if (_itemComponent) {
+              <ng-container *ngComponentOutlet="_itemComponent; inputs: { item: item }" />
             } @else {
               {{ item[_optionLabel || 'label'] }}
             }
           </ng-template>
 
           <ng-template #header>
-             @if (config().headerComponent) {
-               <ng-container *ngComponentOutlet="config().headerComponent!" />
+             @let _headerComponent = unwrapComponent(config().headerComponent);
+             @if (_headerComponent) {
+               <ng-container *ngComponentOutlet="_headerComponent" />
              }
           </ng-template>
 
           <ng-template #footer>
-             @if (config().footerComponent) {
-               <ng-container *ngComponentOutlet="config().footerComponent!" />
+             @let _footerComponent = unwrapComponent(config().footerComponent);
+             @if (_footerComponent) {
+               <ng-container *ngComponentOutlet="_footerComponent" />
              }
           </ng-template>
         </p-autocomplete>
@@ -136,5 +139,10 @@ export class ErpAutoCompleteComponent implements ControlValueAccessor {
 
   public setDisabledState(isDisabled: boolean): void {
     isDisabled ? this.internalControl.disable() : this.internalControl.enable();
+  }
+
+  protected unwrapComponent(componentSignal: any) {
+    if (!componentSignal) return null;
+    return unwrapSignal(componentSignal);
   }
 }

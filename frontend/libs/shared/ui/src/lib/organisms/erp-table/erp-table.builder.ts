@@ -1,5 +1,6 @@
 import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 import { 
   ErpTableConfig, 
   ErpTableColumn, 
@@ -165,7 +166,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
   public addCustomColumn(
     field: string,
     header: string,
-    component: Type<any>,
+    component: MaybeSignal<Type<any>>,
     inputs?: Record<string, any>,
     options: Partial<Omit<ErpTableColumn, 'field' | 'header' | 'type' | 'typeConfig'>> = {}
   ): this {

@@ -43,8 +43,9 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
         (onBlur)="onTouched()"
       >
         <ng-template let-item #item>
-          @if (config().itemComponent) {
-            <ng-container *ngComponentOutlet="config().itemComponent!; inputs: { item: item }" />
+          @let _itemComponent = unwrapComponent(config().itemComponent);
+          @if (_itemComponent) {
+            <ng-container *ngComponentOutlet="_itemComponent; inputs: { item: item }" />
           } @else {
             {{ item[_optionLabel || 'label'] }}
           }
@@ -118,5 +119,10 @@ export class ErpListboxComponent implements ControlValueAccessor {
 
   public setDisabledState(isDisabled: boolean): void {
     isDisabled ? this.internalControl.disable() : this.internalControl.enable();
+  }
+
+  protected unwrapComponent(componentSignal: any) {
+    if (!componentSignal) return null;
+    return unwrapSignal(componentSignal);
   }
 }

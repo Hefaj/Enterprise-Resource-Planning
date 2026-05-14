@@ -5,6 +5,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { TagModule } from 'primeng/tag';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 
 import { 
@@ -208,9 +209,10 @@ import {
 
                   <!-- Custom Renderer -->
                   @case ('custom') {
-                    @if ($any(col.typeConfig)?.component) {
+                    @let _customComponent = unwrapComponent($any(col.typeConfig)?.component);
+                    @if (_customComponent) {
                       <ng-container 
-                        *ngComponentOutlet="$any(col.typeConfig).component; inputs: getCustomInputs(row, col)" 
+                        *ngComponentOutlet="_customComponent; inputs: getCustomInputs(row, col)" 
                       />
                     }
                   }
@@ -412,6 +414,11 @@ export class ErpTableComponent {
       field: col.field,
       value: row[col.field],
     };
+  }
+
+  protected unwrapComponent(componentSignal: any) {
+    if (!componentSignal) return null;
+    return unwrapSignal(componentSignal);
   }
 
   protected formatValue(value: any, col: ErpTableColumn): string {

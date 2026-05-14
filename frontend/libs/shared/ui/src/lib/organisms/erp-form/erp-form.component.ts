@@ -77,7 +77,10 @@ import { ErpAutoCompleteComponent } from '@erp/shared/ui/erp-auto-complete';
               />
             }
             @case ('custom') {
-              <ng-container *ngComponentOutlet="field.component!; inputs: { config: field.config, control: getControl(field.key) }" />
+              @let _customComponent = unwrapComponent(field.component);
+              @if (_customComponent) {
+                <ng-container *ngComponentOutlet="_customComponent; inputs: { config: field.config, control: getControl(field.key) }" />
+              }
             }
           }
         </div>
@@ -101,5 +104,10 @@ export class ErpFormComponent {
 
   public getControl(key: string): FormControl {
     return this.config().formGroup.get(key) as FormControl;
+  }
+
+  protected unwrapComponent(componentSignal: any) {
+    if (!componentSignal) return null;
+    return unwrapSignal(componentSignal);
   }
 }

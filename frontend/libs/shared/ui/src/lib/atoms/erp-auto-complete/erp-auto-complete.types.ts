@@ -11,7 +11,7 @@ export interface ErpAutoCompleteConfig {
   multiple?: MaybeSignal<boolean | undefined>;
   fluid?: MaybeSignal<boolean | undefined>;
   forceSelection?: MaybeSignal<boolean | undefined>;
-  itemComponent?: Type<any>;
-  headerComponent?: Type<any>;
-  footerComponent?: Type<any>;
+  itemComponent?: MaybeSignal<Type<any>>;
+  headerComponent?: MaybeSignal<Type<any>>;
+  footerComponent?: MaybeSignal<Type<any>>;
 }

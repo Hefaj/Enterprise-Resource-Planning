@@ -58,7 +58,7 @@ export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
    */
   public addCustomField<TComp>(
     key: string,
-    component: Type<TComp>,
+    component: MaybeSignal<Type<TComp>>,
     config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
     options: { colSpan?: MaybeSignal<number | undefined>; defaultValue?: any; validators?: any[] } = {}
   ): this {

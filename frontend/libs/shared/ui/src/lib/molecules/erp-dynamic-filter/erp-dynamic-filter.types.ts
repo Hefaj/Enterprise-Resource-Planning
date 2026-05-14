@@ -6,7 +6,7 @@ import { MaybeSignal } from '../../base/erp-signal-utils';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ErpDynamicFilterItem<T = any> {
   label: MaybeSignal<string | undefined>;
-  component: Type<T>;
+  component: MaybeSignal<Type<T>>;
   inputs: ErpComponentSignalInputs<T>;
 }
 

@@ -1,4 +1,5 @@
 import { Type, WritableSignal } from '@angular/core';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 // ── Cell Renderer Configs ───────────────────────────────
 
@@ -45,7 +46,7 @@ export interface ErpCellLinkConfig {
 
 export interface ErpCellCustomConfig {
   /** Komponent Angular wstrzykiwany w komórkę */
-  component: Type<any>;
+  component: MaybeSignal<Type<any>>;
   /** Dodatkowe inputy przekazywane do komponentu */
   inputs?: Record<string, any>;
 }

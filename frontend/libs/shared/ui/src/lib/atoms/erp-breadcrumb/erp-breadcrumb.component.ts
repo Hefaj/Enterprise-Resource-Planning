@@ -1,30 +1,26 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { MenuItem } from 'primeng/api';
+import { ChangeDetectionStrategy, Component, input, computed } from '@angular/core';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { ErpBreadcrumbBuilder } from './erp-breadcrumb.builder';
-
-export { ErpBreadcrumbBuilder };
-
-export type ErpMenuItem = MenuItem;
-
-export interface ErpBreadcrumb {
-  home?: ErpMenuItem;
-  items?: ErpMenuItem[];
-}
+import { ErpBreadcrumbConfig } from './erp-breadcrumb.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-breadcrumb',
+  standalone: true,
   imports: [BreadcrumbModule],
   template: `
-    @let _config = config();
+    @let _home = home();
+    @let _items = items();
 
     <p-breadcrumb
-      [home]="_config.home"
-      [model]="_config.items"
+      [home]="_home"
+      [model]="_items"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpBreadcrumbComponent {
-  public config = input.required<ErpBreadcrumb>();
+  public config = input.required<ErpBreadcrumbConfig>();
+
+  protected home = computed(() => unwrapSignal(this.config().home));
+  protected items = computed(() => unwrapSignal(this.config().items));
 }

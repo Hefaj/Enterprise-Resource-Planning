@@ -1,22 +1,15 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { ErpEmptyCardComponent } from '../../atoms/erp-empty-card/erp-empty-card.component';
-import { ErpDrawerComponent } from '../../atoms/erp-drawer/erp-drawer.component';
-import { ErpButtonComponent } from '../../atoms/erp-button/erp-button.component';
-import { ErpButtonBuilder } from '../../atoms/erp-button/erp-button.builder';
-import { ErpPanelMenu, ErpPanelMenuComponent } from '../../atoms/erp-panel-menu/erp-panel-menu.component';
-import { ErpBreadcrumb, ErpBreadcrumbComponent } from '../../atoms/erp-breadcrumb/erp-breadcrumb.component';
-import { ErpUserMenu, ErpUserMenuComponent } from '../../atoms/erp-user-menu/erp-user-menu.component';
+import { ErpEmptyCardComponent } from '@erp/shared/ui/erp-empty-card';
+import { ErpDrawerComponent } from '@erp/shared/ui/erp-drawer';
+import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button';
+import { ErpPanelMenuConfig, ErpPanelMenuComponent } from '@erp/shared/ui/erp-panel-menu';
+import { ErpBreadcrumbConfig, ErpBreadcrumbComponent } from '@erp/shared/ui/erp-breadcrumb';
+import { ErpUserMenuConfig, ErpUserMenuComponent } from '@erp/shared/ui/erp-user-menu';
 
 @Component({
   selector: 'erp-host-layout',
-  imports: [
-    ErpEmptyCardComponent,
-    ErpDrawerComponent,
-    ErpButtonComponent,
-    ErpPanelMenuComponent,
-    ErpBreadcrumbComponent,
-    ErpUserMenuComponent,
-  ],
+  standalone: true,
+  imports: [ErpEmptyCardComponent, ErpDrawerComponent, ErpButtonComponent, ErpPanelMenuComponent, ErpBreadcrumbComponent, ErpUserMenuComponent],
   template: `
     @let _menuConfig = menuConfig();
     @let _breadcrumbConfig = breadcrumbConfig();
@@ -30,7 +23,7 @@ import { ErpUserMenu, ErpUserMenuComponent } from '../../atoms/erp-user-menu/erp
       <div class="h-16 flex items-center px-2 bg-white dark:bg-slate-900 shadow-xl">
         <erp-button
           [config]="menuBtn"
-          (click)="drawer.show()"
+          (onClick)="drawer.show()"
         />
         <erp-breadcrumb
           class="w-full"
@@ -49,8 +42,8 @@ import { ErpUserMenu, ErpUserMenuComponent } from '../../atoms/erp-user-menu/erp
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpHostLayoutComponent {
-  public userMenuConfig = input.required<ErpUserMenu>();
-  public menuConfig = input.required<ErpPanelMenu>();
-  public breadcrumbConfig = input.required<ErpBreadcrumb>();
+  public userMenuConfig = input.required<ErpUserMenuConfig>();
+  public menuConfig = input.required<ErpPanelMenuConfig>();
+  public breadcrumbConfig = input.required<ErpBreadcrumbConfig>();
   protected readonly menuBtn = ErpButtonBuilder.create((b) => b.setSeverity('info').setIcon('pi pi-bars'));
 }

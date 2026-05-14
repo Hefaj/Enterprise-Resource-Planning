@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpButtonComponent, ErpButtonConfig } from '../../atoms/erp-button/erp-button.component';
+import { ErpButtonComponent, ErpButtonConfig } from '../../atoms/erp-button';
 
 export interface ErpActionButtonsConfig {
   buttons: (ErpButtonConfig & { id: string })[];
@@ -14,18 +14,21 @@ export interface ErpActionButtonsConfig {
   imports: [CommonModule, ErpButtonComponent],
   template: `
     @let _config = config();
-    <div 
-      class="flex items-center" 
+    <div
+      class="flex items-center"
       [ngClass]="{
         'justify-start': _config.alignment === 'start',
         'justify-end': _config.alignment === 'end' || !_config.alignment,
         'justify-center': _config.alignment === 'center',
-        'justify-between': _config.alignment === 'between'
+        'justify-between': _config.alignment === 'between',
       }"
       [style.gap.rem]="_config.gap || 0.5"
     >
       @for (btn of _config.buttons; track btn.id) {
-        <erp-button [config]="btn" (click)="buttonClick.emit(btn.id)" />
+        <erp-button
+          [config]="btn"
+          (onClick)="buttonClick.emit(btn.id)"
+        />
       }
     </div>
   `,

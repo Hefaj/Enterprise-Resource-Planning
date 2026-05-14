@@ -1,26 +1,24 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { MenuItem } from 'primeng/api';
+import { ChangeDetectionStrategy, Component, input, computed } from '@angular/core';
 import { PanelMenu } from 'primeng/panelmenu';
-
-export type ErpPanelMenuItem = MenuItem;
-
-export interface ErpPanelMenu {
-  items: ErpPanelMenuItem[];
-}
+import { ErpPanelMenuConfig } from './erp-panel-menu.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-panel-menu',
+  standalone: true,
   imports: [PanelMenu],
   template: `
-    @let _config = config();
+    @let _items = items();
 
     <p-panelmenu
-      [model]="_config.items"
+      [model]="_items || []"
       class="w-full"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpPanelMenuComponent {
-  public readonly config = input.required<ErpPanelMenu>();
+  public config = input.required<ErpPanelMenuConfig>();
+
+  protected items = computed(() => unwrapSignal(this.config().items));
 }

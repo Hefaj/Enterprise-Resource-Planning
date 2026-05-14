@@ -1,25 +1,21 @@
-import { ChangeDetectionStrategy, Component, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, viewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
-import { ErpMenuBuilder } from './erp-menu.builder';
-
-export { ErpMenuBuilder };
-
-export interface ErpMenuConfig {
-  items: MenuItem[];
-  popup?: boolean;
-}
+import { ErpMenuConfig } from './erp-menu.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-menu',
   standalone: true,
   imports: [CommonModule, MenuModule],
   template: `
+    @let _items = items();
+    @let _popup = popup();
+
     <p-menu
       #menu
-      [model]="config().items"
-      [popup]="config().popup ?? true"
+      [model]="_items || []"
+      [popup]="_popup ?? true"
       [appendTo]="'body'"
     />
   `,
@@ -27,7 +23,12 @@ export interface ErpMenuConfig {
 })
 export class ErpMenuComponent {
   public config = input.required<ErpMenuConfig>();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public menu = viewChild<any>('menu');
+
+  protected items = computed(() => unwrapSignal(this.config().items));
+  protected popup = computed(() => unwrapSignal(this.config().popup));
 
   /**
    * Metoda do otwierania menu (jeśli jest popup)

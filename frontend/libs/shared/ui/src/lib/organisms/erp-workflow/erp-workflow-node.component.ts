@@ -2,10 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input
 import { CommonModule } from '@angular/common';
 import { WorkflowNode, WorkflowNodeAction } from './erp-workflow.types';
 import { TemplateRef } from '@angular/core';
-import { ErpButtonBuilder } from '../../atoms/erp-button/erp-button.builder';
-import { ErpButtonComponent } from '../../atoms/erp-button/erp-button.component';
-import { ErpMenuBuilder } from '../../atoms/erp-menu/erp-menu.builder';
-import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
+import { ErpButtonBuilder, ErpButtonComponent } from '../../atoms/erp-button';
+import { ErpMenuBuilder, ErpMenuComponent } from '@erp/shared/ui/erp-menu';
 
 @Component({
   selector: 'erp-workflow-node',
@@ -14,7 +12,7 @@ import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (isGateway()) {
-      <div 
+      <div
         class="absolute flex items-center justify-center cursor-pointer overflow-visible group"
         [style.left.px]="node().position.x"
         [style.top.px]="node().position.y"
@@ -23,39 +21,49 @@ import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
         (mousedown)="onMouseDown($event)"
       >
         <!-- Diamond Shape -->
-        <div class="absolute inset-0 border-2 rounded shadow-sm rotate-45 transition-all"
-             [ngClass]="gatewayStatusClass()"></div>
-             
+        <div
+          class="absolute inset-0 border-2 rounded shadow-sm rotate-45 transition-all"
+          [ngClass]="gatewayStatusClass()"
+        ></div>
+
         <!-- Icon -->
-        <span class="relative z-10 font-bold text-sm text-surface-700 dark:text-surface-200 pointer-events-none" style="transform: rotate(-45deg)">
+        <span
+          class="relative z-10 font-bold text-sm text-surface-700 dark:text-surface-200 pointer-events-none"
+          style="transform: rotate(-45deg)"
+        >
           @if (node().type === 'and') {
             AND
           } @else {
             OR
           }
         </span>
-        
+
         <!-- Actions Menu -->
         @if (!readonlyMode() && menuItems().length > 0) {
           <div class="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
-            <erp-button 
-              [config]="actionButtonConfig" 
-              (onClick)="menuGateway.toggle($event); $event.stopPropagation()" 
+            <erp-button
+              [config]="actionButtonConfig"
+              (onClick)="menuGateway.toggle($event); $event.stopPropagation()"
               (mousedown)="$event.stopPropagation()"
             />
-            <erp-menu #menuGateway [config]="menuConfig()" />
+            <erp-menu
+              #menuGateway
+              [config]="menuConfig()"
+            />
           </div>
         }
 
         <!-- Output Handle -->
-        <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm z-20"
-             (mousedown)="onHandleMouseDown($event, 'default')"></div>
-             
+        <div
+          class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm z-20"
+          (mousedown)="onHandleMouseDown($event, 'default')"
+        ></div>
+
         <!-- Input Handle -->
         <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-surface-400 rounded-full border-2 border-surface-0 dark:border-surface-900 z-20"></div>
       </div>
     } @else {
-      <div 
+      <div
         class="absolute rounded-xl border bg-surface-0 dark:bg-surface-900 overflow-visible transition-shadow transition-colors flex flex-col"
         [ngClass]="statusBorderClass()"
         [style.left.px]="node().position.x"
@@ -65,8 +73,10 @@ import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
         (mousedown)="onMouseDown($event)"
       >
         <!-- Header -->
-        <div class="px-4 py-2 flex justify-between items-center rounded-xl"
-             [ngClass]="headerBgClass()">
+        <div
+          class="px-4 py-2 flex justify-between items-center rounded-xl"
+          [ngClass]="headerBgClass()"
+        >
           <div class="flex items-center gap-2 flex-1 overflow-hidden">
             @if (node().status === 'completed') {
               <i class="pi pi-check-circle text-green-600 dark:text-green-400"></i>
@@ -79,16 +89,19 @@ import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
               {{ node().label }}
             </span>
           </div>
-          
+
           <!-- Actions Menu -->
           @if (!readonlyMode() && menuItems().length > 0) {
             <div class="ml-2">
-              <erp-button 
-                [config]="actionButtonConfig" 
+              <erp-button
+                [config]="actionButtonConfig"
                 (onClick)="menu.toggle($event); $event.stopPropagation()"
                 (mousedown)="$event.stopPropagation()"
               />
-              <erp-menu #menu [config]="menuConfig()" />
+              <erp-menu
+                #menu
+                [config]="menuConfig()"
+              />
             </div>
           }
         </div>
@@ -98,33 +111,37 @@ import { ErpMenuComponent } from '../../atoms/erp-menu/erp-menu.component';
           @if (customTemplate()) {
             <ng-container *ngTemplateOutlet="customTemplate()!; context: { $implicit: node() }"></ng-container>
           } @else if (!hasContent()) {
-            <div class="p-4 text-xs text-surface-500">
-              Type: {{ node().type }}
-            </div>
+            <div class="p-4 text-xs text-surface-500">Type: {{ node().type }}</div>
           }
           <ng-content></ng-content>
         </div>
 
         <!-- Output Handles (Dots) -->
         @if (node().type === 'condition') {
-          <div class="absolute -bottom-2 left-1/4 w-4 h-4 bg-red-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
-               title="False"
-               (mousedown)="onHandleMouseDown($event, 'false')"></div>
-          <div class="absolute -bottom-2 right-1/4 w-4 h-4 bg-green-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
-               title="True"
-               (mousedown)="onHandleMouseDown($event, 'true')"></div>
+          <div
+            class="absolute -bottom-2 left-1/4 w-4 h-4 bg-red-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
+            title="False"
+            (mousedown)="onHandleMouseDown($event, 'false')"
+          ></div>
+          <div
+            class="absolute -bottom-2 right-1/4 w-4 h-4 bg-green-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
+            title="True"
+            (mousedown)="onHandleMouseDown($event, 'true')"
+          ></div>
         } @else if (node().type !== 'end') {
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
-               (mousedown)="onHandleMouseDown($event, 'default')"></div>
+          <div
+            class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-0 dark:border-surface-900 cursor-pointer hover:scale-125 transition-transform shadow-sm"
+            (mousedown)="onHandleMouseDown($event, 'default')"
+          ></div>
         }
-        
+
         <!-- Input Handle (Dot) -->
         @if (node().type !== 'start') {
           <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-surface-400 rounded-full border-2 border-surface-0 dark:border-surface-900"></div>
         }
       </div>
     }
-  `
+  `,
 })
 export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
   node = input.required<WorkflowNode>();
@@ -132,17 +149,17 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
   actions = input<WorkflowNodeAction[]>([]);
   typeActions = input<WorkflowNodeAction[]>([]);
   customTemplate = input<TemplateRef<any> | undefined>();
-  
+
   dragStart = output<MouseEvent>();
-  connectionStart = output<{ event: MouseEvent, sourceHandle: string }>();
+  connectionStart = output<{ event: MouseEvent; sourceHandle: string }>();
   deleteRequest = output<string>();
-  heightChange = output<{ id: string, height: number }>();
+  heightChange = output<{ id: string; height: number }>();
 
   el = inject(ElementRef);
   private resizeObserver: ResizeObserver | null = null;
 
   ngAfterViewInit() {
-    this.resizeObserver = new ResizeObserver(entries => {
+    this.resizeObserver = new ResizeObserver((entries) => {
       requestAnimationFrame(() => {
         for (let entry of entries) {
           const height = (entry.target as HTMLElement).offsetHeight;
@@ -152,7 +169,7 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
         }
       });
     });
-    
+
     const wrapper = this.el.nativeElement.firstElementChild;
     if (wrapper) {
       this.resizeObserver.observe(wrapper);
@@ -173,50 +190,56 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
 
   statusBorderClass = computed(() => {
     switch (this.node().status) {
-      case 'completed': return 'border-green-500 ring-2 ring-green-500/50 shadow-lg';
-      case 'in-progress': return 'border-primary-500 ring-2 ring-primary-500/50 shadow-lg';
-      case 'error': return 'border-red-500 ring-2 ring-red-500/50 shadow-lg';
-      default: return 'border-surface-200 dark:border-surface-700 shadow-md hover:shadow-lg';
+      case 'completed':
+        return 'border-green-500 ring-2 ring-green-500/50 shadow-lg';
+      case 'in-progress':
+        return 'border-primary-500 ring-2 ring-primary-500/50 shadow-lg';
+      case 'error':
+        return 'border-red-500 ring-2 ring-red-500/50 shadow-lg';
+      default:
+        return 'border-surface-200 dark:border-surface-700 shadow-md hover:shadow-lg';
     }
   });
 
   gatewayStatusClass = computed(() => {
-    const base = this.node().type === 'and' 
-      ? 'bg-blue-50 dark:bg-blue-900/20 ' 
-      : 'bg-orange-50 dark:bg-orange-900/20 ';
-      
+    const base = this.node().type === 'and' ? 'bg-blue-50 dark:bg-blue-900/20 ' : 'bg-orange-50 dark:bg-orange-900/20 ';
+
     switch (this.node().status) {
-      case 'completed': return base + 'border-green-500 ring-2 ring-green-500/50 shadow-lg';
-      case 'in-progress': return base + 'border-primary-500 ring-2 ring-primary-500/50 shadow-lg';
-      case 'error': return base + 'border-red-500 ring-2 ring-red-500/50 shadow-lg';
-      default: return base + (this.node().type === 'and' ? 'border-blue-400 dark:border-blue-600 shadow-sm hover:shadow-md' : 'border-orange-400 dark:border-orange-600 shadow-sm hover:shadow-md');
+      case 'completed':
+        return base + 'border-green-500 ring-2 ring-green-500/50 shadow-lg';
+      case 'in-progress':
+        return base + 'border-primary-500 ring-2 ring-primary-500/50 shadow-lg';
+      case 'error':
+        return base + 'border-red-500 ring-2 ring-red-500/50 shadow-lg';
+      default:
+        return base + (this.node().type === 'and' ? 'border-blue-400 dark:border-blue-600 shadow-sm hover:shadow-md' : 'border-orange-400 dark:border-orange-600 shadow-sm hover:shadow-md');
     }
   });
 
   menuItems = computed(() => {
     // 1. Global actions
-    const items: any[] = this.actions().map(action => ({
+    const items: any[] = this.actions().map((action) => ({
       label: action.label,
       icon: action.icon,
-      command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() })
+      command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() }),
     }));
 
     // 2. Type-specific actions
-    this.typeActions().forEach(action => {
+    this.typeActions().forEach((action) => {
       items.push({
         label: action.label,
         icon: action.icon,
-        command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() })
+        command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() }),
       });
     });
 
     // 3. Node-specific actions
     const nodeActions = this.node().actions || [];
-    nodeActions.forEach(action => {
+    nodeActions.forEach((action) => {
       items.push({
         label: action.label,
         icon: action.icon,
-        command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() })
+        command: (e: any) => action.command({ originalEvent: e.originalEvent, node: this.node() }),
       });
     });
 
@@ -228,34 +251,32 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
       items.push({
         label: 'Usuń Węzeł',
         icon: 'pi pi-trash',
-        command: () => this.deleteRequest.emit(this.node().id)
+        command: () => this.deleteRequest.emit(this.node().id),
       });
     }
 
     return items;
   });
 
-  menuConfig = computed(() => 
-    ErpMenuBuilder.create(b => b.setItems(this.menuItems()))
-  );
+  menuConfig = computed(() => ErpMenuBuilder.create((b) => b.setItems(this.menuItems())));
 
-  protected readonly actionButtonConfig = ErpButtonBuilder.create(b => b
-    .setIcon('pi pi-ellipsis-v')
-    .setVariant('text')
-    .setRounded(true)
-    .setSeverity('secondary')
-    .setSize('small')
-  );
+  protected readonly actionButtonConfig = ErpButtonBuilder.create((b) => b.setIcon('pi pi-ellipsis-v').setVariant('text').setRounded(true).setSeverity('secondary').setSize('small'));
 
   headerBgClass = computed(() => {
     const type = this.node().type;
-    switch(type) {
-      case 'start': return 'bg-green-100 dark:bg-green-900/30';
-      case 'end': return 'bg-red-100 dark:bg-red-900/30';
-      case 'condition': return 'bg-yellow-100 dark:bg-yellow-900/30';
-      case 'loop': return 'bg-purple-100 dark:bg-purple-900/30';
-      case 'action': return 'bg-blue-100 dark:bg-blue-900/30';
-      default: return 'bg-surface-100 dark:bg-surface-800';
+    switch (type) {
+      case 'start':
+        return 'bg-green-100 dark:bg-green-900/30';
+      case 'end':
+        return 'bg-red-100 dark:bg-red-900/30';
+      case 'condition':
+        return 'bg-yellow-100 dark:bg-yellow-900/30';
+      case 'loop':
+        return 'bg-purple-100 dark:bg-purple-900/30';
+      case 'action':
+        return 'bg-blue-100 dark:bg-blue-900/30';
+      default:
+        return 'bg-surface-100 dark:bg-surface-800';
     }
   });
 

@@ -1,29 +1,25 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { ErpInputBase } from '../../base/erp-input-base';
 import { noop } from 'rxjs';
-
-import { ErpToggleSwitchBuilder } from './erp-toggle-switch.builder';
-
-export { ErpToggleSwitchBuilder };
-
-export interface ErpToggleSwitch extends ErpInputBase {}
+import { ErpToggleSwitchConfig } from './erp-toggle-switch.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-toggle-switch',
   standalone: true,
   imports: [ToggleSwitchModule, ReactiveFormsModule],
   template: `
-    @let _config = config();
     @let _activeControl = activeControl();
+    @let _placeholder = placeholder();
+    @let _hint = hint();
 
     <div class="flex items-center gap-3">
       <p-toggleswitch [formControl]="_activeControl" (onBlur)="onTouched()" />
       <div class="flex flex-col">
-        <span class="text-sm font-medium text-slate-700">{{ _config.placeholder }}</span>
-        @if (_config.hint) {
-          <small class="text-slate-500">{{ _config.hint }}</small>
+        <span class="text-sm font-medium text-slate-700">{{ _placeholder }}</span>
+        @if (_hint) {
+          <small class="text-slate-500">{{ _hint }}</small>
         }
       </div>
     </div>
@@ -38,13 +34,17 @@ export interface ErpToggleSwitch extends ErpInputBase {}
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpToggleSwitchComponent implements ControlValueAccessor {
-  public config = input.required<ErpToggleSwitch>();
+  public config = input.required<ErpToggleSwitchConfig>();
   public control = input<FormControl | null>(null);
   public internalControl = new FormControl();
 
   public activeControl = computed(() => this.control() || this.internalControl);
 
+  protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
+  protected hint = computed(() => unwrapSignal(this.config().hint));
+
   public onTouched: () => void = noop;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private _onChange: (value: any) => void = noop;
 
   public writeValue(val: any): void {

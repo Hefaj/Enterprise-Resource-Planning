@@ -1,36 +1,28 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { ErpMenuConfig } from './erp-menu.component';
 import { MenuItem } from 'primeng/api';
+import { ErpMenuConfig } from './erp-menu.types';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpMenuBuilder extends ErpBaseBuilder<ErpMenuConfig> {
-  constructor() {
-    super();
-    this._data.items = [];
-    this._data.popup = true;
-  }
 
-  public addItem(label: string, icon?: string, command?: (event?: any) => void): this {
-    this._data.items?.push({ label, icon, command });
+
+  public setItems(items: MaybeSignal<MenuItem[] | undefined>): this {
+    this._data.items = items;
     return this;
   }
 
-  public addSeparator(): this {
-    this._data.items?.push({ separator: true });
-    return this;
-  }
-
-  public addGroup(label: string, items: MenuItem[]): this {
-    this._data.items?.push({ label, items });
-    return this;
-  }
-
-  public setPopup(popup = true): this {
+  public setPopup(popup: MaybeSignal<boolean | undefined> = true): this {
     this._data.popup = popup;
     return this;
   }
 
-  public setItems(items: MenuItem[]): this {
-    this._data.items = items;
+  public addItem(item: MenuItem): this {
+    if (!this._data.items) {
+      this._data.items = [];
+    }
+    if (Array.isArray(this._data.items)) {
+      this._data.items.push(item);
+    }
     return this;
   }
 }

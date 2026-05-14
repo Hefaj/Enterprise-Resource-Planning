@@ -41,12 +41,9 @@ export abstract class ErpBaseBuilder<T> {
     return val;
   }
 
-  public static create<TBuilder extends ErpBaseBuilder<any>>(
-    this: new () => TBuilder,
-    configure: (builder: TBuilder) => void
-  ): ReturnType<TBuilder['build']> {
+  public static create<TBuilder extends ErpBaseBuilder<any>>(this: new () => TBuilder, configure?: (builder: TBuilder) => void): ReturnType<TBuilder['build']> {
     const builder = new this();
-    configure(builder);
+    configure?.(builder);
     return builder.build();
   }
 }

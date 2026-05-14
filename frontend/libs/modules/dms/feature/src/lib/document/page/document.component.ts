@@ -1,46 +1,46 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { ErpPageLayoutComponent, ErpTabsComponent, ErpTabsBuilder, ErpCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui';
+import { ErpPageLayoutComponent } from '@erp/shared/ui';
+import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
+import { ErpEmptyCardBuilder } from '@erp/shared/ui/erp-empty-card';
+import { ErpCardComponent } from '@erp/shared/ui/erp-card';
 import { DmsDocumentWorkflowComponent, DocumentTableComponent, DmsDocument } from '@erp/dms/ui';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'erp-document',
   standalone: true,
-  imports: [
-    ErpPageLayoutComponent,
-    ErpTabsComponent,
-    DocumentTableComponent,
-    DmsDocumentWorkflowComponent,
-    ErpCardComponent
-  ],
+  imports: [CommonModule, ErpPageLayoutComponent, ErpTabsComponent, DocumentTableComponent, DmsDocumentWorkflowComponent, ErpCardComponent],
   template: `
     <erp-page-layout>
       <!-- Lewy panel: Filtry -->
       <div filters>
         <div class="p-4 bg-surface-50 dark:bg-surface-900/50 rounded-xl border border-surface-200 dark:border-surface-800">
-           <div class="text-sm font-bold uppercase tracking-wider text-surface-500 mb-4">Statusy Dokumentów</div>
-           <div class="flex flex-col gap-2">
-              <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <span class="text-sm">W obiegu</span>
-                </div>
-                <span class="text-xs font-mono text-surface-400">12</span>
+          <div class="text-sm font-bold uppercase tracking-wider text-surface-500 mb-4">Statusy Dokumentów</div>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span class="text-sm">W obiegu</span>
               </div>
-              <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                  <span class="text-sm">Zatwierdzone</span>
-                </div>
-                <span class="text-xs font-mono text-surface-400">45</span>
+              <span class="text-xs font-mono text-surface-400">12</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span class="text-sm">Zatwierdzone</span>
               </div>
-           </div>
+              <span class="text-xs font-mono text-surface-400">45</span>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Główne Zakładki -->
       <div class="h-full flex flex-col">
-        <erp-tabs [config]="tabsConfig" [(value)]="activeTab">
-          
+        <erp-tabs
+          [config]="tabsConfig"
+          [(value)]="activeTab"
+        >
           <!-- TAB 1: LISTA -->
           @if (activeTab() === 'list') {
             <div class="h-full animate-fade-in">
@@ -68,16 +68,16 @@ import { DmsDocumentWorkflowComponent, DocumentTableComponent, DmsDocument } fro
                       </div>
                     </div>
                     <div class="flex items-center gap-2">
-                       <button class="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg transition-colors cursor-pointer">
-                          <i class="pi pi-history"></i>
-                       </button>
+                      <button class="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg transition-colors cursor-pointer">
+                        <i class="pi pi-history"></i>
+                      </button>
                     </div>
                   </div>
 
                   <!-- Workflow Engine -->
                   <div class="flex-1 bg-surface-0 dark:bg-surface-950 rounded-2xl border border-surface-200 dark:border-surface-800 overflow-hidden relative">
                     <erp-dms-document-workflow
-                    class="h-full w-full"
+                      class="h-full w-full"
                       [nodes]="currentDocumentNodes()"
                       [edges]="currentDocumentEdges()"
                       [readonlyMode]="true"
@@ -87,25 +87,32 @@ import { DmsDocumentWorkflowComponent, DocumentTableComponent, DmsDocument } fro
               } @else {
                 <!-- Stan pusty jeśli > 1 lub 0 zaznaczonych -->
                 <div class="h-full flex items-center justify-center">
-                   <erp-card [config]="emptyWorkflowCardConfig" />
+                  <erp-card [config]="emptyWorkflowCardConfig" />
                 </div>
               }
             </div>
           }
-
         </erp-tabs>
       </div>
     </erp-page-layout>
   `,
-  styles: [`
-    .animate-fade-in {
-      animation: fadeIn 0.3s ease-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  `],
+  styles: [
+    `
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentComponent {
@@ -123,21 +130,23 @@ export class DocumentComponent {
   });
 
   /** Dynamiczna konfiguracja zakładek */
-  protected readonly tabsConfig = ErpTabsBuilder.create(b => b
-    .addItem('Lista dokumentów', 'list', undefined, undefined, { icon: 'pi pi-list' })
-    .addItem('Workflow obiegu', 'workflow', undefined, undefined, { icon: 'pi pi-sitemap' })
-    .setInitialValue('list')
-    .onTabChange(val => this.activeTab.set(val))
+  protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
+    b
+      .addTab('Lista dokumentów', 'list', { icon: 'pi pi-list' })
+      .addTab('Workflow obiegu', 'workflow', { icon: 'pi pi-sitemap' })
+      .setInitialValue('list')
+      .setOnTabChange((val) => this.activeTab.set(val)),
   );
 
   /** Karta stanu pustego dla Workflow */
-  protected readonly emptyWorkflowCardConfig = new ErpEmptyCardBuilder()
-    .setIcon('pi pi-info-circle')
-    .setTitle('Wybierz dokument')
-    .setSubtitle('Aby zobaczyć workflow, zaznacz dokładnie jeden dokument na liście.')
-    .setDescription('Zaznaczenie wielu dokumentów uniemożliwia podgląd procesu jednostkowego.')
-    .withPulse(true)
-    .build();
+  protected readonly emptyWorkflowCardConfig = ErpEmptyCardBuilder.create((b) =>
+    b
+      .setIcon('pi pi-info-circle')
+      .setTitle('Wybierz dokument')
+      .setSubtitle('Aby zobaczyć workflow, zaznacz dokładnie jeden dokument na liście.')
+      .setDescription('Zaznaczenie wielu dokumentów uniemożliwia podgląd procesu jednostkowego.')
+      .setShowPulse(true)
+  );
 
   /** Pobieranie węzłów dla zaznaczonego dokumentu */
   protected currentDocumentNodes = computed(() => {
@@ -156,10 +165,28 @@ export class DocumentComponent {
   // ── Dane testowe ──
 
   protected readonly documents: DmsDocument[] = [
-    { id: 'doc-1', name: 'Faktura VAT #2024/001', type: 'Faktura', status: 'Zatwierdzony', author: 'Jan Kowalski', createdAt: new Date('2024-01-15'), updatedAt: new Date('2024-01-20'), size: '245 KB' },
+    {
+      id: 'doc-1',
+      name: 'Faktura VAT #2024/001',
+      type: 'Faktura',
+      status: 'Zatwierdzony',
+      author: 'Jan Kowalski',
+      createdAt: new Date('2024-01-15'),
+      updatedAt: new Date('2024-01-20'),
+      size: '245 KB',
+    },
     { id: 'doc-2', name: 'Umowa z Dostawcą XYZ', type: 'Umowa', status: 'W obiegu', author: 'Anna Nowak', createdAt: new Date('2024-02-01'), updatedAt: new Date('2024-02-10'), size: '1.2 MB' },
     { id: 'doc-3', name: 'Protokół odbioru Q1', type: 'Protokół', status: 'Szkic', author: 'Piotr Wiśniewski', createdAt: new Date('2024-03-05'), updatedAt: new Date('2024-03-05'), size: '89 KB' },
-    { id: 'doc-4', name: 'Zamówienie #ZAM-2024-042', type: 'Zamówienie', status: 'W obiegu', author: 'Maria Kaczmarek', createdAt: new Date('2024-03-12'), updatedAt: new Date('2024-03-14'), size: '156 KB' },
+    {
+      id: 'doc-4',
+      name: 'Zamówienie #ZAM-2024-042',
+      type: 'Zamówienie',
+      status: 'W obiegu',
+      author: 'Maria Kaczmarek',
+      createdAt: new Date('2024-03-12'),
+      updatedAt: new Date('2024-03-14'),
+      size: '156 KB',
+    },
   ];
 
   private readonly defaultWorkflowNodes = [
@@ -186,6 +213,6 @@ export class DocumentComponent {
         { id: 'e2', source: 'a1', target: 'a2' },
         { id: 'e3', source: 'a2', target: 'e1' },
       ],
-    }
+    },
   };
 }

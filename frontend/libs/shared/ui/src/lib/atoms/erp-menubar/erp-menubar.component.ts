@@ -1,21 +1,17 @@
-import { ChangeDetectionStrategy, Component, input, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, TemplateRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenubarModule } from 'primeng/menubar';
-import { MenuItem } from 'primeng/api';
-import { ErpMenubarBuilder } from './erp-menubar.builder';
-
-export { ErpMenubarBuilder };
-
-export interface ErpMenubarConfig {
-  items: MenuItem[];
-}
+import { ErpMenubarConfig } from './erp-menubar.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-menubar',
   standalone: true,
   imports: [CommonModule, MenubarModule],
   template: `
-    <p-menubar [model]="config().items">
+    @let _items = items();
+
+    <p-menubar [model]="_items || []">
       @if (startTemplate()) {
         <ng-template #start>
           <ng-container *ngTemplateOutlet="startTemplate()!" />
@@ -32,6 +28,10 @@ export interface ErpMenubarConfig {
 })
 export class ErpMenubarComponent {
   public config = input.required<ErpMenubarConfig>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public startTemplate = input<TemplateRef<any>>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public endTemplate = input<TemplateRef<any>>();
+
+  protected items = computed(() => unwrapSignal(this.config().items));
 }

@@ -3,50 +3,46 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormContr
 import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
-import { ErpInputBase } from '../../base/erp-input-base';
 import { noop } from 'rxjs';
-
-import { ErpDatePickerBuilder } from './erp-datepicker.builder';
-
-export { ErpDatePickerBuilder };
-
-export interface ErpDatePicker extends ErpInputBase {
-  showIcon?: boolean;
-  dateFormat?: string;
-  selectionMode?: 'single' | 'multiple' | 'range';
-  view?: 'date' | 'month' | 'year';
-  showTime?: boolean;
-  hourFormat?: '12' | '24';
-}
+import { ErpDatePickerConfig } from './erp-datepicker.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-datepicker',
   standalone: true,
   imports: [DatePickerModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
   template: `
-    @let _config = config();
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
+    
+    @let _placeholder = placeholder();
+    @let _hint = hint();
+    @let _showIcon = showIcon();
+    @let _dateFormat = dateFormat();
+    @let _selectionMode = selectionMode();
+    @let _view = view();
+    @let _showTime = showTime();
+    @let _hourFormat = hourFormat();
 
     <div class="flex flex-col gap-2">
       <p-floatlabel variant="on">
         <p-datepicker
           [formControl]="_activeControl"
-          [showIcon]="_config.showIcon"
-          [dateFormat]="_config.dateFormat || 'dd/mm/yy'"
-          [selectionMode]="_config.selectionMode || 'single'"
-          [view]="_config.view || 'date'"
-          [showTime]="_config.showTime || false"
-          [hourFormat]="_config.hourFormat || '24'"
+          [showIcon]="_showIcon || false"
+          [dateFormat]="_dateFormat || 'dd/mm/yy'"
+          [selectionMode]="_selectionMode || 'single'"
+          [view]="_view || 'date'"
+          [showTime]="_showTime || false"
+          [hourFormat]="_hourFormat || '24'"
           [fluid]="true"
           (onBlur)="onTouched()"
           [appendTo]="'body'"
         />
-        <label>{{ _config.placeholder || '' }}</label>
+        <label>{{ _placeholder || '' }}</label>
       </p-floatlabel>
 
-      @if (_config.hint) {
-        <small class="text-slate-500">{{ _config.hint }}</small>
+      @if (_hint) {
+        <small class="text-slate-500">{{ _hint }}</small>
       }
 
       @if (_errorMsg) {
@@ -66,13 +62,24 @@ export interface ErpDatePicker extends ErpInputBase {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpDatePickerComponent implements ControlValueAccessor {
-  public config = input.required<ErpDatePicker>();
+  public config = input.required<ErpDatePickerConfig>();
   public control = input<FormControl | null>(null);
   public internalControl = new FormControl();
 
   public activeControl = computed(() => this.control() || this.internalControl);
 
+  protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
+  protected hint = computed(() => unwrapSignal(this.config().hint));
+  protected showIcon = computed(() => unwrapSignal(this.config().showIcon));
+  protected dateFormat = computed(() => unwrapSignal(this.config().dateFormat));
+  protected selectionMode = computed(() => unwrapSignal(this.config().selectionMode));
+  protected view = computed(() => unwrapSignal(this.config().view));
+  protected showTime = computed(() => unwrapSignal(this.config().showTime));
+  protected hourFormat = computed(() => unwrapSignal(this.config().hourFormat));
+  protected errorMessages = computed(() => unwrapSignal(this.config().errorMessages));
+
   public onTouched: () => void = noop;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private _onChange: (value: any) => void = noop;
 
   public getErrorMessage(): string | null {
@@ -80,7 +87,7 @@ export class ErpDatePickerComponent implements ControlValueAccessor {
     if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) return null;
     if (ctrl.errors) {
       const firstErrorKey = Object.keys(ctrl.errors)[0];
-      return this.config().errorMessages?.[firstErrorKey] || `Błąd: ${firstErrorKey}`;
+      return this.errorMessages()?.[firstErrorKey] || `Błąd: ${firstErrorKey}`;
     }
     return null;
   }

@@ -1,34 +1,52 @@
 import { Type } from '@angular/core';
-import { ErpInputBaseBuilder } from '../../base/erp-input-base';
-import { ErpAutoComplete } from './erp-auto-complete.component';
+import { ErpBaseBuilder } from '../../base/erp-base-builder';
+import { ErpAutoCompleteConfig } from './erp-auto-complete.types';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
-export class ErpAutoCompleteBuilder extends ErpInputBaseBuilder<ErpAutoComplete> {
-  public setSuggestions(suggestions: any[]): this {
+export class ErpAutoCompleteBuilder extends ErpBaseBuilder<ErpAutoCompleteConfig> {
+
+
+  public setPlaceholder(placeholder: MaybeSignal<string | undefined>): this {
+    this._data.placeholder = placeholder;
+    return this;
+  }
+
+  public setHint(hint: MaybeSignal<string | undefined>): this {
+    this._data.hint = hint;
+    return this;
+  }
+
+  public setErrorMessages(messages: MaybeSignal<Record<string, string> | undefined>): this {
+    this._data.errorMessages = messages;
+    return this;
+  }
+
+  public setSuggestions(suggestions: MaybeSignal<any[] | undefined>): this {
     this._data.suggestions = suggestions;
     return this;
   }
 
-  public setOptionLabel(label: string): this {
+  public setOptionLabel(label: MaybeSignal<string | undefined>): this {
     this._data.optionLabel = label;
     return this;
   }
 
-  public setDropdown(dropdown = true): this {
+  public setDropdown(dropdown: MaybeSignal<boolean | undefined> = true): this {
     this._data.dropdown = dropdown;
     return this;
   }
 
-  public setMultiple(multiple = true): this {
+  public setMultiple(multiple: MaybeSignal<boolean | undefined> = true): this {
     this._data.multiple = multiple;
     return this;
   }
 
-  public setFluid(fluid = true): this {
+  public setFluid(fluid: MaybeSignal<boolean | undefined> = true): this {
     this._data.fluid = fluid;
     return this;
   }
 
-  public setForceSelection(forceSelection = true): this {
+  public setForceSelection(forceSelection: MaybeSignal<boolean | undefined> = true): this {
     this._data.forceSelection = forceSelection;
     return this;
   }

@@ -1,75 +1,69 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output, Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
-import { ErpInputBase } from '../../base/erp-input-base';
 import { noop } from 'rxjs';
-import { ErpAutoCompleteBuilder } from './erp-auto-complete.builder';
-
-export { ErpAutoCompleteBuilder };
-
-export interface ErpAutoComplete extends ErpInputBase {
-  suggestions: any[];
-  optionLabel?: string;
-  dropdown?: boolean;
-  multiple?: boolean;
-  fluid?: boolean;
-  forceSelection?: boolean;
-  itemComponent?: Type<any>;
-  headerComponent?: Type<any>;
-  footerComponent?: Type<any>;
-}
+import { ErpAutoCompleteConfig } from './erp-auto-complete.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-auto-complete',
   standalone: true,
   imports: [CommonModule, AutoCompleteModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
   template: `
-    @let _config = config();
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
+    
+    @let _placeholder = placeholder();
+    @let _hint = hint();
+    @let _suggestions = suggestions();
+    @let _optionLabel = optionLabel();
+    @let _dropdown = dropdown();
+    @let _multiple = multiple();
+    @let _fluid = fluid();
+    @let _forceSelection = forceSelection();
 
     <div class="flex flex-col gap-2">
       <p-floatlabel variant="on">
         <p-autocomplete
           [formControl]="_activeControl"
-          [suggestions]="_config.suggestions"
-          [optionLabel]="_config.optionLabel || 'label'"
-          [dropdown]="_config.dropdown ?? true"
-          [multiple]="_config.multiple"
-          [fluid]="_config.fluid ?? true"
-          [forceSelection]="_config.forceSelection"
+          [suggestions]="_suggestions || []"
+          [optionLabel]="_optionLabel || 'label'"
+          [dropdown]="_dropdown ?? true"
+          [multiple]="_multiple || false"
+          [fluid]="_fluid ?? true"
+          [forceSelection]="_forceSelection || false"
           (completeMethod)="onComplete($event)"
           (onBlur)="onTouched()"
           [appendTo]="'body'"
         >
           <ng-template let-item #item>
-            @if (_config.itemComponent) {
-              <ng-container *ngComponentOutlet="_config.itemComponent; inputs: { item: item }" />
+            @if (config().itemComponent) {
+              <ng-container *ngComponentOutlet="config().itemComponent!; inputs: { item: item }" />
             } @else {
-              {{ item[_config.optionLabel || 'label'] }}
+              {{ item[_optionLabel || 'label'] }}
             }
           </ng-template>
 
           <ng-template #header>
-             @if (_config.headerComponent) {
-               <ng-container *ngComponentOutlet="_config.headerComponent" />
+             @if (config().headerComponent) {
+               <ng-container *ngComponentOutlet="config().headerComponent!" />
              }
           </ng-template>
 
           <ng-template #footer>
-             @if (_config.footerComponent) {
-               <ng-container *ngComponentOutlet="_config.footerComponent" />
+             @if (config().footerComponent) {
+               <ng-container *ngComponentOutlet="config().footerComponent!" />
              }
           </ng-template>
         </p-autocomplete>
-        <label>{{ _config.placeholder || '' }}</label>
+        <label>{{ _placeholder || '' }}</label>
       </p-floatlabel>
       
-      @if (_config.hint) {
-        <small class="text-slate-500">{{ _config.hint }}</small>
+      @if (_hint) {
+        <small class="text-slate-500">{{ _hint }}</small>
       }
 
       @if (_errorMsg) {
@@ -89,17 +83,30 @@ export interface ErpAutoComplete extends ErpInputBase {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpAutoCompleteComponent implements ControlValueAccessor {
-  public config = input.required<ErpAutoComplete>();
+  public config = input.required<ErpAutoCompleteConfig>();
   public control = input<FormControl | null>(null);
   public internalControl = new FormControl();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public complete = output<any>();
 
   public activeControl = computed(() => this.control() || this.internalControl);
 
+  protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
+  protected hint = computed(() => unwrapSignal(this.config().hint));
+  protected errorMessages = computed(() => unwrapSignal(this.config().errorMessages));
+  protected suggestions = computed(() => unwrapSignal(this.config().suggestions));
+  protected optionLabel = computed(() => unwrapSignal(this.config().optionLabel));
+  protected dropdown = computed(() => unwrapSignal(this.config().dropdown));
+  protected multiple = computed(() => unwrapSignal(this.config().multiple));
+  protected fluid = computed(() => unwrapSignal(this.config().fluid));
+  protected forceSelection = computed(() => unwrapSignal(this.config().forceSelection));
+
   public onTouched: () => void = noop;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private _onChange: (value: any) => void = noop;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public onComplete(event: any): void {
     this.complete.emit(event);
   }
@@ -109,7 +116,7 @@ export class ErpAutoCompleteComponent implements ControlValueAccessor {
     if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) return null;
     if (ctrl.errors) {
       const firstErrorKey = Object.keys(ctrl.errors)[0];
-      return this.config().errorMessages?.[firstErrorKey] || `Błąd: ${firstErrorKey}`;
+      return this.errorMessages()?.[firstErrorKey] || `Błąd: ${firstErrorKey}`;
     }
     return null;
   }

@@ -1,35 +1,36 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { ErpCardConfig } from './erp-card.component';
 import { Type } from '@angular/core';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
+import { ErpCardConfig } from './erp-card.types';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpCardBuilder extends ErpBaseBuilder<ErpCardConfig> {
   /** Tekst nagłówka karty (wyświetlany nad tytułem). */
-  public setHeader(header: string): this {
+  public setHeader(header: MaybeSignal<string | undefined>): this {
     this._data.header = header;
     return this;
   }
 
   /** Tytuł karty. */
-  public setTitle(title: string): this {
+  public setTitle(title: MaybeSignal<string | undefined>): this {
     this._data.title = title;
     return this;
   }
 
   /** Podtytuł karty. */
-  public setSubtitle(subtitle: string): this {
+  public setSubtitle(subtitle: MaybeSignal<string | undefined>): this {
     this._data.subtitle = subtitle;
     return this;
   }
 
   /** Dodatkowa klasa CSS dla zewnętrznego kontenera karty. */
-  public setStyleClass(styleClass: string): this {
+  public setStyleClass(styleClass: MaybeSignal<string | undefined>): this {
     this._data.styleClass = styleClass;
     return this;
   }
 
   /** Dodatkowa klasa CSS dla obszaru treści karty. */
-  public setContentStyleClass(contentStyleClass: string): this {
+  public setContentStyleClass(contentStyleClass: MaybeSignal<string | undefined>): this {
     this._data.contentStyleClass = contentStyleClass;
     return this;
   }
@@ -39,10 +40,7 @@ export class ErpCardBuilder extends ErpBaseBuilder<ErpCardConfig> {
    * @param component — Klasa komponentu do renderowania
    * @param config — Inputy przekazywane do komponentu (lub builder)
    */
-  public setContentComponent<TComp>(
-    component: Type<TComp>, 
-    config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }
-  ): this {
+  public setContentComponent<TComp>(component: Type<TComp>, config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }): this {
     this._data.contentComponent = component;
     this._data.contentConfig = this._extract(config);
     return this;
@@ -53,10 +51,7 @@ export class ErpCardBuilder extends ErpBaseBuilder<ErpCardConfig> {
    * @param component — Klasa komponentu do renderowania
    * @param config — Inputy przekazywane do komponentu
    */
-  public setFooterComponent<TComp>(
-    component: Type<TComp>, 
-    config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }
-  ): this {
+  public setFooterComponent<TComp>(component: Type<TComp>, config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }): this {
     this._data.footerComponent = component;
     this._data.footerConfig = this._extract(config);
     return this;
@@ -67,10 +62,7 @@ export class ErpCardBuilder extends ErpBaseBuilder<ErpCardConfig> {
    * @param component — Klasa komponentu do renderowania
    * @param config — Inputy przekazywane do komponentu
    */
-  public setHeaderComponent<TComp>(
-    component: Type<TComp>, 
-    config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }
-  ): this {
+  public setHeaderComponent<TComp>(component: Type<TComp>, config?: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> }): this {
     this._data.headerComponent = component;
     this._data.headerConfig = this._extract(config);
     return this;

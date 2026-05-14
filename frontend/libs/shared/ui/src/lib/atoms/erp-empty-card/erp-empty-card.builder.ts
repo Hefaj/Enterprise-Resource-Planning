@@ -1,33 +1,31 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { ErpEmptyCardConfig } from './erp-empty-card.component';
+import { ErpEmptyCardConfig } from './erp-empty-card.types';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpEmptyCardBuilder extends ErpBaseBuilder<ErpEmptyCardConfig> {
-  /** Ikona PrimeNG wyświetlana w centralnej części pustej karty. */
-  public setIcon(icon: string): this {
+
+
+  public setIcon(icon: MaybeSignal<string | undefined>): this {
     this._data.icon = icon;
     return this;
   }
 
-  /** Tytuł pustej karty. */
-  public setTitle(title: string): this {
+  public setTitle(title: MaybeSignal<string | undefined>): this {
     this._data.title = title;
     return this;
   }
 
-  /** Podtytuł pustej karty. */
-  public setSubtitle(subtitle: string): this {
+  public setSubtitle(subtitle: MaybeSignal<string | undefined>): this {
     this._data.subtitle = subtitle;
     return this;
   }
 
-  /** Opis (dłuższy tekst) wyświetlany pod tytułem. */
-  public setDescription(description: string): this {
+  public setDescription(description: MaybeSignal<string | undefined>): this {
     this._data.description = description;
     return this;
   }
 
-  /** Włącza animację pulsowania ikony. */
-  public withPulse(showPulse = true): this {
+  public setShowPulse(showPulse: MaybeSignal<boolean | undefined> = true): this {
     this._data.showPulse = showPulse;
     return this;
   }

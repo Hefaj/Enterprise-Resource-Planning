@@ -1,29 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, ReactiveFormsModule, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
-import { ErpInputBase } from '../../base/erp-input-base';
 import { noop } from 'rxjs';
-import { ErpInputTextBuilder } from './erp-input-text.builder';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
 import { AutoFocusModule } from 'primeng/autofocus';
-
-export { ErpInputTextBuilder };
-
-export interface ErpInputText extends ErpInputBase {
-  icon?: string;
-  fluid?: boolean;
-  size?: 'small' | 'large';
-  variant?: 'filled' | 'outlined';
-}
+import { ErpInputTextConfig } from './erp-input-text.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-input-text',
+  standalone: true,
   imports: [InputTextModule, ReactiveFormsModule, FloatLabelModule, MessageModule, AutoFocusModule],
   template: `
-    @let _config = config();
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
+    
+    @let _placeholder = placeholder();
+    @let _hint = hint();
+    @let _fluid = fluid();
+    @let _variant = variant();
+    @let _size = size();
 
     <div class="flex flex-col gap-2">
       <p-floatlabel variant="on">
@@ -35,15 +32,15 @@ export interface ErpInputText extends ErpInputBase {
           aria-describedby="hint"
           [invalid]="!!_errorMsg"
           [pAutoFocus]="true"
-          [fluid]="_config.fluid"
-          [variant]="_config.variant"
-          [class.p-inputtext-sm]="_config.size === 'small'"
-          [class.p-inputtext-lg]="_config.size === 'large'"
+          [fluid]="_fluid"
+          [variant]="_variant || 'outlined'"
+          [class.p-inputtext-sm]="_size === 'small'"
+          [class.p-inputtext-lg]="_size === 'large'"
         />
-        <label for="on_label">{{ _config.placeholder || '' }}</label>
+        <label for="on_label">{{ _placeholder || '' }}</label>
       </p-floatlabel>
-      @if (_config.hint) {
-        <small id="hint">{{ _config.hint }}</small>
+      @if (_hint) {
+        <small id="hint">{{ _hint }}</small>
       }
       @if (_errorMsg) {
         <p-message
@@ -66,69 +63,56 @@ export interface ErpInputText extends ErpInputBase {
   ],
 })
 export class ErpInputTextComponent implements ControlValueAccessor {
-  public config = input.required<ErpInputText>();
-
-  // Opcjonalna kontrolka wstrzykiwana z zewnątrz (dla dynamicznych widoków)
+  public config = input.required<ErpInputTextConfig>();
   public control = input<FormControl | null>(null);
-
-  // Nasz wewnętrzny "zapasowy" kontroler, jeśli ktoś używa podejścia statycznego z CVA
   public internalControl = new FormControl();
 
   public activeControl = computed(() => this.control() || this.internalControl);
 
+  protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
+  protected hint = computed(() => unwrapSignal(this.config().hint));
+  protected fluid = computed(() => unwrapSignal(this.config().fluid));
+  protected variant = computed(() => unwrapSignal(this.config().variant));
+  protected size = computed(() => unwrapSignal(this.config().size));
+  protected errorMessages = computed(() => unwrapSignal(this.config().errorMessages));
+
+  public onTouched: () => void = noop;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private _onChange: (value: string) => void = noop;
+
   public getErrorMessage(): string | null {
     const ctrl = this.activeControl();
-    const errorMessages = this.config().errorMessages || {};
+    const errorMsgs = this.errorMessages() || {};
 
-    // Jeśli pole jest poprawne, albo użytkownik go jeszcze nie dotknął - nie pokazuj błędu
     if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) {
       return null;
     }
 
-    // Jeśli są błędy, weź pierwszy z brzegu
     if (ctrl.errors) {
-      const firstErrorKey = Object.keys(ctrl.errors)[0]; // np. 'required'
-
-      // Zwróć tekst z configa LUB domyślny tekst
-      return errorMessages[firstErrorKey] || `Błąd walidacji: ${firstErrorKey}`;
+      const firstErrorKey = Object.keys(ctrl.errors)[0];
+      return errorMsgs[firstErrorKey] || `Błąd walidacji: ${firstErrorKey}`;
     }
 
     return null;
   }
 
-  // Puste funkcje callback, które Angular nadpisze swoimi
-  public onTouched: () => void = noop;
-  private _onChange: (value: string) => void = noop;
-
-  // --- IMPLEMENTACJA INTERFEJSU CONTROL VALUE ACCESSOR ---
-
-  // Angular mówi: "Zaktualizuj widok, bo w kodzie TS zmieniłem wartość formularza"
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public writeValue(val: any): void {
     this.internalControl.setValue(val, { emitEvent: false });
   }
 
-  // Angular podrzuca nam funkcję: "Zawołaj ją, jak użytkownik coś wpisze"
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public registerOnChange(fn: any): void {
     this._onChange = fn;
+    this.internalControl.valueChanges.subscribe(fn);
   }
 
-  // Angular podrzuca nam funkcję: "Zawołaj ją, jak użytkownik wyjdzie z pola (blur)"
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public registerOnTouched(fn: any): void {
     this.onTouched = fn;
   }
 
-  // Angular mówi: "Zablokuj/odblokuj to pole (np. formularz.disable())"
-  public setDisabledState(_isDisabled: boolean): void {
-    // Implementacja opcjonalna
-  }
-
-  // --- WEWNĘTRZNE METODY DLA HTML ---
-
-  public onValueChange(newValue: string): void {
-    this.internalControl.setValue(newValue, { emitEvent: false });
-    this._onChange(newValue); // Informujemy Angulara o nowej wartości!
+  public setDisabledState(isDisabled: boolean): void {
+    isDisabled ? this.internalControl.disable() : this.internalControl.enable();
   }
 }

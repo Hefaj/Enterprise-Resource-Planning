@@ -1,20 +1,23 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { ErpMenubarConfig } from './erp-menubar.component';
 import { MenuItem } from 'primeng/api';
+import { ErpMenubarConfig } from './erp-menubar.types';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpMenubarBuilder extends ErpBaseBuilder<ErpMenubarConfig> {
-  constructor() {
-    super();
-    this._data.items = [];
-  }
 
-  public addItem(item: MenuItem): this {
-    this._data.items?.push(item);
+
+  public setItems(items: MaybeSignal<MenuItem[] | undefined>): this {
+    this._data.items = items;
     return this;
   }
 
-  public setItems(items: MenuItem[]): this {
-    this._data.items = items;
+  public addItem(item: MenuItem): this {
+    if (!this._data.items) {
+      this._data.items = [];
+    }
+    if (Array.isArray(this._data.items)) {
+      this._data.items.push(item);
+    }
     return this;
   }
 }

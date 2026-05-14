@@ -1,25 +1,21 @@
-import { ChangeDetectionStrategy, Component, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, viewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextMenuModule } from 'primeng/contextmenu';
-import { MenuItem } from 'primeng/api';
-import { ErpContextMenuBuilder } from './erp-context-menu.builder';
-
-export { ErpContextMenuBuilder };
-
-export interface ErpContextMenuConfig {
-  items: MenuItem[];
-  global?: boolean;
-}
+import { ErpContextMenuConfig } from './erp-context-menu.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-context-menu',
   standalone: true,
   imports: [CommonModule, ContextMenuModule],
   template: `
+    @let _items = items();
+    @let _global = isGlobal();
+    
     <p-contextmenu
       #cm
-      [model]="config().items"
-      [global]="config().global"
+      [model]="_items || []"
+      [global]="_global || false"
       [appendTo]="'body'"
     />
   `,
@@ -27,7 +23,11 @@ export interface ErpContextMenuConfig {
 })
 export class ErpContextMenuComponent {
   public config = input.required<ErpContextMenuConfig>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public cm = viewChild<any>('cm');
+
+  protected items = computed(() => unwrapSignal(this.config().items));
+  protected isGlobal = computed(() => unwrapSignal(this.config().global));
 
   public show(event: Event): void {
     this.cm()?.show(event);

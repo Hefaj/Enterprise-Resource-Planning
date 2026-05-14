@@ -1,28 +1,8 @@
-import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
-import { ErpTabsBuilder } from './erp-tabs.builder';
-
-import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
-import { Type } from '@angular/core';
-
-export { ErpTabsBuilder };
-
-export interface ErpTabItem<TComp = any> {
-  label: string;
-  value: string | number;
-  icon?: string;
-  disabled?: boolean;
-  component?: Type<TComp>;
-  config?: ErpComponentSignalInputs<TComp> | any;
-}
-
-export interface ErpTabsConfig {
-  items: ErpTabItem[];
-  initialValue?: string | number;
-  onTabChange?: (value: string | number) => void;
-  headless?: boolean;
-}
+import { ErpTabsConfig, ErpTabItem } from './erp-tabs.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-tabs',
@@ -31,13 +11,14 @@ export interface ErpTabsConfig {
   template: `
     @let _config = config();
     @let _value = value();
-    @let _headless = headless() ?? _config.headless;
-    @let activeTab = getActiveTab(_config, _value);
+    @let _headless = isHeadless();
+    @let _items = unwrappedItems();
+    @let activeTab = getActiveTab(_items, _value, _config.initialValue);
 
     <div class="flex flex-col h-full">
-      <p-tabs [value]="_value" (valueChange)="handleValueChange($event)">
+      <p-tabs [value]="_value || _config.initialValue" (valueChange)="handleValueChange($event)">
         <p-tablist>
-          @for (item of _config.items; track item.value) {
+          @for (item of _items; track item.value) {
             <p-tab [value]="item.value" [disabled]="item.disabled">
               <div class="flex items-center gap-2">
                 @if (item.icon) {
@@ -68,11 +49,26 @@ export interface ErpTabsConfig {
 export class ErpTabsComponent {
   public config = input.required<ErpTabsConfig>();
   public value = model<string | number | undefined>();
-  public headless = input<boolean>();
+  public headlessInput = input<boolean | undefined>(undefined, { alias: 'headless' });
 
-  protected getActiveTab(config: ErpTabsConfig, value: any): ErpTabItem | undefined {
-    const val = value ?? config.initialValue;
-    return config.items.find(i => i.value === val);
+  protected isHeadless = computed(() => {
+    const fromInput = this.headlessInput();
+    if (fromInput !== undefined) return fromInput;
+    return unwrapSignal(this.config().headless);
+  });
+
+  protected unwrappedItems = computed(() => {
+    return this.config().items.map(item => ({
+      ...item,
+      label: unwrapSignal(item.label),
+      icon: unwrapSignal(item.icon),
+      disabled: unwrapSignal(item.disabled)
+    }));
+  });
+
+  protected getActiveTab(items: any[], value: any, initialValue: any): any | undefined {
+    const val = value ?? initialValue;
+    return items.find(i => i.value === val);
   }
 
   protected handleValueChange(newValue: any): void {

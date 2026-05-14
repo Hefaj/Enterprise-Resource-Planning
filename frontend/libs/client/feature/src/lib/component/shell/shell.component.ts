@@ -1,5 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { ErpBreadcrumb, ErpHostLayoutComponent, ErpUserMenu } from '@erp/shared/ui';
+import { ErpHostLayoutComponent } from '@erp/shared/ui';
+import { ErpBreadcrumbConfig } from '@erp/shared/ui/erp-breadcrumb';
+import { ErpUserMenuConfig } from '@erp/shared/ui/erp-user-menu';
 import { Router, RouterModule } from '@angular/router';
 import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';
@@ -9,6 +11,7 @@ import { ErpAuthService } from '@erp/shared/auth';
 
 @Component({
   selector: 'erp-shell',
+  standalone: true,
   imports: [CommonModule, ErpHostLayoutComponent, RouterModule],
   templateUrl: './shell.component.html',
 })
@@ -34,11 +37,10 @@ export class ShellLayoutComponent {
           label: 'Wyloguj',
           icon: 'pi pi-sign-out',
           command: (): void => this._authService.logout(),
-          linkClass: '!text-red-500 dark:!text-red-400',
         },
         { separator: true },
       ],
-    } as ErpUserMenu;
+    } as ErpUserMenuConfig;
   });
 
   protected $navMenu = computed(() => {
@@ -50,7 +52,7 @@ export class ShellLayoutComponent {
 
   protected $breadcrumbConfig = computed(() => {
     const { home, items } = this._breadcrumbService.breadcrumb();
-    return { home, items } as ErpBreadcrumb;
+    return { home, items } as ErpBreadcrumbConfig;
   });
 
   private _mapToPrimeNg(items: ErpNavigationItem[]): MenuItem[] {

@@ -1,16 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ErpFormBuilder } from './erp-form.builder';
-import { ErpInputTextComponent } from '../../atoms/erp-input-text/erp-input-text.component';
-import { ErpSelectComponent } from '../../atoms/erp-select/erp-select.component';
-import { ErpDatePickerComponent } from '../../atoms/erp-datepicker/erp-datepicker.component';
-import { ErpMultiSelectComponent } from '../../atoms/erp-multi-select/erp-multi-select.component';
-import { ErpListboxComponent } from '../../atoms/erp-listbox/erp-listbox.component';
-import { ErpToggleSwitchComponent } from '../../atoms/erp-toggle-switch/erp-toggle-switch.component';
+import { ErpInputTextComponent } from '@erp/shared/ui/erp-input-text';
+import { ErpSelectComponent } from '@erp/shared/ui/erp-select';
+import { ErpDatePickerComponent } from '@erp/shared/ui/erp-datepicker';
+import { ErpMultiSelectComponent } from '@erp/shared/ui/erp-multi-select';
+import { ErpListboxComponent } from '@erp/shared/ui/erp-listbox';
+import { ErpToggleSwitchComponent } from '@erp/shared/ui/erp-toggle-switch';
 import { Type } from '@angular/core';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
-import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete/erp-auto-complete.component';
+import { ErpAutoCompleteComponent } from '@erp/shared/ui/erp-auto-complete';
 
 export { ErpFormBuilder };
 

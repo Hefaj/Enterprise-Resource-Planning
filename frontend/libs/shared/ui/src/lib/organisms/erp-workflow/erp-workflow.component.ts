@@ -4,10 +4,8 @@ import { ErpWorkflowNodeComponent } from './erp-workflow-node.component';
 import { WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType } from './erp-workflow.types';
 import { MenuItem } from 'primeng/api';
 import { ErpWorkflowBuilder } from './erp-workflow.builder';
-import { ErpContextMenuBuilder } from '../../atoms/erp-context-menu/erp-context-menu.builder';
-import { ErpContextMenuComponent } from '../../atoms/erp-context-menu/erp-context-menu.component';
-import { ErpMenubarBuilder } from '../../atoms/erp-menubar/erp-menubar.builder';
-import { ErpMenubarComponent } from '../../atoms/erp-menubar/erp-menubar.component';
+import { ErpContextMenuBuilder, ErpContextMenuComponent } from '@erp/shared/ui/erp-context-menu';
+import { ErpMenubarBuilder, ErpMenubarComponent } from '@erp/shared/ui/erp-menubar';
 
 export { ErpWorkflowBuilder };
 

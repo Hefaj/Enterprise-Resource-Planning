@@ -1,46 +1,35 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-
-import { ButtonIconPosition, ButtonModule } from 'primeng/button';
-import { ErpButtonBuilder, ErpButtonSave, ErpButtonCancel, ErpButtonRemove } from './erp-button.builder';
-
-export { ErpButtonBuilder };
-export { ErpButtonSave, ErpButtonCancel, ErpButtonRemove };
-
-export type ErpButtonSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'help' | 'danger' | 'contrast';
-export type ErpButtonVariant = 'outlined' | 'text';
-export type ErpButtonIconPosition = ButtonIconPosition;
-
-export interface ErpButtonConfig {
-  label?: string;
-  icon?: string;
-  iconPos?: ErpButtonIconPosition;
-  severity?: ErpButtonSeverity;
-  rounded?: boolean;
-  variant?: ErpButtonVariant;
-  size?: "small" | "large" | undefined;
-  onClick?: () => void;
-}
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
+import { ErpButtonConfig } from './erp-button.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-button',
+  standalone: true,
   imports: [ButtonModule],
   template: `
-    @let _config = config();
-    @let _loading = loading();
-    @let _disabled = disabled();
+    @let _label = label();
+    @let _icon = icon();
+    @let _iconPos = iconPos();
+    @let _severity = severity();
+    @let _rounded = rounded();
+    @let _variant = variant();
+    @let _size = size();
+    @let _loading = isLoading();
+    @let _disabled = isDisabled();
     @let _badge = badge();
 
     <p-button
-      [label]="_config.label"
-      [severity]="_config.severity"
-      [rounded]="_config.rounded"
-      [variant]="_config.variant"
-      [icon]="_config.icon"
-      [iconPos]="_config.iconPos ?? 'left'"
-      [badge]="_badge"
+      [label]="_label ?? ''"
+      [icon]="_icon ?? ''"
+      [iconPos]="_iconPos ?? 'left'"
+      [severity]="_severity"
+      [rounded]="_rounded ?? false"
+      [variant]="_variant"
+      [size]="_size"
       [loading]="_loading"
       [disabled]="_disabled"
-      [size]="_config.size"
+      [badge]="_badge"
       (onClick)="handleClick($event)"
     />
   `,
@@ -48,26 +37,40 @@ export interface ErpButtonConfig {
 })
 export class ErpButtonComponent {
   public config = input.required<ErpButtonConfig>();
-  public loading = input<boolean>(false);
-
-  /**
-   * https://primeng.org/button#api.button.props.disabled
-   */
-  public disabled = input<boolean>(false);
-
-  /**
-   * https://primeng.org/button#api.button.props.badge
-   */
-  public badge = input<string>();
-  
   public onClick = output<MouseEvent>();
 
-  protected handleClick(event: MouseEvent): void {
+  protected internalLoading = signal(false);
+
+  protected label = computed(() => unwrapSignal(this.config().label));
+  protected icon = computed(() => unwrapSignal(this.config().icon));
+  protected iconPos = computed(() => unwrapSignal(this.config().iconPos));
+  protected severity = computed(() => unwrapSignal(this.config().severity));
+  protected rounded = computed(() => unwrapSignal(this.config().rounded));
+  protected variant = computed(() => unwrapSignal(this.config().variant));
+  protected size = computed(() => unwrapSignal(this.config().size));
+  protected loading = computed(() => unwrapSignal(this.config().loading));
+  protected disabled = computed(() => unwrapSignal(this.config().disabled));
+  protected badge = computed(() => unwrapSignal(this.config().badge));
+
+  protected isLoading = computed(() => this.internalLoading() || !!this.loading());
+  protected isDisabled = computed(() => !!this.disabled() || this.internalLoading());
+
+  protected async handleClick(event: MouseEvent): Promise<void> {
     this.onClick.emit(event);
-    
+
     const callback = this.config().onClick;
     if (callback) {
-      callback();
+      const result = callback(event);
+      if (result instanceof Promise) {
+        this.internalLoading.set(true);
+        try {
+          await result;
+        } finally {
+          this.internalLoading.set(false);
+        }
+      }
     }
   }
+
+
 }

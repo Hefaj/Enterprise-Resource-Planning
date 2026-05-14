@@ -1,5 +1,6 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { ErpButtonConfig, ErpButtonIconPosition, ErpButtonSeverity, ErpButtonVariant } from './erp-button.component';
+import { MaybeSignal } from '../../base/erp-signal-utils';
+import { ErpButtonConfig, ErpButtonIconPosition, ErpButtonSeverity, ErpButtonVariant, ErpButtonSize } from './erp-button.types';
 
 /** Preset: przycisk 'Save' (zielony, ikona dyskietki). */
 export function ErpButtonSave(builder: ErpButtonBuilder): ErpButtonBuilder {
@@ -16,57 +17,58 @@ export function ErpButtonCancel(builder: ErpButtonBuilder): ErpButtonBuilder {
   return builder.setLabel('Cancel').setSeverity('secondary').setIcon('pi pi-times');
 }
 
-/**
- * https://primeng.org/button#api.button.props.label
- */
 export class ErpButtonBuilder extends ErpBaseBuilder<ErpButtonConfig> {
-  public setLabel(label: string): this {
+
+
+  public setLabel(label: MaybeSignal<string | undefined>): this {
     this._data.label = label;
     return this;
   }
 
-  /**
-   * https://primeng.org/button#api.button.props.icon
-   * https://primeng.org/button#api.button.props.iconPos
-   */
-  public setIcon(icon: string, iconPos?: ErpButtonIconPosition): this {
+  public setIcon(icon: MaybeSignal<string | undefined>, iconPos?: MaybeSignal<ErpButtonIconPosition | undefined>): this {
     this._data.icon = icon;
-    this._data.iconPos = iconPos;
+    if (iconPos !== undefined) {
+      this._data.iconPos = iconPos;
+    }
     return this;
   }
 
-  /**
-   * https://primeng.org/button#api.button.props.severity
-   */
-  public setSeverity(severity: ErpButtonSeverity): this {
+  public setSeverity(severity: MaybeSignal<ErpButtonSeverity | undefined>): this {
     this._data.severity = severity;
     return this;
   }
 
-  /**
-   * https://primeng.org/button#api.buttondirective.props.rounded
-   */
-  public setRounded(rounded = true): this {
+  public setRounded(rounded: MaybeSignal<boolean | undefined> = true): this {
     this._data.rounded = rounded;
     return this;
   }
 
-  /**
-   * https://primeng.org/button#api.button.props.variant
-   */
-  public setVariant(variant: ErpButtonVariant): this {
+  public setVariant(variant: MaybeSignal<ErpButtonVariant | undefined>): this {
     this._data.variant = variant;
     return this;
   }
 
-  /** Rozmiar przycisku: 'small', 'large' lub undefined (normalny). */
-  public setSize(size: 'small' | 'large' | undefined): this {
+  public setSize(size: MaybeSignal<ErpButtonSize | undefined>): this {
     this._data.size = size;
     return this;
   }
 
-  /** Callback wywoływany po kliknięciu przycisku. */
-  public setOnClick(callback: () => void): this {
+  public setLoading(loading: MaybeSignal<boolean | undefined>): this {
+    this._data.loading = loading;
+    return this;
+  }
+
+  public setDisabled(disabled: MaybeSignal<boolean | undefined>): this {
+    this._data.disabled = disabled;
+    return this;
+  }
+
+  public setBadge(badge: MaybeSignal<string | undefined>): this {
+    this._data.badge = badge;
+    return this;
+  }
+
+  public setOnClick(callback: (event: MouseEvent) => void | Promise<void>): this {
     this._data.onClick = callback;
     return this;
   }

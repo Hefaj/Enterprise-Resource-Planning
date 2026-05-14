@@ -3,50 +3,47 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormContr
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
-import { ErpInputBase } from '../../base/erp-input-base';
 import { noop } from 'rxjs';
-import { ErpMultiSelectBuilder } from './erp-multi-select.builder';
-
-export { ErpMultiSelectBuilder };
-
-export interface ErpMultiSelect extends ErpInputBase {
-  options: any[];
-  optionLabel?: string;
-  optionValue?: string;
-  filter?: boolean;
-  display?: 'comma' | 'chip';
-  showHeader?: boolean;
-  fluid?: boolean;
-}
+import { ErpMultiSelectConfig } from './erp-multi-select.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-multi-select',
   standalone: true,
   imports: [MultiSelectModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
   template: `
-    @let _config = config();
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
+    
+    @let _placeholder = placeholder();
+    @let _hint = hint();
+    @let _options = options();
+    @let _optionLabel = optionLabel();
+    @let _optionValue = optionValue();
+    @let _filter = filter();
+    @let _display = display();
+    @let _showHeader = showHeader();
+    @let _fluid = fluid();
 
     <div class="flex flex-col gap-2">
       <p-floatlabel variant="on">
         <p-multiselect
           [formControl]="_activeControl"
-          [options]="_config.options"
-          [optionLabel]="_config.optionLabel || 'label'"
-          [optionValue]="_config.optionValue || 'value'"
-          [filter]="_config.filter"
-          [display]="_config.display || 'comma'"
-          [showHeader]="_config.showHeader ?? true"
-          [fluid]="_config.fluid ?? true"
+          [options]="_options || []"
+          [optionLabel]="_optionLabel || 'label'"
+          [optionValue]="_optionValue || 'value'"
+          [filter]="_filter || false"
+          [display]="_display || 'comma'"
+          [showHeader]="_showHeader ?? true"
+          [fluid]="_fluid ?? true"
           (onBlur)="onTouched()"
           [appendTo]="'body'"
         />
-        <label>{{ _config.placeholder || '' }}</label>
+        <label>{{ _placeholder || '' }}</label>
       </p-floatlabel>
       
-      @if (_config.hint) {
-        <small class="text-slate-500">{{ _config.hint }}</small>
+      @if (_hint) {
+        <small class="text-slate-500">{{ _hint }}</small>
       }
 
       @if (_errorMsg) {
@@ -66,13 +63,25 @@ export interface ErpMultiSelect extends ErpInputBase {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpMultiSelectComponent implements ControlValueAccessor {
-  public config = input.required<ErpMultiSelect>();
+  public config = input.required<ErpMultiSelectConfig>();
   public control = input<FormControl | null>(null);
   public internalControl = new FormControl();
 
   public activeControl = computed(() => this.control() || this.internalControl);
 
+  protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
+  protected hint = computed(() => unwrapSignal(this.config().hint));
+  protected options = computed(() => unwrapSignal(this.config().options));
+  protected optionLabel = computed(() => unwrapSignal(this.config().optionLabel));
+  protected optionValue = computed(() => unwrapSignal(this.config().optionValue));
+  protected filter = computed(() => unwrapSignal(this.config().filter));
+  protected display = computed(() => unwrapSignal(this.config().display));
+  protected showHeader = computed(() => unwrapSignal(this.config().showHeader));
+  protected fluid = computed(() => unwrapSignal(this.config().fluid));
+  protected errorMessages = computed(() => unwrapSignal(this.config().errorMessages));
+
   public onTouched: () => void = noop;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private _onChange: (value: any) => void = noop;
 
   public getErrorMessage(): string | null {
@@ -80,7 +89,7 @@ export class ErpMultiSelectComponent implements ControlValueAccessor {
     if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) return null;
     if (ctrl.errors) {
       const firstErrorKey = Object.keys(ctrl.errors)[0];
-      return this.config().errorMessages?.[firstErrorKey] || `Błąd: ${firstErrorKey}`;
+      return this.errorMessages()?.[firstErrorKey] || `Błąd: ${firstErrorKey}`;
     }
     return null;
   }

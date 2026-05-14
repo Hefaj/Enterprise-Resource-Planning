@@ -5,6 +5,7 @@ import { ErpEmptyCardBuilder } from '@erp/shared/ui/erp-empty-card';
 import { ErpCardComponent } from '@erp/shared/ui/erp-card';
 import { DmsDocumentWorkflowComponent, DocumentTableComponent, DmsDocument } from '@erp/dms/ui';
 import { CommonModule } from '@angular/common';
+import { noop } from 'rxjs';
 
 @Component({
   selector: 'erp-document',
@@ -39,59 +40,7 @@ import { CommonModule } from '@angular/common';
       <div class="h-full flex flex-col">
         <erp-tabs
           [config]="tabsConfig"
-          [(value)]="activeTab"
         >
-          <!-- TAB 1: LISTA -->
-          @if (activeTab() === 'list') {
-            <div class="h-full animate-fade-in">
-              <dms-document-table
-                [data]="documents"
-                [(selection)]="selectedDocuments"
-              />
-            </div>
-          }
-
-          <!-- TAB 2: WORKFLOW -->
-          @if (activeTab() === 'workflow') {
-            <div class="h-full animate-fade-in">
-              @if (singleSelectedDocument()) {
-                <div class="flex flex-col h-full gap-4">
-                  <!-- Info o dokumencie w workflow -->
-                  <div class="p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800 rounded-xl flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white">
-                        <i class="pi pi-file-pdf text-xl"></i>
-                      </div>
-                      <div>
-                        <div class="font-bold text-surface-900 dark:text-surface-0">{{ singleSelectedDocument()?.name }}</div>
-                        <div class="text-xs text-surface-500">{{ singleSelectedDocument()?.type }} • {{ singleSelectedDocument()?.author }}</div>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <button class="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg transition-colors cursor-pointer">
-                        <i class="pi pi-history"></i>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Workflow Engine -->
-                  <div class="flex-1 bg-surface-0 dark:bg-surface-950 rounded-2xl border border-surface-200 dark:border-surface-800 overflow-hidden relative">
-                    <erp-dms-document-workflow
-                      class="h-full w-full"
-                      [nodes]="currentDocumentNodes()"
-                      [edges]="currentDocumentEdges()"
-                      [readonlyMode]="true"
-                    />
-                  </div>
-                </div>
-              } @else {
-                <!-- Stan pusty jeśli > 1 lub 0 zaznaczonych -->
-                <div class="h-full flex items-center justify-center">
-                  <erp-card [config]="emptyWorkflowCardConfig" />
-                </div>
-              }
-            </div>
-          }
         </erp-tabs>
       </div>
     </erp-page-layout>
@@ -116,7 +65,6 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentComponent {
-  protected activeTab = signal<string | number>('list');
 
   /** Zaznaczone dokumenty */
   protected selectedDocuments = signal<DmsDocument | DmsDocument[] | null>(null);
@@ -135,7 +83,7 @@ export class DocumentComponent {
       .addTab('Lista dokumentów', 'list', { icon: 'pi pi-list' })
       .addTab('Workflow obiegu', 'workflow', { icon: 'pi pi-sitemap' })
       .setInitialValue('list')
-      .setOnTabChange((val) => this.activeTab.set(val)),
+      .setOnTabChange(noop),
   );
 
   /** Karta stanu pustego dla Workflow */

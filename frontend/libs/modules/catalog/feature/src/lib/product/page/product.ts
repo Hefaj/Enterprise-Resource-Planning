@@ -16,6 +16,7 @@ import { ProductTableComponent } from '@erp/catalog/ui';
 
 import { ProductFlowComponent } from './product-flow/product-flow.component';
 import { TreeNode } from 'primeng/api';
+import { noop } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -33,30 +34,13 @@ import { TreeNode } from 'primeng/api';
       <div class="h-full">
         <erp-tabs
           [config]="tabsConfig"
-          [(value)]="activeTab"
-        >
-          <!-- Placeholdery dla zakładek bez komponentów -->
-          @if (activeTab() === '2') {
-            <div
-              class="h-full flex items-center justify-center border-2 border-dashed border-orange-200 dark:border-orange-900/50 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 text-orange-400 dark:text-orange-500"
-            >
-              Stany Magazynowe (Zakładka 2)
-            </div>
-          } @else if (activeTab() === '3') {
-            <div
-              class="h-full flex items-center justify-center border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-2xl bg-surface-50/50 dark:bg-surface-800/20 text-surface-400 dark:text-surface-500"
-            >
-              Historia zmian (Zakładka 3)
-            </div>
-          }
-        </erp-tabs>
+        />
       </div>
     </erp-page-layout>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductComponent {
-  public activeTab = signal<string | number | undefined>('0');
 
   // ── Dane testowe produktów ──
   protected readonly products = signal([
@@ -234,11 +218,11 @@ export class ProductComponent {
     b
       .addTab('Lista produktów', '0', { component: ProductTableComponent, config: { data: this.products() } })
       .addTab('Multimedia', '1', { component: ProductFlowComponent })
-      .addTab('Magazyn', '2')
-      .addTab('Historia zmian', '3')
+      .addTab('Magazyn', '2', { component: ErpCardComponent, config: { config: this.formCardConfig } })
+      .addTab('Historia zmian', '3', { component: ErpCardComponent, config: { config: this.formCardConfig } })
       .addTab('Dodaj produkt (Test Form)', '4', { component: ErpCardComponent, config: { config: this.formCardConfig } })
       .setInitialValue('0')
-      .setOnTabChange((val) => this.activeTab.set(val)),
+      .setOnTabChange(noop),
   );
 
   protected saveProduct(): void {

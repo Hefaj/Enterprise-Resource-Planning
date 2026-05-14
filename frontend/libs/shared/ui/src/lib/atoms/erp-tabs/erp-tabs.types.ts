@@ -15,5 +15,4 @@ export interface ErpTabsConfig {
   items: ErpTabItem[];
   initialValue?: string | number;
   onTabChange?: (value: string | number) => void;
-  headless?: MaybeSignal<boolean | undefined>;
 }

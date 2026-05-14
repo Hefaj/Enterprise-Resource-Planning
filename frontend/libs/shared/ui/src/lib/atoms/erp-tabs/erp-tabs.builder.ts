@@ -15,7 +15,7 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
   public addTab<T = any>(
     label: MaybeSignal<string>,
     value: string | number,
-    options?: {
+    options: {
       icon?: MaybeSignal<string | undefined>;
       disabled?: MaybeSignal<boolean | undefined>;
       component?: Type<T>;
@@ -41,11 +41,6 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
 
   public setOnTabChange(callback: (value: string | number) => void): this {
     this._data.onTabChange = callback;
-    return this;
-  }
-
-  public setHeadless(headless: MaybeSignal<boolean | undefined> = true): this {
-    this._data.headless = headless;
     return this;
   }
 }

@@ -7,6 +7,9 @@ export * from './lib/layouts/erp-host-layout/erp-host-layout';
 
 export * from './lib/auth/login/login.component';
 
+// Atoms
+// SEPs exported via tsconfig path aliases
+
 // Molecules
 // SEPs exported via tsconfig path aliases
 

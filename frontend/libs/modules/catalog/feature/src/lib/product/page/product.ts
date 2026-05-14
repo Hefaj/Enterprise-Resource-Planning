@@ -26,7 +26,6 @@ import { TreeNode } from 'primeng/api';
       <div filters>
         <erp-dynamic-filter
           [config]="filtersConfig"
-          (filterSubmit)="onFilter()"
         />
       </div>
 
@@ -168,8 +167,8 @@ export class ProductComponent {
   );
 
   protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {
-    // ... tutaj inne filtry (zakomentowane)
     b.addFilter('Kategoria zaawansowana', ErpTreeSelectComponent, { config: this.treeConfig });
+    b.setOnSubmit(() => this.onFilter());
   });
 
   protected readonly testFormConfig = ErpFormBuilder.create((f) =>

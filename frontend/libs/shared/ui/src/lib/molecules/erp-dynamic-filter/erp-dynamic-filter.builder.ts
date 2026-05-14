@@ -38,4 +38,10 @@ export class ErpDynamicFilterBuilder extends ErpBaseBuilder<ErpDynamicFilterConf
     this._data.showSubmitButton = show;
     return this;
   }
+
+  /** Ustawia akcję po zatwierdzeniu filtrów. */
+  public setOnSubmit(callback: () => void | Promise<void>): this {
+    this._data.onSubmit = callback;
+    return this;
+  }
 }

@@ -14,4 +14,5 @@ export interface ErpDynamicFilterConfig {
   items: MaybeSignal<ErpDynamicFilterItem[]>;
   submitButtonLabel?: MaybeSignal<string | undefined>;
   showSubmitButton?: MaybeSignal<boolean | undefined>;
+  onSubmit?: () => void | Promise<void>;
 }

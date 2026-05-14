@@ -37,7 +37,6 @@ export { ErpDynamicFilterBuilder };
 })
 export class ErpDynamicFilterComponent {
   public config = input.required<ErpDynamicFilterConfig>();
-  public filterSubmit = output<void>();
 
   protected items = computed(() => {
     const rawItems = unwrapSignal(this.config().items) ?? [];
@@ -58,7 +57,10 @@ export class ErpDynamicFilterComponent {
     ),
   );
 
-  protected onSubmit(): void {
-    this.filterSubmit.emit();
+  protected onSubmit(): void | Promise<void> {
+    const callback = this.config().onSubmit;
+    if (callback) {
+      return callback();
+    }
   }
 }

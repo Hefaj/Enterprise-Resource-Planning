@@ -34,13 +34,16 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 })
 export class ErpActionButtonsComponent {
   public config = input.required<ErpActionButtonsConfig>();
-  public buttonClick = output<string>();
 
   protected buttons = computed(() => {
     const rawButtons = unwrapSignal(this.config().buttons) ?? [];
     return rawButtons.map((btn) => ({
       ...btn,
-      onClick: () => this.buttonClick.emit(btn.id),
+      onClick: (event: MouseEvent) => {
+        if (btn.onClick) {
+          return btn.onClick(event);
+        }
+      },
     }));
   });
   protected alignment = computed(() => unwrapSignal(this.config().alignment));

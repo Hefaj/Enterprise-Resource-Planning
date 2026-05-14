@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { ErpHostLayoutComponent } from '@erp/shared/ui';
+import { ErpHostLayoutComponent, ErpHostLayoutBuilder } from '@erp/shared/ui';
 import { ErpBreadcrumbConfig } from '@erp/shared/ui/erp-breadcrumb';
 import { ErpUserMenuConfig } from '@erp/shared/ui/erp-user-menu';
 import { Router, RouterModule } from '@angular/router';
@@ -8,6 +8,14 @@ import { MenuItem } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 import { ErpAuthService } from '@erp/shared/auth';
+
+@Component({
+  selector: 'erp-router-wrapper',
+  standalone: true,
+  imports: [RouterModule],
+  template: `<router-outlet></router-outlet>`
+})
+export class RouterOutletWrapperComponent {}
 
 @Component({
   selector: 'erp-shell',
@@ -63,4 +71,13 @@ export class ShellLayoutComponent {
       items: item.children ? this._mapToPrimeNg(item.children) : undefined,
     }));
   }
+
+  protected $hostLayoutConfig = computed(() => {
+    return ErpHostLayoutBuilder.create((b) =>
+      b.setUserMenuConfig(this.$userMenuConfig)
+       .setMenuConfig(this.$navMenu)
+       .setBreadcrumbConfig(this.$breadcrumbConfig)
+       .setContentComponent(RouterOutletWrapperComponent)
+    );
+  });
 }

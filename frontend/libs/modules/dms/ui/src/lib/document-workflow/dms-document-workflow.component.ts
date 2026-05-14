@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, model, signal, viewChild, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, model, signal, viewChild, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction } from '@erp/shared/ui/erp-workflow';
+import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction, ErpWorkflowBuilder } from '@erp/shared/ui/erp-workflow';
 
 @Component({
   selector: 'erp-dms-document-workflow',
@@ -9,13 +9,7 @@ import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, W
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="h-full w-full">
-      <erp-workflow
-        [(nodes)]="nodes"
-        [(edges)]="edges"
-        [readonlyMode]="readonlyMode()"
-        [actions]="actions()"
-        [availableNodeTypes]="availableNodeTypes"
-      >
+      <erp-workflow [config]="workflowConfig">
       </erp-workflow>
     </div>
   `,
@@ -25,6 +19,15 @@ export class DmsDocumentWorkflowComponent {
   edges = model<WorkflowEdge[]>([]);
   readonlyMode = input<boolean>(false);
   actions = input<WorkflowNodeAction[]>([]);
+
+  protected readonly workflowConfig = ErpWorkflowBuilder.create((b) =>
+    b
+      .setNodes(this.nodes)
+      .setEdges(this.edges)
+      .setReadonlyMode(this.readonlyMode)
+      .setActions(this.actions)
+      .setAvailableNodeTypes(computed(() => this.availableNodeTypes)),
+  );
 
   // conditionEditor = viewChild(CatalogProductWorkflowConditionEditorComponent);
   // approvalEditor = viewChild(CatalogProductWorkflowApprovalEditorComponent);

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, model, output } from '@angular/core';
-import { ErpTableComponent, ErpTableBuilder, ErpTableFilters } from '@erp/shared/ui';
+import { ErpTableComponent, ErpTableBuilder, ErpTableFilters } from '@erp/shared/ui/erp-table';
 
 export interface DmsDocument {
   id: string;

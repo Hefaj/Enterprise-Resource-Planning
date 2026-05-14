@@ -23,6 +23,13 @@ export { ErpWorkflowBuilder };
         max-height: 400px;
         overflow-y: auto;
       }
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow {
+        animation: spin-slow 2s linear infinite;
+      }
     `,
   ],
 })
@@ -164,10 +171,13 @@ export class ErpWorkflowComponent implements AfterViewInit {
 
   el = inject(ElementRef);
 
+  isInitialized = signal(false);
+
   ngAfterViewInit() {
     // Wait for the next tick to ensure DOM is rendered and dimensions are available
     setTimeout(() => {
       this.resetZoom();
+      this.isInitialized.set(true);
     }, 0);
   }
 

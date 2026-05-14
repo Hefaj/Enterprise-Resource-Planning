@@ -5,8 +5,26 @@
     (wheel)="onWheel($event)"
     #canvasContainer>
         
+    <!-- Loader Overlay -->
+    <div class="absolute inset-0 z-50 flex items-center justify-center bg-surface-50/80 dark:bg-surface-950/80 backdrop-blur-[2px] transition-all duration-500 ease-in-out"
+        [class.opacity-0]="isInitialized()"
+        [class.pointer-events-none]="isInitialized()">
+        <div class="flex flex-col items-center gap-4">
+            <div class="relative w-12 h-12">
+                <i class="pi pi-spinner pi-spin text-4xl text-primary-500"></i>
+                <div class="absolute inset-0 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin-slow"></div>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-surface-900 dark:text-surface-0 font-semibold text-lg tracking-tight">Przygotowywanie widoku</span>
+                <span class="text-surface-500 dark:text-surface-400 text-sm animate-pulse">Trwa obliczanie pozycji elementów...</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Canvas Wrapper for Pan and Zoom -->
-<div class="absolute inset-0 origin-top-left"
+    <div class="absolute inset-0 origin-top-left transition-opacity duration-700 ease-out"
+        [class.opacity-0]="!isInitialized()"
+        [class.opacity-100]="isInitialized()"
         [style.transform]="transformStyle()">
     
     <!-- SVG Layer for Edges -->

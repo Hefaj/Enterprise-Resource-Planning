@@ -1,8 +1,62 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { WorkflowNodeAction, WorkflowNodeType } from './erp-workflow.types';
+import { WorkflowNode, WorkflowEdge, WorkflowNodeAction, WorkflowNodeType, ErpWorkflowConfig } from './erp-workflow.types';
+import { MaybeSignal } from '../../base/erp-signal-utils';
 
 /**
- * Builder dla pojedynczego typu węzła workflow.
+ * Główny builder dla komponentu ErpWorkflow.
+ */
+export class ErpWorkflowBuilder extends ErpBaseBuilder<ErpWorkflowConfig> {
+  constructor() {
+    super();
+    this._data.nodes = [];
+    this._data.edges = [];
+  }
+
+  /** Ustawia listę węzłów workflow. */
+  public setNodes(nodes: MaybeSignal<WorkflowNode[]>): this {
+    this._data.nodes = nodes;
+    return this;
+  }
+
+  /** Ustawia listę połączeń (krawędzi) między węzłami. */
+  public setEdges(edges: MaybeSignal<WorkflowEdge[]>): this {
+    this._data.edges = edges;
+    return this;
+  }
+
+  /** Ustawia tryb tylko do odczytu. */
+  public setReadonlyMode(readonly: MaybeSignal<boolean>): this {
+    this._data.readonlyMode = readonly;
+    return this;
+  }
+
+  /** Ustawia listę globalnych akcji dostępnych dla węzłów. */
+  public setActions(actions: MaybeSignal<WorkflowNodeAction[]>): this {
+    this._data.actions = actions;
+    return this;
+  }
+
+  /** Ustawia strukturę dostępnych typów węzłów w menu. */
+  public setAvailableNodeTypes(types: MaybeSignal<WorkflowNodeType[]>): this {
+    this._data.availableNodeTypes = types;
+    return this;
+  }
+
+  /** Callback wywoływany przy zmianie listy węzłów (np. dodanie, przesunięcie, usunięcie). */
+  public setOnNodesChange(cb: (nodes: WorkflowNode[]) => void): this {
+    this._data.onNodesChange = cb;
+    return this;
+  }
+
+  /** Callback wywoływany przy zmianie listy połączeń. */
+  public setOnEdgesChange(cb: (edges: WorkflowEdge[]) => void): this {
+    this._data.onEdgesChange = cb;
+    return this;
+  }
+}
+
+/**
+ * Builder dla pojedynczego typu węzła workflow (pomocniczy).
  */
 export class ErpWorkflowNodeTypeBuilder extends ErpBaseBuilder<WorkflowNodeType> {
   constructor() {
@@ -33,61 +87,5 @@ export class ErpWorkflowNodeTypeBuilder extends ErpBaseBuilder<WorkflowNodeType>
   public addAction(label: string, icon: string, command: WorkflowNodeAction['command']): this {
     this._data.actions?.push({ label, icon, command });
     return this;
-  }
-}
-
-/**
- * Główny builder do budowania listy dostępnych typów węzłów (hierarchii).
- */
-export class ErpWorkflowBuilder {
-  private _types: WorkflowNodeType[] = [];
-
-  public static create(configure: (builder: ErpWorkflowBuilder) => void): WorkflowNodeType[] {
-    const builder = new ErpWorkflowBuilder();
-    configure(builder);
-    return builder.build();
-  }
-
-  /**
-   * Dodaje prosty węzeł.
-   */
-  public addNode(
-    type: string, 
-    label: string, 
-    configure?: (b: ErpWorkflowNodeTypeBuilder) => void
-  ): this {
-    const builder = new ErpWorkflowNodeTypeBuilder();
-    builder.setType(type).setLabel(label).setDefaultWidth(200);
-    
-    if (configure) {
-      configure(builder);
-    }
-    
-    this._types.push(builder.build());
-    return this;
-  }
-
-  /**
-   * Dodaje grupę węzłów (podmenu).
-   */
-  public addGroup(
-    label: string, 
-    icon: string, 
-    configure: (builder: ErpWorkflowBuilder) => void
-  ): this {
-    const subBuilder = new ErpWorkflowBuilder();
-    configure(subBuilder);
-    
-    this._types.push({
-      label,
-      icon,
-      items: subBuilder.build()
-    });
-    
-    return this;
-  }
-
-  public build(): WorkflowNodeType[] {
-    return this._types;
   }
 }

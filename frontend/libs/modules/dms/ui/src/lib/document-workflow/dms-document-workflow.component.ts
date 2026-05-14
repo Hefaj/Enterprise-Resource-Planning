@@ -1,14 +1,11 @@
 import { ChangeDetectionStrategy, Component, model, signal, viewChild, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction } from '@erp/shared/ui';
+import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction } from '@erp/shared/ui/erp-workflow';
 
 @Component({
   selector: 'erp-dms-document-workflow',
   standalone: true,
-  imports: [
-    CommonModule,
-    ErpWorkflowComponent,
-  ],
+  imports: [CommonModule, ErpWorkflowComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="h-full w-full">
@@ -21,7 +18,7 @@ import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, W
       >
       </erp-workflow>
     </div>
-  `
+  `,
 })
 export class DmsDocumentWorkflowComponent {
   nodes = model<WorkflowNode[]>([]);
@@ -41,44 +38,34 @@ export class DmsDocumentWorkflowComponent {
       workflowNode('approval2', 'Zatwierdzenie Księgowe'),
       workflowNode('approval3', 'Zatwierdzenie Merytoryczne'),
 
-
-
-    //   workflowNode('action', 'Akcja (Zadanie)', {
-    //     actions: [
-    //       workflowAction('Pobierz zdjęcie', 'pi pi-download', () => alert('Pobieranie wygenerowanego zdjęcia...'))
-    //     ]
-    //   }),
-    //   workflowNode('approval', 'Akceptacja (Zatwierdzenie)', {
-    //     actions: [
-    //       workflowAction('Przypisz osobę', 'pi pi-user-plus', ({ node }) => this.approvalEditor()?.open(node))
-    //     ]
-    //   }),
-    // ]),
-    // workflowGroup('Bloki Techniczne', 'pi pi-cog', [
-    //   workflowNode('condition', 'Warunek (Bramka decyzyjna)', {
-    //     actions: [
-    //       workflowAction('Zarządzaj warunkami', 'pi pi-filter', ({ node }) => this.conditionEditor()?.open(node))
-    //     ]
-    //   }),
-    //   workflowNode('loop', 'Pętla (Cykl)'),
-    //   workflowNode('and', 'Rozwidlenie AND', { defaultWidth: 60 }),
-    //   workflowNode('or', 'Bramka OR (XOR)', { defaultWidth: 60 })
-    ])
+      //   workflowNode('action', 'Akcja (Zadanie)', {
+      //     actions: [
+      //       workflowAction('Pobierz zdjęcie', 'pi pi-download', () => alert('Pobieranie wygenerowanego zdjęcia...'))
+      //     ]
+      //   }),
+      //   workflowNode('approval', 'Akceptacja (Zatwierdzenie)', {
+      //     actions: [
+      //       workflowAction('Przypisz osobę', 'pi pi-user-plus', ({ node }) => this.approvalEditor()?.open(node))
+      //     ]
+      //   }),
+      // ]),
+      // workflowGroup('Bloki Techniczne', 'pi pi-cog', [
+      //   workflowNode('condition', 'Warunek (Bramka decyzyjna)', {
+      //     actions: [
+      //       workflowAction('Zarządzaj warunkami', 'pi pi-filter', ({ node }) => this.conditionEditor()?.open(node))
+      //     ]
+      //   }),
+      //   workflowNode('loop', 'Pętla (Cykl)'),
+      //   workflowNode('and', 'Rozwidlenie AND', { defaultWidth: 60 }),
+      //   workflowNode('or', 'Bramka OR (XOR)', { defaultWidth: 60 })
+    ]),
   ];
 
-  onSaveConditions(event: { nodeId: string, conditions: any[] }) {
-    this.nodes.update(ns => ns.map(n => 
-      n.id === event.nodeId 
-        ? { ...n, metadata: { ...n.metadata, conditions: event.conditions } } 
-        : n
-    ));
+  onSaveConditions(event: { nodeId: string; conditions: any[] }) {
+    this.nodes.update((ns) => ns.map((n) => (n.id === event.nodeId ? { ...n, metadata: { ...n.metadata, conditions: event.conditions } } : n)));
   }
 
-  onSaveApproval(event: { nodeId: string, assignedTo: string | null }) {
-    this.nodes.update(ns => ns.map(n => 
-      n.id === event.nodeId 
-        ? { ...n, metadata: { ...n.metadata, assignedTo: event.assignedTo } } 
-        : n
-    ));
+  onSaveApproval(event: { nodeId: string; assignedTo: string | null }) {
+    this.nodes.update((ns) => ns.map((n) => (n.id === event.nodeId ? { ...n, metadata: { ...n.metadata, assignedTo: event.assignedTo } } : n)));
   }
 }

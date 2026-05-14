@@ -3,7 +3,7 @@ import {
   ErpTableComponent, 
   ErpTableBuilder, 
   ErpTableFilters 
-} from '@erp/shared/ui';
+} from '@erp/shared/ui/erp-table';
 
 /**
  * Biznesowy komponent tabeli produktów.

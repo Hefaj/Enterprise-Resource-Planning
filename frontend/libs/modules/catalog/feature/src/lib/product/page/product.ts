@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ErpPageLayoutComponent } from '@erp/shared/ui';
 import { ErpDynamicFilterComponent, ErpDynamicFilterBuilder } from '@erp/shared/ui/erp-dynamic-filter';
 import { ErpTreeSelectComponent, ErpTreeSelectBuilder } from '@erp/shared/ui/erp-tree-select';
-import { ErpActionButtonsComponent } from '@erp/shared/ui/erp-action-buttons';
-import { ErpFormComponent, ErpFormBuilder } from '@erp/shared/ui';
+import { ErpActionButtonsBuilder, ErpActionButtonsComponent } from '@erp/shared/ui/erp-action-buttons';
+import { ErpFormComponent, ErpFormBuilder } from '@erp/shared/ui/erp-form';
 import { ErpInputTextBuilder } from '@erp/shared/ui/erp-input-text';
 import { ErpSelectBuilder } from '@erp/shared/ui/erp-select';
 import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
@@ -224,12 +224,10 @@ export class ProductComponent {
       .setSubtitle('Wprowadź podstawowe dane techniczne i handlowe')
       .setContentComponent(ErpFormComponent, { config: this.testFormConfig })
       .setFooterComponent(ErpActionButtonsComponent, {
-        config: {
-          buttons: [
-            { ...this.cancelBtnConfig, id: 'cancel' },
-            { ...this.saveBtnConfig, id: 'save' },
-          ],
-        },
+        config: ErpActionButtonsBuilder.create((b) => {
+          b.addButton({ ...this.cancelBtnConfig, id: 'cancel' });
+          b.addButton({ ...this.saveBtnConfig, id: 'save' });
+        }),
       }),
   );
 

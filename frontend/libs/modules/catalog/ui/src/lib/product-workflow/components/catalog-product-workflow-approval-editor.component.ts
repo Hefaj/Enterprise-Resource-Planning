@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, model, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { WorkflowNode } from '@erp/shared/ui';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
+import { WorkflowNode } from '@erp/shared/ui/erp-workflow';
 
 @Component({
   selector: 'erp-catalog-product-workflow-approval-editor',

@@ -2,14 +2,15 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpSplitterComponent, ErpSplitterBuilder } from '@erp/shared/ui/erp-splitter';
 import { ErpEmptyCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui/erp-empty-card';
+import { ErpPopoutDirective } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-product-tab',
   standalone: true,
-  imports: [CommonModule, ErpSplitterComponent],
+  imports: [CommonModule, ErpSplitterComponent, ErpPopoutDirective],
   template: `
     <div class="tab-container">
-      <div class="demo-card">
+      <div class="demo-card" erpPopout erpPopoutTitle="Katalog - Splitter Demo">
         <div class="demo-header">
           <div>
             <h3 class="demo-title">Demo: Nowy komponent Splitter</h3>

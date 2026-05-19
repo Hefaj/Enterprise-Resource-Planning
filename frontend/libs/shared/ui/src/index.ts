@@ -7,3 +7,4 @@ export * from './lib/layouts/erp-page-layout/erp-page-layout.types';
 export * from './lib/layouts/erp-host-layout';
 
 export * from './lib/auth/login/login.component';
+export * from './lib/directives/erp-popout/erp-popout.directive';

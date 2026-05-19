@@ -55,6 +55,38 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
         width: 100%;
         height: 100%;
       }
+      :host ::ng-deep .p-splitter {
+        border: 1px solid var(--p-surface-200);
+        background: var(--p-surface-0);
+        border-radius: 0.5rem;
+        transition: border-color 0.2s, background-color 0.2s;
+      }
+      :host-context(.dark) ::ng-deep .p-splitter {
+        border-color: var(--p-surface-800);
+        background: var(--p-surface-950);
+      }
+      :host ::ng-deep .p-splitter-gutter {
+        background: var(--p-surface-200) !important;
+        transition: background-color 0.2s;
+      }
+      :host-context(.dark) ::ng-deep .p-splitter-gutter {
+        background: var(--p-surface-800) !important;
+      }
+      :host ::ng-deep .p-splitter-gutter-handle {
+        background: var(--p-surface-400) !important;
+        border-radius: 9999px;
+      }
+      :host-context(.dark) ::ng-deep .p-splitter-gutter-handle {
+        background: var(--p-surface-600) !important;
+      }
+      :host ::ng-deep .p-splitter-gutter:hover {
+        background: var(--p-primary-color) !important;
+      }
+      :host ::ng-deep .p-splitter .p-splitter {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -46,7 +46,12 @@ async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNaviga
     return null;
   } catch (error) {
     console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.id}.`, error);
-    return null;
+    return {
+      id: config.id,
+      label: `${config.label} (nieaktywny)`,
+      iconId: 'exclamation-triangle',
+      disabled: true,
+    };
   }
 }
 

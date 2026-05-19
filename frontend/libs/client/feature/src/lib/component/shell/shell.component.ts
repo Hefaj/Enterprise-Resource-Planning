@@ -67,7 +67,8 @@ export class ShellLayoutComponent {
     return items.map((item) => ({
       label: item.label,
       icon: item.iconId ? `pi pi-${item.iconId}` : undefined,
-      routerLink: item.route,
+      routerLink: item.disabled ? undefined : item.route,
+      disabled: item.disabled,
       items: item.children ? this._mapToPrimeNg(item.children) : undefined,
     }));
   }

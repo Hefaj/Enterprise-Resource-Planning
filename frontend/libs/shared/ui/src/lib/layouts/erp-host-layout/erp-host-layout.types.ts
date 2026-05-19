@@ -12,4 +12,6 @@ export interface ErpHostLayoutConfig {
   
   contentComponent?: MaybeSignal<Type<any>>;
   contentConfig?: MaybeSignal<ErpComponentSignalInputs<any> | any>;
+
+  closeMenuOnNavigation?: MaybeSignal<boolean>;
 }

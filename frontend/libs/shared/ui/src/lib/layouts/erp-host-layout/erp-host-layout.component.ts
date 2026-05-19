@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, viewChild, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, viewChild, computed, inject } from '@angular/core';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { ErpEmptyCardComponent } from '@erp/shared/ui/erp-empty-card';
 import { ErpDrawerComponent } from '@erp/shared/ui/erp-drawer';
@@ -8,6 +8,9 @@ import { ErpBreadcrumbComponent } from '@erp/shared/ui/erp-breadcrumb';
 import { ErpUserMenuComponent } from '@erp/shared/ui/erp-user-menu';
 import { ErpHostLayoutConfig } from './erp-host-layout.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { Router, NavigationEnd } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'erp-host-layout',
@@ -59,6 +62,22 @@ export class ErpHostLayoutComponent {
   public config = input.required<ErpHostLayoutConfig>();
 
   protected drawer = viewChild.required<ErpDrawerComponent>('drawer');
+
+  private _router = inject(Router);
+
+  public constructor() {
+    this._router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
+      .subscribe(() => {
+        const closeOnNav = this.unwrapConfig(this.config().closeMenuOnNavigation) ?? true;
+        if (closeOnNav) {
+          this.drawer().hide();
+        }
+      });
+  }
 
   protected menuBtnConfig = computed(() =>
     ErpButtonBuilder.create((b) =>

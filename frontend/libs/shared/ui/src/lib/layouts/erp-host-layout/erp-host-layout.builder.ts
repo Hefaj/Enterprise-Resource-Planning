@@ -8,7 +8,7 @@ import { MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 
 export class ErpHostLayoutBuilder extends ErpBaseBuilder<ErpHostLayoutConfig> {
-  constructor() {
+  public constructor() {
     super();
     this._data = {};
   }
@@ -34,6 +34,11 @@ export class ErpHostLayoutBuilder extends ErpBaseBuilder<ErpHostLayoutConfig> {
   ): this {
     this._data.contentComponent = component;
     this._data.contentConfig = config;
+    return this;
+  }
+
+  public setCloseMenuOnNavigation(close: MaybeSignal<boolean>): this {
+    this._data.closeMenuOnNavigation = close;
     return this;
   }
 }

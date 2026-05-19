@@ -38,6 +38,7 @@
       "@erp/shared/ui/erp-panel-menu": ["frontend/libs/shared/ui/src/lib/atoms/erp-panel-menu/index.ts"],
       "@erp/shared/ui/erp-select": ["frontend/libs/shared/ui/src/lib/atoms/erp-select/index.ts"],
       "@erp/shared/ui/erp-tabs": ["frontend/libs/shared/ui/src/lib/atoms/erp-tabs/index.ts"],
+      "@erp/shared/ui/erp-splitter": ["frontend/libs/shared/ui/src/lib/atoms/erp-splitter/index.ts"],
       "@erp/shared/ui/erp-toggle-switch": ["frontend/libs/shared/ui/src/lib/atoms/erp-toggle-switch/index.ts"],
       "@erp/shared/ui/erp-user-menu": ["frontend/libs/shared/ui/src/lib/atoms/erp-user-menu/index.ts"],
       "@erp/shared/ui/erp-dynamic-filter": ["frontend/libs/shared/ui/src/lib/molecules/erp-dynamic-filter/index.ts"],

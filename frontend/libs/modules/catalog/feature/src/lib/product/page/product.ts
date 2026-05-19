@@ -2,9 +2,14 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpPageLayoutComponent, ErpPageLayoutBuilder } from '@erp/shared/ui';
 import { ErpDynamicFilterComponent } from '@erp/shared/ui/erp-dynamic-filter';
-import { ErpTabsComponent } from '@erp/shared/ui/erp-tabs';
+import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
+import { noop } from 'rxjs';
 
-import { filtersConfig, tabsConfig } from './product.mock';
+import { filtersConfig } from './product.mock';
+import { ProductTabComponent } from './tabs/product-tab.component';
+import { MultimediaTabComponent } from './tabs/multimedia-tab.component';
+import { SalesOfferTabComponent } from './tabs/sales-offer-tab.component';
+import { WarrantyTabComponent } from './tabs/warranty-tab.component';
 
 @Component({
   standalone: true,
@@ -13,5 +18,32 @@ import { filtersConfig, tabsConfig } from './product.mock';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductComponent {
-  protected readonly pageConfig = ErpPageLayoutBuilder.create((b) => b.setLeftSidebar(ErpDynamicFilterComponent, { config: filtersConfig }).setMain(ErpTabsComponent, { config: tabsConfig }));
+  protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
+    b
+      .addTab('Produkty', 'products', {
+        component: ProductTabComponent,
+        icon: 'pi pi-shopping-bag',
+      })
+      .addTab('Multimedia', 'multimedia', {
+        component: MultimediaTabComponent,
+        icon: 'pi pi-image',
+      })
+      .addTab('Oferta sprzedaży', 'sales-offer', {
+        component: SalesOfferTabComponent,
+        icon: 'pi pi-percentage',
+      })
+      .addTab('Gwarancje', 'warranties', {
+        component: WarrantyTabComponent,
+        icon: 'pi pi-verified',
+      })
+      .setInitialValue('products')
+      .setOnTabChange(noop)
+  );
+
+  protected readonly pageConfig = ErpPageLayoutBuilder.create((b) =>
+    b
+      .setLeftSidebar(ErpDynamicFilterComponent, { config: filtersConfig })
+      .setMain(ErpTabsComponent, { config: this.tabsConfig })
+  );
 }
+

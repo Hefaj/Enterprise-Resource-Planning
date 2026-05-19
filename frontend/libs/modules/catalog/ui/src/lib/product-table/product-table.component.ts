@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { 
   ErpTableComponent, 
   ErpTableBuilder, 
@@ -19,6 +19,12 @@ import {
       [config]="tableConfig" 
     />
   `,
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductTableComponent {

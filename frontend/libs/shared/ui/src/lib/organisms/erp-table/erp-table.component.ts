@@ -249,6 +249,22 @@ import {
       display: block;
       height: 100%;
     }
+    :host ::ng-deep p-table {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    :host ::ng-deep .p-datatable {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    :host ::ng-deep .p-datatable-wrapper {
+      flex: 1;
+      min-height: 0;
+    }
     :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
       background: var(--p-surface-0);
       color: var(--p-surface-700);

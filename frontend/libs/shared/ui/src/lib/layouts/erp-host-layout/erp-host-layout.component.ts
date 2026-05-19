@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, viewChild, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, viewChild, computed, inject, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { ErpEmptyCardComponent } from '@erp/shared/ui/erp-empty-card';
 import { ErpDrawerComponent } from '@erp/shared/ui/erp-drawer';
@@ -58,18 +58,19 @@ import { filter } from 'rxjs';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ErpHostLayoutComponent {
+export class ErpHostLayoutComponent implements OnInit {
   public config = input.required<ErpHostLayoutConfig>();
 
   protected drawer = viewChild.required<ErpDrawerComponent>('drawer');
 
   private _router = inject(Router);
+  private _destroyRef = inject(DestroyRef);
 
-  public constructor() {
+  public ngOnInit(): void {
     this._router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-        takeUntilDestroyed()
+        takeUntilDestroyed(this._destroyRef)
       )
       .subscribe(() => {
         const closeOnNav = this.unwrapConfig(this.config().closeMenuOnNavigation) ?? true;

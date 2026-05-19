@@ -14,13 +14,16 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Directive({
   selector: '[erpIntersect]',
-  standalone: true
+  standalone: true,
 })
 export class ErpIntersectDirective implements OnInit, OnDestroy {
   @Output() erpIntersect = new EventEmitter<void>();
   private observer: IntersectionObserver | null = null;
 
-  constructor(private el: ElementRef, private zone: NgZone) {}
+  constructor(
+    private el: ElementRef,
+    private zone: NgZone,
+  ) {}
 
   ngOnInit() {
     this.observer = new IntersectionObserver(([entry]) => {
@@ -45,7 +48,7 @@ export { ErpTreeSelectBuilder };
   standalone: true,
   imports: [CommonModule, PopoverModule, TreeModule, CheckboxModule, FormsModule, ErpIntersectDirective],
   template: `
-    <div 
+    <div
       class="border border-surface-300 dark:border-surface-700 rounded-md px-3 py-2 cursor-pointer flex justify-between items-center bg-surface-0 dark:bg-surface-900 hover:border-surface-400 dark:hover:border-surface-600"
       (click)="!disabled && op.toggle($event)"
       [class.opacity-50]="disabled"
@@ -57,69 +60,102 @@ export { ErpTreeSelectBuilder };
       <i class="pi pi-chevron-down text-surface-500 dark:text-surface-400 text-sm"></i>
     </div>
 
-    <p-popover #op [style]="{'min-width': '350px', 'max-width': '600px'}">
-      <div class="max-h-[500px] overflow-auto">
-        <p-tree 
-          [value]="optionsWithParents()" 
+    <p-popover
+      #op
+      [style]="{ 'min-width': '350px', 'max-width': '600px' }"
+    >
+      <div class="max-h-125 overflow-auto">
+        <p-tree
+          [value]="optionsWithParents()"
           class="w-full border-none p-0 erp-tree-hide-toggler"
           (onNodeExpand)="handleNodeExpand($event)"
           (onNodeCollapse)="realignPopover()"
         >
-          <ng-template let-node pTemplate="default">
+          <ng-template
+            let-node
+            pTemplate="default"
+          >
             @if (node.data?.isLoadMore) {
-              <div class="flex items-center justify-center w-full py-2 text-surface-500 dark:text-surface-400 gap-2 select-none cursor-pointer" (erpIntersect)="triggerLoadMore(node)" (click)="triggerLoadMore(node)">
+              <div
+                class="flex items-center justify-center w-full py-2 text-surface-500 dark:text-surface-400 gap-2 select-none cursor-pointer"
+                (erpIntersect)="triggerLoadMore(node)"
+                (click)="triggerLoadMore(node)"
+              >
                 <i class="pi pi-spinner pi-spin"></i>
                 <span class="text-sm">Doczytywanie...</span>
               </div>
             } @else {
               <div class="flex flex-col w-full">
-              <!-- GŁÓWNY WIERSZ RODZICA -->
-              <div class="flex items-center justify-between flex-1 pr-2 gap-4 cursor-pointer select-none" (click)="toggleExpand(node, $event)">
-                <div class="flex items-center gap-2 flex-1" (click)="$event.stopPropagation()">
-                  
-                  @if (node.children?.length || node.leaf === false) {
-                    <div class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer" (click)="toggleExpand(node, $event)">
-                      @if (isLoading(node)) {
-                        <i class="pi pi-spinner pi-spin text-surface-400 dark:text-surface-600 text-sm"></i>
-                      } @else {
-                        <i class="pi text-surface-500 dark:text-surface-400 text-sm" [ngClass]="node.expanded ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
-                      }
-                    </div>
-                  } @else {
-                    <div class="w-6 h-6"></div>
-                  }
+                <!-- GŁÓWNY WIERSZ RODZICA -->
+                <div
+                  class="flex items-center justify-between flex-1 pr-2 gap-4 cursor-pointer select-none"
+                  (click)="toggleExpand(node, $event)"
+                >
+                  <div
+                    class="flex items-center gap-2 flex-1"
+                    (click)="$event.stopPropagation()"
+                  >
+                    @if (node.children?.length || node.leaf === false) {
+                      <div
+                        class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer"
+                        (click)="toggleExpand(node, $event)"
+                      >
+                        @if (isLoading(node)) {
+                          <i class="pi pi-spinner pi-spin text-surface-400 dark:text-surface-600 text-sm"></i>
+                        } @else {
+                          <i
+                            class="pi text-surface-500 dark:text-surface-400 text-sm"
+                            [ngClass]="node.expanded ? 'pi-chevron-down' : 'pi-chevron-right'"
+                          ></i>
+                        }
+                      </div>
+                    } @else {
+                      <div class="w-6 h-6"></div>
+                    }
 
-                  <p-checkbox 
-                    [binary]="true" 
-                    [ngModel]="isNodeChecked(node)" 
-                    [disabled]="isNodeDisabled(node)"
-                    (ngModelChange)="toggleNode(node, $event)" 
-                  />
-                  <!-- Klikalny obszar tekstu -->
-                  <div class="flex-1 py-1" (click)="toggleNode(node, !isNodeChecked(node))">
-                    <span [class.text-surface-400]="isNodeDisabled(node)" [class.dark:text-surface-600]="isNodeDisabled(node)">{{ node.label }}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- "WSZYSTKIE DZIECI" SYMULUJĄCE PIERWSZE DZIECKO -->
-              @if (node.children?.length || node.leaf === false) {
-                <div class="pl-6 mt-2 mb-1">
-                  <div class="flex items-center gap-2 w-full select-none" (click)="$event.stopPropagation()">
-                    <div class="w-6 h-6"></div> <!-- Pusty spacer (jak u liścia) żeby zrównać checkboxy w linii -->
-                    <p-checkbox 
-                      [binary]="true" 
-                      [ngModel]="isAllChildrenChecked(node)" 
-                      (ngModelChange)="toggleAllChildren(node, $event)" 
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isNodeChecked(node)"
+                      [disabled]="isNodeDisabled(node)"
+                      (ngModelChange)="toggleNode(node, $event)"
                     />
-                    <div class="flex-1 py-1 cursor-pointer" (click)="toggleAllChildren(node, !isAllChildrenChecked(node))">
-                      <span class="text-sm text-surface-600 dark:text-surface-400 hover:underline whitespace-nowrap">
-                        Wszystkie dzieci
-                      </span>
+                    <!-- Klikalny obszar tekstu -->
+                    <div
+                      class="flex-1 py-1"
+                      (click)="toggleNode(node, !isNodeChecked(node))"
+                    >
+                      <span
+                        [class.text-surface-400]="isNodeDisabled(node)"
+                        [class.dark:text-surface-600]="isNodeDisabled(node)"
+                        >{{ node.label }}</span
+                      >
                     </div>
                   </div>
                 </div>
-              }
+
+                <!-- "WSZYSTKIE DZIECI" SYMULUJĄCE PIERWSZE DZIECKO -->
+                @if (node.children?.length || node.leaf === false) {
+                  <div class="pl-6 mt-2 mb-1">
+                    <div
+                      class="flex items-center gap-2 w-full select-none"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <div class="w-6 h-6"></div>
+                      <!-- Pusty spacer (jak u liścia) żeby zrównać checkboxy w linii -->
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isAllChildrenChecked(node)"
+                        (ngModelChange)="toggleAllChildren(node, $event)"
+                      />
+                      <div
+                        class="flex-1 py-1 cursor-pointer"
+                        (click)="toggleAllChildren(node, !isAllChildrenChecked(node))"
+                      >
+                        <span class="text-sm text-surface-600 dark:text-surface-400 hover:underline whitespace-nowrap"> Wszystkie dzieci </span>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             }
           </ng-template>
@@ -127,12 +163,14 @@ export { ErpTreeSelectBuilder };
       </div>
     </p-popover>
   `,
-  styles: [`
-    ::ng-deep .erp-tree-hide-toggler .p-tree-toggler,
-    ::ng-deep .erp-tree-hide-toggler .p-tree-node-toggle-button {
-      display: none !important;
-    }
-  `],
+  styles: [
+    `
+      ::ng-deep .erp-tree-hide-toggler .p-tree-toggler,
+      ::ng-deep .erp-tree-hide-toggler .p-tree-node-toggle-button {
+        display: none !important;
+      }
+    `,
+  ],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -144,16 +182,16 @@ export { ErpTreeSelectBuilder };
 })
 export class ErpTreeSelectComponent implements ControlValueAccessor {
   @ViewChild('op') op!: any;
-  
+
   public config = input.required<ErpTreeSelectConfig>();
-  
+
   public disabled = false;
   private _selection = signal<ErpTreeSelection>({ selectedItems: [], selectedChildrenOf: [] });
   private _loadingNodes = signal<Set<string>>(new Set());
   public isLoadingMore = signal(false);
-  
+
   private _refreshTrigger = signal(0);
-  
+
   private onTouched: () => void = noop;
   private onChange: (value: ErpTreeSelection) => void = noop;
 
@@ -163,7 +201,7 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
     this._refreshTrigger(); // Wymusza przeliczenie przy każdej zmianie
     const opts = unwrapSignal(this.config().options) || [];
     const attach = (nodes: TreeNode[], parent?: TreeNode) => {
-      nodes.forEach(n => {
+      nodes.forEach((n) => {
         n.parent = parent;
         if (n.children) attach(n.children, n);
       });
@@ -183,7 +221,7 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
     if (val) {
       this._selection.set({
         selectedItems: val.selectedItems || [],
-        selectedChildrenOf: val.selectedChildrenOf || []
+        selectedChildrenOf: val.selectedChildrenOf || [],
       });
     } else {
       this._selection.set({ selectedItems: [], selectedChildrenOf: [] });
@@ -241,24 +279,26 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
 
   public triggerLoadMore(loadMoreNode: TreeNode): void {
     if (this.isLoadingMore() || !this.config().onLoadMore) return;
-    
+
     this.isLoadingMore.set(true);
     // Przekazujemy węzeł nadrzędny, aby komponent-rodzic wiedział dla jakiej gałęzi dograć elementy.
     // Jeżeli data.parentNode to null, doczytujemy poziom Root.
     const parentNode = loadMoreNode.data?.parentNode || null;
-    
+
     const res = this.config().onLoadMore!(parentNode);
     if (res && typeof res.then === 'function') {
-      res.then(() => {
-        this.isLoadingMore.set(false);
-        this._refreshTrigger.update(v => v + 1);
-        this.realignPopover();
-      }).catch(() => {
-        this.isLoadingMore.set(false);
-      });
+      res
+        .then(() => {
+          this.isLoadingMore.set(false);
+          this._refreshTrigger.update((v) => v + 1);
+          this.realignPopover();
+        })
+        .catch(() => {
+          this.isLoadingMore.set(false);
+        });
     } else {
       this.isLoadingMore.set(false);
-      this._refreshTrigger.update(v => v + 1);
+      this._refreshTrigger.update((v) => v + 1);
       this.realignPopover();
     }
   }
@@ -277,30 +317,30 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
 
   private triggerNodeExpand(node: TreeNode): void {
     if (this.config().onNodeExpand && node.leaf === false && (!node.children || node.children.length === 0)) {
-      this._loadingNodes.update(set => {
+      this._loadingNodes.update((set) => {
         const newSet = new Set(set);
         newSet.add(node.key!);
         return newSet;
       });
-      
+
       const res = this.config().onNodeExpand!(node);
       if (res && typeof res.then === 'function') {
         res.then(() => {
-          this._loadingNodes.update(set => {
+          this._loadingNodes.update((set) => {
             const newSet = new Set(set);
             newSet.delete(node.key!);
             return newSet;
           });
-          this._refreshTrigger.update(v => v + 1);
+          this._refreshTrigger.update((v) => v + 1);
           this.realignPopover();
         });
       } else {
-        this._loadingNodes.update(set => {
+        this._loadingNodes.update((set) => {
           const newSet = new Set(set);
           newSet.delete(node.key!);
           return newSet;
         });
-        this._refreshTrigger.update(v => v + 1);
+        this._refreshTrigger.update((v) => v + 1);
       }
     } else {
       this.realignPopover();
@@ -319,7 +359,7 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
     const currentSel = this._selection();
     const items = new Set(currentSel.selectedItems);
     const childrenOf = new Set(currentSel.selectedChildrenOf);
-    
+
     if (checked) {
       items.add(node.key);
       childrenOf.add(node.key);
@@ -327,10 +367,10 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
       items.delete(node.key);
       childrenOf.delete(node.key);
     }
-    
+
     this.updateSelection({
       selectedItems: Array.from(items),
-      selectedChildrenOf: Array.from(childrenOf)
+      selectedChildrenOf: Array.from(childrenOf),
     });
   }
 
@@ -344,10 +384,10 @@ export class ErpTreeSelectComponent implements ControlValueAccessor {
     } else {
       childrenOf.delete(node.key);
     }
-    
+
     this.updateSelection({
       ...currentSel,
-      selectedChildrenOf: Array.from(childrenOf)
+      selectedChildrenOf: Array.from(childrenOf),
     });
   }
 }

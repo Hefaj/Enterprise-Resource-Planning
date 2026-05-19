@@ -32,9 +32,13 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 
         <div class="flex-1 mt-4">
           @if (activeTab?.component) {
-            <ng-container 
-              *ngComponentOutlet="activeTab!.component!; inputs: activeTab!.config" 
-            />
+            @for (tabVal of [_value]; track tabVal) {
+              <div class="tab-content-animate h-full">
+                <ng-container 
+                  *ngComponentOutlet="activeTab!.component!; inputs: activeTab!.config" 
+                />
+              </div>
+            }
           } @else if (!activeTab) {
             <div class="flex flex-col items-center justify-center h-full opacity-50 grayscale p-12">
                <i class="pi pi-ban text-4xl mb-2"></i>
@@ -49,6 +53,22 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
         </div>
       }
     </div>
+  `,
+  styles: `
+    @keyframes tabFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .tab-content-animate {
+      animation: tabFadeIn 0.2s cubic-bezier(0, 0, 0.2, 1) forwards;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

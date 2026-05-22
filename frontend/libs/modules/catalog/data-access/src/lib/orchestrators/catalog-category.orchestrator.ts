@@ -1,37 +1,38 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BaseOrchestrator, AggregateStore } from '@erp/shared/data-access';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CategoryViewModel } from '@erp/catalog/util';
-import { CategoryDto } from '../api-client';
+import { CatalogBffClient, CategoryDto, SearchCategoryRequest } from '../api-client';
 
 
 @Injectable({
   providedIn: 'root'
 })
-export class CatalogCategoryOrchestrator extends BaseOrchestrator<CategoryDto, CategoryViewModel> {
+export class CatalogCategoryOrchestrator extends BaseOrchestrator<
+  CategoryDto,
+  CategoryViewModel,
+  SearchCategoryRequest
+> {
   static {
     AggregateStore.registerToken('CatalogCategory', CatalogCategoryOrchestrator);
   }
 
   protected override get signature(): string { return 'CatalogCategory'; }
 
+  private readonly _api = inject(CatalogBffClient);
+
   /**
-   * Mock search: returns category UUIDs.
+   * Search categories matching filters. Returns list of category UUIDs.
    */
-  protected override fetchSearch(): Observable<string[]> {
-    return of(['cat-electronics', 'cat-laptops', 'cat-smartphones']);
+  protected override fetchSearch(filters: SearchCategoryRequest): Observable<string[]> {
+    return this._api.searchCategory(filters);
   }
 
   /**
-   * Mock get/fetch: returns category DTOs by UUIDs.
+   * Fetch category DTOs by UUIDs.
    */
   protected override fetchData(uuids: string[]): Observable<CategoryDto[]> {
-    const mockCategories: CategoryDto[] = [
-      { uuid: 'cat-electronics', name: 'Electronics', parentUuid: undefined },
-      { uuid: 'cat-laptops', name: 'Laptops', parentUuid: 'cat-electronics' },
-      { uuid: 'cat-smartphones', name: 'Smartphones', parentUuid: 'cat-electronics' }
-    ];
-    return of(mockCategories.filter(c => uuids.includes(c.uuid)));
+    return this._api.getCategory({ uuids });
   }
 
   /**

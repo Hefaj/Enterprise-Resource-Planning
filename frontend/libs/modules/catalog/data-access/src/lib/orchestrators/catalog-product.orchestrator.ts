@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { BaseOrchestrator, BaseDto, AggregateStore } from '@erp/shared/data-access';
 import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { CatalogBffClient, ProductDto, GetProductRequest } from '../api-client';
+import { CatalogBffClient, ProductDto, SearchProductRequest } from '../api-client';
 import { ProductViewModel, CategoryViewModel, ModelViewModel } from '@erp/catalog/util';
 import { CatalogCategoryOrchestrator } from './catalog-category.orchestrator';
 import { CatalogModelOrchestrator } from './catalog-model.orchestrator';
@@ -20,7 +20,7 @@ export interface ProductLoadOptions {
 export class CatalogProductOrchestrator extends BaseOrchestrator<
   ProductDto,
   ProductViewModel,
-  GetProductRequest,
+  SearchProductRequest,
   ProductLoadOptions
 > {
   static {
@@ -36,10 +36,8 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   /**
    * Search products matching filters. Returns list of product UUIDs.
    */
-  protected override fetchSearch(filters: GetProductRequest): Observable<string[]> {
-    return this._api.getProduct(filters).pipe(
-      map(products => products.map(p => p.uuid))
-    );
+  protected override fetchSearch(filters: SearchProductRequest): Observable<string[]> {
+    return this._api.searchProduct(filters);
   }
 
   /**

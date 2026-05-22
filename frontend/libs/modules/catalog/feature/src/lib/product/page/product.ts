@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpPageLayoutComponent, ErpPageLayoutBuilder, ErpDynamicFilterComponent, ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui';
+import { ErpPageLayoutComponent, ErpPageLayoutBuilder, ErpDynamicFilterComponent, ErpTabsComponent, ErpTabsBuilder, ErpDynamicFilterBuilder, ErpTreeSelectComponent } from '@erp/shared/ui';
 import { noop } from 'rxjs';
 
-import { filtersConfig } from './product.mock';
+import { onFilter } from './product.mock';
 import { ProductTabComponent } from './tabs/product-tab.component';
 import { MultimediaTabComponent } from './tabs/multimedia-tab.component';
 import { SalesOfferTabComponent } from './tabs/sales-offer-tab.component';
@@ -38,9 +38,13 @@ export class ProductComponent {
       .setOnTabChange(noop)
   );
 
+  protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {
+    b.setOnSubmit(() => onFilter());
+  });
+
   protected readonly pageConfig = ErpPageLayoutBuilder.create((b) =>
     b
-      .setLeftSidebar(ErpDynamicFilterComponent, { config: filtersConfig })
+      .setLeftSidebar(ErpDynamicFilterComponent, { config: this.filtersConfig })
       .setMain(ErpTabsComponent, { config: this.tabsConfig })
   );
 }

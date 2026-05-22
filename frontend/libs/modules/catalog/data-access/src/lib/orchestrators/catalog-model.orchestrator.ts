@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { BaseOrchestrator, AggregateStore } from '@erp/shared/data-access';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { CatalogBffClient, ModelDto, GetModelRequest } from '../api-client';
+import { CatalogBffClient, ModelDto, SearchModelRequest } from '../api-client';
 import { ModelViewModel } from '@erp/catalog/util';
 
 
@@ -12,7 +11,7 @@ import { ModelViewModel } from '@erp/catalog/util';
 export class CatalogModelOrchestrator extends BaseOrchestrator<
   ModelDto,
   ModelViewModel,
-  GetModelRequest
+  SearchModelRequest
 > {
   static {
     AggregateStore.registerToken('CatalogModel', CatalogModelOrchestrator);
@@ -25,10 +24,8 @@ export class CatalogModelOrchestrator extends BaseOrchestrator<
   /**
    * Search models matching filters. Returns list of model UUIDs.
    */
-  protected override fetchSearch(filters: GetModelRequest): Observable<string[]> {
-    return this._api.getModel(filters).pipe(
-      map(models => models.map(m => m.uuid))
-    );
+  protected override fetchSearch(filters: SearchModelRequest): Observable<string[]> {
+    return this._api.searchModel(filters);
   }
 
   /**

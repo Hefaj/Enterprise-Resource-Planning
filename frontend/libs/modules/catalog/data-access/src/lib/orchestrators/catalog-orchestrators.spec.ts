@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { CatalogBffClient, ProductDto, ModelDto } from '../api-client';
+import { CatalogBffClient, ProductDto, ModelDto, CategoryDto } from '../api-client';
 import { CatalogProductOrchestrator } from './catalog-product.orchestrator';
 import { CatalogCategoryOrchestrator } from './catalog-category.orchestrator';
 import { CatalogModelOrchestrator } from './catalog-model.orchestrator';
@@ -39,6 +39,29 @@ describe('Catalog Orchestrators', () => {
         return of(mockModels.filter(m => body.uuids.includes(m.uuid)));
       }
       return of(mockModels);
+    }),
+    getCategory: vi.fn((body) => {
+      const mockCategories: CategoryDto[] = [
+        { uuid: 'cat-electronics', name: 'Electronics', parentUuid: undefined },
+        { uuid: 'cat-laptops', name: 'Laptops', parentUuid: 'cat-electronics' },
+        { uuid: 'cat-smartphones', name: 'Smartphones', parentUuid: 'cat-electronics' }
+      ];
+      if (body && body.uuids) {
+        return of(mockCategories.filter(c => body.uuids.includes(c.uuid)));
+      }
+      return of(mockCategories);
+    }),
+    searchProduct: vi.fn((body) => {
+      if (body && body.uuids) {
+        return of(body.uuids);
+      }
+      return of(['prod-1', 'prod-2']);
+    }),
+    searchCategory: vi.fn((body) => {
+      return of(['cat-electronics', 'cat-laptops', 'cat-smartphones']);
+    }),
+    searchModel: vi.fn((body) => {
+      return of(['model-mbp']);
     })
   };
 
@@ -59,6 +82,10 @@ describe('Catalog Orchestrators', () => {
     // Reset mock calls
     mockCatalogBffClient.getProduct.mockClear();
     mockCatalogBffClient.getModel.mockClear();
+    mockCatalogBffClient.getCategory.mockClear();
+    mockCatalogBffClient.searchProduct.mockClear();
+    mockCatalogBffClient.searchCategory.mockClear();
+    mockCatalogBffClient.searchModel.mockClear();
   });
 
   it('should resolve and map Product dependencies reactively (Category & Model)', () => {
@@ -127,7 +154,7 @@ describe('Catalog Orchestrators', () => {
       productOrchestrator.search({ uuids: ['prod-2'] }).subscribe({
         next: uuids => {
           expect(uuids).toEqual(['prod-2']);
-          expect(mockCatalogBffClient.getProduct).toHaveBeenCalledWith({ uuids: ['prod-2'] });
+          expect(mockCatalogBffClient.searchProduct).toHaveBeenCalledWith({ uuids: ['prod-2'] });
           resolve();
         },
         error: reject

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CatalogProductWorkflowComponent } from '@erp/catalog/ui';
-import { WorkflowNode, WorkflowEdge, WorkflowNodeAction } from '@erp/shared/ui/erp-workflow';
+import { WorkflowNode, WorkflowEdge, WorkflowNodeAction } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-product-flow',

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpEmptyCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui/erp-empty-card';
+import { ErpEmptyCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-multimedia-tab',

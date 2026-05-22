@@ -1,4 +1,5 @@
 import { withModuleFederation } from '@nx/module-federation/angular';
+import { createModuleFederationConfig } from '../../module-federation.shared';
 import config from './module-federation.config';
 
 /**
@@ -7,7 +8,7 @@ import config from './module-federation.config';
  * Learn more about the DTS Plugin here: https://module-federation.io/configure/dts.html
  */
 export default withModuleFederation(
-  {
+  createModuleFederationConfig({
     ...config,
     /*
      * Remote overrides for production.
@@ -19,6 +20,6 @@ export default withModuleFederation(
      *   ['app2', 'https://app2.example.com'],
      * ]
      */
-  },
+  }),
   { dts: false },
 );

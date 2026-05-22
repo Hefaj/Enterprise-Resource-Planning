@@ -5,8 +5,8 @@ import { WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, ErpWo
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { MenuItem } from 'primeng/api';
 import { ErpWorkflowBuilder } from './erp-workflow.builder';
-import { ErpContextMenuBuilder, ErpContextMenuComponent } from '@erp/shared/ui/erp-context-menu';
-import { ErpMenubarBuilder, ErpMenubarComponent } from '@erp/shared/ui/erp-menubar';
+import { ErpContextMenuBuilder, ErpContextMenuComponent } from '../../atoms/erp-context-menu';
+import { ErpMenubarBuilder, ErpMenubarComponent } from '../../atoms/erp-menubar';
 
 export { ErpWorkflowBuilder };
 

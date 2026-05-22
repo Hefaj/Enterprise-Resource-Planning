@@ -1,9 +1,9 @@
 import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpHostLayoutConfig } from './erp-host-layout.types';
-import { ErpUserMenuConfig } from '@erp/shared/ui/erp-user-menu';
-import { ErpPanelMenuConfig } from '@erp/shared/ui/erp-panel-menu';
-import { ErpBreadcrumbConfig } from '@erp/shared/ui/erp-breadcrumb';
+import { ErpUserMenuConfig } from '../../atoms/erp-user-menu';
+import { ErpPanelMenuConfig } from '../../atoms/erp-panel-menu';
+import { ErpBreadcrumbConfig } from '../../atoms/erp-breadcrumb';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 

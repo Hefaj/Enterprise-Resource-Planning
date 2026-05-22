@@ -6,7 +6,7 @@ import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
-import { WorkflowNode } from '@erp/shared/ui/erp-workflow';
+import { WorkflowNode } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-catalog-product-workflow-condition-editor',

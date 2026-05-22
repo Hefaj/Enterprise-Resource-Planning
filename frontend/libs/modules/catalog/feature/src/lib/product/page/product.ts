@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpPageLayoutComponent, ErpPageLayoutBuilder } from '@erp/shared/ui';
-import { ErpDynamicFilterComponent } from '@erp/shared/ui/erp-dynamic-filter';
-import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
+import { ErpPageLayoutComponent, ErpPageLayoutBuilder, ErpDynamicFilterComponent, ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui';
 import { noop } from 'rxjs';
 
 import { filtersConfig } from './product.mock';

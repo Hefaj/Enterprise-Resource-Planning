@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
+import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui';
 import { noop } from 'rxjs';
 import { ManualExclusionTabComponent } from './manual-exclusion-tab.component';
 import { DeliveryOptionsTabComponent } from './delivery-options-tab.component';

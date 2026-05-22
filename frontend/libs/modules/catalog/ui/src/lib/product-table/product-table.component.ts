@@ -7,13 +7,14 @@ import {
   WritableSignal,
 } from '@angular/core';
 import { MenuItem } from 'primeng/api';
+import { ProductViewModel } from '@erp/catalog/util';
 import {
   ErpTableComponent,
   ErpTableBuilder,
   ErpTableColumn,
   ErpTableFilters,
   ErpTableLazyEvent,
-} from '@erp/shared/ui/erp-table';
+} from '@erp/shared/ui';
 
 /**
  * Biznesowy komponent tabeli produktów.
@@ -41,7 +42,7 @@ import {
 })
 export class ProductTableComponent {
   /** Dane produktów do wyświetlenia */
-  public data = input<any[]>([]);
+  public data = input<ProductViewModel[]>([]);
 
   /** Filtry zewnętrzne (np. z globalnego panelu ErpDynamicFilter) */
   public externalFilters = input<ErpTableFilters>({});
@@ -69,14 +70,13 @@ export class ProductTableComponent {
    * WritableSignal selekcji z zewnątrz (smart component).
    * Tabela zapisuje tu zaznaczone wiersze; smart component czyta reaktywnie.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public selectionSignal = input<WritableSignal<any[]> | undefined>(undefined);
+  public selectionSignal = input<WritableSignal<ProductViewModel[]> | undefined>(undefined);
 
   /** Emitowany gdy tabela potrzebuje nowych danych (scroll, sort) */
   public lazyLoad = output<ErpTableLazyEvent>();
 
   /** Stałe kolumny specyficzne dla produktu */
-  private readonly staticColumns: ErpTableColumn[] = [
+  private readonly _staticColumns: ErpTableColumn[] = [
     // Miniatura
     {
       field: 'image',
@@ -107,6 +107,13 @@ export class ProductTableComponent {
       header: 'Kategoria',
       sortable: true,
       width: '180px',
+    },
+    // Model
+    {
+      field: 'modelName',
+      header: 'Model',
+      sortable: true,
+      width: '160px',
     },
     // Cena netto
     {
@@ -154,14 +161,21 @@ export class ProductTableComponent {
       },
       width: '100px',
     },
+    // EAN
+    {
+      field: 'ean',
+      header: 'EAN',
+      sortable: true,
+      width: '140px',
+    },
   ];
 
   /**
    * Połączone kolumny: statyczne + dynamiczne atrybuty.
    * computed() zapewnia reaktywną aktualizację gdy lista atrybutów się zmienia.
    */
-  private allColumns = computed<ErpTableColumn[]>(() => [
-    ...this.staticColumns,
+  private readonly _allColumns = computed<ErpTableColumn[]>(() => [
+    ...this._staticColumns,
     ...this.attributeColumns(),
   ]);
 
@@ -170,7 +184,7 @@ export class ProductTableComponent {
     const builder = new ErpTableBuilder();
 
     builder
-      .setColumns(this.allColumns())
+      .setColumns(this._allColumns())
       .setData(this.data)
       .setExternalFilters(this.externalFilters)
       .setLoading(this.loading)

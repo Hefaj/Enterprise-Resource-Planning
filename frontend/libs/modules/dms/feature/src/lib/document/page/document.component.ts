@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { ErpPageLayoutComponent, ErpPageLayoutBuilder } from '@erp/shared/ui';
-import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
-import { ErpEmptyCardBuilder } from '@erp/shared/ui/erp-empty-card';
+import { ErpPageLayoutComponent, ErpPageLayoutBuilder, ErpTabsComponent, ErpTabsBuilder, ErpEmptyCardBuilder } from '@erp/shared/ui';
 import { DmsDocument } from '@erp/dms/ui';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';

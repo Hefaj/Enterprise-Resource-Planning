@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, model, signal, viewChild, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction, ErpWorkflowBuilder } from '@erp/shared/ui/erp-workflow';
+import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction, ErpWorkflowBuilder } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-dms-document-workflow',

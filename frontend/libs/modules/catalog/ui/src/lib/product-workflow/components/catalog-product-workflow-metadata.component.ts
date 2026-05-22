@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WorkflowNode } from '@erp/shared/ui/erp-workflow';
+import { WorkflowNode } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-catalog-product-workflow-metadata',

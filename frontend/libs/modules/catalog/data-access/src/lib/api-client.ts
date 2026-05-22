@@ -9,7 +9,7 @@
 
 import { mergeMap as _observableMergeMap, catchError as _observableCatch } from 'rxjs/operators';
 import { Observable, throwError as _observableThrow, of as _observableOf } from 'rxjs';
-import { Injectable, Inject, Optional, InjectionToken } from '@angular/core';
+import { Injectable, Inject, Optional, InjectionToken, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angular/common/http';
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
@@ -25,15 +25,15 @@ export interface ICatalogBffClient {
     getModel(body: GetModelRequest): Observable<ModelDto[]>;
 }
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+})
 export class CatalogBffClient implements ICatalogBffClient {
-    private http: HttpClient;
-    private baseUrl: string;
+    private http = inject(HttpClient);
+    private baseUrl = inject(API_BASE_URL, { optional: true }) ?? "http://localhost:5149/";
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
 
-    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
-        this.http = http;
-        this.baseUrl = baseUrl ?? "http://localhost:5149/";
+    constructor() {
     }
 
     /**
@@ -87,7 +87,7 @@ export class CatalogBffClient implements ICatalogBffClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<ProductDto[]>(null as any);
+        return _observableOf(null as any) as Observable<ProductDto[]>;
     }
 
     /**
@@ -141,7 +141,7 @@ export class CatalogBffClient implements ICatalogBffClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<ModelDto[]>(null as any);
+        return _observableOf(null as any) as Observable<ModelDto[]>;
     }
 }
 

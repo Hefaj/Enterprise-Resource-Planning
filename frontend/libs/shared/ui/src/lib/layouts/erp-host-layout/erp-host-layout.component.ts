@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, input, viewChild, computed, inject, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
-import { ErpEmptyCardComponent } from '@erp/shared/ui/erp-empty-card';
-import { ErpDrawerComponent } from '@erp/shared/ui/erp-drawer';
-import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button';
-import { ErpPanelMenuComponent } from '@erp/shared/ui/erp-panel-menu';
-import { ErpBreadcrumbComponent } from '@erp/shared/ui/erp-breadcrumb';
-import { ErpUserMenuComponent } from '@erp/shared/ui/erp-user-menu';
+import { ErpEmptyCardComponent } from '../../atoms/erp-empty-card';
+import { ErpDrawerComponent } from '../../atoms/erp-drawer';
+import { ErpButtonComponent, ErpButtonBuilder } from '../../atoms/erp-button';
+import { ErpPanelMenuComponent } from '../../atoms/erp-panel-menu';
+import { ErpBreadcrumbComponent } from '../../atoms/erp-breadcrumb';
+import { ErpUserMenuComponent } from '../../atoms/erp-user-menu';
 import { ErpHostLayoutConfig } from './erp-host-layout.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { Router, NavigationEnd } from '@angular/router';

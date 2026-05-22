@@ -1,7 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { ErpHostLayoutComponent, ErpHostLayoutBuilder } from '@erp/shared/ui';
-import { ErpBreadcrumbConfig } from '@erp/shared/ui/erp-breadcrumb';
-import { ErpUserMenuConfig } from '@erp/shared/ui/erp-user-menu';
+import { ErpHostLayoutComponent, ErpHostLayoutBuilder, ErpBreadcrumbConfig, ErpUserMenuConfig } from '@erp/shared/ui';
 import { Router, RouterModule } from '@angular/router';
 import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';

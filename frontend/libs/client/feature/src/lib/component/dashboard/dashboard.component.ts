@@ -4,7 +4,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { ErpInputTextBuilder, ErpInputTextComponent } from '@erp/shared/ui/erp-input-text';
+import { ErpInputTextBuilder, ErpInputTextComponent } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-dashboard',

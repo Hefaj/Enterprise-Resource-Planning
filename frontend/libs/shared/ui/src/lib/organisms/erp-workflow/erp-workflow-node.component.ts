@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { WorkflowNode, WorkflowNodeAction } from './erp-workflow.types';
 import { TemplateRef } from '@angular/core';
 import { ErpButtonBuilder, ErpButtonComponent } from '../../atoms/erp-button';
-import { ErpMenuBuilder, ErpMenuComponent } from '@erp/shared/ui/erp-menu';
+import { ErpMenuBuilder, ErpMenuComponent } from '../../atoms/erp-menu';
 
 @Component({
   selector: 'erp-workflow-node',

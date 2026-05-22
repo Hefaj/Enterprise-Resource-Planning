@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, model, signal, viewChild, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction, ErpWorkflowBuilder } from '@erp/shared/ui/erp-workflow';
+import { ErpWorkflowComponent, WorkflowEdge, WorkflowNode, WorkflowNodeAction, WorkflowNodeType, workflowGroup, workflowNode, workflowAction, ErpWorkflowBuilder } from '@erp/shared/ui';
 import { CatalogProductWorkflowMetadataComponent } from './components/catalog-product-workflow-metadata.component';
 import { CatalogProductWorkflowConditionEditorComponent } from './components/catalog-product-workflow-condition-editor.component';
 import { CatalogProductWorkflowApprovalEditorComponent } from './components/catalog-product-workflow-approval-editor.component';

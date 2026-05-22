@@ -3,11 +3,6 @@ import { ErpAvatarConfig } from './erp-avatar.types';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpAvatarBuilder extends ErpBaseBuilder<ErpAvatarConfig> {
-  public static create(builderFn?: (builder: ErpAvatarBuilder) => void): ErpAvatarConfig {
-    const builder = new ErpAvatarBuilder();
-    builderFn?.(builder);
-    return builder.build();
-  }
 
   public setShape(shape: MaybeSignal<'square' | 'circle' | undefined>): this {
     this._data.shape = shape;

@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ErpFormConfig } from './erp-form.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
-import { ErpInputTextComponent } from '@erp/shared/ui/erp-input-text';
-import { ErpSelectComponent } from '@erp/shared/ui/erp-select';
-import { ErpDatePickerComponent } from '@erp/shared/ui/erp-datepicker';
-import { ErpMultiSelectComponent } from '@erp/shared/ui/erp-multi-select';
-import { ErpListboxComponent } from '@erp/shared/ui/erp-listbox';
-import { ErpToggleSwitchComponent } from '@erp/shared/ui/erp-toggle-switch';
-import { ErpAutoCompleteComponent } from '@erp/shared/ui/erp-auto-complete';
+import { ErpInputTextComponent } from '../../atoms/erp-input-text';
+import { ErpSelectComponent } from '../../atoms/erp-select';
+import { ErpDatePickerComponent } from '../../atoms/erp-datepicker';
+import { ErpMultiSelectComponent } from '../../atoms/erp-multi-select';
+import { ErpListboxComponent } from '../../atoms/erp-listbox';
+import { ErpToggleSwitchComponent } from '../../atoms/erp-toggle-switch';
+import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete';
 
 @Component({
   selector: 'erp-form',

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { WorkflowNode } from '@erp/shared/ui/erp-workflow';
+import { WorkflowNode } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-catalog-product-workflow-approval-editor',

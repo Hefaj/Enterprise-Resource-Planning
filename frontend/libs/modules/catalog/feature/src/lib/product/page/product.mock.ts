@@ -1,18 +1,24 @@
 import { signal } from '@angular/core';
 import { ProductTableComponent } from '@erp/catalog/ui';
-import { ErpCardBuilder, ErpCardComponent } from '@erp/shared/ui/erp-card';
-import { ErpDatePickerBuilder } from '@erp/shared/ui/erp-datepicker';
-import { ErpDynamicFilterBuilder } from '@erp/shared/ui/erp-dynamic-filter';
-import { ErpFormBuilder, ErpFormComponent } from '@erp/shared/ui/erp-form';
-import { ErpInputTextBuilder } from '@erp/shared/ui/erp-input-text';
-import { ErpSelectBuilder } from '@erp/shared/ui/erp-select';
-import { ErpTabsBuilder } from '@erp/shared/ui/erp-tabs';
-import { ErpTreeSelectComponent, ErpTreeSelectBuilder } from '@erp/shared/ui/erp-tree-select';
+import {
+  ErpCardBuilder,
+  ErpCardComponent,
+  ErpDatePickerBuilder,
+  ErpDynamicFilterBuilder,
+  ErpFormBuilder,
+  ErpFormComponent,
+  ErpInputTextBuilder,
+  ErpSelectBuilder,
+  ErpTabsBuilder,
+  ErpTreeSelectComponent,
+  ErpTreeSelectBuilder,
+  ErpActionButtonsComponent,
+  ErpActionButtonsBuilder,
+  ErpButtonBuilder
+} from '@erp/shared/ui';
 import { TreeNode } from 'primeng/api';
 import { noop } from 'rxjs';
 import { ProductFlowComponent } from './product-flow/product-flow.component';
-import { ErpActionButtonsComponent, ErpActionButtonsBuilder } from '@erp/shared/ui/erp-action-buttons';
-import { ErpButtonBuilder } from '@erp/shared/ui/erp-button';
 
 export const onFilter = (): void => {
   console.log('Applied filters - submit triggered');

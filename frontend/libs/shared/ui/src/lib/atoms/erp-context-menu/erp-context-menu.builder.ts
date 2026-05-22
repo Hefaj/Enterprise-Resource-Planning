@@ -10,8 +10,6 @@ export class ErpContextMenuBuilder extends ErpBaseBuilder<ErpContextMenuConfig> 
     this._data.global = false;
   }
 
-
-
   public addItem(item: MenuItem): this {
     if (!this._data.items) {
       this._data.items = [];

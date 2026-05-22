@@ -1,9 +1,11 @@
 import { Type } from '@angular/core';
+import { MenuItem } from 'primeng/api';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 import { 
   ErpTableConfig, 
   ErpTableColumn, 
+  ErpTableLazyEvent,
   ErpCellImageConfig, 
   ErpCellBadgeConfig, 
   ErpCellBooleanConfig,
@@ -44,7 +46,15 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
     return this;
   }
 
-  // ── Kolumny ──
+  /**
+   * Ustawia pełną listę kolumn (zastępuje wcześniej dodane).
+   * Przydatne gdy kolumny są budowane dynamicznie przez computed().
+   */
+  public setColumns(columns: ErpTableColumn[]): this {
+    this._data.columns = columns;
+    return this;
+  }
+
 
   /**
    * Dodaje kolumnę tekstową do tabeli.
@@ -248,6 +258,48 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
   /** Ustawia rozmiar tabeli (small, normal, large). */
   public setSize(size: 'small' | 'normal' | 'large'): this {
     this._data.size = size;
+    return this;
+  }
+
+  // ── Wirtualizacja i lazy loading ──
+
+  /**
+   * Włącza wirtualny scroll wierszy (zastępuje paginację).
+   * @param rowHeight — Wysokość pojedynczego wiersza w px (domyślnie 45)
+   */
+  public setVirtualScroll(rowHeight = 45, rows = 50): this {
+    this._data.virtualScroll = true;
+    this._data.virtualScrollRowHeight = rowHeight;
+    this._data.rows = rows;
+    this._data.paginator = false;
+    return this;
+  }
+
+  /**
+   * Ustawia łączną liczbę rekordów (potrzebna przy lazy load).
+   * Może być Signal lub wartością statyczną.
+   */
+  public setTotalRecords(total: MaybeSignal<number>): this {
+    this._data.totalRecords = total;
+    return this;
+  }
+
+  /**
+   * Rejestruje callback wywoływany przez tabelę, gdy potrzebuje nowych danych.
+   * Wywoływany przy: inicjalizacji, scroll, zmiana sortowania.
+   * @param fn — funkcja przyjmująca ErpTableLazyEvent
+   */
+  public setLazyLoad(fn: (event: ErpTableLazyEvent) => void): this {
+    this._data.onLazyLoad = fn;
+    return this;
+  }
+
+  /**
+   * Ustawia elementy context menu wyświetlanego po PPM na wierszu.
+   * Może być Signal – wtedy menu jest aktualizowane reaktywnie (np. zależnie od selekcji).
+   */
+  public setContextMenuItems(items: MaybeSignal<MenuItem[] | undefined>): this {
+    this._data.contextMenuItems = items;
     return this;
   }
 }

@@ -92,7 +92,7 @@ export class ErpWorkflowComponent implements AfterViewInit {
 
   menubarConfig = computed(() => ErpMenubarBuilder.create((b) => b.setItems(this.menubarItems())));
 
-  contextMenuConfig = computed(() => ErpContextMenuBuilder.create((b) => b.setItems(this.contextMenuItems())));
+  contextMenuConfig = computed(() => ErpContextMenuBuilder.create((b) => b.setItems(this.contextMenuItems)));
 
   @ViewChild('canvasContextMenu') canvasContextMenu!: ErpContextMenuComponent;
 

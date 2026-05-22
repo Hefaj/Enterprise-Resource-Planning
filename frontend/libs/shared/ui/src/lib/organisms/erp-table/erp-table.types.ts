@@ -1,4 +1,5 @@
 import { Type, WritableSignal } from '@angular/core';
+import { MenuItem } from 'primeng/api';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 
 // ── Cell Renderer Configs ───────────────────────────────
@@ -62,6 +63,20 @@ export type ErpCellRendererConfig =
 /** Typ renderera komórki */
 export type ErpCellType = 'text' | 'image' | 'badge' | 'tag' | 'boolean' | 'link' | 'custom';
 
+// ── Lazy Loading ──────────────────────────────────────────
+
+/** Event emitowany przy lazy loadzie (scroll, sort) */
+export interface ErpTableLazyEvent {
+  /** Indeks pierwszego wiersza do załadowania */
+  first: number;
+  /** Liczba wierszy do załadowania */
+  rows: number;
+  /** Pole sortowania */
+  sortField?: string;
+  /** Kierunek sortowania (1 = rosnąco, -1 = malejąco) */
+  sortOrder?: number;
+}
+
 // ── Table Interfaces ────────────────────────────────────
 
 export interface ErpTableColumn {
@@ -102,6 +117,23 @@ export interface ErpTableConfig {
   externalFilters?: any; // MaybeSignal<ErpTableFilters>
   loading?: any; // MaybeSignal<boolean>
   selection?: WritableSignal<any>;
+
+  // ── Wirtualizacja i lazy loading ──
+  /** Włącza virtual scroll wierszy. Wyłącza paginację. */
+  virtualScroll?: boolean;
+  /** Wysokość pojedynczego wiersza w px (wymagana dla virtual scroll) */
+  virtualScrollRowHeight?: number;
+  /** Łączna liczba rekordów (dla lazy load) */
+  totalRecords?: MaybeSignal<number>;
+  /** Callback wywoływany przy potrzebie załadowania nowych danych */
+  onLazyLoad?: (event: ErpTableLazyEvent) => void;
+
+  // ── Context menu ──
+  /**
+   * Elementy context menu wyświetlanego po PPM na wierszu.
+   * MaybeSignal pozwala na dynamiczne menu zależne od selekcji.
+   */
+  contextMenuItems?: MaybeSignal<MenuItem[] | undefined>;
 }
 
 export type ErpTableFilters = Record<string, any>;

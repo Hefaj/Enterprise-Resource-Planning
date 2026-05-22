@@ -1,23 +1,35 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { 
-  ErpTableComponent, 
-  ErpTableBuilder, 
-  ErpTableFilters 
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  WritableSignal,
+} from '@angular/core';
+import { MenuItem } from 'primeng/api';
+import {
+  ErpTableComponent,
+  ErpTableBuilder,
+  ErpTableColumn,
+  ErpTableFilters,
+  ErpTableLazyEvent,
 } from '@erp/shared/ui/erp-table';
 
 /**
  * Biznesowy komponent tabeli produktów.
- * Definiuje kolumny specyficzne dla produktu (miniatura, nazwa jako link, status jako badge).
- * Używa ErpTableComponent jako bazowego silnika renderowania.
+ *
+ * Łączy:
+ * - Stałe kolumny produktowe (miniatura, SKU, nazwa, kategoria, cena, status, dostępność)
+ * - Dynamiczne kolumny atrybutów (przekazywane z zewnątrz przez `attributeColumns`)
+ *
+ * Obsługuje wirtualny scroll w obu osiach, lazy loading i context menu.
  */
 @Component({
   selector: 'catalog-product-table',
   standalone: true,
   imports: [ErpTableComponent],
   template: `
-    <erp-table 
-      [config]="tableConfig" 
-    />
+    <erp-table [config]="tableConfig()" />
   `,
   styles: [`
     :host {
@@ -37,72 +49,144 @@ export class ProductTableComponent {
   /** Stan ładowania */
   public loading = input<boolean>(false);
 
-  /** Konfiguracja tabeli z predefiniowanymi kolumnami produktowymi */
-  protected readonly tableConfig = ErpTableBuilder.create(b => b
-    // Miniatura produktu
-    .addImageColumn('image', '', { 
-      width: '40px', 
-      height: '40px', 
-      rounded: false, 
-      fallbackIcon: 'pi pi-box' 
-    }, { width: '70px' })
+  /** Łączna liczba rekordów (dla lazy load w trybie wirtualnym) */
+  public totalRecords = input<number>(0);
 
+  /**
+   * Dynamiczne kolumny atrybutów produktu.
+   * Każdy produkt może mieć inny zestaw atrybutów –
+   * ta lista to unia wszystkich kluczy atrybutów ze wszystkich produktów.
+   */
+  public attributeColumns = input<ErpTableColumn[]>([]);
+
+  /**
+   * Elementy context menu (PPM).
+   * Smart component przekazuje menu reagujące na aktualną selekcję.
+   */
+  public contextMenuItems = input<MenuItem[]>([]);
+
+  /**
+   * WritableSignal selekcji z zewnątrz (smart component).
+   * Tabela zapisuje tu zaznaczone wiersze; smart component czyta reaktywnie.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public selectionSignal = input<WritableSignal<any[]> | undefined>(undefined);
+
+  /** Emitowany gdy tabela potrzebuje nowych danych (scroll, sort) */
+  public lazyLoad = output<ErpTableLazyEvent>();
+
+  /** Stałe kolumny specyficzne dla produktu */
+  private readonly staticColumns: ErpTableColumn[] = [
+    // Miniatura
+    {
+      field: 'image',
+      header: '',
+      type: 'image',
+      typeConfig: { width: '40px', height: '40px', rounded: false, fallbackIcon: 'pi pi-box' },
+      width: '70px',
+    },
     // SKU
-    .addColumn('sku', 'SKU', { 
-      sortable: true, 
+    {
+      field: 'sku',
+      header: 'SKU',
+      sortable: true,
       width: '130px',
-    })
-
+    },
     // Nazwa produktu (link)
-    .addLinkColumn('name', 'Nazwa produktu', {
-      onClick: (row) => console.log('Otwórz produkt:', row)
-    }, { sortable: true, minWidth: '250px' })
-
+    {
+      field: 'name',
+      header: 'Nazwa produktu',
+      type: 'link',
+      typeConfig: { onClick: (row) => console.log('Otwórz produkt:', row) },
+      sortable: true,
+      minWidth: '250px',
+    },
     // Kategoria
-    .addColumn('category', 'Kategoria', { 
-      sortable: true, 
-      width: '180px' 
-    })
-
+    {
+      field: 'category',
+      header: 'Kategoria',
+      sortable: true,
+      width: '180px',
+    },
     // Cena netto
-    .addColumn('price', 'Cena netto', { 
-      sortable: true, 
-      align: 'right', 
-      pipe: 'currency', 
-      width: '160px' 
-    })
-
+    {
+      field: 'price',
+      header: 'Cena netto',
+      sortable: true,
+      align: 'right',
+      pipe: 'currency',
+      width: '160px',
+    },
     // Data dostępności
-    .addColumn('availableFrom', 'Dostępny od', { 
-      sortable: true, 
-      pipe: 'date', 
-      width: '150px' 
-    })
+    {
+      field: 'availableFrom',
+      header: 'Dostępny od',
+      sortable: true,
+      pipe: 'date',
+      width: '150px',
+    },
+    // Status
+    {
+      field: 'status',
+      header: 'Status',
+      type: 'badge',
+      typeConfig: {
+        severityMap: {
+          'Aktywny': 'success',
+          'Draft': 'warn',
+          'Wycofany': 'danger',
+          'Archiwum': 'secondary',
+        },
+      },
+      sortable: true,
+      width: '130px',
+    },
+    // Dostępność
+    {
+      field: 'available',
+      header: 'Dostępny',
+      type: 'boolean',
+      typeConfig: {
+        trueIcon: 'pi pi-check-circle',
+        falseIcon: 'pi pi-minus-circle',
+        trueClass: 'text-green-500',
+        falseClass: 'text-surface-300 dark:text-surface-600',
+      },
+      width: '100px',
+    },
+  ];
 
-    // Status jako badge z mapowaniem kolorów
-    .addBadgeColumn('status', 'Status', {
-      'Aktywny': 'success',
-      'Draft': 'warn',
-      'Wycofany': 'danger',
-      'Archiwum': 'secondary',
-    }, { sortable: true, width: '130px' })
+  /**
+   * Połączone kolumny: statyczne + dynamiczne atrybuty.
+   * computed() zapewnia reaktywną aktualizację gdy lista atrybutów się zmienia.
+   */
+  private allColumns = computed<ErpTableColumn[]>(() => [
+    ...this.staticColumns,
+    ...this.attributeColumns(),
+  ]);
 
-    // Dostępność jako boolean
-    .addBooleanColumn('available', 'Dostępny', {
-      trueIcon: 'pi pi-check-circle',
-      falseIcon: 'pi pi-minus-circle',
-      trueClass: 'text-green-500',
-      falseClass: 'text-surface-300 dark:text-surface-600',
-    }, { width: '100px' })
+  /** Reaktywna konfiguracja tabeli */
+  protected tableConfig = computed(() => {
+    const builder = new ErpTableBuilder();
 
-    // Konfiguracja tabeli
-    .setPagination(10, [5, 10, 25, 50])
-    .setGlobalFilter(['sku', 'name', 'category', 'status'])
-    .setEmptyMessage('Nie znaleziono produktów')
-    .setSize('small')
-    .setSelectionMode('multiple')
-    .setData(this.data)
-    .setExternalFilters(this.externalFilters)
-    .setLoading(this.loading)
-  );
+    builder
+      .setColumns(this.allColumns())
+      .setData(this.data)
+      .setExternalFilters(this.externalFilters)
+      .setLoading(this.loading)
+      .setTotalRecords(this.totalRecords)
+      .setVirtualScroll(45, 50)
+      .setLazyLoad((event) => this.lazyLoad.emit(event))
+      .setGlobalFilter(['sku', 'name', 'category', 'status'])
+      .setEmptyMessage('Nie znaleziono produktów')
+      .setSize('small')
+      .setSelectionMode('multiple')
+      .setContextMenuItems(this.contextMenuItems);
+
+    const sel = this.selectionSignal();
+    if (sel) builder.setSelection(sel);
+
+    return builder.build();
+  });
 }
+

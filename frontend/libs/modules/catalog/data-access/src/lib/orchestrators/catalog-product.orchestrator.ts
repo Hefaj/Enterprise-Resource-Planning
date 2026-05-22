@@ -4,6 +4,8 @@ import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CatalogBffClient, ProductDto, GetProductRequest } from '../api-client';
 import { ProductViewModel, CategoryViewModel, ModelViewModel } from '@erp/catalog/util';
+import { CatalogCategoryOrchestrator } from './catalog-category.orchestrator';
+import { CatalogModelOrchestrator } from './catalog-model.orchestrator';
 
 // Define the loaded options for Product aggregate
 export interface ProductLoadOptions {
@@ -23,6 +25,8 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
 > {
   static {
     AggregateStore.registerToken('CatalogProduct', CatalogProductOrchestrator);
+    AggregateStore.registerToken('CatalogCategory', CatalogCategoryOrchestrator);
+    AggregateStore.registerToken('CatalogModel', CatalogModelOrchestrator);
   }
 
   protected override get signature(): string { return 'CatalogProduct'; }

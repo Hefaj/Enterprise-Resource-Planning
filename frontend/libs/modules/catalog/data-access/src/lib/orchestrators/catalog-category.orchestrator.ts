@@ -1,13 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BaseDto, BaseOrchestrator, AggregateStore } from '@erp/shared/data-access';
+import { BaseOrchestrator, AggregateStore } from '@erp/shared/data-access';
 import { Observable, of } from 'rxjs';
 import { CategoryViewModel } from '@erp/catalog/util';
-
-export interface CategoryDto extends BaseDto {
-  uuid: string;
-  name: string;
-  parentUuid?: string;
-}
+import { CategoryDto } from '../api-client';
 
 
 @Injectable({
@@ -32,7 +27,7 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<CategoryDto, C
    */
   protected override fetchData(uuids: string[]): Observable<CategoryDto[]> {
     const mockCategories: CategoryDto[] = [
-      { uuid: 'cat-electronics', name: 'Electronics' },
+      { uuid: 'cat-electronics', name: 'Electronics', parentUuid: undefined },
       { uuid: 'cat-laptops', name: 'Laptops', parentUuid: 'cat-electronics' },
       { uuid: 'cat-smartphones', name: 'Smartphones', parentUuid: 'cat-electronics' }
     ];

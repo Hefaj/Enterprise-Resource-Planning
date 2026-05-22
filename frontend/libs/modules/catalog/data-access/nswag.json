@@ -19,6 +19,7 @@
       "generateClientInterfaces": true,
       "generateSignals": true,
       "rxJsVersion": 7.0,
+      "useSingletonProvider": true,
       "typeStyle": "Interface",
       "enumStyle": "Enum",
       "dateTimeType": "Date",

@@ -6,6 +6,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { STARTUP } from './STARTUP';
 import { registerLocaleData } from '@angular/common';
 import localePl from '@angular/common/locales/pl';
+import { API_BASE_URL } from '@erp/catalog/data-access';
 
 registerLocaleData(localePl);
 
@@ -24,5 +25,6 @@ export const appConfig: ApplicationConfig = {
     sharedPrimeNGConfig,
     provideAppInitializer(STARTUP),
     { provide: LOCALE_ID, useValue: 'pl-PL' },
+    { provide: API_BASE_URL, useValue: 'http://localhost:5149' },
   ],
 };

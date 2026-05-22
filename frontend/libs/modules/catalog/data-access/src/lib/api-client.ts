@@ -41,7 +41,9 @@ export interface ICatalogBffClient {
     searchCategory(body: SearchCategoryRequest): Observable<string[]>;
 }
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+})
 export class CatalogBffClient implements ICatalogBffClient {
     private http: HttpClient;
     private baseUrl: string;

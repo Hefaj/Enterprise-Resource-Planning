@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import {
   ErpDynamicFilterComponent,
   ErpDynamicFilterBuilder,
@@ -8,7 +8,7 @@ import {
   ErpDatePickerComponent,
   ErpDatePickerBuilder
 } from '@erp/shared/ui';
-import { CatalogProductOrchestrator, SearchProductRequest } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator } from '@erp/catalog/data-access';
 
 @Component({
   selector: 'erp-product-filter',
@@ -20,40 +20,43 @@ import { CatalogProductOrchestrator, SearchProductRequest } from '@erp/catalog/d
 export class ProductFilterComponent {
   private readonly _productOrchestrator = inject(CatalogProductOrchestrator);
 
-  protected readonly skuControl = new FormControl<string | null>(null);
-  protected readonly nameControl = new FormControl<string | null>(null);
-  protected readonly priceControl = new FormControl<number | null>(null);
-  protected readonly availableFromControl = new FormControl<Date | null>(null);
+  protected readonly filtersForm = new FormGroup({
+    sku: new FormControl<string | null>(null),
+    name: new FormControl<string | null>(null),
+    price: new FormControl<number | null>(null),
+    availableFrom: new FormControl<Date | null>(null),
+  });
 
   protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {
     b.addFilter('Kod SKU', ErpInputTextComponent, {
-      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Wpisz kod SKU')),
-      control: this.skuControl,
+      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Wpisz kod SKU').setFluid(true)),
+      control: this.filtersForm.controls.sku,
     });
     b.addFilter('Nazwa produktu', ErpInputTextComponent, {
-      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Wpisz nazwę produktu')),
-      control: this.nameControl,
+      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Wpisz nazwę produktu').setFluid(true)),
+      control: this.filtersForm.controls.name,
     });
     b.addFilter('Cena netto do', ErpInputTextComponent, {
-      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Maksymalna cena (PLN)')),
-      control: this.priceControl,
+      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Maksymalna cena (PLN)').setFluid(true)),
+      control: this.filtersForm.controls.price,
     });
     b.addFilter('Dostępny od', ErpDatePickerComponent, {
       config: ErpDatePickerBuilder.create((c) => c.setPlaceholder('Wybierz datę')),
-      control: this.availableFromControl,
+      control: this.filtersForm.controls.availableFrom,
     });
     b.setOnSubmit(() => this.onSubmitFilters());
   });
 
   protected onSubmitFilters(): void {
-    const rawPrice = this.priceControl.value;
+    const values = this.filtersForm.value;
+    const rawPrice = values.price;
     const price = rawPrice ? Number(rawPrice) : undefined;
 
     this._productOrchestrator.searchFilters.set({
-      sku: this.skuControl.value || undefined,
-      name: this.nameControl.value || undefined,
+      sku: values.sku || undefined,
+      name: values.name || undefined,
       price: isNaN(price as number) ? undefined : price,
-      availableFrom: this.availableFromControl.value || undefined,
+      availableFrom: values.availableFrom || undefined,
     });
   }
 }

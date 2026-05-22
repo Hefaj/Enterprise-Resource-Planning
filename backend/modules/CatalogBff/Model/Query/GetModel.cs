@@ -1,4 +1,7 @@
 using FastEndpoints;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CatalogBff.Model.Query;
 
@@ -7,25 +10,23 @@ public class GetModelRequest
     public List<Guid>? Uuids { get; set; }
 }
 
-public record ModelDto(Guid Uuid);
-
 public class GetModelEndpoint : Endpoint<GetModelRequest, List<ModelDto>>
 {
     public override void Configure()
     {
-        Get("");
+        Post("get");
         Group<ModelGroup>();
     }
 
     public override async Task HandleAsync(GetModelRequest req, CancellationToken ct)
     {
-        var list = new List<ModelDto>
-        {
-            new(Guid.NewGuid()),
-            new(Guid.NewGuid()),
-            new(Guid.NewGuid()),
-        };
+        var result = CatalogMockData.Models;
 
-        await Send.OkAsync(list);
+        if (req.Uuids != null && req.Uuids.Any())
+        {
+            result = result.Where(m => req.Uuids.Contains(m.Uuid)).ToList();
+        }
+
+        await Send.OkAsync(result, ct);
     }
 }

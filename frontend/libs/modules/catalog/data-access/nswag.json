@@ -18,6 +18,7 @@
       "injectionTokenType": "InjectionToken",
       "generateClientInterfaces": true,
       "generateSignals": true,
+      "rxJsVersion": 7.0,
       "typeStyle": "Interface",
       "enumStyle": "Enum",
       "dateTimeType": "Date",

@@ -1,7 +1,7 @@
 import { inject, DestroyRef, computed, Signal, WritableSignal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, of, forkJoin } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { Observable, of, forkJoin, Subject, ReplaySubject } from 'rxjs';
+import { bufferTime, filter, map, switchMap, tap, finalize } from 'rxjs/operators';
 import { SignalrSyncService } from '../sync/signalr-sync.service';
 import { AggregateStore } from './aggregate-store';
 
@@ -9,6 +9,18 @@ export interface BaseDto {
   uuid: string;
   [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
+
+/**
+ * Internal request structure used to batch load calls.
+ */
+interface LoadRequest<TOptions> {
+  uuid: string;
+  options?: TOptions;
+  resolve: (uuid: string) => void;
+}
+
+/** Default buffer time in milliseconds for aggregating load requests. */
+const LOAD_BUFFER_TIME_MS = 50;
 
 export abstract class BaseOrchestrator<
   TDto extends BaseDto,
@@ -46,9 +58,29 @@ export abstract class BaseOrchestrator<
   protected readonly syncService: SignalrSyncService = inject(SignalrSyncService);
   protected readonly destroyRef: DestroyRef = inject(DestroyRef);
 
+  /**
+   * Set of UUIDs currently being fetched from the backend.
+   * Used to prevent duplicate API calls for the same UUID.
+   */
+  private readonly _pendingUuids = new Set<string>();
+
+  /**
+   * Map of UUIDs currently in-flight to a ReplaySubject that resolves
+   * when the UUID data is available. Callers requesting an in-flight UUID
+   * subscribe to this subject instead of triggering a new request.
+   */
+  private readonly _inFlightNotifiers = new Map<string, ReplaySubject<string>>();
+
+  /**
+   * Subject that collects individual load requests and batches them
+   * using bufferTime for efficient API calls.
+   */
+  private readonly _loadSubject = new Subject<LoadRequest<TOptions>>();
+
   public constructor() {
     this.store.register(this.signature, this);
     this._initializeRealtimeSync();
+    this._initializeLoadBuffer();
   }
 
   /**
@@ -66,12 +98,67 @@ export abstract class BaseOrchestrator<
           const toReload = uuids.filter(id => currentCache.has(id));
           if (toReload.length > 0) {
             console.log(`[BaseOrchestrator - ${this.signature}] Reloading modified UUIDs:`, toReload);
-            this.load(toReload).subscribe();
+            this._forceLoad(toReload).subscribe();
           }
         },
         error: (err: unknown) => console.error(`[BaseOrchestrator - ${this.signature}] Sync error:`, err),
         complete: () => console.log(`[BaseOrchestrator - ${this.signature}] Sync subscription completed.`)
       });
+  }
+
+  /**
+   * Initialize the internal load buffer that aggregates incoming UUID requests
+   * using bufferTime, deduplicates them, and performs a single batched API call.
+   */
+  private _initializeLoadBuffer(): void {
+    this._loadSubject.pipe(
+      bufferTime(LOAD_BUFFER_TIME_MS),
+      filter(batch => batch.length > 0),
+      switchMap(batch => {
+        // Deduplicate UUIDs within the batch
+        const uniqueUuids = Array.from(new Set(batch.map(r => r.uuid)));
+
+        // Determine the merged options from all requests in the batch (take the first non-undefined)
+        const mergedOptions = batch.find(r => r.options !== undefined)?.options;
+
+        // Mark UUIDs as pending
+        for (const uuid of uniqueUuids) {
+          this._pendingUuids.add(uuid);
+        }
+
+        return this.fetchData(uniqueUuids).pipe(
+          tap(dtos => this.updateCache(dtos)),
+          switchMap(dtos => {
+            const depLoads = this.resolveDependencies(dtos, mergedOptions);
+            if (depLoads.length > 0) {
+              return forkJoin(depLoads).pipe(map(() => uniqueUuids));
+            }
+            return of(uniqueUuids);
+          }),
+          finalize(() => {
+            // Remove from pending and notify all waiters
+            for (const uuid of uniqueUuids) {
+              this._pendingUuids.delete(uuid);
+              const notifier = this._inFlightNotifiers.get(uuid);
+              if (notifier) {
+                notifier.next(uuid);
+                notifier.complete();
+                this._inFlightNotifiers.delete(uuid);
+              }
+            }
+          }),
+          // Notify individual request resolvers
+          tap(() => {
+            for (const request of batch) {
+              request.resolve(request.uuid);
+            }
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      error: (err: unknown) => console.error(`[BaseOrchestrator - ${this.signature}] Load buffer error:`, err)
+    });
   }
 
   /**
@@ -83,24 +170,115 @@ export abstract class BaseOrchestrator<
 
   /**
    * Loads specific aggregates by their UUIDs.
-   * Triggers background dependency resolution based on `options`.
+   * - Skips UUIDs already present in cache.
+   * - Skips UUIDs currently being fetched (in-flight), but waits for them.
+   * - Aggregates remaining UUIDs into a buffered batch via bufferTime.
+   *
+   * Returns an Observable that resolves when ALL requested UUIDs
+   * (cached, in-flight, and newly fetched) are available.
    */
   public load(uuids: string[], options?: TOptions): Observable<TViewModel[]> {
     if (!uuids || uuids.length === 0) {
       return of([]);
     }
 
-    return this.fetchData(uuids).pipe(
-      tap(dtos => this.updateCache(dtos)),
-      switchMap(dtos => {
-        const depLoads = this.resolveDependencies(dtos, options);
-        if (depLoads.length > 0) {
-          return forkJoin(depLoads).pipe(
-            map(() => this._mapUuidsToViewModels(uuids))
-          );
+    const cachedUuids: string[] = [];
+    const inFlightUuids: string[] = [];
+    const toFetchUuids: string[] = [];
+
+    const currentCache = this.cacheSignal();
+
+    for (const uuid of uuids) {
+      if (currentCache.has(uuid)) {
+        // Already in cache — no fetch needed
+        cachedUuids.push(uuid);
+      } else if (this._pendingUuids.has(uuid)) {
+        // Currently being fetched — wait for it
+        inFlightUuids.push(uuid);
+      } else {
+        // Needs fetching
+        toFetchUuids.push(uuid);
+      }
+    }
+
+    // Collect all observables we need to wait on
+    const waitObservables: Observable<unknown>[] = [];
+
+    // For in-flight UUIDs, subscribe to their existing notifiers
+    for (const uuid of inFlightUuids) {
+      let notifier = this._inFlightNotifiers.get(uuid);
+      if (!notifier) {
+        // Edge case: pending but no notifier yet — create one
+        notifier = new ReplaySubject<string>(1);
+        this._inFlightNotifiers.set(uuid, notifier);
+      }
+      waitObservables.push(notifier);
+    }
+
+    // For UUIDs that need fetching, push them into the buffer and wait
+    for (const uuid of toFetchUuids) {
+      // Mark as pending immediately so subsequent calls see it
+      this._pendingUuids.add(uuid);
+
+      // Create a notifier for this UUID
+      const notifier = new ReplaySubject<string>(1);
+      this._inFlightNotifiers.set(uuid, notifier);
+      waitObservables.push(notifier);
+
+      // Push into the load buffer
+      this._loadSubject.next({
+        uuid,
+        options,
+        resolve: () => { /* resolved via notifier */ }
+      });
+    }
+
+    // If nothing to wait on, return immediately from cache
+    if (waitObservables.length === 0) {
+      return of(this._mapUuidsToViewModels(uuids));
+    }
+
+    // Wait for all in-flight + new fetches to complete, then map
+    return forkJoin(waitObservables).pipe(
+      map(() => this._mapUuidsToViewModels(uuids))
+    );
+  }
+
+  /**
+   * Force-loads UUIDs bypassing the cache check (used for sync/reload).
+   * Still uses buffering to avoid request storms.
+   */
+  private _forceLoad(uuids: string[]): Observable<TViewModel[]> {
+    const waitObservables: Observable<unknown>[] = [];
+
+    for (const uuid of uuids) {
+      if (this._pendingUuids.has(uuid)) {
+        // Already being fetched — wait for it
+        let notifier = this._inFlightNotifiers.get(uuid);
+        if (!notifier) {
+          notifier = new ReplaySubject<string>(1);
+          this._inFlightNotifiers.set(uuid, notifier);
         }
-        return of(this._mapUuidsToViewModels(uuids));
-      })
+        waitObservables.push(notifier);
+      } else {
+        this._pendingUuids.add(uuid);
+        const notifier = new ReplaySubject<string>(1);
+        this._inFlightNotifiers.set(uuid, notifier);
+        waitObservables.push(notifier);
+
+        this._loadSubject.next({
+          uuid,
+          resolve: () => { /* resolved via notifier */ }
+        });
+      }
+    }
+
+    if (waitObservables.length === 0) {
+      return of(this._mapUuidsToViewModels(uuids));
+    }
+
+    return forkJoin(waitObservables).pipe(
+      map(() => this._mapUuidsToViewModels(uuids))
     );
   }
 
@@ -170,3 +348,4 @@ export abstract class BaseOrchestrator<
     return [];
   }
 }
+

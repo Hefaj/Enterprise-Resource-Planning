@@ -1,4 +1,7 @@
 using FastEndpoints;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CatalogBff.Product.Query;
 
@@ -7,26 +10,23 @@ public class GetProductRequest
     public List<Guid>? Uuids { get; set; }
 }
 
-public record ProductDto(Guid Uuid);
-
 public class GetProductEndpoint : Endpoint<GetProductRequest, List<ProductDto>>
 {
     public override void Configure()
     {
-        Get("");
+        Post("get");
         Group<ProductGroup>();
     }
 
     public override async Task HandleAsync(GetProductRequest req, CancellationToken ct)
     {
-        var list = new List<ProductDto>
-        {
-            new(Guid.NewGuid()),
-            new(Guid.NewGuid()),
-            new(Guid.NewGuid()),
-            new(Guid.NewGuid()),
-        };
+        var result = CatalogMockData.Products;
 
-        await Send.OkAsync(list);
+        if (req.Uuids != null && req.Uuids.Any())
+        {
+            result = result.Where(p => req.Uuids.Contains(p.Uuid)).ToList();
+        }
+
+        await Send.OkAsync(result, ct);
     }
 }

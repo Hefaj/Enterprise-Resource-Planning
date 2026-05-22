@@ -23,8 +23,8 @@ export function createModuleFederationConfig(baseConfig: ModuleFederationConfig)
       libraryName: libName,
       sharedConfig: {
         singleton: true,
-        strictVersion: true,
-        requiredVersion: 'auto',
+        strictVersion: false,
+        requiredVersion: false as const,
       },
     }));
 

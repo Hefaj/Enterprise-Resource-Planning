@@ -112,7 +112,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     if (options?.includeCategory) {
       const categoryUuids = Array.from(
         new Set(dtos.flatMap(dto => (dto['categoryUuids'] || []) as string[]))
-      ).filter(uuid => !categoryOrchestrator.allViewModels().has(uuid));
+      );
 
       if (categoryUuids.length > 0) {
         deps.push(categoryOrchestrator.load(categoryUuids));
@@ -122,7 +122,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     if (options?.includeModel) {
       const modelUuids = Array.from(
         new Set(dtos.map(dto => dto['modelUuid'] as string).filter(Boolean))
-      ).filter(uuid => !modelOrchestrator.allViewModels().has(uuid));
+      );
 
       if (modelUuids.length > 0) {
         deps.push(modelOrchestrator.load(modelUuids));

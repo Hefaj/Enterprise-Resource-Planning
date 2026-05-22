@@ -174,15 +174,10 @@ export class ProductTabComponent implements OnInit {
     if (uuids.length === 0) return;
 
     const slice = uuids.slice(offset, offset + count);
-    
-    // Check which ones are already loaded in allViewModels
-    const allVms = this._productOrchestrator.allViewModels();
-    const toLoad = slice.filter(uuid => !allVms.has(uuid));
-
-    if (toLoad.length === 0) return;
+    if (slice.length === 0) return;
 
     this.loading.set(true);
-    this._productOrchestrator.load(toLoad, { includeCategory: true, includeModel: true }).subscribe({
+    this._productOrchestrator.load(slice, { includeCategory: true, includeModel: true }).subscribe({
       next: () => {
         this.loading.set(false);
       },
@@ -216,7 +211,7 @@ export class ProductTabComponent implements OnInit {
           const allVms = this._productOrchestrator.allViewModels();
           const p = allVms.get(uuid);
           if (p) {
-            this._productOrchestrator.updateProduct({ ...p, ean }).subscribe();
+            // this._productOrchestrator.updateProduct({ ...p, ean }).subscribe();
           }
           console.log('[API] PATCH /product/ean →', { uuid, ean });
         },
@@ -239,7 +234,7 @@ export class ProductTabComponent implements OnInit {
           const allVms = this._productOrchestrator.allViewModels();
           const p = allVms.get(uuid);
           if (p) {
-            this._productOrchestrator.updateProduct({ ...p, sku }).subscribe();
+            // this._productOrchestrator.updateProduct({ ...p, sku }).subscribe();
           }
           console.log('[API] PATCH /product/sku →', { uuid, sku });
         },
@@ -262,7 +257,7 @@ export class ProductTabComponent implements OnInit {
           const allVms = this._productOrchestrator.allViewModels();
           const p = allVms.get(uuid);
           if (p) {
-            this._productOrchestrator.updateProduct({ ...p, status }).subscribe();
+            // this._productOrchestrator.updateProduct({ ...p, status }).subscribe();
           }
           console.log('[API] PATCH /product/status →', { uuid, status });
         },

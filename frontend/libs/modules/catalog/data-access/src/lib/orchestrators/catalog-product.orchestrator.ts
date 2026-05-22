@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { BaseOrchestrator, BaseDto, AggregateStore } from '@erp/shared/data-access';
 import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -32,6 +32,8 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   protected override get signature(): string { return 'CatalogProduct'; }
 
   private readonly _api = inject(CatalogBffClient);
+
+  public readonly searchFilters = signal<SearchProductRequest>({});
 
   /**
    * Search products matching filters. Returns list of product UUIDs.

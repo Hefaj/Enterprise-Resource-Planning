@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, WritableSignal, DestroyRef } from '@angular/core';
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MenuItem } from 'primeng/api';
 import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
@@ -6,6 +7,7 @@ import { ProductTableComponent } from '@erp/catalog/ui';
 import { ErpTableColumn, ErpTableLazyEvent } from '@erp/shared/ui';
 import { CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { ProductViewModel } from '@erp/catalog/util';
+import { switchMap, tap } from 'rxjs';
 
 import { EditEanModalComponent } from '../../modal';
 import { EditSkuModalComponent } from '../../modal';
@@ -60,6 +62,7 @@ const PAGE_SIZE = 50;
 export class ProductTabComponent implements OnInit {
   private readonly _dialogService = inject(DialogService);
   private readonly _productOrchestrator = inject(CatalogProductOrchestrator);
+  private readonly _destroyRef = inject(DestroyRef);
 
   // ── State ──
 
@@ -138,35 +141,38 @@ export class ProductTabComponent implements OnInit {
     ];
   });
 
+  constructor() {
+    toObservable(this._productOrchestrator.searchFilters)
+      .pipe(
+        tap(() => this.loading.set(true)),
+        switchMap((filters) => this._productOrchestrator.search(filters)),
+        takeUntilDestroyed()
+      )
+      .subscribe({
+        next: (uuids) => {
+          this.searchedUuids.set(uuids);
+          this.loading.set(false);
+          if (uuids.length > 0) {
+            this._loadProducts(0, PAGE_SIZE);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to search products:', err);
+          this.loading.set(false);
+        },
+      });
+  }
+
   // ── Lifecycle ──
 
   public ngOnInit(): void {
     this._loadAttributeSchema();
-    this._triggerSearch();
   }
 
   // ── Data loading ──
 
   protected onLazyLoad(event: ErpTableLazyEvent): void {
     this._loadProducts(event.first, event.rows);
-  }
-
-  private _triggerSearch(): void {
-    this.loading.set(true);
-    this._productOrchestrator.search({}).subscribe({
-      next: (uuids) => {
-        this.searchedUuids.set(uuids);
-        this.loading.set(false);
-        // Initially load the first page if there are UUIDs
-        if (uuids.length > 0) {
-          this._loadProducts(0, PAGE_SIZE);
-        }
-      },
-      error: (err) => {
-        console.error('Failed to search products:', err);
-        this.loading.set(false);
-      }
-    });
   }
 
   private _loadProducts(offset: number, count: number): void {

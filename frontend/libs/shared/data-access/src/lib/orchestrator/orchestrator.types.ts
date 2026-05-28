@@ -67,6 +67,15 @@ export interface Pagination {
 }
 
 // ────────────────────────────────────────────────────────────────
+// Search Results Response
+// ────────────────────────────────────────────────────────────────
+
+export interface SharedSearchResponse {
+  readonly uuids?: string[];
+  readonly totalCount?: number;
+}
+
+// ────────────────────────────────────────────────────────────────
 // Error Tracking
 // ────────────────────────────────────────────────────────────────
 

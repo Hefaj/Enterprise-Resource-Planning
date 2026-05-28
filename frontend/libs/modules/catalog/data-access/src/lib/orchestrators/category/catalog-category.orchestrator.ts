@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps, LoadOptions } from '@erp/shared/data-access';
-import { CatalogBffClient, CategoryDto, SearchCategoryRequest } from '../../api-client';
+import { CatalogBffClient, CategoryDto, SearchCategoryRequest, SearchResponse } from '../../api-client';
 import { CategoryVM } from './category.view-model';
 
 /**
@@ -44,7 +44,7 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
 
   protected override searchByFilters(
     filters: SearchCategoryRequest,
-  ): Observable<string[]> {
+  ): Observable<SearchResponse> {
     return this._api.searchCategory(filters);
   }
 

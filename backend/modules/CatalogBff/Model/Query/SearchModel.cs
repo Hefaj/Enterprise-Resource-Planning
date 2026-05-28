@@ -11,7 +11,7 @@ public class SearchModelRequest : PagedRequest
     public string? Name { get; set; }
 }
 
-public class SearchModelEndpoint : Endpoint<SearchModelRequest, List<Guid>>
+public class SearchModelEndpoint : Endpoint<SearchModelRequest, SearchResponse>
 {
     public override void Configure()
     {
@@ -28,13 +28,15 @@ public class SearchModelEndpoint : Endpoint<SearchModelRequest, List<Guid>>
             query = query.Where(m => m.Name.Contains(req.Name, StringComparison.OrdinalIgnoreCase));
         }
 
+        var totalCount = query.Count();
+
         var uuids = query
             .Skip((req.Page - 1) * req.PageSize)
             .Take(req.PageSize)
             .Select(m => m.Uuid)
             .ToList();
             
-        await Send.OkAsync(uuids, ct);
+        await Send.OkAsync(new SearchResponse { Uuids = uuids, TotalCount = totalCount }, ct);
     }
 }
 

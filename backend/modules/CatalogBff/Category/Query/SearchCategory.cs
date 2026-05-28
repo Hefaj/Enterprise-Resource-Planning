@@ -11,7 +11,7 @@ public class SearchCategoryRequest : PagedRequest
     public string? Name { get; set; }
 }
 
-public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, List<Guid>>
+public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, SearchResponse>
 {
     public override void Configure()
     {
@@ -28,13 +28,15 @@ public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, List<Guid>
             query = query.Where(c => c.Name.Contains(req.Name, StringComparison.OrdinalIgnoreCase));
         }
 
+        var totalCount = query.Count();
+
         var uuids = query
             .Skip((req.Page - 1) * req.PageSize)
             .Take(req.PageSize)
             .Select(c => c.Uuid)
             .ToList();
             
-        await Send.OkAsync(uuids, ct);
+        await Send.OkAsync(new SearchResponse { Uuids = uuids, TotalCount = totalCount }, ct);
     }
 }
 

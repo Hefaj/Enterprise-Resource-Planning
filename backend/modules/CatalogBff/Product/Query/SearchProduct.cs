@@ -15,7 +15,7 @@ public class SearchProductRequest : PagedRequest
     public DateTime? AvailableFrom { get; set; }
 }
 
-public class SearchProductEndpoint : Endpoint<SearchProductRequest, List<Guid>>
+public class SearchProductEndpoint : Endpoint<SearchProductRequest, SearchResponse>
 {
     public override void Configure()
     {
@@ -47,13 +47,15 @@ public class SearchProductEndpoint : Endpoint<SearchProductRequest, List<Guid>>
             query = query.Where(p => p.AvailableFrom >= req.AvailableFrom.Value);
         }
 
+        var totalCount = query.Count();
+
         var uuids = query
             .Skip((req.Page - 1) * req.PageSize)
             .Take(req.PageSize)
             .Select(p => p.Uuid)
             .ToList();
             
-        await Send.OkAsync(uuids, ct);
+        await Send.OkAsync(new SearchResponse { Uuids = uuids, TotalCount = totalCount }, ct);
     }
 }
 

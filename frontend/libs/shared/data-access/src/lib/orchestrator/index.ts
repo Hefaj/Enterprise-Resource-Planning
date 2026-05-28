@@ -11,6 +11,7 @@ export type {
   JobStatus,
   HasUuid,
   ResolvedDeps,
+  SharedSearchResponse,
 } from './orchestrator.types';
 
 export { DEFAULT_ORCHESTRATOR_CONFIG } from './orchestrator.types';

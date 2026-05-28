@@ -25,6 +25,7 @@ import {
   JobMeta,
   DEFAULT_ORCHESTRATOR_CONFIG,
   ResolvedDeps,
+  SharedSearchResponse,
 } from './orchestrator.types';
 
 /**
@@ -105,7 +106,7 @@ export abstract class BaseOrchestrator<
   protected abstract fetchByUuids(uuids: string[]): Observable<TDto[]>;
 
   /** Execute a search query and return matching UUIDs. */
-  protected abstract searchByFilters(filters: TFilters): Observable<string[]>;
+  protected abstract searchByFilters(filters: TFilters): Observable<SharedSearchResponse>;
 
   /**
    * Transform a raw DTO into a rich ViewModel.
@@ -197,7 +198,8 @@ export abstract class BaseOrchestrator<
     options?: { autoLoad?: boolean; loadOptions?: TLoadOptions },
   ): Promise<string[]> {
     try {
-      const uuids = await firstValueFrom(this.searchByFilters(filters));
+      const response = await firstValueFrom(this.searchByFilters(filters));
+      const uuids = response.uuids ?? [];
 
       if (options?.autoLoad !== false && uuids.length > 0) {
         await this.loadAsync(uuids, options?.loadOptions);

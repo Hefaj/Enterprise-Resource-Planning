@@ -22,7 +22,7 @@ export interface ICatalogBffClient {
     /**
      * @return OK
      */
-    searchProduct(body: SearchProductRequest): Observable<string[]>;
+    searchProduct(body: SearchProductRequest): Observable<SearchResponse>;
     /**
      * @return OK
      */
@@ -30,7 +30,7 @@ export interface ICatalogBffClient {
     /**
      * @return OK
      */
-    searchModel(body: SearchModelRequest): Observable<string[]>;
+    searchModel(body: SearchModelRequest): Observable<SearchResponse>;
     /**
      * @return OK
      */
@@ -38,7 +38,7 @@ export interface ICatalogBffClient {
     /**
      * @return OK
      */
-    searchCategory(body: SearchCategoryRequest): Observable<string[]>;
+    searchCategory(body: SearchCategoryRequest): Observable<SearchResponse>;
 }
 
 @Injectable({
@@ -111,7 +111,7 @@ export class CatalogBffClient implements ICatalogBffClient {
     /**
      * @return OK
      */
-    searchProduct(body: SearchProductRequest): Observable<string[]> {
+    searchProduct(body: SearchProductRequest): Observable<SearchResponse> {
         let url_ = this.baseUrl + "/product/searchProduct";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -134,14 +134,14 @@ export class CatalogBffClient implements ICatalogBffClient {
                 try {
                     return this.processSearchProduct(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string[]>;
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string[]>;
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
         }));
     }
 
-    protected processSearchProduct(response: HttpResponseBase): Observable<string[]> {
+    protected processSearchProduct(response: HttpResponseBase): Observable<SearchResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -151,7 +151,7 @@ export class CatalogBffClient implements ICatalogBffClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string[];
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -219,7 +219,7 @@ export class CatalogBffClient implements ICatalogBffClient {
     /**
      * @return OK
      */
-    searchModel(body: SearchModelRequest): Observable<string[]> {
+    searchModel(body: SearchModelRequest): Observable<SearchResponse> {
         let url_ = this.baseUrl + "/model/searchModel";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -242,14 +242,14 @@ export class CatalogBffClient implements ICatalogBffClient {
                 try {
                     return this.processSearchModel(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string[]>;
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string[]>;
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
         }));
     }
 
-    protected processSearchModel(response: HttpResponseBase): Observable<string[]> {
+    protected processSearchModel(response: HttpResponseBase): Observable<SearchResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -259,7 +259,7 @@ export class CatalogBffClient implements ICatalogBffClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string[];
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -327,7 +327,7 @@ export class CatalogBffClient implements ICatalogBffClient {
     /**
      * @return OK
      */
-    searchCategory(body: SearchCategoryRequest): Observable<string[]> {
+    searchCategory(body: SearchCategoryRequest): Observable<SearchResponse> {
         let url_ = this.baseUrl + "/category/searchCategory";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -350,14 +350,14 @@ export class CatalogBffClient implements ICatalogBffClient {
                 try {
                     return this.processSearchCategory(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string[]>;
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string[]>;
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
         }));
     }
 
-    protected processSearchCategory(response: HttpResponseBase): Observable<string[]> {
+    protected processSearchCategory(response: HttpResponseBase): Observable<SearchResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -367,7 +367,7 @@ export class CatalogBffClient implements ICatalogBffClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string[];
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -454,6 +454,13 @@ export interface SearchProductRequest {
     availableFrom?: Date | undefined;
     page?: number;
     pageSize?: number;
+
+    [key: string]: any;
+}
+
+export interface SearchResponse {
+    uuids?: string[];
+    totalCount?: number;
 
     [key: string]: any;
 }

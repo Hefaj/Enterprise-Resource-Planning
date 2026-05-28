@@ -2,10 +2,11 @@ using FastEndpoints;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CatalogBff.Common;
 
 namespace CatalogBff.Model.Query;
 
-public class SearchModelRequest
+public class SearchModelRequest : PagedRequest
 {
     public string? Name { get; set; }
 }
@@ -27,7 +28,13 @@ public class SearchModelEndpoint : Endpoint<SearchModelRequest, List<Guid>>
             query = query.Where(m => m.Name.Contains(req.Name, StringComparison.OrdinalIgnoreCase));
         }
 
-        var uuids = query.Select(m => m.Uuid).ToList();
+        var uuids = query
+            .Skip((req.Page - 1) * req.PageSize)
+            .Take(req.PageSize)
+            .Select(m => m.Uuid)
+            .ToList();
+            
         await Send.OkAsync(uuids, ct);
     }
 }
+

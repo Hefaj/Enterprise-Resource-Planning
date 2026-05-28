@@ -432,12 +432,16 @@ export interface ProductDto {
 
 export interface SearchCategoryRequest {
     name?: string | undefined;
+    page?: number;
+    pageSize?: number;
 
     [key: string]: any;
 }
 
 export interface SearchModelRequest {
     name?: string | undefined;
+    page?: number;
+    pageSize?: number;
 
     [key: string]: any;
 }
@@ -448,6 +452,8 @@ export interface SearchProductRequest {
     category?: string | undefined;
     price?: number | undefined;
     availableFrom?: Date | undefined;
+    page?: number;
+    pageSize?: number;
 
     [key: string]: any;
 }

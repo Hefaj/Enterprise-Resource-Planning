@@ -2,10 +2,11 @@ using FastEndpoints;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CatalogBff.Common;
 
 namespace CatalogBff.Product.Query;
 
-public class SearchProductRequest
+public class SearchProductRequest : PagedRequest
 {
     public string? Sku { get; set; }
     public string? Name { get; set; }
@@ -46,7 +47,13 @@ public class SearchProductEndpoint : Endpoint<SearchProductRequest, List<Guid>>
             query = query.Where(p => p.AvailableFrom >= req.AvailableFrom.Value);
         }
 
-        var uuids = query.Select(p => p.Uuid).ToList();
+        var uuids = query
+            .Skip((req.Page - 1) * req.PageSize)
+            .Take(req.PageSize)
+            .Select(p => p.Uuid)
+            .ToList();
+            
         await Send.OkAsync(uuids, ct);
     }
 }
+

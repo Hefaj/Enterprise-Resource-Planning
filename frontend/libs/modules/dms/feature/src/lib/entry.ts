@@ -4,6 +4,12 @@ import { RouterModule } from '@angular/router';
   imports: [RouterModule],
   selector: 'erp-dms-entry',
   template: `<router-outlet></router-outlet>`,
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
+  `],
 })
 export class RemoteEntry {
 }

@@ -30,10 +30,10 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           </p-tablist>
         </p-tabs>
 
-        <div class="flex-1 mt-4">
+        <div class="flex-1 mt-4 flex flex-col min-h-0">
           @if (activeTab?.component) {
             @for (tabVal of [_value]; track tabVal) {
-              <div class="tab-content-animate h-full">
+              <div class="tab-content-animate flex-1 min-h-0">
                 <ng-container 
                   *ngComponentOutlet="activeTab!.component!; inputs: activeTab!.config" 
                 />
@@ -55,6 +55,10 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     </div>
   `,
   styles: `
+    :host {
+      display: block;
+      height: 100%;
+    }
     @keyframes tabFadeIn {
       0% {
         opacity: 0;

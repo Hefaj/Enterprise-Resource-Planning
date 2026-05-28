@@ -54,72 +54,111 @@ public static class CatalogMockData
         new(ModelIphone, "iPhone 15 Pro")
     };
 
-    public static readonly List<ProductDto> Products = new()
+    public static readonly List<ProductDto> Products = GenerateMockProducts();
+
+    private static List<ProductDto> GenerateMockProducts()
     {
-        new(
-            Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            "Laptop ProMax 16\"",
-            new List<Guid> { CatElectronics, CatLaptops },
-            ModelMbp,
-            "ELE-001",
-            5499.99m,
-            new DateTime(2024, 3, 15),
-            "Aktywny",
-            true,
-            "5901234567890",
-            null
-        ),
-        new(
-            Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            "Monitor UltraWide 34\"",
-            new List<Guid> { CatElectronics },
-            null,
-            "ELE-002",
-            2899.00m,
-            new DateTime(2024, 1, 20),
-            "Aktywny",
-            true,
-            "5901234567891",
-            null
-        ),
-        new(
-            Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            "Fotel Ergonomiczny ErgoPlus",
-            new List<Guid> { CatHome },
-            null,
-            "DOM-001",
-            1299.00m,
-            new DateTime(2024, 6, 1),
-            "Wycofany",
-            false,
-            "5901234567892",
-            null
-        ),
-        new(
-            Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            "Klawiatura Mechaniczna RGB",
-            new List<Guid> { CatElectronics },
-            null,
-            "ELE-003",
-            449.99m,
-            new DateTime(2024, 2, 10),
-            "Aktywny",
-            true,
-            "5901234567893",
-            null
-        ),
-        new(
-            Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            "Biurko Standing Desk 180cm",
-            new List<Guid> { CatHome },
-            null,
-            "DOM-002",
-            2199.00m,
-            new DateTime(2024, 4, 22),
-            "Aktywny",
-            true,
-            "5901234567894",
-            null
-        )
-    };
+        var list = new List<ProductDto>
+        {
+            new(
+                Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                "Laptop ProMax 16\"",
+                new List<Guid> { CatElectronics, CatLaptops },
+                ModelMbp,
+                "ELE-001",
+                5499.99m,
+                new DateTime(2024, 3, 15),
+                "Aktywny",
+                true,
+                "5901234567890",
+                null
+            ),
+            new(
+                Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                "Monitor UltraWide 34\"",
+                new List<Guid> { CatElectronics },
+                null,
+                "ELE-002",
+                2899.00m,
+                new DateTime(2024, 1, 20),
+                "Aktywny",
+                true,
+                "5901234567891",
+                null
+            ),
+            new(
+                Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                "Fotel Ergonomiczny ErgoPlus",
+                new List<Guid> { CatHome },
+                null,
+                "DOM-001",
+                1299.00m,
+                new DateTime(2024, 6, 1),
+                "Wycofany",
+                false,
+                "5901234567892",
+                null
+            ),
+            new(
+                Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                "Klawiatura Mechaniczna RGB",
+                new List<Guid> { CatElectronics },
+                null,
+                "ELE-003",
+                449.99m,
+                new DateTime(2024, 2, 10),
+                "Aktywny",
+                true,
+                "5901234567893",
+                null
+            ),
+            new(
+                Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                "Biurko Standing Desk 180cm",
+                new List<Guid> { CatHome },
+                null,
+                "DOM-002",
+                2199.00m,
+                new DateTime(2024, 4, 22),
+                "Aktywny",
+                true,
+                "5901234567894",
+                null
+            )
+        };
+
+        for (int i = 6; i <= 150; i++)
+        {
+            var isElec = i % 2 == 0;
+            var categoryUuids = isElec 
+                ? new List<Guid> { CatElectronics, CatLaptops } 
+                : new List<Guid> { CatHome };
+            
+            var sku = isElec ? $"ELE-{i:D3}" : $"DOM-{i:D3}";
+            var name = isElec ? $"Urządzenie elektroniczne v{i}" : $"Akcesorium domowe v{i}";
+            var price = 99.99m + (i * 15.5m);
+            var date = new DateTime(2024, 1, 1).AddDays(i);
+            var active = i % 3 != 0;
+            var status = active ? "Aktywny" : "Draft";
+            var ean = $"5901234567{i:D3}";
+
+            list.Add(new ProductDto(
+                Guid.NewGuid(),
+                name,
+                categoryUuids,
+                isElec && i % 4 == 0 ? ModelMbp : null,
+                sku,
+                price,
+                date,
+                status,
+                active,
+                ean,
+                null,
+                $"{(1.0 + i * 0.05):F1}kg",
+                i % 2 == 0 ? "Space Gray" : "Black"
+            ));
+        }
+
+        return list;
+    }
 }

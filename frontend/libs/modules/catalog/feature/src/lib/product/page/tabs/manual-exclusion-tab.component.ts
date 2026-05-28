@@ -15,6 +15,10 @@ import { ErpEmptyCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui';
   `,
   styles: [
     `
+      :host {
+        display: block;
+        height: 100%;
+      }
       .tab-container {
         padding: 1rem 0;
         height: 100%;

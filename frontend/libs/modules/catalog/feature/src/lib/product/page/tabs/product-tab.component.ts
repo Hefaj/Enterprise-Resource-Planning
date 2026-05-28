@@ -49,6 +49,10 @@ const PAGE_SIZE = 50;
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
     .tab-container {
       padding: 1rem 0;
       height: 100%;
@@ -72,15 +76,24 @@ export class ProductTabComponent implements OnInit {
   /** Stan ładowania */
   protected readonly loading = signal(false);
 
-  /** Łączna liczba rekordów (do virtual scroll) */
+  /** Bieżący offset paginacji (pierwszy indeks) */
+  protected readonly first = signal(0);
+
+  /** Liczba wierszy na stronie */
+  protected readonly rows = signal(PAGE_SIZE);
+
+  /** Łączna liczba rekordów */
   protected readonly totalRecords = computed(() => this.searchedUuids().length);
 
-  /** Aktualnie załadowane produkty z orkiestratora na podstawie pasujących UUIDs */
+  /** Aktualnie załadowane produkty z orkiestratora na podstawie pasujących UUIDs dla aktywnej strony */
   protected readonly products = computed<ProductViewModel[]>(() => {
     const uuids = this.searchedUuids();
+    const firstIdx = this.first();
+    const count = this.rows();
+    const pageUuids = uuids.slice(firstIdx, firstIdx + count);
     const allVms = this._productOrchestrator.allViewModels();
     
-    return uuids.map(uuid => {
+    return pageUuids.map(uuid => {
       const vm = allVms.get(uuid);
       if (vm) return vm;
       
@@ -152,8 +165,9 @@ export class ProductTabComponent implements OnInit {
         next: (uuids) => {
           this.searchedUuids.set(uuids);
           this.loading.set(false);
+          this.first.set(0);
           if (uuids.length > 0) {
-            this._loadProducts(0, PAGE_SIZE);
+            this._loadProducts(0, this.rows());
           }
         },
         error: (err) => {
@@ -172,6 +186,8 @@ export class ProductTabComponent implements OnInit {
   // ── Data loading ──
 
   protected onLazyLoad(event: ErpTableLazyEvent): void {
+    this.first.set(event.first);
+    this.rows.set(event.rows);
     this._loadProducts(event.first, event.rows);
   }
 

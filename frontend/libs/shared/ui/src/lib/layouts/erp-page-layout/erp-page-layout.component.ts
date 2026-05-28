@@ -70,7 +70,7 @@ import { ErpPageLayoutConfig, ErpPageRegion } from './erp-page-layout.types';
       <!-- Prawy panel: Kontent -->
       <div class="flex-1 flex flex-col min-w-0 relative">
         <!-- Główna zawartość -->
-        <main class="flex-1 p-6 overflow-auto bg-surface-50 dark:bg-surface-950">
+        <main class="flex-1 p-6 overflow-hidden flex flex-col bg-surface-50 dark:bg-surface-950">
           @if (mainComponent) {
             @let mainConfig = getConfig(_config.main);
             <ng-container
@@ -81,6 +81,12 @@ import { ErpPageLayoutConfig, ErpPageRegion } from './erp-page-layout.types';
       </div>
     </div>
   `,
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpPageLayoutComponent {

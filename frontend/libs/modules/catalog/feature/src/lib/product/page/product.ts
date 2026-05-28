@@ -18,6 +18,12 @@ import { ProductFilterComponent } from './filters/product-filter.component';
   standalone: true,
   imports: [CommonModule, ErpPageLayoutComponent],
   template: ` <erp-page-layout [config]="pageConfig" /> `,
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductComponent {

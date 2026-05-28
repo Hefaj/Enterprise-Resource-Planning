@@ -189,7 +189,7 @@ export class ProductTableComponent {
       .setExternalFilters(this.externalFilters)
       .setLoading(this.loading)
       .setTotalRecords(this.totalRecords)
-      .setVirtualScroll(45, 50)
+      .setPagination(50, [10, 25, 50, 100])
       .setLazyLoad((event) => this.lazyLoad.emit(event))
       .setGlobalFilter(['sku', 'name', 'category', 'status'])
       .setEmptyMessage('Nie znaleziono produktów')

@@ -11,7 +11,13 @@ import { ErpAuthService } from '@erp/shared/auth';
   selector: 'erp-router-wrapper',
   standalone: true,
   imports: [RouterModule],
-  template: `<router-outlet></router-outlet>`
+  template: `<router-outlet></router-outlet>`,
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
+  `]
 })
 export class RouterOutletWrapperComponent {}
 

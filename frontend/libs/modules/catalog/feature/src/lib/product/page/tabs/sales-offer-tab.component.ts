@@ -16,6 +16,10 @@ import { DeliveryOptionsTabComponent } from './delivery-options-tab.component';
   `,
   styles: [
     `
+      :host {
+        display: block;
+        height: 100%;
+      }
       .nested-tabs-container {
         height: 100%;
       }

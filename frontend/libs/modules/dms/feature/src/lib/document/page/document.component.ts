@@ -40,6 +40,10 @@ export class DocumentStatusSidebarComponent {}
   `,
   styles: [
     `
+      :host {
+        display: block;
+        height: 100%;
+      }
       .animate-fade-in {
         animation: fadeIn 0.3s ease-out;
       }

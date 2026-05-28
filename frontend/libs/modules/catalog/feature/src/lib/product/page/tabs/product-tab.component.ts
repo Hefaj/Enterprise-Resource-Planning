@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CatalogProductOrchestrator } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, CategoryVM, ProductVM } from '@erp/catalog/data-access';
 import { ErpTableComponent, ErpTableBuilder } from '@erp/shared/ui';
 import { ProductViewModel } from '@erp/catalog/util';
+import { ProductListViewStore } from '../product-list-view.store';
 
 /**
  * Komponent zakładki produktów.
@@ -34,22 +35,29 @@ import { ProductViewModel } from '@erp/catalog/util';
 })
 export class ProductTabComponent {
   private readonly _catalogProductOrchestrator = inject(CatalogProductOrchestrator);
+  private readonly _store = inject(ProductListViewStore);
 
   protected readonly products = computed<ProductViewModel[]>(() => {
-    const results = this._catalogProductOrchestrator.searchResults();
-    return results.map(p => ({
-      ...p,
-      category: p.categories.map(c => c.name).join(', '),
-      modelName: p.model?.name ?? '',
-    })) as ProductViewModel[];
+    const resultsUuids = this._store.searchResultUuids();
+    const vmMap = this._catalogProductOrchestrator.getViewModel()();
+    return resultsUuids
+      .map(uuid => vmMap.get(uuid))
+      .filter((p): p is ProductVM => !!p)
+      .map(p => ({
+        ...p,
+        category: p.categories.map((c: CategoryVM) => c.name).join(', '),
+        modelName: p.model?.name ?? '',
+      })) as ProductViewModel[];
   });
 
-  protected readonly isLoading = this._catalogProductOrchestrator.isLoading;
+  protected readonly isLoading = this._store.isLoading;
+  protected readonly totalRecords = this._store.totalCount;
 
   protected readonly tableConfig = computed(() => {
     return ErpTableBuilder.create((b) => {
       b.setData(this.products)
         .setLoading(this.isLoading)
+        .setTotalRecords(this.totalRecords)
         .addColumn('sku', 'SKU', { sortable: true, width: '130px' })
         .addLinkColumn('name', 'Nazwa produktu', {
           onClick: (row) => console.log('Otwórz produkt:', row),
@@ -70,7 +78,11 @@ export class ProductTabComponent {
           trueClass: 'text-green-500',
           falseClass: 'text-surface-300 dark:text-surface-600',
         }, { width: '100px' })
-        .setPagination(10, [10, 25, 50])
+        .setPagination(20, [10, 20, 50])
+        .setLazyLoad((event) => {
+          const page = Math.floor(event.first / event.rows) + 1;
+          this._store.updatePagination(page, event.rows);
+        })
         .setEmptyMessage('Nie znaleziono produktów')
         .setSize('small');
     });

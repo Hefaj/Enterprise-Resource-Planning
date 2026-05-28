@@ -8,7 +8,7 @@ import {
   ErpDatePickerComponent,
   ErpDatePickerBuilder
 } from '@erp/shared/ui';
-import { CatalogProductOrchestrator } from '@erp/catalog/data-access';
+import { ProductListViewStore } from '../product-list-view.store';
 
 @Component({
   selector: 'erp-product-filter',
@@ -18,7 +18,7 @@ import { CatalogProductOrchestrator } from '@erp/catalog/data-access';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFilterComponent {
-  private readonly _catalogProductOrchestrator = inject(CatalogProductOrchestrator);
+  private readonly _store = inject(ProductListViewStore);
 
   protected readonly filtersForm = new FormGroup({
     sku: new FormControl<string | null>(null),
@@ -52,20 +52,11 @@ export class ProductFilterComponent {
     const rawPrice = values.price;
     const price = rawPrice ? Number(rawPrice) : undefined;
 
-    this._catalogProductOrchestrator.searchAsync(
-      {
-        sku: values.sku ?? undefined,
-        name: values.name ?? undefined,
-        price,
-        availableFrom: values.availableFrom ?? undefined,
-      },
-      {
-        autoLoad: true,
-        loadOptions: {
-          includeCategories: true,
-          includeModel: true,
-        },
-      }
-    ).catch(err => console.error('Product search failed:', err));
-  } 
+    this._store.updateFilters({
+      sku: values.sku ?? undefined,
+      name: values.name ?? undefined,
+      price,
+      availableFrom: values.availableFrom ?? undefined,
+    });
+  }
 }

@@ -64,29 +64,15 @@ export abstract class BaseOrchestrator<
   protected readonly identityMap: IdentityMapStore<TDto>;
   protected readonly dataLoader: DataLoader<TDto>;
 
-  // ── Reactive state ──
   private readonly _errors: WritableSignal<OrchestratorError[]> = signal([]);
   private readonly _isLoading: WritableSignal<boolean> = signal(false);
   private readonly _loadedUuids: WritableSignal<Set<string>> = signal(new Set());
-  private readonly _searchResultsUuids: WritableSignal<string[]> = signal([]);
 
   /** Reactive list of errors from this orchestrator. */
   public readonly errors: Signal<OrchestratorError[]> = this._errors.asReadonly();
 
   /** Whether any load operation is currently in progress. */
   public readonly isLoading: Signal<boolean> = this._isLoading.asReadonly();
-
-  /** Reactive list of UUIDs from the latest search query. */
-  public readonly searchResultsUuids: Signal<string[]> = this._searchResultsUuids.asReadonly();
-
-  /** Reactive list of ViewModels representing the latest search results. */
-  public readonly searchResults: Signal<TViewModel[]> = computed(() => {
-    const uuids = this._searchResultsUuids();
-    const vms = this.getViewModel()();
-    return uuids
-      .map(uuid => vms.get(uuid))
-      .filter((vm): vm is TViewModel => vm !== undefined);
-  });
 
   // ── SignalR subscription ──
   private _signalrSub: Subscription | null = null;
@@ -196,7 +182,7 @@ export abstract class BaseOrchestrator<
   public async searchAsync(
     filters: TFilters,
     options?: { autoLoad?: boolean; loadOptions?: TLoadOptions },
-  ): Promise<string[]> {
+  ): Promise<SharedSearchResponse> {
     try {
       const response = await firstValueFrom(this.searchByFilters(filters));
       const uuids = response.uuids ?? [];
@@ -205,9 +191,7 @@ export abstract class BaseOrchestrator<
         await this.loadAsync(uuids, options?.loadOptions);
       }
 
-      this._searchResultsUuids.set(uuids);
-
-      return uuids;
+      return response;
     } catch (err) {
       this._addError({
         operation: 'search',

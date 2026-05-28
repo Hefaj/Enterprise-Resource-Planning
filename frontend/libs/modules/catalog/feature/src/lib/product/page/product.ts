@@ -13,10 +13,12 @@ import { MultimediaTabComponent } from './tabs/multimedia-tab.component';
 import { SalesOfferTabComponent } from './tabs/sales-offer-tab.component';
 import { WarrantyTabComponent } from './tabs/warranty-tab.component';
 import { ProductFilterComponent } from './filters/product-filter.component';
+import { ProductListViewStore } from './product-list-view.store';
 
 @Component({
   standalone: true,
   imports: [CommonModule, ErpPageLayoutComponent],
+  providers: [ProductListViewStore],
   template: ` <erp-page-layout [config]="pageConfig" /> `,
   styles: [`
     :host {

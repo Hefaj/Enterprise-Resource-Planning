@@ -19,7 +19,7 @@ public class SearchProductEndpoint : Endpoint<SearchProductRequest, List<Guid>>
 {
     public override void Configure()
     {
-        Post("search");
+        Post("searchProduct");
         Group<ProductGroup>();
     }
 

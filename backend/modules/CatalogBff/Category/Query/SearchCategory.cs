@@ -15,7 +15,7 @@ public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, List<Guid>
 {
     public override void Configure()
     {
-        Post("search");
+        Post("searchCategory");
         Group<CategoryGroup>();
     }
 

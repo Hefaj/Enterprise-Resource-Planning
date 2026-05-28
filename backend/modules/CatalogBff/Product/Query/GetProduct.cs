@@ -14,7 +14,7 @@ public class GetProductEndpoint : Endpoint<GetProductRequest, List<ProductDto>>
 {
     public override void Configure()
     {
-        Post("get");
+        Post("getProduct");
         Group<ProductGroup>();
     }
 

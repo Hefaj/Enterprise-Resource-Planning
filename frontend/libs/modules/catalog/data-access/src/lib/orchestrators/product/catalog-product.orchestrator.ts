@@ -1,7 +1,7 @@
 import { Injectable, inject, Injector } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { BaseOrchestrator, OrchestratorConfig, Pagination, ResolvedDeps } from '@erp/shared/data-access';
+import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { CatalogBffClient, ProductDto, SearchProductRequest } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
@@ -78,7 +78,6 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
 
   protected override searchByFilters(
     filters: SearchProductRequest,
-    _pagination?: Pagination,
   ): Observable<string[]> {
     return this._api.searchProduct(filters);
   }

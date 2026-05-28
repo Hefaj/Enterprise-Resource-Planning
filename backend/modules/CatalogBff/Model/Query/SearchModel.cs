@@ -15,7 +15,7 @@ public class SearchModelEndpoint : Endpoint<SearchModelRequest, List<Guid>>
 {
     public override void Configure()
     {
-        Post("search");
+        Post("searchModel");
         Group<ModelGroup>();
     }
 

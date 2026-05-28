@@ -14,7 +14,7 @@ public class GetCategoryEndpoint : Endpoint<GetCategoryRequest, List<CategoryDto
 {
     public override void Configure()
     {
-        Post("get");
+        Post("getCategory");
         Group<CategoryGroup>();
     }
 

@@ -58,7 +58,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * @return OK
      */
     getProduct(body: GetProductRequest): Observable<ProductDto[]> {
-        let url_ = this.baseUrl + "/product/get";
+        let url_ = this.baseUrl + "/product/getProduct";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -112,7 +112,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * @return OK
      */
     searchProduct(body: SearchProductRequest): Observable<string[]> {
-        let url_ = this.baseUrl + "/product/search";
+        let url_ = this.baseUrl + "/product/searchProduct";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -166,7 +166,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * @return OK
      */
     getModel(body: GetModelRequest): Observable<ModelDto[]> {
-        let url_ = this.baseUrl + "/model/get";
+        let url_ = this.baseUrl + "/model/getModel";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -220,7 +220,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * @return OK
      */
     searchModel(body: SearchModelRequest): Observable<string[]> {
-        let url_ = this.baseUrl + "/model/search";
+        let url_ = this.baseUrl + "/model/searchModel";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -274,7 +274,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * @return OK
      */
     getCategory(body: GetCategoryRequest): Observable<CategoryDto[]> {
-        let url_ = this.baseUrl + "/category/get";
+        let url_ = this.baseUrl + "/category/getCategory";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -328,7 +328,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * @return OK
      */
     searchCategory(body: SearchCategoryRequest): Observable<string[]> {
-        let url_ = this.baseUrl + "/category/search";
+        let url_ = this.baseUrl + "/category/searchCategory";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);

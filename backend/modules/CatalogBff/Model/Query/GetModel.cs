@@ -14,7 +14,7 @@ public class GetModelEndpoint : Endpoint<GetModelRequest, List<ModelDto>>
 {
     public override void Configure()
     {
-        Post("get");
+        Post("getModel");
         Group<ModelGroup>();
     }
 

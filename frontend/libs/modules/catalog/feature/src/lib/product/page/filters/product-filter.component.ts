@@ -8,6 +8,7 @@ import {
   ErpDatePickerComponent,
   ErpDatePickerBuilder
 } from '@erp/shared/ui';
+import { CatalogProductOrchestrator } from '@erp/catalog/data-access';
 
 @Component({
   selector: 'erp-product-filter',
@@ -17,6 +18,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFilterComponent {
+  private readonly _catalogProductOrchestrator = inject(CatalogProductOrchestrator);
 
   protected readonly filtersForm = new FormGroup({
     sku: new FormControl<string | null>(null),
@@ -49,5 +51,21 @@ export class ProductFilterComponent {
     const values = this.filtersForm.value;
     const rawPrice = values.price;
     const price = rawPrice ? Number(rawPrice) : undefined;
-  }
+
+    this._catalogProductOrchestrator.searchAsync(
+      {
+        sku: values.sku ?? undefined,
+        name: values.name ?? undefined,
+        price,
+        availableFrom: values.availableFrom ?? undefined,
+      },
+      {
+        autoLoad: true,
+        loadOptions: {
+          includeCategories: true,
+          includeModel: true,
+        },
+      }
+    ).catch(err => console.error('Product search failed:', err));
+  } 
 }

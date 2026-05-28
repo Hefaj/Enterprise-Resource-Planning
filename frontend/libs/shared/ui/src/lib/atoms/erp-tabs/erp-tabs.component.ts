@@ -31,15 +31,16 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
         </p-tabs>
 
         <div class="flex-1 mt-4 flex flex-col min-h-0">
-          @if (activeTab?.component) {
-            @for (tabVal of [_value]; track tabVal) {
+          @for (item of _items; track item.value) {
+            @if (item.value === _value && item.component) {
               <div class="tab-content-animate flex-1 min-h-0">
                 <ng-container 
-                  *ngComponentOutlet="activeTab!.component!; inputs: activeTab!.config" 
+                  *ngComponentOutlet="item.component; inputs: item.config" 
                 />
               </div>
             }
-          } @else if (!activeTab) {
+          }
+          @if (!activeTab) {
             <div class="flex flex-col items-center justify-center h-full opacity-50 grayscale p-12">
                <i class="pi pi-ban text-4xl mb-2"></i>
                <span class="font-medium">Brak dostępnych zakładek</span>

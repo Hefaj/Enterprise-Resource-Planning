@@ -77,10 +77,10 @@ const DEFAULT_COL_WIDTH_PX = 150;
         class="erp-col-viewport flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
         (scroll)="onHorizontalScroll($event)"
       >
-        <!-- Szeroki kontener – jego szerokość = suma wszystkich kolumn -->
+        <!-- Szeroki kontener – jego szerokość = suma wszystkich kolumn, ale nie mniej niż 100% -->
         <div
           class="erp-col-spacer"
-          [style.width.px]="totalColumnsWidth()"
+          [style.width]="'100%'"
           [style.min-width.px]="totalColumnsWidth()"
         >
           <p-table
@@ -107,7 +107,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
             [styleClass]="getTableStyleClass(_config)"
             [currentPageReportTemplate]="'Pokazuję {first} do {last} z {totalRecords} rekordów'"
             [showCurrentPageReport]="true"
-            [tableStyle]="{ 'table-layout': 'fixed', 'width': totalColumnsWidth() + 'px' }"
+            [tableStyle]="{ 'table-layout': 'fixed', 'min-width': totalColumnsWidth() + 'px', 'width': '100%' }"
           >
             <!-- Header -->
             <ng-template pTemplate="header">

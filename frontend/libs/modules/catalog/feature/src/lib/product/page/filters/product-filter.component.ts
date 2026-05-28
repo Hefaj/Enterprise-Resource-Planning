@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import {
   ErpDynamicFilterComponent,
@@ -17,8 +17,12 @@ import { ProductListViewStore } from '../product-list-view.store';
   template: `<erp-dynamic-filter [config]="filtersConfig" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductFilterComponent {
+export class ProductFilterComponent implements OnInit {
   private readonly _store = inject(ProductListViewStore);
+
+  ngOnInit(): void {
+        this._store.autoload.set(true);
+  }
 
   protected readonly filtersForm = new FormGroup({
     sku: new FormControl<string | null>(null),

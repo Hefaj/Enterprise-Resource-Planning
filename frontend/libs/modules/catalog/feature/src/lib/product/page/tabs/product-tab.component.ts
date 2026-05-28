@@ -81,6 +81,7 @@ export class ProductTabComponent {
         .setPagination(20, [10, 20, 50])
         .setLazyLoad((event) => {
           const page = Math.floor(event.first / event.rows) + 1;
+          this._store.updateSort(event.sortField, event.sortOrder);
           this._store.updatePagination(page, event.rows);
         })
         .setEmptyMessage('Nie znaleziono produktów')

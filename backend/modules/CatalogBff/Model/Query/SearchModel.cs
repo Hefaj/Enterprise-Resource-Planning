@@ -28,6 +28,16 @@ public class SearchModelEndpoint : Endpoint<SearchModelRequest, SearchResponse>
             query = query.Where(m => m.Name.Contains(req.Name, StringComparison.OrdinalIgnoreCase));
         }
 
+        if (!string.IsNullOrWhiteSpace(req.SortField))
+        {
+            var isDesc = req.SortOrder == -1;
+            query = req.SortField.ToLower() switch
+            {
+                "name" => isDesc ? query.OrderByDescending(m => m.Name) : query.OrderBy(m => m.Name),
+                _ => query
+            };
+        }
+
         var totalCount = query.Count();
 
         var uuids = query

@@ -47,6 +47,21 @@ public class SearchProductEndpoint : Endpoint<SearchProductRequest, SearchRespon
             query = query.Where(p => p.AvailableFrom >= req.AvailableFrom.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(req.SortField))
+        {
+            var isDesc = req.SortOrder == -1;
+            query = req.SortField.ToLower() switch
+            {
+                "sku" => isDesc ? query.OrderByDescending(p => p.Sku) : query.OrderBy(p => p.Sku),
+                "name" => isDesc ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
+                "price" => isDesc ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price),
+                "availablefrom" => isDesc ? query.OrderByDescending(p => p.AvailableFrom) : query.OrderBy(p => p.AvailableFrom),
+                "status" => isDesc ? query.OrderByDescending(p => p.Status) : query.OrderBy(p => p.Status),
+                "available" => isDesc ? query.OrderByDescending(p => p.Available) : query.OrderBy(p => p.Available),
+                _ => query
+            };
+        }
+
         var totalCount = query.Count();
 
         var uuids = query

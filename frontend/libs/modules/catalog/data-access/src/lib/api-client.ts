@@ -434,6 +434,8 @@ export interface SearchCategoryRequest {
     name?: string | undefined;
     page?: number;
     pageSize?: number;
+    sortField?: string | undefined;
+    sortOrder?: number | undefined;
 
     [key: string]: any;
 }
@@ -442,6 +444,8 @@ export interface SearchModelRequest {
     name?: string | undefined;
     page?: number;
     pageSize?: number;
+    sortField?: string | undefined;
+    sortOrder?: number | undefined;
 
     [key: string]: any;
 }
@@ -454,6 +458,8 @@ export interface SearchProductRequest {
     availableFrom?: Date | undefined;
     page?: number;
     pageSize?: number;
+    sortField?: string | undefined;
+    sortOrder?: number | undefined;
 
     [key: string]: any;
 }

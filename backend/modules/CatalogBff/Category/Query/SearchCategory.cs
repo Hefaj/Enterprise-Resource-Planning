@@ -28,6 +28,16 @@ public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, SearchResp
             query = query.Where(c => c.Name.Contains(req.Name, StringComparison.OrdinalIgnoreCase));
         }
 
+        if (!string.IsNullOrWhiteSpace(req.SortField))
+        {
+            var isDesc = req.SortOrder == -1;
+            query = req.SortField.ToLower() switch
+            {
+                "name" => isDesc ? query.OrderByDescending(c => c.Name) : query.OrderBy(c => c.Name),
+                _ => query
+            };
+        }
+
         var totalCount = query.Count();
 
         var uuids = query

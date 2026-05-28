@@ -24,6 +24,11 @@ export interface ICatalogBffClient {
      */
     searchProduct(body: SearchProductRequest): Observable<SearchResponse>;
     /**
+     * Seryjna aktualizacja cen produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommand): Observable<BatchResult>;
+    /**
      * @return OK
      */
     getModel(body: GetModelRequest): Observable<ModelDto[]>;
@@ -152,6 +157,61 @@ export class CatalogBffClient implements ICatalogBffClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Seryjna aktualizacja cen produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommand): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/product/product/batch-set-price";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProductSetPriceMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProductSetPriceMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processProductSetPriceMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -379,6 +439,18 @@ export class CatalogBffClient implements ICatalogBffClient {
     }
 }
 
+export interface BatchCommandOfProductSetPriceCommand {
+    commands?: ProductSetPriceCommand[];
+
+    [key: string]: any;
+}
+
+export interface BatchResult {
+    jobUuid?: string;
+
+    [key: string]: any;
+}
+
 export interface CategoryDto {
     uuid: string;
     name: string;
@@ -426,6 +498,13 @@ export interface ProductDto {
     image: string | undefined;
     attr_Weight?: string;
     attr_Color?: string;
+
+    [key: string]: any;
+}
+
+export interface ProductSetPriceCommand {
+    uuid?: string;
+    price?: number;
 
     [key: string]: any;
 }

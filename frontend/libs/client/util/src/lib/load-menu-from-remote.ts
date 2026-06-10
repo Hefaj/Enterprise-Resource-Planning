@@ -1,11 +1,11 @@
-import { RemoteModuleConfig } from "@erp/client/contract";
-import { ErpNavigationItem } from "@erp/shared/data-access";
-import { loadRemote } from "@module-federation/enhanced/runtime";
-import { EntryMenuModule } from "./entry-menu-module";
+import { RemoteModuleConfig } from '@erp/client/contract';
+import { ErpNavigationItem } from '@erp/shared/data-access';
+import { loadRemote } from '@module-federation/enhanced/runtime';
+import { EntryMenuModule } from './entry-menu-module';
 
 export async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNavigationItem | null> {
   try {
-    const module = await loadRemote<EntryMenuModule>(config.path);
+    const module = await loadRemote<EntryMenuModule>(config.routePrefix);
 
     if (module?.remoteMenu) {
       const prefixedMenu = applyRoutePrefixToMenu(module.remoteMenu, config.routePrefix);
@@ -19,7 +19,7 @@ export async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<Er
 
     return null;
   } catch (error) {
-    console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.path}.`, error);
+    console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.routePrefix}.`, error);
     return null;
   }
 }

@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { ErpBreadcrumb, ErpHostLayoutComponent, ErpUserMenu } from '@erp/shared/ui';
+import { ErpHostLayoutComponent, ErpHostLayoutBuilder, ErpBreadcrumbConfig, ErpUserMenuConfig } from '@erp/shared/ui';
 import { Router, RouterModule } from '@angular/router';
 import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';
@@ -8,7 +8,22 @@ import { noop } from 'rxjs';
 import { ErpAuthService } from '@erp/shared/auth';
 
 @Component({
+  selector: 'erp-router-wrapper',
+  standalone: true,
+  imports: [RouterModule],
+  template: `<router-outlet></router-outlet>`,
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+    }
+  `]
+})
+export class RouterOutletWrapperComponent {}
+
+@Component({
   selector: 'erp-shell',
+  standalone: true,
   imports: [CommonModule, ErpHostLayoutComponent, RouterModule],
   templateUrl: './shell.component.html',
 })
@@ -34,11 +49,10 @@ export class ShellLayoutComponent {
           label: 'Wyloguj',
           icon: 'pi pi-sign-out',
           command: (): void => this._authService.logout(),
-          linkClass: '!text-red-500 dark:!text-red-400',
         },
         { separator: true },
       ],
-    } as ErpUserMenu;
+    } as ErpUserMenuConfig;
   });
 
   protected $navMenu = computed(() => {
@@ -50,15 +64,25 @@ export class ShellLayoutComponent {
 
   protected $breadcrumbConfig = computed(() => {
     const { home, items } = this._breadcrumbService.breadcrumb();
-    return { home, items } as ErpBreadcrumb;
+    return { home, items } as ErpBreadcrumbConfig;
   });
 
   private _mapToPrimeNg(items: ErpNavigationItem[]): MenuItem[] {
     return items.map((item) => ({
       label: item.label,
       icon: item.iconId ? `pi pi-${item.iconId}` : undefined,
-      routerLink: item.route,
+      routerLink: item.disabled ? undefined : item.route,
+      disabled: item.disabled,
       items: item.children ? this._mapToPrimeNg(item.children) : undefined,
     }));
   }
+
+  protected $hostLayoutConfig = computed(() => {
+    return ErpHostLayoutBuilder.create((b) =>
+      b.setUserMenuConfig(this.$userMenuConfig)
+       .setMenuConfig(this.$navMenu)
+       .setBreadcrumbConfig(this.$breadcrumbConfig)
+       .setContentComponent(RouterOutletWrapperComponent)
+    );
+  });
 }

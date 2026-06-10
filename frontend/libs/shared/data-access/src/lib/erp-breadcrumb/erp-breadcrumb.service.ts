@@ -10,7 +10,7 @@ export interface ErpBreadcrumbData {
 export interface ErpBreadcrumbItem {
   id?: string;
   label?: string;
-  route?: string | string[];
+  routerLink?: string | string[];
   iconId?: string; // Zamiast "pi pi-box", np. po prostu "box"
 }
 
@@ -20,7 +20,7 @@ export class ErpBreadcrumbService {
 
   // Reaktywny stan dla Twojego komponentu
   private readonly _breadcrumb = signal<ErpBreadcrumbData>({
-    home: { iconId: 'home', route: '/' },
+    home: { iconId: 'home', routerLink: '/' },
     items: [],
   });
 
@@ -64,7 +64,7 @@ export class ErpBreadcrumbService {
 
       const label = child.data['breadcrumb'];
       if (label) {
-        breadcrumbs.push({ label, route: url });
+        breadcrumbs.push({ label, routerLink: url });
       }
 
       return this._buildBreadcrumb(child, url, breadcrumbs);

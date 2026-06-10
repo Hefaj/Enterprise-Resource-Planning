@@ -1,10 +1,12 @@
 import { inject } from '@angular/core';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
 import { ErpNavRegistryService, ErpNavigationItem } from '@erp/shared/data-access';
+import { ThemeService } from '@erp/client/util';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
+  inject(ThemeService); // Triggers initialization and effect
 
   menuRegistry.register({
     id: 'dashbord',
@@ -44,7 +46,12 @@ async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNaviga
     return null;
   } catch (error) {
     console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.id}.`, error);
-    return null;
+    return {
+      id: config.id,
+      label: `${config.label} (nieaktywny)`,
+      iconId: 'exclamation-triangle',
+      disabled: true,
+    };
   }
 }
 

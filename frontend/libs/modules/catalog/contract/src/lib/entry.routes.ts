@@ -15,8 +15,4 @@ export const remoteRoutes: Route[] = [
       },
     ],
   },
-  {
-    path: '**',
-    loadComponent: () => import('@erp/catalog/feature').then((m) => m.ProductComponent),
-  },
 ];

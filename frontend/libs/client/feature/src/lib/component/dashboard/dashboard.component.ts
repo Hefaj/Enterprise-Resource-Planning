@@ -4,19 +4,12 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { ErpInputTextBuilder, ErpInputTextComponent, ErpTwoSectionLayoutComponent } from '@erp/shared/ui';
+import { ErpInputTextBuilder, ErpInputTextComponent } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    CheckboxModule,
-    InputTextModule,
-    ButtonModule,
-    ErpInputTextComponent,
-    ErpTwoSectionLayoutComponent,
-  ],
+  imports: [CommonModule, CheckboxModule, InputTextModule, ButtonModule, ErpInputTextComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
@@ -28,7 +21,7 @@ export class DashboardComponent {
   public control = this.myDynamicForm.controls.email;
 
   public textConfig = ErpInputTextBuilder.create((input) => {
-    input.setPlaceholser('Rafi');
+    input.setPlaceholder('Rafi');
     input.setErrorMessages({
       required: 'required',
       email: 'email',
@@ -38,7 +31,7 @@ export class DashboardComponent {
   public control2 = this.myDynamicForm.controls.age;
 
   public textConfig2 = ErpInputTextBuilder.create((input) => {
-    input.setPlaceholser('Rafi2');
+    input.setPlaceholder('Rafi2');
     input.setHint('Ale jazda2');
     input.setErrorMessages({
       required: 'required',

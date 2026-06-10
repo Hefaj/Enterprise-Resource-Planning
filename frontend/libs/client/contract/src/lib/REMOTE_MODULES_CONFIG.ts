@@ -8,4 +8,6 @@ export const REMOTE_MODULES_CONFIG: RemoteModuleConfig[] = [
   { id: 'catalog', label: 'Katalog', routePrefix: 'catalog' },
   { id: 'inventory', label: 'WMS', routePrefix: 'inventory' },
   { id: 'sales', label: 'Sprzedaż', routePrefix: 'sales' },
+  { id: 'dms', label: 'DMS', routePrefix: 'dms' },
+  { id: 'task-management', label: 'Zadania', routePrefix: 'task-management' },
 ];

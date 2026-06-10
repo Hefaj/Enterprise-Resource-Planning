@@ -12,11 +12,19 @@ const config: ModuleFederationConfig = {
   additionalShared: [
     // 2. AUTORYZACJA I STAN GLOBALNY
     {
-      libraryName: '@erp/auth',
+      libraryName: '@erp/shared/auth',
       sharedConfig: {
         singleton: true,
-        strictVersion: true,
-        requiredVersion: 'auto',
+        strictVersion: false,
+        requiredVersion: false,
+      },
+    },
+    {
+      libraryName: '@erp/shared/data-access',
+      sharedConfig: {
+        singleton: true,
+        strictVersion: false,
+        requiredVersion: false,
       },
     },
 
@@ -27,8 +35,8 @@ const config: ModuleFederationConfig = {
       libraryName: '@erp/shared/ui',
       sharedConfig: {
         singleton: true,
-        strictVersion: true,
-        requiredVersion: 'auto',
+        strictVersion: false,
+        requiredVersion: false,
       },
     },
 

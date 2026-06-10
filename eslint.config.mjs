@@ -36,6 +36,14 @@ export default [
               onlyDependOnLibsWithTags: ['scope:shared', 'scope:sales'],
             },
             {
+              sourceTag: 'scope:dms',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:dms'],
+            },
+            {
+              sourceTag: 'scope:task-management',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:task-management'],
+            },
+            {
               sourceTag: 'scope:shared',
               onlyDependOnLibsWithTags: ['scope:shared'],
             },

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'erp',
+  selector: 'lib-catalog-util',
   imports: [],
   templateUrl: './catalog-util.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -5,6 +5,7 @@ export interface ErpNavigationItem {
   label: string;
   route?: string | string[]; // Twoja domena nazywa to "route", a nie "routerLink"
   iconId?: string; // Zamiast "pi pi-box", np. po prostu "box"
+  disabled?: boolean;
   children?: ErpNavigationItem[];
 }
 

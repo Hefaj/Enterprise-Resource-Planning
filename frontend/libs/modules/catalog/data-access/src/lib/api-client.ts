@@ -22,10 +22,33 @@ export interface ICatalogBffClient {
     /**
      * @return OK
      */
+    searchProduct(body: SearchProductRequest): Observable<SearchResponse>;
+    /**
+     * Seryjna aktualizacja cen produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommand): Observable<BatchResult>;
+    /**
+     * @return OK
+     */
     getModel(body: GetModelRequest): Observable<ModelDto[]>;
+    /**
+     * @return OK
+     */
+    searchModel(body: SearchModelRequest): Observable<SearchResponse>;
+    /**
+     * @return OK
+     */
+    getCategory(body: GetCategoryRequest): Observable<CategoryDto[]>;
+    /**
+     * @return OK
+     */
+    searchCategory(body: SearchCategoryRequest): Observable<SearchResponse>;
 }
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+})
 export class CatalogBffClient implements ICatalogBffClient {
     private http: HttpClient;
     private baseUrl: string;
@@ -40,7 +63,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * @return OK
      */
     getProduct(body: GetProductRequest): Observable<ProductDto[]> {
-        let url_ = this.baseUrl + "/product";
+        let url_ = this.baseUrl + "/product/getProduct";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -50,12 +73,12 @@ export class CatalogBffClient implements ICatalogBffClient {
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
-                "Content-Type": "*/*",
+                "Content-Type": "application/json",
                 "Accept": "application/json"
             })
         };
 
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
             return this.processGetProduct(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
@@ -77,24 +100,24 @@ export class CatalogBffClient implements ICatalogBffClient {
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductDto[];
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<ProductDto[]>(null as any);
+        return _observableOf(null as any);
     }
 
     /**
      * @return OK
      */
-    getModel(body: GetModelRequest): Observable<ModelDto[]> {
-        let url_ = this.baseUrl + "/model";
+    searchProduct(body: SearchProductRequest): Observable<SearchResponse> {
+        let url_ = this.baseUrl + "/product/searchProduct";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -104,12 +127,121 @@ export class CatalogBffClient implements ICatalogBffClient {
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
-                "Content-Type": "*/*",
+                "Content-Type": "application/json",
                 "Accept": "application/json"
             })
         };
 
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchProduct(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchProduct(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }));
+    }
+
+    protected processSearchProduct(response: HttpResponseBase): Observable<SearchResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Seryjna aktualizacja cen produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommand): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/product/product/batch-set-price";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProductSetPriceMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProductSetPriceMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processProductSetPriceMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getModel(body: GetModelRequest): Observable<ModelDto[]> {
+        let url_ = this.baseUrl + "/model/getModel";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
             return this.processGetModel(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
@@ -131,18 +263,206 @@ export class CatalogBffClient implements ICatalogBffClient {
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ModelDto[];
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<ModelDto[]>(null as any);
+        return _observableOf(null as any);
     }
+
+    /**
+     * @return OK
+     */
+    searchModel(body: SearchModelRequest): Observable<SearchResponse> {
+        let url_ = this.baseUrl + "/model/searchModel";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchModel(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchModel(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }));
+    }
+
+    protected processSearchModel(response: HttpResponseBase): Observable<SearchResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getCategory(body: GetCategoryRequest): Observable<CategoryDto[]> {
+        let url_ = this.baseUrl + "/category/getCategory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCategory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCategory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CategoryDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CategoryDto[]>;
+        }));
+    }
+
+    protected processGetCategory(response: HttpResponseBase): Observable<CategoryDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CategoryDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    searchCategory(body: SearchCategoryRequest): Observable<SearchResponse> {
+        let url_ = this.baseUrl + "/category/searchCategory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchCategory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchCategory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }));
+    }
+
+    protected processSearchCategory(response: HttpResponseBase): Observable<SearchResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface BatchCommandOfProductSetPriceCommand {
+    commands?: ProductSetPriceCommand[];
+
+    [key: string]: any;
+}
+
+export interface BatchResult {
+    jobUuid?: string;
+
+    [key: string]: any;
+}
+
+export interface CategoryDto {
+    uuid: string;
+    name: string;
+    parentUuid: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface GetCategoryRequest {
+    uuids?: string[] | undefined;
+
+    [key: string]: any;
 }
 
 export interface GetModelRequest {
@@ -159,12 +479,73 @@ export interface GetProductRequest {
 
 export interface ModelDto {
     uuid: string;
+    name: string;
 
     [key: string]: any;
 }
 
 export interface ProductDto {
     uuid: string;
+    name: string;
+    categoryUuids: string[];
+    modelUuid: string | undefined;
+    sku: string;
+    price: number;
+    availableFrom: Date | undefined;
+    status: string;
+    available: boolean;
+    ean: string;
+    image: string | undefined;
+    attr_Weight?: string;
+    attr_Color?: string;
+
+    [key: string]: any;
+}
+
+export interface ProductSetPriceCommand {
+    uuid?: string;
+    price?: number;
+
+    [key: string]: any;
+}
+
+export interface SearchCategoryRequest {
+    name?: string | undefined;
+    page?: number;
+    pageSize?: number;
+    sortField?: string | undefined;
+    sortOrder?: number | undefined;
+
+    [key: string]: any;
+}
+
+export interface SearchModelRequest {
+    name?: string | undefined;
+    page?: number;
+    pageSize?: number;
+    sortField?: string | undefined;
+    sortOrder?: number | undefined;
+
+    [key: string]: any;
+}
+
+export interface SearchProductRequest {
+    sku?: string | undefined;
+    name?: string | undefined;
+    category?: string | undefined;
+    price?: number | undefined;
+    availableFrom?: Date | undefined;
+    page?: number;
+    pageSize?: number;
+    sortField?: string | undefined;
+    sortOrder?: number | undefined;
+
+    [key: string]: any;
+}
+
+export interface SearchResponse {
+    uuids?: string[];
+    totalCount?: number;
 
     [key: string]: any;
 }

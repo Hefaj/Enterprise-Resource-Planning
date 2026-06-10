@@ -54,7 +54,7 @@ interface Ripple {
 }
 
 @Component({
-  selector: 'app-login',
+  selector: 'erp-login',
   standalone: true,
   imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, PasswordModule, CheckboxModule, MessageModule],
   template: `
@@ -137,14 +137,15 @@ interface Ripple {
             pButton
             type="submit"
             [loading]="isLoading()"
-            label="EXECUTE LOGIN"
             class="w-full !mt-3 !py-6 !rounded-2xl !bg-cyan-600 hover:!bg-cyan-500 !text-white !border-none !font-black !text-xs !tracking-[0.45em] !shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] !transition-colors active:scale-95"
-          ></button>
+          >
+            EXECUTE LOGIN
+          </button>
         </form>
       </div>
 
       <div
-        class="absolute inset-0 z-50 bg-white pointer-events-none transition-opacity duration-1000"
+        class="absolute inset-0 z-50 bg-black pointer-events-none transition-opacity duration-1000"
         [class.opacity-100]="isWarpFlash()"
         [class.opacity-0]="!isWarpFlash()"
       ></div>
@@ -451,7 +452,8 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.isLoading.set(false);
 
-      if (this.password !== 'cosmic2026') {
+      if (this.password.length === 0) {
+      // if (this.password !== 'cosmic2026') {
         this.loginError.set(true);
         setTimeout(() => this.loginError.set(false), 2500);
       } else {

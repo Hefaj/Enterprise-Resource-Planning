@@ -2,7 +2,13 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter } from '@angular/router';
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
 import { remoteRoutes } from '@erp/catalog/contract';
+import { API_BASE_URL } from '@erp/catalog/data-access';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideBrowserGlobalErrorListeners(), provideRouter(remoteRoutes), sharedPrimeNGConfig],
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(remoteRoutes),
+    sharedPrimeNGConfig,
+    { provide: API_BASE_URL, useValue: 'http://localhost:5149' },
+  ],
 };

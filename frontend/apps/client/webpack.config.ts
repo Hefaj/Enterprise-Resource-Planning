@@ -1,4 +1,5 @@
 import { withModuleFederation } from '@nx/module-federation/angular';
+import { createModuleFederationConfig } from '../module-federation.shared';
 import config from './module-federation.config';
 
 /**
@@ -9,17 +10,9 @@ import config from './module-federation.config';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function (wConfig: any): Promise<any> {
   // Pobieramy konfigurator
-  const mf = await withModuleFederation(config, { dts: false });
+  const mf = await withModuleFederation(createModuleFederationConfig(config), { dts: false });
 
   const customConfig = await mf(wConfig);
-
-  // FIX DLA BŁĘDU: Cannot use 'import.meta' outside a module
-  if (!customConfig.output) {
-    customConfig.output = {};
-  }
-
-  // Wymuszamy na Webpacku serwowanie jako zwykły skrypt JS.
-  customConfig.output.scriptType = 'text/javascript';
 
   return customConfig;
 }

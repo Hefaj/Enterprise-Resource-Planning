@@ -1,5 +1,7 @@
 import { RemoteModuleConfig } from '@erp/client/util';
 
+export type { RemoteModuleConfig };
+
 // Konfiguracja naszych modułów - łatwa do rozszerzania w przyszłości
 export const REMOTE_MODULES_CONFIG: RemoteModuleConfig[] = [
   { id: 'catalog', label: 'Katalog', routePrefix: 'catalog' },

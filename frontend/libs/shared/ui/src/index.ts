@@ -41,4 +41,5 @@ export * from './lib/molecules/erp-action-buttons';
 export * from './lib/organisms/erp-form';
 export * from './lib/organisms/erp-workflow';
 export * from './lib/organisms/erp-table';
+export * from './lib/organisms/erp-modal';
 

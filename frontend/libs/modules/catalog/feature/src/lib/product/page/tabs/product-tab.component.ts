@@ -1,9 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MenuItem } from 'primeng/api';
 import { CatalogProductOrchestrator, CategoryVM, ProductVM } from '@erp/catalog/data-access';
-import { ErpTableComponent, ErpTableBuilder } from '@erp/shared/ui';
+import { ErpTableComponent, ErpTableBuilder, ErpModalService } from '@erp/shared/ui';
 import { ProductViewModel } from '@erp/catalog/util';
 import { ProductListViewStore } from '../product-list-view.store';
+import { ProductModalRegistration, EDIT_SKU_MODAL_ID, EDIT_EAN_MODAL_ID, EDIT_STATUS_MODAL_ID } from '../../modal';
+import { EditSkuCommand } from '../../modal/edit-sku';
+import { EditEanCommand } from '../../modal/edit-ean';
+import { EditStatusCommand } from '../../modal/edit-status';
 
 /**
  * Komponent zakładki produktów.
@@ -36,6 +41,10 @@ import { ProductListViewStore } from '../product-list-view.store';
 export class ProductTabComponent {
   private readonly _catalogProductOrchestrator = inject(CatalogProductOrchestrator);
   private readonly _store = inject(ProductListViewStore);
+  private readonly _modalService = inject(ErpModalService);
+
+  // Rejestracja modali produktowych (wystarczy inject — konstruktor robi register)
+  private readonly _ = inject(ProductModalRegistration);
 
   protected readonly products = computed<ProductViewModel[]>(() => {
     const resultsUuids = this._store.searchResultUuids();
@@ -52,6 +61,49 @@ export class ProductTabComponent {
 
   protected readonly isLoading = this._store.isLoading;
   protected readonly totalRecords = this._store.totalCount;
+
+  // ── Context Menu Items ──
+
+  private readonly _contextMenuItems = computed<MenuItem[]>(() => [
+    {
+      label: 'Edytuj SKU',
+      icon: 'pi pi-tag',
+      command: () => {
+        const products = this._getSelectedProducts();
+        this._modalService.open<EditSkuCommand>(EDIT_SKU_MODAL_ID, {
+          productUuids: products.map(p => p.uuid),
+          products: products.map(p => ({ uuid: p.uuid, sku: p.sku })),
+          sku: '',
+        });
+      },
+    },
+    {
+      label: 'Edytuj EAN',
+      icon: 'pi pi-barcode',
+      command: () => {
+        const products = this._getSelectedProducts();
+        this._modalService.open<EditEanCommand>(EDIT_EAN_MODAL_ID, {
+          productUuids: products.map(p => p.uuid),
+          products: products.map(p => ({ uuid: p.uuid, sku: p.sku, ean: p.ean })),
+          ean: '',
+        });
+      },
+    },
+    {
+      label: 'Zmień status',
+      icon: 'pi pi-sync',
+      command: () => {
+        const products = this._getSelectedProducts();
+        this._modalService.open<EditStatusCommand>(EDIT_STATUS_MODAL_ID, {
+          productUuids: products.map(p => p.uuid),
+          products: products.map(p => ({ uuid: p.uuid, sku: p.sku, status: p.status })),
+          status: null,
+        });
+      },
+    },
+  ]);
+
+  // ── Table Config ──
 
   protected readonly tableConfig = computed(() => {
     return ErpTableBuilder.create((b) => {
@@ -84,8 +136,16 @@ export class ProductTabComponent {
           this._store.updateSort(event.sortField, event.sortOrder);
           this._store.updatePagination(page, event.rows);
         })
+        .setContextMenuItems(this._contextMenuItems)
         .setEmptyMessage('Nie znaleziono produktów')
         .setSize('small');
     });
   });
+
+  // ── Helpers ──
+
+  private _getSelectedProducts(): ProductViewModel[] {
+    const all = this.products();
+    return all.length > 0 ? [all[0]] : [];
+  }
 }

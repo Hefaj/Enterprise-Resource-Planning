@@ -281,12 +281,14 @@ export abstract class BaseOrchestrator<
    * @param commandName Human-readable command name for tracking
    * @param apiCall Function that calls the API and returns Observable<string> (jobUuid)
    * @param aggregateUuid Optional UUID of the affected aggregate
+   * @param queueID Optional identifier of the originating modal (modal ID)
    * @returns The job UUID
    */
   public async executeCommand(
     commandName: string,
     apiCall: () => Observable<string>,
     aggregateUuid?: string,
+    queueID?: string,
   ): Promise<string> {
     try {
       const jobUuid = await firstValueFrom(apiCall());
@@ -297,7 +299,7 @@ export abstract class BaseOrchestrator<
         timestamp: new Date(),
       };
 
-      this.jobService.addJob(jobUuid, meta);
+      this.jobService.addJob(jobUuid, queueID, meta);
 
       return jobUuid;
     } catch (err) {

@@ -106,6 +106,28 @@ export interface JobEntry extends JobMeta {
   status: JobStatus;
 }
 
+export interface JobRecord {
+  queueID?: string;
+  trackingID?: string;
+  command?: any | null;
+  result?: any | null;
+  executeAfter?: string;
+  expireOn?: string;
+  isComplete?: boolean;
+  serviceId?: number;
+  userId?: string;
+  commandJson?: string;
+  executionTimes?: number;
+  resultJson?: string | null;
+  resultType?: string | null;
+  errors?: string | null;
+  successes?: string | null;
+  exceptions?: string | null;
+  unRead?: boolean;
+  clientId?: string | null;
+  uiMetadata?: string | null;
+}
+
 // ────────────────────────────────────────────────────────────────
 // Generic DTO constraint
 // ────────────────────────────────────────────────────────────────

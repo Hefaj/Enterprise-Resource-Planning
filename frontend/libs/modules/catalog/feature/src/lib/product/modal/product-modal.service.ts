@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { ErpModalService } from '@erp/shared/ui';
-import { EDIT_SKU_MODAL } from './edit-sku';
-import { EDIT_EAN_MODAL } from './edit-ean';
-import { EDIT_STATUS_MODAL } from './edit-status';
+import { EditSkuModalDefinition } from './edit-sku';
+import { EditEanModalDefinition } from './edit-ean';
+import { EditStatusModalDefinition } from './edit-status';
+import { SetPriceModalDefinition } from './set-price';
 
 /**
  * Serwis rejestrujący wszystkie modale produktowe w globalnym ErpModalService.
@@ -30,9 +31,10 @@ export class ProductModalRegistration {
     const modalService = inject(ErpModalService);
 
     modalService.register(
-      EDIT_SKU_MODAL,
-      EDIT_EAN_MODAL,
-      EDIT_STATUS_MODAL,
+      inject(EditSkuModalDefinition),
+      inject(EditEanModalDefinition),
+      inject(EditStatusModalDefinition),
+      inject(SetPriceModalDefinition),
     );
   }
 }

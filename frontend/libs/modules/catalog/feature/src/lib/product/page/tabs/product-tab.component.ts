@@ -10,12 +10,15 @@ import {
   EDIT_SKU_MODAL_ID,
   EDIT_EAN_MODAL_ID,
   EDIT_STATUS_MODAL_ID,
+  SET_PRICE_MODAL_ID,
   EditSkuCommand,
   EditSkuMetadata,
   EditEanCommand,
   EditEanMetadata,
   EditStatusCommand,
-  EditStatusMetadata
+  EditStatusMetadata,
+  SetPriceCommand,
+  SetPriceMetadata
 } from '../../modal';
 
 /**
@@ -106,6 +109,17 @@ export class ProductTabComponent {
           productUuids: products.map(p => p.uuid),
           products: products.map(p => ({ uuid: p.uuid, sku: p.sku, status: p.status })),
           status: null,
+        });
+      },
+    },
+    {
+      label: 'Ustaw cenę',
+      icon: 'pi pi-money-bill',
+      command: () => {
+        const products = this._getSelectedProducts();
+        this._modalService.open<SetPriceCommand, SetPriceMetadata>(SET_PRICE_MODAL_ID, {
+          products: products.map(p => ({ uuid: p.uuid, sku: p.sku, price: p.price })),
+          price: null,
         });
       },
     },

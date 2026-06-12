@@ -9,6 +9,7 @@ export type {
   JobMeta,
   JobEntry,
   JobStatus,
+  JobRecord,
   HasUuid,
   ResolvedDeps,
   SharedSearchResponse,

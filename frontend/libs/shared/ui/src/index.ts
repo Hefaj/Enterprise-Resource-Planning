@@ -28,6 +28,7 @@ export * from './lib/atoms/erp-panel-menu';
 export * from './lib/atoms/erp-select';
 export * from './lib/atoms/erp-tabs';
 export * from './lib/atoms/erp-splitter';
+export * from './lib/atoms/erp-stepper';
 export * from './lib/atoms/erp-toggle-switch';
 export * from './lib/atoms/erp-user-menu';
 

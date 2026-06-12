@@ -6,8 +6,12 @@ export const remoteRoutes: Route[] = [
     path: '',
     data: { breadcrumb: 'Dms' },
     canActivate: [erpAuthGuard],
-    loadComponent: () => import('@erp/dms/feature').then((m) => m.RemoteEntry),
     children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'document',
+      },
       {
         path: 'document',
         data: { breadcrumb: 'Dokumenty' },

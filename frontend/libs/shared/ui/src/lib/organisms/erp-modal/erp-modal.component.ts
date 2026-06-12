@@ -32,10 +32,10 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     <p-dialog
       [(visible)]="visible"
       [modal]="true"
-      [draggable]="false"
+      [draggable]="!maximized()"
       [resizable]="false"
       [closable]="false"
-      [styleClass]="'erp-modal ' + _sizeClass"
+      [styleClass]="'erp-modal ' + _sizeClass + (maximized() ? ' erp-modal--maximized' : '')"
       [dismissableMask]="true"
       (onHide)="handleCancel()"
     >
@@ -82,14 +82,24 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
             </div>
           }
 
-          <button
-            class="erp-modal-header__close"
-            type="button"
-            (click)="handleCancel()"
-            aria-label="Zamknij modal"
-          >
-            <i class="pi pi-times"></i>
-          </button>
+          <div class="erp-modal-header__actions">
+            <button
+              class="erp-modal-header__maximize"
+              type="button"
+              (click)="maximized.set(!maximized())"
+              [aria-label]="maximized() ? 'Zminimalizuj modal' : 'Zmaksymalizuj modal'"
+            >
+              <i [class]="maximized() ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"></i>
+            </button>
+            <button
+              class="erp-modal-header__close"
+              type="button"
+              (click)="handleCancel()"
+              aria-label="Zamknij modal"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
         </div>
       </ng-template>
 
@@ -162,29 +172,37 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     ::ng-deep {
       .erp-modal.p-dialog {
         border-radius: 12px;
-        border: 1px solid var(--border-color, rgba(226, 232, 240, 0.6));
-        background: var(--surface-card, #ffffff);
+        border: 1px solid var(--p-surface-200);
+        background: var(--p-surface-0);
         box-shadow:
           0 25px 50px -12px rgba(0, 0, 0, 0.25),
           0 0 0 1px rgba(0, 0, 0, 0.03);
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       .erp-modal .p-dialog-header {
         padding: 0;
-        border-bottom: 1px solid var(--border-color, #e2e8f0);
+        border-bottom: 1px solid var(--p-surface-200);
         background: transparent;
+        flex-shrink: 0;
       }
 
       .erp-modal .p-dialog-content {
         padding: 0;
         background: transparent;
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        overflow-y: hidden;
       }
 
       .erp-modal .p-dialog-footer {
         padding: 0;
-        border-top: 1px solid var(--border-color, #e2e8f0);
+        border-top: 1px solid var(--p-surface-200);
         background: transparent;
+        flex-shrink: 0;
       }
 
       .erp-modal .p-dialog-mask {
@@ -192,12 +210,45 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
         background: rgba(0, 0, 0, 0.4);
       }
 
-      /* ── Size variants ── */
-      .erp-modal--sm.p-dialog { width: 400px; max-width: 95vw; }
-      .erp-modal--md.p-dialog { width: 600px; max-width: 95vw; }
-      .erp-modal--lg.p-dialog { width: 800px; max-width: 95vw; }
-      .erp-modal--xl.p-dialog { width: 1100px; max-width: 95vw; }
+      /* ── Dark mode structural overrides ── */
+      .dark .erp-modal.p-dialog,
+      [data-theme="dark"] .erp-modal.p-dialog {
+        background: var(--p-surface-900, #18181b);
+        border-color: var(--p-surface-800, #27272a);
+        color: var(--p-surface-100, #f4f4f5);
+      }
+
+      .dark .erp-modal .p-dialog-header,
+      [data-theme="dark"] .erp-modal .p-dialog-header,
+      .dark .erp-modal .p-dialog-footer,
+      [data-theme="dark"] .erp-modal .p-dialog-footer {
+        border-color: var(--p-surface-800, #27272a);
+      }
+
+      .dark .erp-modal .p-dialog-mask,
+      [data-theme="dark"] .erp-modal .p-dialog-mask {
+        background: rgba(0, 0, 0, 0.6);
+      }
+
+      /* ── Size variants with rigid heights ── */
+      .erp-modal--sm.p-dialog { width: 400px; max-width: 95vw; height: 400px; }
+      .erp-modal--md.p-dialog { width: 600px; max-width: 95vw; height: 500px; }
+      .erp-modal--lg.p-dialog { width: 800px; max-width: 95vw; height: 600px; }
+      .erp-modal--xl.p-dialog { width: 1100px; max-width: 95vw; height: 700px; }
       .erp-modal--full.p-dialog { width: 95vw; height: 90vh; }
+
+      /* Fullscreen maximized mode */
+      .erp-modal--maximized.p-dialog {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        top: 0 !important;
+        left: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        transform: none !important;
+      }
     }
 
     /* ── Header ── */
@@ -206,6 +257,13 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       align-items: center;
       padding: 1.25rem 1.5rem;
       gap: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      cursor: grab;
+
+      &:active {
+        cursor: grabbing;
+      }
     }
 
     .erp-modal-header__left {
@@ -216,7 +274,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       margin: 0;
       font-size: 1.125rem;
       font-weight: 600;
-      color: var(--text-color, #1e293b);
+      color: var(--p-surface-800);
       line-height: 1.4;
       display: flex;
       align-items: center;
@@ -224,14 +282,14 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     }
 
     .erp-modal-header__separator {
-      color: var(--text-muted, #94a3b8);
+      color: var(--p-surface-400);
       font-weight: 400;
       font-size: 0.875rem;
       user-select: none;
     }
 
     .erp-modal-header__segment--muted {
-      color: var(--text-muted, #64748b);
+      color: var(--p-surface-500);
       font-weight: 500;
     }
 
@@ -243,6 +301,15 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       gap: 0;
     }
 
+    .erp-modal-header__actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .erp-modal-header__maximize,
     .erp-modal-header__close {
       flex-shrink: 0;
       display: flex;
@@ -253,14 +320,13 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       border-radius: 6px;
       border: none;
       background: transparent;
-      color: var(--text-muted, #64748b);
+      color: var(--p-surface-500);
       cursor: pointer;
       transition: all 0.15s ease;
-      margin-left: auto;
 
       &:hover {
-        background: var(--surface-hover, #f1f5f9);
-        color: var(--text-color, #1e293b);
+        background: var(--p-surface-100);
+        color: var(--p-surface-900);
       }
 
       i {
@@ -285,8 +351,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       border-radius: 50%;
       font-size: 0.75rem;
       font-weight: 600;
-      border: 2px solid var(--border-color, #cbd5e1);
-      color: var(--text-muted, #94a3b8);
+      border: 2px solid var(--p-surface-200);
+      color: var(--p-surface-400);
       background: transparent;
       transition: all 0.2s ease;
 
@@ -298,53 +364,60 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     .erp-modal-step-indicator__label {
       font-size: 0.8125rem;
       font-weight: 500;
-      color: var(--text-muted, #94a3b8);
+      color: var(--p-surface-400);
       transition: color 0.2s ease;
       white-space: nowrap;
     }
 
     .erp-modal-step-indicator--active {
       .erp-modal-step-indicator__dot {
-        border-color: var(--primary-color, #3b82f6);
-        color: var(--primary-color, #3b82f6);
-        background: var(--primary-color-alpha, rgba(59, 130, 246, 0.08));
+        border-color: var(--p-primary-500);
+        color: var(--p-primary-500);
+        background: rgba(59, 130, 246, 0.08);
       }
 
       .erp-modal-step-indicator__label {
-        color: var(--primary-color, #3b82f6);
+        color: var(--p-primary-500);
         font-weight: 600;
       }
     }
 
     .erp-modal-step-indicator--completed {
       .erp-modal-step-indicator__dot {
-        border-color: var(--green-500, #22c55e);
-        background: var(--green-500, #22c55e);
+        border-color: var(--p-green-500);
+        background: var(--p-green-500);
         color: #fff;
       }
 
       .erp-modal-step-indicator__label {
-        color: var(--text-color, #475569);
+        color: var(--p-surface-700);
       }
     }
 
     .erp-modal-step-separator {
       width: 2rem;
       height: 2px;
-      background: var(--border-color, #e2e8f0);
+      background: var(--p-surface-200);
       transition: background 0.2s ease;
     }
 
     .erp-modal-step-separator--completed {
-      background: var(--green-500, #22c55e);
+      background: var(--p-green-500);
     }
 
     /* ── Body ── */
     .erp-modal-body {
       padding: 1.5rem;
+      flex: 1 1 auto;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .erp-modal-body__content {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
       animation: erpModalFadeIn 0.2s cubic-bezier(0, 0, 0.2, 1) forwards;
     }
 
@@ -365,6 +438,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       align-items: center;
       justify-content: space-between;
       padding: 1rem 1.5rem;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .erp-modal-footer__left {
@@ -378,6 +453,61 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       align-items: center;
       gap: 0.5rem;
     }
+
+    /* ── Dark mode overrides for internal classes ── */
+    :host-context(.dark),
+    :host-context([data-theme="dark"]) {
+      .erp-modal-header__title {
+        color: var(--p-surface-100, #f4f4f5);
+      }
+      .erp-modal-header__segment--muted {
+        color: var(--p-surface-400, #a1a1aa);
+      }
+      .erp-modal-header__separator {
+        color: var(--p-surface-500, #71717a);
+      }
+      .erp-modal-header__maximize,
+      .erp-modal-header__close {
+        color: var(--p-surface-400, #a1a1aa);
+        &:hover {
+          background: var(--p-surface-800, #27272a);
+          color: var(--p-surface-100, #f4f4f5);
+        }
+      }
+      .erp-modal-step-indicator__dot {
+        border-color: var(--p-surface-700, #3f3f46);
+        color: var(--p-surface-400, #a1a1aa);
+      }
+      .erp-modal-step-indicator__label {
+        color: var(--p-surface-400, #a1a1aa);
+      }
+      .erp-modal-step-indicator--active {
+        .erp-modal-step-indicator__dot {
+          border-color: var(--p-primary-500, #3b82f6);
+          color: var(--p-primary-500, #3b82f6);
+          background: rgba(59, 130, 246, 0.15);
+        }
+        .erp-modal-step-indicator__label {
+          color: var(--p-primary-500, #3b82f6);
+        }
+      }
+      .erp-modal-step-indicator--completed {
+        .erp-modal-step-indicator__dot {
+          border-color: var(--p-green-500, #22c55e);
+          background: var(--p-green-500, #22c55e);
+          color: #fff;
+        }
+        .erp-modal-step-indicator__label {
+          color: var(--p-surface-200, #e4e4e7);
+        }
+      }
+      .erp-modal-step-separator {
+        background: var(--p-surface-700, #3f3f46);
+      }
+      .erp-modal-step-separator--completed {
+        background: var(--p-green-500, #22c55e);
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -386,6 +516,9 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
 
   /** Widoczność modalu — zarządzana przez serwis. */
   public visible = signal(true);
+
+  /** Stan maksymalizacji modalu. */
+  public maximized = signal(false);
 
   /** Aktualny indeks kroku. */
   public currentStep = signal(0);

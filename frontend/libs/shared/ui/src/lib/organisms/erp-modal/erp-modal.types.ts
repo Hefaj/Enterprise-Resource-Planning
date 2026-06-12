@@ -5,12 +5,12 @@ import { MaybeSignal } from '../../base/erp-signal-utils';
  * Konfiguracja pojedynczego kroku modalu.
  * Każdy step to oddzielny Angular component renderowany przez ngComponentOutlet.
  */
-export interface ErpModalStep<TCommand = any> {
+export interface ErpModalStep<TCommand = any, TMetadata = any> {
   /** Etykieta wyświetlana w stepperze. */
   label: MaybeSignal<string>;
   /** Komponent Angular renderowany w tym kroku. */
   component: Type<any>;
-  /** Dodatkowe inputy przekazywane do komponentu (oprócz command i registerCanGoNext). */
+  /** Dodatkowe inputy przekazywane do komponentu (oprócz command, metadata i registerCanGoNext). */
   inputs?: Record<string, any>;
 }
 
@@ -23,13 +23,15 @@ export type ErpModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
  * Główna konfiguracja modalu.
  * @template TCommand Typ commanda (obiektu danych) edytowanego przez stepy.
  */
-export interface ErpModalConfig<TCommand = any> {
-  /** Tytuł wyświetlany w nagłówku modalu. */
-  title: MaybeSignal<string>;
+export interface ErpModalConfig<TCommand = any, TMetadata = any> {
+  /** Tytuł wyświetlany w nagłówku modalu (jako pojedyncza nazwa lub chlebki/breadcrumb). */
+  title: MaybeSignal<string | string[]>;
   /** Lista kroków modalu (min. 1). */
-  steps: ErpModalStep<TCommand>[];
+  steps: ErpModalStep<TCommand, TMetadata>[];
   /** Początkowy stan commanda — opcjonalny dla modali frontend-only. */
   command?: TCommand;
+  /** Dodatkowe opcjonalne metadane przekazywane do kroków. */
+  metadata?: TMetadata;
   /** Rozmiar modalu. Domyślnie 'md'. */
   size?: MaybeSignal<ErpModalSize>;
 
@@ -45,7 +47,7 @@ export interface ErpModalConfig<TCommand = any> {
 
   // ── Callbacki ──
   /** Callback wywoływany po kliknięciu Zapisz. Może być async — modal pokaże loading. */
-  onSave?: (command: TCommand) => void | Promise<void>;
+  onSave?: (command: TCommand, metadata?: TMetadata) => void | Promise<void>;
   /** Callback wywoływany po zamknięciu modalu (X lub Anuluj). */
   onCancel?: () => void;
 
@@ -57,11 +59,13 @@ export interface ErpModalConfig<TCommand = any> {
  * Referencja do otwartego modalu zwracana przez ErpModalService.
  * Pozwala programistycznie zamknąć modal i odczytać stan commanda.
  */
-export interface ErpModalRef<TCommand = any> {
+export interface ErpModalRef<TCommand = any, TMetadata = any> {
   /** Zamyka modal programistycznie. */
   close: () => void;
   /** WritableSignal z aktualnym stanem commanda. */
   command: WritableSignal<TCommand>;
+  /** WritableSignal z aktualnym stanem metadanych. */
+  metadata: WritableSignal<TMetadata>;
 }
 
 /**
@@ -86,9 +90,9 @@ export interface ErpModalRef<TCommand = any> {
  * };
  * ```
  */
-export interface ErpModalDefinition<TCommand = any> {
+export interface ErpModalDefinition<TCommand = any, TMetadata = any> {
   /** Unikalny identyfikator modalu (np. 'catalog.product.edit-sku'). */
   id: string;
-  /** Funkcja budująca ErpModalConfig na podstawie commanda. */
-  build: (command: TCommand) => ErpModalConfig<TCommand>;
+  /** Funkcja budująca ErpModalConfig na podstawie commanda i metadanych. */
+  build: (command: TCommand, metadata?: TMetadata) => ErpModalConfig<TCommand, TMetadata>;
 }

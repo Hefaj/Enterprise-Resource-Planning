@@ -44,7 +44,14 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       <ng-template #header>
         <div class="erp-modal-header">
           <div class="erp-modal-header__left">
-            <h2 class="erp-modal-header__title">{{ _title }}</h2>
+            <h2 class="erp-modal-header__title">
+              @for (item of _title; track $index) {
+                <span [class.erp-modal-header__segment--muted]="!$last">{{ item }}</span>
+                @if (!$last) {
+                  <span class="erp-modal-header__separator">></span>
+                }
+              }
+            </h2>
           </div>
 
           @if (_showStepper) {
@@ -212,6 +219,21 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       font-weight: 600;
       color: var(--text-color, #1e293b);
       line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .erp-modal-header__separator {
+      color: var(--text-muted, #94a3b8);
+      font-weight: 400;
+      font-size: 0.875rem;
+      user-select: none;
+    }
+
+    .erp-modal-header__segment--muted {
+      color: var(--text-muted, #64748b);
+      font-weight: 500;
     }
 
     .erp-modal-header__stepper {
@@ -360,8 +382,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ErpModalComponent<TCommand = any> {
-  public config = input.required<ErpModalConfig<TCommand>>();
+export class ErpModalComponent<TCommand = any, TMetadata = any> {
+  public config = input.required<ErpModalConfig<TCommand, TMetadata>>();
 
   /** Widoczność modalu — zarządzana przez serwis. */
   public visible = signal(true);
@@ -375,12 +397,19 @@ export class ErpModalComponent<TCommand = any> {
   /** WritableSignal przechowujący stan commanda. */
   public commandSignal!: WritableSignal<TCommand>;
 
+  /** WritableSignal przechowujący stan metadanych. */
+  public metadataSignal!: WritableSignal<TMetadata>;
+
   /** Mapa canGoNext Signal per step index. */
   private stepCanGoNextMap = new Map<number, Signal<boolean>>();
 
   // ── Computed properties ──
 
-  protected title = computed(() => unwrapSignal(this.config().title) || '');
+  protected title = computed<string[]>(() => {
+    const raw = unwrapSignal(this.config().title);
+    if (!raw) return [];
+    return Array.isArray(raw) ? raw : [raw];
+  });
 
   protected showStepper = computed(() => this.config().steps.length > 1);
 
@@ -418,10 +447,12 @@ export class ErpModalComponent<TCommand = any> {
     return stepSignal ? stepSignal() : true;
   });
 
-  /** Inicjalizuje commandSignal z konfiguracji. Wywoływane przez serwis. */
+  /** Inicjalizuje commandSignal i metadataSignal z konfiguracji. Wywoływane przez serwis. */
   public initCommand(): void {
     const cmd = this.config().command;
     this.commandSignal = signal(cmd as TCommand) as WritableSignal<TCommand>;
+    const meta = this.config().metadata;
+    this.metadataSignal = signal(meta as TMetadata) as WritableSignal<TMetadata>;
   }
 
   /** Zwraca inputy przekazywane do step component via ngComponentOutlet. */
@@ -429,6 +460,7 @@ export class ErpModalComponent<TCommand = any> {
     const step = this.config().steps[stepIndex];
     const baseInputs: Record<string, any> = {
       command: this.commandSignal,
+      metadata: this.metadataSignal,
       registerCanGoNext: (canGoNextSignal: Signal<boolean>) => {
         this.stepCanGoNextMap.set(stepIndex, canGoNextSignal);
       },
@@ -468,7 +500,10 @@ export class ErpModalComponent<TCommand = any> {
 
     const onSave = this.config().onSave;
     if (onSave) {
-      const result = onSave(this.commandSignal?.() as TCommand);
+      const result = onSave(
+        this.commandSignal?.() as TCommand,
+        this.metadataSignal?.() as TMetadata
+      );
       if (result instanceof Promise) {
         this.internalLoading.set(true);
         try {

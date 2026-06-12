@@ -33,7 +33,7 @@ export class ErpModalService {
   private readonly injector = inject(EnvironmentInjector);
 
   /** Globalny rejestr definicji modali. */
-  private readonly _registry = new Map<string, ErpModalDefinition<any>>();
+  private readonly _registry = new Map<string, ErpModalDefinition<any, any>>();
 
   // ── Rejestracja ──
 
@@ -51,7 +51,7 @@ export class ErpModalService {
    * }
    * ```
    */
-  public register(...definitions: ErpModalDefinition<any>[]): void {
+  public register(...definitions: ErpModalDefinition<any, any>[]): void {
     for (const def of definitions) {
       if (this._registry.has(def.id)) {
         console.warn(`[ErpModalService] Modal "${def.id}" is already registered. Overwriting.`);
@@ -63,22 +63,30 @@ export class ErpModalService {
   // ── Otwieranie ──
 
   /**
-   * Otwiera modal z pełną konfiguracją (tryb bezpośredni).
+   * Otwira modal z pełną konfiguracją (tryb bezpośredni).
    */
-  public open<TCommand = any>(config: ErpModalConfig<TCommand>): ErpModalRef<TCommand>;
+  public open<TCommand = any, TMetadata = any>(
+    config: ErpModalConfig<TCommand, TMetadata>
+  ): ErpModalRef<TCommand, TMetadata>;
 
   /**
-   * Otwiera zarejestrowany modal po identyfikatorze (tryb rejestrowy).
+   * Otwira zarejestrowany modal po identyfikatorze (tryb rejestrowy).
    * @param id Identyfikator modalu zarejestrowanego przez `register()`
    * @param command Początkowy stan commanda
+   * @param metadata Opcjonalne metadane przekazywane do modalu
    */
-  public open<TCommand = any>(id: string, command: TCommand): ErpModalRef<TCommand>;
+  public open<TCommand = any, TMetadata = any>(
+    id: string,
+    command: TCommand,
+    metadata?: TMetadata
+  ): ErpModalRef<TCommand, TMetadata>;
 
-  public open<TCommand = any>(
-    configOrId: ErpModalConfig<TCommand> | string,
-    command?: TCommand
-  ): ErpModalRef<TCommand> {
-    let config: ErpModalConfig<TCommand>;
+  public open<TCommand = any, TMetadata = any>(
+    configOrId: ErpModalConfig<TCommand, TMetadata> | string,
+    command?: TCommand,
+    metadata?: TMetadata
+  ): ErpModalRef<TCommand, TMetadata> {
+    let config: ErpModalConfig<TCommand, TMetadata>;
 
     if (typeof configOrId === 'string') {
       const definition = this._registry.get(configOrId);
@@ -88,7 +96,7 @@ export class ErpModalService {
           `Available: [${Array.from(this._registry.keys()).join(', ')}]`
         );
       }
-      config = definition.build(command!);
+      config = definition.build(command!, metadata);
     } else {
       config = configOrId;
     }
@@ -98,14 +106,16 @@ export class ErpModalService {
 
   // ── Internals ──
 
-  private _openInternal<TCommand>(config: ErpModalConfig<TCommand>): ErpModalRef<TCommand> {
+  private _openInternal<TCommand, TMetadata>(
+    config: ErpModalConfig<TCommand, TMetadata>
+  ): ErpModalRef<TCommand, TMetadata> {
     // Tworzenie komponentu dynamicznie
     const componentRef = createComponent(
       ErpModalComponent,
       {
         environmentInjector: this.injector,
       }
-    ) as unknown as ComponentRef<ErpModalComponent<TCommand>>;
+    ) as unknown as ComponentRef<ErpModalComponent<TCommand, TMetadata>>;
 
     // Ustawienie configu
     componentRef.setInput('config', config);
@@ -113,7 +123,7 @@ export class ErpModalService {
     // Podpięcie do ApplicationRef (detekcja zmian)
     this.appRef.attachView(componentRef.hostView);
 
-    // Inicjalizacja commanda
+    // Inicjalizacja commanda i metadanych
     componentRef.instance.initCommand();
 
     // Dodanie do DOM
@@ -132,18 +142,19 @@ export class ErpModalService {
     checkAndCleanup();
 
     // Zwracamy referencję
-    const ref: ErpModalRef<TCommand> = {
+    const ref: ErpModalRef<TCommand, TMetadata> = {
       close: () => {
         componentRef.instance.visible.set(false);
       },
       command: componentRef.instance.commandSignal,
+      metadata: componentRef.instance.metadataSignal,
     };
 
     return ref;
   }
 
-  private _destroyModal<TCommand>(
-    componentRef: ComponentRef<ErpModalComponent<TCommand>>,
+  private _destroyModal<TCommand, TMetadata>(
+    componentRef: ComponentRef<ErpModalComponent<TCommand, TMetadata>>,
     domElement: HTMLElement
   ): void {
     setTimeout(() => {

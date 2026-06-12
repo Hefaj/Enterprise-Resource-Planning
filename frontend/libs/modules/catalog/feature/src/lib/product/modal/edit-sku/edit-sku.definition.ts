@@ -4,11 +4,14 @@ import { EditSkuStepComponent } from './edit-sku.step';
 
 export const EDIT_SKU_MODAL_ID = 'catalog.product.edit-sku';
 
-export const EDIT_SKU_MODAL: ErpModalDefinition<EditSkuCommand> = {
+export interface EditSkuMetadata {}
+
+export const EDIT_SKU_MODAL: ErpModalDefinition<EditSkuCommand, EditSkuMetadata> = {
   id: EDIT_SKU_MODAL_ID,
-  build: (command) => ErpModalBuilder.modal<EditSkuCommand>(b => b
-    .setTitle('Edycja kodu SKU')
+  build: (command, metadata) => ErpModalBuilder.modal<EditSkuCommand, EditSkuMetadata>(b => b
+    .setTitle(['Produkty', 'Edycja kodu SKU'])
     .setCommand(command)
+    .setMetadata(metadata)
     .addStep('Kod SKU', EditSkuStepComponent)
     .setSaveLabel('Zapisz SKU')
     .setOnSave(async (cmd) => {

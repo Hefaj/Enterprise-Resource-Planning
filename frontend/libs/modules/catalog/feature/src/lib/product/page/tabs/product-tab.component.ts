@@ -5,10 +5,18 @@ import { CatalogProductOrchestrator, CategoryVM, ProductVM } from '@erp/catalog/
 import { ErpTableComponent, ErpTableBuilder, ErpModalService } from '@erp/shared/ui';
 import { ProductViewModel } from '@erp/catalog/util';
 import { ProductListViewStore } from '../product-list-view.store';
-import { ProductModalRegistration, EDIT_SKU_MODAL_ID, EDIT_EAN_MODAL_ID, EDIT_STATUS_MODAL_ID } from '../../modal';
-import { EditSkuCommand } from '../../modal/edit-sku';
-import { EditEanCommand } from '../../modal/edit-ean';
-import { EditStatusCommand } from '../../modal/edit-status';
+import {
+  ProductModalRegistration,
+  EDIT_SKU_MODAL_ID,
+  EDIT_EAN_MODAL_ID,
+  EDIT_STATUS_MODAL_ID,
+  EditSkuCommand,
+  EditSkuMetadata,
+  EditEanCommand,
+  EditEanMetadata,
+  EditStatusCommand,
+  EditStatusMetadata
+} from '../../modal';
 
 /**
  * Komponent zakładki produktów.
@@ -70,7 +78,7 @@ export class ProductTabComponent {
       icon: 'pi pi-tag',
       command: () => {
         const products = this._getSelectedProducts();
-        this._modalService.open<EditSkuCommand>(EDIT_SKU_MODAL_ID, {
+        this._modalService.open<EditSkuCommand, EditSkuMetadata>(EDIT_SKU_MODAL_ID, {
           productUuids: products.map(p => p.uuid),
           products: products.map(p => ({ uuid: p.uuid, sku: p.sku })),
           sku: '',
@@ -82,7 +90,7 @@ export class ProductTabComponent {
       icon: 'pi pi-barcode',
       command: () => {
         const products = this._getSelectedProducts();
-        this._modalService.open<EditEanCommand>(EDIT_EAN_MODAL_ID, {
+        this._modalService.open<EditEanCommand, EditEanMetadata>(EDIT_EAN_MODAL_ID, {
           productUuids: products.map(p => p.uuid),
           products: products.map(p => ({ uuid: p.uuid, sku: p.sku, ean: p.ean })),
           ean: '',
@@ -94,7 +102,7 @@ export class ProductTabComponent {
       icon: 'pi pi-sync',
       command: () => {
         const products = this._getSelectedProducts();
-        this._modalService.open<EditStatusCommand>(EDIT_STATUS_MODAL_ID, {
+        this._modalService.open<EditStatusCommand, EditStatusMetadata>(EDIT_STATUS_MODAL_ID, {
           productUuids: products.map(p => p.uuid),
           products: products.map(p => ({ uuid: p.uuid, sku: p.sku, status: p.status })),
           status: null,

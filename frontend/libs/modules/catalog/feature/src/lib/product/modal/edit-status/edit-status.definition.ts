@@ -4,11 +4,14 @@ import { EditStatusStepComponent } from './edit-status.step';
 
 export const EDIT_STATUS_MODAL_ID = 'catalog.product.edit-status';
 
-export const EDIT_STATUS_MODAL: ErpModalDefinition<EditStatusCommand> = {
+export interface EditStatusMetadata {}
+
+export const EDIT_STATUS_MODAL: ErpModalDefinition<EditStatusCommand, EditStatusMetadata> = {
   id: EDIT_STATUS_MODAL_ID,
-  build: (command) => ErpModalBuilder.modal<EditStatusCommand>(b => b
-    .setTitle('Zmiana statusu produktu')
+  build: (command, metadata) => ErpModalBuilder.modal<EditStatusCommand, EditStatusMetadata>(b => b
+    .setTitle(['Produkty', 'Zmiana statusu'])
     .setCommand(command)
+    .setMetadata(metadata)
     .addStep('Nowy status', EditStatusStepComponent)
     .setSaveLabel('Zmień status')
     .setOnSave(async (cmd) => {

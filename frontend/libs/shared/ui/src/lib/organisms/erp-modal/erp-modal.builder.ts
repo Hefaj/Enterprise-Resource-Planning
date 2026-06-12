@@ -18,7 +18,7 @@ import { ErpModalConfig, ErpModalSize, ErpModalStep } from './erp-modal.types';
  * );
  * ```
  */
-export class ErpModalBuilder<TCommand = any> extends ErpBaseBuilder<ErpModalConfig<TCommand>> {
+export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBuilder<ErpModalConfig<TCommand, TMetadata>> {
 
   constructor() {
     super();
@@ -26,8 +26,8 @@ export class ErpModalBuilder<TCommand = any> extends ErpBaseBuilder<ErpModalConf
     this._data.showFooter = true;
   }
 
-  /** Ustawia tytuł nagłówka modalu. */
-  public setTitle(title: MaybeSignal<string>): this {
+  /** Ustawia tytuł nagłówka modalu (jako pojedynczy ciąg lub tablicę breadcrumbów). */
+  public setTitle(title: MaybeSignal<string | string[]>): this {
     this._data.title = title;
     return this;
   }
@@ -35,6 +35,12 @@ export class ErpModalBuilder<TCommand = any> extends ErpBaseBuilder<ErpModalConf
   /** Ustawia początkowy stan commanda. Opcjonalny dla modali frontend-only. */
   public setCommand(command: TCommand): this {
     this._data.command = command;
+    return this;
+  }
+
+  /** Ustawia początkowy stan metadanych. */
+  public setMetadata(metadata?: TMetadata): this {
+    this._data.metadata = metadata;
     return this;
   }
 
@@ -55,12 +61,12 @@ export class ErpModalBuilder<TCommand = any> extends ErpBaseBuilder<ErpModalConf
     component: Type<TComp>,
     inputs?: Record<string, any>
   ): this {
-    const step: ErpModalStep<TCommand> = {
+    const step: ErpModalStep<TCommand, TMetadata> = {
       label,
       component,
       inputs,
     };
-    (this._data.steps as ErpModalStep<TCommand>[]).push(step);
+    (this._data.steps as ErpModalStep<TCommand, TMetadata>[]).push(step);
     return this;
   }
 
@@ -118,10 +124,10 @@ export class ErpModalBuilder<TCommand = any> extends ErpBaseBuilder<ErpModalConf
    * );
    * ```
    */
-  public static modal<TCommand = any>(
-    configure?: (builder: ErpModalBuilder<TCommand>) => void
-  ): ErpModalConfig<TCommand> {
-    const builder = new ErpModalBuilder<TCommand>();
+  public static modal<TCommand = any, TMetadata = any>(
+    configure?: (builder: ErpModalBuilder<TCommand, TMetadata>) => void
+  ): ErpModalConfig<TCommand, TMetadata> {
+    const builder = new ErpModalBuilder<TCommand, TMetadata>();
     configure?.(builder);
     return builder.build();
   }

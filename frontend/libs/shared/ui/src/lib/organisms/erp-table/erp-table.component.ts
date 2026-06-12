@@ -414,7 +414,6 @@ const DEFAULT_COL_WIDTH_PX = 150;
     }
     :host-context(.dark) ::ng-deep .p-datatable .p-datatable-tbody > tr > td,
     :host-context([data-theme="dark"]) ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
-      background: var(--p-surface-950);
       color: var(--p-surface-300);
       border-color: var(--p-surface-800);
     }

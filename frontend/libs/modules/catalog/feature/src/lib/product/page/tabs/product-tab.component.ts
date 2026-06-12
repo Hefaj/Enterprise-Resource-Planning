@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenuItem } from 'primeng/api';
 import { CatalogProductOrchestrator, CategoryVM, ProductVM } from '@erp/catalog/data-access';
@@ -72,64 +72,74 @@ export class ProductTabComponent {
 
   protected readonly isLoading = this._store.isLoading;
   protected readonly totalRecords = this._store.totalCount;
+  protected readonly selectedProducts = signal<ProductViewModel[]>([]);
 
   // ── Context Menu Items ──
 
-  private readonly _contextMenuItems = computed<MenuItem[]>(() => [
-    {
-      label: 'Edytuj SKU',
-      icon: 'pi pi-tag',
-      command: () => {
-        const products = this._getSelectedProducts();
-        this._modalService.open<EditSkuCommand, EditSkuMetadata>(EDIT_SKU_MODAL_ID, {
-          productUuids: products.map(p => p.uuid),
-          products: products.map(p => ({ uuid: p.uuid, sku: p.sku })),
-          sku: '',
-        });
-      },
-    },
-    {
-      label: 'Edytuj EAN',
-      icon: 'pi pi-barcode',
-      command: () => {
-        const products = this._getSelectedProducts();
-        this._modalService.open<EditEanCommand, EditEanMetadata>(EDIT_EAN_MODAL_ID, {
-          productUuids: products.map(p => p.uuid),
-          products: products.map(p => ({ uuid: p.uuid, sku: p.sku, ean: p.ean })),
-          ean: '',
-        });
-      },
-    },
-    {
-      label: 'Zmień status',
-      icon: 'pi pi-sync',
-      command: () => {
-        const products = this._getSelectedProducts();
-        this._modalService.open<EditStatusCommand, EditStatusMetadata>(EDIT_STATUS_MODAL_ID, {
-          productUuids: products.map(p => p.uuid),
-          products: products.map(p => ({ uuid: p.uuid, sku: p.sku, status: p.status })),
-          status: null,
-        });
-      },
-    },
-    {
-      label: 'Ustaw cenę',
-      icon: 'pi pi-money-bill',
-      command: () => {
-        const products = this._getSelectedProducts();
-        this._modalService.open<SetPriceCommand, SetPriceMetadata>(SET_PRICE_MODAL_ID, {
-          products: products.map(p => ({ uuid: p.uuid, sku: p.sku, price: p.price })),
-          price: null,
-        });
-      },
-    },
-  ]);
+  private readonly _contextMenuItems = computed<MenuItem[]>(() => {
+    const actions: MenuItem[] = [];
+
+    const products = this._getSelectedProducts();
+    if (products.length > 0) {
+      
+          actions.push({
+            label: 'Edytuj SKU',
+            icon: 'pi pi-tag',
+            command: () => {
+              this._modalService.open<EditSkuCommand, EditSkuMetadata>(EDIT_SKU_MODAL_ID, {
+                productUuids: products.map(p => p.uuid),
+                products: products.map(p => ({ uuid: p.uuid, sku: p.sku })),
+                sku: '',
+              });
+            },
+          });
+          
+          actions.push({
+            label: 'Edytuj EAN',
+            icon: 'pi pi-barcode',
+            command: () => {
+              this._modalService.open<EditEanCommand, EditEanMetadata>(EDIT_EAN_MODAL_ID, {
+                productUuids: products.map(p => p.uuid),
+                products: products.map(p => ({ uuid: p.uuid, sku: p.sku, ean: p.ean })),
+                ean: '',
+              });
+            },
+          });
+      
+          actions.push({
+            label: 'Zmień status',
+            icon: 'pi pi-sync',
+            command: () => {
+              this._modalService.open<EditStatusCommand, EditStatusMetadata>(EDIT_STATUS_MODAL_ID, {
+                productUuids: products.map(p => p.uuid),
+                products: products.map(p => ({ uuid: p.uuid, sku: p.sku, status: p.status })),
+                status: null,
+              });
+            },
+          });
+      
+          actions.push({
+            label: 'Ustaw cenę',
+            icon: 'pi pi-money-bill',
+            command: (event) => {
+              this._modalService.open<SetPriceCommand, SetPriceMetadata>(SET_PRICE_MODAL_ID, {
+                products: products.map(p => ({ uuid: p.uuid, sku: p.sku, price: p.price })),
+                price: null,
+              });
+            },
+          });
+    }
+
+    return actions;
+  });
 
   // ── Table Config ──
 
   protected readonly tableConfig = computed(() => {
     return ErpTableBuilder.create((b) => {
       b.setData(this.products)
+        .setSelectionMode('multiple')
+        .setSelection(this.selectedProducts)
         .setLoading(this.isLoading)
         .setTotalRecords(this.totalRecords)
         .addColumn('sku', 'SKU', { sortable: true, width: '130px' })
@@ -167,7 +177,6 @@ export class ProductTabComponent {
   // ── Helpers ──
 
   private _getSelectedProducts(): ProductViewModel[] {
-    const all = this.products();
-    return all.length > 0 ? [all[0]] : [];
+    return this.selectedProducts();
   }
 }

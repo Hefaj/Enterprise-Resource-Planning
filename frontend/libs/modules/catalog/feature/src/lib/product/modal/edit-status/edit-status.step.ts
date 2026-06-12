@@ -11,6 +11,7 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { EditStatusCommand, ProductStatus } from './edit-status.types';
+import { EditStatusMetadata } from './edit-status.definition';
 
 const STATUS_OPTIONS: { label: string; value: ProductStatus; severity: string; icon: string }[] = [
   { label: 'Aktywny', value: 'Aktywny', severity: 'success', icon: 'pi pi-check-circle' },
@@ -114,6 +115,7 @@ const STATUS_OPTIONS: { label: string; value: ProductStatus; severity: string; i
 })
 export class EditStatusStepComponent {
   public command = input.required<WritableSignal<EditStatusCommand>>();
+  public metadata = input.required<WritableSignal<EditStatusMetadata>>();
   public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
 
   protected readonly statusOptions = STATUS_OPTIONS;

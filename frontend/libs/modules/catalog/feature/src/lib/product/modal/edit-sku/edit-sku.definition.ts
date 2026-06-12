@@ -14,7 +14,8 @@ export const EDIT_SKU_MODAL: ErpModalDefinition<EditSkuCommand, EditSkuMetadata>
     .setMetadata(metadata)
     .addStep('Kod SKU', EditSkuStepComponent)
     .setSaveLabel('Zapisz SKU')
-    .setOnSave(async (cmd) => {
+    .setSize('xl')
+    .setOnSave(async (cmd, meta) => {
       for (let i = 0; i < cmd.products.length; i++) {
         const sku = cmd.products.length === 1 ? cmd.sku : `${cmd.sku}-${i + 1}`;
         // TODO: zamienić na wywołanie API

@@ -14,7 +14,7 @@ export const EDIT_EAN_MODAL: ErpModalDefinition<EditEanCommand, EditEanMetadata>
     .setMetadata(metadata)
     .addStep('Kod EAN', EditEanStepComponent)
     .setSaveLabel('Zapisz EAN')
-    .setOnSave(async (cmd) => {
+    .setOnSave(async (cmd, meta) => {
       for (const product of cmd.products) {
         // TODO: zamienić na wywołanie API
         await new Promise<void>((r) => setTimeout(r, 400));

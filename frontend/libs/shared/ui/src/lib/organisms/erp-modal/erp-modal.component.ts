@@ -19,7 +19,6 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   imports: [CommonModule, DialogModule, ButtonModule],
   template: `
     @let _title = title();
-    @let _visible = visible();
     @let _steps = config().steps;
     @let _currentStep = currentStep();
     @let _showStepper = showStepper();

@@ -11,6 +11,7 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { EditEanCommand } from './edit-ean.types';
+import { EditEanMetadata } from './edit-ean.definition';
 
 /**
  * Step komponent do edycji kodu EAN produktu.
@@ -90,6 +91,7 @@ import { EditEanCommand } from './edit-ean.types';
 })
 export class EditEanStepComponent {
   public command = input.required<WritableSignal<EditEanCommand>>();
+  public metadata = input.required<WritableSignal<EditEanMetadata>>();
   public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
 
   protected eanControl = new FormControl('', [

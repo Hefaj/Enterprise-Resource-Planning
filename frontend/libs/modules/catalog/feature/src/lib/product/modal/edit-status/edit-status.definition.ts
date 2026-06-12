@@ -14,7 +14,7 @@ export const EDIT_STATUS_MODAL: ErpModalDefinition<EditStatusCommand, EditStatus
     .setMetadata(metadata)
     .addStep('Nowy status', EditStatusStepComponent)
     .setSaveLabel('Zmień status')
-    .setOnSave(async (cmd) => {
+    .setOnSave(async (cmd, meta) => {
       for (const product of cmd.products) {
         // TODO: zamienić na wywołanie API
         await new Promise<void>((r) => setTimeout(r, 300));

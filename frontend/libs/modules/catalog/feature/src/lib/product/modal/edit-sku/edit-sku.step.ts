@@ -11,6 +11,7 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { EditSkuCommand } from './edit-sku.types';
+import { EditSkuMetadata } from './edit-sku.definition';
 
 /**
  * Step komponent do edycji kodu SKU produktu.
@@ -108,6 +109,7 @@ import { EditSkuCommand } from './edit-sku.types';
 })
 export class EditSkuStepComponent {
   public command = input.required<WritableSignal<EditSkuCommand>>();
+  public metadata = input.required<WritableSignal<EditSkuMetadata>>();
   public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
 
   protected skuControl = new FormControl('', [

@@ -8,13 +8,14 @@ import { ErpModalConfig, ErpModalSize, ErpModalStep } from './erp-modal.types';
  *
  * @example
  * ```ts
- * const config = ErpModalBuilder.create<EditProductCommand>(b => b
+ * const config = ErpModalBuilder.modal<EditProductCommand, EditProductMetadata>(b => b
  *   .setTitle('Edycja produktu')
  *   .setCommand({ name: '', price: 0 })
+ *   .setMetadata({ categoryId: '123' })
  *   .addStep('Nazwa', EditProductNameStepComponent)
  *   .addStep('Cena', EditProductPriceStepComponent)
  *   .setSaveLabel('Zatwierdź')
- *   .setOnSave(async (cmd) => await this.productService.update(cmd))
+ *   .setOnSave(async (cmd, meta) => await this.productService.update(cmd, meta))
  * );
  * ```
  */
@@ -95,7 +96,7 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
   }
 
   /** Ustawia callback wywoływany po kliknięciu Zapisz. Może być async. */
-  public setOnSave(callback: (command: TCommand) => void | Promise<void>): this {
+  public setOnSave(callback: (command: TCommand, metadata?: TMetadata) => void | Promise<void>): this {
     this._data.onSave = callback;
     return this;
   }
@@ -116,11 +117,12 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
    * Statyczna metoda tworząca konfigurację modalu z generycznym TCommand.
    * @example
    * ```ts
-   * const config = ErpModalBuilder.modal<EditProductCommand>(b => b
+   * const config = ErpModalBuilder.modal<EditProductCommand, EditProductMetadata>(b => b
    *   .setTitle('Edycja produktu')
    *   .setCommand({ name: '' })
+   *   .setMetadata({ categoryId: 'abc' })
    *   .addStep('Dane', EditProductStepComponent)
-   *   .setOnSave(async (cmd) => await api.save(cmd))
+   *   .setOnSave(async (cmd, meta) => await api.save(cmd, meta))
    * );
    * ```
    */

@@ -1,4 +1,4 @@
-import { RemoteModuleConfig } from '@erp/client/contract';
+import { RemoteModuleConfig } from './remote-module-config.interface';
 import { ErpNavigationItem } from '@erp/shared/data-access';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 import { EntryMenuModule } from './entry-menu-module';

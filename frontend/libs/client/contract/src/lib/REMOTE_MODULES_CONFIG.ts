@@ -1,8 +1,5 @@
-export interface RemoteModuleConfig {
-  id: string;
-  label: string;
-  routePrefix: string; // Ścieżka w Angular Routerze Hosta (np. 'catalog')
-}
+import { RemoteModuleConfig } from '@erp/client/util';
+
 // Konfiguracja naszych modułów - łatwa do rozszerzania w przyszłości
 export const REMOTE_MODULES_CONFIG: RemoteModuleConfig[] = [
   { id: 'catalog', label: 'Katalog', routePrefix: 'catalog' },

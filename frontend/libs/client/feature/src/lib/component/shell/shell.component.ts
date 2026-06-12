@@ -6,6 +6,7 @@ import { MenuItem } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 import { ErpAuthService } from '@erp/shared/auth';
+import { AppSettingsService } from '@erp/client/util';
 
 @Component({
   selector: 'erp-router-wrapper',
@@ -32,6 +33,7 @@ export class ShellLayoutComponent {
   private _breadcrumbService = inject(ErpBreadcrumbService);
   private _authService = inject(ErpAuthService);
   private _router = inject(Router);
+  private _settingsService = inject(AppSettingsService);
 
   protected $userMenuConfig = computed(() => {
     return {

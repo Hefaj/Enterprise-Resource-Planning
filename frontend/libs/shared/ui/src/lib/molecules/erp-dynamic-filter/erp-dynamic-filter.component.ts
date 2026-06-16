@@ -1,23 +1,25 @@
 import { ChangeDetectionStrategy, Component, input, output, computed } from '@angular/core';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
+import { TranslocoModule } from '@jsverse/transloco';
 import { ErpDynamicFilterConfig } from './erp-dynamic-filter.types';
 import { ErpButtonComponent, ErpButtonBuilder } from '../../atoms/erp-button';
 
 import { ErpDynamicFilterBuilder } from './erp-dynamic-filter.builder';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { SHARED_KEYS } from '../../translation';
 
 export { ErpDynamicFilterBuilder };
 
 @Component({
   selector: 'erp-dynamic-filter',
   standalone: true,
-  imports: [CommonModule, ErpButtonComponent],
+  imports: [CommonModule, ErpButtonComponent, TranslocoModule],
   template: `
     <div class="flex flex-col gap-6">
       @for (item of items(); track $index) {
         <div class="flex flex-col gap-2">
           @if (item.resolvedLabel) {
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ item.resolvedLabel }}</label>
+            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ item.resolvedLabel | transloco }}</label>
           }
           <ng-container *ngComponentOutlet="item.component; inputs: item.inputs" />
         </div>
@@ -52,7 +54,7 @@ export class ErpDynamicFilterComponent {
   protected submitBtnConfig = computed(() =>
     ErpButtonBuilder.create((b) =>
       b
-        .setLabel(unwrapSignal(this.config().submitButtonLabel) || 'Filtruj')
+        .setLabel(unwrapSignal(this.config().submitButtonLabel) || SHARED_KEYS.filters.submit)
         .setSeverity('info')
         .setOnClick(() => this.onSubmit()),
     ),

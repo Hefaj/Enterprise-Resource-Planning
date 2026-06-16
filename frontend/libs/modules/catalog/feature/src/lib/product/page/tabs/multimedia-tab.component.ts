@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpEmptyCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui';
+import { PRODUCT_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-multimedia-tab',
@@ -51,18 +52,18 @@ export class MultimediaTabComponent {
   protected readonly section1Config = ErpEmptyCardBuilder.create((b) =>
     b
       .setIcon('pi pi-image')
-      .setTitle('Galeria zdjęć')
-      .setSubtitle('Zdjęcia produktu')
-      .setDescription('Zarządzanie zdjęciami głównymi, wariantami oraz kolejnością wyświetlania w sklepie.')
+      .setTitle(PRODUCT_KEYS.base.multimedia.gallery.title)
+      .setSubtitle(PRODUCT_KEYS.base.multimedia.gallery.subtitle)
+      .setDescription(PRODUCT_KEYS.base.multimedia.gallery.description)
       .setShowPulse(false)
   );
 
   protected readonly section2Config = ErpEmptyCardBuilder.create((b) =>
     b
       .setIcon('pi pi-video')
-      .setTitle('Materiały wideo i 3D')
-      .setSubtitle('Wideo oraz modele')
-      .setDescription('Dodawanie filmów promocyjnych, instruktażowych oraz wizualizacji 3D i AR.')
+      .setTitle(PRODUCT_KEYS.base.multimedia.video.title)
+      .setSubtitle(PRODUCT_KEYS.base.multimedia.video.subtitle)
+      .setDescription(PRODUCT_KEYS.base.multimedia.video.description)
       .setShowPulse(false)
   );
 }

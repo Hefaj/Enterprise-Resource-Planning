@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpEmptyCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui';
+import { PRODUCT_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-manual-exclusion-tab',
@@ -35,9 +36,9 @@ export class ManualExclusionTabComponent {
   protected readonly sectionConfig = ErpEmptyCardBuilder.create((b) =>
     b
       .setIcon('pi pi-eye-slash')
-      .setTitle('Ręczne wyłączenie ze sprzedaży')
-      .setSubtitle('Status widoczności oferty')
-      .setDescription('Umożliwia tymczasowe lub stałe zablokowanie produktu w kanałach sprzedaży bez usuwania jego definicji.')
+      .setTitle(PRODUCT_KEYS.base.exclusion.title)
+      .setSubtitle(PRODUCT_KEYS.base.exclusion.subtitle)
+      .setDescription(PRODUCT_KEYS.base.exclusion.description)
       .setShowPulse(false)
   );
 }

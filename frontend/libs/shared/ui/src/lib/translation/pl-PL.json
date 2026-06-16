@@ -23,5 +23,8 @@
     "cancel": "Anuluj",
     "next": "Dalej",
     "back": "Wstecz"
+  },
+  "filters": {
+    "submit": "Filtruj"
   }
 }

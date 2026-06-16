@@ -4,6 +4,7 @@ import { ErpTabsComponent, ErpTabsBuilder } from '@erp/shared/ui';
 import { noop } from 'rxjs';
 import { ManualExclusionTabComponent } from './manual-exclusion-tab.component';
 import { DeliveryOptionsTabComponent } from './delivery-options-tab.component';
+import { PRODUCT_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-sales-offer-tab',
@@ -30,11 +31,11 @@ import { DeliveryOptionsTabComponent } from './delivery-options-tab.component';
 export class SalesOfferTabComponent {
   protected readonly subTabsConfig = ErpTabsBuilder.create((b) =>
     b
-      .addTab('Ręczne wyłączenie ze sprzedaży', 'exclusion', {
+      .addTab(PRODUCT_KEYS.base.salesOffer.tabs.exclusion, 'exclusion', {
         component: ManualExclusionTabComponent,
         icon: 'pi pi-eye-slash'
       })
-      .addTab('Opcje dostawy produktu', 'delivery', {
+      .addTab(PRODUCT_KEYS.base.salesOffer.tabs.delivery, 'delivery', {
         component: DeliveryOptionsTabComponent,
         icon: 'pi pi-truck'
       })

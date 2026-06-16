@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpEmptyCardComponent, ErpEmptyCardBuilder } from '@erp/shared/ui';
+import { PRODUCT_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-delivery-options-tab',
@@ -51,18 +52,18 @@ export class DeliveryOptionsTabComponent {
   protected readonly section1Config = ErpEmptyCardBuilder.create((b) =>
     b
       .setIcon('pi pi-truck')
-      .setTitle('Metody wysyłki')
-      .setSubtitle('Metody dostawy')
-      .setDescription('Definiowanie dostępnych kurierów, punktów odbioru oraz progów darmowej dostawy dla danego produktu.')
+      .setTitle(PRODUCT_KEYS.base.delivery.shipping.title)
+      .setSubtitle(PRODUCT_KEYS.base.delivery.shipping.subtitle)
+      .setDescription(PRODUCT_KEYS.base.delivery.shipping.description)
       .setShowPulse(false)
   );
 
   protected readonly section2Config = ErpEmptyCardBuilder.create((b) =>
     b
       .setIcon('pi pi-box')
-      .setTitle('Warunki pakowania')
-      .setSubtitle('Gabaryty i opakowanie')
-      .setDescription('Określanie gabarytów paczki, ograniczeń dotyczących łączenia w jedno opakowanie i wymogów logistycznych.')
+      .setTitle(PRODUCT_KEYS.base.delivery.packing.title)
+      .setSubtitle(PRODUCT_KEYS.base.delivery.packing.subtitle)
+      .setDescription(PRODUCT_KEYS.base.delivery.packing.description)
       .setShowPulse(false)
   );
 }

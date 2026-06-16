@@ -5,13 +5,14 @@ import { noop } from 'rxjs';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
 import { AutoFocusModule } from 'primeng/autofocus';
+import { TranslocoModule } from '@jsverse/transloco';
 import { ErpInputTextConfig } from './erp-input-text.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-input-text',
   standalone: true,
-  imports: [InputTextModule, ReactiveFormsModule, FloatLabelModule, MessageModule, AutoFocusModule],
+  imports: [InputTextModule, ReactiveFormsModule, FloatLabelModule, MessageModule, AutoFocusModule, TranslocoModule],
   template: `
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
@@ -37,7 +38,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           [class.p-inputtext-sm]="_size === 'small'"
           [class.p-inputtext-lg]="_size === 'large'"
         />
-        <label for="on_label">{{ _placeholder || '' }}</label>
+        <label for="on_label">{{ (_placeholder | transloco) || '' }}</label>
       </p-floatlabel>
       @if (_hint) {
         <small id="hint">{{ _hint }}</small>

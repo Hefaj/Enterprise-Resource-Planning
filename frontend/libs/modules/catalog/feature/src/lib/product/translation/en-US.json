@@ -6,6 +6,24 @@
       "salesOffer": "Sales Offer",
       "warranties": "Warranties"
     },
+    "filters": {
+      "sku": {
+        "label": "SKU Code",
+        "placeholder": "Enter SKU code"
+      },
+      "name": {
+        "label": "Product name",
+        "placeholder": "Enter product name"
+      },
+      "price": {
+        "label": "Max net price",
+        "placeholder": "Maximum price (USD)"
+      },
+      "availableFrom": {
+        "label": "Available from",
+        "placeholder": "Select date"
+      }
+    },
     "table": {
       "columns": {
         "sku": "SKU",
@@ -18,6 +36,57 @@
         "available": "Available"
       },
       "emptyMessage": "No products found"
+    },
+    "multimedia": {
+      "gallery": {
+        "title": "Photo gallery",
+        "subtitle": "Product pictures",
+        "description": "Manage main pictures, variants and display order in the store."
+      },
+      "video": {
+        "title": "Video & 3D materials",
+        "subtitle": "Videos and models",
+        "description": "Add promotional/instructional videos and 3D/AR visualizations."
+      }
+    },
+    "delivery": {
+      "shipping": {
+        "title": "Shipping methods",
+        "subtitle": "Delivery methods",
+        "description": "Define available couriers, pick-up points and free delivery thresholds for a product."
+      },
+      "packing": {
+        "title": "Packing conditions",
+        "subtitle": "Dimensions and packing",
+        "description": "Specify package sizes, grouping restrictions, and logistical requirements."
+      }
+    },
+    "exclusion": {
+      "title": "Manual sale exclusion",
+      "subtitle": "Offer visibility status",
+      "description": "Temporarily or permanently disable a product in sales channels without deleting its definition."
+    },
+    "salesOffer": {
+      "tabs": {
+        "exclusion": "Manual sale exclusion",
+        "delivery": "Product delivery options"
+      }
+    },
+    "warranty": {
+      "terms": {
+        "title": "Warranty terms",
+        "subtitle": "Terms and coverage",
+        "description": "Configure warranty types (manufacturer, seller), duration periods, and coverage scope."
+      },
+      "service": {
+        "title": "Claim procedures",
+        "subtitle": "Service and complaints",
+        "description": "Manage service addresses, RMA request forms, and damaged goods return procedures."
+      },
+      "steps": {
+        "terms": "Step 1: Terms",
+        "service": "Step 2: Service"
+      }
     }
   },
   "enums": {

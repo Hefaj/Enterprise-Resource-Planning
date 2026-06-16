@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpEmptyCardComponent, ErpEmptyCardBuilder, ErpStepperComponent, ErpStepperBuilder } from '@erp/shared/ui';
+import { PRODUCT_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-warranty-tab',
@@ -15,18 +16,18 @@ export class WarrantyTabComponent {
   protected readonly section1Config = ErpEmptyCardBuilder.create((b) =>
     b
       .setIcon('pi pi-verified')
-      .setTitle('Warunki gwarancji')
-      .setSubtitle('Warunki i okres ochrony')
-      .setDescription('Konfiguracja typów gwarancji (producenta, sprzedawcy), okresów trwania oraz zakresu ochrony.')
+      .setTitle(PRODUCT_KEYS.base.warranty.terms.title)
+      .setSubtitle(PRODUCT_KEYS.base.warranty.terms.subtitle)
+      .setDescription(PRODUCT_KEYS.base.warranty.terms.description)
       .setShowPulse(false)
   );
 
   protected readonly section2Config = ErpEmptyCardBuilder.create((b) =>
     b
       .setIcon('pi pi-wrench')
-      .setTitle('Procedury reklamacyjne')
-      .setSubtitle('Serwis i reklamacje')
-      .setDescription('Zarządzanie adresami serwisowymi, formularzami zgłoszeń RMA i procedurami zwrotów towarów uszkodzonych.')
+      .setTitle(PRODUCT_KEYS.base.warranty.service.title)
+      .setSubtitle(PRODUCT_KEYS.base.warranty.service.subtitle)
+      .setDescription(PRODUCT_KEYS.base.warranty.service.description)
       .setShowPulse(false)
   );
 
@@ -34,11 +35,11 @@ export class WarrantyTabComponent {
     b
       .setInitialValue(1)
       .setLinear(false)
-      .addStep('Krok 1: Warunki', 1, {
+      .addStep(PRODUCT_KEYS.base.warranty.steps.terms, 1, {
         component: ErpEmptyCardComponent,
         config: { config: this.section1Config },
       })
-      .addStep('Krok 2: Serwis', 2, {
+      .addStep(PRODUCT_KEYS.base.warranty.steps.service, 2, {
         component: ErpEmptyCardComponent,
         config: { config: this.section2Config },
       })

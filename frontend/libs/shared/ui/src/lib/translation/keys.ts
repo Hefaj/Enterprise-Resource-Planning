@@ -23,5 +23,8 @@ export const SHARED_KEYS = {
     cancel: 'shared.modal.cancel',
     next: 'shared.modal.next',
     back: 'shared.modal.back'
+  },
+  filters: {
+    submit: 'shared.filters.submit'
   }
 } as const;

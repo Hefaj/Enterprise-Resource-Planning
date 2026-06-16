@@ -6,6 +6,24 @@
       "salesOffer": "Oferta sprzedaży",
       "warranties": "Gwarancje"
     },
+    "filters": {
+      "sku": {
+        "label": "Kod SKU",
+        "placeholder": "Wpisz kod SKU"
+      },
+      "name": {
+        "label": "Nazwa produktu",
+        "placeholder": "Wpisz nazwę produktu"
+      },
+      "price": {
+        "label": "Cena netto do",
+        "placeholder": "Maksymalna cena (PLN)"
+      },
+      "availableFrom": {
+        "label": "Dostępny od",
+        "placeholder": "Wybierz datę"
+      }
+    },
     "table": {
       "columns": {
         "sku": "SKU",
@@ -18,6 +36,57 @@
         "available": "Dostępny"
       },
       "emptyMessage": "Nie znaleziono produktów"
+    },
+    "multimedia": {
+      "gallery": {
+        "title": "Galeria zdjęć",
+        "subtitle": "Zdjęcia produktu",
+        "description": "Zarządzanie zdjęciami głównymi, wariantami oraz kolejnością wyświetlania w sklepie."
+      },
+      "video": {
+        "title": "Materiały wideo i 3D",
+        "subtitle": "Wideo oraz modele",
+        "description": "Dodawanie filmów promocyjnych, instruktażowych oraz wizualizacji 3D i AR."
+      }
+    },
+    "delivery": {
+      "shipping": {
+        "title": "Metody wysyłki",
+        "subtitle": "Metody dostawy",
+        "description": "Definiowanie dostępnych kurierów, punktów odbioru oraz progów darmowej dostawy dla danego produktu."
+      },
+      "packing": {
+        "title": "Warunki pakowania",
+        "subtitle": "Gabaryty i opakowanie",
+        "description": "Określanie gabarytów paczki, ograniczeń dotyczących łączenia w jedno opakowanie i wymogów logistycznych."
+      }
+    },
+    "exclusion": {
+      "title": "Ręczne wyłączenie ze sprzedaży",
+      "subtitle": "Status widoczności oferty",
+      "description": "Umożliwia tymczasowe lub stałe zablokowanie produktu w kanałach sprzedaży bez usuwania jego definicji."
+    },
+    "salesOffer": {
+      "tabs": {
+        "exclusion": "Ręczne wyłączenie ze sprzedaży",
+        "delivery": "Opcje dostawy produktu"
+      }
+    },
+    "warranty": {
+      "terms": {
+        "title": "Warunki gwarancji",
+        "subtitle": "Warunki i okres ochrony",
+        "description": "Konfiguracja typów gwarancji (producenta, sprzedawcy), okresów trwania oraz zakresu ochrony."
+      },
+      "service": {
+        "title": "Procedury reklamacyjne",
+        "subtitle": "Serwis i reklamacje",
+        "description": "Zarządzanie adresami serwisowymi, formularzami zgłoszeń RMA i procedurami zwrotów towarów uszkodzonych."
+      },
+      "steps": {
+        "terms": "Krok 1: Warunki",
+        "service": "Krok 2: Serwis"
+      }
     }
   },
   "enums": {

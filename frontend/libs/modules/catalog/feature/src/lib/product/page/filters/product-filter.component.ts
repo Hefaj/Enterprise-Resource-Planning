@@ -9,6 +9,7 @@ import {
   ErpDatePickerBuilder
 } from '@erp/shared/ui';
 import { ProductListViewStore } from '../product-list-view.store';
+import { PRODUCT_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-product-filter',
@@ -32,20 +33,20 @@ export class ProductFilterComponent implements OnInit {
   });
 
   protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {
-    b.addFilter('Kod SKU', ErpInputTextComponent, {
-      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Wpisz kod SKU').setFluid(true)),
+    b.addFilter(PRODUCT_KEYS.base.filters.sku.label, ErpInputTextComponent, {
+      config: ErpInputTextBuilder.create((c) => c.setPlaceholder(PRODUCT_KEYS.base.filters.sku.placeholder).setFluid(true)),
       control: this.filtersForm.controls.sku,
     });
-    b.addFilter('Nazwa produktu', ErpInputTextComponent, {
-      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Wpisz nazwę produktu').setFluid(true)),
+    b.addFilter(PRODUCT_KEYS.base.filters.name.label, ErpInputTextComponent, {
+      config: ErpInputTextBuilder.create((c) => c.setPlaceholder(PRODUCT_KEYS.base.filters.name.placeholder).setFluid(true)),
       control: this.filtersForm.controls.name,
     });
-    b.addFilter('Cena netto do', ErpInputTextComponent, {
-      config: ErpInputTextBuilder.create((c) => c.setPlaceholder('Maksymalna cena (PLN)').setFluid(true)),
+    b.addFilter(PRODUCT_KEYS.base.filters.price.label, ErpInputTextComponent, {
+      config: ErpInputTextBuilder.create((c) => c.setPlaceholder(PRODUCT_KEYS.base.filters.price.placeholder).setFluid(true)),
       control: this.filtersForm.controls.price,
     });
-    b.addFilter('Dostępny od', ErpDatePickerComponent, {
-      config: ErpDatePickerBuilder.create((c) => c.setPlaceholder('Wybierz datę')),
+    b.addFilter(PRODUCT_KEYS.base.filters.availableFrom.label, ErpDatePickerComponent, {
+      config: ErpDatePickerBuilder.create((c) => c.setPlaceholder(PRODUCT_KEYS.base.filters.availableFrom.placeholder)),
       control: this.filtersForm.controls.availableFrom,
     });
     b.setOnSubmit(() => this.onSubmitFilters());

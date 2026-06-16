@@ -3,6 +3,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormContr
 import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
+import { TranslocoModule } from '@jsverse/transloco';
 import { noop } from 'rxjs';
 import { ErpDatePickerConfig } from './erp-datepicker.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
@@ -10,7 +11,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 @Component({
   selector: 'erp-datepicker',
   standalone: true,
-  imports: [DatePickerModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
+  imports: [DatePickerModule, ReactiveFormsModule, FloatLabelModule, MessageModule, TranslocoModule],
   template: `
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
@@ -38,7 +39,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           (onBlur)="onTouched()"
           [appendTo]="'body'"
         />
-        <label>{{ _placeholder || '' }}</label>
+        <label>{{ (_placeholder | transloco) || '' }}</label>
       </p-floatlabel>
 
       @if (_hint) {

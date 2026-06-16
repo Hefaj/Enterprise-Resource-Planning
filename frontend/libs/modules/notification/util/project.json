@@ -1,0 +1,20 @@
+{
+  "name": "notification-util",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "frontend/libs/modules/notification/util/src",
+  "prefix": "erp",
+  "projectType": "library",
+  "tags": ["scope:notification", "type:util"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../../../coverage/frontend/libs/modules/notification/util"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

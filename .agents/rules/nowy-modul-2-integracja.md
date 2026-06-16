@@ -129,7 +129,7 @@ Dodaj wpis do tablicy `REMOTE_MODULES_CONFIG`:
 
 Plik: `eslint.config.mjs` (w katalogu głównym workspace)
 
-Dodaj nową regułę domenową w sekcji `depConstraints` (w bloku `--- 1. ZASADY DOMENOWE (SCOPE) ---`):
+1. Dodaj nową regułę domenową w sekcji `depConstraints` (w bloku `--- 1. ZASADY DOMENOWE (SCOPE) ---`):
 
 ```js
 {
@@ -139,6 +139,16 @@ Dodaj nową regułę domenową w sekcji `depConstraints` (w bloku `--- 1. ZASADY
 ```
 
 Umieść ją **przed** regułą `scope:shared`.
+
+2. Upewnij się, że w konfiguracji reguły `@nx/enforce-module-boundaries` w sekcji `allow` dodano regułę pozwalającą na importowanie pliku shared module federation bez wywoływania błędów lintera (`'^.*module-federation\\.shared$'`):
+
+```js
+allow: [
+  '^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$',
+  '^.*module-federation\\.shared$',
+  '@ngrx/.*'
+],
+```
 
 ---
 
@@ -154,13 +164,20 @@ Dodaj aliasy w `compilerOptions.paths`:
 "@erp/MODULE_NAME/util": ["frontend/libs/modules/MODULE_NAME/util/src/index.ts"]
 ```
 
-> **UWAGA**: Generator NX powinien dodać te wpisy automatycznie. **Zweryfikuj** po generacji, czy wszystkie 5 aliasów jest obecnych.
+> **UWAGA**: Generator NX dodaje te wpisy automatycznie, ale często z krótkimi, niepoprawnymi nazwami (np. `"contract": [...]` zamiast `"@erp/MODULE_NAME/contract": [...]`).
+> **Musisz ręcznie zweryfikować te wpisy w `tsconfig.base.json`** i poprawić je na format z prefiksem `@erp/MODULE_NAME/`.
+> Dodatkowo generator aplikacji remote może dodać automatyczny alias `"MODULE_NAME/Routes"` — należy go bezwzględnie usunąć z `tsconfig.base.json`.
 
 ---
 
 ## Krok 8: Weryfikacja
 
+> **UWAGA**: Zanim uruchomisz komendy weryfikacji, zaleca się zresetować cache NX daemon za pomocą `npx nx reset`. Zapobiegnie to problemom typu "Could not find project MODULE_NAME" z powodu nieodświeżonego grafu projektów.
+
 ```bash
+# 0. Reset cache NX
+npx nx reset
+
 # 1. Graph zależności
 npx nx graph
 

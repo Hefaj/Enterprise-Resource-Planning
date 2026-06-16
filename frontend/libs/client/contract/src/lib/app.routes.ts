@@ -48,6 +48,10 @@ export const appRoutes: Route[] = [
         path: 'task-management',
         loadChildren: () => loadRemote<typeof import('@erp/task-management/contract')>('task-management/contract').then((m) => m!.remoteRoutes),
       },
+      {
+        path: 'notification',
+        loadChildren: () => loadRemote<typeof import('@erp/notification/contract')>('notification/contract').then((m) => m!.remoteRoutes),
+      },
     ],
   },
   {

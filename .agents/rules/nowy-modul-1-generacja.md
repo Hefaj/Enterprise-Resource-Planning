@@ -85,6 +85,19 @@ npx nx generate @nx/angular:remote \
 
 > Jeśli `@nx/angular:remote` nie działa — wygeneruj zwykłą aplikację i skonfiguruj MF ręcznie (Krok 3).
 
+### Krok 2.1: Czyszczenie kodu boilerplate i e2e
+
+Generator `@nx/angular:remote` tworzy nieużywane lokalne pliki routingu i e2e. Ponieważ cała logika modułu jest przechowywana w dedykowanych bibliotekach (`contract`, `feature` itp.), musisz je usunąć, aby zachować czystość repozytorium:
+
+```bash
+# 1. Usuń wygenerowany projekt e2e (nieużywany w monorepo)
+rm -rf frontend/apps/modules/MODULE_NAME-e2e
+
+# 2. Usuń lokalne pliki routingu i komponentów remote-entry z aplikacji
+rm -rf frontend/apps/modules/MODULE_NAME/src/app/app.routes.ts \
+       frontend/apps/modules/MODULE_NAME/src/app/remote-entry
+```
+
 ---
 
 ## Krok 3: Skonfiguruj pliki aplikacji
@@ -214,6 +227,38 @@ export default [
   },
   { files: ['**/*.html'], rules: {} },
 ];
+```
+
+### 3.10 `tsconfig.app.json`
+
+Ponieważ usunęliśmy wygenerowany plik `entry.routes.ts` z katalogu `remote-entry`, musisz wyczyścić pole `"files"` w konfiguracji tsconfig aplikacji i dostosować wersję docelową standardu ES (`"es2022"`):
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/out-tsc",
+    "types": [],
+    "target": "es2022"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "vite.config.ts",
+    "vite.config.mts",
+    "vitest.config.ts",
+    "vitest.config.mts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.js",
+    "src/**/*.spec.js",
+    "src/**/*.test.jsx",
+    "src/**/*.spec.jsx",
+    "src/test-setup.ts"
+  ],
+  "files": []
+}
 ```
 
 ---

@@ -15,7 +15,11 @@ export default [
         {
           enforceBuildableLibDependency: true,
           // Pozwalamy linterowi na swobodne importy w plikach konfiguracyjnych
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$', '@ngrx/.*'],
+          allow: [
+            '^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$',
+            '^.*module-federation\\.shared$',
+            '@ngrx/.*'
+          ],
 
           depConstraints: [
             // --- 1. ZASADY DOMENOWE (SCOPE) ---
@@ -42,6 +46,10 @@ export default [
             {
               sourceTag: 'scope:task-management',
               onlyDependOnLibsWithTags: ['scope:shared', 'scope:task-management'],
+            },
+            {
+              sourceTag: 'scope:notification',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:notification'],
             },
             {
               sourceTag: 'scope:shared',

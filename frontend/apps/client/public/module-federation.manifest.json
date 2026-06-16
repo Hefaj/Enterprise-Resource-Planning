@@ -3,5 +3,6 @@
   "inventory": "http://localhost:4202/mf-manifest.json",
   "sales": "http://localhost:4203/mf-manifest.json",
   "dms": "http://localhost:4204/mf-manifest.json",
-  "task-management": "http://localhost:4205/mf-manifest.json"
+  "task-management": "http://localhost:4205/mf-manifest.json",
+  "notification": "http://localhost:4206/mf-manifest.json"
 }

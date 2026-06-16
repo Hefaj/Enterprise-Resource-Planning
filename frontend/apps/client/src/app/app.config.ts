@@ -8,11 +8,13 @@ import { registerLocaleData } from '@angular/common';
 import localePl from '@angular/common/locales/pl';
 import { API_BASE_URL } from '@erp/catalog/data-access';
 import { provideTransloco } from '@jsverse/transloco';
+import { provideSharedTranslations } from '@erp/shared/ui';
 
 registerLocaleData(localePl);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideSharedTranslations(),
     provideRouter(
       appRoutes,
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),

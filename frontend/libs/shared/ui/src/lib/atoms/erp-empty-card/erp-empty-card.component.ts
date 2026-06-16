@@ -9,7 +9,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
   selector: 'erp-empty-card',
   standalone: true,
   imports: [CommonModule, TranslocoModule],
-  providers: [provideSharedTranslations()],
   template: `
     @let _icon = icon();
     @let _title = title();

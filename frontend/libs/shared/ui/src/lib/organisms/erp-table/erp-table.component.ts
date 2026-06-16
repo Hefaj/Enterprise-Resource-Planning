@@ -52,7 +52,6 @@ const DEFAULT_COL_WIDTH_PX = 150;
     ErpContextMenuComponent,
     TranslocoModule,
   ],
-  providers: [provideSharedTranslations()],
   template: `
     @let _config = config();
     @let _data = displayData();

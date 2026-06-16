@@ -10,7 +10,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
   selector: 'erp-tabs',
   standalone: true,
   imports: [CommonModule, TabsModule, TranslocoModule],
-  providers: [provideSharedTranslations()],
   template: `
     @let _value = activeValue();
     @let _items = unwrappedItems();

@@ -19,7 +19,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
   selector: 'erp-modal',
   standalone: true,
   imports: [CommonModule, DialogModule, ButtonModule, TranslocoModule],
-  providers: [provideSharedTranslations()],
   template: `
     @let _title = title();
     @let _steps = config().steps;

@@ -10,7 +10,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
   selector: 'erp-stepper',
   standalone: true,
   imports: [CommonModule, StepperModule, TranslocoModule],
-  providers: [provideSharedTranslations()],
   template: `
     @let _value = activeValue();
     @let _items = unwrappedItems();

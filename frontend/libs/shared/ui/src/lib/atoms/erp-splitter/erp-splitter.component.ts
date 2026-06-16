@@ -10,7 +10,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
   selector: 'erp-splitter',
   standalone: true,
   imports: [NgComponentOutlet, NgStyle, SplitterModule, TranslocoModule],
-  providers: [provideSharedTranslations()],
   template: `
     @let _layout = layout();
     @let _gutterSize = gutterSize();

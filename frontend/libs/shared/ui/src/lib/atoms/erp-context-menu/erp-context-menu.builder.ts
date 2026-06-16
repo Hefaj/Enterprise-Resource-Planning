@@ -1,6 +1,5 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { MenuItem } from 'primeng/api';
-import { ErpContextMenuConfig } from './erp-context-menu.types';
+import { ErpContextMenuConfig, ErpContextMenuItem } from './erp-context-menu.types';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpContextMenuBuilder extends ErpBaseBuilder<ErpContextMenuConfig> {
@@ -10,7 +9,7 @@ export class ErpContextMenuBuilder extends ErpBaseBuilder<ErpContextMenuConfig> 
     this._data.global = false;
   }
 
-  public addItem(item: MenuItem): this {
+  public addItem(item: ErpContextMenuItem): this {
     if (!this._data.items) {
       this._data.items = [];
     }
@@ -27,7 +26,7 @@ export class ErpContextMenuBuilder extends ErpBaseBuilder<ErpContextMenuConfig> 
     return this;
   }
 
-  public setItems(items: MaybeSignal<MenuItem[] | undefined>): this {
+  public setItems(items: MaybeSignal<ErpContextMenuItem[] | undefined>): this {
     this._data.items = items;
     return this;
   }

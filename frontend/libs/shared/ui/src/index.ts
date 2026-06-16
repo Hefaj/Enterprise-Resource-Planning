@@ -1,4 +1,6 @@
 export * from './lib/base/shared-prime-ng-config';
+export * from './lib/base/erp-signal-utils';
+export * from './lib/base/erp-translate.pipe';
 
 export * from './lib/layouts/erp-page-layout/erp-page-layout.component';
 export * from './lib/layouts/erp-page-layout/erp-page-layout.builder';

@@ -2,7 +2,7 @@ import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 import { ErpDynamicFilterConfig, ErpDynamicFilterItem } from './erp-dynamic-filter.types';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export class ErpDynamicFilterBuilder extends ErpBaseBuilder<ErpDynamicFilterConfig> {
   constructor() {
@@ -17,7 +17,7 @@ export class ErpDynamicFilterBuilder extends ErpBaseBuilder<ErpDynamicFilterConf
    * @param inputs — Inputy przekazywane do komponentu
    */
   public addFilter<T>(
-    label: MaybeSignal<string | undefined>,
+    label: MaybeSignal<Translatable | undefined>,
     component: MaybeSignal<Type<T>>,
     inputs: ErpComponentSignalInputs<T>
   ): this {
@@ -28,7 +28,7 @@ export class ErpDynamicFilterBuilder extends ErpBaseBuilder<ErpDynamicFilterConf
   }
 
   /** Zmienia etykietę przycisku zatwierdzającego filtry (domyślnie 'Zastosuj'). */
-  public setSubmitButtonLabel(label: MaybeSignal<string | undefined>): this {
+  public setSubmitButtonLabel(label: MaybeSignal<Translatable | undefined>): this {
     this._data.submitButtonLabel = label;
     return this;
   }

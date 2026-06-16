@@ -10,15 +10,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpModalConfig } from './erp-modal.types';
-import { unwrapSignal } from '../../base/erp-signal-utils';
+import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-modal',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule, TranslocoModule],
+  imports: [CommonModule, DialogModule, ButtonModule, ErpTranslatePipe],
   template: `
     @let _title = title();
     @let _steps = config().steps;
@@ -47,7 +47,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
           <div class="erp-modal-header__left">
             <h2 class="erp-modal-header__title">
               @for (item of _title; track $index) {
-                <span [class.erp-modal-header__segment--muted]="!$last">{{ item | transloco }}</span>
+                <span [class.erp-modal-header__segment--muted]="!$last">{{ item | erpTranslate }}</span>
                 @if (!$last) {
                   <span class="erp-modal-header__separator">></span>
                 }
@@ -71,7 +71,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
                     }
                   </div>
                   <span class="erp-modal-step-indicator__label">
-                    {{ unwrapLabel(step.label) | transloco }}
+                    {{ unwrapLabel(step.label) | erpTranslate }}
                   </span>
                 </div>
                 @if (!$last) {
@@ -124,7 +124,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
           <div class="erp-modal-footer">
             <div class="erp-modal-footer__left">
               <p-button
-                [label]="cancelLabel() | transloco"
+                [label]="cancelLabel() | erpTranslate"
                 severity="secondary"
                 [variant]="'text'"
                 (onClick)="handleCancel()"
@@ -134,7 +134,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
             <div class="erp-modal-footer__right">
               @if (_showStepper && !_isFirstStep) {
                 <p-button
-                  [label]="backLabel() | transloco"
+                  [label]="backLabel() | erpTranslate"
                   severity="secondary"
                   [variant]="'outlined'"
                   icon="pi pi-arrow-left"
@@ -144,7 +144,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
               @if (_isLastStep) {
                 <p-button
-                  [label]="saveLabel() | transloco"
+                  [label]="saveLabel() | erpTranslate"
                   icon="pi pi-check"
                   [loading]="_loading"
                   [disabled]="!_canGoNext"
@@ -152,7 +152,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
                 />
               } @else {
                 <p-button
-                  [label]="nextLabel() | transloco"
+                  [label]="nextLabel() | erpTranslate"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   [disabled]="!_canGoNext"
@@ -539,7 +539,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
 
   // ── Computed properties ──
 
-  protected title = computed<string[]>(() => {
+  protected title = computed<Translatable[]>(() => {
     const raw = unwrapSignal(this.config().title);
     if (!raw) return [];
     return Array.isArray(raw) ? raw : [raw];
@@ -608,8 +608,8 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
   }
 
   /** Helper do unwrapowania MaybeSignal w template. */
-  protected unwrapLabel(label: any): string {
-    return (unwrapSignal(label) as string) || '';
+  protected unwrapLabel(label: any): Translatable {
+    return unwrapSignal(label) || '';
   }
 
   // ── Nawigacja ──

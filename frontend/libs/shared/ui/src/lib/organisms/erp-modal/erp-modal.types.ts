@@ -1,5 +1,5 @@
 import { Type, Signal, WritableSignal } from '@angular/core';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 /**
  * Konfiguracja pojedynczego kroku modalu.
@@ -7,7 +7,7 @@ import { MaybeSignal } from '../../base/erp-signal-utils';
  */
 export interface ErpModalStep<TCommand = any, TMetadata = any> {
   /** Etykieta wyświetlana w stepperze. */
-  label: MaybeSignal<string>;
+  label: MaybeSignal<Translatable>;
   /** Komponent Angular renderowany w tym kroku. */
   component: Type<any>;
   /** Dodatkowe inputy przekazywane do komponentu (oprócz command, metadata i registerCanGoNext). */
@@ -25,7 +25,7 @@ export type ErpModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
  */
 export interface ErpModalConfig<TCommand = any, TMetadata = any> {
   /** Tytuł wyświetlany w nagłówku modalu (jako pojedyncza nazwa lub chlebki/breadcrumb). */
-  title: MaybeSignal<string | string[]>;
+  title: MaybeSignal<Translatable | Translatable[]>;
   /** Lista kroków modalu (min. 1). */
   steps: ErpModalStep<TCommand, TMetadata>[];
   /** Początkowy stan commanda — opcjonalny dla modali frontend-only. */
@@ -37,13 +37,13 @@ export interface ErpModalConfig<TCommand = any, TMetadata = any> {
 
   // ── Customizacja etykiet przycisków ──
   /** Etykieta przycisku zapisz. Domyślnie "Zapisz". */
-  saveLabel?: MaybeSignal<string>;
+  saveLabel?: MaybeSignal<Translatable>;
   /** Etykieta przycisku anuluj. Domyślnie "Anuluj". */
-  cancelLabel?: MaybeSignal<string>;
+  cancelLabel?: MaybeSignal<Translatable>;
   /** Etykieta przycisku dalej. Domyślnie "Dalej". */
-  nextLabel?: MaybeSignal<string>;
+  nextLabel?: MaybeSignal<Translatable>;
   /** Etykieta przycisku wstecz. Domyślnie "Wstecz". */
-  backLabel?: MaybeSignal<string>;
+  backLabel?: MaybeSignal<Translatable>;
 
   // ── Callbacki ──
   /** Callback wywoływany po kliknięciu Zapisz. Może być async — modal pokaże loading. */

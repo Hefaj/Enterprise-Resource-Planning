@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
 import { ErpTabsConfig } from './erp-tabs.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-tabs',
   standalone: true,
-  imports: [CommonModule, TabsModule, TranslocoModule],
+  imports: [CommonModule, TabsModule, ErpTranslatePipe],
   template: `
     @let _value = activeValue();
     @let _items = unwrappedItems();
@@ -25,7 +25,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
                   @if (item.icon) {
                     <i [class]="item.icon"></i>
                   }
-                  <span>{{ item.label | transloco }}</span>
+                  <span>{{ item.label | erpTranslate }}</span>
                 </div>
               </p-tab>
             }
@@ -45,14 +45,14 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
           @if (!activeTab) {
             <div class="flex flex-col items-center justify-center h-full opacity-50 grayscale p-12">
                <i class="pi pi-ban text-4xl mb-2"></i>
-               <span class="font-medium">{{ SHARED_KEYS.tabs.noAvailable | transloco }}</span>
+               <span class="font-medium">{{ SHARED_KEYS.tabs.noAvailable | erpTranslate }}</span>
             </div>
           }
         </div>
       } @else {
         <div class="flex flex-col items-center justify-center h-full opacity-30 p-12">
            <i class="pi pi-inbox text-4xl mb-2"></i>
-           <span>{{ SHARED_KEYS.tabs.empty | transloco }}</span>
+           <span>{{ SHARED_KEYS.tabs.empty | erpTranslate }}</span>
         </div>
       }
     </div>

@@ -1,6 +1,6 @@
 import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpModalConfig, ErpModalSize, ErpModalStep } from './erp-modal.types';
 
 /**
@@ -28,7 +28,7 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
   }
 
   /** Ustawia tytuł nagłówka modalu (jako pojedynczy ciąg lub tablicę breadcrumbów). */
-  public setTitle(title: MaybeSignal<string | string[]>): this {
+  public setTitle(title: MaybeSignal<Translatable | Translatable[]>): this {
     this._data.title = title;
     return this;
   }
@@ -58,7 +58,7 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
    * @param inputs Dodatkowe inputy przekazywane do komponentu (oprócz command i registerCanGoNext)
    */
   public addStep<TComp = any>(
-    label: MaybeSignal<string>,
+    label: MaybeSignal<Translatable>,
     component: Type<TComp>,
     inputs?: Record<string, any>
   ): this {
@@ -72,25 +72,25 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
   }
 
   /** Nadpisuje etykietę przycisku "Zapisz". */
-  public setSaveLabel(label: MaybeSignal<string>): this {
+  public setSaveLabel(label: MaybeSignal<Translatable>): this {
     this._data.saveLabel = label;
     return this;
   }
 
   /** Nadpisuje etykietę przycisku "Anuluj". */
-  public setCancelLabel(label: MaybeSignal<string>): this {
+  public setCancelLabel(label: MaybeSignal<Translatable>): this {
     this._data.cancelLabel = label;
     return this;
   }
 
   /** Nadpisuje etykietę przycisku "Dalej". */
-  public setNextLabel(label: MaybeSignal<string>): this {
+  public setNextLabel(label: MaybeSignal<Translatable>): this {
     this._data.nextLabel = label;
     return this;
   }
 
   /** Nadpisuje etykietę przycisku "Wstecz". */
-  public setBackLabel(label: MaybeSignal<string>): this {
+  public setBackLabel(label: MaybeSignal<Translatable>): this {
     this._data.backLabel = label;
     return this;
   }

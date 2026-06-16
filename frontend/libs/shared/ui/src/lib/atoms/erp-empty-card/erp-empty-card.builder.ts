@@ -1,6 +1,6 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpEmptyCardConfig } from './erp-empty-card.types';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export class ErpEmptyCardBuilder extends ErpBaseBuilder<ErpEmptyCardConfig> {
 
@@ -10,17 +10,17 @@ export class ErpEmptyCardBuilder extends ErpBaseBuilder<ErpEmptyCardConfig> {
     return this;
   }
 
-  public setTitle(title: MaybeSignal<string | undefined>): this {
+  public setTitle(title: MaybeSignal<Translatable | undefined>): this {
     this._data.title = title;
     return this;
   }
 
-  public setSubtitle(subtitle: MaybeSignal<string | undefined>): this {
+  public setSubtitle(subtitle: MaybeSignal<Translatable | undefined>): this {
     this._data.subtitle = subtitle;
     return this;
   }
 
-  public setDescription(description: MaybeSignal<string | undefined>): this {
+  public setDescription(description: MaybeSignal<Translatable | undefined>): this {
     this._data.description = description;
     return this;
   }

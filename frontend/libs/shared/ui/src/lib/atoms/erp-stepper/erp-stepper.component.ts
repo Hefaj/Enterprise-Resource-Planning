@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { StepperModule } from 'primeng/stepper';
 import { ErpStepperConfig } from './erp-stepper.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-stepper',
   standalone: true,
-  imports: [CommonModule, StepperModule, TranslocoModule],
+  imports: [CommonModule, StepperModule, ErpTranslatePipe],
   template: `
     @let _value = activeValue();
     @let _items = unwrappedItems();
@@ -21,7 +21,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
           <p-step-list>
             @for (item of _items; track item.value) {
               <p-step [value]="item.value" [disabled]="item.disabled ?? false">
-                {{ item.label | transloco }}
+                {{ item.label | erpTranslate }}
               </p-step>
             }
           </p-step-list>
@@ -43,7 +43,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       } @else {
         <div class="erp-stepper-empty">
           <i class="pi pi-inbox"></i>
-          <span>{{ SHARED_KEYS.stepper.empty | transloco }}</span>
+          <span>{{ SHARED_KEYS.stepper.empty | erpTranslate }}</span>
         </div>
       }
     </div>

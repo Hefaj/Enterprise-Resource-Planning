@@ -1,6 +1,6 @@
 import { Type, WritableSignal } from '@angular/core';
-import { MenuItem } from 'primeng/api';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpContextMenuItem } from '../../atoms/erp-context-menu/erp-context-menu.types';
 
 // ── Cell Renderer Configs ───────────────────────────────
 
@@ -81,7 +81,7 @@ export interface ErpTableLazyEvent {
 
 export interface ErpTableColumn {
   field: string;
-  header: string;
+  header: Translatable;
   sortable?: boolean;
   width?: string;
   minWidth?: string;
@@ -106,7 +106,7 @@ export interface ErpTableConfig {
   paginator?: boolean;
   selectionMode?: 'single' | 'multiple';
   globalFilterFields?: string[];
-  emptyMessage?: string;
+  emptyMessage?: Translatable;
   striped?: boolean;
   scrollable?: boolean;
   scrollHeight?: string;
@@ -133,7 +133,7 @@ export interface ErpTableConfig {
    * Elementy context menu wyświetlanego po PPM na wierszu.
    * MaybeSignal pozwala na dynamiczne menu zależne od selekcji.
    */
-  contextMenuItems?: MaybeSignal<MenuItem[] | undefined>;
+  contextMenuItems?: MaybeSignal<ErpContextMenuItem[] | undefined>;
 }
 
 export type ErpTableFilters = Record<string, any>;

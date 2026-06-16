@@ -1,9 +1,9 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpTextConfig, ErpTextTag } from './erp-text.types';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export class ErpTextBuilder extends ErpBaseBuilder<ErpTextConfig> {
-  public setValue(value: MaybeSignal<string | string[] | undefined>): this {
+  public setValue(value: MaybeSignal<Translatable | Translatable[] | undefined>): this {
     this._data.value = value;
     return this;
   }

@@ -1,21 +1,21 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpDatePickerConfig } from './erp-datepicker.types';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export class ErpDatePickerBuilder extends ErpBaseBuilder<ErpDatePickerConfig> {
 
 
-  public setPlaceholder(placeholder: MaybeSignal<string | undefined>): this {
+  public setPlaceholder(placeholder: MaybeSignal<Translatable | undefined>): this {
     this._data.placeholder = placeholder;
     return this;
   }
 
-  public setHint(hint: MaybeSignal<string | undefined>): this {
+  public setHint(hint: MaybeSignal<Translatable | undefined>): this {
     this._data.hint = hint;
     return this;
   }
 
-  public setErrorMessages(messages: MaybeSignal<Record<string, string> | undefined>): this {
+  public setErrorMessages(messages: MaybeSignal<Record<string, Translatable> | undefined>): this {
     this._data.errorMessages = messages;
     return this;
   }

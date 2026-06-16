@@ -3,14 +3,15 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormContr
 import { SelectModule } from 'primeng/select';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { noop } from 'rxjs';
 import { ErpSelectConfig } from './erp-select.types';
-import { unwrapSignal } from '../../base/erp-signal-utils';
+import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-select',
   standalone: true,
-  imports: [SelectModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
+  imports: [SelectModule, ReactiveFormsModule, FloatLabelModule, MessageModule, ErpTranslatePipe],
   template: `
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
@@ -37,16 +38,16 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           (onBlur)="onTouched()"
           [appendTo]="'body'"
         />
-        <label>{{ _placeholder || '' }}</label>
+        <label>{{ (_placeholder | erpTranslate) || '' }}</label>
       </p-floatlabel>
       
       @if (_hint) {
-        <small class="text-slate-500">{{ _hint }}</small>
+        <small class="text-slate-500">{{ _hint | erpTranslate }}</small>
       }
 
       @if (_errorMsg) {
         <p-message severity="error" size="small" variant="simple">
-          {{ _errorMsg }}
+          {{ _errorMsg | erpTranslate }}
         </p-message>
       }
     </div>
@@ -81,7 +82,7 @@ export class ErpSelectComponent implements ControlValueAccessor {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private _onChange: (value: any) => void = noop;
 
-  public getErrorMessage(): string | null {
+  public getErrorMessage(): Translatable | null {
     const ctrl = this.activeControl();
     if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) return null;
     if (ctrl.errors) {

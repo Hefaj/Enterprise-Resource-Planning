@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpButtonConfig } from './erp-button.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-button',
   standalone: true,
-  imports: [ButtonModule, TranslocoModule],
+  imports: [ButtonModule, ErpTranslatePipe],
   template: `
     @let _label = label();
     @let _icon = icon();
@@ -21,7 +21,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     @let _badge = badge();
 
     <p-button
-      [label]="(_label | transloco) ?? ''"
+      [label]="(_label | erpTranslate) ?? ''"
       [icon]="_icon ?? ''"
       [iconPos]="_iconPos ?? 'left'"
       [severity]="_severity"

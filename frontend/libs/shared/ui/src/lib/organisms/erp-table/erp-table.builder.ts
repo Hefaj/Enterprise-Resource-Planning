@@ -1,7 +1,7 @@
 import { Type } from '@angular/core';
-import { MenuItem } from 'primeng/api';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpContextMenuItem } from '../../atoms/erp-context-menu/erp-context-menu.types';
 import { 
   ErpTableConfig, 
   ErpTableColumn, 
@@ -64,7 +64,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
    */
   public addColumn(
     field: string,
-    header: string,
+    header: Translatable,
     options: Partial<Omit<ErpTableColumn, 'field' | 'header'>> = {}
   ): this {
     this._data.columns!.push({ field, header, ...options });
@@ -80,7 +80,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
    */
   public addImageColumn(
     field: string,
-    header: string,
+    header: Translatable,
     config: ErpCellImageConfig = {},
     options: Partial<Omit<ErpTableColumn, 'field' | 'header' | 'type' | 'typeConfig'>> = {}
   ): this {
@@ -103,7 +103,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
    */
   public addBadgeColumn(
     field: string,
-    header: string,
+    header: Translatable,
     severityMap: ErpCellBadgeConfig['severityMap'],
     options: Partial<Omit<ErpTableColumn, 'field' | 'header' | 'type' | 'typeConfig'>> = {}
   ): this {
@@ -126,7 +126,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
    */
   public addBooleanColumn(
     field: string,
-    header: string,
+    header: Translatable,
     config: ErpCellBooleanConfig = {},
     options: Partial<Omit<ErpTableColumn, 'field' | 'header' | 'type' | 'typeConfig'>> = {}
   ): this {
@@ -150,7 +150,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
    */
   public addLinkColumn(
     field: string,
-    header: string,
+    header: Translatable,
     config: ErpCellLinkConfig = {},
     options: Partial<Omit<ErpTableColumn, 'field' | 'header' | 'type' | 'typeConfig'>> = {}
   ): this {
@@ -175,7 +175,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
    */
   public addCustomColumn(
     field: string,
-    header: string,
+    header: Translatable,
     component: MaybeSignal<Type<any>>,
     inputs?: Record<string, any>,
     options: Partial<Omit<ErpTableColumn, 'field' | 'header' | 'type' | 'typeConfig'>> = {}
@@ -223,7 +223,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
   }
 
   /** Komunikat wyświetlany, gdy tabela jest pusta. */
-  public setEmptyMessage(message: string): this {
+  public setEmptyMessage(message: Translatable): this {
     this._data.emptyMessage = message;
     return this;
   }
@@ -285,7 +285,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
   }
 
   /**
-   * Rejestruje callback wywoływany przez tabelę, gdy potrzebuje nowych danych.
+   * Rejestruje callback wywoływany przez tabelę, gdy potrzebuje danych.
    * Wywoływany przy: inicjalizacji, scroll, zmiana sortowania.
    * @param fn — funkcja przyjmująca ErpTableLazyEvent
    */
@@ -298,7 +298,7 @@ export class ErpTableBuilder extends ErpBaseBuilder<ErpTableConfig> {
    * Ustawia elementy context menu wyświetlanego po PPM na wierszu.
    * Może być Signal – wtedy menu jest aktualizowane reaktywnie (np. zależnie od selekcji).
    */
-  public setContextMenuItems(items: MaybeSignal<MenuItem[] | undefined>): this {
+  public setContextMenuItems(items: MaybeSignal<ErpContextMenuItem[] | undefined>): this {
     this._data.contextMenuItems = items;
     return this;
   }

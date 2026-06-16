@@ -2,7 +2,7 @@ import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpStepItem, ErpStepperConfig } from './erp-stepper.types';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export class ErpStepperBuilder extends ErpBaseBuilder<ErpStepperConfig> {
   constructor() {
@@ -15,7 +15,7 @@ export class ErpStepperBuilder extends ErpBaseBuilder<ErpStepperConfig> {
   }
 
   public addStep<T = any>(
-    label: MaybeSignal<string>,
+    label: MaybeSignal<Translatable>,
     value: MaybeSignal<number>,
     options?: {
       disabled?: MaybeSignal<boolean | undefined>;

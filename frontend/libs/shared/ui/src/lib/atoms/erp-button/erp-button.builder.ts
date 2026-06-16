@@ -1,5 +1,5 @@
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpButtonConfig, ErpButtonIconPosition, ErpButtonSeverity, ErpButtonVariant, ErpButtonSize } from './erp-button.types';
 
 /** Preset: przycisk 'Save' (zielony, ikona dyskietki). */
@@ -20,7 +20,7 @@ export function ErpButtonCancel(builder: ErpButtonBuilder): ErpButtonBuilder {
 export class ErpButtonBuilder extends ErpBaseBuilder<ErpButtonConfig> {
 
 
-  public setLabel(label: MaybeSignal<string | undefined>): this {
+  public setLabel(label: MaybeSignal<Translatable | undefined>): this {
     this._data.label = label;
     return this;
   }

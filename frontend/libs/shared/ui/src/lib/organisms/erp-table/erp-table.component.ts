@@ -21,7 +21,7 @@ import { TagModule } from 'primeng/tag';
 import { MenuItem } from 'primeng/api';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpContextMenuComponent } from '../../atoms/erp-context-menu/erp-context-menu.component';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 import {
@@ -50,7 +50,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
     InputIconModule,
     TagModule,
     ErpContextMenuComponent,
-    TranslocoModule,
+    ErpTranslatePipe,
   ],
   template: `
     @let _config = config();
@@ -66,7 +66,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
             <input
               pInputText
               type="text"
-              [placeholder]="SHARED_KEYS.table.search | transloco"
+              [placeholder]="SHARED_KEYS.table.search | erpTranslate"
               class="w-full md:w-80"
               (input)="onGlobalFilter($event)"
             />
@@ -108,7 +108,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
             (onRowSelect)="handleRowSelect($event)"
             (onRowUnselect)="handleRowUnselect($event)"
             [styleClass]="getTableStyleClass(_config)"
-            [currentPageReportTemplate]="SHARED_KEYS.table.paginationReport | transloco"
+            [currentPageReportTemplate]="SHARED_KEYS.table.paginationReport | erpTranslate"
             [showCurrentPageReport]="true"
             [tableStyle]="{ 'table-layout': 'fixed', 'min-width': totalColumnsWidth() + 'px', 'width': '100%' }"
           >
@@ -128,7 +128,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                     [style.text-align]="col.align || 'left'"
                   >
                     <div class="flex items-center gap-2">
-                      {{ col.header | transloco }}
+                      {{ col.header | erpTranslate }}
                       @if (col.sortable) {
                         <p-sortIcon [field]="col.field" />
                       }
@@ -158,7 +158,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                               [value]="value"
                               (input)="filterCallback($any($event.target).value)"
                               class="w-full text-sm"
-                              [placeholder]="('Filtruj ' + (col.header | transloco))"
+                              [placeholder]="('Filtruj ' + (col.header | erpTranslate))"
                             />
                           </ng-template>
                         </p-columnFilter>
@@ -194,7 +194,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                         @if (row[col.field]) {
                           <img
                             [src]="row[col.field]"
-                            [alt]="col.header"
+                            [alt]="$any(col.header)"
                             [style.width]="$any(col.typeConfig)?.width || '40px'"
                             [style.height]="$any(col.typeConfig)?.height || '40px'"
                             class="object-cover"
@@ -218,7 +218,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                       @case ('badge') {
                         @if (row[col.field] !== null && row[col.field] !== undefined) {
                           <p-tag
-                            [value]="row[col.field] | transloco"
+                            [value]="row[col.field] | erpTranslate"
                             [severity]="getBadgeSeverity(row[col.field], col)"
                             [rounded]="true"
                           />
@@ -229,7 +229,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                       @case ('tag') {
                         @if (row[col.field] !== null && row[col.field] !== undefined) {
                           <p-tag
-                            [value]="row[col.field] | transloco"
+                            [value]="row[col.field] | erpTranslate"
                             [severity]="getTagSeverity(row[col.field], col)"
                             [rounded]="$any(col.typeConfig)?.rounded ?? false"
                           />
@@ -301,7 +301,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                 >
                   <div class="flex flex-col items-center gap-3 text-surface-400 dark:text-surface-500">
                     <i class="pi pi-inbox text-4xl"></i>
-                    <span class="text-lg">{{ _config.emptyMessage ? (_config.emptyMessage | transloco) : (SHARED_KEYS.table.empty | transloco) }}</span>
+                    <span class="text-lg">{{ _config.emptyMessage ? (_config.emptyMessage | erpTranslate) : (SHARED_KEYS.table.empty | erpTranslate) }}</span>
                   </div>
                 </td>
               </tr>

@@ -4,14 +4,15 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormContr
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { noop } from 'rxjs';
 import { ErpAutoCompleteConfig } from './erp-auto-complete.types';
-import { unwrapSignal } from '../../base/erp-signal-utils';
+import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-auto-complete',
   standalone: true,
-  imports: [CommonModule, AutoCompleteModule, ReactiveFormsModule, FloatLabelModule, MessageModule],
+  imports: [CommonModule, AutoCompleteModule, ReactiveFormsModule, FloatLabelModule, MessageModule, ErpTranslatePipe],
   template: `
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
@@ -62,16 +63,16 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
              }
           </ng-template>
         </p-autocomplete>
-        <label>{{ _placeholder || '' }}</label>
+        <label>{{ (_placeholder | erpTranslate) || '' }}</label>
       </p-floatlabel>
       
       @if (_hint) {
-        <small class="text-slate-500">{{ _hint }}</small>
+        <small class="text-slate-500">{{ _hint | erpTranslate }}</small>
       }
 
       @if (_errorMsg) {
         <p-message severity="error" size="small" variant="simple">
-          {{ _errorMsg }}
+          {{ _errorMsg | erpTranslate }}
         </p-message>
       }
     </div>
@@ -114,7 +115,7 @@ export class ErpAutoCompleteComponent implements ControlValueAccessor {
     this.complete.emit(event);
   }
 
-  public getErrorMessage(): string | null {
+  public getErrorMessage(): Translatable | null {
     const ctrl = this.activeControl();
     if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) return null;
     if (ctrl.errors) {

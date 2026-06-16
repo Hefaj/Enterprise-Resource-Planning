@@ -5,14 +5,14 @@ import { noop } from 'rxjs';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
 import { AutoFocusModule } from 'primeng/autofocus';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpInputTextConfig } from './erp-input-text.types';
-import { unwrapSignal } from '../../base/erp-signal-utils';
+import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-input-text',
   standalone: true,
-  imports: [InputTextModule, ReactiveFormsModule, FloatLabelModule, MessageModule, AutoFocusModule, TranslocoModule],
+  imports: [InputTextModule, ReactiveFormsModule, FloatLabelModule, MessageModule, AutoFocusModule, ErpTranslatePipe],
   template: `
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
@@ -38,10 +38,10 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           [class.p-inputtext-sm]="_size === 'small'"
           [class.p-inputtext-lg]="_size === 'large'"
         />
-        <label for="on_label">{{ (_placeholder | transloco) || '' }}</label>
+        <label for="on_label">{{ (_placeholder | erpTranslate) || '' }}</label>
       </p-floatlabel>
       @if (_hint) {
-        <small id="hint">{{ _hint }}</small>
+        <small id="hint">{{ _hint | erpTranslate }}</small>
       }
       @if (_errorMsg) {
         <p-message
@@ -49,7 +49,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           size="small"
           variant="simple"
         >
-          {{ _errorMsg }}
+          {{ _errorMsg | erpTranslate }}
         </p-message>
       }
     </div>
@@ -81,7 +81,7 @@ export class ErpInputTextComponent implements ControlValueAccessor {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private _onChange: (value: string) => void = noop;
 
-  public getErrorMessage(): string | null {
+  public getErrorMessage(): Translatable | null {
     const ctrl = this.activeControl();
     const errorMsgs = this.errorMessages() || {};
 

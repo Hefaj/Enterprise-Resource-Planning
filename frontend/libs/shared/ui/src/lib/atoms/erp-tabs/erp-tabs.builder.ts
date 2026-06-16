@@ -2,7 +2,7 @@ import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
   constructor() {
@@ -17,7 +17,7 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
 
 
   public addTab<T = any>(
-    label: MaybeSignal<string>,
+    label: MaybeSignal<Translatable>,
     value: MaybeSignal<string | number>,
     options: {
       icon?: MaybeSignal<string | undefined>;

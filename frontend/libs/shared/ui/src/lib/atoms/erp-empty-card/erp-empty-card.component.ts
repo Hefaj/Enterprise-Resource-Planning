@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, input, computed } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ErpEmptyCardConfig } from './erp-empty-card.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-empty-card',
   standalone: true,
-  imports: [CommonModule, TranslocoModule],
+  imports: [CommonModule, ErpTranslatePipe],
   template: `
     @let _icon = icon();
     @let _title = title();
@@ -26,15 +26,15 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       </div>
 
       <h3 class="font-bold text-surface-700 dark:text-surface-100 mt-4 text-lg">
-        {{ _title ? (_title | transloco) : (SHARED_KEYS.emptyCard.empty | transloco) }}
+        {{ _title ? (_title | erpTranslate) : (SHARED_KEYS.emptyCard.empty | erpTranslate) }}
       </h3>
       @if (_subtitle) {
         <p class="text-sm text-surface-500 dark:text-surface-400 font-semibold tracking-wide uppercase mt-1">
-          {{ _subtitle | transloco }}
+          {{ _subtitle | erpTranslate }}
         </p>
       }
       <p class="text-sm text-center max-w-sm mt-2 text-surface-500 dark:text-surface-500 italic">
-        {{ _description ? (_description | transloco) : (SHARED_KEYS.emptyCard.description | transloco) }}
+        {{ _description ? (_description | erpTranslate) : (SHARED_KEYS.emptyCard.description | erpTranslate) }}
       </p>
 
       @if (_showPulse !== false) {

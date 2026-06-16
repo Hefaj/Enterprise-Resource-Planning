@@ -1,9 +1,9 @@
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export interface ErpDatePickerConfig {
-  placeholder?: MaybeSignal<string | undefined>;
-  hint?: MaybeSignal<string | undefined>;
-  errorMessages?: MaybeSignal<Record<string, string> | undefined>;
+  placeholder?: MaybeSignal<Translatable | undefined>;
+  hint?: MaybeSignal<Translatable | undefined>;
+  errorMessages?: MaybeSignal<Record<string, Translatable> | undefined>;
   showIcon?: MaybeSignal<boolean | undefined>;
   dateFormat?: MaybeSignal<string | undefined>;
   selectionMode?: MaybeSignal<'single' | 'multiple' | 'range' | undefined>;

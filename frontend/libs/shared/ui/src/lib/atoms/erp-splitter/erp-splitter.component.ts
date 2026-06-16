@@ -3,13 +3,13 @@ import { NgComponentOutlet, NgStyle } from '@angular/common';
 import { SplitterModule } from 'primeng/splitter';
 import { ErpSplitterConfig } from './erp-splitter.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
-import { TranslocoModule } from '@jsverse/transloco';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-splitter',
   standalone: true,
-  imports: [NgComponentOutlet, NgStyle, SplitterModule, TranslocoModule],
+  imports: [NgComponentOutlet, NgStyle, SplitterModule, ErpTranslatePipe],
   template: `
     @let _layout = layout();
     @let _gutterSize = gutterSize();
@@ -45,7 +45,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     } @else {
       <div class="flex flex-col items-center justify-center p-8 border border-dashed border-slate-300 text-slate-400 rounded-lg">
         <i class="pi pi-columns text-3xl mb-2"></i>
-        <span class="text-sm font-medium">{{ SHARED_KEYS.splitter.empty | transloco }}</span>
+        <span class="text-sm font-medium">{{ SHARED_KEYS.splitter.empty | erpTranslate }}</span>
       </div>
     }
   `,

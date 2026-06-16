@@ -1,5 +1,5 @@
 import { ButtonIconPosition } from 'primeng/button';
-import { MaybeSignal } from '../../base/erp-signal-utils';
+import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export type ErpButtonSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'help' | 'danger' | 'contrast';
 export type ErpButtonVariant = 'outlined' | 'text';
@@ -7,7 +7,7 @@ export type ErpButtonIconPosition = ButtonIconPosition;
 export type ErpButtonSize = 'small' | 'large';
 
 export interface ErpButtonConfig {
-  label?: MaybeSignal<string | undefined>;
+  label?: MaybeSignal<Translatable | undefined>;
   icon?: MaybeSignal<string | undefined>;
   iconPos?: MaybeSignal<ErpButtonIconPosition | undefined>;
   severity?: MaybeSignal<ErpButtonSeverity | undefined>;

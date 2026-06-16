@@ -1,25 +1,25 @@
 import { ErpBaseBuilder } from './erp-base-builder';
 
-import { MaybeSignal } from './erp-signal-utils';
+import { MaybeSignal, Translatable } from './erp-signal-utils';
 
 export interface ErpInputBase {
-  placeholder?: MaybeSignal<string | undefined>;
-  hint?: MaybeSignal<string | undefined>;
-  errorMessages?: MaybeSignal<Record<string, string> | undefined>;
+  placeholder?: MaybeSignal<Translatable | undefined>;
+  hint?: MaybeSignal<Translatable | undefined>;
+  errorMessages?: MaybeSignal<Record<string, Translatable> | undefined>;
 }
 
 export class ErpInputBaseBuilder<T extends ErpInputBase> extends ErpBaseBuilder<T> {
-  public setPlaceholder(placeholder: MaybeSignal<string | undefined>): this {
+  public setPlaceholder(placeholder: MaybeSignal<Translatable | undefined>): this {
     this._data.placeholder = placeholder;
     return this;
   }
 
-  public setHint(hint: MaybeSignal<string | undefined>): this {
+  public setHint(hint: MaybeSignal<Translatable | undefined>): this {
     this._data.hint = hint;
     return this;
   }
 
-  public setErrorMessages(messages: MaybeSignal<Record<string, string> | undefined>): this {
+  public setErrorMessages(messages: MaybeSignal<Record<string, Translatable> | undefined>): this {
     this._data.errorMessages = messages;
     return this;
   }

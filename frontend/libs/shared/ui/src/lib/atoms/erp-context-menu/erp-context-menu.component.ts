@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, viewChild, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextMenuModule } from 'primeng/contextmenu';
-import { ErpContextMenuConfig } from './erp-context-menu.types';
-import { unwrapSignal } from '../../base/erp-signal-utils';
+import { ErpContextMenuConfig, ErpContextMenuItem } from './erp-context-menu.types';
+import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 import { TranslocoService } from '@jsverse/transloco';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -34,10 +34,7 @@ export class ErpContextMenuComponent {
   protected items = computed(() => {
     this._lang(); // track language change to trigger re-evaluation
     const rawItems = unwrapSignal(this.config().items) || [];
-    return rawItems.map(item => ({
-      ...item,
-      label: item.label ? this._transloco.translate(item.label) : undefined
-    }));
+    return this.translateItems(rawItems);
   });
   protected isGlobal = computed(() => unwrapSignal(this.config().global));
 
@@ -47,5 +44,25 @@ export class ErpContextMenuComponent {
 
   public hide(): void {
     this.cm()?.hide();
+  }
+
+  private translateItems(items: ErpContextMenuItem[]): any[] {
+    return items.map(item => {
+      const mapped: any = {
+        ...item,
+        label: item.label ? this.translateLabel(item.label) : undefined
+      };
+      if (item.items) {
+        mapped.items = this.translateItems(item.items);
+      }
+      return mapped;
+    });
+  }
+
+  private translateLabel(label: Translatable): string {
+    if (typeof label === 'string') {
+      return this._transloco.translate(label);
+    }
+    return this._transloco.translate(label.key, label.params);
   }
 }

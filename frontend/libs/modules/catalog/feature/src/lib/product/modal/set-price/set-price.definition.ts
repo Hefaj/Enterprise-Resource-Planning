@@ -1,20 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
-import { SetPriceCommand } from './set-price.types';
 import { SetPriceStepComponent } from './set-price.step';
-import { CatalogProductOrchestrator } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 
 export const SET_PRICE_MODAL_ID = 'catalog.product.set-price';
 
 export interface SetPriceMetadata {}
 
 @Injectable({ providedIn: 'root' })
-export class SetPriceModalDefinition implements ErpModalDefinition<SetPriceCommand, SetPriceMetadata> {
+export class SetPriceModalDefinition implements ErpModalDefinition<BatchCommandOfProductSetPriceCommand, SetPriceMetadata> {
   public readonly id = SET_PRICE_MODAL_ID;
   private readonly orchestrator = inject(CatalogProductOrchestrator);
 
-  public build(command: SetPriceCommand, metadata?: SetPriceMetadata): ErpModalConfig<SetPriceCommand, SetPriceMetadata> {
-    return ErpModalBuilder.modal<SetPriceCommand, SetPriceMetadata>(b => b
+  public build(command: BatchCommandOfProductSetPriceCommand, metadata?: SetPriceMetadata): ErpModalConfig<BatchCommandOfProductSetPriceCommand, SetPriceMetadata> {
+    return ErpModalBuilder.modal<BatchCommandOfProductSetPriceCommand, SetPriceMetadata>(b => b
       .setTitle(['Produkty', 'Seryjna edycja ceny'])
       .setCommand(command)
       .setMetadata(metadata)

@@ -10,7 +10,7 @@ import {
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
-import { SetPriceCommand } from './set-price.types';
+import { BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 import { SetPriceMetadata } from './set-price.definition';
 
 /**
@@ -91,7 +91,7 @@ import { SetPriceMetadata } from './set-price.definition';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetPriceStepComponent {
-  public command = input.required<WritableSignal<SetPriceCommand>>();
+  public command = input.required<WritableSignal<BatchCommandOfProductSetPriceCommand>>();
   public metadata = input.required<WritableSignal<SetPriceMetadata>>();
   public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
 
@@ -100,7 +100,7 @@ export class SetPriceStepComponent {
     Validators.min(0.01),
   ]);
 
-  protected products = computed(() => this.command()().products);
+  protected products = computed<{ uuid: string; sku: string; price: number }[]>(() => this.command()()['products'] ?? []);
   protected canGoNext = computed(() => this.priceControl.valid);
 
   constructor() {
@@ -111,15 +111,15 @@ export class SetPriceStepComponent {
 
     effect(() => {
       const cmd = this.command()();
-      if (cmd.price !== null && this.priceControl.value !== cmd.price) {
-        this.priceControl.setValue(cmd.price, { emitEvent: false });
+      if (cmd['price'] !== null && this.priceControl.value !== cmd['price']) {
+        this.priceControl.setValue(cmd['price'], { emitEvent: false });
       }
     });
 
     this.priceControl.valueChanges.subscribe((value) => {
       this.command().update((cmd) => {
         const numPrice = value ? Number(value) : null;
-        const commands = cmd.products.map(p => ({
+        const commands = (cmd['products'] as { uuid: string; sku: string; price: number }[] || []).map(p => ({
           uuid: p.uuid,
           price: numPrice ?? 0,
         }));

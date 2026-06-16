@@ -1,8 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import { ErpModalService } from '@erp/shared/ui';
-import { EditSkuModalDefinition } from './edit-sku';
-import { EditEanModalDefinition } from './edit-ean';
-import { EditStatusModalDefinition } from './edit-status';
 import { SetPriceModalDefinition } from './set-price';
 
 /**
@@ -31,9 +28,6 @@ export class ProductModalRegistration {
     const modalService = inject(ErpModalService);
 
     modalService.register(
-      inject(EditSkuModalDefinition),
-      inject(EditEanModalDefinition),
-      inject(EditStatusModalDefinition),
       inject(SetPriceModalDefinition),
     );
   }

@@ -1,23 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenuItem } from 'primeng/api';
-import { CatalogProductOrchestrator, CategoryVM, ProductVM } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, CategoryVM, ProductVM, BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 import { ErpTableComponent, ErpTableBuilder, ErpModalService } from '@erp/shared/ui';
 import { ProductViewModel } from '@erp/catalog/util';
 import { ProductListViewStore } from '../product-list-view.store';
 import {
   ProductModalRegistration,
-  EDIT_SKU_MODAL_ID,
-  EDIT_EAN_MODAL_ID,
-  EDIT_STATUS_MODAL_ID,
   SET_PRICE_MODAL_ID,
-  EditSkuCommand,
-  EditSkuMetadata,
-  EditEanCommand,
-  EditEanMetadata,
-  EditStatusCommand,
-  EditStatusMetadata,
-  SetPriceCommand,
   SetPriceMetadata
 } from '../../modal';
 
@@ -83,46 +73,10 @@ export class ProductTabComponent {
     if (products.length > 0) {
       
           actions.push({
-            label: 'Edytuj SKU',
-            icon: 'pi pi-tag',
-            command: () => {
-              this._modalService.open<EditSkuCommand, EditSkuMetadata>(EDIT_SKU_MODAL_ID, {
-                productUuids: products.map(p => p.uuid),
-                products: products.map(p => ({ uuid: p.uuid, sku: p.sku })),
-                sku: '',
-              });
-            },
-          });
-          
-          actions.push({
-            label: 'Edytuj EAN',
-            icon: 'pi pi-barcode',
-            command: () => {
-              this._modalService.open<EditEanCommand, EditEanMetadata>(EDIT_EAN_MODAL_ID, {
-                productUuids: products.map(p => p.uuid),
-                products: products.map(p => ({ uuid: p.uuid, sku: p.sku, ean: p.ean })),
-                ean: '',
-              });
-            },
-          });
-      
-          actions.push({
-            label: 'Zmień status',
-            icon: 'pi pi-sync',
-            command: () => {
-              this._modalService.open<EditStatusCommand, EditStatusMetadata>(EDIT_STATUS_MODAL_ID, {
-                productUuids: products.map(p => p.uuid),
-                products: products.map(p => ({ uuid: p.uuid, sku: p.sku, status: p.status })),
-                status: null,
-              });
-            },
-          });
-      
-          actions.push({
             label: 'Ustaw cenę',
             icon: 'pi pi-money-bill',
-            command: (event) => {
-              this._modalService.open<SetPriceCommand, SetPriceMetadata>(SET_PRICE_MODAL_ID, {
+            command: () => {
+              this._modalService.open<BatchCommandOfProductSetPriceCommand, SetPriceMetadata>(SET_PRICE_MODAL_ID, {
                 products: products.map(p => ({ uuid: p.uuid, sku: p.sku, price: p.price })),
                 price: null,
               });

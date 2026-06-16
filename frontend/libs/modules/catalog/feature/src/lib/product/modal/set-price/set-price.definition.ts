@@ -20,8 +20,8 @@ export class SetPriceModalDefinition implements ErpModalDefinition<SetPriceComma
       .setMetadata(metadata)
       .addStep('Nowa cena', SetPriceStepComponent)
       .setSaveLabel('Ustaw cenę')
-      .setOnSave(async (cmd) => {
-        await this.orchestrator.setPriceMultiple(cmd, SET_PRICE_MODAL_ID);
+      .setOnSave(async (command, meta) => {
+        await this.orchestrator.setPriceMultiple(command, SET_PRICE_MODAL_ID);
       })
     );
   }

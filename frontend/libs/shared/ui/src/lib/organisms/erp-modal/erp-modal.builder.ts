@@ -118,7 +118,7 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
    * @example
    * ```ts
    * const config = ErpModalBuilder.modal<EditProductCommand, EditProductMetadata>(b => b
-   *   .setTitle('Edycja produktu')
+   *   .setTitle(['Edycja produktu'])
    *   .setCommand({ name: '' })
    *   .setMetadata({ categoryId: 'abc' })
    *   .addStep('Dane', EditProductStepComponent)

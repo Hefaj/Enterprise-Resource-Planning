@@ -1,0 +1,27 @@
+{
+  "table": {
+    "search": "Search...",
+    "empty": "No data to display",
+    "paginationReport": "Showing {first} to {last} of {totalRecords} records"
+  },
+  "tabs": {
+    "empty": "No tabs to display",
+    "noAvailable": "No available tabs"
+  },
+  "stepper": {
+    "empty": "No steps to display"
+  },
+  "splitter": {
+    "empty": "Splitter - No panels"
+  },
+  "emptyCard": {
+    "empty": "No content",
+    "description": "This place is waiting for your data. Pass a component to fill it."
+  },
+  "modal": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "next": "Next",
+    "back": "Back"
+  }
+}

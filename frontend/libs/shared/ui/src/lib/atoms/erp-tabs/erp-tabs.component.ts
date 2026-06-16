@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
 import { ErpTabsConfig } from './erp-tabs.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-tabs',
   standalone: true,
-  imports: [CommonModule, TabsModule],
+  imports: [CommonModule, TabsModule, TranslocoModule],
+  providers: [provideSharedTranslations()],
   template: `
     @let _value = activeValue();
     @let _items = unwrappedItems();
@@ -23,7 +26,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
                   @if (item.icon) {
                     <i [class]="item.icon"></i>
                   }
-                  <span>{{ item.label }}</span>
+                  <span>{{ item.label | transloco }}</span>
                 </div>
               </p-tab>
             }
@@ -43,14 +46,14 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           @if (!activeTab) {
             <div class="flex flex-col items-center justify-center h-full opacity-50 grayscale p-12">
                <i class="pi pi-ban text-4xl mb-2"></i>
-               <span class="font-medium">Brak dostępnych zakładek</span>
+               <span class="font-medium">{{ SHARED_KEYS.tabs.noAvailable | transloco }}</span>
             </div>
           }
         </div>
       } @else {
         <div class="flex flex-col items-center justify-center h-full opacity-30 p-12">
            <i class="pi pi-inbox text-4xl mb-2"></i>
-           <span>Brak zakładek do wyświetlenia</span>
+           <span>{{ SHARED_KEYS.tabs.empty | transloco }}</span>
         </div>
       }
     </div>
@@ -78,6 +81,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpTabsComponent {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+
   public config = input.required<ErpTabsConfig>();
 
   protected internalValue = signal<string | number | undefined>(undefined);

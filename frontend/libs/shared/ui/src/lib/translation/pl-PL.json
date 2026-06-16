@@ -1,0 +1,27 @@
+{
+  "table": {
+    "search": "Szukaj...",
+    "empty": "Brak danych do wyświetlenia",
+    "paginationReport": "Pokazuję {first} do {last} z {totalRecords} rekordów"
+  },
+  "tabs": {
+    "empty": "Brak zakładek do wyświetlenia",
+    "noAvailable": "Brak dostępnych zakładek"
+  },
+  "stepper": {
+    "empty": "Brak kroków do wyświetlenia"
+  },
+  "splitter": {
+    "empty": "Splitter - Brak paneli"
+  },
+  "emptyCard": {
+    "empty": "Brak zawartości",
+    "description": "To miejsce czeka na Twoje dane. Przekaż komponent, aby go wypełnić."
+  },
+  "modal": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "next": "Dalej",
+    "back": "Wstecz"
+  }
+}

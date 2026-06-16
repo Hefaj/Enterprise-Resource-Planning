@@ -3,11 +3,14 @@ import { NgComponentOutlet, NgStyle } from '@angular/common';
 import { SplitterModule } from 'primeng/splitter';
 import { ErpSplitterConfig } from './erp-splitter.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-splitter',
   standalone: true,
-  imports: [NgComponentOutlet, NgStyle, SplitterModule],
+  imports: [NgComponentOutlet, NgStyle, SplitterModule, TranslocoModule],
+  providers: [provideSharedTranslations()],
   template: `
     @let _layout = layout();
     @let _gutterSize = gutterSize();
@@ -43,7 +46,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
     } @else {
       <div class="flex flex-col items-center justify-center p-8 border border-dashed border-slate-300 text-slate-400 rounded-lg">
         <i class="pi pi-columns text-3xl mb-2"></i>
-        <span class="text-sm font-medium">Splitter - Brak paneli</span>
+        <span class="text-sm font-medium">{{ SHARED_KEYS.splitter.empty | transloco }}</span>
       </div>
     }
   `,
@@ -92,6 +95,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpSplitterComponent {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+
   public config = input.required<ErpSplitterConfig>();
   public internalLoading = signal(false);
 

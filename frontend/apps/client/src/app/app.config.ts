@@ -1,4 +1,4 @@
-import { ApplicationConfig, LOCALE_ID, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, isDevMode, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { appRoutes } from '@erp/client/contract';
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
@@ -7,6 +7,7 @@ import { STARTUP } from './STARTUP';
 import { registerLocaleData } from '@angular/common';
 import localePl from '@angular/common/locales/pl';
 import { API_BASE_URL } from '@erp/catalog/data-access';
+import { provideTransloco } from '@jsverse/transloco';
 
 registerLocaleData(localePl);
 
@@ -26,5 +27,13 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(STARTUP),
     { provide: LOCALE_ID, useValue: 'pl-PL' },
     { provide: API_BASE_URL, useValue: 'http://localhost:5149' },
+    provideTransloco({
+      config: {
+        availableLangs: ['pl-PL', 'en-US'],
+        defaultLang: 'pl-PL',
+        reRenderOnLangChange: true,
+        prodMode: !isDevMode(),
+      },
+    }),
   ],
 };

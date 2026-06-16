@@ -1,0 +1,47 @@
+{
+  "base": {
+    "tabs": {
+      "products": "Products",
+      "multimedia": "Multimedia",
+      "salesOffer": "Sales Offer",
+      "warranties": "Warranties"
+    },
+    "table": {
+      "columns": {
+        "sku": "SKU",
+        "name": "Product name",
+        "category": "Category",
+        "modelName": "Model",
+        "price": "Net price",
+        "availableFrom": "Available from",
+        "status": "Status",
+        "available": "Available"
+      },
+      "emptyMessage": "No products found"
+    }
+  },
+  "enums": {
+    "status": {
+      "active": "Active",
+      "draft": "Draft",
+      "withdrawn": "Withdrawn",
+      "archive": "Archive"
+    }
+  },
+  "commands": {
+    "setPrice": {
+      "label": "Set price",
+      "modalTitle": "Set price for selected products",
+      "priceLabel": "New net price (USD)",
+      "submitButton": "Apply",
+      "cancelButton": "Cancel",
+      "editMessage": "You are editing the net price for",
+      "productSuffixSingle": "product",
+      "productSuffixPlural": "products"
+    }
+  },
+  "validations": {
+    "priceRequired": "Price is required",
+    "priceMin": "Price must be greater than zero"
+  }
+}

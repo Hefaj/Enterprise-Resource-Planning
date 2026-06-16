@@ -88,6 +88,14 @@ export function createModuleFederationConfig(baseConfig: ModuleFederationConfig)
         strictVersion: false,
         requiredVersion: false,
       }
+    },
+    {
+      libraryName: '@jsverse/transloco',
+      sharedConfig: {
+        singleton: true,
+        strictVersion: false,
+        requiredVersion: false,
+      }
     }
   ];
 

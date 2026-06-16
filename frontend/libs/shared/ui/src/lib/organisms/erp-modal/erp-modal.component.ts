@@ -10,13 +10,16 @@ import {
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { TranslocoModule } from '@jsverse/transloco';
 import { ErpModalConfig } from './erp-modal.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-modal',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule],
+  imports: [CommonModule, DialogModule, ButtonModule, TranslocoModule],
+  providers: [provideSharedTranslations()],
   template: `
     @let _title = title();
     @let _steps = config().steps;
@@ -45,11 +48,11 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           <div class="erp-modal-header__left">
             <h2 class="erp-modal-header__title">
               @for (item of _title; track $index) {
-                <span [class.erp-modal-header__segment--muted]="!$last">{{ item }}</span>
+                <span [class.erp-modal-header__segment--muted]="!$last">{{ item | transloco }}</span>
                 @if (!$last) {
                   <span class="erp-modal-header__separator">></span>
                 }
-              }
+               }
             </h2>
           </div>
 
@@ -69,7 +72,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
                     }
                   </div>
                   <span class="erp-modal-step-indicator__label">
-                    {{ unwrapLabel(step.label) }}
+                    {{ unwrapLabel(step.label) | transloco }}
                   </span>
                 </div>
                 @if (!$last) {
@@ -122,7 +125,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           <div class="erp-modal-footer">
             <div class="erp-modal-footer__left">
               <p-button
-                [label]="cancelLabel()"
+                [label]="cancelLabel() | transloco"
                 severity="secondary"
                 [variant]="'text'"
                 (onClick)="handleCancel()"
@@ -132,7 +135,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
             <div class="erp-modal-footer__right">
               @if (_showStepper && !_isFirstStep) {
                 <p-button
-                  [label]="backLabel()"
+                  [label]="backLabel() | transloco"
                   severity="secondary"
                   [variant]="'outlined'"
                   icon="pi pi-arrow-left"
@@ -142,7 +145,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 
               @if (_isLastStep) {
                 <p-button
-                  [label]="saveLabel()"
+                  [label]="saveLabel() | transloco"
                   icon="pi pi-check"
                   [loading]="_loading"
                   [disabled]="!_canGoNext"
@@ -150,7 +153,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
                 />
               } @else {
                 <p-button
-                  [label]="nextLabel()"
+                  [label]="nextLabel() | transloco"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   [disabled]="!_canGoNext"
@@ -533,7 +536,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
   public metadataSignal!: WritableSignal<TMetadata>;
 
   /** Mapa canGoNext Signal per step index. */
-  private stepCanGoNextMap = new Map<number, Signal<boolean>>();
+  private _stepCanGoNextMap = new Map<number, Signal<boolean>>();
 
   // ── Computed properties ──
 
@@ -554,19 +557,19 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
   protected showFooter = computed(() => this.config().showFooter !== false);
 
   protected saveLabel = computed(
-    () => unwrapSignal(this.config().saveLabel) || 'Zapisz'
+    () => unwrapSignal(this.config().saveLabel) || SHARED_KEYS.modal.save
   );
 
   protected cancelLabel = computed(
-    () => unwrapSignal(this.config().cancelLabel) || 'Anuluj'
+    () => unwrapSignal(this.config().cancelLabel) || SHARED_KEYS.modal.cancel
   );
 
   protected nextLabel = computed(
-    () => unwrapSignal(this.config().nextLabel) || 'Dalej'
+    () => unwrapSignal(this.config().nextLabel) || SHARED_KEYS.modal.next
   );
 
   protected backLabel = computed(
-    () => unwrapSignal(this.config().backLabel) || 'Wstecz'
+    () => unwrapSignal(this.config().backLabel) || SHARED_KEYS.modal.back
   );
 
   protected sizeClass = computed(() => {
@@ -575,7 +578,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
   });
 
   protected canGoNext = computed(() => {
-    const stepSignal = this.stepCanGoNextMap.get(this.currentStep());
+    const stepSignal = this._stepCanGoNextMap.get(this.currentStep());
     return stepSignal ? stepSignal() : true;
   });
 
@@ -594,7 +597,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
       command: this.commandSignal,
       metadata: this.metadataSignal,
       registerCanGoNext: (canGoNextSignal: Signal<boolean>) => {
-        this.stepCanGoNextMap.set(stepIndex, canGoNextSignal);
+        this._stepCanGoNextMap.set(stepIndex, canGoNextSignal);
       },
     };
 

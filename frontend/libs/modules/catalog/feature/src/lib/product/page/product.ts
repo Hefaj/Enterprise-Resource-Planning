@@ -14,11 +14,12 @@ import { SalesOfferTabComponent } from './tabs/sales-offer-tab.component';
 import { WarrantyTabComponent } from './tabs/warranty-tab.component';
 import { ProductFilterComponent } from './filters/product-filter.component';
 import { ProductListViewStore } from './product-list-view.store';
+import { provideProductTranslations, PRODUCT_KEYS } from '../translation';
 
 @Component({
   standalone: true,
   imports: [CommonModule, ErpPageLayoutComponent],
-  providers: [ProductListViewStore],
+  providers: [ProductListViewStore, provideProductTranslations()],
   template: ` <erp-page-layout [config]="pageConfig" /> `,
   styles: [`
     :host {
@@ -31,19 +32,19 @@ import { ProductListViewStore } from './product-list-view.store';
 export class ProductComponent {
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
-      .addTab('Produkty', 'products', {
+      .addTab(PRODUCT_KEYS.base.tabs.products, 'products', {
         component: ProductTabComponent,
         icon: 'pi pi-shopping-bag',
       })
-      .addTab('Multimedia', 'multimedia', {
+      .addTab(PRODUCT_KEYS.base.tabs.multimedia, 'multimedia', {
         component: MultimediaTabComponent,
         icon: 'pi pi-image',
       })
-      .addTab('Oferta sprzedaży', 'sales-offer', {
+      .addTab(PRODUCT_KEYS.base.tabs.salesOffer, 'sales-offer', {
         component: SalesOfferTabComponent,
         icon: 'pi pi-percentage',
       })
-      .addTab('Gwarancje', 'warranties', {
+      .addTab(PRODUCT_KEYS.base.tabs.warranties, 'warranties', {
         component: WarrantyTabComponent,
         icon: 'pi pi-verified',
       })

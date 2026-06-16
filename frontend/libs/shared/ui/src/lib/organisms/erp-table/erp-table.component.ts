@@ -21,6 +21,8 @@ import { TagModule } from 'primeng/tag';
 import { MenuItem } from 'primeng/api';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpContextMenuComponent } from '../../atoms/erp-context-menu/erp-context-menu.component';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 import {
   ErpTableConfig,
@@ -48,7 +50,9 @@ const DEFAULT_COL_WIDTH_PX = 150;
     InputIconModule,
     TagModule,
     ErpContextMenuComponent,
+    TranslocoModule,
   ],
+  providers: [provideSharedTranslations()],
   template: `
     @let _config = config();
     @let _data = displayData();
@@ -63,7 +67,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
             <input
               pInputText
               type="text"
-              [placeholder]="'Szukaj...'"
+              [placeholder]="SHARED_KEYS.table.search | transloco"
               class="w-full md:w-80"
               (input)="onGlobalFilter($event)"
             />
@@ -105,7 +109,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
             (onRowSelect)="handleRowSelect($event)"
             (onRowUnselect)="handleRowUnselect($event)"
             [styleClass]="getTableStyleClass(_config)"
-            [currentPageReportTemplate]="'Pokazuję {first} do {last} z {totalRecords} rekordów'"
+            [currentPageReportTemplate]="SHARED_KEYS.table.paginationReport | transloco"
             [showCurrentPageReport]="true"
             [tableStyle]="{ 'table-layout': 'fixed', 'min-width': totalColumnsWidth() + 'px', 'width': '100%' }"
           >
@@ -125,7 +129,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                     [style.text-align]="col.align || 'left'"
                   >
                     <div class="flex items-center gap-2">
-                      {{ col.header }}
+                      {{ col.header | transloco }}
                       @if (col.sortable) {
                         <p-sortIcon [field]="col.field" />
                       }
@@ -155,7 +159,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                               [value]="value"
                               (input)="filterCallback($any($event.target).value)"
                               class="w-full text-sm"
-                              [placeholder]="'Filtruj ' + col.header"
+                              [placeholder]="('Filtruj ' + (col.header | transloco))"
                             />
                           </ng-template>
                         </p-columnFilter>
@@ -215,7 +219,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                       @case ('badge') {
                         @if (row[col.field] !== null && row[col.field] !== undefined) {
                           <p-tag
-                            [value]="row[col.field]"
+                            [value]="row[col.field] | transloco"
                             [severity]="getBadgeSeverity(row[col.field], col)"
                             [rounded]="true"
                           />
@@ -226,7 +230,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                       @case ('tag') {
                         @if (row[col.field] !== null && row[col.field] !== undefined) {
                           <p-tag
-                            [value]="row[col.field]"
+                            [value]="row[col.field] | transloco"
                             [severity]="getTagSeverity(row[col.field], col)"
                             [rounded]="$any(col.typeConfig)?.rounded ?? false"
                           />
@@ -298,7 +302,7 @@ const DEFAULT_COL_WIDTH_PX = 150;
                 >
                   <div class="flex flex-col items-center gap-3 text-surface-400 dark:text-surface-500">
                     <i class="pi pi-inbox text-4xl"></i>
-                    <span class="text-lg">{{ _config.emptyMessage || 'Brak danych do wyświetlenia' }}</span>
+                    <span class="text-lg">{{ _config.emptyMessage ? (_config.emptyMessage | transloco) : (SHARED_KEYS.table.empty | transloco) }}</span>
                   </div>
                 </td>
               </tr>
@@ -449,6 +453,8 @@ const DEFAULT_COL_WIDTH_PX = 150;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpTableComponent implements OnInit, OnDestroy {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+
   @ViewChild('dt') table!: Table;
   private colScrollViewport = viewChild<ElementRef<HTMLDivElement>>('colScrollViewport');
   private contextMenuRef = viewChild<ErpContextMenuComponent>('cm');

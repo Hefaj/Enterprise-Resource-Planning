@@ -70,6 +70,7 @@
     "@angular/forms": "~21.1.0",
     "@angular/platform-browser": "~21.1.0",
     "@angular/router": "~21.1.0",
+    "@jsverse/transloco": "^8.4.0",
     "@ngrx/operators": "^21.1.0",
     "@ngrx/signals": "^21.1.0",
     "@nx-dotnet/core": "^3.0.2",

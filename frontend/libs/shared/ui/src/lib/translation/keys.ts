@@ -1,0 +1,27 @@
+export const SHARED_KEYS = {
+  table: {
+    search: 'shared.table.search',
+    empty: 'shared.table.empty',
+    paginationReport: 'shared.table.paginationReport'
+  },
+  tabs: {
+    empty: 'shared.tabs.empty',
+    noAvailable: 'shared.tabs.noAvailable'
+  },
+  stepper: {
+    empty: 'shared.stepper.empty'
+  },
+  splitter: {
+    empty: 'shared.splitter.empty'
+  },
+  emptyCard: {
+    empty: 'shared.emptyCard.empty',
+    description: 'shared.emptyCard.description'
+  },
+  modal: {
+    save: 'shared.modal.save',
+    cancel: 'shared.modal.cancel',
+    next: 'shared.modal.next',
+    back: 'shared.modal.back'
+  }
+} as const;

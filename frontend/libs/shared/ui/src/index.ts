@@ -31,6 +31,7 @@ export * from './lib/atoms/erp-splitter';
 export * from './lib/atoms/erp-stepper';
 export * from './lib/atoms/erp-toggle-switch';
 export * from './lib/atoms/erp-user-menu';
+export * from './lib/atoms/erp-text';
 
 // Molecules
 export * from './lib/molecules/erp-dynamic-filter';
@@ -42,4 +43,7 @@ export * from './lib/organisms/erp-form';
 export * from './lib/organisms/erp-workflow';
 export * from './lib/organisms/erp-table';
 export * from './lib/organisms/erp-modal';
+
+// Translations
+export * from './lib/translation';
 

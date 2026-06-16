@@ -1,1 +1,47 @@
-{}
+{
+  "base": {
+    "tabs": {
+      "products": "Produkty",
+      "multimedia": "Multimedia",
+      "salesOffer": "Oferta sprzedaży",
+      "warranties": "Gwarancje"
+    },
+    "table": {
+      "columns": {
+        "sku": "SKU",
+        "name": "Nazwa produktu",
+        "category": "Kategoria",
+        "modelName": "Model",
+        "price": "Cena netto",
+        "availableFrom": "Dostępny od",
+        "status": "Status",
+        "available": "Dostępny"
+      },
+      "emptyMessage": "Nie znaleziono produktów"
+    }
+  },
+  "enums": {
+    "status": {
+      "active": "Aktywny",
+      "draft": "Draft",
+      "withdrawn": "Wycofany",
+      "archive": "Archiwum"
+    }
+  },
+  "commands": {
+    "setPrice": {
+      "label": "Ustaw cenę",
+      "modalTitle": "Ustaw cenę dla wybranych produktów",
+      "priceLabel": "Nowa cena netto (PLN)",
+      "submitButton": "Zastosuj",
+      "cancelButton": "Anuluj",
+      "editMessage": "Edytujesz cenę netto dla",
+      "productSuffixSingle": "produktu",
+      "productSuffixPlural": "produktów"
+    }
+  },
+  "validations": {
+    "priceRequired": "Cena jest wymagana",
+    "priceMin": "Cena musi być większa od zera"
+  }
+}

@@ -12,22 +12,24 @@ import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 import { SetPriceMetadata } from './set-price.definition';
+import { PRODUCT_KEYS } from '../../translation';
+import { ErpTextComponent } from '@erp/shared/ui';
 
 /**
  * Step komponent do seryjnej edycji ceny produktów.
  */
 @Component({
-  selector: 'catalog-set-price-step',
+  selector: 'erp-catalog-set-price-step',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule],
+  imports: [CommonModule, ReactiveFormsModule, InputTextModule, ErpTextComponent],
   template: `
     @let _products = products();
 
     <div class="set-price-step">
       <p class="text-surface-600 dark:text-surface-400 text-sm mb-4">
-        Edytujesz cenę netto dla
+        <erp-text [config]="{ value: keys.commands.setPrice.editMessage }" />
         <strong>{{ _products.length }}</strong>
-        {{ _products.length === 1 ? 'produktu' : 'produktów' }}:
+        <erp-text [config]="{ value: _products.length === 1 ? keys.commands.setPrice.productSuffixSingle : keys.commands.setPrice.productSuffixPlural }" />:
       </p>
 
       <div class="selected-products mb-4">
@@ -41,7 +43,7 @@ import { SetPriceMetadata } from './set-price.definition';
 
       <div class="field">
         <label for="price-input" class="field-label">
-          Nowa cena netto (PLN)
+          <erp-text [config]="{ value: keys.commands.setPrice.priceLabel }" />
           <span class="required-mark">*</span>
         </label>
         <input
@@ -59,9 +61,9 @@ import { SetPriceMetadata } from './set-price.definition';
         @if (priceControl.invalid && priceControl.touched) {
           <small class="field-error">
             @if (priceControl.errors?.['required']) {
-              Cena jest wymagana
+              <erp-text [config]="{ value: keys.validations.priceRequired }" />
             } @else if (priceControl.errors?.['min']) {
-              Cena musi być większa od 0
+              <erp-text [config]="{ value: keys.validations.priceMin }" />
             }
           </small>
         }
@@ -91,6 +93,8 @@ import { SetPriceMetadata } from './set-price.definition';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetPriceStepComponent {
+  protected readonly keys = PRODUCT_KEYS;
+
   public command = input.required<WritableSignal<BatchCommandOfProductSetPriceCommand>>();
   public metadata = input.required<WritableSignal<SetPriceMetadata>>();
   public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
@@ -103,7 +107,7 @@ export class SetPriceStepComponent {
   protected products = computed<{ uuid: string; sku: string; price: number }[]>(() => this.command()()['products'] ?? []);
   protected canGoNext = computed(() => this.priceControl.valid);
 
-  constructor() {
+  public constructor() {
     effect(() => {
       const register = this.registerCanGoNext();
       if (register) register(this.canGoNext);

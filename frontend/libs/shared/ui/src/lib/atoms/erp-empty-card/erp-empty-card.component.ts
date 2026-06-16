@@ -2,11 +2,14 @@ import { ChangeDetectionStrategy, Component, input, computed } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ErpEmptyCardConfig } from './erp-empty-card.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-empty-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoModule],
+  providers: [provideSharedTranslations()],
   template: `
     @let _icon = icon();
     @let _title = title();
@@ -23,12 +26,16 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
         <i [class]="(_icon || 'pi pi-box') + ' text-xl'"></i>
       </div>
 
-      <h3 class="font-bold text-surface-700 dark:text-surface-100 mt-4 text-lg">{{ _title || 'Brak zawartości' }}</h3>
+      <h3 class="font-bold text-surface-700 dark:text-surface-100 mt-4 text-lg">
+        {{ _title ? (_title | transloco) : (SHARED_KEYS.emptyCard.empty | transloco) }}
+      </h3>
       @if (_subtitle) {
-        <p class="text-sm text-surface-500 dark:text-surface-400 font-semibold tracking-wide uppercase mt-1">{{ _subtitle }}</p>
+        <p class="text-sm text-surface-500 dark:text-surface-400 font-semibold tracking-wide uppercase mt-1">
+          {{ _subtitle | transloco }}
+        </p>
       }
       <p class="text-sm text-center max-w-sm mt-2 text-surface-500 dark:text-surface-500 italic">
-        {{ _description || 'To miejsce czeka na Twoje dane. Przekaż komponent, aby go wypełnić.' }}
+        {{ _description ? (_description | transloco) : (SHARED_KEYS.emptyCard.description | transloco) }}
       </p>
 
       @if (_showPulse !== false) {
@@ -57,6 +64,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   ],
 })
 export class ErpEmptyCardComponent {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+
   public config = input<ErpEmptyCardConfig>({});
 
   protected icon = computed(() => unwrapSignal(this.config().icon));

@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { StepperModule } from 'primeng/stepper';
 import { ErpStepperConfig } from './erp-stepper.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-stepper',
   standalone: true,
-  imports: [CommonModule, StepperModule],
+  imports: [CommonModule, StepperModule, TranslocoModule],
+  providers: [provideSharedTranslations()],
   template: `
     @let _value = activeValue();
     @let _items = unwrappedItems();
@@ -19,7 +22,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
           <p-step-list>
             @for (item of _items; track item.value) {
               <p-step [value]="item.value" [disabled]="item.disabled ?? false">
-                {{ item.label }}
+                {{ item.label | transloco }}
               </p-step>
             }
           </p-step-list>
@@ -41,7 +44,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       } @else {
         <div class="erp-stepper-empty">
           <i class="pi pi-inbox"></i>
-          <span>Brak kroków do wyświetlenia</span>
+          <span>{{ SHARED_KEYS.stepper.empty | transloco }}</span>
         </div>
       }
     </div>
@@ -166,6 +169,8 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpStepperComponent {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+
   public config = input.required<ErpStepperConfig>();
 
   protected internalLoading = signal(false);

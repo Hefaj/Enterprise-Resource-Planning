@@ -107,10 +107,22 @@
       "editMessage": "You are editing the net price for",
       "productSuffixSingle": "product",
       "productSuffixPlural": "products"
+    },
+    "setName": {
+      "label": "Set name",
+      "modalTitle": "Batch edit name",
+      "nameLabel": "New product name",
+      "namePlaceholder": "Enter new name",
+      "submitButton": "Set name",
+      "cancelButton": "Cancel",
+      "editMessage": "You are editing the name for",
+      "productSuffixSingle": "product",
+      "productSuffixPlural": "products"
     }
   },
   "validations": {
     "priceRequired": "Price is required",
-    "priceMin": "Price must be greater than zero"
+    "priceMin": "Price must be greater than zero",
+    "nameRequired": "Name is required"
   }
 }

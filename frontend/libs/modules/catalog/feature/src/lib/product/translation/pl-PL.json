@@ -107,10 +107,22 @@
       "editMessage": "Edytujesz cenę netto dla",
       "productSuffixSingle": "produktu",
       "productSuffixPlural": "produktów"
+    },
+    "setName": {
+      "label": "Ustaw nazwę",
+      "modalTitle": "Seryjna edycja nazwy",
+      "nameLabel": "Nowa nazwa produktu",
+      "namePlaceholder": "Wprowadź nową nazwę",
+      "submitButton": "Ustaw nazwę",
+      "cancelButton": "Anuluj",
+      "editMessage": "Edytujesz nazwę dla",
+      "productSuffixSingle": "produktu",
+      "productSuffixPlural": "produktów"
     }
   },
   "validations": {
     "priceRequired": "Cena jest wymagana",
-    "priceMin": "Cena musi być większa od zera"
+    "priceMin": "Cena musi być większa od zera",
+    "nameRequired": "Nazwa jest wymagana"
   }
 }

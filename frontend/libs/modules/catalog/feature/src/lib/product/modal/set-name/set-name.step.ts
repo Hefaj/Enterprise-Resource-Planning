@@ -12,22 +12,24 @@ import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { BatchCommandOfProductSetNameCommand } from '@erp/catalog/data-access';
 import { SetNameMetadata } from './set-name.definition';
+import { PRODUCT_KEYS } from '../../translation';
+import { ErpTextComponent, ErpTranslatePipe } from '@erp/shared/ui';
 
 /**
  * Step komponent do seryjnej edycji nazwy produktów.
  */
 @Component({
-  selector: 'catalog-set-name-step',
+  selector: 'erp-catalog-set-name-step',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule],
+  imports: [CommonModule, ReactiveFormsModule, InputTextModule, ErpTextComponent, ErpTranslatePipe],
   template: `
     @let _products = products();
 
     <div class="set-name-step">
       <p class="text-surface-600 dark:text-surface-400 text-sm mb-4">
-        Edytujesz nazwę dla
+        <erp-text [config]="{ value: keys.commands.setName.editMessage }" />
         <strong>{{ _products.length }}</strong>
-        {{ _products.length === 1 ? 'produktu' : 'produktów' }}:
+        <erp-text [config]="{ value: _products.length === 1 ? keys.commands.setName.productSuffixSingle : keys.commands.setName.productSuffixPlural }" />:
       </p>
 
       <div class="selected-products mb-4">
@@ -41,7 +43,7 @@ import { SetNameMetadata } from './set-name.definition';
 
       <div class="field">
         <label for="name-input" class="field-label">
-          Nowa nazwa produktu
+          <erp-text [config]="{ value: keys.commands.setName.nameLabel }" />
           <span class="required-mark">*</span>
         </label>
         <input
@@ -49,7 +51,7 @@ import { SetNameMetadata } from './set-name.definition';
           pInputText
           type="text"
           [formControl]="nameControl"
-          placeholder="Wprowadź nową nazwę"
+          [placeholder]="(keys.commands.setName.namePlaceholder | erpTranslate) || ''"
           class="w-full"
           [class.p-invalid]="nameControl.invalid && nameControl.touched"
           autocomplete="off"
@@ -57,7 +59,7 @@ import { SetNameMetadata } from './set-name.definition';
         @if (nameControl.invalid && nameControl.touched) {
           <small class="field-error">
             @if (nameControl.errors?.['required']) {
-              Nazwa jest wymagana
+              <erp-text [config]="{ value: keys.validations.nameRequired }" />
             }
           </small>
         }
@@ -87,6 +89,8 @@ import { SetNameMetadata } from './set-name.definition';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetNameStepComponent {
+  protected readonly keys = PRODUCT_KEYS;
+
   public command = input.required<WritableSignal<BatchCommandOfProductSetNameCommand>>();
   public metadata = input.required<WritableSignal<SetNameMetadata>>();
   public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
@@ -98,7 +102,7 @@ export class SetNameStepComponent {
   protected products = computed<{ uuid: string; sku: string; name: string }[]>(() => this.command()()['products'] ?? []);
   protected canGoNext = computed(() => this.nameControl.valid);
 
-  constructor() {
+  public constructor() {
     effect(() => {
       const register = this.registerCanGoNext();
       if (register) register(this.canGoNext);

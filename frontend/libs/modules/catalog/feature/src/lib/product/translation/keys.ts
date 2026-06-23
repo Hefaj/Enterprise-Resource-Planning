@@ -113,9 +113,21 @@ export const PRODUCT_KEYS = {
         productSuffixSingle: 'product.commands.setPrice.productSuffixSingle',
         productSuffixPlural: 'product.commands.setPrice.productSuffixPlural',
       },
+      setName: {
+        label: 'product.commands.setName.label',
+        modalTitle: 'product.commands.setName.modalTitle',
+        nameLabel: 'product.commands.setName.nameLabel',
+        namePlaceholder: 'product.commands.setName.namePlaceholder',
+        submitButton: 'product.commands.setName.submitButton',
+        cancelButton: 'product.commands.setName.cancelButton',
+        editMessage: 'product.commands.setName.editMessage',
+        productSuffixSingle: 'product.commands.setName.productSuffixSingle',
+        productSuffixPlural: 'product.commands.setName.productSuffixPlural',
+      },
     },
     validations: {
       priceRequired: 'product.validations.priceRequired',
       priceMin: 'product.validations.priceMin',
+      nameRequired: 'product.validations.nameRequired',
     },
   } as const;

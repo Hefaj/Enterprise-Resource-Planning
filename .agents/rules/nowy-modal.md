@@ -38,6 +38,24 @@ Przed utworzeniem definicji modalu, upewnij się, że orkiestrator (np. `Catalog
 
 ---
 
+## Krok 1.7: Dodawanie stałych tekstów (Tłumaczenia)
+
+Wszystkie stałe teksty widoczne dla użytkownika w modalu (np. tytuł, etykiety kroków, przycisk zapisu, placeholder, komunikaty błędów) **muszą być zdefiniowane za pomocą systemu tłumaczeń** Transloco, zgodnie z zasadami opisanymi w [architekturze tłumaczeń](file:///home/hefaj/Pulpit/git/Enterprise-Resource-Planning/.agents/rules/tlumaczenia.md). 
+
+Zabrania się wpisywania napisów "na sztywno" (hardkodowania).
+
+### Procedura dodawania:
+1. Dodaj klucze i teksty do plików językowych w:
+   - `libs/modules/MODULE_NAME/feature/src/lib/.../translation/pl-PL.json`
+   - `libs/modules/MODULE_NAME/feature/src/lib/.../translation/en-US.json`
+2. Uruchom generator kluczy w głównym katalogu projektu:
+   ```bash
+   pnpm translate:keys
+   ```
+3. Zaimportuj wygenerowany obiekt kluczy (np. `PRODUCT_KEYS`) i używaj go bezpośrednio w definicji modalu oraz jego komponentach.
+
+---
+
 ## Krok 2: Tworzenie plików modalu (Feature)
 
 Utwórz katalog modalu w odpowiedniej lokalizacji domeny wewnątrz `libs/modules/MODULE_NAME/feature/src/lib/.../modal/MODAL_NAME/`.
@@ -59,25 +77,26 @@ import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
 import { PascalCaseModalNameStepComponent } from './MODAL_NAME.step';
 import { PascalCaseModuleNameProductOrchestrator } from '@erp/MODULE_NAME/data-access'; // Dopasuj serwis orkiestratora
+import { PRODUCT_KEYS } from '../../translation'; // Dopasuj ścieżkę do tłumaczeń
 import { MODAL_ID } from '@erp/MODULE_NAME/util';
 
-export interface PascalCaseModalNameMetadata {}
+export type PascalCaseModalNameMetadata = Record<string, never>;
 
 @Injectable({ providedIn: 'root' })
 export class PascalCaseModalNameModalDefinition implements ErpModalDefinition<COMMAND_TYPE, PascalCaseModalNameMetadata> {
   public readonly id = MODAL_ID;
-  private readonly orchestrator = inject(PascalCaseModuleNameProductOrchestrator);
+  private readonly _orchestrator = inject(PascalCaseModuleNameProductOrchestrator);
 
   public build(command: COMMAND_TYPE, metadata?: PascalCaseModalNameMetadata): ErpModalConfig<COMMAND_TYPE, PascalCaseModalNameMetadata> {
     return ErpModalBuilder.modal<COMMAND_TYPE, PascalCaseModalNameMetadata>(b => b
-      .setTitle(['TytułGłówny', 'Podtytuł']) // np. ['Produkty', 'Seryjna edycja ceny']
+      .setTitle([PRODUCT_KEYS.base.tabs.products, PRODUCT_KEYS.commands.modalAction.modalTitle]) // Używaj kluczy tłumaczeń
       .setCommand(command)
       .setMetadata(metadata)
-      .addStep('Nazwa Kroku', PascalCaseModalNameStepComponent) // Zawsze dokładnie jeden krok
-      .setSaveLabel('Zapisz')
-      .setOnSave(async (cmd, meta) => {
+      .addStep(PRODUCT_KEYS.commands.modalAction.label, PascalCaseModalNameStepComponent) // Zawsze dokładnie jeden krok
+      .setSaveLabel(PRODUCT_KEYS.commands.modalAction.submitButton)
+      .setOnSave(async (cmd) => {
         // Wywołaj odpowiednią metodę orkiestratora zapisu
-        await this.orchestrator.saveMethodName(cmd, MODAL_ID);
+        await this._orchestrator.saveMethodName(cmd, MODAL_ID);
       })
     );
   }

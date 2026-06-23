@@ -60,7 +60,10 @@
       "executor": "@nx/angular:dev-server",
       "options": {
         "port": 4206,
-        "publicHost": "http://localhost:4206"
+        "publicHost": "http://localhost:4206",
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
       },
       "configurations": {
         "production": {

@@ -5,26 +5,27 @@ import {
   EnvironmentInjector,
   inject,
   Injectable,
+  runInInjectionContext,
 } from '@angular/core';
+import { loadRemote } from '@module-federation/enhanced/runtime';
 import { ErpModalComponent } from './erp-modal.component';
 import { ErpModalConfig, ErpModalDefinition, ErpModalRef } from './erp-modal.types';
 
 /**
- * Globalny serwis do otwierania modali.
+ * Globalny serwis do otwierania modali z automatycznym lazy loadingiem modułów.
  *
- * Obsługuje dwa tryby:
- * 1. **Rejestrowy** — modal zarejestrowany przez `register()`, otwierany przez `open(id, command)`
- * 2. **Bezpośredni** — modal otwierany przez `open(config)` z pełną konfiguracją
+ * Wszystkie modale są otwierane wyłącznie przez metodę `open(queueID, command, metadata)`,
+ * która w razie potrzeby automatycznie dociąga zdalny moduł (remote) za pomocą Module Federation.
  *
  * @example
  * ```ts
  * private modalService = inject(ErpModalService);
  *
- * // Tryb rejestrowy (zalecany):
- * this.modalService.open('catalog.product.edit-sku', { productUuids: [...], sku: '' });
- *
- * // Tryb bezpośredni:
- * this.modalService.open(ErpModalBuilder.modal<MyCommand>(b => b.setTitle('...')));
+ * // Otwieranie (z automatycznym lazy loadingiem modułu jeśli to konieczne):
+ * await this.modalService.open(SET_PRICE_MODAL_ID, {
+ *   products: [...],
+ *   price: null
+ * });
  * ```
  */
 @Injectable({ providedIn: 'root' })
@@ -34,6 +35,12 @@ export class ErpModalService {
 
   /** Globalny rejestr definicji modali. */
   private readonly _registry = new Map<string, ErpModalDefinition<any, any>>();
+
+  /** Mapa modalId → routePrefix remota. Budowana przy STARTUP z remoteModalIds. */
+  private readonly _modalIdToModule = new Map<string, string>();
+
+  /** Zbiór prefixów remotów, których modale zostały już załadowane. */
+  private readonly _loadedRemotes = new Set<string>();
 
   // ── Rejestracja ──
 
@@ -60,47 +67,97 @@ export class ErpModalService {
     }
   }
 
-  // ── Otwieranie ──
-
   /**
-   * Otwira modal z pełną konfiguracją (tryb bezpośredni).
+   * Rejestruje mapowanie modalId → routePrefix remota.
+   * Wywoływane przy STARTUP z remoteModalIds każdego modułu.
+   *
+   * @param modulePrefix routePrefix remota (np. 'catalog')
+   * @param modalIds tablica identyfikatorów modali z danego modułu
    */
-  public open<TCommand = any, TMetadata = any>(
-    config: ErpModalConfig<TCommand, TMetadata>
-  ): ErpModalRef<TCommand, TMetadata>;
+  public registerModalIds(modulePrefix: string, modalIds: string[]): void {
+    for (const id of modalIds) {
+      this._modalIdToModule.set(id, modulePrefix);
+    }
+  }
+
+  // ── Otwieranie (zawsze przez lazyloading) ──
 
   /**
-   * Otwira zarejestrowany modal po identyfikatorze (tryb rejestrowy).
-   * @param id Identyfikator modalu zarejestrowanego przez `register()`
+   * Otwiera modal na podstawie jego identyfikatora (queueID, np. hash MD5).
+   * Jeśli modal nie jest jeszcze zarejestrowany, lazy-ładuje definicje modali
+   * z odpowiedniego remota na podstawie mapy modalId → modulePrefix
+   * (budowanej przy STARTUP z remoteModalIds).
+   *
+   * @param queueID Identyfikator modalu (np. hash MD5)
    * @param command Początkowy stan commanda
    * @param metadata Opcjonalne metadane przekazywane do modalu
    */
-  public open<TCommand = any, TMetadata = any>(
+  public async open<TCommand = any, TMetadata = any>(
+    queueID: string,
+    command: TCommand,
+    metadata?: TMetadata,
+  ): Promise<ErpModalRef<TCommand, TMetadata>> {
+    // 1. Sprawdź czy modal jest już zarejestrowany
+    if (this._registry.has(queueID)) {
+      return this._openDirect(queueID, command, metadata);
+    }
+
+    // 2. Znajdź moduł na podstawie mapy (budowanej przy STARTUP)
+    const modulePrefix = this._modalIdToModule.get(queueID);
+    if (!modulePrefix) {
+      throw new Error(
+        `[ErpModalService] Unknown modal ID: "${queueID}". ` +
+        `Not found in modalId → module mapping. ` +
+        `Make sure the remote module exports remoteModalIds in its contract.`
+      );
+    }
+
+    // 3. Lazy load definicji modali z remota (jeśli jeszcze nie załadowane)
+    if (!this._loadedRemotes.has(modulePrefix)) {
+      try {
+        const contractModule = await loadRemote<{ registerModals?: () => Promise<any[]> }>(
+          `${modulePrefix}/contract`
+        );
+
+        if (contractModule?.registerModals) {
+          const tokens = await contractModule.registerModals();
+          runInInjectionContext(this.injector, () => {
+            for (const token of tokens) {
+              this.register(inject(token));
+            }
+          });
+        }
+
+        this._loadedRemotes.add(modulePrefix);
+      } catch (error) {
+        throw new Error(
+          `[ErpModalService] Failed to load modals from "${modulePrefix}/contract" for queueID "${queueID}". ` +
+          `Is the remote module running? Error: ${error}`
+        );
+      }
+    }
+
+    // 4. Teraz modal powinien być zarejestrowany
+    if (!this._registry.has(queueID)) {
+      throw new Error(
+        `[ErpModalService] Modal "${queueID}" not found after loading "${modulePrefix}/contract". ` +
+        `Make sure registerModals() in "${modulePrefix}" returns the ModalDefinition token for this ID.`
+      );
+    }
+
+    return this._openDirect(queueID, command, metadata);
+  }
+
+  private _openDirect<TCommand, TMetadata>(
     id: string,
     command: TCommand,
     metadata?: TMetadata
-  ): ErpModalRef<TCommand, TMetadata>;
-
-  public open<TCommand = any, TMetadata = any>(
-    configOrId: ErpModalConfig<TCommand, TMetadata> | string,
-    command?: TCommand,
-    metadata?: TMetadata
   ): ErpModalRef<TCommand, TMetadata> {
-    let config: ErpModalConfig<TCommand, TMetadata>;
-
-    if (typeof configOrId === 'string') {
-      const definition = this._registry.get(configOrId);
-      if (!definition) {
-        throw new Error(
-          `[ErpModalService] Modal "${configOrId}" not found in registry. ` +
-          `Available: [${Array.from(this._registry.keys()).join(', ')}]`
-        );
-      }
-      config = definition.build(command!, metadata);
-    } else {
-      config = configOrId;
+    const definition = this._registry.get(id);
+    if (!definition) {
+      throw new Error(`[ErpModalService] Modal "${id}" not found in registry.`);
     }
-
+    const config = definition.build(command, metadata);
     return this._openInternal(config);
   }
 
@@ -166,3 +223,4 @@ export class ErpModalService {
     }, 300);
   }
 }
+

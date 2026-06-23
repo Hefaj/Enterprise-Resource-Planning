@@ -74,12 +74,36 @@ export const remoteMenu: ErpNavigationItem[] = [
 ];
 ```
 
+Plik: `frontend/libs/modules/MODULE_NAME/contract/src/lib/entry.modals.ts`
+
+```ts
+/**
+ * Identyfikatory modali tego modułu.
+ * Służy do budowania globalnej mapy modalId → modulePrefix w ErpModalService.
+ */
+export const remoteModalIds: string[] = [
+  // Dodaj stałe ID modali z @erp/MODULE_NAME/util
+];
+
+/**
+ * Asynchronicznie ładuje i zwraca tokeny DI definicji modali tego modułu.
+ * Używana przez ErpModalService do lazy loadingu.
+ */
+export async function registerModals(): Promise<any[]> {
+  // const { MyModalDefinition } = await import('@erp/MODULE_NAME/feature');
+  // return [MyModalDefinition];
+  return [];
+}
+```
+
 Plik: `frontend/libs/modules/MODULE_NAME/contract/src/index.ts`
 
 ```ts
 export * from './lib/entry.menu';
 
 export * from './lib/entry.routes';
+
+export { registerModals, remoteModalIds } from './lib/entry.modals';
 ```
 
 ### 4.3 Data-Access, UI, Util
@@ -204,7 +228,7 @@ npx nx serve MODULE_NAME
 - [ ] `bootstrap.ts` — importuje `RemoteEntry` z `@erp/MODULE_NAME/feature`
 - [ ] `app.config.ts` — importuje `remoteRoutes` z `@erp/MODULE_NAME/contract`
 - [ ] `entry.ts` w feature — komponent `RemoteEntry` z `<router-outlet>`
-- [ ] `entry.routes.ts` i `entry.menu.ts` w contract
+- [ ] `entry.routes.ts`, `entry.menu.ts` i `entry.modals.ts` w contract (oraz ich poprawne eksporty w `index.ts`)
 - [ ] `module-federation.manifest.json` — wpis z portem
 - [ ] `app.routes.ts` (client) — nowy path z `loadRemote`
 - [ ] `REMOTE_MODULES_CONFIG.ts` — nowy wpis

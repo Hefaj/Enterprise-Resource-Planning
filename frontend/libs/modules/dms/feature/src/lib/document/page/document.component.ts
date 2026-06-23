@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ErpPageLayoutComponent, ErpPageLayoutBuilder, ErpTabsComponent, ErpTabsBuilder, ErpEmptyCardBuilder, ErpModalService } from '@erp/shared/ui';
-import { SET_PRICE_MODAL_ID } from '@erp/catalog/util';
+import { SET_PRICE_MODAL_ID, SET_NAME_MODAL_ID } from '@erp/catalog/util';
 import { DmsDocument } from '@erp/dms/ui';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
@@ -40,12 +40,20 @@ export class DocumentStatusSidebarComponent {}
     <div class="flex flex-col h-full">
       <div class="p-4 bg-surface-100 dark:bg-surface-800 flex justify-between items-center border-b border-surface-200 dark:border-surface-700">
         <h2 class="text-lg font-bold">Dokumenty</h2>
-        <button 
-          (click)="openTestProductModal()" 
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2">
-          <i class="pi pi-external-link"></i>
-          Test: Otwórz modal z innego modułu (Product)
-        </button>
+        <div class="flex gap-2">
+          <button 
+            (click)="openTestProductModal()" 
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2">
+            <i class="pi pi-external-link"></i>
+            Test: Otwórz modal z innego modułu (Product)
+          </button>
+          <button 
+            (click)="openTestProductNameModal()" 
+            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2">
+            <i class="pi pi-external-link"></i>
+            Test: Otwórz modal nazwy z Product
+          </button>
+        </div>
       </div>
       <div class="flex-1">
         <erp-page-layout [config]="pageConfig" />
@@ -84,6 +92,15 @@ export class DocumentComponent {
         { uuid: 'test-uuid-1', sku: 'TEST-SKU-DMS', price: 99.99 }
       ],
       price: 150.00
+    });
+  }
+
+  protected openTestProductNameModal() {
+    this._modalService.open(SET_NAME_MODAL_ID, {
+      products: [
+        { uuid: 'test-uuid-1', sku: 'TEST-SKU-DMS', name: 'Original Name' }
+      ],
+      name: 'New Test Name'
     });
   }
 

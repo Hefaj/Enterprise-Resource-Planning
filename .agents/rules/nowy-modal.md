@@ -213,3 +213,23 @@ Upewnij się, że plik `libs/modules/MODULE_NAME/contract/src/index.ts` eksportu
 export { registerModals, remoteModalIds } from './lib/entry.modals';
 ```
 
+---
+
+## Krok 5: Konfiguracja nagłówków CORS w dev-server (Opcjonalnie)
+
+Aby uniknąć problemów z CORS przy dynamicznym ładowaniu modułów (Module Federation), upewnij się, że w pliku `apps/modules/MODULE_NAME/project.json` (oraz w aplikacji hosta `apps/client/project.json`) w sekcji `"serve.options"` skonfigurowane są odpowiednie nagłówki:
+
+```json
+"serve": {
+  "executor": "@nx/angular:dev-server",
+  "options": {
+    "port": 420X,
+    "publicHost": "http://localhost:420X",
+    "headers": {
+      "Access-Control-Allow-Origin": "*"
+    }
+  }
+}
+```
+
+

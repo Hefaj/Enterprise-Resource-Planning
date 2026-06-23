@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenuItem } from 'primeng/api';
-import { CatalogProductOrchestrator, CategoryVM, ProductVM, BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, CategoryVM, ProductVM, BatchCommandOfProductSetPriceCommand, BatchCommandOfProductSetNameCommand } from '@erp/catalog/data-access';
 import { ErpTableComponent, ErpTableBuilder, ErpModalService } from '@erp/shared/ui';
 import { ProductViewModel } from '@erp/catalog/util';
 import { ProductListViewStore } from '../product-list-view.store';
 import {
   SET_PRICE_MODAL_ID,
-  SetPriceMetadata
+  SetPriceMetadata,
+  SET_NAME_MODAL_ID,
+  SetNameMetadata
 } from '../../modal';
 
 /**
@@ -75,6 +77,17 @@ export class ProductTabComponent {
               this._modalService.open<BatchCommandOfProductSetPriceCommand, SetPriceMetadata>(SET_PRICE_MODAL_ID, {
                 products: products.map(p => ({ uuid: p.uuid, sku: p.sku, price: p.price })),
                 price: null,
+              });
+            },
+          });
+
+          actions.push({
+            label: 'Ustaw nazwę',
+            icon: 'pi pi-pencil',
+            command: () => {
+              this._modalService.open<BatchCommandOfProductSetNameCommand, SetNameMetadata>(SET_NAME_MODAL_ID, {
+                products: products.map(p => ({ uuid: p.uuid, sku: p.sku, name: p.name })),
+                name: null,
               });
             },
           });

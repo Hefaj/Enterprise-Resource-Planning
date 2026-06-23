@@ -1,5 +1,5 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
-import { TranslocoService } from '@jsverse/transloco';
+import { Pipe, PipeTransform, Inject, Optional, ChangeDetectorRef } from '@angular/core';
+import { TranslocoPipe, TranslocoService, TRANSLOCO_SCOPE, TRANSLOCO_LANG } from '@jsverse/transloco';
 import { Translatable } from './erp-signal-utils';
 
 @Pipe({
@@ -7,14 +7,21 @@ import { Translatable } from './erp-signal-utils';
   standalone: true,
   pure: false
 })
-export class ErpTranslatePipe implements PipeTransform {
-  private transloco = inject(TranslocoService);
+export class ErpTranslatePipe extends TranslocoPipe implements PipeTransform {
+  constructor(
+    service: TranslocoService,
+    @Optional() @Inject(TRANSLOCO_SCOPE) providerScope: any,
+    @Optional() @Inject(TRANSLOCO_LANG) providerLang: any,
+    cdr: ChangeDetectorRef
+  ) {
+    super(service, providerScope, providerLang, cdr);
+  }
 
-  transform(value: Translatable | null | undefined): string {
+  override transform(value: Translatable | null | undefined): string {
     if (!value) return '';
     if (typeof value === 'string') {
-      return this.transloco.translate(value);
+      return super.transform(value);
     }
-    return this.transloco.translate(value.key, value.params);
+    return super.transform(value.key, value.params);
   }
 }

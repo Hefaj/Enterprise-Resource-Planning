@@ -53,6 +53,8 @@ export interface ErpModalConfig<TCommand = any, TMetadata = any> {
 
   /** Czy wyświetlić footer z przyciskami akcji. Domyślnie true. */
   showFooter?: boolean;
+  /** Opcjonalne providery DI (np. do dostarczenia lokalnych tłumaczeń). */
+  providers?: any[];
 }
 
 /**

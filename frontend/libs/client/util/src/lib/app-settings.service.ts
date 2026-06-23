@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { PrimeNG } from 'primeng/config';
 import { ThemeService } from './theme.service';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Injectable({
   providedIn: 'root',
@@ -9,6 +10,7 @@ export class AppSettingsService {
   private readonly _langKey = 'erp-lang';
   private _themeService = inject(ThemeService);
   private _primengConfig = inject(PrimeNG);
+  private _translocoService = inject(TranslocoService);
 
   public language = signal<string>(localStorage.getItem(this._langKey) || 'pl');
   public isDarkMode = this._themeService.isDarkMode;
@@ -18,6 +20,9 @@ export class AppSettingsService {
       const lang = this.language();
       localStorage.setItem(this._langKey, lang);
       this._updatePrimeNGTranslation(lang);
+
+      const translocoLang = lang === 'pl' ? 'pl-PL' : 'en-US';
+      this._translocoService.setActiveLang(translocoLang);
     });
   }
 

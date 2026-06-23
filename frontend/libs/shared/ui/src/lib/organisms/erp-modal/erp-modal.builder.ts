@@ -113,6 +113,12 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
     return this;
   }
 
+  /** Ustawia opcjonalne providery DI (np. do dostarczenia lokalnych tłumaczeń). */
+  public setProviders(providers: any[]): this {
+    this._data.providers = providers;
+    return this;
+  }
+
   /**
    * Statyczna metoda tworząca konfigurację modalu z generycznym TCommand.
    * @example

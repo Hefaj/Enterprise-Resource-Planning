@@ -9,4 +9,5 @@ export * from './lib/product/page/tabs/warranty-tab.component';
 export * from './lib/product/modal';
 
 export * from './lib/entry';
+export * from './lib/product/translation';
 

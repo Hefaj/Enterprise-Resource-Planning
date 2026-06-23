@@ -1,4 +1,4 @@
-import { ApplicationConfig, LOCALE_ID, isDevMode, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
+import { ApplicationConfig, Injectable, LOCALE_ID, isDevMode, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { appRoutes } from '@erp/client/contract';
 import { sharedPrimeNGConfig } from '@erp/shared/ui';
@@ -7,8 +7,16 @@ import { STARTUP } from './STARTUP';
 import { registerLocaleData } from '@angular/common';
 import localePl from '@angular/common/locales/pl';
 import { API_BASE_URL } from '@erp/catalog/data-access';
-import { provideTransloco } from '@jsverse/transloco';
+import { Translation, TranslocoLoader, provideTransloco } from '@jsverse/transloco';
 import { provideSharedTranslations } from '@erp/shared/ui';
+import { Observable, of } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class TranslocoInlineLoader implements TranslocoLoader {
+  public getTranslation(lang: string): Observable<Translation> {
+    return of({});
+  }
+}
 
 registerLocaleData(localePl);
 
@@ -36,6 +44,7 @@ export const appConfig: ApplicationConfig = {
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
       },
+      loader: TranslocoInlineLoader,
     }),
   ],
 };

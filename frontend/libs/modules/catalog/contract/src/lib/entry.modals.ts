@@ -28,3 +28,8 @@ export async function registerModals(): Promise<any[]> {
   return [SetPriceModalDefinition, SetNameModalDefinition];
 }
 
+export async function getModalProviders(): Promise<any[]> {
+  const { provideProductTranslations } = await import('@erp/catalog/feature');
+  return provideProductTranslations();
+}
+

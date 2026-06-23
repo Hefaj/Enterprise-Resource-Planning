@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
 import { SetPriceStepComponent } from './set-price.step';
 import { CatalogProductOrchestrator, BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
-import { PRODUCT_KEYS } from '../../translation';
+import { provideProductTranslations, PRODUCT_KEYS } from '../../translation';
 import { SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 
 export type SetPriceMetadata = Record<string, never>;

@@ -5,6 +5,7 @@ import {
   EnvironmentInjector,
   inject,
   Injectable,
+  Injector,
   runInInjectionContext,
 } from '@angular/core';
 import { loadRemote } from '@module-federation/enhanced/runtime';
@@ -41,6 +42,9 @@ export class ErpModalService {
 
   /** Zbiór prefixów remotów, których modale zostały już załadowane. */
   private readonly _loadedRemotes = new Set<string>();
+
+  /** Mapa modulePrefix → lista providerów zarejestrowanych dla modali z danego modułu. */
+  private readonly _moduleProviders = new Map<string, any[]>();
 
   // ── Rejestracja ──
 
@@ -115,9 +119,15 @@ export class ErpModalService {
     // 3. Lazy load definicji modali z remota (jeśli jeszcze nie załadowane)
     if (!this._loadedRemotes.has(modulePrefix)) {
       try {
-        const contractModule = await loadRemote<{ registerModals?: () => Promise<any[]> }>(
-          `${modulePrefix}/contract`
-        );
+        const contractModule = await loadRemote<{
+          registerModals?: () => Promise<any[]>;
+          getModalProviders?: () => Promise<any[]>;
+        }>(`${modulePrefix}/contract`);
+
+        if (contractModule?.getModalProviders) {
+          const providers = await contractModule.getModalProviders();
+          this._moduleProviders.set(modulePrefix, providers);
+        }
 
         if (contractModule?.registerModals) {
           const tokens = await contractModule.registerModals();
@@ -158,6 +168,16 @@ export class ErpModalService {
       throw new Error(`[ErpModalService] Modal "${id}" not found in registry.`);
     }
     const config = definition.build(command, metadata);
+
+    // Automatycznie doklej providery specyficzne dla modułu, w którym zdefiniowany jest ten modal
+    const modulePrefix = this._modalIdToModule.get(id);
+    if (modulePrefix) {
+      const moduleProviders = this._moduleProviders.get(modulePrefix);
+      if (moduleProviders && moduleProviders.length > 0) {
+        config.providers = [...(config.providers || []), ...moduleProviders];
+      }
+    }
+
     return this._openInternal(config);
   }
 
@@ -167,10 +187,19 @@ export class ErpModalService {
     config: ErpModalConfig<TCommand, TMetadata>
   ): ErpModalRef<TCommand, TMetadata> {
     // Tworzenie komponentu dynamicznie
+    let elementInjector: Injector | undefined = undefined;
+    if (config.providers && config.providers.length > 0) {
+      elementInjector = Injector.create({
+        providers: config.providers,
+        parent: this.injector,
+      });
+    }
+
     const componentRef = createComponent(
       ErpModalComponent,
       {
         environmentInjector: this.injector,
+        elementInjector,
       }
     ) as unknown as ComponentRef<ErpModalComponent<TCommand, TMetadata>>;
 

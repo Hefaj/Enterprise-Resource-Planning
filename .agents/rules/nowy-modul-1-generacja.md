@@ -238,7 +238,7 @@ Ponieważ usunęliśmy wygenerowany plik `entry.routes.ts` z katalogu `remote-en
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../../dist/out-tsc",
-    "types": [],
+    "types": ["node"],
     "target": "es2022"
   },
   "include": ["src/**/*.ts"],

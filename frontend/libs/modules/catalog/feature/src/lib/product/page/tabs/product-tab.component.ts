@@ -6,7 +6,6 @@ import { ErpTableComponent, ErpTableBuilder, ErpModalService } from '@erp/shared
 import { ProductViewModel } from '@erp/catalog/util';
 import { ProductListViewStore } from '../product-list-view.store';
 import {
-  ProductModalRegistration,
   SET_PRICE_MODAL_ID,
   SetPriceMetadata
 } from '../../modal';
@@ -43,9 +42,6 @@ export class ProductTabComponent {
   private readonly _catalogProductOrchestrator = inject(CatalogProductOrchestrator);
   private readonly _store = inject(ProductListViewStore);
   private readonly _modalService = inject(ErpModalService);
-
-  // Rejestracja modali produktowych (wystarczy inject — konstruktor robi register)
-  private readonly _ = inject(ProductModalRegistration);
 
   protected readonly products = computed<ProductViewModel[]>(() => {
     const resultsUuids = this._store.searchResultUuids();

@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
-import { CatalogBffClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommand, BatchResult } from '../../api-client';
+import { CatalogBffClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommand, BatchCommandOfProductSetNameCommand, BatchResult } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
@@ -183,6 +183,24 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     );
     return this.executeCommand(
       'Ustawianie cen produktów',
+      apiCall,
+      undefined,
+      queueID
+    );
+  }
+
+  /**
+   * Execute batch command to update name for selected products.
+   */
+  public async setNameMultiple(
+    command: BatchCommandOfProductSetNameCommand,
+    queueID?: string,
+  ): Promise<string> {
+    const apiCall = () => this._api.productSetNameMultipleCommand(command).pipe(
+      map((res: BatchResult) => res.jobUuid || '')
+    );
+    return this.executeCommand(
+      'Ustawianie nazw produktów',
       apiCall,
       undefined,
       queueID

@@ -91,7 +91,7 @@ export class ProductTabComponent {
           });
 
           actions.push({
-            label: 'Ustaw nazwę',
+            label: PRODUCT_KEYS.commands.setName.label,
             icon: 'pi pi-pencil',
             command: () => {
               this._modalService.open<BatchCommandOfProductSetNameCommand, SetNameMetadata>(SET_NAME_MODAL_ID, {

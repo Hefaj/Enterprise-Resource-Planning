@@ -9,11 +9,17 @@ import {
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { InputTextModule } from 'primeng/inputtext';
 import { BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 import { SetPriceMetadata } from './set-price.definition';
 import { PRODUCT_KEYS } from '../../translation';
-import { ErpTextComponent } from '@erp/shared/ui';
+import {
+  ErpTextComponent,
+  ErpTextBuilder,
+  ErpStepContentComponent,
+  ErpStepContentBuilder,
+  ErpStepContentConfig,
+  ErpInputTextBuilder,
+} from '@erp/shared/ui';
 
 /**
  * Step komponent do seryjnej edycji ceny produktów.
@@ -21,15 +27,15 @@ import { ErpTextComponent } from '@erp/shared/ui';
 @Component({
   selector: 'erp-catalog-set-price-step',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule, ErpTextComponent],
+  imports: [CommonModule, ErpTextComponent, ErpStepContentComponent],
   template: `
     @let _products = products();
 
     <div class="set-price-step">
-      <p class="text-surface-600 dark:text-surface-400 text-sm mb-4">
-        <erp-text [config]="{ value: keys.commands.setPrice.editMessage }" />
+      <!-- <p class="text-surface-600 dark:text-surface-400 text-sm mb-4">
+        <erp-text [config]="editMessageConfig" />
         <strong>{{ _products.length }}</strong>
-        <erp-text [config]="{ value: _products.length === 1 ? keys.commands.setPrice.productSuffixSingle : keys.commands.setPrice.productSuffixPlural }" />:
+        <erp-text [config]="productSuffixConfig()" />:
       </p>
 
       <div class="selected-products mb-4">
@@ -39,35 +45,9 @@ import { ErpTextComponent } from '@erp/shared/ui';
             <span>{{ p.sku }} ({{ p.price | currency:'PLN':'symbol-narrow':'1.2-2' }})</span>
           </div>
         }
-      </div>
+      </div> -->
 
-      <div class="field">
-        <label for="price-input" class="field-label">
-          <erp-text [config]="{ value: keys.commands.setPrice.priceLabel }" />
-          <span class="required-mark">*</span>
-        </label>
-        <input
-          id="price-input"
-          pInputText
-          type="number"
-          step="0.01"
-          min="0.01"
-          [formControl]="priceControl"
-          placeholder="np. 99.99"
-          class="w-full font-mono"
-          [class.p-invalid]="priceControl.invalid && priceControl.touched"
-          autocomplete="off"
-        />
-        @if (priceControl.invalid && priceControl.touched) {
-          <small class="field-error">
-            @if (priceControl.errors?.['required']) {
-              <erp-text [config]="{ value: keys.validations.priceRequired }" />
-            } @else if (priceControl.errors?.['min']) {
-              <erp-text [config]="{ value: keys.validations.priceMin }" />
-            }
-          </small>
-        }
-      </div>
+      <erp-step-content [contentConfig]="formContent" />
     </div>
   `,
   styles: [`
@@ -83,12 +63,6 @@ import { ErpTextComponent } from '@erp/shared/ui';
     :host-context([data-theme="dark"]) .product-badge {
       background: var(--p-surface-800); color: var(--p-surface-200); border-color: var(--p-surface-700);
     }
-    .field { display: flex; flex-direction: column; gap: 0.4rem; }
-    .field-label { font-size: 0.875rem; font-weight: 600; color: var(--p-surface-700); }
-    :host-context(.dark) .field-label,
-    :host-context([data-theme="dark"]) .field-label { color: var(--p-surface-300); }
-    .required-mark { color: var(--p-red-500); margin-left: 2px; }
-    .field-error { color: var(--p-red-500); font-size: 0.75rem; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -99,15 +73,63 @@ export class SetPriceStepComponent {
   public metadata = input.required<WritableSignal<SetPriceMetadata>>();
   public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
 
-  protected priceControl = new FormControl<number | null>(null, [
-    Validators.required,
-    Validators.min(0.01),
-  ]);
+  protected readonly editMessageConfig = ErpTextBuilder.create(b => b
+    .setValue(PRODUCT_KEYS.commands.setPrice.editMessage)
+  );
+
+  protected readonly priceLabelConfig = ErpTextBuilder.create(b => b
+    .setValue(PRODUCT_KEYS.commands.setPrice.priceLabel)
+  );
+
+  protected readonly priceRequiredConfig = ErpTextBuilder.create(b => b
+    .setValue(PRODUCT_KEYS.validations.priceRequired)
+  );
+
+  protected readonly priceMinConfig = ErpTextBuilder.create(b => b
+    .setValue(PRODUCT_KEYS.validations.priceMin)
+  );
+
+  /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
+  protected readonly formContent: ErpStepContentConfig;
+
+  /** Referencja do FormControl wyciągnięta z zbudowanego FormGroup. */
+  private readonly _priceControl: FormControl<number | null>;
 
   protected products = computed<{ uuid: string; sku: string; price: number }[]>(() => this.command()()['products'] ?? []);
-  protected canGoNext = computed(() => this.priceControl.valid);
+
+  protected productSuffixConfig = computed(() => {
+    const count = this.products().length;
+    return ErpTextBuilder.create(b => b
+      .setValue(count === 1 ? PRODUCT_KEYS.commands.setPrice.productSuffixSingle : PRODUCT_KEYS.commands.setPrice.productSuffixPlural)
+    );
+  });
+
+  protected canGoNext: Signal<boolean>;
 
   public constructor() {
+    // ── Build form content declaratively ──
+    this.formContent = ErpStepContentBuilder.content(b => b
+      .addForm(f => f
+        .setGridCols(1)
+        .addField('price', 'text',
+          ErpInputTextBuilder.create(ib => ib
+            .setPlaceholder(PRODUCT_KEYS.commands.setPrice.priceLabel)
+            .setErrorMessages({
+              required: PRODUCT_KEYS.validations.priceRequired,
+              min: PRODUCT_KEYS.validations.priceMin,
+            })
+          ),
+          { validators: [Validators.required, Validators.min(0.01)] }
+        )
+      )
+    );
+
+    // Extract FormGroup reference from built config for command sync
+    const formElement = this.formContent.elements.find(e => e.type === 'form');
+    this._priceControl = formElement!.config.formGroup.get('price') as FormControl<number | null>;
+
+    this.canGoNext = computed(() => this._priceControl.valid);
+
     effect(() => {
       const register = this.registerCanGoNext();
       if (register) register(this.canGoNext);
@@ -115,12 +137,12 @@ export class SetPriceStepComponent {
 
     effect(() => {
       const cmd = this.command()();
-      if (cmd['price'] !== null && this.priceControl.value !== cmd['price']) {
-        this.priceControl.setValue(cmd['price'], { emitEvent: false });
+      if (cmd['price'] !== null && this._priceControl.value !== cmd['price']) {
+        this._priceControl.setValue(cmd['price'], { emitEvent: false });
       }
     });
 
-    this.priceControl.valueChanges.subscribe((value) => {
+    this._priceControl.valueChanges.subscribe((value) => {
       this.command().update((cmd) => {
         const numPrice = value ? Number(value) : null;
         const commands = (cmd['products'] as { uuid: string; sku: string; price: number }[] || []).map(p => ({

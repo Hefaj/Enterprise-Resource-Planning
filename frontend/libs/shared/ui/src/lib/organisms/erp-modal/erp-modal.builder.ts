@@ -2,6 +2,8 @@ import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpModalConfig, ErpModalSize, ErpModalStep } from './erp-modal.types';
+import { ErpStepContentBuilder } from '../erp-step-content/erp-step-content.builder';
+import { ErpStepContentComponent } from '../erp-step-content/erp-step-content.component';
 
 /**
  * Fluent Builder do konfiguracji ErpModal.
@@ -66,6 +68,41 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
       label,
       component,
       inputs,
+    };
+    (this._data.steps as ErpModalStep<TCommand, TMetadata>[]).push(step);
+    return this;
+  }
+
+  /**
+   * Dodaje krok z deklaratywną treścią budowaną przez ErpStepContentBuilder.
+   *
+   * Zamiast tworzyć osobny komponent Angular dla stepu, budujesz
+   * treść deklaratywnie za pomocą convenience methods i addComponent.
+   *
+   * @param label Etykieta wyświetlana w stepperze
+   * @param configure Callback konfigurujący ErpStepContentBuilder
+   *
+   * @example
+   * ```ts
+   * .addContentStep(KEYS.stepLabel, s => s
+   *   .addText(KEYS.description)
+   *   .addForm(f => f
+   *     .addField('name', 'text', { placeholder: KEYS.name })
+   *   )
+   *   .addComponent(ProductListComponent, { products })
+   * )
+   * ```
+   */
+  public addContentStep(
+    label: MaybeSignal<Translatable>,
+    configure: (builder: ErpStepContentBuilder) => void
+  ): this {
+    const contentConfig = ErpStepContentBuilder.content(configure);
+    const step: ErpModalStep<TCommand, TMetadata> = {
+      label,
+      component: ErpStepContentComponent,
+      inputs: { contentConfig },
+      content: contentConfig,
     };
     (this._data.steps as ErpModalStep<TCommand, TMetadata>[]).push(step);
     return this;

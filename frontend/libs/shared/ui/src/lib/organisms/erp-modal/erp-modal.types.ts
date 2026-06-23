@@ -1,5 +1,6 @@
 import { Type, Signal, WritableSignal } from '@angular/core';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpStepContentConfig } from '../erp-step-content/erp-step-content.types';
 
 /**
  * Konfiguracja pojedynczego kroku modalu.
@@ -12,6 +13,8 @@ export interface ErpModalStep<TCommand = any, TMetadata = any> {
   component: Type<any>;
   /** Dodatkowe inputy przekazywane do komponentu (oprócz command, metadata i registerCanGoNext). */
   inputs?: Record<string, any>;
+  /** Deklaratywna treść stepu budowana przez ErpStepContentBuilder (alternatywa dla custom component). */
+  content?: ErpStepContentConfig;
 }
 
 /**

@@ -45,6 +45,7 @@ export * from './lib/organisms/erp-form';
 export * from './lib/organisms/erp-workflow';
 export * from './lib/organisms/erp-table';
 export * from './lib/organisms/erp-modal';
+export * from './lib/organisms/erp-step-content';
 
 // Translations
 export * from './lib/translation';

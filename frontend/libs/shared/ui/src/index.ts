@@ -23,6 +23,7 @@ export * from './lib/atoms/erp-drawer';
 export * from './lib/atoms/erp-empty-card';
 export * from './lib/atoms/erp-input-text';
 export * from './lib/atoms/erp-listbox';
+export * from './lib/atoms/erp-list';
 export * from './lib/atoms/erp-menu';
 export * from './lib/atoms/erp-menubar';
 export * from './lib/atoms/erp-multi-select';

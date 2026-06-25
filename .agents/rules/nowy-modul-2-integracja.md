@@ -147,6 +147,19 @@ Dodaj wpis do tablicy `REMOTE_MODULES_CONFIG`:
 { id: 'MODULE_NAME', label: 'MODULE_LABEL', routePrefix: 'MODULE_NAME' },
 ```
 
+### 5.4 Konfiguracja API_BASE_URL — `frontend/apps/client/src/app/remote-api.providers.ts`
+
+Dodaj import tokenu i podaj go w tablicy `remoteApiProviders`, aby poprawnie konfigurować bazowy URL do endpointów BFF:
+
+```ts
+import { API_BASE_URL as MODULE_NAME_API_BASE_URL } from '@erp/MODULE_NAME/data-access';
+
+export const remoteApiProviders: Provider[] = [
+  // ...
+  { provide: MODULE_NAME_API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na odpowiedni port BFF dla tego modułu (np. 5250)
+];
+```
+
 ---
 
 ## Krok 6: Aktualizuj `eslint.config.mjs` (root)

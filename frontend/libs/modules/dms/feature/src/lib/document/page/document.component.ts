@@ -4,6 +4,7 @@ import { SET_PRICE_MODAL_ID, SET_NAME_MODAL_ID } from '@erp/catalog/util';
 import { DmsDocument } from '@erp/dms/ui';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
+import { JobListComponent } from '@erp/notification/contract';
 
 @Component({
   selector: 'erp-document-status-sidebar',
@@ -35,7 +36,7 @@ export class DocumentStatusSidebarComponent {}
 @Component({
   selector: 'erp-document',
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent],
+  imports: [CommonModule, ErpPageLayoutComponent, JobListComponent],
   template: `
     <div class="flex flex-col h-full">
       <div class="p-4 bg-surface-100 dark:bg-surface-800 flex justify-between items-center border-b border-surface-200 dark:border-surface-700">
@@ -115,11 +116,11 @@ export class DocumentComponent {
     return sel;
   });
 
-  /** Dynamiczna konfiguracja zakładek */
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
       .addTab('Lista dokumentów', 'list', { icon: 'pi pi-list' })
       .addTab('Workflow obiegu', 'workflow', { icon: 'pi pi-sitemap' })
+      .addTab('Test: Jobs', 'jobs', { component: JobListComponent, icon: 'pi pi-cog' })
       .setInitialValue('list')
       .setOnTabChange(noop),
   );

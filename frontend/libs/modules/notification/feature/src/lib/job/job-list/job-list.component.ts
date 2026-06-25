@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 import { NotificationJobOrchestrator, JobVM } from '@erp/notification/data-access';
-import { ErpListComponent, ErpListBuilder } from '@erp/shared/ui';
+import { ErpListComponent, ErpListBuilder, ErpBaseListComponent } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-job-list-item',
@@ -45,7 +46,7 @@ export class JobListItemComponent {
 @Component({
   selector: 'erp-job-list',
   standalone: true,
-  imports: [CommonModule, ErpListComponent],
+  imports: [CommonModule, ErpListComponent, ReactiveFormsModule],
   template: `
     <div class="job-list-container p-4 w-full h-full flex flex-col gap-3">
       <div class="flex justify-between items-center mb-2">
@@ -55,12 +56,12 @@ export class JobListItemComponent {
         }
       </div>
       
-      <erp-list [config]="listConfig" />
+      <erp-list [config]="listConfig()" [control]="control" />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class JobListComponent implements OnInit {
+export class JobListComponent extends ErpBaseListComponent<JobVM> implements OnInit {
   private readonly _orchestrator = inject(NotificationJobOrchestrator);
 
   protected readonly jobs = computed(() => {
@@ -69,13 +70,16 @@ export class JobListComponent implements OnInit {
 
   protected readonly isLoading = this._orchestrator.isLoading;
 
-  protected readonly listConfig = ErpListBuilder.create<ErpListBuilder<JobVM>>((b) =>
-    b
-      .setItems(this.jobs)
-      .setItemValue((job) => job.uuid)
-      .setSelectionMode('none')
-      .setItemComponent(JobListItemComponent)
-      .setScrollHeight('400px')
+  protected readonly listConfig = computed(() =>
+    ErpListBuilder.create<ErpListBuilder<JobVM>>((b) =>
+      b
+        .setItems(this.jobs)
+        .setItemValue((job) => job)
+        .setSelectionMode(this.selectionMode())
+        .setReadonly(this.readonly())
+        .setItemComponent(JobListItemComponent)
+        .setScrollHeight('400px')
+    )
   );
 
   public ngOnInit(): void {

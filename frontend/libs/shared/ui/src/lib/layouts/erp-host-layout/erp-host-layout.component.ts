@@ -1,11 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, viewChild, computed, inject, OnInit, DestroyRef } from '@angular/core';
-import { CommonModule, NgComponentOutlet } from '@angular/common';
-import { ErpEmptyCardComponent } from '../../atoms/erp-empty-card';
+import { CommonModule } from '@angular/common';
 import { ErpDrawerComponent } from '../../atoms/erp-drawer';
 import { ErpButtonComponent, ErpButtonBuilder } from '../../atoms/erp-button';
-import { ErpPanelMenuComponent } from '../../atoms/erp-panel-menu';
-import { ErpBreadcrumbComponent } from '../../atoms/erp-breadcrumb';
-import { ErpUserMenuComponent } from '../../atoms/erp-user-menu';
 import { ErpHostLayoutConfig } from './erp-host-layout.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { Router, NavigationEnd } from '@angular/router';
@@ -15,51 +11,38 @@ import { filter } from 'rxjs';
 @Component({
   selector: 'erp-host-layout',
   standalone: true,
-  imports: [CommonModule, NgComponentOutlet, ErpEmptyCardComponent, ErpDrawerComponent, ErpButtonComponent, ErpPanelMenuComponent, ErpBreadcrumbComponent, ErpUserMenuComponent],
+  imports: [CommonModule, ErpDrawerComponent, ErpButtonComponent],
   template: `
-    @let _config = config();
-    @let _menuConfig = unwrapConfig(_config.menuConfig);
-    @let _breadcrumbConfig = unwrapConfig(_config.breadcrumbConfig);
-    @let _userMenuConfig = unwrapConfig(_config.userMenuConfig);
     @let _menuBtnConfig = menuBtnConfig();
-    @let _contentComponent = unwrapComponent(_config.contentComponent);
-    @let _contentConfig = unwrapConfig(_config.contentConfig);
 
     <erp-drawer #drawer>
-      @if (_menuConfig) {
-        <erp-panel-menu [config]="_menuConfig" />
-      }
+      <ng-content select="[menu]"></ng-content>
     </erp-drawer>
 
     <div class="flex flex-col h-svh w-svw bg-slate-50 dark:bg-slate-900">
-      <div class="h-16 flex items-center px-2 bg-white dark:bg-slate-900 shadow-xl">
+      <div class="h-16 flex items-center px-2 bg-surface-0 dark:bg-surface-900 shadow-xl">
         <erp-button
           [config]="_menuBtnConfig"
         />
-        @if (_breadcrumbConfig) {
-          <erp-breadcrumb
-            class="w-full"
-            [config]="_breadcrumbConfig"
-          />
-        }
+        <div class="w-full flex items-center px-2">
+          <ng-content select="[breadcrumb]"></ng-content>
+        </div>
 
-        @if (_userMenuConfig) {
-          <erp-user-menu [config]="_userMenuConfig" />
-        }
+        <div class="flex items-center gap-2 mr-2">
+          <ng-content select="[header-actions]"></ng-content>
+        </div>
+
+        <ng-content select="[user-menu]"></ng-content>
       </div>
       <main class="flex-1 overflow-auto p-2">
-        @if (_contentComponent) {
-          <ng-container *ngComponentOutlet="_contentComponent; inputs: _contentConfig" />
-        } @else {
-          <erp-empty-card />
-        }
+        <ng-content></ng-content>
       </main>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpHostLayoutComponent implements OnInit {
-  public config = input.required<ErpHostLayoutConfig>();
+  public config = input<ErpHostLayoutConfig>({});
 
   protected drawer = viewChild.required<ErpDrawerComponent>('drawer');
 
@@ -91,10 +74,5 @@ export class ErpHostLayoutComponent implements OnInit {
   protected unwrapConfig(signalConfig: any) {
     if (!signalConfig) return undefined;
     return unwrapSignal(signalConfig);
-  }
-
-  protected unwrapComponent(signalComponent: any) {
-    if (!signalComponent) return null;
-    return unwrapSignal(signalComponent);
   }
 }

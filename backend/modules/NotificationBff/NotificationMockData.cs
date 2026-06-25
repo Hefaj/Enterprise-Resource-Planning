@@ -39,7 +39,7 @@ public static class NotificationMockData
             var hasErrors = i % 5 == 0;
             list.Add(new JobDto(
                 Uuid: uuid,
-                QueueId: $"queue-{i % 5}",
+                QueueId: Random.Shared.Next(2) == 0 ? "2cff8772bd344f1faa99b31e8c1bfccd" : "fcd357f55a77f081759dc43ee69aa6a3",
                 TrackingId: trackingId,
                 CommandJson: $"{{\"CommandName\":\"TestCommand{i}\"}}",
                 ResultJson: isComplete && !hasErrors ? $"{{\"Result\":\"Success-{i}\"}}" : null,

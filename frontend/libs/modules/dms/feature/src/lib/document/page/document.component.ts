@@ -36,7 +36,7 @@ export class DocumentStatusSidebarComponent {}
 @Component({
   selector: 'erp-document',
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent, JobListComponent],
+  imports: [CommonModule, ErpPageLayoutComponent],
   template: `
     <div class="flex flex-col h-full">
       <div class="p-4 bg-surface-100 dark:bg-surface-800 flex justify-between items-center border-b border-surface-200 dark:border-surface-700">

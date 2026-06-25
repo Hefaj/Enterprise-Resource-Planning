@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { ErpHostLayoutComponent, ErpHostLayoutBuilder, ErpBreadcrumbConfig, ErpUserMenuConfig } from '@erp/shared/ui';
+import { ErpHostLayoutComponent, ErpHostLayoutBuilder, ErpBreadcrumbConfig, ErpUserMenuConfig, ErpPanelMenuComponent, ErpBreadcrumbComponent, ErpUserMenuComponent, ErpModalService } from '@erp/shared/ui';
 import { Router, RouterModule } from '@angular/router';
 import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
 import { MenuItem } from 'primeng/api';
@@ -7,25 +7,20 @@ import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 import { ErpAuthService } from '@erp/shared/auth';
 import { AppSettingsService } from '@erp/client/util';
-
-@Component({
-  selector: 'erp-router-wrapper',
-  standalone: true,
-  imports: [RouterModule],
-  template: `<router-outlet></router-outlet>`,
-  styles: [`
-    :host {
-      display: block;
-      height: 100%;
-    }
-  `]
-})
-export class RouterOutletWrapperComponent {}
+import { JobPopoverComponent } from '../job-popover/job-popover.component';
 
 @Component({
   selector: 'erp-shell',
   standalone: true,
-  imports: [CommonModule, ErpHostLayoutComponent, RouterModule],
+  imports: [
+    CommonModule,
+    ErpHostLayoutComponent,
+    RouterModule,
+    ErpPanelMenuComponent,
+    ErpBreadcrumbComponent,
+    ErpUserMenuComponent,
+    JobPopoverComponent
+  ],
   templateUrl: './shell.component.html',
 })
 export class ShellLayoutComponent {
@@ -34,6 +29,7 @@ export class ShellLayoutComponent {
   private _authService = inject(ErpAuthService);
   private _router = inject(Router);
   private _settingsService = inject(AppSettingsService);
+  private _modalService = inject(ErpModalService);
 
   protected $userMenuConfig = computed(() => {
     return {
@@ -79,12 +75,23 @@ export class ShellLayoutComponent {
     }));
   }
 
+  protected onJobSelection = (val: any): void => {
+    if (val && val.queueId) {
+      let command = {};
+      if (val.commandJson) {
+        try {
+          command = JSON.parse(val.commandJson);
+        } catch (e) {
+          console.error('Failed to parse commandJson', e);
+        }
+      }
+      this._modalService.open(val.queueId, command);
+    }
+  };
+
   protected $hostLayoutConfig = computed(() => {
     return ErpHostLayoutBuilder.create((b) =>
-      b.setUserMenuConfig(this.$userMenuConfig)
-       .setMenuConfig(this.$navMenu)
-       .setBreadcrumbConfig(this.$breadcrumbConfig)
-       .setContentComponent(RouterOutletWrapperComponent)
+      b.setCloseMenuOnNavigation(true)
     );
   });
 }

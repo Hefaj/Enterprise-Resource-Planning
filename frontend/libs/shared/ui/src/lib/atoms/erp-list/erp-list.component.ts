@@ -12,7 +12,6 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
   standalone: true,
   imports: [CommonModule, ListboxModule, ReactiveFormsModule, MessageModule],
   template: `
-    @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
     
     @let _placeholder = placeholder();
@@ -33,7 +32,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
       }
       
       <p-listbox
-        [formControl]="internalControl"
+        [formControl]="activeControl()"
         [options]="_items || []"
         [multiple]="_multiple"
         [checkbox]="_checkbox"
@@ -123,6 +122,7 @@ export class ErpListComponent implements ControlValueAccessor {
 
   protected checkbox = computed(() => {
     const mode = unwrapSignal(this.config().selectionMode);
+    if (mode === 'multiple') return true;
     if (mode === 'none') return false;
     return unwrapSignal(this.config().checkbox) ?? false;
   });
@@ -133,8 +133,6 @@ export class ErpListComponent implements ControlValueAccessor {
   protected virtualScrollItemSize = computed(() => unwrapSignal(this.config().virtualScrollItemSize));
   protected scrollHeight = computed(() => unwrapSignal(this.config().scrollHeight));
   protected readonly = computed(() => {
-    const mode = unwrapSignal(this.config().selectionMode);
-    if (mode === 'none') return true;
     return unwrapSignal(this.config().readonly) ?? false;
   });
   protected errorMessages = computed(() => unwrapSignal(this.config().errorMessages));
@@ -173,7 +171,11 @@ export class ErpListComponent implements ControlValueAccessor {
         const values = (selected || []).map((item: any) => this.resolveValue(item));
         this._onChange(values);
       } else {
-        this._onChange(selected ? this.resolveValue(selected) : null);
+        const value = selected ? this.resolveValue(selected) : null;
+        this._onChange(value);
+        if (unwrapSignal(this.config().selectionMode) === 'none' && value !== null) {
+          this.internalControl.setValue(null, { emitEvent: false });
+        }
       }
     });
   }

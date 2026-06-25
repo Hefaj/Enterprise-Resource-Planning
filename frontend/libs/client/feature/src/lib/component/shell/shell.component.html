@@ -1,3 +1,12 @@
 @let _hostLayoutConfig = $hostLayoutConfig();
 
-<erp-host-layout [config]="_hostLayoutConfig"></erp-host-layout>
+<erp-host-layout [config]="_hostLayoutConfig">
+  <erp-panel-menu menu [config]="$navMenu()" />
+  <erp-breadcrumb breadcrumb [config]="$breadcrumbConfig()" class="w-full" />
+  
+  <app-job-popover header-actions [onSelection]="onJobSelection" />
+  
+  <erp-user-menu user-menu [config]="$userMenuConfig()" />
+
+  <router-outlet></router-outlet>
+</erp-host-layout>

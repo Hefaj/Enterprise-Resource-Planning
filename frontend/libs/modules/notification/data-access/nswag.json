@@ -1,0 +1,29 @@
+{
+  "runtime": "Net100",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "http://localhost:5250/openapi/v1.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToTypeScriptClient": {
+      "operationGenerationMode": "MultipleClientsFromFirstTagAndOperationId",
+      "generateOptionalParameters": true,
+      "useTransformOptionsMethod": false,
+      "className": "{controller}Client",
+      "template": "Angular",
+      "httpClass": "HttpClient",
+      "injectionTokenType": "InjectionToken",
+      "generateClientInterfaces": true,
+      "generateSignals": true,
+      "rxJsVersion": 7.0,
+      "useSingletonProvider": true,
+      "typeStyle": "Interface",
+      "enumStyle": "Enum",
+      "dateTimeType": "Date",
+      "output": "src/lib/api-client.ts"
+    }
+  }
+}

@@ -7,13 +7,12 @@ import {
   Signal,
   WritableSignal,
 } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 import { SetPriceMetadata } from './set-price.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
-  ErpTextComponent,
   ErpTextBuilder,
   ErpStepContentComponent,
   ErpStepContentBuilder,
@@ -27,9 +26,9 @@ import {
 @Component({
   selector: 'erp-catalog-set-price-step',
   standalone: true,
-  imports: [CommonModule, ErpTextComponent, ErpStepContentComponent],
+  imports: [CommonModule, ErpStepContentComponent],
   template: `
-    @let _products = products();
+    <!-- @let _products = products(); -->
 
     <div class="set-price-step">
       <!-- <p class="text-surface-600 dark:text-surface-400 text-sm mb-4">
@@ -125,8 +124,8 @@ export class SetPriceStepComponent {
     );
 
     // Extract FormGroup reference from built config for command sync
-    const formElement = this.formContent.elements.find(e => e.type === 'form');
-    this._priceControl = formElement!.config.formGroup.get('price') as FormControl<number | null>;
+    const formGroup = ErpStepContentBuilder.findFormGroup(this.formContent);
+    this._priceControl = formGroup!.get('price') as FormControl<number | null>;
 
     this.canGoNext = computed(() => this._priceControl.valid);
 

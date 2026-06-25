@@ -4,21 +4,25 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ErpStepContentConfig, ErpStepContentElement } from './erp-step-content.types';
+import { NgComponentOutlet, NgStyle } from '@angular/common';
+import {
+  ErpStepContentConfig,
+  ErpStepContentElement,
+  ErpStepContentSectionElement,
+} from './erp-step-content.types';
 import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
-import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
-import { ErpFormComponent } from '../erp-form/erp-form.component';
-import { ErpSplitterComponent } from '../../atoms/erp-splitter/erp-splitter.component';
-import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
 
 /**
  * Generyczny renderer treści stepu modalu.
  *
  * Iteruje po elementach `ErpStepContentConfig` i renderuje odpowiedni
- * komponent per typ elementu. Obsługuje rekurencję — sekcje (`type='section'`)
- * renderują zagnieżdżony `<erp-step-content>`.
+ * komponent per typ elementu. Wszystkie elementy typu `component` są
+ * renderowane wyłącznie przez `ngComponentOutlet` — komponent nie importuje
+ * żadnych konkretnych atomów/organizmów UI.
+ *
+ * Sekcje (`type='section'`) renderują zagnieżdżony `<erp-step-content>`.
+ * Separatory (`type='divider'`) renderują `<hr>`.
  *
  * Używany automatycznie przez `ErpModalBuilder.addContentStep()`.
  * Można też użyć bezpośrednio w dowolnym template.
@@ -32,12 +36,9 @@ import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
   selector: 'erp-step-content',
   standalone: true,
   imports: [
-    CommonModule,
+    NgComponentOutlet,
+    NgStyle,
     ErpTranslatePipe,
-    ErpTextComponent,
-    ErpFormComponent,
-    ErpSplitterComponent,
-    ErpCardComponent,
   ],
   template: `
     @let _elements = config().elements;
@@ -47,25 +48,10 @@ import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
       @for (element of _elements; track $index) {
         <div [class]="elementWrapperClass(element)" [ngStyle]="elementWrapperStyle(element)">
           @switch (element.type) {
-            @case ('text') {
-              <erp-text [config]="element.config" />
-            }
-            @case ('form') {
-              <erp-form [config]="element.config" />
-            }
-            @case ('splitter') {
-              <erp-splitter [config]="element.config" />
-            }
-            @case ('card') {
-              <erp-card [config]="element.config" />
-            }
             @case ('component') {
-              @let _comp = resolveComponent(element);
-              @if (_comp) {
-                <ng-container
-                  *ngComponentOutlet="_comp; inputs: element.inputs"
-                />
-              }
+              <ng-container
+                *ngComponentOutlet="element.component; inputs: element.inputs"
+              />
             }
             @case ('section') {
               @let _sectionTitle = resolveTranslatable(element.title);
@@ -192,7 +178,7 @@ export class ErpStepContentComponent {
 
     // W layoucie 'row' — dodaj flex-fill domyślnie
     const parentLayout = unwrapSignal(this.config().layout) || 'stack';
-    if (parentLayout === 'row' && !element.colSpan) {
+    if (parentLayout === 'row' && element.type !== 'divider' && !('colSpan' in element && element.colSpan)) {
       parts.push('erp-step-content__element--flex-fill');
     }
 
@@ -206,9 +192,11 @@ export class ErpStepContentComponent {
   protected elementWrapperStyle(element: ErpStepContentElement): Record<string, string> {
     const result: Record<string, string> = {};
 
-    const colSpan = unwrapSignal(element.colSpan);
-    if (colSpan) {
-      result['grid-column'] = `span ${colSpan}`;
+    if ('colSpan' in element) {
+      const colSpan = unwrapSignal(element.colSpan);
+      if (colSpan) {
+        result['grid-column'] = `span ${colSpan}`;
+      }
     }
 
     const customStyle = unwrapSignal(element.style);
@@ -217,16 +205,6 @@ export class ErpStepContentComponent {
     }
 
     return result;
-  }
-
-  /**
-   * Unwrapuje MaybeSignal<Type<any>> do klasy komponentu.
-   * Potrzebne bo ngComponentOutlet nie przyjmuje Signali.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected resolveComponent(element: ErpStepContentElement): any {
-    if (!element.component) return null;
-    return unwrapSignal(element.component);
   }
 
   /** Unwrapuje MaybeSignal<Translatable> do wartości. */
@@ -239,7 +217,7 @@ export class ErpStepContentComponent {
    * Konwertuje element typu 'section' na pełną konfigurację ErpStepContentConfig
    * do rekurencyjnego renderowania przez zagnieżdżony <erp-step-content>.
    */
-  protected toSectionConfig(element: ErpStepContentElement): ErpStepContentConfig {
+  protected toSectionConfig(element: ErpStepContentSectionElement): ErpStepContentConfig {
     return {
       elements: element.children || [],
       layout: element.layout,

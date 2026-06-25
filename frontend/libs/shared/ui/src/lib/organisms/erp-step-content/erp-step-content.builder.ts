@@ -6,6 +6,10 @@ import { ErpStepContentConfig, ErpStepContentElement } from './erp-step-content.
 import { ErpFormBuilder } from '../erp-form/erp-form.builder';
 import { ErpSplitterBuilder } from '../../atoms/erp-splitter/erp-splitter.builder';
 import { ErpCardBuilder } from '../../atoms/erp-card/erp-card.builder';
+import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
+import { ErpFormComponent } from '../erp-form/erp-form.component';
+import { ErpSplitterComponent } from '../../atoms/erp-splitter/erp-splitter.component';
+import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
 
 /**
  * Fluent Builder do deklaratywnego budowania treści stepów modali.
@@ -13,6 +17,10 @@ import { ErpCardBuilder } from '../../atoms/erp-card/erp-card.builder';
  * Udostępnia convenience methods dla komponentów z `@erp/shared/ui`
  * (addText, addForm, addSplitter, addCard) oraz generyczną metodę
  * `addComponent<T>()` dla komponentów biznesowych z typowanymi inputami.
+ *
+ * Wszystkie convenience methods wewnętrznie delegują do `addComponent()`,
+ * dzięki czemu `ErpStepContentComponent` nie musi znać żadnych
+ * konkretnych komponentów — renderuje wszystko przez `ngComponentOutlet`.
  *
  * @example Prosty formularz
  * ```ts
@@ -76,7 +84,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
 
   /**
    * Dodaje blok tekstu tłumaczony przez Transloco.
-   * Renderuje `<erp-text>` z podaną konfiguracją.
+   * Wewnętrznie tworzy `ErpTextComponent` renderowany przez `ngComponentOutlet`.
    *
    * @param value — Klucz tłumaczenia lub obiekt Translatable
    * @param options — Opcjonalne klasy CSS i style inline
@@ -85,18 +93,17 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
     value: MaybeSignal<Translatable>,
     options?: { styleClass?: MaybeSignal<string>; style?: MaybeSignal<Record<string, string>> }
   ): this {
-    this._pushElement({
-      type: 'text',
-      config: { value },
-      styleClass: options?.styleClass,
-      style: options?.style,
-    });
+    this.addComponent(
+      ErpTextComponent,
+      { config: { value } } as any,
+      options
+    );
     return this;
   }
 
   /**
    * Dodaje formularz budowany przez ErpFormBuilder.
-   * Renderuje `<erp-form>` z wynikową konfiguracją.
+   * Wewnętrznie tworzy `ErpFormComponent` renderowany przez `ngComponentOutlet`.
    *
    * @param configure — Callback konfigurujący ErpFormBuilder
    *
@@ -112,16 +119,16 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   public addForm(configure: (builder: ErpFormBuilder) => void): this {
     const builder = new ErpFormBuilder();
     configure(builder);
-    this._pushElement({
-      type: 'form',
-      config: builder.build(),
-    });
+    this.addComponent(
+      ErpFormComponent,
+      { config: builder.build() } as any
+    );
     return this;
   }
 
   /**
    * Dodaje splitter budowany przez ErpSplitterBuilder.
-   * Renderuje `<erp-splitter>` z wynikową konfiguracją.
+   * Wewnętrznie tworzy `ErpSplitterComponent` renderowany przez `ngComponentOutlet`.
    *
    * @param configure — Callback konfigurujący ErpSplitterBuilder
    *
@@ -137,26 +144,26 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   public addSplitter(configure: (builder: ErpSplitterBuilder) => void): this {
     const builder = new ErpSplitterBuilder();
     configure(builder);
-    this._pushElement({
-      type: 'splitter',
-      config: builder.build(),
-    });
+    this.addComponent(
+      ErpSplitterComponent,
+      { config: builder.build() } as any
+    );
     return this;
   }
 
   /**
    * Dodaje kartę budowaną przez ErpCardBuilder.
-   * Renderuje `<erp-card>` z wynikową konfiguracją.
+   * Wewnętrznie tworzy `ErpCardComponent` renderowany przez `ngComponentOutlet`.
    *
    * @param configure — Callback konfigurujący ErpCardBuilder
    */
   public addCard(configure: (builder: ErpCardBuilder) => void): this {
     const builder = new ErpCardBuilder();
     configure(builder);
-    this._pushElement({
-      type: 'card',
-      config: builder.build(),
-    });
+    this.addComponent(
+      ErpCardComponent,
+      { config: builder.build() } as any
+    );
     return this;
   }
 
@@ -190,7 +197,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    * ```
    */
   public addComponent<T>(
-    component: MaybeSignal<Type<T>>,
+    component: Type<T>,
     inputs?: ErpComponentSignalInputs<T>,
     options?: {
       colSpan?: MaybeSignal<number>;
@@ -287,5 +294,31 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
     const builder = new ErpStepContentBuilder();
     configure?.(builder);
     return builder.build();
+  }
+
+  /**
+   * Wyciąga FormGroup z konfiguracji treści stepu.
+   *
+   * Przeszukuje elementy typu 'component' i szuka tego, który
+   * ma `inputs.config.formGroup` — tj. elementu wygenerowanego
+   * przez `addForm()`.
+   *
+   * @param config — Konfiguracja treści stepu
+   * @returns FormGroup lub null jeśli nie znaleziono
+   *
+   * @example
+   * ```ts
+   * const formContent = ErpStepContentBuilder.content(b => b.addForm(f => ...));
+   * const formGroup = ErpStepContentBuilder.findFormGroup(formContent);
+   * const nameControl = formGroup!.get('name') as FormControl<string>;
+   * ```
+   */
+  public static findFormGroup(config: ErpStepContentConfig): import('@angular/forms').FormGroup | null {
+    for (const element of config.elements) {
+      if (element.type === 'component' && element.inputs?.['config']?.formGroup) {
+        return element.inputs['config'].formGroup;
+      }
+    }
+    return null;
   }
 }

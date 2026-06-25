@@ -14,7 +14,6 @@ import { SetNameMetadata } from './set-name.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
   ErpTextComponent,
-  ErpTranslatePipe,
   ErpStepContentComponent,
   ErpStepContentBuilder,
   ErpStepContentConfig,
@@ -32,9 +31,9 @@ import {
 @Component({
   selector: 'erp-catalog-set-name-step',
   standalone: true,
-  imports: [CommonModule, ErpTextComponent, ErpTranslatePipe, ErpStepContentComponent],
+  imports: [CommonModule, ErpStepContentComponent],
   template: `
-    @let _products = products();
+    <!-- @let _products = products(); -->
 
     <div class="set-name-step">
       <!-- <p class="set-name-step__message">
@@ -178,8 +177,8 @@ export class SetNameStepComponent {
     );
 
     // Extract FormGroup reference from built config for command sync
-    const formElement = this.formContent.elements.find(e => e.type === 'form');
-    this._nameControl = formElement!.config.formGroup.get('name') as FormControl<string | null>;
+    const formGroup = ErpStepContentBuilder.findFormGroup(this.formContent);
+    this._nameControl = formGroup!.get('name') as FormControl<string | null>;
 
     this.canGoNext = computed(() => this._nameControl.valid);
 

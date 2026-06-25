@@ -6,6 +6,12 @@
   "projectType": "library",
   "tags": ["scope:notification", "type:data-access"],
   "targets": {
+    "generate-api": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "dotnet nswag run frontend/libs/modules/notification/data-access/nswag.json"
+      }
+    },
     "test": {
       "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"],

@@ -61,7 +61,25 @@
     "vite": "^7.0.0",
     "vitest": "^4.0.8"
   },
-  "nx": {},
+  "nx": {
+    "tags": [
+      "scope:shared",
+      "scope:host",
+      "scope:catalog",
+      "scope:inventory",
+      "scope:sales",
+      "scope:dms",
+      "scope:task-management",
+      "scope:notification",
+      "type:util",
+      "type:ui",
+      "type:data-access",
+      "type:feature",
+      "type:contract",
+      "type:auth",
+      "type:env"
+    ]
+  },
   "dependencies": {
     "@angular/animations": "^21.2.4",
     "@angular/cdk": "^21.2.8",

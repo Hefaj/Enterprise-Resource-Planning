@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 import { ErpAuthService } from '@erp/shared/auth';
 import { AppSettingsService } from '@erp/client/util';
-import { JobPopoverComponent } from '../job-popover/job-popover.component';
+import { JobPopoverLazyComponent } from './job-popover-lazy.component';
 
 @Component({
   selector: 'erp-shell',
@@ -19,7 +19,7 @@ import { JobPopoverComponent } from '../job-popover/job-popover.component';
     ErpPanelMenuComponent,
     ErpBreadcrumbComponent,
     ErpUserMenuComponent,
-    JobPopoverComponent
+    JobPopoverLazyComponent
   ],
   templateUrl: './shell.component.html',
 })

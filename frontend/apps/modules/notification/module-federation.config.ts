@@ -4,6 +4,7 @@ const config: ModuleFederationConfig = {
   name: 'notification',
   exposes: {
     './contract': 'frontend/libs/modules/notification/contract/src/index.ts',
+    './JobPopover': 'frontend/libs/modules/notification/feature/src/lib/job/job-popover/job-popover.component.ts',
   },
 };
 

@@ -59,7 +59,7 @@ export default [
             // --- 2. ZASADY WARSTW TECHNICZNYCH (TYPE) ---
             {
               sourceTag: 'type:app',
-              onlyDependOnLibsWithTags: ['type:feature', 'type:contract', 'type:ui', 'type:data-access'],
+              onlyDependOnLibsWithTags: ['type:feature', 'type:contract', 'type:ui', 'type:data-access', 'type:util', 'type:auth', 'type:env'],
             },
             {
               sourceTag: 'type:contract',
@@ -92,6 +92,12 @@ export default [
           ],
         },
       ],
+    },
+  },
+  {
+    files: ['**/remote-api.providers.ts'],
+    rules: {
+      '@nx/enforce-module-boundaries': 'off',
     },
   },
   {

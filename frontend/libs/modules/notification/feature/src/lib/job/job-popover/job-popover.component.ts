@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpPopoverComponent, ErpPopoverBuilder, ErpButtonComponent, ErpButtonBuilder, ErpBasePopoverDirective } from '@erp/shared/ui';
-import { JobListComponent } from '@erp/notification/contract';
+import { JobListComponent } from '../job-list/job-list.component';
 
 @Component({
-  selector: 'app-job-popover',
+  selector: 'erp-job-popover',
   standalone: true,
   imports: [CommonModule, ErpPopoverComponent, ErpButtonComponent],
   template: `

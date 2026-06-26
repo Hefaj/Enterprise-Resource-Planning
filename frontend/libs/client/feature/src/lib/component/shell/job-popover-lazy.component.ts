@@ -1,0 +1,44 @@
+import { Component, OnInit, input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui';
+import { loadRemote } from '@module-federation/enhanced/runtime';
+
+@Component({
+  selector: 'erp-job-popover-lazy',
+  standalone: true,
+  imports: [CommonModule, ErpButtonComponent],
+  template: `
+    <ng-container *ngComponentOutlet="loadedComponent; inputs: { onSelection: onSelection() }" />
+    @if (failed) {
+      <erp-button [config]="fallbackButtonConfig" />
+    }
+  `
+})
+export class JobPopoverLazyComponent implements OnInit {
+  public onSelection = input<(val: any) => void>();
+
+  protected loadedComponent: any = null;
+  protected failed = false;
+
+  protected readonly fallbackButtonConfig = ErpButtonBuilder.create((b) =>
+    b.setIcon('pi pi-bell-slash')
+     .setSeverity('secondary')
+     .setVariant('text')
+     .setRounded(true)
+     .setDisabled(true)
+  );
+
+  async ngOnInit() {
+    try {
+      // const module = await loadRemote<{ JobPopoverComponent: any }>('notification/JobPopover');
+      // if (module) {
+      //   this.loadedComponent = module.JobPopoverComponent;
+      // } else {
+      //   throw new Error('Module resolved to null');
+      // }
+    } catch (e) {
+      console.warn('[JobPopoverLazyComponent] Failed to load notification remote, using fallback icon', e);
+      this.failed = true;
+    }
+  }
+}

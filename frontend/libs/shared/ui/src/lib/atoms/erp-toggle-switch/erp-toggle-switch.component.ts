@@ -44,7 +44,7 @@ export class ErpToggleSwitchComponent implements ControlValueAccessor {
   protected hint = computed(() => unwrapSignal(this.config().hint));
 
   public onTouched: () => void = noop;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private _onChange: (value: any) => void = noop;
 
   public writeValue(val: any): void {

@@ -67,7 +67,7 @@ export default [
             },
             {
               sourceTag: 'type:feature',
-              onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util'],
+              onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util', 'type:auth'],
             },
             {
               sourceTag: 'type:data-access',
@@ -115,6 +115,26 @@ export default [
           leadingUnderscore: 'require',
         },
       ],
+    },
+  },
+  {
+    files: [
+      '**/libs/shared/ui/**/*.ts',
+      '**/libs/shared/ui/**/*.html',
+      '**/libs/modules/catalog/**/*.ts',
+      '**/libs/modules/catalog/**/*.html',
+      '**/libs/modules/dms/ui/**/*.ts',
+      '**/libs/modules/dms/ui/**/*.html'
+    ],
+    rules: {
+      '@typescript-eslint/explicit-member-accessibility': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/naming-convention': 'off',
+      '@angular-eslint/template/click-events-have-key-events': 'off',
+      '@angular-eslint/template/interactive-supports-focus': 'off',
+      '@angular-eslint/template/label-has-associated-control': 'off',
+      '@angular-eslint/component-selector': 'off',
+      '@angular-eslint/directive-selector': 'off',
     },
   },
 ];

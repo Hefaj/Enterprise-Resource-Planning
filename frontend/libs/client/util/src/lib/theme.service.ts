@@ -4,26 +4,26 @@ import { Injectable, effect, signal } from '@angular/core';
   providedIn: 'root',
 })
 export class ThemeService {
-  private readonly THEME_KEY = 'erp-theme';
-  public isDarkMode = signal<boolean>(this.getInitialTheme());
+  private readonly _themeKey = 'erp-theme';
+  public isDarkMode = signal<boolean>(this._getInitialTheme());
 
-  constructor() {
+  public constructor() {
     effect(() => {
       const dark = this.isDarkMode();
-      this.updateTheme(dark);
-      localStorage.setItem(this.THEME_KEY, dark ? 'dark' : 'light');
+      this._updateTheme(dark);
+      localStorage.setItem(this._themeKey, dark ? 'dark' : 'light');
     });
   }
 
-  private getInitialTheme(): boolean {
-    const savedTheme = localStorage.getItem(this.THEME_KEY);
+  private _getInitialTheme(): boolean {
+    const savedTheme = localStorage.getItem(this._themeKey);
     if (savedTheme) {
       return savedTheme === 'dark';
     }
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
-  private updateTheme(isDark: boolean): void {
+  private _updateTheme(isDark: boolean): void {
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {

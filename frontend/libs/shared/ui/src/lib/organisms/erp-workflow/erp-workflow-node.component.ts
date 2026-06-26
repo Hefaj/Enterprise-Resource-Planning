@@ -159,7 +159,7 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.resizeObserver = new ResizeObserver((entries) => {
       requestAnimationFrame(() => {
-        for (let entry of entries) {
+        for (const entry of entries) {
           const height = (entry.target as HTMLElement).offsetHeight;
           if (this.node().height !== height) {
             this.heightChange.emit({ id: this.node().id, height });

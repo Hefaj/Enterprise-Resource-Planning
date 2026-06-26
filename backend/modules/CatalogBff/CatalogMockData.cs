@@ -130,10 +130,10 @@ public static class CatalogMockData
         for (int i = 6; i <= 150; i++)
         {
             var isElec = i % 2 == 0;
-            var categoryUuids = isElec 
-                ? new List<Guid> { CatElectronics, CatLaptops } 
+            var categoryUuids = isElec
+                ? new List<Guid> { CatElectronics, CatLaptops }
                 : new List<Guid> { CatHome };
-            
+
             var sku = isElec ? $"ELE-{i:D3}" : $"DOM-{i:D3}";
             var name = isElec ? $"Urządzenie elektroniczne v{i}" : $"Akcesorium domowe v{i}";
             var price = 99.99m + (i * 15.5m);

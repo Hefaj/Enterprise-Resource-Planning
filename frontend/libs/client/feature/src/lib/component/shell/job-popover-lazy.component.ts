@@ -28,7 +28,7 @@ export class JobPopoverLazyComponent implements OnInit {
      .setDisabled(true)
   );
 
-  async ngOnInit() {
+  public async ngOnInit(): Promise<void> {
     try {
       // const module = await loadRemote<{ JobPopoverComponent: any }>('notification/JobPopover');
       // if (module) {

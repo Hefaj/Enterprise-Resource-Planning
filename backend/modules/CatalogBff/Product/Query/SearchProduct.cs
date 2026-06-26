@@ -69,7 +69,7 @@ public class SearchProductEndpoint : Endpoint<SearchProductRequest, SearchRespon
             .Take(req.PageSize)
             .Select(p => p.Uuid)
             .ToList();
-            
+
         await Send.OkAsync(new SearchResponse { Uuids = uuids, TotalCount = totalCount }, ct);
     }
 }

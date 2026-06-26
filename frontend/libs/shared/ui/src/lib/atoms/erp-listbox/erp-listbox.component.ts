@@ -91,7 +91,7 @@ export class ErpListboxComponent implements ControlValueAccessor {
   protected errorMessages = computed(() => unwrapSignal(this.config().errorMessages));
 
   public onTouched: () => void = noop;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private _onChange: (value: any) => void = noop;
 
   public getErrorMessage(): string | null {

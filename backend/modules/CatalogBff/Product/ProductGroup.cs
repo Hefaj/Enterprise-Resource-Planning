@@ -1,6 +1,7 @@
 using FastEndpoints;
 
 namespace CatalogBff.Product;
+
 public class ProductGroup : Group
 {
     public ProductGroup()

@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ErpPageLayoutComponent, ErpPageLayoutBuilder, ErpTabsComponent, ErpTabsBuilder, ErpEmptyCardBuilder, ErpModalService } from '@erp/shared/ui';
-import { SET_PRICE_MODAL_ID, SET_NAME_MODAL_ID } from '@erp/catalog/util';
 import { DmsDocument } from '@erp/dms/ui';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
-import { JobListComponent } from '@erp/notification/contract';
 
 @Component({
   selector: 'erp-document-status-sidebar',
@@ -87,8 +85,8 @@ export class DocumentStatusSidebarComponent {}
 export class DocumentComponent {
   private readonly _modalService = inject(ErpModalService);
 
-  protected openTestProductModal() {
-    this._modalService.open(SET_PRICE_MODAL_ID, {
+  protected openTestProductModal(): void {
+    this._modalService.open('2cff8772bd344f1faa99b31e8c1bfccd', {
       products: [
         { uuid: 'test-uuid-1', sku: 'TEST-SKU-DMS', price: 99.99 }
       ],
@@ -96,8 +94,8 @@ export class DocumentComponent {
     });
   }
 
-  protected openTestProductNameModal() {
-    this._modalService.open(SET_NAME_MODAL_ID, {
+  protected openTestProductNameModal(): void {
+    this._modalService.open('fcd357f55a77f081759dc43ee69aa6a3', {
       products: [
         { uuid: 'test-uuid-1', sku: 'TEST-SKU-DMS', name: 'Original Name' }
       ],
@@ -120,7 +118,6 @@ export class DocumentComponent {
     b
       .addTab('Lista dokumentów', 'list', { icon: 'pi pi-list' })
       .addTab('Workflow obiegu', 'workflow', { icon: 'pi pi-sitemap' })
-      .addTab('Test: Jobs', 'jobs', { component: JobListComponent, icon: 'pi pi-cog' })
       .setInitialValue('list')
       .setOnTabChange(noop),
   );
@@ -144,14 +141,14 @@ export class DocumentComponent {
   protected currentDocumentNodes = computed(() => {
     const doc = this.singleSelectedDocument();
     if (!doc) return [];
-    return this.documentWorkflows[doc.id]?.nodes ?? this.defaultWorkflowNodes;
+    return this._documentWorkflows[doc.id]?.nodes ?? this._defaultWorkflowNodes;
   });
 
   /** Pobieranie krawędzi dla zaznaczonego dokumentu */
   protected currentDocumentEdges = computed(() => {
     const doc = this.singleSelectedDocument();
     if (!doc) return [];
-    return this.documentWorkflows[doc.id]?.edges ?? this.defaultWorkflowEdges;
+    return this._documentWorkflows[doc.id]?.edges ?? this._defaultWorkflowEdges;
   });
 
   // ── Dane testowe ──
@@ -181,18 +178,18 @@ export class DocumentComponent {
     },
   ];
 
-  private readonly defaultWorkflowNodes = [
+  private readonly _defaultWorkflowNodes = [
     { id: 's1', type: 'start', label: 'Start', position: { x: 300, y: 50 }, width: 150, status: 'completed' as const },
     { id: 'a1', type: 'approval', label: 'Weryfikacja', position: { x: 275, y: 180 }, width: 200, status: 'active' as const },
     { id: 'e1', type: 'end', label: 'Koniec', position: { x: 300, y: 320 }, width: 150, status: 'pending' as const },
   ];
 
-  private readonly defaultWorkflowEdges = [
+  private readonly _defaultWorkflowEdges = [
     { id: 'e1', source: 's1', target: 'a1' },
     { id: 'e2', source: 'a1', target: 'e1' },
   ];
 
-  private readonly documentWorkflows: Record<string, { nodes: any[]; edges: any[] }> = {
+  private readonly _documentWorkflows: Record<string, { nodes: any[]; edges: any[] }> = {
     'doc-2': {
       nodes: [
         { id: 's1', type: 'start', label: 'Nowa umowa', position: { x: 300, y: 40 }, width: 180, status: 'completed' as const },

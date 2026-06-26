@@ -45,7 +45,7 @@ public class SearchModelEndpoint : Endpoint<SearchModelRequest, SearchResponse>
             .Take(req.PageSize)
             .Select(m => m.Uuid)
             .ToList();
-            
+
         await Send.OkAsync(new SearchResponse { Uuids = uuids, TotalCount = totalCount }, ct);
     }
 }

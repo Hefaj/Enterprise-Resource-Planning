@@ -45,7 +45,7 @@ public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, SearchResp
             .Take(req.PageSize)
             .Select(c => c.Uuid)
             .ToList();
-            
+
         await Send.OkAsync(new SearchResponse { Uuids = uuids, TotalCount = totalCount }, ct);
     }
 }

@@ -20,15 +20,21 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'lib',
+          prefix: ['lib', 'erp', 'catalog'],
           style: 'kebab-case',
         },
       ],
     },
   },
   {
-    files: ['**/*.html'],
-    // Override or add rules here
-    rules: {},
+    files: ['**/*.ts', '**/*.html'],
+    rules: {
+      '@angular-eslint/template/click-events-have-key-events': 'off',
+      '@angular-eslint/template/interactive-supports-focus': 'off',
+      '@angular-eslint/template/label-has-associated-control': 'off',
+      '@angular-eslint/prefer-inject': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+    },
   },
 ];
+

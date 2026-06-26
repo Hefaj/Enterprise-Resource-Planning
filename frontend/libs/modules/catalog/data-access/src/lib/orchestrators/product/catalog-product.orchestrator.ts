@@ -178,7 +178,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     command: BatchCommandOfProductSetPriceCommand,
     queueID?: string,
   ): Promise<string> {
-    const apiCall = () => this._api.productSetPriceMultipleCommand(command).pipe(
+    const apiCall = (): Observable<string> => this._api.productSetPriceMultipleCommand(command).pipe(
       map((res: BatchResult) => res.jobUuid || '')
     );
     return this.executeCommand(
@@ -196,7 +196,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     command: BatchCommandOfProductSetNameCommand,
     queueID?: string,
   ): Promise<string> {
-    const apiCall = () => this._api.productSetNameMultipleCommand(command).pipe(
+    const apiCall = (): Observable<string> => this._api.productSetNameMultipleCommand(command).pipe(
       map((res: BatchResult) => res.jobUuid || '')
     );
     return this.executeCommand(

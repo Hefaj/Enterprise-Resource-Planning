@@ -386,7 +386,7 @@ export class ErpWorkflowComponent implements AfterViewInit {
     // Calculate source point
     let startX = sourceNode.position.x + w1 / 2;
     const isGateway = sourceNode.type === 'and' || sourceNode.type === 'or';
-    let startY = sourceNode.position.y + (sourceNode.height || (isGateway ? 60 : 100)); // use dynamic height if available
+    const startY = sourceNode.position.y + (sourceNode.height || (isGateway ? 60 : 100)); // use dynamic height if available
 
     if (sourceNode.type === 'condition') {
       if (edge.sourceHandle === 'false') startX = sourceNode.position.x + w1 / 4;

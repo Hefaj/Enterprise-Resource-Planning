@@ -20,7 +20,7 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'lib',
+          prefix: ['lib', 'erp', 'task-management'],
           style: 'kebab-case',
         },
       ],

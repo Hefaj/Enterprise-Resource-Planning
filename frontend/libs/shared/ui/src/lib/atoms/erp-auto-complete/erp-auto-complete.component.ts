@@ -107,7 +107,7 @@ export class ErpAutoCompleteComponent implements ControlValueAccessor {
   protected forceSelection = computed(() => unwrapSignal(this.config().forceSelection));
 
   public onTouched: () => void = noop;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private _onChange: (value: any) => void = noop;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

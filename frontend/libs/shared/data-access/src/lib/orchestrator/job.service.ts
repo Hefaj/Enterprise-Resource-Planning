@@ -15,7 +15,7 @@ export class JobService {
   private readonly _signalrSync = inject(SignalrSyncService);
   private readonly _jobs = signal(new Map<string, JobRecord>());
 
-  constructor() {
+  public constructor() {
     // Listen for real-time status update events for jobs using trackingID
     this._signalrSync.onUpdate('jobs').subscribe(trackingIDs => {
       this._jobs.update(jobs => {

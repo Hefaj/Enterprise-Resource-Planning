@@ -29,22 +29,22 @@ import {
 } from './orchestrator.types';
 
 /**
- * Abstract base class for all orchestrators in the ERP system.
+ * Abstrakcyjna klasa bazowa dla wszystkich orkiestratorów w systemie ERP.
  *
- * Responsibilities:
- * - Manages an `IdentityMapStore` for its aggregate type
- * - Owns a `DataLoader` for intelligent batched fetching
- * - Subscribes to SignalR for real-time aggregate updates
- * - Provides reactive `getViewModel()` / `getSignalViewModel()` for the UI
- * - Delegates command execution and registers jobs with `JobService`
- * - Enforces retry policies and error reporting
+ * Odpowiedzialności:
+ * - Zarządza `IdentityMapStore` dla swojego typu agregatu
+ * - Posiada `DataLoader` dla inteligentnego pobierania paczek danych
+ * - Subskrybuje SignalR dla aktualizacji agregatów w czasie rzeczywistym
+ * - Zapewnia reaktywne metody `getViewModel()` / `getSignalViewModel()` dla UI
+ * - Deleguje wykonywanie poleceń (commands) i rejestruje zadania (jobs) w `JobService`
+ * - Wymusza polityki ponawiania i raportowania błędów
  *
- * Subclasses must implement:
- * - `signature` — unique identifier for SignalR events
- * - `config` — orchestrator-specific configuration
- * - `fetchByUuids()` — delegates to the generated API client
- * - `searchByFilters()` — delegates search to the API client
- * - `mapToViewModel()` — transforms DTO + resolved deps → ViewModel
+ * Klasy potomne muszą zaimplementować:
+ * - `signature` — unikalny identyfikator dla zdarzeń SignalR
+ * - `config` — specyficzna konfiguracja orkiestratora
+ * - `fetchByUuids()` — deleguje do wygenerowanego klienta API
+ * - `searchByFilters()` — deleguje wyszukiwanie do klienta API
+ * - `mapToViewModel()` — transformuje DTO + rozwiązane zależności → ViewModel
  */
 @Injectable()
 export abstract class BaseOrchestrator<
@@ -54,13 +54,13 @@ export abstract class BaseOrchestrator<
   TLoadOptions extends LoadOptions = LoadOptions,
 > implements OnDestroy {
 
-  // ── Injected services ──
+  // ── Wstrzykiwane serwisy ──
   protected readonly injector = inject(Injector);
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly jobService = inject(JobService);
   private readonly _signalrSync = inject(SignalrSyncService);
 
-  // ── Core infrastructure ──
+  // ── Podstawowa infrastruktura ──
   protected readonly identityMap: IdentityMapStore<TDto>;
   protected readonly dataLoader: DataLoader<TDto>;
 
@@ -68,40 +68,40 @@ export abstract class BaseOrchestrator<
   private readonly _isLoading: WritableSignal<boolean> = signal(false);
   private readonly _loadedUuids: WritableSignal<Set<string>> = signal(new Set());
 
-  /** Reactive list of errors from this orchestrator. */
+  /** Reaktywna lista błędów z tego orkiestratora. */
   public readonly errors: Signal<OrchestratorError[]> = this._errors.asReadonly();
 
-  /** Whether any load operation is currently in progress. */
+  /** Czy jakakolwiek operacja ładowania jest obecnie w toku. */
   public readonly isLoading: Signal<boolean> = this._isLoading.asReadonly();
 
-  // ── SignalR subscription ──
+  // ── Subskrypcja SignalR ──
   private _signalrSub: Subscription | null = null;
   private readonly _signalrRefreshInFlight = new Set<string>();
 
   // ────────────────────────────────────────────────────────────────
-  // Abstract members — to be implemented by each concrete orchestrator
+  // Elementy abstrakcyjne — do zaimplementowania w klasach potomnych
   // ────────────────────────────────────────────────────────────────
 
-  /** Unique signature for this aggregate, e.g. 'catalog.product'. */
+  /** Unikalny podpis dla tego agregatu, np. 'catalog.product'. */
   protected abstract readonly signature: string;
 
-  /** Orchestrator-specific configuration with overridable defaults. */
+  /** Specyficzna konfiguracja orkiestratora z możliwością nadpisania domyślnych wartości. */
   protected abstract readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string };
 
-  /** Fetch raw DTOs from the API by UUIDs. */
+  /** Pobierz surowe obiekty DTO z API za pomocą identyfikatorów UUID. */
   protected abstract fetchByUuids(uuids: string[]): Observable<TDto[]>;
 
-  /** Execute a search query and return matching UUIDs. */
+  /** Wykonaj zapytanie wyszukiwania i zwróć pasujące identyfikatory UUID. */
   protected abstract searchByFilters(filters: TFilters): Observable<SharedSearchResponse>;
 
   /**
-   * Transform a raw DTO into a rich ViewModel.
-   * `resolvedDeps` contains eagerly-loaded related aggregates.
+   * Przekształć surowy obiekt DTO w bogaty ViewModel.
+   * `resolvedDeps` zawiera eagerly-loaded (natychmiast załadowane) powiązane agregaty.
    */
   protected abstract mapToViewModel(dto: TDto, resolvedDeps: ResolvedDeps): TViewModel;
 
   // ────────────────────────────────────────────────────────────────
-  // Constructor
+  // Konstruktor
   // ────────────────────────────────────────────────────────────────
 
   public constructor() {
@@ -118,10 +118,10 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Configuration
+  // Konfiguracja
   // ────────────────────────────────────────────────────────────────
 
-  /** Merge concrete orchestrator config with defaults. */
+  /** Połącz konfigurację konkretnego orkiestratora z wartościami domyślnymi. */
   private _getConfig(): OrchestratorConfig {
     return {
       ...DEFAULT_ORCHESTRATOR_CONFIG,
@@ -130,16 +130,16 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Public API: Data Loading
+  // Publiczne API: Ładowanie Danych
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Load aggregates by UUID, with optional eager loading of related aggregates.
+   * Ładowanie agregatów po UUID, z opcjonalnym eager loading (natychmiastowym ładowaniem) powiązanych agregatów.
    *
-   * This is the primary entry point for components. It:
-   * 1. Delegates to `DataLoader` for intelligent batched fetching
-   * 2. Optionally loads related aggregates (dependency tree)
-   * 3. Updates the loaded UUIDs set for `getViewModel()`
+   * To jest główny punkt wejścia dla komponentów. Wykonuje:
+   * 1. Deleguje do `DataLoader` dla inteligentnego pobierania paczek danych
+   * 2. Opcjonalnie ładuje powiązane agregaty (drzewo zależności)
+   * 3. Aktualizuje zestaw załadowanych UUID dla `getViewModel()`
    */
   public async loadAsync(uuids: string[], options?: TLoadOptions): Promise<void> {
     if (uuids.length === 0) return;
@@ -147,15 +147,15 @@ export abstract class BaseOrchestrator<
     this._isLoading.set(true);
 
     try {
-      // Load primary aggregates
+      // Pobierz główne agregaty
       await this.dataLoader.loadAsync(uuids);
 
-      // Eager load dependencies if options are provided
+      // Eager load zależności, jeśli przekazano opcje
       if (options) {
         await this.resolveEagerDependencies(uuids, options);
       }
 
-      // Track loaded UUIDs for reactive view
+      // Śledź załadowane UUID dla widoku reaktywnego
       this._loadedUuids.update(set => {
         const updated = new Set(set);
         for (const uuid of uuids) {
@@ -176,8 +176,8 @@ export abstract class BaseOrchestrator<
   }
 
   /**
-   * Execute a search query and return matching UUIDs.
-   * Optionally auto-loads the found aggregates.
+   * Wykonaj zapytanie wyszukiwania i zwróć pasujące identyfikatory UUID.
+   * Opcjonalnie automatycznie ładuje znalezione agregaty.
    */
   public async searchAsync(
     filters: TFilters,
@@ -203,15 +203,15 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Public API: Reactive ViewModels
+  // Publiczne API: Reaktywne ViewModels
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Reactive `Signal<Map<uuid, TViewModel>>` for the UI.
+   * Reaktywny `Signal<Map<uuid, TViewModel>>` dla UI.
    *
-   * Returns a computed signal that automatically re-evaluates when
-   * underlying DTOs change. Suitable for list views where the entire
-   * Map is consumed.
+   * Zwraca obliczony sygnał (computed), który automatycznie przelicza się, gdy
+   * bazowe obiekty DTO ulegną zmianie. Odpowiedni dla widoków listowych, gdzie
+   * cała mapa jest konsumowana.
    */
   public getViewModel(): Signal<Map<string, TViewModel>> {
     return computed(() => {
@@ -230,11 +230,11 @@ export abstract class BaseOrchestrator<
   }
 
   /**
-   * `Map<uuid, Signal<TViewModel>>` for per-item reactivity.
+   * `Map<uuid, Signal<TViewModel>>` dla reaktywności na poziomie pojedynczego elementu.
    *
-   * Each entry has its own Signal, so changing one aggregate
-   * does NOT cause re-renders for the entire list.
-   * Ideal for table rows.
+   * Każdy wpis ma swój własny Signal, więc zmiana jednego agregatu
+   * NIE powoduje ponownego renderowania dla całej listy.
+   * Idealne dla wierszy tabeli.
    */
   public getSignalViewModel(): Map<string, Signal<TViewModel>> {
     const loaded = this._loadedUuids();
@@ -258,7 +258,7 @@ export abstract class BaseOrchestrator<
   }
 
   /**
-   * Get a single ViewModel by UUID as a reactive Signal.
+   * Pobierz pojedynczy ViewModel po UUID jako reaktywny Signal.
    */
   public getOne(uuid: string): Signal<TViewModel | undefined> {
     return computed(() => {
@@ -269,20 +269,20 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Public API: Command Execution
+  // Publiczne API: Wykonywanie Poleceń (Commands)
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Execute a command via the API and register the returned job UUID.
+   * Wykonaj polecenie (command) przez API i zarejestruj zwrócony identyfikator UUID zadania (job).
    *
-   * All commands are delegation-only — the API returns a `jobUuid`
-   * that is tracked in `JobService`.
+   * Wszystkie polecenia działają na zasadzie delegacji — API zwraca `jobUuid`,
+   * który jest śledzony w `JobService`.
    *
-   * @param commandName Human-readable command name for tracking
-   * @param apiCall Function that calls the API and returns Observable<string> (jobUuid)
-   * @param aggregateUuid Optional UUID of the affected aggregate
-   * @param queueID Optional identifier of the originating modal (modal ID)
-   * @returns The job UUID
+   * @param commandName Czytelna dla człowieka nazwa polecenia do śledzenia
+   * @param apiCall Funkcja wywołująca API i zwracająca Observable<string> (jobUuid)
+   * @param aggregateUuid Opcjonalny identyfikator UUID powiązanego agregatu
+   * @param queueID Opcjonalny identyfikator pochodnego modalu (identyfikator kolejki)
+   * @returns Identyfikator UUID zadania (job)
    */
   public async executeCommand(
     commandName: string,
@@ -314,37 +314,37 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Protected: Dependency Resolution (override in subclasses)
+  // Protected: Rozwiązywanie Zależności (do nadpisania w klasach potomnych)
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Override to eagerly load related aggregates when `loadAsync` is
-   * called with options.
+   * Nadpisz, aby natychmiast ładować (eager load) powiązane agregaty, gdy `loadAsync`
+   * jest wywoływany z opcjami.
    *
-   * Example: CatalogProductOrchestrator overrides this to load
-   * categories and models referenced by the product DTOs.
+   * Przykład: CatalogProductOrchestrator nadpisuje tę metodę, aby ładować
+   * kategorie i modele powiązane przez produktowe DTO.
    */
   protected async resolveEagerDependencies(
     _uuids: string[],
     _options: TLoadOptions,
   ): Promise<void> {
-    // Default: no eager loading. Subclasses override.
+    // Domyślnie: brak eager loadingu. Nadpisywane w podklasach.
   }
 
   /**
-   * Override to resolve current dependencies for ViewModel mapping.
-   * Called synchronously during `computed()` evaluation.
+   * Nadpisz, aby rozwiązywać aktualne zależności dla mapowania ViewModel.
+   * Wywoływane synchronicznie podczas ewaluacji `computed()`.
    *
-   * Returns cached/already-loaded dependency data for the given DTO.
+   * Zwraca zapisane w cache/już załadowane dane zależności dla danego DTO.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected _resolveCurrentDeps(_dto: TDto): ResolvedDeps {
-    // Default: empty deps. Subclasses override.
+    // Domyślnie: puste zależności. Nadpisywane w podklasach.
     return {};
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Internal: SignalR Real-time Updates
+  // Wewnętrzne: Aktualizacje w czasie rzeczywistym SignalR
   // ────────────────────────────────────────────────────────────────
 
   private _initSignalR(signature: string): void {
@@ -357,11 +357,11 @@ export abstract class BaseOrchestrator<
   }
 
   private async _handleSignalRUpdate(uuids: string[]): Promise<void> {
-    // Only refresh aggregates that are currently in our cache
+    // Odświeżaj tylko te agregaty, które aktualnie mamy w cache
     const cachedUuids = uuids.filter(uuid => this.identityMap.has(uuid));
     if (cachedUuids.length === 0) return;
 
-    // Prevent duplicate refresh attempts
+    // Zapobiegaj zduplikowanym próbom odświeżenia
     const toRefresh = cachedUuids.filter(uuid => !this._signalrRefreshInFlight.has(uuid));
     if (toRefresh.length === 0) return;
 
@@ -377,7 +377,7 @@ export abstract class BaseOrchestrator<
         message: err instanceof Error ? err.message : String(err),
         timestamp: new Date(),
       });
-      // Do NOT retry endlessly — error is logged, no infinite loop
+      // NIE ponawiaj w nieskończoność — błąd jest logowany, brak pętli nieskończonej
     } finally {
       for (const uuid of toRefresh) {
         this._signalrRefreshInFlight.delete(uuid);
@@ -386,21 +386,21 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Internal: Error Management
+  // Wewnętrzne: Zarządzanie Błędami
   // ────────────────────────────────────────────────────────────────
 
   private _addError(error: OrchestratorError): void {
     console.error(`[${this.signature}]`, error.operation, error.message);
-    this._errors.update(errors => [...errors.slice(-49), error]); // Keep last 50
+    this._errors.update(errors => [...errors.slice(-49), error]); // Zachowaj ostatnie 50
   }
 
-  /** Clear all tracked errors. */
+  /** Wyczyść wszystkie śledzone błędy. */
   public clearErrors(): void {
     this._errors.set([]);
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Lifecycle
+  // Cykl Życia (Lifecycle)
   // ────────────────────────────────────────────────────────────────
 
   public ngOnDestroy(): void {

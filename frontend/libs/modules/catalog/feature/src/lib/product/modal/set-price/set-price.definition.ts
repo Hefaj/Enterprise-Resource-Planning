@@ -13,6 +13,11 @@ export class SetPriceModalDefinition implements ErpModalDefinition<BatchCommandO
   private readonly _orchestrator = inject(CatalogProductOrchestrator);
 
   public build(command: BatchCommandOfProductSetPriceCommand, metadata?: SetPriceMetadata): ErpModalConfig<BatchCommandOfProductSetPriceCommand, SetPriceMetadata> {
+    const uuids = command['products']?.map((p: any) => p.uuid) ?? [];
+    if (uuids.length > 0) {
+      this._orchestrator.loadAsync(uuids).catch(err => console.error(err));
+    }
+
     return ErpModalBuilder.modal<BatchCommandOfProductSetPriceCommand, SetPriceMetadata>((b): void => {
       b.setTitle([PRODUCT_KEYS.base.tabs.products, PRODUCT_KEYS.commands.setPrice.modalTitle])
         .setCommand(command)

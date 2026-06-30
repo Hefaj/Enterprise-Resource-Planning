@@ -6,10 +6,10 @@ import { CatalogBffClient, ModelDto, SearchModelRequest, SearchResponse } from '
 import { ModelVM } from './model.view-model';
 
 /**
- * Orchestrator for the Model aggregate in the Catalog module.
+ * Orkiestrator dla agregatu modelu (Model) w module Catalog.
  *
- * This is the simplest orchestrator — ModelDto has no references
- * to other aggregates, so `mapToViewModel` is a 1:1 mapping.
+ * To jest najprostszy orkiestrator — ModelDto nie posiada referencji
+ * do innych agregatów, więc mapToViewModel to mapowanie 1:1.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogModelOrchestrator extends BaseOrchestrator<
@@ -24,11 +24,11 @@ export class CatalogModelOrchestrator extends BaseOrchestrator<
 
   protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
     signalrSignature: 'catalog.model',
-    maxCacheSize: 500, // Models are typically fewer than products
+    maxCacheSize: 500, // Modele są zazwyczaj mniej liczne niż produkty
   };
 
   // ────────────────────────────────────────────────────────────────
-  // Abstract implementations
+  // Abstrakcyjne implementacje
   // ────────────────────────────────────────────────────────────────
 
   protected override fetchByUuids(uuids: string[]): Observable<ModelDto[]> {

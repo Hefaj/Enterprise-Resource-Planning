@@ -4,15 +4,15 @@ import { IdentityMapStore } from './identity-map.store';
 import { HasUuid, OrchestratorConfig } from './orchestrator.types';
 
 /**
- * Intelligent request manager that serves as the heart of the data fetching system.
+ * Inteligentny menedżer żądań, który służy jako serce systemu pobierania danych.
  *
- * Implements a multi-layered optimization pipeline:
- * 1. **Deduplication** — removes duplicate UUIDs from the request queue
- * 2. **Cache checking** — skips UUIDs already present in the IdentityMapStore
- * 3. **In-flight tracking** — prevents duplicate requests for the same UUID
- * 4. **Temporal batching** — collects individual calls into batches via `bufferTime`
- * 5. **Chunking** — splits large batches into configurable-size chunks
- * 6. **Retry with backoff** — exponential backoff for transient failures
+ * Implementuje wielowarstwowy potok optymalizacyjny:
+ * 1. **Dedupikacja** — usuwa duplikaty UUID z kolejki żądań
+ * 2. **Sprawdzanie cache** — pomija UUID, które już istnieją w IdentityMapStore
+ * 3. **Śledzenie żądań w toku (in-flight tracking)** — zapobiega duplikowaniu zapytań o to samo UUID
+ * 4. **Grupowanie czasowe (temporal batching)** — zbiera pojedyncze wywołania w paczki za pomocą `bufferTime`
+ * 5. **Dzielenie na części (chunking)** — dzieli duże paczki na części o skonfigurowanym rozmiarze
+ * 6. **Ponawianie z wycofaniem (retry with backoff)** — wykładnicze wycofywanie się w przypadku przejściowych awarii
  */
 export class DataLoader<TDto extends HasUuid> {
   private readonly _bufferSubject = new Subject<LoadRequest>();
@@ -34,29 +34,29 @@ export class DataLoader<TDto extends HasUuid> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Public API
+  // Publiczne API
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Request loading of one or more aggregates by UUID.
+   * Zażądaj załadowania jednego lub więcej agregatów po UUID.
    *
-   * This method is designed to be called frequently from many components.
-   * Calls are batched, deduplicated, and optimized automatically.
+   * Ta metoda jest zaprojektowana do częstego wywoływania z wielu komponentów.
+   * Wywołania są automatycznie grupowane, dedupikowane i optymalizowane.
    *
-   * Returns a Promise that resolves when ALL requested UUIDs are available
-   * in the IdentityMapStore (either from cache or freshly fetched).
+   * Zwraca Promise, który rozwiązuje się, gdy WSZYSTKIE żądane UUID są dostępne
+   * w IdentityMapStore (pochodzące z cache lub nowo pobrane).
    */
   public async loadAsync(uuids: string[]): Promise<void> {
     if (uuids.length === 0) return;
 
-    // Step 1: Deduplicate
+    // Krok 1: Deduplikacja
     const unique = [...new Set(uuids)];
 
-    // Step 2: Filter out already-cached UUIDs
+    // Krok 2: Odfiltruj już zapamiętane UUID
     const missing = this._identityMap.getMissing(unique);
     if (missing.length === 0) return;
 
-    // Step 3: Filter out in-flight UUIDs, but keep their promises
+    // Krok 3: Odfiltruj UUID, których pobieranie jest w toku, ale zachowaj ich obietnice (Promises)
     const toFetch: string[] = [];
     const existingPromises: Promise<void>[] = [];
 
@@ -69,7 +69,7 @@ export class DataLoader<TDto extends HasUuid> {
       }
     }
 
-    // Step 4: Enqueue new UUIDs into the buffer pipeline
+    // Krok 4: Umieść nowe UUID w kolejce potoku buforowego
     let newPromise: Promise<void> | undefined;
 
     if (toFetch.length > 0) {
@@ -77,13 +77,13 @@ export class DataLoader<TDto extends HasUuid> {
         this._bufferSubject.next({ uuids: toFetch, resolve, reject });
       });
 
-      // Register pending promises for all new UUIDs
+      // Zarejestruj oczekujące obietnice dla wszystkich nowych UUID
       for (const uuid of toFetch) {
         this._pendingRequests.set(uuid, newPromise);
       }
     }
 
-    // Wait for all — both existing in-flight and newly queued
+    // Czekaj na wszystkie — zarówno te w toku, jak i nowo zakolejkowane
     const allPromises = [...existingPromises];
     if (newPromise) {
       allPromises.push(newPromise);
@@ -93,8 +93,8 @@ export class DataLoader<TDto extends HasUuid> {
   }
 
   /**
-   * Force a reload of specific UUIDs, bypassing the cache check.
-   * Used by SignalR refresh to update stale data.
+   * Wymuś przeładowanie określonych UUID, pomijając sprawdzanie cache.
+   * Używane przez odświeżanie SignalR do aktualizacji nieaktualnych danych.
    */
   public async reloadAsync(uuids: string[]): Promise<void> {
     if (uuids.length === 0) return;
@@ -106,14 +106,14 @@ export class DataLoader<TDto extends HasUuid> {
   }
 
   /**
-   * Clean up resources.
+   * Wyczyść zasoby.
    */
   public destroy(): void {
     this._bufferSubject.complete();
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Internal: Buffer Pipeline
+  // Wewnętrzne: Potok buforowy (Buffer Pipeline)
   // ────────────────────────────────────────────────────────────────
 
   private _initBufferPipeline(): void {
@@ -128,7 +128,7 @@ export class DataLoader<TDto extends HasUuid> {
   }
 
   private async _processBatch(batch: LoadRequest[]): Promise<void> {
-    // Merge all UUIDs from the batch, deduplicate again
+    // Połącz wszystkie UUID z paczki i ponownie je zdedupikuj
     const allUuids = new Set<string>();
     for (const request of batch) {
       for (const uuid of request.uuids) {
@@ -136,11 +136,11 @@ export class DataLoader<TDto extends HasUuid> {
       }
     }
 
-    // Final cache check (some may have been loaded by a concurrent batch)
+    // Ostateczne sprawdzenie cache (niektóre mogły zostać załadowane przez współbieżną paczkę)
     const missing = this._identityMap.getMissing([...allUuids]);
 
     if (missing.length === 0) {
-      // Everything cached — resolve all promises
+      // Wszystko jest w cache — rozwiąż wszystkie obietnice
       for (const request of batch) {
         request.resolve();
       }
@@ -148,18 +148,18 @@ export class DataLoader<TDto extends HasUuid> {
       return;
     }
 
-    // Chunk and fetch
+    // Podziel na części i pobierz
     const chunks = this._chunkArray(missing, this._config.maxChunkSize);
 
     try {
       await Promise.all(chunks.map(chunk => this._fetchChunkWithRetry(chunk)));
 
-      // All succeeded — resolve all batch promises
+      // Wszystko się udało — rozwiąż wszystkie obietnice z paczki
       for (const request of batch) {
         request.resolve();
       }
     } catch (err) {
-      // If any chunk fails after retries, reject all batch promises
+      // Jeśli którakolwiek część zawiedzie po ponowieniach, odrzuć wszystkie obietnice z paczki
       for (const request of batch) {
         request.reject(err);
       }
@@ -169,7 +169,7 @@ export class DataLoader<TDto extends HasUuid> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Internal: Fetch with Retry
+  // Wewnętrzne: Pobieranie z ponawianiem (Fetch with Retry)
   // ────────────────────────────────────────────────────────────────
 
   private async _fetchChunkWithRetry(uuids: string[]): Promise<void> {
@@ -179,7 +179,7 @@ export class DataLoader<TDto extends HasUuid> {
         delay: (_error, retryIndex) => {
           const delayMs = this._config.retryDelayMs * Math.pow(2, retryIndex - 1);
           console.warn(
-            `[DataLoader] Retry ${retryIndex}/${this._config.maxRetries} after ${delayMs}ms`,
+            `[DataLoader] Ponowienie ${retryIndex}/${this._config.maxRetries} po ${delayMs}ms`,
             _error,
           );
           return new Observable<void>(subscriber => {
@@ -199,7 +199,7 @@ export class DataLoader<TDto extends HasUuid> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Internal: Utilities
+  // Wewnętrzne: Narzędzia
   // ────────────────────────────────────────────────────────────────
 
   private _chunkArray(arr: string[], size: number): string[][] {
@@ -218,7 +218,7 @@ export class DataLoader<TDto extends HasUuid> {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Internal Types
+// Typy Wewnętrzne
 // ────────────────────────────────────────────────────────────────
 
 interface LoadRequest {

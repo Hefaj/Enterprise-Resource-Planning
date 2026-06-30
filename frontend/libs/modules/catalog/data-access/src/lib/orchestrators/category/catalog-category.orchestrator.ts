@@ -6,17 +6,17 @@ import { CatalogBffClient, CategoryDto, SearchCategoryRequest, SearchResponse } 
 import { CategoryVM } from './category.view-model';
 
 /**
- * Maximum depth for resolving parent category chains.
- * Prevents infinite recursion when categories form deep hierarchies.
+ * Maksymalna głębokość dla rozwiązywania łańcuchów kategorii nadrzędnych.
+ * Zapobiega nieskończonej rekurencji, gdy kategorie tworzą głębokie hierarchie.
  */
 const MAX_PARENT_DEPTH = 3;
 
 /**
- * Orchestrator for the Category aggregate in the Catalog module.
+ * Orkiestrator dla agregatu kategorii (Category) w module Catalog.
  *
- * Handles self-referential `parentUuid` resolution with max-depth guard.
- * When a CategoryDto has a `parentUuid`, the orchestrator resolves it
- * to a nested `CategoryVM.parent` object — up to MAX_PARENT_DEPTH levels.
+ * Obsługuje rekurencyjne rozwiązywanie parentUuid z zabezpieczeniem maksymalnej głębokości.
+ * Gdy CategoryDto posiada parentUuid, orkiestrator mapuje go na zagnieżdżony obiekt
+ * CategoryVM.parent — do poziomu MAX_PARENT_DEPTH.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogCategoryOrchestrator extends BaseOrchestrator<
@@ -31,11 +31,11 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
 
   protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
     signalrSignature: 'catalog.category',
-    maxCacheSize: 500, // Categories are typically fewer than products
+    maxCacheSize: 500, // Kategorie są zazwyczaj mniej liczne niż produkty
   };
 
   // ────────────────────────────────────────────────────────────────
-  // Abstract implementations
+  // Abstrakcyjne implementacje
   // ────────────────────────────────────────────────────────────────
 
   protected override fetchByUuids(uuids: string[]): Observable<CategoryDto[]> {
@@ -53,12 +53,12 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Eager Loading: Resolve parent chain
+  // Eager Loading: Rozwiązywanie łańcucha nadrzędnego
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * After loading categories, eagerly load their parent chain
-   * up to MAX_PARENT_DEPTH levels.
+   * Po załadowaniu kategorii, natychmiast załaduj ich łańcuch nadrzędny
+   * do poziomu MAX_PARENT_DEPTH.
    */
   protected override async resolveEagerDependencies(
     uuids: string[],
@@ -68,12 +68,12 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
   }
 
   /**
-   * Recursively load parent categories up to max depth.
+   * Rekurencyjne ładowanie kategorii nadrzędnych do maksymalnej głębokości.
    */
   private async _loadParentChain(uuids: string[], depth: number): Promise<void> {
     if (depth >= MAX_PARENT_DEPTH) return;
 
-    // Collect all parentUuids from currently loaded categories
+    // Zbierz wszystkie parentUuids z aktualnie załadowanych kategorii
     const parentUuids = new Set<string>();
     for (const uuid of uuids) {
       const dto = this.identityMap.peek(uuid);
@@ -84,18 +84,18 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
 
     if (parentUuids.size === 0) return;
 
-    // Load parents
+    // Załaduj rodziców
     const missingParents = [...parentUuids].filter(uuid => !this.identityMap.has(uuid));
     if (missingParents.length > 0) {
       await this.dataLoader.loadAsync(missingParents);
     }
 
-    // Recurse for the next level
+    // Rekurencja dla następnego poziomu
     await this._loadParentChain([...parentUuids], depth + 1);
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Internal: Recursive DTO → VM mapping with depth guard
+  // Wewnętrzne: Rekurencyjne mapowanie DTO → VM z zabezpieczeniem głębokości
   // ────────────────────────────────────────────────────────────────
 
   private _mapWithDepthGuard(dto: CategoryDto, depth: number): CategoryVM {
@@ -115,13 +115,13 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Public: Convenience method for external orchestrators
+  // Publiczne: Metoda pomocnicza dla zewnętrznych orkiestratorów
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Resolve a list of category UUIDs to CategoryVM objects.
-   * Used by CatalogProductOrchestrator to populate Product.categories.
-   * Returns only categories that are already cached.
+   * Rozwiąż listę UUID kategorii do obiektów CategoryVM.
+   * Używane przez CatalogProductOrchestrator do uzupełnienia Product.categories.
+   * Zwraca tylko te kategorie, które są już w pamięci podręcznej (cache).
    */
   public resolveCategoryVMs(uuids: string[]): CategoryVM[] {
     const result: CategoryVM[] = [];

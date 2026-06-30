@@ -3,17 +3,17 @@ import { LruTracker } from './lru-tracker';
 import { HasUuid } from './orchestrator.types';
 
 /**
- * Generic, centralized Identity Map store for normalized aggregates.
+ * Generyczny, scentralizowany magazyn Identity Map dla znormalizowanych agregatów.
  *
- * Design principles:
- * - **Granular signals**: Each aggregate is stored in its own `WritableSignal<TDto>`,
- *   so updating one aggregate does NOT trigger re-renders for unrelated entries.
- * - **LRU eviction**: Enforces `maxCacheSize` to prevent unbounded memory growth.
- * - **Single source of truth**: One store instance per aggregate type, preventing
- *   data duplication across components.
+ * Zasady projektowe:
+ * - **Granularne sygnały (granular signals)**: Każdy agregat jest przechowywany we własnym `WritableSignal<TDto>`,
+ *   dzięki czemu aktualizacja jednego agregatu NIE powoduje ponownego renderowania dla niepowiązanych wpisów.
+ * - **Eksmisja LRU**: Wymusza `maxCacheSize`, aby zapobiec nieograniczonemu wzrostowi pamięci.
+ * - **Pojedyncze źródło prawdy (Single source of truth)**: Jedna instancja magazynu na typ agregatu, zapobiegająca
+ *   duplikowaniu danych w komponentach.
  *
- * This is NOT an Angular @Injectable — each `BaseOrchestrator` creates and owns
- * its own `IdentityMapStore` instance for its aggregate type.
+ * To NIE jest Angularowy `@Injectable` — każdy `BaseOrchestrator` tworzy i posiada
+ * własną instancję `IdentityMapStore` dla swojego typu agregatu.
  */
 export class IdentityMapStore<TDto extends HasUuid> {
   private readonly _entries = new Map<string, WritableSignal<TDto>>();
@@ -21,9 +21,9 @@ export class IdentityMapStore<TDto extends HasUuid> {
   private readonly _maxCacheSize: number;
 
   /**
-   * Reactive signal tracking the set of currently cached UUIDs.
-   * Updated on every add/remove operation to allow derived signals
-   * to react to store membership changes.
+   * Reaktywny sygnał śledzący zestaw aktualnie zapisanych w cache UUID.
+   * Aktualizowany przy każdej operacji dodawania/usuwania, aby umożliwić pochodnym sygnałom
+   * reagowanie na zmiany członkostwa w magazynie.
    */
   private readonly _version = signal(0);
 
@@ -33,12 +33,12 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Read Operations
+  // Operacje Odczytu
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Get a reactive signal for a single aggregate.
-   * Returns `undefined` if the UUID is not in the cache.
+   * Pobierz reaktywny sygnał dla pojedynczego agregatu.
+   * Zwraca `undefined`, jeśli UUID nie znajduje się w cache.
    */
   public get(uuid: string): Signal<TDto | undefined> {
     const entry = this._entries.get(uuid);
@@ -46,17 +46,17 @@ export class IdentityMapStore<TDto extends HasUuid> {
       this._lru.touch(uuid);
       return entry.asReadonly();
     }
-    // Return a stable computed that reacts to store changes
+    // Zwróć stabilny computed, który reaguje na zmiany w magazynie
     return computed(() => {
-      this._version(); // track reactivity
+      this._version(); // śledzenie reaktywności
       const current = this._entries.get(uuid);
       return current ? current() : undefined;
     });
   }
 
   /**
-   * Get a snapshot of the raw DTO value (non-reactive).
-   * Returns `undefined` if not cached.
+   * Pobierz migawkę (snapshot) surowej wartości DTO (niereaktywną).
+   * Zwraca `undefined`, jeśli nie ma w cache.
    */
   public peek(uuid: string): TDto | undefined {
     const entry = this._entries.get(uuid);
@@ -68,12 +68,12 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   /**
-   * Get many aggregates as a reactive `Signal<Map<uuid, TDto>>`.
-   * Only emits when any of the requested UUIDs change.
+   * Pobierz wiele agregatów jako reaktywny `Signal<Map<uuid, TDto>>`.
+   * Emituje tylko wtedy, gdy którykolwiek z żądanych UUID ulegnie zmianie.
    */
   public getMany(uuids: string[]): Signal<Map<string, TDto>> {
     return computed(() => {
-      this._version(); // track membership changes
+      this._version(); // śledzenie zmian członkostwa
       const result = new Map<string, TDto>();
       for (const uuid of uuids) {
         const entry = this._entries.get(uuid);
@@ -86,11 +86,11 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   /**
-   * Get all cached aggregates as a reactive `Signal<Map<uuid, TDto>>`.
+   * Pobierz wszystkie zapisane w cache agregaty jako reaktywny `Signal<Map<uuid, TDto>>`.
    */
   public getAll(): Signal<Map<string, TDto>> {
     return computed(() => {
-      this._version(); // track membership changes
+      this._version(); // śledzenie zmian członkostwa
       const result = new Map<string, TDto>();
       for (const [uuid, entry] of this._entries) {
         result.set(uuid, entry());
@@ -100,8 +100,8 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   /**
-   * Get individual signals for each UUID.
-   * Used for `getSignalViewModel()` — enables per-row reactivity in tables.
+   * Pobierz pojedyncze sygnały dla każdego UUID.
+   * Używane do `getSignalViewModel()` — umożliwia reaktywność dla każdego wiersza w tabelach.
    */
   public getSignals(uuids: string[]): Map<string, Signal<TDto>> {
     const result = new Map<string, Signal<TDto>>();
@@ -116,12 +116,12 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Write Operations
+  // Operacje Zapisu
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Upsert a single aggregate. If the UUID exists, its signal is updated
-   * in place (preserving signal identity for existing subscribers).
+   * Dodaj lub zaktualizuj pojedynczy agregat. Jeśli UUID istnieje, jego sygnał jest aktualizowany
+   * w miejscu (zachowując tożsamość sygnału dla istniejących subskrybentów).
    */
   public set(dto: TDto): void {
     const uuid = dto.uuid;
@@ -139,7 +139,7 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   /**
-   * Upsert many aggregates at once.
+   * Dodaj lub zaktualizuj wiele agregatów naraz.
    */
   public setMany(dtos: TDto[]): void {
     let added = false;
@@ -164,29 +164,29 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Query Operations
+  // Operacje Zapytania
   // ────────────────────────────────────────────────────────────────
 
-  /** Check if a UUID is in the cache. */
+  /** Sprawdź, czy UUID znajduje się w cache. */
   public has(uuid: string): boolean {
     return this._entries.has(uuid);
   }
 
-  /** Filter a list of UUIDs to only those missing from the cache. */
+  /** Filtruj listę UUID do tylko tych brakujących w cache. */
   public getMissing(uuids: string[]): string[] {
     return uuids.filter(uuid => !this._entries.has(uuid));
   }
 
-  /** Current number of cached entries. */
+  /** Aktualna liczba zapisanych wpisów w cache. */
   public get size(): number {
     return this._entries.size;
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Removal Operations
+  // Operacje Usuwania
   // ────────────────────────────────────────────────────────────────
 
-  /** Remove a single aggregate from the cache. */
+  /** Usuń pojedynczy agregat z cache. */
   public delete(uuid: string): void {
     if (this._entries.delete(uuid)) {
       this._lru.delete(uuid);
@@ -194,7 +194,7 @@ export class IdentityMapStore<TDto extends HasUuid> {
     }
   }
 
-  /** Clear the entire cache. */
+  /** Wyczyść cały cache. */
   public clear(): void {
     this._entries.clear();
     this._lru.clear();
@@ -202,7 +202,7 @@ export class IdentityMapStore<TDto extends HasUuid> {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // LRU Eviction
+  // LRU Eksmisja
   // ────────────────────────────────────────────────────────────────
 
   private _evictIfNeeded(): void {
@@ -211,7 +211,7 @@ export class IdentityMapStore<TDto extends HasUuid> {
       if (oldest) {
         this._entries.delete(oldest);
       } else {
-        break; // Safety: should not happen
+        break; // Bezpieczeństwo: nie powinno się zdarzyć
       }
     }
   }

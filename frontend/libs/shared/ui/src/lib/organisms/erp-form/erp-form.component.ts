@@ -32,7 +32,11 @@ import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete';
       [class]="'grid-cols-' + (gridCols() || 1)"
     >
       @for (field of fields(); track field.key) {
-        <div [class]="field.resolvedColSpan ? 'col-span-' + field.resolvedColSpan : 'col-span-1'">
+        <div 
+          [class]="field.resolvedColSpan ? 'col-span-' + field.resolvedColSpan : 'col-span-1'"
+          [attr.data-field-key]="field.key"
+          [attr.data-testid]="'field-' + field.key"
+        >
           @switch (field.type) {
             @case ('text') {
               <erp-input-text

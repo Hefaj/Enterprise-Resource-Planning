@@ -1,8 +1,8 @@
 /**
- * Doubly-linked-list based LRU (Least Recently Used) tracker.
+ * LRU (Least Recently Used) oparty na liście dwukierunkowej.
  *
- * Provides O(1) `touch`, `evictOldest`, and `delete` operations.
- * Used internally by `IdentityMapStore` to enforce `maxCacheSize`.
+ * Zapewnia operacje `touch`, `evictOldest` oraz `delete` o złożoności O(1).
+ * Używany wewnętrznie przez `IdentityMapStore` do wymuszania `maxCacheSize`.
  */
 
 interface LruNode {
@@ -21,33 +21,33 @@ export class LruTracker {
     this._tail.prev = this._head;
   }
 
-  /** Number of tracked entries. */
+  /** Liczba śledzonych wpisów. */
   public get size(): number {
     return this._map.size;
   }
 
   /**
-   * Mark `key` as most-recently-used.
-   * If the key doesn't exist yet, it is added.
+   * Oznacz `key` jako ostatnio używany (most-recently-used).
+   * Jeśli klucz jeszcze nie istnieje, zostanie dodany.
    */
   public touch(key: string): void {
     let node = this._map.get(key);
 
     if (node) {
-      // Detach from current position
+      // Odłącz z bieżącej pozycji
       this._detach(node);
     } else {
       node = { key, prev: null, next: null };
       this._map.set(key, node);
     }
 
-    // Attach right before tail (most recent)
+    // Dołącz tuż przed ogonem (tail - najnowszy)
     this._attachBeforeTail(node);
   }
 
   /**
-   * Evict and return the least-recently-used key.
-   * Returns `null` if the tracker is empty.
+   * Usuń i zwróć najdawniej używany klucz (least-recently-used).
+   * Zwraca `null`, jeśli tracker jest pusty.
    */
   public evictOldest(): string | null {
     const oldest = this._head.next;
@@ -61,7 +61,7 @@ export class LruTracker {
   }
 
   /**
-   * Remove a specific key from tracking.
+   * Usuń określony klucz ze śledzenia.
    */
   public delete(key: string): void {
     const node = this._map.get(key);
@@ -72,14 +72,14 @@ export class LruTracker {
   }
 
   /**
-   * Check if a key is being tracked.
+   * Sprawdź, czy klucz jest śledzony.
    */
   public has(key: string): boolean {
     return this._map.has(key);
   }
 
   /**
-   * Clear all tracked entries.
+   * Wyczyść wszystkie śledzone wpisy.
    */
   public clear(): void {
     this._map.clear();
@@ -87,7 +87,7 @@ export class LruTracker {
     this._tail.prev = this._head;
   }
 
-  // ── Internal linked-list operations ──
+  // ── Wewnętrzne operacje na liście dwukierunkowej ──
 
   private _detach(node: LruNode): void {
     if (node.prev) {

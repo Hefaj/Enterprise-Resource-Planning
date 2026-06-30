@@ -1,37 +1,37 @@
 /**
- * Core types, interfaces, and configuration objects for the Orchestrator architecture.
+ * Podstawowe typy, interfejsy i obiekty konfiguracyjne dla architektury orkiestratora.
  *
- * These types are shared across all modules and form the foundation for:
- * - BaseOrchestrator configuration
- * - DataLoader batching/retry policies
- * - IdentityMapStore LRU settings
- * - Command → Job tracking
+ * Te typy są współdzielone we wszystkich modułach i stanowią podstawę dla:
+ * - Konfiguracji BaseOrchestrator
+ * - Polityki grupowania/ponawiania DataLoader
+ * - Ustawień LRU IdentityMapStore
+ * - Śledzenia Command → Job
  */
 
 // ────────────────────────────────────────────────────────────────
-// Orchestrator Configuration
+// Konfiguracja Orkiestratora
 // ────────────────────────────────────────────────────────────────
 
 export interface OrchestratorConfig {
-  /** Default page size for search queries. */
+  /** Domyślny rozmiar strony dla zapytań wyszukiwania. */
   readonly defaultPageSize: number;
 
-  /** Maximum number of UUIDs per single API request (chunking). */
+  /** Maksymalna liczba UUID w pojedynczym zapytaniu API (dzielenie na części). */
   readonly maxChunkSize: number;
 
-  /** Buffer window in ms for batching individual loadAsync calls. */
+  /** Okno bufora w ms do grupowania pojedynczych wywołań loadAsync. */
   readonly bufferTimeMs: number;
 
-  /** Maximum number of retry attempts for failed fetch operations. */
+  /** Maksymalna liczba prób ponowienia dla nieudanych operacji pobierania. */
   readonly maxRetries: number;
 
-  /** Base delay in ms for exponential backoff between retries. */
+  /** Podstawowe opóźnienie w ms dla wykładniczego wycofywania (exponential backoff) pomiędzy ponowieniami. */
   readonly retryDelayMs: number;
 
-  /** Maximum number of aggregates kept in the LRU cache per type. */
+  /** Maksymalna liczba agregatów przechowywanych w cache LRU dla każdego typu. */
   readonly maxCacheSize: number;
 
-  /** SignalR event signature used for real-time updates (e.g. 'catalog.product'). */
+  /** Sygnatura zdarzenia SignalR używana do aktualizacji w czasie rzeczywistym (np. 'catalog.product'). */
   readonly signalrSignature: string;
 }
 
@@ -45,20 +45,20 @@ export const DEFAULT_ORCHESTRATOR_CONFIG: Omit<OrchestratorConfig, 'signalrSigna
 } as const;
 
 // ────────────────────────────────────────────────────────────────
-// Load Options (Eager Loading / Dependency Tree)
+// Opcje Ładowania (Eager Loading / Drzewo Zależności)
 // ────────────────────────────────────────────────────────────────
 
 /**
- * Declares which related aggregates should be eagerly loaded
- * alongside the primary aggregate. Each orchestrator can extend
- * this with module-specific keys.
+ * Deklaruje, które powiązane agregaty powinny być natychmiast załadowane (eagerly loaded)
+ * wraz z agregatem głównym. Każdy orkiestrator może rozszerzyć ten interfejs
+ * o specyficzne klucze dla swojego modułu.
  */
 export interface LoadOptions {
   [key: string]: boolean | undefined;
 }
 
 // ────────────────────────────────────────────────────────────────
-// Pagination
+// Paginacja
 // ────────────────────────────────────────────────────────────────
 
 export interface Pagination {
@@ -67,7 +67,7 @@ export interface Pagination {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Search Results Response
+// Odpowiedź z Wynikami Wyszukiwania
 // ────────────────────────────────────────────────────────────────
 
 export interface SharedSearchResponse {
@@ -76,7 +76,7 @@ export interface SharedSearchResponse {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Error Tracking
+// Śledzenie Błędów
 // ────────────────────────────────────────────────────────────────
 
 export type OrchestratorOperation = 'load' | 'search' | 'command' | 'signalr-refresh';
@@ -90,7 +90,7 @@ export interface OrchestratorError {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Job Management (Command → Job UUID)
+// Zarządzanie Zadaniami (Command → Job UUID)
 // ────────────────────────────────────────────────────────────────
 
 export type JobStatus = 'pending' | 'completed' | 'failed';
@@ -129,23 +129,23 @@ export interface JobRecord {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Generic DTO constraint
+// Generyczne ograniczenie DTO
 // ────────────────────────────────────────────────────────────────
 
 /**
- * Every DTO managed by the orchestrator system must have a `uuid` field.
+ * Każde DTO zarządzane przez system orkiestratora musi posiadać pole `uuid`.
  */
 export interface HasUuid {
   readonly uuid: string;
 }
 
 // ────────────────────────────────────────────────────────────────
-// Resolved Dependencies (passed to mapToViewModel)
+// Rozwiązane Zależności (przekazywane do mapToViewModel)
 // ────────────────────────────────────────────────────────────────
 
 /**
- * A generic bag of resolved dependency data that is passed into
- * `mapToViewModel`. Each orchestrator defines the shape of its
- * own resolved deps via the generic parameter.
+ * Generyczny worek rozwiązanych danych zależności, który jest przekazywany do
+ * `mapToViewModel`. Każdy orkiestrator definiuje strukturę swoich własnych
+ * rozwiązanych zależności za pomocą generycznego parametru.
  */
 export type ResolvedDeps = Record<string, unknown>;

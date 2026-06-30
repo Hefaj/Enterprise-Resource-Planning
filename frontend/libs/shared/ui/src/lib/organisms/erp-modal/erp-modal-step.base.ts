@@ -1,4 +1,6 @@
 import { Directive, input, effect, Signal, WritableSignal } from '@angular/core';
+import { ErpStepContentBuilder } from '../erp-step-content/erp-step-content.builder';
+import { ErpStepContentConfig } from '../erp-step-content/erp-step-content.types';
 
 /**
  * Bazowa klasa dla stepów modali ERP.
@@ -14,17 +16,11 @@ export abstract class ErpModalStepBase<
   public readonly metadata = input.required<WritableSignal<TMetadata>>();
   public readonly registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
 
-  // ── Wymagane właściwości ──
-  /** Sygnał określający, czy krok jest poprawny (można przejść dalej). */
-  protected abstract readonly canGoNext: Signal<boolean>;
-
-  protected constructor() {
-    // Automatyczna rejestracja statusu walidacji w modalu nadrzędnym
-    effect(() => {
-      const register = this.registerCanGoNext();
-      if (register) {
-        register(this.canGoNext);
-      }
-    });
+  protected constructor(formConfig?: ErpStepContentConfig) {
+    if (formConfig) {
+      ErpStepContentBuilder.bindForm(formConfig, {
+        registerCanGoNext: this.registerCanGoNext,
+      });
+    }
   }
 }

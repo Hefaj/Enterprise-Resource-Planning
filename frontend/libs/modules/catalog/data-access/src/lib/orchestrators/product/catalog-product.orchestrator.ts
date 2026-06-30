@@ -11,7 +11,7 @@ import { CatalogCategoryOrchestrator } from '../category/catalog-category.orches
 import { CatalogModelOrchestrator } from '../model/catalog-model.orchestrator';
 
 /**
- * Resolved dependencies shape for Product ViewModel mapping.
+ * Struktura rozwiązanych zależności do mapowania ViewModel produktu.
  */
 interface ProductResolvedDeps extends ResolvedDeps {
   categories: CategoryVM[];
@@ -19,13 +19,12 @@ interface ProductResolvedDeps extends ResolvedDeps {
 }
 
 /**
- * Orchestrator for the Product aggregate in the Catalog module.
+ * Orkiestrator dla agregatu produktu (Product) w module Catalog.
  *
- * This is the most complex orchestrator, demonstrating:
- * - **Lazy injection** of sibling orchestrators via `Injector` to avoid circular DI
- * - **Eager loading** of categories and models based on `LoadOptions`
- * - **DTO → ViewModel mapping** that resolves `categoryUuids` and `modelUuid`
- *   to rich nested objects
+ * To jest najbardziej złożony orkiestrator, demonstrujący:
+ * - **Leniwe wstrzykiwanie (lazy injection)** sąsiednich orkiestratorów przez Injector w celu uniknięcia kołowej zależności
+ * - **Eager loading** kategorii i modeli na podstawie LoadOptions
+ * - **Mapowanie DTO → ViewModel**, które rozwiązuje categoryUuids i modelUuid do bogatych obiektów zagnieżdżonych
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogProductOrchestrator extends BaseOrchestrator<
@@ -37,7 +36,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   private readonly _api = inject(CatalogBffClient);
   private readonly _injector = inject(Injector);
 
-  // Lazy-loaded sibling orchestrators to break circular dependency
+  // Leniwie ładowane sąsiednie orkiestratorzy w celu uniknięcia kołowej zależności
   private _categoryOrchestrator: CatalogCategoryOrchestrator | null = null;
   private _modelOrchestrator: CatalogModelOrchestrator | null = null;
 
@@ -45,14 +44,14 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
 
   protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
     signalrSignature: 'catalog.product',
-    // Products are the heaviest aggregate — max cache
+    // Produkty są najcięższym agregatem — maksymalny cache
     maxCacheSize: 1000,
     maxChunkSize: 100,
     bufferTimeMs: 50,
   };
 
   // ────────────────────────────────────────────────────────────────
-  // Lazy Injection (Circular Dependency Prevention)
+  // Leniwe wstrzykiwanie (Zapobieganie kołowej zależności)
   // ────────────────────────────────────────────────────────────────
 
   private get _categorySiblingOrchestrator(): CatalogCategoryOrchestrator {
@@ -70,7 +69,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Abstract implementations
+  // Abstrakcyjne implementacje
   // ────────────────────────────────────────────────────────────────
 
   protected override fetchByUuids(uuids: string[]): Observable<ProductDto[]> {
@@ -97,15 +96,15 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Eager Loading: Resolve Product Dependencies
+  // Eager Loading: Rozwiązywanie zależności produktu
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * After loading products, eagerly load their categories and models.
+   * Po załadowaniu produktów, natychmiast załaduj ich kategorie i modele.
    *
-   * 1. Collect all unique `categoryUuids` and `modelUuid` from loaded products
-   * 2. Delegate to the respective sibling orchestrators
-   * 3. Products are considered "ready" only when all dependencies resolve
+   * 1. Zbierz wszystkie unikalne categoryUuids i modelUuid z załadowanych produktów
+   * 2. Przekaż żądanie do odpowiednich sąsiednich orkiestratorów
+   * 3. Produkty są uważane za "gotowe" tylko wtedy, gdy wszystkie zależności zostaną rozwiązane
    */
   protected override async resolveEagerDependencies(
     uuids: string[],
@@ -113,7 +112,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   ): Promise<void> {
     const promises: Promise<void>[] = [];
 
-    // Collect referenced UUIDs from loaded products
+    // Zbierz odwołania UUID z załadowanych produktów
     const categoryUuids = new Set<string>();
     const modelUuids = new Set<string>();
 
@@ -132,7 +131,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       }
     }
 
-    // Delegate to sibling orchestrators
+    // Przekaż żądanie do sąsiednich orkiestratorów
     if (categoryUuids.size > 0) {
       promises.push(
         this._categorySiblingOrchestrator.loadAsync([...categoryUuids], { includeParent: true }),
@@ -149,17 +148,17 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   }
 
   /**
-   * Resolve current dependencies for a single product DTO.
-   * Called synchronously during Signal/computed evaluation.
-   * Uses already-cached data from sibling orchestrators.
+   * Rozwiąż aktualne zależności dla pojedynczego DTO produktu.
+   * Wywoływane synchronicznie podczas ewaluacji Signal/computed.
+   * Używa już zapamiętanych danych z sąsiednich orkiestratorów.
    */
   protected override _resolveCurrentDeps(dto: ProductDto): ProductResolvedDeps {
-    // Resolve categories from the category orchestrator's cache
+    // Rozwiąż kategorie z cache orkiestratora kategorii
     const categories: CategoryVM[] = dto.categoryUuids
       ? this._categorySiblingOrchestrator.resolveCategoryVMs(dto.categoryUuids)
       : [];
 
-    // Resolve model from the model orchestrator's cache
+    // Rozwiąż model z cache orkiestratora modeli
     let model: ModelVM | null = null;
     if (dto.modelUuid) {
       const modelDto = this._modelSiblingOrchestrator['identityMap'].peek(dto.modelUuid);
@@ -172,7 +171,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   }
 
   /**
-   * Execute batch command to update price for selected products.
+   * Wykonaj seryjne polecenie aktualizacji ceny dla wybranych produktów.
    */
   public async setPriceMultiple(
     command: BatchCommandOfProductSetPriceCommand,
@@ -190,7 +189,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   }
 
   /**
-   * Execute batch command to update name for selected products.
+   * Wykonaj seryjne polecenie aktualizacji nazwy dla wybranych produktów.
    */
   public async setNameMultiple(
     command: BatchCommandOfProductSetNameCommand,

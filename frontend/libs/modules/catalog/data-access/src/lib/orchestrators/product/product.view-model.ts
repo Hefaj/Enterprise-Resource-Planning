@@ -3,10 +3,10 @@ import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
 
 export interface ProductVM extends ProductDto {
-  /** Resolved category references (from categoryUuids). */
+  /** Rozwiązane odniesienia do kategorii (z categoryUuids). */
   readonly categories: CategoryVM[];
 
-  /** Resolved model reference (from modelUuid), or null if none. */
+  /** Rozwiązane odniesienie do modelu (z modelUuid) lub null. */
   readonly model: ModelVM | null;
 }
 

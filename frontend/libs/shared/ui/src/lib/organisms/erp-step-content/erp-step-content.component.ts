@@ -56,7 +56,12 @@ import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 
     <div [class]="_rootClass" [ngStyle]="rootStyle()">
       @for (element of _elements; track $index) {
-        <div [class]="elementWrapperClass(element)" [ngStyle]="elementWrapperStyle(element)">
+        <div 
+          [class]="elementWrapperClass(element)" 
+          [ngStyle]="elementWrapperStyle(element)"
+          [attr.data-field-key]="element.type === 'formField' ? element.key : null"
+          [attr.data-testid]="element.type === 'formField' ? 'field-' + element.key : null"
+        >
           @switch (element.type) {
             @case ('component') {
               <ng-container

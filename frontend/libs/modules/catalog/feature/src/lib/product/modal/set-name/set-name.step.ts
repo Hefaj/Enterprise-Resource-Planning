@@ -2,13 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   Signal,
   WritableSignal,
 } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { BatchCommandOfProductSetNameCommand } from '@erp/catalog/data-access';
+import { BatchCommandOfProductSetNameCommand, CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { SetNameMetadata } from './set-name.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
@@ -31,17 +32,17 @@ import {
 @Component({
   selector: 'erp-catalog-set-name-step',
   standalone: true,
-  imports: [CommonModule, ErpStepContentComponent],
+  imports: [CommonModule, ErpStepContentComponent, ErpTextComponent],
   template: `
-    <!-- @let _products = products(); -->
-
+    @let _products = products();
+ 
     <div class="set-name-step">
-      <!-- <p class="set-name-step__message">
+      <p class="set-name-step__message">
         <erp-text [config]="{ value: keys.commands.setName.editMessage }" />
         <strong>{{ _products.length }}</strong>
         <erp-text [config]="{ value: _products.length === 1 ? keys.commands.setName.productSuffixSingle : keys.commands.setName.productSuffixPlural }" />:
       </p>
-
+ 
       <div class="set-name-step__badges">
         @for (p of _products; track p.uuid) {
           <div class="set-name-step__badge">
@@ -49,8 +50,8 @@ import {
             <span>{{ p.sku }} ({{ p.name }})</span>
           </div>
         }
-      </div> -->
-
+      </div>
+ 
       <erp-step-content [contentConfig]="formContent" />
     </div>
   `,
@@ -71,21 +72,28 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProductSetNameCommand, SetNameMetadata> {
-  protected readonly keys = PRODUCT_KEYS;
 
   /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
-
-  protected products = computed<{ uuid: string; sku: string; name: string }[]>(
-    () => this.command()()['products'] ?? []
-  );
-
-  protected readonly canGoNext = computed(() => ErpStepContentBuilder.findFormGroup(this.formContent)?.valid ?? false);
+  protected readonly keys = PRODUCT_KEYS;
+  private readonly _orchestrator = inject(CatalogProductOrchestrator);
+ 
+  protected products = computed(() => {
+    const list = this.command()()['products'] ?? [];
+    const vmMap = this._orchestrator.getViewModel()();
+    return list.map((p: any) => {
+      const details = vmMap.get(p.uuid);
+      return {
+        uuid: p.uuid,
+        sku: p.sku,
+        name: details?.name ?? 'Ładowanie...',
+      };
+    });
+  });
 
   public constructor() {
-    super();
     // ── Build form declaratively showcasing all ErpStepContentBuilder options with setGridAreas layout ──
-    this.formContent = ErpStepContentBuilder.create(b => b
+    const config = ErpStepContentBuilder.create(b => b
       .setGridAreas({
         template: [
           'header   header',
@@ -131,7 +139,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
             value: () => this.command()().commands?.at(0)?.name,
             onChange: (value) => {
               this.command().update((cmd) => {
-                const commands = (cmd['products'] as { uuid: string; sku: string; name: string }[] || []).map(p => ({
+                const commands = (cmd['products'] as { uuid: string; sku: string; name: string }[] || []).map((p: any) => ({
                   uuid: p.uuid,
                   name: value ?? '',
                 }));
@@ -196,10 +204,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
         )
       }, { slot: 'comp' })
     );
- 
-    // Automatyczna synchronizacja i rejestracja stanu przejścia dalej
-    ErpStepContentBuilder.bindForm(this.formContent, {
-      registerCanGoNext: this.registerCanGoNext
-    });
+    super(config);
+    this.formContent = config;
   }
 }

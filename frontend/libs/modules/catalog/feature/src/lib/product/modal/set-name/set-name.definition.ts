@@ -13,6 +13,11 @@ export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOf
   private readonly _orchestrator = inject(CatalogProductOrchestrator);
 
   public build(command: BatchCommandOfProductSetNameCommand, metadata?: SetNameMetadata): ErpModalConfig<BatchCommandOfProductSetNameCommand, SetNameMetadata> {
+    const uuids = command['products']?.map((p: any) => p.uuid) ?? [];
+    if (uuids.length > 0) {
+      this._orchestrator.loadAsync(uuids).catch(err => console.error(err));
+    }
+
     return ErpModalBuilder.modal<BatchCommandOfProductSetNameCommand, SetNameMetadata>(b => b
       .setTitle([PRODUCT_KEYS.base.tabs.products, PRODUCT_KEYS.commands.setName.modalTitle])
       .setCommand(command)

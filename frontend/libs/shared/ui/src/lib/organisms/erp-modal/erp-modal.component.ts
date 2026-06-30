@@ -535,7 +535,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
   public metadataSignal!: WritableSignal<TMetadata>;
 
   /** Mapa canGoNext Signal per step index. */
-  private _stepCanGoNextMap = new Map<number, Signal<boolean>>();
+  private _stepCanGoNextMap = signal<Record<number, Signal<boolean>>>({});
 
   // ── Computed properties ──
 
@@ -577,7 +577,8 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
   });
 
   protected canGoNext = computed(() => {
-    const stepSignal = this._stepCanGoNextMap.get(this.currentStep());
+    const map = this._stepCanGoNextMap();
+    const stepSignal = map[this.currentStep()];
     return stepSignal ? stepSignal() : true;
   });
 
@@ -596,7 +597,10 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
       command: this.commandSignal,
       metadata: this.metadataSignal,
       registerCanGoNext: (canGoNextSignal: Signal<boolean>) => {
-        this._stepCanGoNextMap.set(stepIndex, canGoNextSignal);
+        this._stepCanGoNextMap.update(map => ({
+          ...map,
+          [stepIndex]: canGoNextSignal
+        }));
       },
     };
 

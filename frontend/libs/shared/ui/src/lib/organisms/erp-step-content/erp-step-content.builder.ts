@@ -1,4 +1,4 @@
-import { Type, effect, computed, Signal } from '@angular/core';
+import { Type, effect, computed, Signal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup, FormControl } from '@angular/forms';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
@@ -18,6 +18,13 @@ import { ErpMultiSelectComponent } from '../../atoms/erp-multi-select/erp-multi-
 import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete/erp-auto-complete.component';
 import { ErpListboxComponent } from '../../atoms/erp-listbox/erp-listbox.component';
 import { ErpToggleSwitchComponent } from '../../atoms/erp-toggle-switch/erp-toggle-switch.component';
+import { ErpInputTextBuilder } from '../../atoms/erp-input-text/erp-input-text.builder';
+import { ErpSelectBuilder } from '../../atoms/erp-select/erp-select.builder';
+import { ErpDatePickerBuilder } from '../../atoms/erp-datepicker/erp-datepicker.builder';
+import { ErpMultiSelectBuilder } from '../../atoms/erp-multi-select/erp-multi-select.builder';
+import { ErpAutoCompleteBuilder } from '../../atoms/erp-auto-complete/erp-auto-complete.builder';
+import { ErpListboxBuilder } from '../../atoms/erp-listbox/erp-listbox.builder';
+import { ErpToggleSwitchBuilder } from '../../atoms/erp-toggle-switch/erp-toggle-switch.builder';
 
 /** Mapowanie typów pól formularza na odpowiadające im komponenty atomowe UI. */
 const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type<any>> = {
@@ -28,6 +35,28 @@ const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type
   autocomplete: ErpAutoCompleteComponent,
   listbox: ErpListboxComponent,
   toggle: ErpToggleSwitchComponent,
+};
+
+/** Mapowanie typów pól na odpowiadające im klasy Builderów */
+export interface ErpFormFieldBuilderMap {
+  text: ErpInputTextBuilder;
+  select: ErpSelectBuilder;
+  datepicker: ErpDatePickerBuilder;
+  multiselect: ErpMultiSelectBuilder;
+  autocomplete: ErpAutoCompleteBuilder;
+  listbox: ErpListboxBuilder;
+  toggle: ErpToggleSwitchBuilder;
+}
+
+/** Konstruktory builderów na potrzeby automatycznego tworzenia instancji */
+const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFormFieldBuilderMap, new () => any> = {
+  text: ErpInputTextBuilder,
+  select: ErpSelectBuilder,
+  datepicker: ErpDatePickerBuilder,
+  multiselect: ErpMultiSelectBuilder,
+  autocomplete: ErpAutoCompleteBuilder,
+  listbox: ErpListboxBuilder,
+  toggle: ErpToggleSwitchBuilder,
 };
 
 /**
@@ -81,11 +110,11 @@ export interface ErpElementLayoutOptions {
  */
 export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> {
 
-  public constructor() {
+  public constructor(formGroup?: FormGroup) {
     super();
     this._data.elements = [];
     this._data.layout = 'stack';
-    this._data.formGroup = new FormGroup({});
+    this._data.formGroup = formGroup || new FormGroup({});
   }
 
   // ═══ Layout — Poziom 1: Predefiniowane ═══
@@ -244,10 +273,13 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    * @param config — Konfiguracja specyficzna dla danej kontrolki
    * @param options — Opcje: slot, colSpan, wartość domyślna, walidatory, style
    */
-  public addFormField(
+  public addFormField<TType extends keyof ErpFormFieldBuilderMap>(
     key: string,
-    fieldType: Exclude<ErpFormFieldType, 'custom'>,
-    config: any | { build: () => any },
+    fieldType: TType,
+    config:
+      | ErpFormFieldBuilderMap[TType]
+      | ReturnType<ErpFormFieldBuilderMap[TType]['build']>
+      | ((builder: ErpFormFieldBuilderMap[TType]) => void),
     options: ErpElementLayoutOptions & {
       defaultValue?: any;
       validators?: any[];
@@ -255,7 +287,19 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
       onChange?: (value: any) => void;
     } = {}
   ): this {
-    const extractedConfig = this._extract(config);
+    let builderInstance: any;
+    if (typeof config === 'function') {
+      const BuilderConstructor = FIELD_BUILDER_CONSTRUCTORS[fieldType];
+      if (!BuilderConstructor) {
+        throw new Error(`Brak zdefiniowanego konstruktora buildera dla typu pola: ${fieldType}`);
+      }
+      builderInstance = new BuilderConstructor();
+      config(builderInstance);
+    } else {
+      builderInstance = config;
+    }
+
+    const extractedConfig = this._extract(builderInstance);
     this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
 
     this._pushElement({
@@ -393,7 +437,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
       style?: MaybeSignal<Record<string, string>>;
     }
   ): this {
-    const subBuilder = new ErpStepContentBuilder();
+    const subBuilder = new ErpStepContentBuilder(this._data.formGroup);
     configure(subBuilder);
     const subConfig = subBuilder.build();
 
@@ -513,12 +557,19 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
 
     // 3. Rejestracja canGoNext
     if (options?.registerCanGoNext) {
-      effect(() => {
+      effect((onCleanup) => {
         const registerFn = typeof options.registerCanGoNext === 'function'
           ? (options.registerCanGoNext as () => any)()
           : unwrapSignal(options.registerCanGoNext);
         if (typeof registerFn === 'function') {
-          registerFn(computed(() => formGroup.valid));
+          const validSignal = signal(formGroup.valid);
+          const sub = formGroup.statusChanges.subscribe(() => {
+            validSignal.set(formGroup.valid);
+          });
+          onCleanup(() => {
+            sub.unsubscribe();
+          });
+          registerFn(validSignal.asReadonly());
         }
       });
     }

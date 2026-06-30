@@ -3,12 +3,12 @@ import { JobRecord, JobMeta, JobStatus } from './orchestrator.types';
 import { SignalrSyncService } from '../sync/signalr-sync.service';
 
 /**
- * Centralized service for tracking background jobs spawned by command execution.
+ * Zdecentralizowany serwis do śledzenia zadań w tle (jobs) uruchamianych przez wykonywanie poleceń (commands).
  *
- * When an orchestrator executes a command, the API returns a `jobUuid` (trackingID).
- * The orchestrator registers this job here, associated with its originating modal ID (queueID).
+ * Kiedy orkiestrator wykonuje polecenie, API zwraca `jobUuid` (trackingID).
+ * Orkiestrator rejestruje to zadanie tutaj, powiązane z pierwotnym identyfikatorem modalu (queueID).
  *
- * SignalR events (with 'jobs' signature) notify this service of status changes using the trackingID.
+ * Zdarzenia SignalR (z sygnaturą 'jobs') powiadamiają ten serwis o zmianach statusu za pomocą trackingID.
  */
 @Injectable({ providedIn: 'root' })
 export class JobService {
@@ -16,7 +16,7 @@ export class JobService {
   private readonly _jobs = signal(new Map<string, JobRecord>());
 
   public constructor() {
-    // Listen for real-time status update events for jobs using trackingID
+    // Nasłuchuj zdarzeń aktualizacji statusu zadań w czasie rzeczywistym za pomocą trackingID
     this._signalrSync.onUpdate('jobs').subscribe(trackingIDs => {
       this._jobs.update(jobs => {
         const updated = new Map(jobs);
@@ -35,23 +35,23 @@ export class JobService {
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Read API
+  // API Odczytu
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Get a reactive signal for all tracked jobs.
+   * Pobierz reaktywny sygnał dla wszystkich śledzonych zadań.
    */
   public readonly allJobs: Signal<Map<string, JobRecord>> = this._jobs.asReadonly();
 
   /**
-   * Get a reactive signal for a specific job by trackingID.
+   * Pobierz reaktywny sygnał dla konkretnego zadania po trackingID.
    */
   public getJob(trackingID: string): Signal<JobRecord | undefined> {
     return computed(() => this._jobs().get(trackingID));
   }
 
   /**
-   * Get all jobs filtered by status.
+   * Pobierz wszystkie zadania przefiltrowane według statusu.
    */
   public getJobsByStatus(status: JobStatus): Signal<JobRecord[]> {
     return computed(() => {
@@ -67,7 +67,7 @@ export class JobService {
   }
 
   /**
-   * Get all jobs triggered by a specific modal (queueID).
+   * Pobierz wszystkie zadania wywołane przez konkretny modal (queueID).
    */
   public getJobsByQueueID(queueID: string): Signal<JobRecord[]> {
     return computed(() => {
@@ -76,23 +76,23 @@ export class JobService {
   }
 
   /**
-   * Get all pending jobs.
+   * Pobierz wszystkie oczekujące zadania.
    */
   public readonly pendingJobs: Signal<JobRecord[]> = computed(() =>
     [...this._jobs().values()].filter(j => !j.isComplete),
   );
 
   // ────────────────────────────────────────────────────────────────
-  // Write API
+  // API Zapisu
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Register a new job.
-   * Called by orchestrators after a command returns a jobUuid (trackingID).
+   * Zarejestruj nowe zadanie.
+   * Wywoływane przez orkiestratorów po tym, jak polecenie zwróci jobUuid (trackingID).
    *
-   * @param trackingID The jobUuid returned by the endpoint
-   * @param queueID The identifier of the triggering modal
-   * @param meta Optional tracking metadata
+   * @param trackingID Zwrócony przez endpoint jobUuid
+   * @param queueID Identyfikator wywołującego modalu
+   * @param meta Opcjonalne metadane śledzenia
    */
   public addJob(trackingID: string, queueID?: string, meta?: JobMeta): void {
     this._jobs.update(jobs => {
@@ -109,7 +109,7 @@ export class JobService {
   }
 
   /**
-   * Register a full/partial JobRecord directly.
+   * Zarejestruj pełny lub częściowy rekord JobRecord bezpośrednio.
    */
   public registerJob(job: JobRecord): void {
     if (!job.trackingID) return;
@@ -125,7 +125,7 @@ export class JobService {
   }
 
   /**
-   * Update specific fields of an existing job by its trackingID.
+   * Zaktualizuj określone pola istniejącego zadania za pomocą jego trackingID.
    */
   public updateJob(trackingID: string, patch: Partial<JobRecord>): void {
     this._jobs.update(jobs => {
@@ -142,18 +142,18 @@ export class JobService {
   }
 
   /**
-   * Update the status of an existing job by its trackingID.
-   * Maintains backward compatibility with JobStatus.
+   * Zaktualizuj status istniejącego zadania za pomocą jego trackingID.
+   * Utrzymuje kompatybilność wsteczną z JobStatus.
    */
   public updateJobStatus(trackingID: string, status: JobStatus): void {
     this.updateJob(trackingID, {
       isComplete: status !== 'pending',
-      errors: status === 'failed' ? 'Job failed' : null,
+      errors: status === 'failed' ? 'Zadanie nie powiodło się' : null,
     });
   }
 
   /**
-   * Remove a job from tracking by its trackingID.
+   * Usuń zadanie ze śledzenia za pomocą jego trackingID.
    */
   public removeJob(trackingID: string): void {
     this._jobs.update(jobs => {
@@ -164,7 +164,7 @@ export class JobService {
   }
 
   /**
-   * Clear all completed/failed jobs.
+   * Wyczyść wszystkie zakończone lub nieudane zadania.
    */
   public clearFinished(): void {
     this._jobs.update(jobs => {

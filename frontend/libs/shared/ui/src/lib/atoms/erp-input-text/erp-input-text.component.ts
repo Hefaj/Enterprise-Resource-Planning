@@ -33,7 +33,7 @@ import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
           aria-describedby="hint"
           [invalid]="!!_errorMsg"
           [pAutoFocus]="true"
-          [fluid]="_fluid"
+          [fluid]="_fluid || true"
           [variant]="_variant || 'outlined'"
           [class.p-inputtext-sm]="_size === 'small'"
           [class.p-inputtext-lg]="_size === 'large'"

@@ -97,7 +97,7 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
     label: MaybeSignal<Translatable>,
     configure: (builder: ErpStepContentBuilder) => void
   ): this {
-    const contentConfig = ErpStepContentBuilder.content(configure);
+    const contentConfig = ErpStepContentBuilder.create(configure);
     const step: ErpModalStep<TCommand, TMetadata> = {
       label,
       component: ErpStepContentComponent,

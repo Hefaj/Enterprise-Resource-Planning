@@ -20,6 +20,7 @@ export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOf
       .addStep(PRODUCT_KEYS.commands.setName.label, SetNameStepComponent)
       .setSaveLabel(PRODUCT_KEYS.commands.setName.submitButton)
       .setOnSave(async (command) => {
+        console.log(command);
         await this._orchestrator.setNameMultiple(command, SET_NAME_MODAL_ID);
       })
     );

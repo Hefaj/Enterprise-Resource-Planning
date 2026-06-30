@@ -5,6 +5,7 @@ import {
   input,
 } from '@angular/core';
 import { NgComponentOutlet, NgStyle } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 import {
   ErpStepContentConfig,
   ErpStepContentElement,
@@ -12,6 +13,8 @@ import {
 } from './erp-step-content.types';
 import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
+
+
 
 /**
  * Generyczny renderer treści stepu modalu.
@@ -24,8 +27,14 @@ import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
  * Sekcje (`type='section'`) renderują zagnieżdżony `<erp-step-content>`.
  * Separatory (`type='divider'`) renderują `<hr>`.
  *
+ * ## 3-poziomowy system layout
+ *
+ * 1. **Predefiniowane** — `stack` (flex-column), `row` (flex-row), `grid` (CSS grid + gridCols)
+ * 2. **Grid Areas** — `gridAreas.template` generuje `grid-template-areas`, elementy z `slot` trafiają do slotów
+ * 3. **Escape hatch** — `rootStyle` pozwala przekazać surowe CSS properties na root kontener
+ *
  * Używany automatycznie przez `ErpModalBuilder.addContentStep()`.
- * Można też użyć bezpośrednio w dowolnym template.
+ * Mona też użyć bezpośrednio w dowolnym template.
  *
  * @example
  * ```html
@@ -39,6 +48,7 @@ import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
     NgComponentOutlet,
     NgStyle,
     ErpTranslatePipe,
+    ReactiveFormsModule,
   ],
   template: `
     @let _elements = config().elements;
@@ -64,6 +74,12 @@ import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
             }
             @case ('divider') {
               <hr class="erp-step-content__divider" />
+            }
+            @case ('formField') {
+              @let _ctrl = getControl(element.key);
+              @if (_ctrl) {
+                <ng-container *ngComponentOutlet="element.component; inputs: { config: element.config, control: _ctrl }" />
+              }
             }
           }
         </div>
@@ -138,26 +154,57 @@ export class ErpStepContentComponent {
   // ── Computed properties ──
 
   protected rootLayoutClass = computed(() => {
-    const layout = unwrapSignal(this.config().layout) || 'stack';
-    const customClass = unwrapSignal(this.config().styleClass) || '';
+    const cfg = this.config();
+    const gridAreas = cfg.gridAreas;
+    const layout = gridAreas ? 'grid' : (unwrapSignal(cfg.layout) || 'stack');
+    const customClass = unwrapSignal(cfg.styleClass) || '';
     return `erp-step-content--${layout}${customClass ? ' ' + customClass : ''}`;
   });
 
   protected rootStyle = computed<Record<string, string>>(() => {
     const style: Record<string, string> = {};
-    const gap = unwrapSignal(this.config().gap);
-    const layout = unwrapSignal(this.config().layout) || 'stack';
-    const gridCols = unwrapSignal(this.config().gridCols);
+    const cfg = this.config();
+    const gridAreas = cfg.gridAreas;
 
-    if (gap) {
-      style['gap'] = gap;
+    if (gridAreas) {
+      // ── Poziom 2: Grid Areas mode ──
+      style['grid-template-areas'] = gridAreas.template
+        .map(row => `"${row}"`).join(' ');
+
+      const cols = unwrapSignal(gridAreas.columns);
+      if (cols) {
+        style['grid-template-columns'] = cols;
+      }
+
+      const rows = unwrapSignal(gridAreas.rows);
+      if (rows) {
+        style['grid-template-rows'] = rows;
+      }
+
+      const areaGap = unwrapSignal(gridAreas.gap);
+      style['gap'] = areaGap || '1rem';
     } else {
-      // Domyślne gapy per layout
-      style['gap'] = layout === 'grid' ? '1rem' : '0.75rem';
+      // ── Poziom 1: Predefiniowane layouty ──
+      const gap = unwrapSignal(cfg.gap);
+      const layout = unwrapSignal(cfg.layout) || 'stack';
+      const gridCols = unwrapSignal(cfg.gridCols);
+
+      if (gap) {
+        style['gap'] = gap;
+      } else {
+        // Domyślne gapy per layout
+        style['gap'] = layout === 'grid' ? '1rem' : '0.75rem';
+      }
+
+      if (layout === 'grid' && gridCols) {
+        style['grid-template-columns'] = `repeat(${gridCols}, 1fr)`;
+      }
     }
 
-    if (layout === 'grid' && gridCols) {
-      style['grid-template-columns'] = `repeat(${gridCols}, 1fr)`;
+    // ── Poziom 3: Escape hatch — merge custom root style na końcu ──
+    const customRootStyle = unwrapSignal(cfg.rootStyle);
+    if (customRootStyle) {
+      Object.assign(style, customRootStyle);
     }
 
     return style;
@@ -177,7 +224,8 @@ export class ErpStepContentComponent {
     }
 
     // W layoucie 'row' — dodaj flex-fill domyślnie
-    const parentLayout = unwrapSignal(this.config().layout) || 'stack';
+    const cfg = this.config();
+    const parentLayout = cfg.gridAreas ? 'grid' : (unwrapSignal(cfg.layout) || 'stack');
     if (parentLayout === 'row' && element.type !== 'divider' && !('colSpan' in element && element.colSpan)) {
       parts.push('erp-step-content__element--flex-fill');
     }
@@ -187,11 +235,17 @@ export class ErpStepContentComponent {
 
   /**
    * Generuje inline style wrappera elementu.
-   * Obsługuje colSpan dla layout='grid' i niestandardowe style.
+   * Obsługuje colSpan dla layout='grid', slot dla gridAreas, i niestandardowe style.
    */
   protected elementWrapperStyle(element: ErpStepContentElement): Record<string, string> {
     const result: Record<string, string> = {};
 
+    // ── Slot → grid-area (Poziom 2: Grid Areas) ──
+    if ('slot' in element && element.slot) {
+      result['grid-area'] = element.slot;
+    }
+
+    // ── colSpan → grid-column (Poziom 1: simple grid) ──
     if ('colSpan' in element) {
       const colSpan = unwrapSignal(element.colSpan);
       if (colSpan) {
@@ -199,6 +253,7 @@ export class ErpStepContentComponent {
       }
     }
 
+    // ── Custom inline style ──
     const customStyle = unwrapSignal(element.style);
     if (customStyle) {
       Object.assign(result, customStyle);
@@ -221,9 +276,16 @@ export class ErpStepContentComponent {
     return {
       elements: element.children || [],
       layout: element.layout,
+      gridAreas: element.gridAreas,
       gridCols: element.gridCols,
       gap: element.gap,
       styleClass: element.styleClass,
+      formGroup: this.config().formGroup,
     };
   }
+
+  protected getControl(key: string): import('@angular/forms').FormControl | null {
+    return (this.config().formGroup?.get(key) as import('@angular/forms').FormControl) || null;
+  }
 }
+

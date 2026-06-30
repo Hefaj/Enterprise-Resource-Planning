@@ -1,15 +1,48 @@
-import { Type } from '@angular/core';
+import { Type, effect, computed, Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormGroup, FormControl } from '@angular/forms';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
-import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
-import { ErpStepContentConfig, ErpStepContentElement } from './erp-step-content.types';
-import { ErpFormBuilder } from '../erp-form/erp-form.builder';
+import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-utils';
+import { ErpStepContentConfig, ErpStepContentElement, ErpGridAreasConfig } from './erp-step-content.types';
 import { ErpSplitterBuilder } from '../../atoms/erp-splitter/erp-splitter.builder';
 import { ErpCardBuilder } from '../../atoms/erp-card/erp-card.builder';
 import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
-import { ErpFormComponent } from '../erp-form/erp-form.component';
 import { ErpSplitterComponent } from '../../atoms/erp-splitter/erp-splitter.component';
 import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
+import { ErpFormFieldType } from '../erp-form/erp-form.types';
+import { ErpInputTextComponent } from '../../atoms/erp-input-text/erp-input-text.component';
+import { ErpSelectComponent } from '../../atoms/erp-select/erp-select.component';
+import { ErpDatePickerComponent } from '../../atoms/erp-datepicker/erp-datepicker.component';
+import { ErpMultiSelectComponent } from '../../atoms/erp-multi-select/erp-multi-select.component';
+import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete/erp-auto-complete.component';
+import { ErpListboxComponent } from '../../atoms/erp-listbox/erp-listbox.component';
+import { ErpToggleSwitchComponent } from '../../atoms/erp-toggle-switch/erp-toggle-switch.component';
+
+/** Mapowanie typów pól formularza na odpowiadające im komponenty atomowe UI. */
+const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type<any>> = {
+  text: ErpInputTextComponent,
+  select: ErpSelectComponent,
+  datepicker: ErpDatePickerComponent,
+  multiselect: ErpMultiSelectComponent,
+  autocomplete: ErpAutoCompleteComponent,
+  listbox: ErpListboxComponent,
+  toggle: ErpToggleSwitchComponent,
+};
+
+/**
+ * Opcje layoutu elementu (wspólne dla addComponent, addText, addForm, itp.).
+ */
+export interface ErpElementLayoutOptions {
+  /** Rozpiętość kolumn w parent-grid (layout='grid'). */
+  colSpan?: MaybeSignal<number>;
+  /** Nazwa grid-area slotu (używane z setGridAreas). */
+  slot?: string;
+  /** Dodatkowa klasa CSS dla kontenera elementu. */
+  styleClass?: MaybeSignal<string>;
+  /** Inline style dla kontenera elementu. */
+  style?: MaybeSignal<Record<string, string>>;
+}
 
 /**
  * Fluent Builder do deklaratywnego budowania treści stepów modali.
@@ -22,28 +55,28 @@ import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
  * dzięki czemu `ErpStepContentComponent` nie musi znać żadnych
  * konkretnych komponentów — renderuje wszystko przez `ngComponentOutlet`.
  *
- * @example Prosty formularz
+ * ## 3-poziomowy system layout
+ *
+ * **Poziom 1 — Predefiniowane** (90% przypadków):
  * ```ts
- * const content = ErpStepContentBuilder.content(b => b
- *   .addText(KEYS.editMessage)
- *   .addForm(f => f
- *     .setGridCols(1)
- *     .addField('name', 'text', new ErpInputTextBuilder()
- *       .setPlaceholder(KEYS.namePlaceholder)
- *     , { validators: [Validators.required] })
- *   )
- * );
+ * .setLayout('stack')   // flex column
+ * .setLayout('row')     // flex row
+ * .setLayout('grid')    // CSS grid + setGridCols(N)
  * ```
  *
- * @example Złożony layout z komponentami biznesowymi
+ * **Poziom 2 — Grid Areas z nazwanymi slotami** (złożone layouty):
  * ```ts
- * const content = ErpStepContentBuilder.content(b => b
- *   .addSection(s => s
- *     .setLayout('row')
- *     .addComponent(ProductListComponent, { products: productsSignal })
- *     .addComponent(InvoicePreviewComponent, { invoiceId })
- *   , { title: KEYS.sectionTitle })
- * );
+ * .setGridAreas({
+ *   template: ['form  preview', 'footer footer'],
+ *   columns: '1fr 1fr',
+ * })
+ * .addForm(f => ..., { slot: 'form' })
+ * .addComponent(Preview, {}, { slot: 'preview' })
+ * ```
+ *
+ * **Poziom 3 — Escape hatch** (surowe CSS):
+ * ```ts
+ * .setRootStyle({ 'grid-template-columns': 'repeat(auto-fill, minmax(200px, 1fr))' })
  * ```
  */
 export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> {
@@ -52,9 +85,10 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
     super();
     this._data.elements = [];
     this._data.layout = 'stack';
+    this._data.formGroup = new FormGroup({});
   }
 
-  // ═══ Layout ═══
+  // ═══ Layout — Poziom 1: Predefiniowane ═══
 
   /** Ustawia domyślny layout root kontenera: 'stack' (kolumna), 'row' (wiersz), 'grid' (CSS grid). */
   public setLayout(layout: MaybeSignal<'stack' | 'row' | 'grid'>): this {
@@ -80,6 +114,61 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
     return this;
   }
 
+  // ═══ Layout — Poziom 2: Grid Areas z nazwanymi slotami ═══
+
+  /**
+   * Konfiguruje zaawansowany layout CSS Grid Areas z nazwanymi slotami.
+   *
+   * Elementy przypisuje się do slotów za pomocą `{ slot: 'nazwaSlotu' }`
+   * w opcjach `addComponent()`, `addForm()`, `addText()`, itp.
+   *
+   * Automatycznie wymusza `layout: 'grid'`.
+   *
+   * @example
+   * ```ts
+   * .setGridAreas({
+   *   template: [
+   *     'header   header',
+   *     'sidebar  main',
+   *     'footer   footer',
+   *   ],
+   *   columns: '280px 1fr',
+   *   rows: 'auto 1fr auto',
+   *   gap: '1rem',
+   * })
+   * .addText(KEYS.title, { slot: 'header' })
+   * .addComponent(Sidebar, {}, { slot: 'sidebar' })
+   * .addForm(f => ..., { slot: 'main' })
+   * ```
+   */
+  public setGridAreas(config: ErpGridAreasConfig): this {
+    this._data.gridAreas = config;
+    this._data.layout = 'grid';
+    return this;
+  }
+
+  // ═══ Layout — Poziom 3: Escape hatch ═══
+
+  /**
+   * Ustawia surowe inline style na root kontenerze.
+   *
+   * Escape hatch — gdy predefiniowane layouty i Grid Areas nie wystarczą.
+   * Style są mergowane na końcu, nadpisując wygenerowane.
+   *
+   * @example
+   * ```ts
+   * .setLayout('grid')
+   * .setRootStyle({
+   *   'grid-template-columns': 'repeat(auto-fill, minmax(200px, 1fr))',
+   *   'grid-auto-rows': '150px',
+   * })
+   * ```
+   */
+  public setRootStyle(style: MaybeSignal<Record<string, string>>): this {
+    this._data.rootStyle = style;
+    return this;
+  }
+
   // ═══ Shared UI convenience methods ═══
 
   /**
@@ -87,11 +176,11 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    * Wewnętrznie tworzy `ErpTextComponent` renderowany przez `ngComponentOutlet`.
    *
    * @param value — Klucz tłumaczenia lub obiekt Translatable
-   * @param options — Opcjonalne klasy CSS i style inline
+   * @param options — Opcje layoutu: slot, colSpan, styleClass, style
    */
   public addText(
     value: MaybeSignal<Translatable>,
-    options?: { styleClass?: MaybeSignal<string>; style?: MaybeSignal<Record<string, string>> }
+    options?: ErpElementLayoutOptions
   ): this {
     this.addComponent(
       ErpTextComponent,
@@ -102,35 +191,11 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   }
 
   /**
-   * Dodaje formularz budowany przez ErpFormBuilder.
-   * Wewnętrznie tworzy `ErpFormComponent` renderowany przez `ngComponentOutlet`.
-   *
-   * @param configure — Callback konfigurujący ErpFormBuilder
-   *
-   * @example
-   * ```ts
-   * .addForm(f => f
-   *   .setGridCols(2)
-   *   .addField('name', 'text', { placeholder: KEYS.name })
-   *   .addField('price', 'text', { placeholder: KEYS.price })
-   * )
-   * ```
-   */
-  public addForm(configure: (builder: ErpFormBuilder) => void): this {
-    const builder = new ErpFormBuilder();
-    configure(builder);
-    this.addComponent(
-      ErpFormComponent,
-      { config: builder.build() } as any
-    );
-    return this;
-  }
-
-  /**
    * Dodaje splitter budowany przez ErpSplitterBuilder.
    * Wewnętrznie tworzy `ErpSplitterComponent` renderowany przez `ngComponentOutlet`.
    *
    * @param configure — Callback konfigurujący ErpSplitterBuilder
+   * @param options — Opcje layoutu: slot, colSpan, styleClass, style
    *
    * @example
    * ```ts
@@ -138,15 +203,16 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    *   .setLayout('horizontal')
    *   .addPanel({ size: 40, component: ListComponent, config: { items } })
    *   .addPanel({ size: 60, component: DetailComponent, config: { id } })
-   * )
+   * , { slot: 'details' })
    * ```
    */
-  public addSplitter(configure: (builder: ErpSplitterBuilder) => void): this {
+  public addSplitter(configure: (builder: ErpSplitterBuilder) => void, options?: ErpElementLayoutOptions): this {
     const builder = new ErpSplitterBuilder();
     configure(builder);
     this.addComponent(
       ErpSplitterComponent,
-      { config: builder.build() } as any
+      { config: builder.build() } as any,
+      options
     );
     return this;
   }
@@ -156,20 +222,100 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    * Wewnętrznie tworzy `ErpCardComponent` renderowany przez `ngComponentOutlet`.
    *
    * @param configure — Callback konfigurujący ErpCardBuilder
+   * @param options — Opcje layoutu: slot, colSpan, styleClass, style
    */
-  public addCard(configure: (builder: ErpCardBuilder) => void): this {
+  public addCard(configure: (builder: ErpCardBuilder) => void, options?: ErpElementLayoutOptions): this {
     const builder = new ErpCardBuilder();
     configure(builder);
     this.addComponent(
       ErpCardComponent,
-      { config: builder.build() } as any
+      { config: builder.build() } as any,
+      options
     );
     return this;
   }
 
+  /**
+   * Dodaje pojedyncze, płaskie pole formularza z wbudowanym typem (text, select, datepicker itp.).
+   * Wszystkie pola dodane za pomocą tej metody współdzielą jedną centralną instancję FormGroup.
+   *
+   * @param key — Unikalny klucz kontrolki w FormGroup
+   * @param fieldType — Typ kontrolki formularza
+   * @param config — Konfiguracja specyficzna dla danej kontrolki
+   * @param options — Opcje: slot, colSpan, wartość domyślna, walidatory, style
+   */
+  public addFormField(
+    key: string,
+    fieldType: Exclude<ErpFormFieldType, 'custom'>,
+    config: any | { build: () => any },
+    options: ErpElementLayoutOptions & {
+      defaultValue?: any;
+      validators?: any[];
+      value?: MaybeSignal<any> | (() => any);
+      onChange?: (value: any) => void;
+    } = {}
+  ): this {
+    const extractedConfig = this._extract(config);
+    this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
+
+    this._pushElement({
+      type: 'formField',
+      key,
+      fieldType,
+      component: FIELD_TYPE_COMPONENT_MAP[fieldType],
+      config: extractedConfig,
+      value: options.value,
+      onChange: options.onChange,
+      slot: options.slot,
+      colSpan: options.colSpan,
+      styleClass: options.styleClass,
+      style: options.style,
+    });
+    return this;
+  }
+
+  /**
+   * Dodaje pojedyncze customowe pole formularza (z własnym komponentem).
+   * Wszystkie pola dodane za pomocą tej metody współdzielą jedną centralną instancję FormGroup.
+   *
+   * @param key — Unikalny klucz kontrolki w FormGroup
+   * @param component — Klasa komponentu Angular do wyrenderowania
+   * @param config — Inputy przekazywane do komponentu
+   * @param options — Opcje: slot, colSpan, wartość domyślna, walidatory, style
+   */
+  public addCustomFormField<TComp>(
+    key: string,
+    component: MaybeSignal<Type<TComp>>,
+    config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
+    options: ErpElementLayoutOptions & {
+      defaultValue?: any;
+      validators?: any[];
+      value?: MaybeSignal<any> | (() => any);
+      onChange?: (value: any) => void;
+    } = {}
+  ): this {
+    const extractedConfig = this._extract(config);
+    this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
+
+    this._pushElement({
+      type: 'formField',
+      key,
+      fieldType: 'custom',
+      component: unwrapSignal(component) as any,
+      config: extractedConfig,
+      value: options.value,
+      onChange: options.onChange,
+      slot: options.slot,
+      colSpan: options.colSpan,
+      styleClass: options.styleClass,
+      style: options.style,
+    });
+    return this;
+  }
+
   /** Dodaje wizualny separator (linia pozioma). */
-  public addDivider(): this {
-    this._pushElement({ type: 'divider' });
+  public addDivider(options?: { slot?: string }): this {
+    this._pushElement({ type: 'divider', slot: options?.slot });
     return this;
   }
 
@@ -186,29 +332,26 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    *
    * @param component — Klasa komponentu Angular
    * @param inputs — Typowane inputy komponentu (IDE podpowiada dostępne pola)
-   * @param options — Opcje layoutu: colSpan, styleClass, style
+   * @param options — Opcje layoutu: slot, colSpan, styleClass, style
    *
    * @example
    * ```ts
    * .addComponent(ProductListComponent, {
    *   products: productsSignal,    // IDE podpowiada dostępne inputy
    *   selectionMode: 'multiple',
-   * })
+   * }, { slot: 'sidebar' })
    * ```
    */
   public addComponent<T>(
     component: Type<T>,
     inputs?: ErpComponentSignalInputs<T>,
-    options?: {
-      colSpan?: MaybeSignal<number>;
-      styleClass?: MaybeSignal<string>;
-      style?: MaybeSignal<Record<string, string>>;
-    }
+    options?: ErpElementLayoutOptions
   ): this {
     this._pushElement({
       type: 'component',
       component,
       inputs: inputs as Record<string, any>,
+      slot: options?.slot,
       colSpan: options?.colSpan,
       styleClass: options?.styleClass,
       style: options?.style,
@@ -221,12 +364,12 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   /**
    * Dodaje sekcję z zagnieżdżonymi elementami.
    *
-   * Sekcja może mieć własny layout (stack/row/grid), tytuł, klasy CSS i gap.
+   * Sekcja może mieć własny layout (stack/row/grid/gridAreas), tytuł, klasy CSS i gap.
    * Wewnątrz używa tego samego buildera rekurencyjnie — pozwala
    * na dowolną głębokość kompozycji.
    *
    * @param configure — Callback konfigurujący sub-builder sekcji
-   * @param options — Opcje sekcji: title, layout, gridCols, gap, colSpan, styleClass, style
+   * @param options — Opcje sekcji: slot, title, layout, gridCols, gap, colSpan, styleClass, style
    *
    * @example
    * ```ts
@@ -234,7 +377,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    *   .setLayout('row')
    *   .addComponent(ProductListComponent, { products })
    *   .addComponent(ProductDetailsComponent, { product: selectedProduct })
-   * , { title: KEYS.sectionProducts })
+   * , { slot: 'main', title: KEYS.sectionProducts })
    * ```
    */
   public addSection(
@@ -245,6 +388,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
       gridCols?: MaybeSignal<number>;
       gap?: MaybeSignal<string>;
       colSpan?: MaybeSignal<number>;
+      slot?: string;
       styleClass?: MaybeSignal<string>;
       style?: MaybeSignal<Record<string, string>>;
     }
@@ -257,10 +401,12 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
       type: 'section',
       children: subConfig.elements,
       layout: options?.layout || subConfig.layout,
+      gridAreas: subConfig.gridAreas,
       gridCols: options?.gridCols || subConfig.gridCols,
       gap: options?.gap || subConfig.gap,
       title: options?.title,
       colSpan: options?.colSpan,
+      slot: options?.slot,
       styleClass: options?.styleClass || subConfig.styleClass,
       style: options?.style,
     });
@@ -278,25 +424,6 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   // ═══ Static factory ═══
 
   /**
-   * Statyczna metoda tworząca konfigurację treści stepu.
-   *
-   * @example
-   * ```ts
-   * const config = ErpStepContentBuilder.content(b => b
-   *   .addText(KEYS.header)
-   *   .addForm(f => f.addField('name', 'text', { placeholder: 'Nazwa' }))
-   * );
-   * ```
-   */
-  public static content(
-    configure?: (builder: ErpStepContentBuilder) => void
-  ): ErpStepContentConfig {
-    const builder = new ErpStepContentBuilder();
-    configure?.(builder);
-    return builder.build();
-  }
-
-  /**
    * Wyciąga FormGroup z konfiguracji treści stepu.
    *
    * Przeszukuje elementy typu 'component' i szuka tego, który
@@ -308,17 +435,92 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    *
    * @example
    * ```ts
-   * const formContent = ErpStepContentBuilder.content(b => b.addForm(f => ...));
+   * const formContent = ErpStepContentBuilder.create(b => b.addForm(f => ...));
    * const formGroup = ErpStepContentBuilder.findFormGroup(formContent);
    * const nameControl = formGroup!.get('name') as FormControl<string>;
    * ```
    */
   public static findFormGroup(config: ErpStepContentConfig): import('@angular/forms').FormGroup | null {
+    if (config.formGroup && Object.keys(config.formGroup.controls).length > 0) {
+      return config.formGroup;
+    }
     for (const element of config.elements) {
       if (element.type === 'component' && element.inputs?.['config']?.formGroup) {
         return element.inputs['config'].formGroup;
       }
     }
-    return null;
+    return config.formGroup || null;
+  }
+
+  /**
+   * Automatycznie synchronizuje wartości i stan walidacji pól formularza.
+   *
+   * Skanuje konfigurację i dla każdego pola ze zdefiniowanym `value` lub `onChange`:
+   * 1. (Model -> Form) Tworzy effect() aktualizujący FormControl przy zmianach sygnału/funkcji `value`.
+   * 2. (Form -> Model) Subskrybuje `valueChanges` i wywołuje callback `onChange` (tylko gdy pole jest prawidłowe).
+   * 3. (Opcjonalnie) Rejestruje globalny stan walidacji kroku przez przekazany `registerCanGoNext`.
+   *
+   * @param config - Konfiguracja zbudowana przez builder
+   * @param options - Opcje wiązania (np. registerCanGoNext input)
+   */
+  public static bindForm(
+    config: ErpStepContentConfig,
+    options?: { registerCanGoNext?: any }
+  ): void {
+    const formGroup = this.findFormGroup(config);
+    if (!formGroup) {
+      return;
+    }
+
+    // Rekurencyjnie przeszukaj elementy w poszukiwaniu pól formularza
+    const setupBindings = (elements: ErpStepContentElement[]) => {
+      for (const element of elements) {
+        if (element.type === 'section') {
+          setupBindings(element.children);
+        } else if (element.type === 'formField') {
+          const control = formGroup.get(element.key) as FormControl;
+          if (!control) {
+            continue;
+          }
+
+          // 1. Model -> Form sync (przy użyciu effect)
+          if (element.value !== undefined) {
+            const valSource = element.value;
+            effect(() => {
+              const val = typeof valSource === 'function' ? valSource() : unwrapSignal(valSource);
+              if (control.value !== val) {
+                control.setValue(val, { emitEvent: false });
+              }
+            });
+          }
+
+          // 2. Form -> Model sync (tylko gdy kontrolka jest prawidłowa)
+          if (element.onChange) {
+            const changeHandler = element.onChange;
+            control.valueChanges.pipe(
+              takeUntilDestroyed()
+            ).subscribe((val) => {
+              if (control.valid) {
+                changeHandler(val);
+              }
+            });
+          }
+        }
+      }
+    };
+
+    setupBindings(config.elements);
+
+    // 3. Rejestracja canGoNext
+    if (options?.registerCanGoNext) {
+      effect(() => {
+        const registerFn = typeof options.registerCanGoNext === 'function'
+          ? (options.registerCanGoNext as () => any)()
+          : unwrapSignal(options.registerCanGoNext);
+        if (typeof registerFn === 'function') {
+          registerFn(computed(() => formGroup.valid));
+        }
+      });
+    }
   }
 }

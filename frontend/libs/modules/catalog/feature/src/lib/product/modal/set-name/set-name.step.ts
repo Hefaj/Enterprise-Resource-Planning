@@ -2,12 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   input,
   Signal,
   WritableSignal,
 } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BatchCommandOfProductSetNameCommand } from '@erp/catalog/data-access';
 import { SetNameMetadata } from './set-name.definition';
@@ -80,29 +79,35 @@ export class SetNameStepComponent {
   /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
 
-  /** Referencja do FormControl wyciągnięta z zbudowanego FormGroup. */
-  private readonly _nameControl: FormControl<string | null>;
-
   protected products = computed<{ uuid: string; sku: string; name: string }[]>(
     () => this.command()()['products'] ?? []
   );
 
-  protected canGoNext: Signal<boolean>;
-
   public constructor() {
-    // ── Build form declaratively showcasing all ErpStepContentBuilder options ──
-    this.formContent = ErpStepContentBuilder.content(b => b
-      .setLayout('stack')
-      .setGap('1.5rem')
+    // ── Build form declaratively showcasing all ErpStepContentBuilder options with setGridAreas layout ──
+    this.formContent = ErpStepContentBuilder.create(b => b
+      .setGridAreas({
+        template: [
+          'header   header',
+          'divider  divider',
+          'sec      sec',
+          'form     card',
+          'splitter splitter',
+          'comp     comp'
+        ],
+        columns: '1fr 1fr',
+        gap: '1.5rem',
+      })
       .setStyleClass('demo-step-content-root')
       
       // 1. Text element
       .addText(PRODUCT_KEYS.commands.setName.editMessage, {
+        slot: 'header',
         styleClass: 'text-primary font-bold text-lg',
       })
       
       // 2. Divider element
-      .addDivider()
+      .addDivider({ slot: 'divider' })
       
       // 3. Section element with nested elements and grid layout
       .addSection(s => s
@@ -111,26 +116,42 @@ export class SetNameStepComponent {
         .setGap('1rem')
         .addText('shared.table.empty', { styleClass: 'text-sm text-gray-500' })
         .addText(PRODUCT_KEYS.commands.setName.productSuffixSingle, { styleClass: 'text-sm' })
-      , { title: 'Sekcja demonstracyjna grid' })
+      , { slot: 'sec', title: 'Sekcja demonstracyjna grid' })
       
-      // 4. Form element with text field and toggle field
-      .addForm(f => f
-        .setGridCols(2)
-        .addField('name', 'text',
+      // 4. Form fields directly in layout
+      .addSection(sectionForm => {
+        sectionForm
+        .addFormField('name', 'text',
           ErpInputTextBuilder.create(ib => ib
             .setPlaceholder(PRODUCT_KEYS.commands.setName.namePlaceholder)
             .setErrorMessages({ required: PRODUCT_KEYS.validations.nameRequired })
           ),
-          { validators: [Validators.required] }
+          {
+            validators: [Validators.required],
+            value: () => this.command()().commands?.at(0)?.name,
+            onChange: (value) => {
+              this.command().update((cmd) => {
+                const commands = (cmd['products'] as { uuid: string; sku: string; name: string }[] || []).map(p => ({
+                  uuid: p.uuid,
+                  name: value ?? '',
+                }));
+                return {
+                  ...cmd,
+                  name: value,
+                  commands,
+                };
+              });
+            }
+          }
         )
-        .addField('isActive', 'toggle',
+        .addFormField('isActive', 'toggle',
           ErpToggleSwitchBuilder.create(tb => tb
             .setPlaceholder('Aktywny')
             .setHint('Zaznacz aby aktywować')
           ),
           { defaultValue: true }
         )
-      )
+      }, { slot: 'form' })
 
       // 5. Card element
       .addCard(c => c
@@ -141,7 +162,7 @@ export class SetNameStepComponent {
             .setValue('To jest treść karty wstrzyknięta jako komponent')
           )
         })
-      )
+      , { slot: 'card' })
 
       // 6. Splitter element
       .addSplitter(sp => sp
@@ -164,7 +185,7 @@ export class SetNameStepComponent {
             )
           },
         })
-      )
+      , { slot: 'splitter' })
 
       // 7. Component element directly
       .addComponent(ErpTextComponent, {
@@ -173,42 +194,12 @@ export class SetNameStepComponent {
           .setTag('p')
           .setClass('text-muted italic')
         )
-      })
+      }, { slot: 'comp' })
     );
 
-    // Extract FormGroup reference from built config for command sync
-    const formGroup = ErpStepContentBuilder.findFormGroup(this.formContent);
-    this._nameControl = formGroup!.get('name') as FormControl<string | null>;
-
-    this.canGoNext = computed(() => this._nameControl.valid);
-
-    // ── Register canGoNext ──
-    effect(() => {
-      const register = this.registerCanGoNext();
-      if (register) register(this.canGoNext);
-    });
-
-    // ── Command → Form sync ──
-    effect(() => {
-      const cmd = this.command()();
-      if (cmd['name'] !== undefined && this._nameControl.value !== cmd['name']) {
-        this._nameControl.setValue(cmd['name'], { emitEvent: false });
-      }
-    });
-
-    // ── Form → Command sync ──
-    this._nameControl.valueChanges.subscribe((value) => {
-      this.command().update((cmd) => {
-        const commands = (cmd['products'] as { uuid: string; sku: string; name: string }[] || []).map(p => ({
-          uuid: p.uuid,
-          name: value ?? '',
-        }));
-        return {
-          ...cmd,
-          name: value,
-          commands,
-        };
-      });
+    // Automatyczna synchronizacja i rejestracja stanu przejścia dalej
+    ErpStepContentBuilder.bindForm(this.formContent, {
+      registerCanGoNext: this.registerCanGoNext
     });
   }
 }

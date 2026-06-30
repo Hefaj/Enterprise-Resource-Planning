@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
+import { SignalFormControl } from '@angular/forms/signals/compat';
+import { required, email, min } from '@angular/forms/signals';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
@@ -14,8 +16,14 @@ import { ErpInputTextBuilder, ErpInputTextComponent } from '@erp/shared/ui';
 })
 export class DashboardComponent {
   public myDynamicForm = new FormGroup({
-    email: new FormControl('jan@example.com', [Validators.required, Validators.email]),
-    age: new FormControl(30, [Validators.required, Validators.minLength(5)]),
+    email: new SignalFormControl('jan@example.com', (p) => {
+      required(p);
+      email(p);
+    }),
+    age: new SignalFormControl(30, (p) => {
+      required(p);
+      min(p, 5);
+    }),
   });
 
   public control = this.myDynamicForm.controls.email;

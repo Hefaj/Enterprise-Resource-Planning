@@ -7,7 +7,7 @@ import {
   Signal,
   WritableSignal,
 } from '@angular/core';
-import { Validators } from '@angular/forms';
+import { required, min } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import { BatchCommandOfProductSetPriceCommand, CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { SetPriceMetadata } from './set-price.definition';
@@ -89,7 +89,7 @@ export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProduc
         })
       ,
       {
-        validators: [Validators.required, Validators.min(0.01)],
+        validators: (p: any) => { required(p); min(p, 0.01); },
         value: () => this.command()().commands?.at(0)?.price,
         onChange: (value) => {
           this.command().update((cmd) => {

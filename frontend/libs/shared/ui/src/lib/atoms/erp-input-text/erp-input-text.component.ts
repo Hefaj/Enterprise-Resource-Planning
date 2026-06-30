@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input } from '@angular/core';
-import { ControlValueAccessor, ReactiveFormsModule, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
+import { ControlValueAccessor, ReactiveFormsModule, NG_VALUE_ACCESSOR, FormControl, AbstractControl } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { noop } from 'rxjs';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -65,10 +65,10 @@ import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 })
 export class ErpInputTextComponent implements ControlValueAccessor {
   public config = input.required<ErpInputTextConfig>();
-  public control = input<FormControl | null>(null);
+  public control = input<AbstractControl | null>(null);
   public internalControl = new FormControl();
 
-  public activeControl = computed(() => this.control() || this.internalControl);
+  public activeControl = computed(() => (this.control() || this.internalControl) as any);
 
   protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
   protected hint = computed(() => unwrapSignal(this.config().hint));

@@ -82,6 +82,14 @@ export function createModuleFederationConfig(baseConfig: ModuleFederationConfig)
       }
     },
     {
+      libraryName: '@angular/forms',
+      sharedConfig: {
+        singleton: true,
+        strictVersion: false,
+        requiredVersion: false,
+      }
+    },
+    {
       libraryName: '@angular/router',
       sharedConfig: {
         singleton: true,

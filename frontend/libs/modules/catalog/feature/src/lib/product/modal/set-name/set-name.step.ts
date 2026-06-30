@@ -7,7 +7,7 @@ import {
   Signal,
   WritableSignal,
 } from '@angular/core';
-import { Validators } from '@angular/forms';
+import { required } from '@angular/forms/signals';
 import { CommonModule } from '@angular/common';
 import { BatchCommandOfProductSetNameCommand, CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { SetNameMetadata } from './set-name.definition';
@@ -135,7 +135,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
             .setErrorMessages({ required: PRODUCT_KEYS.validations.nameRequired })
           ),
           {
-            validators: [Validators.required],
+            validators: (p: any) => { required(p); },
             value: () => this.command()().commands?.at(0)?.name,
             onChange: (value) => {
               this.command().update((cmd) => {

@@ -1,12 +1,13 @@
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { FormGroup, AbstractControl } from '@angular/forms';
 import { Type } from '@angular/core';
+import { SignalFormControl } from '@angular/forms/signals/compat';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpFormField, ErpFormFieldType, ErpFormConfig } from './erp-form.types';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 import { MaybeSignal } from '../../base/erp-signal-utils';
 
 export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
-  private _controls: Record<string, FormControl> = {};
+  private _controls: Record<string, AbstractControl> = {};
 
   constructor() {
     super();
@@ -31,7 +32,7 @@ export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
     key: string,
     type: ErpFormFieldType,
     config: any | { build: () => any },
-    options: { colSpan?: MaybeSignal<number | undefined>; defaultValue?: any; validators?: any[] } = {}
+    options: { colSpan?: MaybeSignal<number | undefined>; defaultValue?: any; validators?: any } = {}
   ): this {
     const extractedConfig = this._extract(config);
 
@@ -44,7 +45,7 @@ export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
       });
     }
 
-    this._controls[key] = new FormControl(options.defaultValue ?? null, options.validators || []);
+    this._controls[key] = new SignalFormControl(options.defaultValue ?? null, options.validators);
 
     return this;
   }
@@ -60,7 +61,7 @@ export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
     key: string,
     component: MaybeSignal<Type<TComp>>,
     config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
-    options: { colSpan?: MaybeSignal<number | undefined>; defaultValue?: any; validators?: any[] } = {}
+    options: { colSpan?: MaybeSignal<number | undefined>; defaultValue?: any; validators?: any } = {}
   ): this {
     const extractedConfig = this._extract(config);
 
@@ -74,7 +75,7 @@ export class ErpFormBuilder extends ErpBaseBuilder<ErpFormConfig> {
       });
     }
 
-    this._controls[key] = new FormControl(options.defaultValue ?? null, options.validators || []);
+    this._controls[key] = new SignalFormControl(options.defaultValue ?? null, options.validators);
 
     return this;
   }

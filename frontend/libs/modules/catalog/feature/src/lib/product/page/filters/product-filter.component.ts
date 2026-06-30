@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { SignalFormControl } from '@angular/forms/signals/compat';
 import {
   ErpDynamicFilterComponent,
   ErpDynamicFilterBuilder,
@@ -26,10 +27,10 @@ export class ProductFilterComponent implements OnInit {
   }
 
   protected readonly filtersForm = new FormGroup({
-    sku: new FormControl<string | null>(null),
-    name: new FormControl<string | null>(null),
-    price: new FormControl<number | null>(null),
-    availableFrom: new FormControl<Date | null>(null),
+    sku: new SignalFormControl<string | null>(null),
+    name: new SignalFormControl<string | null>(null),
+    price: new SignalFormControl<number | null>(null),
+    availableFrom: new SignalFormControl<Date | null>(null),
   });
 
   protected readonly filtersConfig = ErpDynamicFilterBuilder.create((b) => {

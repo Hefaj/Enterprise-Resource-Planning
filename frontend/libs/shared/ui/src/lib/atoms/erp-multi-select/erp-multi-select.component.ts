@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormControl, AbstractControl } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
@@ -65,10 +65,10 @@ import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 })
 export class ErpMultiSelectComponent implements ControlValueAccessor {
   public config = input.required<ErpMultiSelectConfig>();
-  public control = input<FormControl | null>(null);
+  public control = input<AbstractControl | null>(null);
   public internalControl = new FormControl();
 
-  public activeControl = computed(() => this.control() || this.internalControl);
+  public activeControl = computed(() => (this.control() || this.internalControl) as any);
 
   protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
   protected hint = computed(() => unwrapSignal(this.config().hint));

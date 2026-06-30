@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { ErpFormConfig } from './erp-form.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpInputTextComponent } from '../../atoms/erp-input-text';
@@ -106,8 +106,8 @@ export class ErpFormComponent {
 
   protected gridCols = computed(() => unwrapSignal(this.config().gridCols));
 
-  public getControl(key: string): FormControl {
-    return this.config().formGroup.get(key) as FormControl;
+  public getControl(key: string): AbstractControl {
+    return this.config().formGroup.get(key) as AbstractControl;
   }
 
   protected unwrapComponent(componentSignal: any) {

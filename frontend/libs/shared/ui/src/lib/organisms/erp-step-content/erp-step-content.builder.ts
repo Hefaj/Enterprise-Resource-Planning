@@ -1,6 +1,7 @@
 import { Type, effect, computed, Signal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormGroup, FormControl } from '@angular/forms';
+import { FormGroup, FormControl, AbstractControl } from '@angular/forms';
+import { SignalFormControl } from '@angular/forms/signals/compat';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-utils';
@@ -282,7 +283,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
       | ((builder: ErpFormFieldBuilderMap[TType]) => void),
     options: ErpElementLayoutOptions & {
       defaultValue?: any;
-      validators?: any[];
+      validators?: any;
       value?: MaybeSignal<any> | (() => any);
       onChange?: (value: any) => void;
     } = {}
@@ -300,7 +301,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
     }
 
     const extractedConfig = this._extract(builderInstance);
-    this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
+    this._data.formGroup!.addControl(key, new SignalFormControl(options.defaultValue ?? null, options.validators));
 
     this._pushElement({
       type: 'formField',
@@ -333,13 +334,13 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
     config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
     options: ErpElementLayoutOptions & {
       defaultValue?: any;
-      validators?: any[];
+      validators?: any;
       value?: MaybeSignal<any> | (() => any);
       onChange?: (value: any) => void;
     } = {}
   ): this {
     const extractedConfig = this._extract(config);
-    this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
+    this._data.formGroup!.addControl(key, new SignalFormControl(options.defaultValue ?? null, options.validators));
 
     this._pushElement({
       type: 'formField',
@@ -522,7 +523,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
         if (element.type === 'section') {
           setupBindings(element.children);
         } else if (element.type === 'formField') {
-          const control = formGroup.get(element.key) as FormControl;
+          const control = formGroup.get(element.key) as AbstractControl;
           if (!control) {
             continue;
           }

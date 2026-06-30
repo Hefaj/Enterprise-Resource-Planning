@@ -17,6 +17,7 @@
     "module": "esnext",
     "lib": ["es2022", "dom"],
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@erp/client/ui": ["frontend/libs/client/ui/src/index.ts"],
       "@erp/client/feature": ["frontend/libs/client/feature/src/index.ts"],

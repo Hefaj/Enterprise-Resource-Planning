@@ -14,6 +14,7 @@
         "index": "frontend/apps/modules/catalog/src/index.html",
         "main": "frontend/apps/modules/catalog/src/main.ts",
         "tsConfig": "frontend/apps/modules/catalog/tsconfig.app.json",
+        "allowedCommonJsDependencies": ["@module-federation/enhanced/runtime"],
         "assets": [
           {
             "glob": "**/*",

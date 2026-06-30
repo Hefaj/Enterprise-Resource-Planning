@@ -14,6 +14,7 @@
         "index": "frontend/apps/modules/notification/src/index.html",
         "main": "frontend/apps/modules/notification/src/main.ts",
         "tsConfig": "frontend/apps/modules/notification/tsconfig.app.json",
+        "allowedCommonJsDependencies": ["@module-federation/enhanced/runtime"],
         "assets": [
           {
             "glob": "**/*",

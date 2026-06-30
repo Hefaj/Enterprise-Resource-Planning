@@ -14,6 +14,7 @@
         "index": "frontend/apps/modules/task-management/src/index.html",
         "main": "frontend/apps/modules/task-management/src/main.ts",
         "tsConfig": "frontend/apps/modules/task-management/tsconfig.app.json",
+        "allowedCommonJsDependencies": ["@module-federation/enhanced/runtime"],
         "assets": [
           {
             "glob": "**/*",

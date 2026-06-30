@@ -14,6 +14,7 @@
         "index": "frontend/apps/modules/inventory/src/index.html",
         "main": "frontend/apps/modules/inventory/src/main.ts",
         "tsConfig": "frontend/apps/modules/inventory/tsconfig.app.json",
+        "allowedCommonJsDependencies": ["@module-federation/enhanced/runtime"],
         "assets": [
           {
             "glob": "**/*",

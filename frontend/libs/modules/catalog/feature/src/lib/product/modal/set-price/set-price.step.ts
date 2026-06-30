@@ -32,10 +32,6 @@ import {
 export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProductSetPriceCommand, SetPriceMetadata> {
   protected readonly keys = PRODUCT_KEYS;
 
-  public command = input.required<WritableSignal<BatchCommandOfProductSetPriceCommand>>();
-  public metadata = input.required<WritableSignal<SetPriceMetadata>>();
-  public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
-
   /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
 

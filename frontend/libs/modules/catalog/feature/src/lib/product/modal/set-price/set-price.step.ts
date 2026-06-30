@@ -16,6 +16,7 @@ import {
   ErpStepContentBuilder,
   ErpStepContentConfig,
   ErpInputTextBuilder,
+  ErpModalStepBase,
 } from '@erp/shared/ui';
 
 /**
@@ -28,7 +29,7 @@ import {
   template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetPriceStepComponent {
+export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProductSetPriceCommand, SetPriceMetadata> {
   protected readonly keys = PRODUCT_KEYS;
 
   public command = input.required<WritableSignal<BatchCommandOfProductSetPriceCommand>>();
@@ -42,7 +43,10 @@ export class SetPriceStepComponent {
     () => this.command()()['products'] ?? []
   );
 
+  protected readonly canGoNext = computed(() => ErpStepContentBuilder.findFormGroup(this.formContent)?.valid ?? false);
+
   public constructor() {
+    super();
     // ── Build form content declaratively ──
     this.formContent = ErpStepContentBuilder.create(b => b
       .setLayout('grid')

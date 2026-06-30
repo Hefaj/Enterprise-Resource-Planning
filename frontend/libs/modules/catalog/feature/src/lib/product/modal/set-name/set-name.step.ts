@@ -19,6 +19,7 @@ import {
   ErpInputTextBuilder,
   ErpToggleSwitchBuilder,
   ErpTextBuilder,
+  ErpModalStepBase,
 } from '@erp/shared/ui';
 
 /**
@@ -69,12 +70,8 @@ import {
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetNameStepComponent {
+export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProductSetNameCommand, SetNameMetadata> {
   protected readonly keys = PRODUCT_KEYS;
-
-  public command = input.required<WritableSignal<BatchCommandOfProductSetNameCommand>>();
-  public metadata = input.required<WritableSignal<SetNameMetadata>>();
-  public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
 
   /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
@@ -83,7 +80,10 @@ export class SetNameStepComponent {
     () => this.command()()['products'] ?? []
   );
 
+  protected readonly canGoNext = computed(() => ErpStepContentBuilder.findFormGroup(this.formContent)?.valid ?? false);
+
   public constructor() {
+    super();
     // ── Build form declaratively showcasing all ErpStepContentBuilder options with setGridAreas layout ──
     this.formContent = ErpStepContentBuilder.create(b => b
       .setGridAreas({
@@ -152,7 +152,7 @@ export class SetNameStepComponent {
           { defaultValue: true }
         )
       }, { slot: 'form' })
-
+ 
       // 5. Card element
       .addCard(c => c
         .setTitle('Karta demonstracyjna')
@@ -163,7 +163,7 @@ export class SetNameStepComponent {
           )
         })
       , { slot: 'card' })
-
+ 
       // 6. Splitter element
       .addSplitter(sp => sp
         .setLayout('horizontal')
@@ -186,7 +186,7 @@ export class SetNameStepComponent {
           },
         })
       , { slot: 'splitter' })
-
+ 
       // 7. Component element directly
       .addComponent(ErpTextComponent, {
         config: ErpTextBuilder.create(tb => tb
@@ -196,7 +196,7 @@ export class SetNameStepComponent {
         )
       }, { slot: 'comp' })
     );
-
+ 
     // Automatyczna synchronizacja i rejestracja stanu przejścia dalej
     ErpStepContentBuilder.bindForm(this.formContent, {
       registerCanGoNext: this.registerCanGoNext

@@ -9,8 +9,6 @@ import { Translation, TranslocoLoader, provideTransloco } from '@jsverse/translo
 import { provideSharedTranslations } from '@erp/shared/ui';
 import { Observable, of } from 'rxjs';
 import { remoteApiProviders } from './remote-api.providers';
-import { provideAnimations } from '@angular/platform-browser/animations';
-import { NG_EVENT_PLUGINS } from '@taiga-ui/event-plugins';
 import { provideTaiga } from '@taiga-ui/core';
 import { TUI_LANGUAGE, TUI_POLISH_LANGUAGE } from '@taiga-ui/i18n';
 
@@ -25,9 +23,7 @@ registerLocaleData(localePl);
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideAnimations(),
     provideTaiga(),
-    NG_EVENT_PLUGINS,
     provideSharedTranslations(),
     provideRouter(
       appRoutes,
@@ -37,7 +33,7 @@ export const appConfig: ApplicationConfig = {
         skipInitialTransition: true, // Opcjonalne: pomija animację przy pierwszym ładowaniu
       }),
     ),
-    provideHttpClient(withFetch()),
+    provideHttpClient(),
     provideZonelessChangeDetection(),
     provideAppInitializer(STARTUP),
     { provide: LOCALE_ID, useValue: 'pl-PL' },

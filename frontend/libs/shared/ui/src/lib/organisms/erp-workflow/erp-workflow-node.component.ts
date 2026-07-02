@@ -264,11 +264,6 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
   protected actionButtonConfigGateway = computed(() =>
     ErpButtonBuilder.create((b) =>
       b
-        .setIcon('pi pi-ellipsis-v')
-        .setVariant('text')
-        .setRounded(true)
-        .setSeverity('secondary')
-        .setSize('small')
         .setOnClick((e) => {
           this.menuGatewayRef()?.toggle(e);
           e.stopPropagation();
@@ -279,11 +274,6 @@ export class ErpWorkflowNodeComponent implements AfterViewInit, OnDestroy {
   protected actionButtonConfigNode = computed(() =>
     ErpButtonBuilder.create((b) =>
       b
-        .setIcon('pi pi-ellipsis-v')
-        .setVariant('text')
-        .setRounded(true)
-        .setSeverity('secondary')
-        .setSize('small')
         .setOnClick((e) => {
           this.menuRef()?.toggle(e);
           e.stopPropagation();

@@ -65,8 +65,8 @@ export class ErpHostLayoutComponent implements OnInit {
 
   protected menuBtnConfig = computed(() =>
     ErpButtonBuilder.create((b) =>
-      b.setSeverity('info')
-       .setIcon('pi pi-bars')
+      b.setAppearance('secondary')
+       .setIconStart('@tui.menu')
        .setOnClick(() => this.drawer().show())
     )
   );

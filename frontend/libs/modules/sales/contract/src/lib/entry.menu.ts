@@ -10,19 +10,19 @@ export const remoteMenu: ErpNavigationItem[] = [
   {
     // (RMA): Workflow decyzyjny dotyczący przyjmowania zwrotów i korekt faktur.
     label: 'Panel Obsługi Zwrotów i Reklamacji',
-    iconId: 'refresh',
+    iconId: 'refresh-cw',
     route: 'producers3',
   },
   {
     // Punkt Sprzedaży (POS/Sales Desk): Uproszczony interfejs do szybkiego wprowadzania zamówień telefonicznych lub stacjonarnych.
     label: 'Punkt Sprzedaży',
-    iconId: 'print',
+    iconId: 'printer',
     route: 'models3',
   },
   {
     // Zestawienia sprzedaży, marżowości oraz integracja z systemami płatności (Stripe/PayU).
     label: 'Raporty i Rozliczenia Finansowe',
-    iconId: 'money-bill',
+    iconId: 'banknote',
     route: 'categories3',
   },
   {

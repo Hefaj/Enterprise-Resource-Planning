@@ -16,19 +16,19 @@ export const remoteMenu: ErpNavigationItem[] = [
   {
     // Zarządzanie cechami dynamicznymi (kolory, rozmiary) – wykorzystanie JSON Column w .NET 10 dla elastyczności.
     label: 'Konfigurator Atrybutów i Wariantów',
-    iconId: 'clone',
+    iconId: 'copy',
     route: 'models',
   },
   {
     // Definiowanie cen bazowych oraz reguł czasowych (np. Black Friday).
     label: 'Zarządzanie Cennikami i Promocjami',
-    iconId: 'percentage',
+    iconId: 'percent',
     route: 'categories',
   },
   {
     // Wizualny edytor (PrimeNG Tree) do mapowania struktury menu i SEO.
     label: 'Kreator Drzewa Kategorii',
-    iconId: 'sitemap',
+    iconId: 'network',
     route: 'brank-kind',
   },
 ];

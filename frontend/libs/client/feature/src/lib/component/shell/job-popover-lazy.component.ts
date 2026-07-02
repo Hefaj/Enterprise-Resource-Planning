@@ -21,10 +21,7 @@ export class JobPopoverLazyComponent implements OnInit {
   protected failed = false;
 
   protected readonly fallbackButtonConfig = ErpButtonBuilder.create((b) =>
-    b.setIcon('pi pi-bell-slash')
-     .setSeverity('secondary')
-     .setVariant('text')
-     .setRounded(true)
+    b
      .setDisabled(true)
   );
 

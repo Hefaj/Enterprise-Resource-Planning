@@ -15,10 +15,7 @@ import { JobListComponent } from '../job-list/job-list.component';
 })
 export class JobPopoverComponent extends ErpBasePopoverDirective {
   protected readonly buttonConfig = ErpButtonBuilder.create((b) =>
-    b.setIcon('pi pi-bell')
-     .setSeverity('secondary')
-     .setVariant('text')
-     .setRounded(true)
+    b
      .setOnClick((event: MouseEvent) => this.toggle(event))
   );
 

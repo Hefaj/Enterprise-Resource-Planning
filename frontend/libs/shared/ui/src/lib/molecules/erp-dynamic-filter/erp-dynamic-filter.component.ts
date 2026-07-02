@@ -55,7 +55,7 @@ export class ErpDynamicFilterComponent {
     ErpButtonBuilder.create((b) =>
       b
         .setLabel(unwrapSignal(this.config().submitButtonLabel) || SHARED_KEYS.filters.submit)
-        .setSeverity('info')
+        .setAppearance('secondary')
         .setOnClick(() => this.onSubmit()),
     ),
   );

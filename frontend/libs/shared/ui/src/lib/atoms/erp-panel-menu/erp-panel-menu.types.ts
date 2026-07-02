@@ -1,6 +1,14 @@
-import { MenuItem } from 'primeng/api';
 import { MaybeSignal } from '../../base/erp-signal-utils';
+import { ErpIcon } from '../../base/erp-icon.types';
+
+export interface ErpPanelMenuItem {
+  label: string;
+  icon?: ErpIcon;
+  routerLink?: string;
+  disabled?: boolean;
+  items?: ErpPanelMenuItem[];
+}
 
 export interface ErpPanelMenuConfig {
-  items?: MaybeSignal<MenuItem[] | undefined>;
+  items?: MaybeSignal<ErpPanelMenuItem[] | undefined>;
 }

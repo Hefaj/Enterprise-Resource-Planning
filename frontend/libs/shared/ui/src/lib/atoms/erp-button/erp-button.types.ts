@@ -1,21 +1,28 @@
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpIcon } from '../../base/erp-icon.types';
 
-export type ErpButtonSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'help' | 'danger' | 'contrast';
-export type ErpButtonVariant = 'outlined' | 'text';
-export type ErpButtonIconPosition = 'left' | 'right';
-export type ErpButtonSize = 'small' | 'large';
+export type ErpButtonAppearance =
+  | 'primary'
+  | 'secondary'
+  | 'accent'
+  | 'mono'
+  | 'outline'
+  | 'flat'
+  | 'glass'
+  | 'destructive'
+  | 'white-block'
+  | 'flat-destructive'
+  | 'outline-destructive';
+
+export type ErpButtonSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 
 export interface ErpButtonConfig {
   label?: MaybeSignal<Translatable | undefined>;
-  icon?: MaybeSignal<string | undefined>;
-  iconPos?: MaybeSignal<ErpButtonIconPosition | undefined>;
-  severity?: MaybeSignal<ErpButtonSeverity | undefined>;
-  rounded?: MaybeSignal<boolean | undefined>;
-  variant?: MaybeSignal<ErpButtonVariant | undefined>;
+  appearance?: MaybeSignal<ErpButtonAppearance | undefined>;
   size?: MaybeSignal<ErpButtonSize | undefined>;
+  iconStart?: MaybeSignal<ErpIcon | undefined>;
+  iconEnd?: MaybeSignal<ErpIcon | undefined>;
   loading?: MaybeSignal<boolean | undefined>;
   disabled?: MaybeSignal<boolean | undefined>;
-  badge?: MaybeSignal<string | undefined>;
   onClick?: (event: MouseEvent) => void | Promise<void>;
 }
-

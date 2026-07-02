@@ -1,8 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { ErpHostLayoutComponent, ErpHostLayoutBuilder, ErpBreadcrumbConfig, ErpUserMenuConfig, ErpPanelMenuComponent, ErpBreadcrumbComponent, ErpUserMenuComponent, ErpModalService } from '@erp/shared/ui';
+import { ErpHostLayoutComponent, ErpHostLayoutBuilder, ErpBreadcrumbConfig, ErpUserMenuConfig, ErpPanelMenuComponent, ErpBreadcrumbComponent, ErpUserMenuComponent, ErpModalService, ErpPanelMenuItem, ErpPanelMenuConfig } from '@erp/shared/ui';
 import { Router, RouterModule } from '@angular/router';
 import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
-import { MenuItem } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 import { ErpAuthService } from '@erp/shared/auth';
@@ -56,8 +55,8 @@ export class ShellLayoutComponent {
   protected $navMenu = computed(() => {
     const navMenu = this._navRegistryService.$navMenu();
     return {
-      items: this._mapToPrimeNg(navMenu),
-    };
+      items: this._mapToNavMenu(navMenu),
+    } as ErpPanelMenuConfig;
   });
 
   protected $breadcrumbConfig = computed(() => {
@@ -65,13 +64,13 @@ export class ShellLayoutComponent {
     return { home, items } as ErpBreadcrumbConfig;
   });
 
-  private _mapToPrimeNg(items: ErpNavigationItem[]): MenuItem[] {
+  private _mapToNavMenu(items: ErpNavigationItem[]): ErpPanelMenuItem[] {
     return items.map((item) => ({
       label: item.label,
-      icon: item.iconId ? `pi pi-${item.iconId}` : undefined,
-      routerLink: item.disabled ? undefined : item.route,
+      icon: item.iconId ? `@tui.${item.iconId}` as any : undefined,
+      routerLink: item.disabled ? undefined : (Array.isArray(item.route) ? item.route.join('/') : item.route),
       disabled: item.disabled,
-      items: item.children ? this._mapToPrimeNg(item.children) : undefined,
+      items: item.children ? this._mapToNavMenu(item.children) : undefined,
     }));
   }
 

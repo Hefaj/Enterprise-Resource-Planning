@@ -9,16 +9,17 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { ErpButtonComponent, ErpButtonBuilder } from '../../atoms/erp-button';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpModalConfig } from './erp-modal.types';
 import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
-import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
+import { ERP_ICONS } from '../../base/erp-icon.types';
+import { SHARED_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-modal',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule, ErpTranslatePipe],
+  imports: [CommonModule, DialogModule, ErpButtonComponent, ErpTranslatePipe],
   template: `
     @let _title = title();
     @let _steps = config().steps;
@@ -27,8 +28,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     @let _isLastStep = isLastStep();
     @let _isFirstStep = isFirstStep();
     @let _showFooter = showFooter();
-    @let _canGoNext = canGoNext();
-    @let _loading = internalLoading();
     @let _sizeClass = sizeClass();
 
     <p-dialog
@@ -123,41 +122,18 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
         <ng-template #footer>
           <div class="erp-modal-footer">
             <div class="erp-modal-footer__left">
-              <p-button
-                [label]="cancelLabel() | erpTranslate"
-                severity="secondary"
-                [variant]="'text'"
-                (onClick)="handleCancel()"
-              />
+              <erp-button [config]="cancelBtnConfig()" />
             </div>
 
             <div class="erp-modal-footer__right">
               @if (_showStepper && !_isFirstStep) {
-                <p-button
-                  [label]="backLabel() | erpTranslate"
-                  severity="secondary"
-                  [variant]="'outlined'"
-                  icon="pi pi-arrow-left"
-                  (onClick)="goBack()"
-                />
+                <erp-button [config]="backBtnConfig()" />
               }
 
               @if (_isLastStep) {
-                <p-button
-                  [label]="saveLabel() | erpTranslate"
-                  icon="pi pi-check"
-                  [loading]="_loading"
-                  [disabled]="!_canGoNext"
-                  (onClick)="handleSave()"
-                />
+                <erp-button [config]="saveBtnConfig()" />
               } @else {
-                <p-button
-                  [label]="nextLabel() | erpTranslate"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  [disabled]="!_canGoNext"
-                  (onClick)="goNext()"
-                />
+                <erp-button [config]="nextBtnConfig()" />
               }
             </div>
           </div>
@@ -581,6 +557,46 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
     const stepSignal = map[this.currentStep()];
     return stepSignal ? stepSignal() : true;
   });
+
+  protected cancelBtnConfig = computed(() =>
+    ErpButtonBuilder.create((b) =>
+      b
+        .setLabel(this.cancelLabel())
+        .setAppearance('glass')
+        .setOnClick(() => this.handleCancel())
+    )
+  );
+
+  protected backBtnConfig = computed(() =>
+    ErpButtonBuilder.create((b) =>
+      b
+        .setLabel(this.backLabel())
+        .setAppearance('outline')
+        .setIconStart(ERP_ICONS.arrowLeft)
+        .setOnClick(() => this.goBack())
+    )
+  );
+
+  protected saveBtnConfig = computed(() =>
+    ErpButtonBuilder.create((b) =>
+      b
+        .setLabel(this.saveLabel())
+        .setIconStart(ERP_ICONS.check)
+        .setLoading(this.internalLoading())
+        .setDisabled(!this.canGoNext())
+        .setOnClick(() => this.handleSave())
+    )
+  );
+
+  protected nextBtnConfig = computed(() =>
+    ErpButtonBuilder.create((b) =>
+      b
+        .setLabel(this.nextLabel())
+        .setIconEnd(ERP_ICONS.arrowRight)
+        .setDisabled(!this.canGoNext())
+        .setOnClick(() => this.goNext())
+    )
+  );
 
   /** Inicjalizuje commandSignal i metadataSignal z konfiguracji. Wywoływane przez serwis. */
   public initCommand(): void {

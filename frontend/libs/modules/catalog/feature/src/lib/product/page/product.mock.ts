@@ -66,11 +66,10 @@ export const saveProduct = (): void => {
   console.log('Product Data:', testFormConfig.formGroup.value);
 };
 
-export const cancelBtnConfig = ErpButtonBuilder.create((b) => b.setLabel('Anuluj').setVariant('text').setSeverity('secondary'));
+export const cancelBtnConfig = ErpButtonBuilder.create((b) => b.setLabel('Anuluj'));
 export const saveBtnConfig = ErpButtonBuilder.create((b) =>
   b
     .setLabel('Zapisz produkt')
-    .setSeverity('secondary')
     .setOnClick(() => saveProduct()),
 );
 

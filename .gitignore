@@ -21,3 +21,4 @@ dist/
 .nx/
 
 .idea/
+.agents/skills.json

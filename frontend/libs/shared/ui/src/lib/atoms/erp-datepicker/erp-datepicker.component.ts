@@ -1,58 +1,65 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormControl } from '@angular/forms';
-import { DatePickerModule } from 'primeng/datepicker';
-import { FloatLabelModule } from 'primeng/floatlabel';
-import { MessageModule } from 'primeng/message';
-import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, input, signal } from '@angular/core';
+import { ControlValueAccessor, ReactiveFormsModule, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
+import { TuiTextfield, TuiIcon, TuiError, TuiDropdown } from '@taiga-ui/core';
+import { TuiInputDate } from '@taiga-ui/kit';
+import { TuiTooltip } from '@taiga-ui/kit';
+import { TuiDay } from '@taiga-ui/cdk/date-time';
 import { noop } from 'rxjs';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpDatePickerConfig } from './erp-datepicker.types';
 import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-datepicker',
   standalone: true,
-  imports: [DatePickerModule, ReactiveFormsModule, FloatLabelModule, MessageModule, ErpTranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    TuiTextfield,
+    TuiInputDate,
+    TuiIcon,
+    TuiTooltip,
+    TuiDropdown,
+    TuiError,
+    ErpTranslatePipe,
+  ],
   template: `
     @let _activeControl = activeControl();
     @let _errorMsg = getErrorMessage();
-    
     @let _placeholder = placeholder();
     @let _hint = hint();
-    @let _showIcon = showIcon();
-    @let _dateFormat = dateFormat();
-    @let _selectionMode = selectionMode();
-    @let _view = view();
-    @let _showTime = showTime();
-    @let _hourFormat = hourFormat();
+    @let _size = size();
+    @let _fluid = fluid();
+    @let _min = minDay();
+    @let _max = maxDay();
 
-    <div class="flex flex-col gap-2">
-      <p-floatlabel variant="on">
-        <p-datepicker
+    <div class="flex flex-col gap-2" [class.w-full]="_fluid"> 
+      <tui-textfield
+        [class.w-full]="_fluid"
+        [tuiTextfieldSize]="_size === 'small' ? 's' : (_size === 'large' ? 'l' : 'm')"
+      >
+        <label tuiLabel>{{ (_placeholder | erpTranslate) || '' }}</label>
+        <input
+          tuiInputDate
           [formControl]="_activeControl"
-          [showIcon]="_showIcon || false"
-          [dateFormat]="_dateFormat || 'dd/mm/yy'"
-          [selectionMode]="_selectionMode || 'single'"
-          [view]="_view || 'date'"
-          [showTime]="_showTime || false"
-          [hourFormat]="_hourFormat || '24'"
-          [fluid]="true"
-          (onBlur)="onTouched()"
-          [appendTo]="'body'"
+          [min]="_min"
+          [max]="_max"
+          (blur)="onTouched()"
         />
-        <label>{{ (_placeholder | erpTranslate) || '' }}</label>
-      </p-floatlabel>
-
-      @if (_hint) {
-        <small class="text-slate-500">{{ _hint | erpTranslate }}</small>
-      }
+        <tui-calendar *tuiDropdown />
+        
+        @if (_hint) {
+          <tui-icon [tuiTooltip]="_hint | erpTranslate" />
+        }
+      </tui-textfield>
 
       @if (_errorMsg) {
-        <p-message severity="error" size="small" variant="simple">
-          {{ _errorMsg | erpTranslate }}
-        </p-message>
+        <tui-error
+          [error]="(_errorMsg | erpTranslate) ?? ''"
+        />
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -60,48 +67,63 @@ import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
       multi: true,
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErpDatePickerComponent implements ControlValueAccessor {
   public config = input.required<ErpDatePickerConfig>();
   public control = input<FormControl | null>(null);
   public internalControl = new FormControl();
 
+  public internalLoading = signal(false);
+
   public activeControl = computed(() => this.control() || this.internalControl);
 
   protected placeholder = computed(() => unwrapSignal(this.config().placeholder));
   protected hint = computed(() => unwrapSignal(this.config().hint));
-  protected showIcon = computed(() => unwrapSignal(this.config().showIcon));
-  protected dateFormat = computed(() => unwrapSignal(this.config().dateFormat));
-  protected selectionMode = computed(() => unwrapSignal(this.config().selectionMode));
-  protected view = computed(() => unwrapSignal(this.config().view));
-  protected showTime = computed(() => unwrapSignal(this.config().showTime));
-  protected hourFormat = computed(() => unwrapSignal(this.config().hourFormat));
+  protected fluid = computed(() => unwrapSignal(this.config().fluid));
+  protected size = computed(() => unwrapSignal(this.config().size));
   protected errorMessages = computed(() => unwrapSignal(this.config().errorMessages));
 
+  protected minDay = computed(() => {
+    const val = unwrapSignal(this.config().min);
+    return val ?? null;
+  });
+
+  protected maxDay = computed(() => {
+    const val = unwrapSignal(this.config().max);
+    return val ?? null;
+  });
+
   public onTouched: () => void = noop;
-   
-  private _onChange: (value: any) => void = noop;
+  private _onChange: (value: TuiDay | null) => void = noop;
 
   public getErrorMessage(): Translatable | null {
     const ctrl = this.activeControl();
-    if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) return null;
+    const errorMsgs = this.errorMessages() || {};
+
+    if (ctrl.valid || (ctrl.pristine && !ctrl.touched)) {
+      return null;
+    }
+
     if (ctrl.errors) {
       const firstErrorKey = Object.keys(ctrl.errors)[0];
-      return this.errorMessages()?.[firstErrorKey] || `Błąd: ${firstErrorKey}`;
+      return errorMsgs[firstErrorKey] || `Błąd walidacji: ${firstErrorKey}`;
     }
+
     return null;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public writeValue(val: any): void {
     this.internalControl.setValue(val, { emitEvent: false });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public registerOnChange(fn: any): void {
     this._onChange = fn;
     this.internalControl.valueChanges.subscribe(fn);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public registerOnTouched(fn: any): void {
     this.onTouched = fn;
   }

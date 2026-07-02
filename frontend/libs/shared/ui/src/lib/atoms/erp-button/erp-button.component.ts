@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { TuiButton } from '@taiga-ui/core';
+import { TuiButtonLoading } from '@taiga-ui/kit';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpButtonConfig } from './erp-button.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
@@ -7,32 +8,31 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 @Component({
   selector: 'erp-button',
   standalone: true,
-  imports: [ButtonModule, ErpTranslatePipe],
+  imports: [TuiButton, TuiButtonLoading, ErpTranslatePipe],
   template: `
     @let _label = label();
     @let _icon = icon();
     @let _iconPos = iconPos();
     @let _severity = severity();
-    @let _rounded = rounded();
     @let _variant = variant();
     @let _size = size();
     @let _loading = isLoading();
     @let _disabled = isDisabled();
-    @let _badge = badge();
 
-    <p-button
-      [label]="(_label | erpTranslate) ?? ''"
-      [icon]="_icon ?? ''"
-      [iconPos]="_iconPos ?? 'left'"
-      [severity]="_severity"
-      [rounded]="_rounded ?? false"
-      [variant]="_variant"
-      [size]="_size"
+    @let _appearance = getAppearance(_severity, _variant);
+
+    <button
+      tuiButton
+      [appearance]="_appearance"
+      [iconStart]="_iconPos !== 'right' ? (_icon ?? '') : ''"
+      [iconEnd]="_iconPos === 'right' ? (_icon ?? '') : ''"
+      [size]="_size === 'small' ? 's' : (_size === 'large' ? 'l' : 'm')"
       [loading]="_loading"
       [disabled]="_disabled"
-      [badge]="_badge"
-      (onClick)="handleClick($event)"
-    />
+      (click)="handleClick($event)"
+    >
+      {{ (_label | erpTranslate) ?? '' }}
+    </button>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -54,6 +54,25 @@ export class ErpButtonComponent {
   protected isLoading = computed(() => this.internalLoading() || !!this.loading());
   protected isDisabled = computed(() => !!this.disabled() || this.internalLoading());
 
+  protected getAppearance(severity: string | undefined, variant: string | undefined): string {
+    if (variant === 'text') {
+      return 'flat';
+    }
+    if (variant === 'outlined') {
+      return 'outline';
+    }
+    switch (severity) {
+      case 'danger':
+        return 'destructive';
+      case 'secondary':
+        return 'secondary';
+      case 'success':
+        return 'primary';
+      default:
+        return 'primary';
+    }
+  }
+
   protected async handleClick(event: MouseEvent): Promise<void> {
     const callback = this.config().onClick;
     if (callback) {
@@ -68,6 +87,6 @@ export class ErpButtonComponent {
       }
     }
   }
-
-
 }
+
+

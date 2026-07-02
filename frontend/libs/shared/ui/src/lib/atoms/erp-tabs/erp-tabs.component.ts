@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, computed, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TabsModule } from 'primeng/tabs';
+import { TuiTabs } from '@taiga-ui/kit';
 import { ErpTabsConfig } from './erp-tabs.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
@@ -9,28 +9,33 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 @Component({
   selector: 'erp-tabs',
   standalone: true,
-  imports: [CommonModule, TabsModule, ErpTranslatePipe],
+  imports: [CommonModule, TuiTabs, ErpTranslatePipe],
   template: `
     @let _value = activeValue();
     @let _items = unwrappedItems();
     @let activeTab = getActiveTab(_items, _value);
+    @let _activeIndex = activeIndex();
 
     <div class="flex flex-col h-full">
       @if (_items.length > 0) {
-        <p-tabs [value]="_value" (valueChange)="handleValueChange($event)">
-          <p-tablist>
-            @for (item of _items; track item.value) {
-              <p-tab [value]="item.value" [disabled]="item.disabled">
-                <div class="flex items-center gap-2">
-                  @if (item.icon) {
-                    <i [class]="item.icon"></i>
-                  }
-                  <span>{{ item.label | erpTranslate }}</span>
-                </div>
-              </p-tab>
-            }
-          </p-tablist>
-        </p-tabs>
+        <tui-tabs
+          [activeItemIndex]="_activeIndex"
+          (activeItemIndexChange)="handleIndexChange($event, _items)"
+        >
+          @for (item of _items; track item.value) {
+            <button
+              tuiTab
+              [disabled]="item.disabled"
+            >
+              <div class="flex items-center gap-2">
+                @if (item.icon) {
+                  <i [class]="item.icon"></i>
+                }
+                <span>{{ item.label | erpTranslate }}</span>
+              </div>
+            </button>
+          }
+        </tui-tabs>
 
         <div class="flex-1 mt-4 flex flex-col min-h-0">
           @for (item of _items; track item.value) {
@@ -44,14 +49,12 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
           }
           @if (!activeTab) {
             <div class="flex flex-col items-center justify-center h-full opacity-50 grayscale p-12">
-               <i class="pi pi-ban text-4xl mb-2"></i>
                <span class="font-medium">{{ SHARED_KEYS.tabs.noAvailable | erpTranslate }}</span>
             </div>
           }
         </div>
       } @else {
         <div class="flex flex-col items-center justify-center h-full opacity-30 p-12">
-           <i class="pi pi-inbox text-4xl mb-2"></i>
            <span>{{ SHARED_KEYS.tabs.empty | erpTranslate }}</span>
         </div>
       }
@@ -109,9 +112,14 @@ export class ErpTabsComponent {
       return currentVal;
     }
     
-    // Fallback: first enabled tab
     const firstEnabled = items.find(i => !i.disabled);
     return firstEnabled?.value;
+  });
+
+  protected activeIndex = computed(() => {
+    const items = this.unwrappedItems();
+    const val = this.activeValue();
+    return items.findIndex(item => item.value === val);
   });
 
   constructor() {
@@ -119,7 +127,6 @@ export class ErpTabsComponent {
       const active = this.activeValue();
       const internal = this.internalValue();
       
-      // Synchronize internal state and trigger callback if forced to change
       if (active !== internal) {
         untracked(() => {
           this.handleValueChange(active);
@@ -132,6 +139,13 @@ export class ErpTabsComponent {
     return items.find(i => i.value === activeVal);
   }
 
+  protected handleIndexChange(index: number, items: any[]): void {
+    const targetItem = items[index];
+    if (targetItem && !targetItem.disabled) {
+      this.handleValueChange(targetItem.value);
+    }
+  }
+
   protected handleValueChange(newValue: any): void {
     this.internalValue.set(newValue);
     if (this.config().onTabChange) {
@@ -139,3 +153,4 @@ export class ErpTabsComponent {
     }
   }
 }
+

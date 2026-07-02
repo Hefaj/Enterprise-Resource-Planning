@@ -19,9 +19,18 @@
           {
             "glob": "**/*",
             "input": "frontend/apps/modules/dms/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "node_modules/@taiga-ui/icons/src",
+            "output": "assets/taiga-ui/icons"
           }
         ],
-        "styles": ["frontend/apps/modules/dms/src/styles.css"],
+        "styles": [
+          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
+          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+          "frontend/apps/modules/dms/src/styles.css"
+        ],
         "customWebpackConfig": {
           "path": "frontend/apps/modules/dms/webpack.config.ts"
         }

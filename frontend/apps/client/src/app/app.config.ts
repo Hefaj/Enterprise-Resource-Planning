@@ -1,7 +1,6 @@
 import { ApplicationConfig, Injectable, LOCALE_ID, isDevMode, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { appRoutes } from '@erp/client/contract';
-import { sharedPrimeNGConfig } from '@erp/shared/ui';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { STARTUP } from './STARTUP';
 import { registerLocaleData } from '@angular/common';
@@ -10,6 +9,10 @@ import { Translation, TranslocoLoader, provideTransloco } from '@jsverse/translo
 import { provideSharedTranslations } from '@erp/shared/ui';
 import { Observable, of } from 'rxjs';
 import { remoteApiProviders } from './remote-api.providers';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { NG_EVENT_PLUGINS } from '@taiga-ui/event-plugins';
+import { provideTaiga } from '@taiga-ui/core';
+import { TUI_LANGUAGE, TUI_POLISH_LANGUAGE } from '@taiga-ui/i18n';
 
 @Injectable({ providedIn: 'root' })
 export class TranslocoInlineLoader implements TranslocoLoader {
@@ -22,6 +25,9 @@ registerLocaleData(localePl);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideAnimations(),
+    provideTaiga(),
+    NG_EVENT_PLUGINS,
     provideSharedTranslations(),
     provideRouter(
       appRoutes,
@@ -33,9 +39,12 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(withFetch()),
     provideZonelessChangeDetection(),
-    sharedPrimeNGConfig,
     provideAppInitializer(STARTUP),
     { provide: LOCALE_ID, useValue: 'pl-PL' },
+    // {
+    //   provide: TUI_LANGUAGE,
+    //   useValue: of(TUI_POLISH_LANGUAGE),
+    // },
     ...remoteApiProviders,
     provideTransloco({
       config: {
@@ -48,3 +57,5 @@ export const appConfig: ApplicationConfig = {
     }),
   ],
 };
+
+

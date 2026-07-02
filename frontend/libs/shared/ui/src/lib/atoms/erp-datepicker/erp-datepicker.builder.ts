@@ -1,52 +1,31 @@
-import { ErpBaseBuilder } from '../../base/erp-base-builder';
+import { ErpInputBaseBuilder } from '../../base/erp-input-base';
 import { ErpDatePickerConfig } from './erp-datepicker.types';
-import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { MaybeSignal } from '../../base/erp-signal-utils';
+import { TuiDay } from '@taiga-ui/cdk/date-time';
 
-export class ErpDatePickerBuilder extends ErpBaseBuilder<ErpDatePickerConfig> {
-
-
-  public setPlaceholder(placeholder: MaybeSignal<Translatable | undefined>): this {
-    this._data.placeholder = placeholder;
+export class ErpDatePickerBuilder extends ErpInputBaseBuilder<ErpDatePickerConfig> {
+  public setMin(min: MaybeSignal<TuiDay | null | undefined>): this {
+    this._data.min = min;
     return this;
   }
 
-  public setHint(hint: MaybeSignal<Translatable | undefined>): this {
-    this._data.hint = hint;
+  public setMax(max: MaybeSignal<TuiDay | null | undefined>): this {
+    this._data.max = max;
     return this;
   }
 
-  public setErrorMessages(messages: MaybeSignal<Record<string, Translatable> | undefined>): this {
-    this._data.errorMessages = messages;
+  public setIcon(icon: MaybeSignal<string | undefined>): this {
+    this._data.icon = icon;
     return this;
   }
 
-  public setShowIcon(showIcon: MaybeSignal<boolean | undefined> = true): this {
-    this._data.showIcon = showIcon;
+  public setFluid(fluid: MaybeSignal<boolean | undefined> = true): this {
+    this._data.fluid = fluid;
     return this;
   }
 
-  public setDateFormat(dateFormat: MaybeSignal<string | undefined>): this {
-    this._data.dateFormat = dateFormat;
-    return this;
-  }
-
-  public setSelectionMode(mode: MaybeSignal<'single' | 'multiple' | 'range' | undefined>): this {
-    this._data.selectionMode = mode;
-    return this;
-  }
-
-  public setView(view: MaybeSignal<'date' | 'month' | 'year' | undefined>): this {
-    this._data.view = view;
-    return this;
-  }
-
-  public setShowTime(showTime: MaybeSignal<boolean | undefined> = true): this {
-    this._data.showTime = showTime;
-    return this;
-  }
-
-  public setHourFormat(format: MaybeSignal<'12' | '24' | undefined>): this {
-    this._data.hourFormat = format;
+  public setSize(size: MaybeSignal<'small' | 'large' | undefined>): this {
+    this._data.size = size;
     return this;
   }
 }

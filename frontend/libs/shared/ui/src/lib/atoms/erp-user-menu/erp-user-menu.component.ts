@@ -1,52 +1,76 @@
 import { ChangeDetectionStrategy, Component, input, computed } from '@angular/core';
-import { AvatarModule } from 'primeng/avatar';
-import { ButtonModule } from 'primeng/button';
-import { MenuModule } from 'primeng/menu';
-import { RippleModule } from 'primeng/ripple';
+import { TuiAvatar } from '@taiga-ui/kit';
+import { TuiDropdown, TuiDataList, TuiOption } from '@taiga-ui/core';
 import { ErpUserMenuConfig } from './erp-user-menu.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 
 @Component({
   selector: 'erp-user-menu',
   standalone: true,
-  imports: [ButtonModule, AvatarModule, MenuModule, RippleModule],
+  imports: [TuiAvatar, TuiDropdown, TuiDataList, TuiOption],
   template: `
     @let _items = items();
     @let _userName = userName();
     @let _userRole = userRole();
     @let _userImage = userImage();
 
-    <p-menu
-      #menu
-      [popup]="true"
-      [model]="_items || []"
-      appendTo="body"
-    >
-      <ng-template #end>
-        <button
-          pRipple
-          class="relative overflow-hidden w-full border-0 bg-transparent flex items-start p-2 pl-4 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-none cursor-pointer transition-colors duration-200"
-        >
-          <p-avatar
-            [image]="_userImage || 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png'"
-            class="mr-2"
-            shape="circle"
-          />
-          <span class="inline-flex flex-col items-start">
-            <span class="font-bold">{{ _userName || 'Guest' }}</span>
-            <span class="text-sm">{{ _userRole || 'User' }}</span>
-          </span>
-        </button>
-      </ng-template>
-    </p-menu>
+    <div class="relative inline-block">
+      <!-- Avatar Trigger button -->
+      <div
+        tuiAvatar
+        size="l"
+        class="border-2 border-slate-200 cursor-pointer rounded-full"
+        [tuiDropdown]="menuContent"
+        [tuiDropdownAlign]="'end'"
+      >
+        <img
+          [attr.alt]="_userName || 'User'"
+          [attr.src]="_userImage || 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png'"
+        />
+      </div>
 
-    <p-avatar
-      [image]="_userImage || 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png'"
-      shape="circle"
-      size="large"
-      class="border-2 border-primary-500 m-2 cursor-pointer"
-      (click)="menu.toggle($event)"
-    />
+      <!-- Dropdown Content Template -->
+      <ng-template #menuContent>
+        <div class="flex flex-col min-w-56 p-1 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-slate-100 dark:border-zinc-700">
+          
+          <!-- User info header -->
+          <div class="flex items-center gap-3 p-3 border-b border-slate-100 dark:border-zinc-700">
+            <div
+              tuiAvatar
+              size="m"
+              class="rounded-full"
+            >
+              <img
+                [attr.alt]="_userName || 'User'"
+                [attr.src]="_userImage || 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png'"
+              />
+            </div>
+            <div class="flex flex-col items-start leading-tight">
+              <span class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ _userName || 'Guest' }}</span>
+              <span class="text-xs text-slate-500 dark:text-zinc-400">{{ _userRole || 'User' }}</span>
+            </div>
+          </div>
+
+          <!-- Menu items list -->
+          <tui-data-list class="mt-1">
+            @for (item of _items || []; track item.label) {
+              <button
+                tuiOption
+                type="button"
+                [disabled]="!!item.disabled"
+                (click)="item.command ? item.command({ item: item }) : null"
+                class="w-full text-left justify-start"
+              >
+                @if (item.icon) {
+                  <i [class]="item.icon + ' mr-2 text-slate-500'"></i>
+                }
+                <span class="text-sm text-slate-700 dark:text-zinc-300">{{ item.label }}</span>
+              </button>
+            }
+          </tui-data-list>
+        </div>
+      </ng-template>
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -58,3 +82,4 @@ export class ErpUserMenuComponent {
   protected userRole = computed(() => unwrapSignal(this.config().userRole));
   protected userImage = computed(() => unwrapSignal(this.config().userImage));
 }
+

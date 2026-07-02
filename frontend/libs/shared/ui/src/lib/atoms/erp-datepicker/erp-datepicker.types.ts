@@ -1,13 +1,16 @@
-import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpInputBase } from '../../base/erp-input-base';
+import { MaybeSignal } from '../../base/erp-signal-utils';
+import { TuiDay } from '@taiga-ui/cdk/date-time';
 
-export interface ErpDatePickerConfig {
-  placeholder?: MaybeSignal<Translatable | undefined>;
-  hint?: MaybeSignal<Translatable | undefined>;
-  errorMessages?: MaybeSignal<Record<string, Translatable> | undefined>;
-  showIcon?: MaybeSignal<boolean | undefined>;
-  dateFormat?: MaybeSignal<string | undefined>;
-  selectionMode?: MaybeSignal<'single' | 'multiple' | 'range' | undefined>;
-  view?: MaybeSignal<'date' | 'month' | 'year' | undefined>;
-  showTime?: MaybeSignal<boolean | undefined>;
-  hourFormat?: MaybeSignal<'12' | '24' | undefined>;
+export interface ErpDatePickerConfig extends ErpInputBase {
+  /** Minimum selectable date */
+  min?: MaybeSignal<TuiDay | null | undefined>;
+  /** Maximum selectable date */
+  max?: MaybeSignal<TuiDay | null | undefined>;
+  /** Icon displayed inside the textfield (default: '@tui.calendar') */
+  icon?: MaybeSignal<string | undefined>;
+  /** Whether the component stretches to fill its container */
+  fluid?: MaybeSignal<boolean | undefined>;
+  /** Textfield size: 'small' | 'large' (default: medium) */
+  size?: MaybeSignal<'small' | 'large' | undefined>;
 }

@@ -4,38 +4,38 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
-import { ErpInputTextBuilder, ErpInputTextComponent } from '@erp/shared/ui';
+// import { ErpInputTextBuilder, ErpInputTextComponent } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-dashboard',
   standalone: true,
-  imports: [CommonModule, CheckboxModule, InputTextModule, ButtonModule, ErpInputTextComponent],
+  imports: [CommonModule, CheckboxModule, InputTextModule, ButtonModule],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
-  public myDynamicForm = new FormGroup({
-    email: new FormControl('jan@example.com', [Validators.required, Validators.email]),
-    age: new FormControl(30, [Validators.required, Validators.minLength(5)]),
-  });
+  // public myDynamicForm = new FormGroup({
+  //   email: new FormControl('jan@example.com', [Validators.required, Validators.email]),
+  //   age: new FormControl(30, [Validators.required, Validators.minLength(5)]),
+  // });
 
-  public control = this.myDynamicForm.controls.email;
+  // public control = this.myDynamicForm.controls.email;
 
-  public textConfig = ErpInputTextBuilder.create((input) => {
-    input.setPlaceholder('Rafi');
-    input.setErrorMessages({
-      required: 'required',
-      email: 'email',
-    });
-  });
+  // public textConfig = ErpInputTextBuilder.create((input) => {
+  //   input.setPlaceholder('Rafi');
+  //   input.setErrorMessages({
+  //     required: 'required',
+  //     email: 'email',
+  //   });
+  // });
 
-  public control2 = this.myDynamicForm.controls.age;
+  // public control2 = this.myDynamicForm.controls.age;
 
-  public textConfig2 = ErpInputTextBuilder.create((input) => {
-    input.setPlaceholder('Rafi2');
-    input.setHint('Ale jazda2');
-    input.setErrorMessages({
-      required: 'required',
-      min: 'min',
-    });
-  });
+  // public textConfig2 = ErpInputTextBuilder.create((input) => {
+  //   input.setPlaceholder('Rafi2');
+  //   input.setHint('Ale jazda2');
+  //   input.setErrorMessages({
+  //     required: 'required',
+  //     min: 'min',
+  //   });
+  // });
 }

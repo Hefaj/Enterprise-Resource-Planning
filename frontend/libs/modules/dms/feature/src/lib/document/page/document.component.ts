@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ErpPageLayoutComponent, ErpPageLayoutBuilder, ErpTabsComponent, ErpTabsBuilder, ErpEmptyCardBuilder, ErpModalService } from '@erp/shared/ui';
-import { DmsDocument } from '@erp/dms/ui';
 import { CommonModule } from '@angular/common';
 import { noop } from 'rxjs';
 
@@ -34,28 +32,15 @@ export class DocumentStatusSidebarComponent {}
 @Component({
   selector: 'erp-document',
   standalone: true,
-  imports: [CommonModule, ErpPageLayoutComponent],
+  imports: [CommonModule],
   template: `
     <div class="flex flex-col h-full">
       <div class="p-4 bg-surface-100 dark:bg-surface-800 flex justify-between items-center border-b border-surface-200 dark:border-surface-700">
         <h2 class="text-lg font-bold">Dokumenty</h2>
         <div class="flex gap-2">
-          <button 
-            (click)="openTestProductModal()" 
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2">
-            <i class="pi pi-external-link"></i>
-            Test: Otwórz modal z innego modułu (Product)
-          </button>
-          <button 
-            (click)="openTestProductNameModal()" 
-            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2">
-            <i class="pi pi-external-link"></i>
-            Test: Otwórz modal nazwy z Product
-          </button>
         </div>
       </div>
       <div class="flex-1">
-        <erp-page-layout [config]="pageConfig" />
       </div>
     </div>
   `,
@@ -83,125 +68,4 @@ export class DocumentStatusSidebarComponent {}
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentComponent {
-  private readonly _modalService = inject(ErpModalService);
-
-  protected openTestProductModal(): void {
-    this._modalService.open('2cff8772bd344f1faa99b31e8c1bfccd', {
-      products: [
-        { uuid: 'test-uuid-1', sku: 'TEST-SKU-DMS', price: 99.99 }
-      ],
-      price: 150.00
-    });
-  }
-
-  protected openTestProductNameModal(): void {
-    this._modalService.open('fcd357f55a77f081759dc43ee69aa6a3', {
-      products: [
-        { uuid: 'test-uuid-1', sku: 'TEST-SKU-DMS', name: 'Original Name' }
-      ],
-      name: 'New Test Name'
-    });
-  }
-
-  /** Zaznaczone dokumenty */
-  protected selectedDocuments = signal<DmsDocument | DmsDocument[] | null>(null);
-
-  /** Wyciągnięcie pojedynczego dokumentu */
-  protected singleSelectedDocument = computed<DmsDocument | null>(() => {
-    const sel = this.selectedDocuments();
-    if (!sel) return null;
-    if (Array.isArray(sel)) return sel.length === 1 ? sel[0] : null;
-    return sel;
-  });
-
-  protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
-    b
-      .addTab('Lista dokumentów', 'list', { icon: 'pi pi-list' })
-      .addTab('Workflow obiegu', 'workflow', { icon: 'pi pi-sitemap' })
-      .setInitialValue('list')
-      .setOnTabChange(noop),
-  );
-
-  protected readonly pageConfig = ErpPageLayoutBuilder.create(b => b
-    .setLeftSidebar(DocumentStatusSidebarComponent)
-    .setMain(ErpTabsComponent, { config: this.tabsConfig })
-  );
-
-  /** Karta stanu pustego dla Workflow */
-  protected readonly emptyWorkflowCardConfig = ErpEmptyCardBuilder.create((b) =>
-    b
-      .setIcon('pi pi-info-circle')
-      .setTitle('Wybierz dokument')
-      .setSubtitle('Aby zobaczyć workflow, zaznacz dokładnie jeden dokument na liście.')
-      .setDescription('Zaznaczenie wielu dokumentów uniemożliwia podgląd procesu jednostkowego.')
-      .setShowPulse(true)
-  );
-
-  /** Pobieranie węzłów dla zaznaczonego dokumentu */
-  protected currentDocumentNodes = computed(() => {
-    const doc = this.singleSelectedDocument();
-    if (!doc) return [];
-    return this._documentWorkflows[doc.id]?.nodes ?? this._defaultWorkflowNodes;
-  });
-
-  /** Pobieranie krawędzi dla zaznaczonego dokumentu */
-  protected currentDocumentEdges = computed(() => {
-    const doc = this.singleSelectedDocument();
-    if (!doc) return [];
-    return this._documentWorkflows[doc.id]?.edges ?? this._defaultWorkflowEdges;
-  });
-
-  // ── Dane testowe ──
-
-  protected readonly documents: DmsDocument[] = [
-    {
-      id: 'doc-1',
-      name: 'Faktura VAT #2024/001',
-      type: 'Faktura',
-      status: 'Zatwierdzony',
-      author: 'Jan Kowalski',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-20'),
-      size: '245 KB',
-    },
-    { id: 'doc-2', name: 'Umowa z Dostawcą XYZ', type: 'Umowa', status: 'W obiegu', author: 'Anna Nowak', createdAt: new Date('2024-02-01'), updatedAt: new Date('2024-02-10'), size: '1.2 MB' },
-    { id: 'doc-3', name: 'Protokół odbioru Q1', type: 'Protokół', status: 'Szkic', author: 'Piotr Wiśniewski', createdAt: new Date('2024-03-05'), updatedAt: new Date('2024-03-05'), size: '89 KB' },
-    {
-      id: 'doc-4',
-      name: 'Zamówienie #ZAM-2024-042',
-      type: 'Zamówienie',
-      status: 'W obiegu',
-      author: 'Maria Kaczmarek',
-      createdAt: new Date('2024-03-12'),
-      updatedAt: new Date('2024-03-14'),
-      size: '156 KB',
-    },
-  ];
-
-  private readonly _defaultWorkflowNodes = [
-    { id: 's1', type: 'start', label: 'Start', position: { x: 300, y: 50 }, width: 150, status: 'completed' as const },
-    { id: 'a1', type: 'approval', label: 'Weryfikacja', position: { x: 275, y: 180 }, width: 200, status: 'active' as const },
-    { id: 'e1', type: 'end', label: 'Koniec', position: { x: 300, y: 320 }, width: 150, status: 'pending' as const },
-  ];
-
-  private readonly _defaultWorkflowEdges = [
-    { id: 'e1', source: 's1', target: 'a1' },
-    { id: 'e2', source: 'a1', target: 'e1' },
-  ];
-
-  private readonly _documentWorkflows: Record<string, { nodes: any[]; edges: any[] }> = {
-    'doc-2': {
-      nodes: [
-        { id: 's1', type: 'start', label: 'Nowa umowa', position: { x: 300, y: 40 }, width: 180, status: 'completed' as const },
-        { id: 'a1', type: 'approval', label: 'Weryfikacja prawna', position: { x: 250, y: 160 }, width: 220, status: 'completed' as const },
-        { id: 'a2', type: 'approval', label: 'Akceptacja zarządu', position: { x: 250, y: 290 }, width: 220, status: 'active' as const },
-        { id: 'e1', type: 'end', label: 'Podpisana', position: { x: 300, y: 430 }, width: 180, status: 'pending' as const },
-      ],
-      edges: [
-        { id: 'e1', source: 's1', target: 'a1' },
-        { id: 'e2', source: 'a1', target: 'a2' },
-        { id: 'e3', source: 'a2', target: 'e1' },
-      ],
-    },
-  };
 }

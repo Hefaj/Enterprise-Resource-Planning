@@ -1,96 +1,104 @@
-import { Component, computed, inject } from '@angular/core';
-import { ErpHostLayoutComponent, ErpHostLayoutBuilder, ErpBreadcrumbConfig, ErpUserMenuConfig, ErpPanelMenuComponent, ErpBreadcrumbComponent, ErpUserMenuComponent, ErpModalService, ErpPanelMenuItem, ErpPanelMenuConfig } from '@erp/shared/ui';
-import { Router, RouterModule } from '@angular/router';
-import { ErpBreadcrumbService, ErpNavigationItem, ErpNavRegistryService } from '@erp/shared/data-access';
+import { Component, signal } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { noop } from 'rxjs';
-import { ErpAuthService } from '@erp/shared/auth';
-import { AppSettingsService } from '@erp/client/util';
-import { JobPopoverLazyComponent } from './job-popover-lazy.component';
+import { FormsModule } from '@angular/forms';
+import { ErpInputComponent, ErpInputBuilder } from '@erp/shared/ui/erp-input';
+import { ERP_ICONS } from '@erp/shared/ui';
+import { form, required, email, FormField } from '@angular/forms/signals';
 
 @Component({
   selector: 'erp-shell',
   standalone: true,
   imports: [
     CommonModule,
-    ErpHostLayoutComponent,
     RouterModule,
-    ErpPanelMenuComponent,
-    ErpBreadcrumbComponent,
-    ErpUserMenuComponent,
-    JobPopoverLazyComponent
+    FormsModule,
+    ErpInputComponent,
+    FormField,
   ],
   templateUrl: './shell.component.html',
 })
 export class ShellLayoutComponent {
-  private _navRegistryService = inject(ErpNavRegistryService);
-  private _breadcrumbService = inject(ErpBreadcrumbService);
-  private _authService = inject(ErpAuthService);
-  private _router = inject(Router);
-  private _settingsService = inject(AppSettingsService);
-  private _modalService = inject(ErpModalService);
+  // Wartość z buildera
+  readonly inputWithValueBuilder = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Wartość z buildera')
+     .setValue('Inicjalna wartość z buildera!')
+     .setClearable(true)
+  );
 
-  protected $userMenuConfig = computed(() => {
-    return {
-      items: [
-        { label: 'Twój Profil', icon: 'pi pi-user', command: noop },
-        {
-          label: 'Ustawienia',
-          icon: 'pi pi-cog',
-          command: (): void => {
-            this._router.navigate(['settings']);
-          },
-        },
-        { separator: true },
-        {
-          label: 'Wyloguj',
-          icon: 'pi pi-sign-out',
-          command: (): void => this._authService.logout(),
-        },
-        { separator: true },
-      ],
-    } as ErpUserMenuConfig;
+  readonly basicInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Wpisz tekst...')
+  );
+
+  readonly inputWithIcons = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Szukaj...')
+     .setIconStart(ERP_ICONS.search)
+     .setSize('l')
+  );
+
+  readonly disabledInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Pole wyłączone')
+     .setDisabled(true)
+  );
+
+  readonly inputWithError = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Email')
+     .setError('Nieprawidłowy format adresu email')
+     .setType('email')
+  );
+
+  readonly clearableInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Wyczyść przyciskiem X')
+     .setClearable(true)
+  );
+
+  readonly inputWithTooltip = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Pole z tooltipem')
+     .setTooltip('To jest podpowiedź kontekstowa')
+  );
+
+  readonly smallInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Mały (s)')
+     .setSize('s')
+  );
+
+  readonly mediumInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Średni (m)')
+     .setSize('m')
+  );
+
+  readonly largeInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Duży (l)')
+     .setSize('l')
+  );
+
+  readonly fullInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Pełny zestaw')
+     .setIconStart(ERP_ICONS.user)
+     .setClearable(true)
+     .setTooltip('To pole wymaga pełnego imienia i nazwiska')
+     .setSize('l')
+  );
+
+  readonly demoValue = signal('Wartość testowa');
+
+  // --- SEKCJA SIGNAL FORMS ---
+  readonly userModel = signal({
+    email: '',
+    username: 'john_doe',
   });
 
-  protected $navMenu = computed(() => {
-    const navMenu = this._navRegistryService.$navMenu();
-    return {
-      items: this._mapToNavMenu(navMenu),
-    } as ErpPanelMenuConfig;
+  readonly userForm = form(this.userModel, (f) => {
+    required(f.email);
+    email(f.email);
+    required(f.username);
   });
 
-  protected $breadcrumbConfig = computed(() => {
-    const { home, items } = this._breadcrumbService.breadcrumb();
-    return { home, items } as ErpBreadcrumbConfig;
-  });
+  readonly signalEmailConfig = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Podaj email...')
+  );
 
-  private _mapToNavMenu(items: ErpNavigationItem[]): ErpPanelMenuItem[] {
-    return items.map((item) => ({
-      label: item.label,
-      icon: item.iconId ? `@tui.${item.iconId}` as any : undefined,
-      routerLink: item.disabled ? undefined : (Array.isArray(item.route) ? item.route.join('/') : item.route),
-      disabled: item.disabled,
-      items: item.children ? this._mapToNavMenu(item.children) : undefined,
-    }));
-  }
-
-  protected onJobSelection = (val: any): void => {
-    if (val && val.queueId) {
-      let command = {};
-      if (val.commandJson) {
-        try {
-          command = JSON.parse(val.commandJson);
-        } catch (e) {
-          console.error('Failed to parse commandJson', e);
-        }
-      }
-      this._modalService.open(val.queueId, command);
-    }
-  };
-
-  protected $hostLayoutConfig = computed(() => {
-    return ErpHostLayoutBuilder.create((b) =>
-      b.setCloseMenuOnNavigation(true)
-    );
-  });
+  readonly signalUsernameConfig = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Nazwa użytkownika...')
+  );
 }

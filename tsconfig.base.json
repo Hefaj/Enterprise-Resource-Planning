@@ -34,6 +34,7 @@
       "@erp/shared/ui/erp-drawer": ["frontend/libs/shared/ui/src/lib/atoms/erp-drawer/index.ts"],
       "@erp/shared/ui/erp-empty-card": ["frontend/libs/shared/ui/src/lib/atoms/erp-empty-card/index.ts"],
       "@erp/shared/ui/erp-input-text": ["frontend/libs/shared/ui/src/lib/atoms/erp-input-text/index.ts"],
+      "@erp/shared/ui/erp-input": ["frontend/libs/shared/ui/src/lib/form/erp-input/index.ts"],
       "@erp/shared/ui/erp-listbox": ["frontend/libs/shared/ui/src/lib/atoms/erp-listbox/index.ts"],
       "@erp/shared/ui/erp-menu": ["frontend/libs/shared/ui/src/lib/atoms/erp-menu/index.ts"],
       "@erp/shared/ui/erp-menubar": ["frontend/libs/shared/ui/src/lib/atoms/erp-menubar/index.ts"],

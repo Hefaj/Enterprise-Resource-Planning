@@ -8,9 +8,10 @@ CORE ARCHITECTURE PRINCIPLES:
 
 - Frontend: Micro-Frontend (MFE) architecture using Nx and Module Federation (Vite/Webpack).
 - UI/UX: Standalone Components, Signals-based state, Angular v21 Control Flow (@if, @for, @let).
-- Styling: Tailwind CSS v4 + PrimeNG (Unstyled/Headless mode preferred).
+- Styling: Tailwind CSS v4 + TaigaUI (v5+).
 - Backend: .NET 10 C# with Backend-for-Frontend (BFF) patterns and Modular Monolith structure.
 - Coding Style: Clean Code, DRY, and "Single Config Builder" pattern for UI components.
+- Component library: Taiga UI (v5+) is used for all atomic/UI components.
 
 TASK SPECIFIC: GENERATE UI COMPONENT
 When asked to create a component, strictly follow the "Single Config Builder" pattern:
@@ -35,7 +36,7 @@ When asked to create a component, strictly follow the "Single Config Builder" pa
      - Single Input: `config = input.required<[ComponentName]Config>();`.
      - Use `computed()` to unwrap Signals from config.
      - Implement `internalLoading = signal(false)` to handle async `onClick` or `onAction` events automatically.
-     - Use Tailwind CSS v4 classes for layout and PrimeNG for core logic.
+     - Use Tailwind CSS v4 classes for layout and TaigaUI for core logic.
 
 3. BACKEND INTEGRATION (.NET 10):
    - When proposing API: Use Minimal APIs, C# 14 features (if applicable), and Strong Typing for DTOs.

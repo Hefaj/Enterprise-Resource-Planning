@@ -119,21 +119,21 @@ import {
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { InputTextModule } from 'primeng/inputtext'; // PrimeNG unstyled imports
+import { TuiTextfield } from '@taiga-ui/kit'; // TaigaUI imports
 import { COMMAND_TYPE } from '@erp/MODULE_NAME/data-access';
 import { PascalCaseModalNameMetadata } from './MODAL_NAME.definition';
 
 @Component({
   selector: 'erp-MODULE_NAME-MODAL_NAME-step',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule],
+  imports: [CommonModule, ReactiveFormsModule, TuiTextfield],
   template: `
     <div class="MODAL_NAME-step">
       <!-- Szablon HTML / Formularz -->
     </div>
   `,
   styles: [`
-    /* Style CSS (zgodnie z PrimeNG Unstyled) */
+    /* Style CSS (zgodnie z TaigaUI) */
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

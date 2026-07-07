@@ -45,7 +45,7 @@ frontend/
 │   │   └── util/
 │   │
 │   ├── shared/                      # Biblioteki współdzielone (scope:shared)
-│   │   ├── ui/                      # Komponenty PrimeNG Unstyled
+│   │   ├── ui/                      # Komponenty TaigaUI / Wspólne UI
 │   │   ├── auth/                    # Guard'y, serwisy auth
 │   │   └── data-access/             # Wspólne serwisy (NavRegistry, etc.)
 │   │
@@ -107,5 +107,5 @@ Reguła `scope:shared` pozwala importować tylko z `scope:shared`.
 - **Standalone Components**: domyślne — bez NgModules
 - **Signal-based state management**: preferowane
 - **Control Flow**: `@if`, `@for`, `@switch` (nowa składnia Angular)
-- **PrimeNG Unstyled**: brak domyślnych tematów, stylowanie przez `pt` lub CSS
+- **TaigaUI**: Używamy biblioteki TaigaUI (v5+) jako bazowego zestawu komponentów. Ewentualne stylowanie nadpisujemy za pomocą zmiennych CSS (`--tui-*`) lub dedykowanych klas CSS.
 - **Package manager**: pnpm

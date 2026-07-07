@@ -178,7 +178,7 @@ bootstrapApplication(RemoteEntry, appConfig).catch((err) => console.error(err));
 ```ts
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { sharedPrimeNGConfig } from '@erp/shared/ui';
+import { provideTaiga } from '@taiga-ui/core';
 import { remoteRoutes } from '@erp/MODULE_NAME/contract';
 import { API_BASE_URL } from '@erp/MODULE_NAME/data-access';
 
@@ -186,7 +186,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
-    sharedPrimeNGConfig,
+    provideTaiga(),
     { provide: API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na odpowiedni port BFF dla tego modułu (np. 5250)
   ],
 };

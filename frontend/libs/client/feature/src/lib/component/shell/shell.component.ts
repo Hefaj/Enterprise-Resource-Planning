@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ErpInputComponent, ErpInputBuilder } from '@erp/shared/ui/erp-input';
+import { ErpInputComponent, ErpInputBuilder, ErpInputConfig } from '@erp/shared/ui/erp-input';
 import { ERP_ICONS } from '@erp/shared/ui';
-import { form, required, email, FormField } from '@angular/forms/signals';
+import { form, required, email } from '@angular/forms/signals';
+import { TUI_DARK_MODE } from '@taiga-ui/core';
 
 @Component({
   selector: 'erp-shell',
@@ -14,20 +15,36 @@ import { form, required, email, FormField } from '@angular/forms/signals';
     RouterModule,
     FormsModule,
     ErpInputComponent,
-    FormField,
   ],
   templateUrl: './shell.component.html',
 })
 export class ShellLayoutComponent {
+  readonly isDarkMode = inject(TUI_DARK_MODE);
+
+  toggleTheme(): void {
+    const nextTheme = !this.isDarkMode();
+    this.isDarkMode.set(nextTheme);
+    localStorage.setItem('erp-theme', nextTheme ? 'dark' : 'light');
+    if (nextTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+
   // Wartość z buildera
   readonly inputWithValueBuilder = ErpInputBuilder.create(b =>
     b.setPlaceholder('Wartość z buildera')
      .setValue('Inicjalna wartość z buildera!')
-     .setClearable(true)
   );
 
   readonly basicInput = ErpInputBuilder.create(b =>
+    b.setPlaceholder('Wpisz tekst...').setType('password')
+  );
+
+  readonly inputWithLabel = ErpInputBuilder.create(b =>
     b.setPlaceholder('Wpisz tekst...')
+     .setLabel('Etykieta (Floating Label)')
   );
 
   readonly inputWithIcons = ErpInputBuilder.create(b =>
@@ -41,15 +58,8 @@ export class ShellLayoutComponent {
      .setDisabled(true)
   );
 
-  readonly inputWithError = ErpInputBuilder.create(b =>
-    b.setPlaceholder('Email')
-     .setError('Nieprawidłowy format adresu email')
-     .setType('email')
-  );
-
   readonly clearableInput = ErpInputBuilder.create(b =>
     b.setPlaceholder('Wyczyść przyciskiem X')
-     .setClearable(true)
   );
 
   readonly inputWithTooltip = ErpInputBuilder.create(b =>
@@ -75,7 +85,6 @@ export class ShellLayoutComponent {
   readonly fullInput = ErpInputBuilder.create(b =>
     b.setPlaceholder('Pełny zestaw')
      .setIconStart(ERP_ICONS.user)
-     .setClearable(true)
      .setTooltip('To pole wymaga pełnego imienia i nazwiska')
      .setSize('l')
   );
@@ -85,7 +94,7 @@ export class ShellLayoutComponent {
   // --- SEKCJA SIGNAL FORMS ---
   readonly userModel = signal({
     email: '',
-    username: 'john_doe',
+    username: '',
   });
 
   readonly userForm = form(this.userModel, (f) => {
@@ -94,11 +103,25 @@ export class ShellLayoutComponent {
     required(f.username);
   });
 
-  readonly signalEmailConfig = ErpInputBuilder.create(b =>
-    b.setPlaceholder('Podaj email...')
-  );
+  readonly signalEmailConfig: ErpInputConfig;
+  readonly signalUsernameConfig: ErpInputConfig;
 
-  readonly signalUsernameConfig = ErpInputBuilder.create(b =>
-    b.setPlaceholder('Nazwa użytkownika...')
-  );
+  constructor() {
+    this.signalEmailConfig = ErpInputBuilder.create(b =>
+      b.setPlaceholder('Podaj email...')
+       .setErrorMessages({
+         required: 'Adres e-mail jest wymagany.',
+         email: 'Wprowadzony e-mail ma niepoprawny format.'
+       })
+       .setFormField(this.userForm.email)
+    );
+
+    this.signalUsernameConfig = ErpInputBuilder.create(b =>
+      b.setPlaceholder('Nazwa użytkownika...')
+       .setErrorMessages({
+         required: 'Nazwa użytkownika jest wymagana.'
+       })
+       .setFormField(this.userForm.username)
+    );
+  }
 }

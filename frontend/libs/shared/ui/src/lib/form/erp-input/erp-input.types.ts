@@ -11,8 +11,8 @@ export interface ErpInputConfig extends ErpInputBase {
   iconStart?: MaybeSignal<ErpIcon | undefined>;
   iconEnd?: MaybeSignal<ErpIcon | undefined>;
   size?: MaybeSignal<ErpInputSize>;
-  error?: MaybeSignal<Translatable | undefined>;
-  clearable?: MaybeSignal<boolean>;
   type?: MaybeSignal<ErpInputType>;
   value?: MaybeSignal<string>;
+  label?: MaybeSignal<Translatable | undefined>;
+  formField?: MaybeSignal<any>;
 }

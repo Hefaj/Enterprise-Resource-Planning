@@ -1,7 +1,19 @@
-<div style="padding: 2rem; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
-  <h2 style="font: var(--tui-typography-heading-h4); color: var(--tui-text-primary); margin: 0;">
-    erp-input — Demo
-  </h2>
+<div style="padding: 2rem; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; max-height: 100vh; overflow-y: auto; box-sizing: border-box;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin: 0;">
+    <h2 style="font: var(--tui-typography-heading-h4); color: var(--tui-text-primary); margin: 0;">
+      erp-input — Demo
+    </h2>
+    <button 
+      (click)="toggleTheme()" 
+      style="cursor: pointer; padding: 0.5rem 1rem; border-radius: var(--tui-radius-m); border: 1px solid var(--tui-border-normal); background: var(--tui-background-neutral-1); color: var(--tui-text-primary); font: var(--tui-typography-body-s-bold); display: flex; align-items: center; gap: 0.5rem;"
+    >
+      @if (isDarkMode()) {
+        <span>☀️ Jasny motyw</span>
+      } @else {
+        <span>🌙 Ciemny motyw</span>
+      }
+    </button>
+  </div>
 
   <!-- Wartość z buildera -->
   <section>
@@ -17,6 +29,12 @@
     <erp-input [config]="basicInput" />
   </section>
 
+  <!-- Pływająca etykieta -->
+  <section>
+    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Z pływającą etykietą (floating label)</h3>
+    <erp-input [config]="inputWithLabel" />
+  </section>
+
   <!-- Z ikonami -->
   <section>
     <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Z ikoną start (search, size: L)</h3>
@@ -29,11 +47,6 @@
     <erp-input [config]="disabledInput" />
   </section>
 
-  <!-- Z błędem walidacji -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Z błędem walidacji</h3>
-    <erp-input [config]="inputWithError" />
-  </section>
 
   <!-- Clearable -->
   <section>
@@ -77,14 +90,14 @@
         <span style="font: var(--tui-typography-body-xs); color: var(--tui-text-secondary); display: block; margin-bottom: 0.25rem;">
           Email (wymagany, walidacja formatu):
         </span>
-        <erp-input [config]="signalEmailConfig" [formField]="userForm.email" />
+        <erp-input [config]="signalEmailConfig" />
       </div>
 
       <div>
         <span style="font: var(--tui-typography-body-xs); color: var(--tui-text-secondary); display: block; margin-bottom: 0.25rem;">
           Nazwa użytkownika (wymagana):
         </span>
-        <erp-input [config]="signalUsernameConfig" [formField]="userForm.username" />
+        <erp-input [config]="signalUsernameConfig" />
       </div>
 
       <div style="font: var(--tui-typography-body-xs); color: var(--tui-text-secondary); background: var(--tui-background-neutral-1); padding: 0.75rem; border-radius: var(--tui-radius-m); line-height: 1.5;">

@@ -38,6 +38,12 @@ importers:
       '@jsverse/transloco':
         specifier: ^8.4.0
         version: 8.4.0(@angular/core@22.0.4(@angular/compiler@22.0.4)(rxjs@7.8.2))(rxjs@7.8.2)(typescript@6.0.3)
+      '@maskito/angular':
+        specifier: ^5.3.1
+        version: 5.3.1(@angular/core@22.0.4(@angular/compiler@22.0.4)(rxjs@7.8.2))(@angular/forms@22.0.4(@angular/common@22.0.4(@angular/core@22.0.4(@angular/compiler@22.0.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.4(@angular/compiler@22.0.4)(rxjs@7.8.2))(@angular/platform-browser@22.0.4(@angular/animations@22.0.4(@angular/core@22.0.4(@angular/compiler@22.0.4)(rxjs@7.8.2)))(@angular/common@22.0.4(@angular/core@22.0.4(@angular/compiler@22.0.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.4(@angular/compiler@22.0.4)(rxjs@7.8.2)))(rxjs@7.8.2))(@maskito/core@5.3.1)
+      '@maskito/core':
+        specifier: ^5.3.1
+        version: 5.3.1
       '@ngrx/operators':
         specifier: ^21.1.0
         version: 21.1.1(rxjs@7.8.2)

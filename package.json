@@ -101,6 +101,8 @@
     "@ngrx/signals": "^21.1.0",
     "@nx-dotnet/core": "^3.0.2",
     "@nx/angular": "22.5.4",
+    "@maskito/angular": "^5.3.1",
+    "@maskito/core": "^5.3.1",
     "@primeuix/themes": "^2.0.3",
     "@taiga-ui/cdk": "5.13.0",
     "@taiga-ui/core": "5.13.0",

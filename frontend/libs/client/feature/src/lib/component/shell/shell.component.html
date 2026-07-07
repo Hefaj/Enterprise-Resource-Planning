@@ -1,112 +1,100 @@
-<div style="padding: 2rem; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; max-height: 100vh; overflow-y: auto; box-sizing: border-box;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin: 0;">
-    <h2 style="font: var(--tui-typography-heading-h4); color: var(--tui-text-primary); margin: 0;">
-      erp-input — Demo
-    </h2>
-    <button 
-      (click)="toggleTheme()" 
-      style="cursor: pointer; padding: 0.5rem 1rem; border-radius: var(--tui-radius-m); border: 1px solid var(--tui-border-normal); background: var(--tui-background-neutral-1); color: var(--tui-text-primary); font: var(--tui-typography-body-s-bold); display: flex; align-items: center; gap: 0.5rem;"
-    >
-      @if (isDarkMode()) {
-        <span>☀️ Jasny motyw</span>
-      } @else {
-        <span>🌙 Ciemny motyw</span>
-      }
-    </button>
-  </div>
-
-  <!-- Wartość z buildera -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">
-      Wartość inicjalna przekazana przez Buildera
-    </h3>
-    <erp-input [config]="inputWithValueBuilder" />
-  </section>
-
-  <!-- Podstawowy -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Podstawowy</h3>
-    <erp-input [config]="basicInput" />
-  </section>
-
-  <!-- Pływająca etykieta -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Z pływającą etykietą (floating label)</h3>
-    <erp-input [config]="inputWithLabel" />
-  </section>
-
-  <!-- Z ikonami -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Z ikoną start (search, size: L)</h3>
-    <erp-input [config]="inputWithIcons" />
-  </section>
-
-  <!-- Disabled -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Disabled</h3>
-    <erp-input [config]="disabledInput" />
-  </section>
-
-
-  <!-- Clearable -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Clearable (X)</h3>
-    <erp-input [config]="clearableInput" [(value)]="demoValue" />
-    <p style="font: var(--tui-typography-body-xs); color: var(--tui-text-tertiary); margin: .25rem 0 0;">
-      Aktualna wartość: {{ demoValue() }}
-    </p>
-  </section>
-
-  <!-- Z tooltipem -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Z tooltipem</h3>
-    <erp-input [config]="inputWithTooltip" />
-  </section>
-
-  <!-- Rozmiary -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Rozmiary</h3>
-    <div style="display: flex; flex-direction: column; gap: .75rem;">
-      <erp-input [config]="smallInput" />
-      <erp-input [config]="mediumInput" />
-      <erp-input [config]="largeInput" />
+<div style="min-height: 100vh; background: var(--tui-background-neutral-1); color: var(--tui-text-primary); font-family: var(--tui-font-heading); display: flex; flex-direction: column;">
+  <!-- Shell Header -->
+  <header style="border-bottom: 1px solid var(--tui-border-normal); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; background: var(--tui-background-neutral-2); position: sticky; top: 0; z-index: 50;">
+    <!-- Left side: Breadcrumbs -->
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <!-- Navigation Menu Toggle Button -->
+      <button
+        tuiIconButton
+        type="button"
+        (click)="menuOpen.set(true)"
+        style="cursor: pointer; border-radius: var(--tui-radius-m); border: 1px solid var(--tui-border-normal); background: var(--tui-background-neutral-1); color: var(--tui-text-primary); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+        title="Menu nawigacji"
+      >
+        <tui-icon icon="@tui.menu" />
+      </button>
+      
+      <erp-breadcrumb [config]="breadcrumbConfig" />
     </div>
-  </section>
 
-  <!-- Pełny zestaw -->
-  <section>
-    <h3 style="font: var(--tui-typography-body-s); color: var(--tui-text-secondary); margin: 0 0 .5rem;">Pełny zestaw (ikona, clear, tooltip, size L)</h3>
-    <erp-input [config]="fullInput" />
-  </section>
-
-  <!-- SEKCJA SIGNAL FORMS -->
-  <section style="border-top: 1px solid var(--tui-border-normal); padding-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-    <h3 style="font: var(--tui-typography-heading-h6); color: var(--tui-text-primary); margin: 0;">
-      Signal Forms Integration (Angular 22)
-    </h3>
-    
-    <div style="display: flex; flex-direction: column; gap: 1rem;">
-      <div>
-        <span style="font: var(--tui-typography-body-xs); color: var(--tui-text-secondary); display: block; margin-bottom: 0.25rem;">
-          Email (wymagany, walidacja formatu):
-        </span>
-        <erp-input [config]="signalEmailConfig" />
-      </div>
-
-      <div>
-        <span style="font: var(--tui-typography-body-xs); color: var(--tui-text-secondary); display: block; margin-bottom: 0.25rem;">
-          Nazwa użytkownika (wymagana):
-        </span>
-        <erp-input [config]="signalUsernameConfig" />
-      </div>
-
-      <div style="font: var(--tui-typography-body-xs); color: var(--tui-text-secondary); background: var(--tui-background-neutral-1); padding: 0.75rem; border-radius: var(--tui-radius-m); line-height: 1.5;">
-        <strong>Stan formularza (Live):</strong><br/>
-        Email: {{ userModel().email || '(brak)' }}<br/>
-        Username: {{ userModel().username || '(brak)' }}<br/>
-        Czy poprawny (valid): {{ userForm().valid() }}<br/>
-        Czy dotknięty (touched): {{ userForm().touched() }}
-      </div>
+    <!-- Right side: Theme toggle -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <!-- Theme Toggle -->
+      <button 
+        tuiIconButton
+        type="button"
+        (click)="toggleTheme()"
+        style="cursor: pointer; border-radius: var(--tui-radius-m); border: 1px solid var(--tui-border-normal); background: var(--tui-background-neutral-1); color: var(--tui-text-primary); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+        [title]="isDarkMode() ? 'Jasny motyw' : 'Ciemny motyw'"
+      >
+        <tui-icon [icon]="isDarkMode() ? '@tui.sun' : '@tui.moon'" />
+      </button>
     </div>
-  </section>
+  </header>
+
+  <!-- Shell Main Content -->
+  <main style="flex: 1; padding: 2rem; overflow-y: auto; box-sizing: border-box;">
+    <router-outlet></router-outlet>
+  </main>
 </div>
+
+<!-- Navigation Drawer Menu -->
+<tui-drawer 
+  *tuiPopup="menuOpen()"
+  [overlay]="true" 
+  direction="start"
+  (click.self)="menuOpen.set(false)"
+  style="background: var(--tui-background-neutral-2); width: 300px; border-inline-end: 1px solid var(--tui-border-normal); border-top-right-radius: var(--tui-radius-l); border-bottom-right-radius: var(--tui-radius-l);"
+>
+  <header style="padding: 1.5rem; border-bottom: 1px solid var(--tui-border-normal); display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="font: var(--tui-typography-heading-h6); margin: 0;">Nawigacja</h3>
+    <button
+      tuiIconButton
+      type="button"
+      (click)="menuOpen.set(false)"
+      style="cursor: pointer; border-radius: var(--tui-radius-m); border: none; background: transparent; color: var(--tui-text-secondary); width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;"
+    >
+      <tui-icon icon="@tui.x" />
+    </button>
+  </header>
+
+  <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+    <tui-data-list style="box-shadow: none; background: transparent; padding: 0;">
+      @for (item of navMenu(); track item.id || item.route || $index) {
+        @if (item.children && item.children.length > 0) {
+          <tui-opt-group [label]="item.label">
+            @for (child of item.children; track child.id || child.route || $index) {
+              <a
+                tuiOption
+                [routerLink]="child.route"
+                (click)="menuOpen.set(false)"
+                style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; padding: 0.75rem 1rem; color: var(--tui-text-primary); border-radius: var(--tui-radius-m); transition: background 0.15s; margin-bottom: 0.25rem;"
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{exact: false}"
+              >
+                @if (child.iconId) {
+                  <tui-icon [icon]="child.iconId" style="opacity: 0.7;" />
+                }
+                <span>{{ child.label }}</span>
+              </a>
+            }
+          </tui-opt-group>
+        } @else {
+          <a
+            tuiOption
+            [routerLink]="item.route"
+            (click)="menuOpen.set(false)"
+            style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; padding: 0.75rem 1rem; color: var(--tui-text-primary); border-radius: var(--tui-radius-m); transition: background 0.15s; margin-bottom: 0.25rem;"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{exact: true}"
+          >
+            @if (item.iconId) {
+              <tui-icon [icon]="item.iconId" style="opacity: 0.7;" />
+            }
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      }
+    </tui-data-list>
+  </div>
+</tui-drawer>

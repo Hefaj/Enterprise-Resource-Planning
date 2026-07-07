@@ -36,5 +36,6 @@ export class JobPopoverLazyComponent implements OnInit {
   //     console.warn('[JobPopoverLazyComponent] Failed to load notification remote, using fallback icon', e);
   //     this.failed = true;
   //   }
+    await Promise.resolve();
   }
 }

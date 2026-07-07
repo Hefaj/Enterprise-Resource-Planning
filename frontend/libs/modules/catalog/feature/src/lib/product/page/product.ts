@@ -14,7 +14,7 @@ import { provideProductTranslations, PRODUCT_KEYS } from '../translation';
   standalone: true,
   imports: [CommonModule],
   providers: [ProductListViewStore, provideProductTranslations()],
-  template: ``,
+  template: `ProductComponent`,
   styles: [`
     :host {
       display: block;

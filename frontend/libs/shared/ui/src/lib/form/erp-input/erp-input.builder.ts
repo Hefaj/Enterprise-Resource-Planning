@@ -82,11 +82,11 @@ export class ErpInputBuilder extends ErpInputBaseBuilder<ErpInputConfig> {
   }
 
   /**
-   * Powiązuje pole wejściowe ze strukturą formularza opartą o sygnały (Signal Forms).
-   * @param formField Obiekt pola z drzewa formularza (FieldTree).
+   * Ustawia maskę tekstową (np. dla formatu telefonu, NIP, daty) przy użyciu biblioteki Maskito.
+   * @param mask Konfiguracja opcji maski (MaskitoOptions).
    */
-  public setFormField(formField: MaybeSignal<any>): this {
-    this._data.formField = formField;
+  public setMask(mask: MaybeSignal<any>): this {
+    this._data.mask = mask;
     return this;
   }
 }

@@ -3,7 +3,7 @@ import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpIcon } from '../../base/erp-icon.types';
 
 export type ErpInputSize = 's' | 'm' | 'l';
-export type ErpInputType = 'text' | 'password' | 'email' | 'tel' | 'url';
+export type ErpInputType = 'text' | 'password';
 
 export interface ErpInputConfig extends ErpInputBase {
   disabled?: MaybeSignal<boolean>;
@@ -14,5 +14,5 @@ export interface ErpInputConfig extends ErpInputBase {
   type?: MaybeSignal<ErpInputType>;
   value?: MaybeSignal<string>;
   label?: MaybeSignal<Translatable | undefined>;
-  formField?: MaybeSignal<any>;
+  mask?: MaybeSignal<any>;
 }

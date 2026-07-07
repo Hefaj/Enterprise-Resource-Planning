@@ -11,7 +11,7 @@ export interface ErpBreadcrumbItem {
   id?: string;
   label?: string;
   routerLink?: string | string[];
-  iconId?: string; // Zamiast "pi pi-box", np. po prostu "box"
+  iconId?: string; 
 }
 
 @Injectable({ providedIn: 'root' })

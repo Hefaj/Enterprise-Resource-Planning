@@ -34,11 +34,14 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
         </aside>
       }
 
-      <div class="erp-page-layout__toggle-zone">
-        @if (sidebar) {
-          <erp-button [config]="collapsed ? expandButtonConfig : collapseButtonConfig" />
-        }
-      </div>
+      @if (sidebar) {
+        <div class="erp-page-layout__toggle-zone" (click)="toggleSidebar()">
+          <erp-button
+            [config]="collapsed ? expandButtonConfig : collapseButtonConfig"
+            style="pointer-events: none;"
+          />
+        </div>
+      }
 
       <main class="erp-page-layout__main">
         @if (main) {
@@ -92,14 +95,36 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
 
     .erp-page-layout__toggle-zone {
       display: flex;
-      align-items: flex-start;
-      padding-top: 0.5rem;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 100%;
       flex-shrink: 0;
-      z-index: 1;
+      z-index: 10;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      border-inline-start: 1px solid var(--tui-border-normal);
+      border-inline-end: 1px solid var(--tui-border-normal);
+      background: var(--tui-background-elevation-1);
+    }
+
+    .erp-page-layout__toggle-zone:hover {
+      background: var(--tui-background-neutral-1-hover);
+    }
+
+    .erp-page-layout__toggle-zone:hover erp-button {
+      transform: scale(1.1);
+      transition: transform 0.15s ease;
+    }
+
+    .erp-page-layout--collapsed .erp-page-layout__toggle-zone {
+      border-inline-start: none;
     }
 
     .erp-page-layout__main {
       flex: 1;
+      padding: 0 1rem;
       height: 100%;
       overflow: auto;
       min-width: 0;
@@ -137,7 +162,7 @@ export class ErpPageLayoutComponent {
       .setFn(() => this.toggleSidebar())
   );
 
-  private toggleSidebar(): void {
+  protected toggleSidebar(): void {
     this._internalCollapsed.update((v) => !v);
   }
 }

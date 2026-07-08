@@ -6,6 +6,7 @@ export * from './lib/base/erp-icon.types';
 export * from './lib/form/erp-input';
 
 // export * from './lib/layouts/erp-host-layout';
+export * from './lib/layouts/erp-page-layout';
 
 export * from './lib/auth/login/login.component';
 // export * from './lib/directives/erp-popout/erp-popout.directive';
@@ -28,7 +29,7 @@ export * from './lib/atoms/erp-drawer';
 // export * from './lib/atoms/erp-multi-select';
 // export * from './lib/atoms/erp-panel-menu';
 // export * from './lib/atoms/erp-select';
-// export * from './lib/atoms/erp-tabs';
+export * from './lib/atoms/erp-tabs';
 // export * from './lib/atoms/erp-splitter';
 // export * from './lib/atoms/erp-stepper';
 // export * from './lib/atoms/erp-toggle-switch';

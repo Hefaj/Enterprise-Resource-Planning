@@ -46,9 +46,9 @@ import { ErpDrawerConfig } from './erp-drawer.types';
         />
       </header>
 
-      <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
         @if (componentVal) {
-          <ng-container *ngComponentOutlet="componentVal" />
+          <ng-container *ngComponentOutlet="componentVal; inputs: _inputs()" />
         }
       </div>
     </tui-drawer>
@@ -62,6 +62,7 @@ export class ErpDrawerComponent {
   protected readonly _overlay = computed(() => unwrapSignal(this.config().overlay) ?? true);
   protected readonly _direction = computed(() => unwrapSignal(this.config().direction) ?? 'start');
   protected readonly _component = computed(() => this.config().component);
+  protected readonly _inputs = computed(() => this.config().inputs);
 
   protected readonly closeButtonConfig = ErpButtonBuilder.create((b) =>
     b

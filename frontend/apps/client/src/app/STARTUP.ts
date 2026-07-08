@@ -2,14 +2,14 @@ import { inject } from '@angular/core';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
 import { ErpNavRegistryService, ErpNavigationItem } from '@erp/shared/data-access';
 // import { ErpModalService } from '@erp/shared/ui';
-import { AppSettingsService, ThemeService } from '@erp/client/util';
+import { ThemeService, LanguageService } from '@erp/client/util';
 import { loadRemote } from '@module-federation/enhanced/runtime';
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
   // const modalService = inject(ErpModalService);
   inject(ThemeService); // Triggers initialization and effect
-  inject(AppSettingsService); // Triggers settings and language initialization
+  inject(LanguageService); // Triggers language initialization and effect
 
   menuRegistry.register({
     id: 'dashbord',

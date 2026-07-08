@@ -1,23 +1,16 @@
-import { ApplicationConfig, Injectable, LOCALE_ID, isDevMode, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, isDevMode, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { appRoutes } from '@erp/client/contract';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { STARTUP } from './STARTUP';
 import { registerLocaleData } from '@angular/common';
 import localePl from '@angular/common/locales/pl';
-import { Translation, TranslocoLoader, provideTransloco } from '@jsverse/transloco';
-import { provideSharedTranslations } from '@erp/shared/ui';
-import { Observable, of } from 'rxjs';
+import { provideTransloco } from '@jsverse/transloco';
+import { provideSharedTranslations, TranslocoInlineLoader } from '@erp/shared/ui';
 import { remoteApiProviders } from './remote-api.providers';
 import { provideTaiga } from '@taiga-ui/core';
-import { TUI_LANGUAGE, TUI_POLISH_LANGUAGE } from '@taiga-ui/i18n';
-
-@Injectable({ providedIn: 'root' })
-export class TranslocoInlineLoader implements TranslocoLoader {
-  public getTranslation(lang: string): Observable<Translation> {
-    return of({});
-  }
-}
+import { TUI_LANGUAGE } from '@taiga-ui/i18n';
+import { AppLanguage, LanguageService } from '@erp/client/util';
 
 registerLocaleData(localePl);
 
@@ -37,15 +30,16 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideAppInitializer(STARTUP),
     { provide: LOCALE_ID, useValue: 'pl-PL' },
-    // {
-    //   provide: TUI_LANGUAGE,
-    //   useValue: of(TUI_POLISH_LANGUAGE),
-    // },
+    {
+      provide: TUI_LANGUAGE,
+      useFactory: (service: LanguageService) => service.tuiLanguage$,
+      deps: [LanguageService],
+    },
     ...remoteApiProviders,
     provideTransloco({
       config: {
-        availableLangs: ['pl-PL', 'en-US'],
-        defaultLang: 'pl-PL',
+        availableLangs: ['pl-PL', 'en-US'] as AppLanguage[],
+        defaultLang: 'pl-PL' as AppLanguage,
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
       },

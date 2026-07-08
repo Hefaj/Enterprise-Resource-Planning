@@ -5,8 +5,10 @@ import { TuiNavigation } from '@taiga-ui/layout';
 import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp-breadcrumb';
 import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button';
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
+import { SHARED_KEYS } from '@erp/shared/ui';
 import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-access';
-import { ThemeService } from '@erp/client/util';
+import { ThemeService, LanguageService, AppLanguage } from '@erp/client/util';
+import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem } from '@erp/client/ui';
 import { NavigationMenuComponent } from './navigation-menu.component';
 
 @Component({
@@ -19,7 +21,7 @@ import { NavigationMenuComponent } from './navigation-menu.component';
     ErpBreadcrumbComponent,
     ErpButtonComponent,
     ErpDrawerComponent,
-    TuiNavigation,
+    ErpSettingsMenuComponent,
   ],
   templateUrl: './shell.component.html',
   styles: [`
@@ -34,6 +36,7 @@ import { NavigationMenuComponent } from './navigation-menu.component';
 })
 export class ShellLayoutComponent {
   private readonly _themeService = inject(ThemeService);
+  private readonly _languageService = inject(LanguageService);
   private readonly _breadcrumbService = inject(ErpBreadcrumbService);
   private readonly _navRegistry = inject(ErpNavRegistryService);
 
@@ -50,6 +53,39 @@ export class ShellLayoutComponent {
     )
   );
 
+  private readonly _dataLanguages = signal<{ code: string; name: string }[]>([]);
+  private readonly _selectedDataLang = signal<string>('pl');
+
+  public readonly dataLanguagesItems = computed<ErpSettingsMenuItem[]>(() => {
+    const langs = this._dataLanguages();
+    if (langs.length === 0) {
+      return [
+        {
+          id: 'loading-data-langs',
+          label: SHARED_KEYS.settings.loading,
+          disabled: true
+        }
+      ];
+    }
+    return langs.map(lang => ({
+      id: `data-lang-${lang.code}`,
+      label: lang.name,
+      active: computed(() => this._selectedDataLang() === lang.code),
+      fn: () => this._selectedDataLang.set(lang.code)
+    }));
+  });
+
+  public constructor() {
+    // Symulacja pobierania danych języków z backendu po 3 sekundach
+    setTimeout(() => {
+      this._dataLanguages.set([
+        { code: 'pl', name: 'Polski (Dane)' },
+        { code: 'en', name: 'English (Data)' },
+        { code: 'de', name: 'Deutsch (Data)' }
+      ]);
+    }, 3000);
+  }
+
   public readonly menuButtonConfig = ErpButtonBuilder.create((b) =>
     b
       .setAppearance('icon')
@@ -57,17 +93,53 @@ export class ShellLayoutComponent {
       .setFn(() => this.menuOpen.set(true))
   );
 
-  public readonly themeButtonConfig = ErpButtonBuilder.create((b) =>
-    b
-      .setAppearance('icon')
-      .setIconStart(computed(() => this.isDarkMode() ? '@tui.sun' : '@tui.moon'))
-      .setFn(() => this.toggleTheme())
-  );
+  public readonly settingsMenuConfig: ErpSettingsMenuConfig = {
+    items: [
+      {
+        id: 'theme',
+        label: computed(() => this.isDarkMode() ? SHARED_KEYS.settings.theme.light : SHARED_KEYS.settings.theme.dark),
+        icon: computed(() => this.isDarkMode() ? '@tui.sun' : '@tui.moon'),
+        fn: () => this.toggleTheme()
+      },
+      {
+        id: 'language',
+        label: SHARED_KEYS.settings.language.title,
+        icon: '@tui.globe',
+        children: [
+          {
+            id: 'lang-pl',
+            label: SHARED_KEYS.settings.language.pl,
+            active: computed(() => this._languageService.language() === 'pl-PL'),
+            fn: () => this.setLanguage('pl-PL')
+          },
+          {
+            id: 'lang-en',
+            label: SHARED_KEYS.settings.language.en,
+            active: computed(() => this._languageService.language() === 'en-US'),
+            fn: () => this.setLanguage('en-US')
+          }
+        ]
+      },
+      {
+        id: 'data-language',
+        label: SHARED_KEYS.settings.language.dataTitle,
+        icon: '@tui.database',
+        children: this.dataLanguagesItems
+      },
+      {
+        id: 'report-issue',
+        label: SHARED_KEYS.settings.reportIssue,
+        icon: '@tui.message-circle',
+        separator: true,
+        fn: () => this.reportIssue()
+      }
+    ]
+  };
 
   public readonly menuDrawerConfig = ErpDrawerBuilder.create((b) =>
     b
       .setOpen(this.menuOpen)
-      .setTitle('Nawigacja')
+      .setTitle(SHARED_KEYS.navigation)
       .setOverlay(true)
       .setDirection('start')
       .setComponent(NavigationMenuComponent)
@@ -76,5 +148,13 @@ export class ShellLayoutComponent {
 
   public toggleTheme(): void {
     this._themeService.toggleTheme();
+  }
+
+  public setLanguage(lang: AppLanguage): void {
+    this._languageService.setLanguage(lang);
+  }
+
+  public reportIssue(): void {
+    console.log('Report issue clicked');
   }
 }

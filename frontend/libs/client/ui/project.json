@@ -2,7 +2,7 @@
   "name": "client-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "frontend/libs/client/ui/src",
-  "prefix": "lib",
+  "prefix": "erp",
   "projectType": "library",
   "tags": ["scope:host", "type:ui"],
   "targets": {

@@ -1,7 +1,15 @@
-import { Provider } from '@angular/core';
-import { provideTranslocoScope } from '@jsverse/transloco';
+import { Provider, Injectable } from '@angular/core';
+import { provideTranslocoScope, Translation, TranslocoLoader } from '@jsverse/transloco';
+import { Observable, of } from 'rxjs';
 
 export { SHARED_KEYS } from './keys';
+
+@Injectable({ providedIn: 'root' })
+export class TranslocoInlineLoader implements TranslocoLoader {
+  public getTranslation(lang: string): Observable<Translation> {
+    return of({});
+  }
+}
 
 export function provideSharedTranslations(): Provider {
   return provideTranslocoScope({

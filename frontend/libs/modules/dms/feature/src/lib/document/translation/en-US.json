@@ -2,7 +2,7 @@
   "base": {
     "tabs": {
       "list": "Document List",
-      "detail": "Document: {title}",
+      "detail": "Document: {{title}}",
       "basicInfo": "Basic Info",
       "accountingDescription": "Accounting Description",
       "substantiveDescription": "Substantive Description",
@@ -16,8 +16,8 @@
       "open": "Open"
     },
     "detail": {
-      "author": "Author: {author}",
-      "createdAt": "Created: {date}",
+      "author": "Author: {{author}}",
+      "createdAt": "Created: {{date}}",
       "content": "Document content:"
     }
   }

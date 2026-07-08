@@ -13,14 +13,10 @@
       <erp-breadcrumb [config]="breadcrumbConfig" />
     </div>
 
-    <!-- Right side: Theme toggle -->
+    <!-- Right side: Settings menu -->
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <!-- Theme Toggle -->
-      <erp-button
-        [config]="themeButtonConfig"
-        style="cursor: pointer; border-radius: var(--tui-radius-m); border: 1px solid var(--tui-border-normal); background: var(--tui-background-neutral-1); color: var(--tui-text-primary); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
-        [title]="isDarkMode() ? 'Jasny motyw' : 'Ciemny motyw'"
-      />
+      <!-- Settings Menu -->
+      <erp-settings-menu [config]="settingsMenuConfig" />
     </div>
   </header>
 

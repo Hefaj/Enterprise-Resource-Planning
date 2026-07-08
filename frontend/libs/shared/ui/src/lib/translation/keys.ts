@@ -32,4 +32,20 @@ export const SHARED_KEYS = {
     filters: {
       submit: 'shared.filters.submit',
     },
+    navigation: 'shared.navigation',
+    settings: {
+      title: 'shared.settings.title',
+      theme: {
+        dark: 'shared.settings.theme.dark',
+        light: 'shared.settings.theme.light',
+      },
+      language: {
+        title: 'shared.settings.language.title',
+        dataTitle: 'shared.settings.language.dataTitle',
+        pl: 'shared.settings.language.pl',
+        en: 'shared.settings.language.en',
+      },
+      loading: 'shared.settings.loading',
+      reportIssue: 'shared.settings.reportIssue',
+    },
   } as const;

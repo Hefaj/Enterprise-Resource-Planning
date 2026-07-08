@@ -26,5 +26,21 @@
   },
   "filters": {
     "submit": "Filtruj"
+  },
+  "navigation": "Nawigacja",
+  "settings": {
+    "title": "Ustawienia",
+    "theme": {
+      "dark": "Ciemny motyw",
+      "light": "Jasny motyw"
+    },
+    "language": {
+      "title": "Język",
+      "dataTitle": "Język danych",
+      "pl": "Polski",
+      "en": "English"
+    },
+    "loading": "Wczytywanie...",
+    "reportIssue": "Zgłoś problem"
   }
 }

@@ -47,21 +47,8 @@ export class ProductComponent {
           {
             label: PRODUCT_KEYS.base.salesOffer.tabs.exclusion,
             id: 'exclusion',
+            component: ExclusionTabComponent,
             icon: '@tui.ban',
-            children: [
-              {
-                label: PRODUCT_KEYS.base.tabs.products,
-                id: 'products',
-                component: ProductTabComponent,
-                icon: '@tui.shopping-bag',
-              },
-              {
-                label: PRODUCT_KEYS.base.tabs.multimedia,
-                id: 'multimedia',
-                component: MultimediaTabComponent,
-                icon: '@tui.image',
-              },
-            ]
           },
           {
             label: PRODUCT_KEYS.base.salesOffer.tabs.delivery,
@@ -75,7 +62,7 @@ export class ProductComponent {
         component: WarrantyTabComponent,
         icon: '@tui.shield-check',
       })
-      .setInitialValue('warranties')
+      .setInitialValue('exclusion')
       .setOnTabChange(noop)
   );
 

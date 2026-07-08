@@ -29,7 +29,6 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let tabList = _visibleTabs();
-    @let active = activeIndex();
     @let sizeVal = _size();
 
     <div class="erp-tabs">
@@ -136,7 +135,17 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
                                   {{ (subChild.label | erpTranslate) || '' }}
                                 </span>
                                 @if (activeTabId() === subChild.id) {
-                                  <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; color: var(--tui-text-action);" />
+                                  <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; margin-inline-end: 0.5rem; color: var(--tui-text-action);" />
+                                }
+                                @if (subChild.closable) {
+                                  <button
+                                    type="button"
+                                    class="erp-tabs__tab-close"
+                                    (click)="handleClose($event, subChild.id)"
+                                    style="margin-inline-start: 0.5rem;"
+                                  >
+                                    <tui-icon icon="@tui.x" class="erp-tabs__close-icon" />
+                                  </button>
                                 }
                               </button>
                             }
@@ -157,7 +166,17 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
                           {{ (child.label | erpTranslate) || '' }}
                         </span>
                         @if (activeTabId() === child.id) {
-                          <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; color: var(--tui-text-action);" />
+                          <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; margin-inline-end: 0.5rem; color: var(--tui-text-action);" />
+                        }
+                        @if (child.closable) {
+                          <button
+                            type="button"
+                            class="erp-tabs__tab-close"
+                            (click)="handleClose($event, child.id)"
+                            style="margin-inline-start: 0.5rem;"
+                          >
+                            <tui-icon icon="@tui.x" class="erp-tabs__close-icon" />
+                          </button>
                         }
                       </button>
                     }
@@ -262,7 +281,7 @@ export class ErpTabsComponent {
   protected readonly _visibleTabs = computed(() => {
     const tabs = this.config().tabs ?? [];
     const closed = this.closedTabIds();
-    return tabs.filter((t) => !closed.has(t.id));
+    return this.filterClosedTabs(tabs, closed);
   });
 
   protected readonly _size = computed(() => unwrapSignal(this.config().size) ?? 'l');
@@ -364,6 +383,20 @@ export class ErpTabsComponent {
     this.activeTabId.set(child.id);
   }
 
+  private filterClosedTabs(tabs: ErpTabItem[], closed: Set<string>): ErpTabItem[] {
+    return tabs
+      .filter((t) => !closed.has(t.id))
+      .map((t) => {
+        if (t.children && t.children.length > 0) {
+          return {
+            ...t,
+            children: this.filterClosedTabs(t.children, closed),
+          };
+        }
+        return t;
+      });
+  }
+
   private buildPathToTab(tabs: ErpTabItem[], id: string, path: any[]): boolean {
     for (const t of tabs) {
       path.push(t.label);
@@ -419,9 +452,6 @@ export class ErpTabsComponent {
       }
     }
 
-    const visibleBefore = this._visibleTabs();
-    const closedIndex = visibleBefore.findIndex((t) => t.id === tabId);
-
     // Dodaj do zamkniętych
     this.closedTabIds.update((set) => {
       const next = new Set(set);
@@ -429,21 +459,21 @@ export class ErpTabsComponent {
       return next;
     });
 
-    // Skoryguj indeks aktywnej zakładki
-    const currentActive = this.activeIndex();
-    const newVisible = visibleBefore.filter((t) => t.id !== tabId);
-
-    if (newVisible.length === 0) {
-      this.activeIndex.set(0);
-      return;
-    }
-
-    if (closedIndex < currentActive) {
-      // Zamknięto zakładkę przed aktywną — przesuń indeks w lewo
-      this.activeIndex.set(currentActive - 1);
-    } else if (closedIndex === currentActive) {
-      // Zamknięto aktywną — aktywuj poprzednią lub pierwszą
-      this.activeIndex.set(Math.min(currentActive, newVisible.length - 1));
+    // Jeśli zamknięto aktualnie aktywną zakładkę, wybierz nową aktywną
+    if (this.activeTabId() === tabId) {
+      const visibleTabs = this._visibleTabs();
+      if (visibleTabs.length > 0) {
+        const firstLeaf = this.getFirstLeafTab(visibleTabs[0]);
+        if (firstLeaf) {
+          const parentIdx = visibleTabs.findIndex((t) => t.id === visibleTabs[0].id || this.findTabById([t], firstLeaf.id));
+          this.activeIndex.set(parentIdx >= 0 ? parentIdx : 0);
+          this.activeTabId.set(firstLeaf.id);
+        } else {
+          this.activeTabId.set(null);
+        }
+      } else {
+        this.activeTabId.set(null);
+      }
     }
   }
 }

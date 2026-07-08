@@ -1,14 +1,13 @@
 import { Component, signal, inject, computed } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TuiNavigation } from '@taiga-ui/layout';
 import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp-breadcrumb';
 import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button';
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
 import { SHARED_KEYS } from '@erp/shared/ui';
 import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-access';
 import { ThemeService, LanguageService, AppLanguage } from '@erp/client/util';
-import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem } from '@erp/client/ui';
+import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent } from '@erp/client/ui';
 import { NavigationMenuComponent } from './navigation-menu.component';
 
 @Component({
@@ -22,6 +21,10 @@ import { NavigationMenuComponent } from './navigation-menu.component';
     ErpButtonComponent,
     ErpDrawerComponent,
     ErpSettingsMenuComponent,
+    ErpCompanySelectorComponent,
+    ErpUpdateIndicatorComponent,
+    ErpNotificationsComponent,
+    ErpTasksComponent,
   ],
   templateUrl: './shell.component.html',
   styles: [`
@@ -43,6 +46,13 @@ export class ShellLayoutComponent {
   public readonly isDarkMode = this._themeService.isDarkMode;
   public readonly navMenu = this._navRegistry.$navMenu;
   public readonly menuOpen = signal(false);
+
+  // Spółki
+  public readonly currentCompany = signal<string>('Sklep Opon');
+  public readonly companies = signal<string[]>(['Sklep Opon', 'Sklep rowerowy', 'Hurtownia Części']);
+
+  // Aktualizacje
+  public readonly updateAvailable = signal<boolean>(true);
 
   public readonly breadcrumbConfig = ErpBreadcrumbBuilder.create((b) =>
     b.setItems(
@@ -156,5 +166,23 @@ export class ShellLayoutComponent {
 
   public reportIssue(): void {
     console.log('Report issue clicked');
+  }
+
+  public selectCompany(company: string): void {
+    this.currentCompany.set(company);
+    console.log('Selected company:', company);
+  }
+
+  public updateApp(): void {
+    alert('Symulacja pobierania nowej wersji aplikacji... Trwa aktualizacja.');
+    this.updateAvailable.set(false);
+  }
+
+  public openNotifications(): void {
+    console.log('Notifications clicked');
+  }
+
+  public openTasks(): void {
+    console.log('Tasks clicked');
   }
 }

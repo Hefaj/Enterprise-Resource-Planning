@@ -1,6 +1,6 @@
 <div style="height: 100%; background: var(--tui-background-neutral-1); color: var(--tui-text-primary); font-family: var(--tui-font-heading); display: flex; flex-direction: column; overflow: hidden;">
   <!-- Shell Header -->
-  <header style="border-bottom: 1px solid var(--tui-border-normal); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; background: var(--tui-background-neutral-2); position: sticky; top: 0; z-index: 50;">
+  <header style="border-bottom: 1px solid var(--tui-border-normal); padding: 0.5rem 1rem; display: flex; align-items: center; justify-content: space-between; background: var(--tui-background-neutral-2); position: sticky; top: 0; z-index: 50;">
     <!-- Left side: Breadcrumbs -->
     <div style="display: flex; align-items: center; gap: 1rem;">
       <!-- Navigation Menu Toggle Button -->
@@ -13,8 +13,27 @@
       <erp-breadcrumb [config]="breadcrumbConfig" />
     </div>
 
-    <!-- Right side: Settings menu -->
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
+    <!-- Right side: Actions -->
+    <div style="display: flex; align-items: center; gap: 1.25rem;">
+      <!-- Update Indicator -->
+      <erp-update-indicator
+        [updateAvailable]="updateAvailable()"
+        (updateClick)="updateApp()"
+      />
+
+      <!-- Notifications -->
+      <erp-notifications (clickNotifications)="openNotifications()" />
+
+      <!-- Tasks -->
+      <erp-tasks (clickTasks)="openTasks()" />
+
+      <!-- Company Selector -->
+      <erp-company-selector
+        [currentCompany]="currentCompany()"
+        [companies]="companies()"
+        (companyChange)="selectCompany($event)"
+      />
+
       <!-- Settings Menu -->
       <erp-settings-menu [config]="settingsMenuConfig" />
     </div>

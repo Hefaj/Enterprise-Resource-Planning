@@ -4,15 +4,11 @@
     <!-- Left side: Breadcrumbs -->
     <div style="display: flex; align-items: center; gap: 1rem;">
       <!-- Navigation Menu Toggle Button -->
-      <button
-        tuiIconButton
-        type="button"
-        (click)="menuOpen.set(true)"
+      <erp-button
+        [config]="menuButtonConfig"
         style="cursor: pointer; border-radius: var(--tui-radius-m); border: 1px solid var(--tui-border-normal); background: var(--tui-background-neutral-1); color: var(--tui-text-primary); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
         title="Menu nawigacji"
-      >
-        <tui-icon icon="@tui.menu" />
-      </button>
+      />
       
       <erp-breadcrumb [config]="breadcrumbConfig" />
     </div>
@@ -20,15 +16,11 @@
     <!-- Right side: Theme toggle -->
     <div style="display: flex; align-items: center; gap: 0.75rem;">
       <!-- Theme Toggle -->
-      <button 
-        tuiIconButton
-        type="button"
-        (click)="toggleTheme()"
+      <erp-button
+        [config]="themeButtonConfig"
         style="cursor: pointer; border-radius: var(--tui-radius-m); border: 1px solid var(--tui-border-normal); background: var(--tui-background-neutral-1); color: var(--tui-text-primary); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
         [title]="isDarkMode() ? 'Jasny motyw' : 'Ciemny motyw'"
-      >
-        <tui-icon [icon]="isDarkMode() ? '@tui.sun' : '@tui.moon'" />
-      </button>
+      />
     </div>
   </header>
 
@@ -39,62 +31,4 @@
 </div>
 
 <!-- Navigation Drawer Menu -->
-<tui-drawer 
-  *tuiPopup="menuOpen()"
-  [overlay]="true" 
-  direction="start"
-  (click.self)="menuOpen.set(false)"
-  style="background: var(--tui-background-neutral-2); width: 300px; border-inline-end: 1px solid var(--tui-border-normal); border-top-right-radius: var(--tui-radius-l); border-bottom-right-radius: var(--tui-radius-l);"
->
-  <header style="padding: 1.5rem; border-bottom: 1px solid var(--tui-border-normal); display: flex; justify-content: space-between; align-items: center;">
-    <h3 style="font: var(--tui-typography-heading-h6); margin: 0;">Nawigacja</h3>
-    <button
-      tuiIconButton
-      type="button"
-      (click)="menuOpen.set(false)"
-      style="cursor: pointer; border-radius: var(--tui-radius-m); border: none; background: transparent; color: var(--tui-text-secondary); width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;"
-    >
-      <tui-icon icon="@tui.x" />
-    </button>
-  </header>
-
-  <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-    <tui-data-list style="box-shadow: none; background: transparent; padding: 0;">
-      @for (item of navMenu(); track item.id || item.route || $index) {
-        @if (item.children && item.children.length > 0) {
-          <tui-opt-group [label]="item.label">
-            @for (child of item.children; track child.id || child.route || $index) {
-              <a
-                tuiOption
-                [routerLink]="child.route"
-                (click)="menuOpen.set(false)"
-                style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; padding: 0.75rem 1rem; color: var(--tui-text-primary); border-radius: var(--tui-radius-m); transition: background 0.15s; margin-bottom: 0.25rem;"
-                routerLinkActive="active-link"
-                [routerLinkActiveOptions]="{exact: false}"
-              >
-                @if (child.iconId) {
-                  <tui-icon [icon]="child.iconId" style="opacity: 0.7;" />
-                }
-                <span>{{ child.label }}</span>
-              </a>
-            }
-          </tui-opt-group>
-        } @else {
-          <a
-            tuiOption
-            [routerLink]="item.route"
-            (click)="menuOpen.set(false)"
-            style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; padding: 0.75rem 1rem; color: var(--tui-text-primary); border-radius: var(--tui-radius-m); transition: background 0.15s; margin-bottom: 0.25rem;"
-            routerLinkActive="active-link"
-            [routerLinkActiveOptions]="{exact: true}"
-          >
-            @if (item.iconId) {
-              <tui-icon [icon]="item.iconId" style="opacity: 0.7;" />
-            }
-            <span>{{ item.label }}</span>
-          </a>
-        }
-      }
-    </tui-data-list>
-  </div>
-</tui-drawer>
+<erp-drawer [config]="menuDrawerConfig" />

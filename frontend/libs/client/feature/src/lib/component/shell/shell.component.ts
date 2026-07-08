@@ -1,11 +1,13 @@
 import { Component, signal, inject, computed } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TUI_DARK_MODE, TuiButton, TuiDataList, TuiIcon, TuiPopup } from '@taiga-ui/core';
-import { TuiDrawer } from '@taiga-ui/kit';
+import { TUI_DARK_MODE } from '@taiga-ui/core';
 import { TuiNavigation } from '@taiga-ui/layout';
 import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp-breadcrumb';
+import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button';
+import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
 import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-access';
+import { NavigationMenuComponent } from './navigation-menu.component';
 
 @Component({
   selector: 'erp-shell',
@@ -15,11 +17,8 @@ import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-ac
     RouterModule,
     RouterOutlet,
     ErpBreadcrumbComponent,
-    TuiButton,
-    TuiDataList,
-    TuiIcon,
-    TuiPopup,
-    TuiDrawer,
+    ErpButtonComponent,
+    ErpDrawerComponent,
     TuiNavigation,
   ],
   templateUrl: './shell.component.html',
@@ -45,6 +44,30 @@ export class ShellLayoutComponent {
         return [data.home, ...data.items];
       })
     )
+  );
+
+  public readonly menuButtonConfig = ErpButtonBuilder.create((b) =>
+    b
+      .setAppearance('icon')
+      .setIconStart('@tui.menu')
+      .setFn(() => this.menuOpen.set(true))
+  );
+
+  public readonly themeButtonConfig = ErpButtonBuilder.create((b) =>
+    b
+      .setAppearance('icon')
+      .setIconStart(computed(() => this.isDarkMode() ? '@tui.sun' : '@tui.moon'))
+      .setFn(() => this.toggleTheme())
+  );
+
+  public readonly menuDrawerConfig = ErpDrawerBuilder.create((b) =>
+    b
+      .setOpen(this.menuOpen)
+      .setTitle('Nawigacja')
+      .setOverlay(true)
+      .setDirection('start')
+      .setComponent(NavigationMenuComponent)
+      .setOnClose(() => this.menuOpen.set(false))
   );
 
   public toggleTheme(): void {

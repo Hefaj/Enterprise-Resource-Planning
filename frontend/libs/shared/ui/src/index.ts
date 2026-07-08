@@ -11,14 +11,14 @@ export * from './lib/auth/login/login.component';
 // export * from './lib/directives/erp-popout/erp-popout.directive';
 
 // // Atoms
-// export * from './lib/atoms/erp-button';
+export * from './lib/atoms/erp-button';
 // export * from './lib/atoms/erp-card';
 // export * from './lib/atoms/erp-context-menu';
 // export * from './lib/atoms/erp-datepicker';
 // export * from './lib/atoms/erp-auto-complete';
 // export * from './lib/atoms/erp-avatar';
 export * from './lib/atoms/erp-breadcrumb';
-// export * from './lib/atoms/erp-drawer';
+export * from './lib/atoms/erp-drawer';
 // export * from './lib/atoms/erp-empty-card';
 // export * from './lib/atoms/erp-input-text';
 // export * from './lib/atoms/erp-listbox';

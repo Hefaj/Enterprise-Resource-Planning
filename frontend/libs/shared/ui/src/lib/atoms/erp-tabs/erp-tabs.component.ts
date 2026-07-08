@@ -56,13 +56,12 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
                 {{ (tab.label | erpTranslate) || '' }}
               </span>
               @if (tab.closable) {
-                <button
-                  type="button"
+                <span
                   class="erp-tabs__tab-close"
                   (click)="handleClose($event, tab.id)"
                 >
                   <tui-icon icon="@tui.x" class="erp-tabs__close-icon" />
-                </button>
+                </span>
               }
             </button>
           } @else {
@@ -93,6 +92,14 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
                   }
                 }
               </span>
+              @if (tab.closable) {
+                <span
+                  class="erp-tabs__tab-close"
+                  (click)="handleClose($event, tab.id)"
+                >
+                  <tui-icon icon="@tui.x" class="erp-tabs__close-icon" />
+                </span>
+              }
               
               <ng-template #dropdown let-close>
                 <tui-data-list tuiDataListDropdownManager>
@@ -138,14 +145,16 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
                                   <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; margin-inline-end: 0.5rem; color: var(--tui-text-action);" />
                                 }
                                 @if (subChild.closable) {
-                                  <button
-                                    type="button"
+                                  <span
+                                    role="button"
+                                    tabindex="0"
                                     class="erp-tabs__tab-close"
                                     (click)="handleClose($event, subChild.id)"
+                                    (keydown.enter)="handleClose($event, subChild.id); $event.preventDefault(); $event.stopPropagation()"
                                     style="margin-inline-start: 0.5rem;"
                                   >
                                     <tui-icon icon="@tui.x" class="erp-tabs__close-icon" />
-                                  </button>
+                                  </span>
                                 }
                               </button>
                             }
@@ -169,14 +178,16 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
                           <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; margin-inline-end: 0.5rem; color: var(--tui-text-action);" />
                         }
                         @if (child.closable) {
-                          <button
-                            type="button"
+                          <span
+                            role="button"
+                            tabindex="0"
                             class="erp-tabs__tab-close"
                             (click)="handleClose($event, child.id)"
+                            (keydown.enter)="handleClose($event, child.id); $event.preventDefault(); $event.stopPropagation()"
                             style="margin-inline-start: 0.5rem;"
                           >
                             <tui-icon icon="@tui.x" class="erp-tabs__close-icon" />
-                          </button>
+                          </span>
                         }
                       </button>
                     }
@@ -440,7 +451,7 @@ export class ErpTabsComponent {
    * Obsługa zamykania zakładki.
    * Zatrzymuje propagację zdarzenia aby nie aktywować zakładki.
    */
-  protected async handleClose(event: MouseEvent, tabId: string): Promise<void> {
+  protected async handleClose(event: Event, tabId: string): Promise<void> {
     event.stopPropagation();
     event.preventDefault();
 
@@ -459,8 +470,12 @@ export class ErpTabsComponent {
       return next;
     });
 
-    // Jeśli zamknięto aktualnie aktywną zakładkę, wybierz nową aktywną
-    if (this.activeTabId() === tabId) {
+    // Jeśli zamknięto aktualnie aktywną zakładkę (lub jej rodzica), wybierz nową aktywną
+    const activeId = this.activeTabId();
+    const closedTab = this.findTabById(this.config().tabs ?? [], tabId);
+    const isActiveOrChildActive = activeId === tabId || (!!closedTab && !!activeId && !!this.findTabById(closedTab.children || [], activeId));
+
+    if (isActiveOrChildActive) {
       const visibleTabs = this._visibleTabs();
       if (visibleTabs.length > 0) {
         const firstLeaf = this.getFirstLeafTab(visibleTabs[0]);

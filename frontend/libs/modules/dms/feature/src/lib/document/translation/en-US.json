@@ -1,0 +1,24 @@
+{
+  "base": {
+    "tabs": {
+      "list": "Document List",
+      "detail": "Document: {title}",
+      "basicInfo": "Basic Info",
+      "accountingDescription": "Accounting Description",
+      "substantiveDescription": "Substantive Description",
+      "history": "History"
+    },
+    "list": {
+      "title": "Title",
+      "author": "Author",
+      "createdAt": "Created At",
+      "actions": "Actions",
+      "open": "Open"
+    },
+    "detail": {
+      "author": "Author: {author}",
+      "createdAt": "Created: {date}",
+      "content": "Document content:"
+    }
+  }
+}

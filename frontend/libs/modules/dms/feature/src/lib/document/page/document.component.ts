@@ -1,71 +1,131 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { noop } from 'rxjs';
+import {
+  ErpPageLayoutBuilder,
+  ErpPageLayoutComponent,
+  ErpTabsComponent,
+  ErpTabsConfig,
+  ErpTabItem,
+} from '@erp/shared/ui';
+import { provideDocumentTranslations, DOCUMENT_KEYS } from '../translation';
+import { DocumentListComponent, MockDocument } from './document-list.component';
+import { DocumentDetailComponent } from './document-detail.component';
+import { DocumentAccountingComponent } from './document-accounting.component';
+import { DocumentSubstantiveComponent } from './document-substantive.component';
+import { DocumentHistoryComponent } from './document-history.component';
 
-@Component({
-  selector: 'erp-document-status-sidebar',
-  standalone: true,
-  template: `
-    <div class="p-4 bg-surface-50 dark:bg-surface-900/50 rounded-xl border border-surface-200 dark:border-surface-800">
-      <div class="text-sm font-bold uppercase tracking-wider text-surface-500 mb-4">Statusy Dokumentów</div>
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            <span class="text-sm">W obiegu</span>
-          </div>
-          <span class="text-xs font-mono text-surface-400">12</span>
-        </div>
-        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer transition-colors">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-            <span class="text-sm">Zatwierdzone</span>
-          </div>
-          <span class="text-xs font-mono text-surface-400">45</span>
-        </div>
-      </div>
-    </div>
-  `
-})
-export class DocumentStatusSidebarComponent {}
+interface OpenTabInfo {
+  tabId: string;
+  document: MockDocument;
+}
 
 @Component({
   selector: 'erp-document',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="flex flex-col h-full">
-      <div class="p-4 bg-surface-100 dark:bg-surface-800 flex justify-between items-center border-b border-surface-200 dark:border-surface-700">
-        <h2 class="text-lg font-bold">Dokumenty</h2>
-        <div class="flex gap-2">
-        </div>
-      </div>
-      <div class="flex-1">
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      :host {
-        display: block;
-        height: 100%;
-      }
-      .animate-fade-in {
-        animation: fadeIn 0.3s ease-out;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    `,
-  ],
+  imports: [ErpPageLayoutComponent],
+  providers: [provideDocumentTranslations()],
+  template: `<erp-page-layout [config]="pageConfig()" />`,
+  styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentComponent {
+  // Track open document tabs
+  private readonly openTabs = signal<OpenTabInfo[]>([]);
+  
+  // Track currently active tab ID ('list' or a dynamic doc tab ID)
+  private readonly activeTabId = signal<string>('list');
+
+  // Computed configuration for ErpTabsComponent
+  protected readonly tabsConfig = computed<ErpTabsConfig>(() => {
+    const listTab: ErpTabItem = {
+      id: 'list',
+      label: DOCUMENT_KEYS.base.tabs.list,
+      component: DocumentListComponent,
+      inputs: {
+        selectDocument: (doc: MockDocument) => this.openDocument(doc)
+      }
+    };
+
+    const docTabs = this.openTabs().map((tab) => ({
+      id: tab.tabId,
+      label: { key: DOCUMENT_KEYS.base.tabs.detail, params: { title: tab.document.title } },
+      closable: true,
+      children: [
+        {
+          id: `${tab.tabId}-basic`,
+          label: DOCUMENT_KEYS.base.tabs.basicInfo,
+          component: DocumentDetailComponent,
+          inputs: {
+            document: tab.document
+          }
+        },
+        {
+          id: `${tab.tabId}-accounting`,
+          label: DOCUMENT_KEYS.base.tabs.accountingDescription,
+          component: DocumentAccountingComponent,
+          inputs: {
+            document: tab.document
+          }
+        },
+        {
+          id: `${tab.tabId}-substantive`,
+          label: DOCUMENT_KEYS.base.tabs.substantiveDescription,
+          component: DocumentSubstantiveComponent,
+          inputs: {
+            document: tab.document
+          }
+        },
+        {
+          id: `${tab.tabId}-history`,
+          label: DOCUMENT_KEYS.base.tabs.history,
+          component: DocumentHistoryComponent,
+          inputs: {
+            document: tab.document
+          }
+        }
+      ]
+    } as ErpTabItem));
+
+    return {
+      tabs: [listTab, ...docTabs],
+      initialValue: this.activeTabId(),
+      onTabChange: (tabId) => {
+        this.activeTabId.set(tabId);
+      },
+      onTabClose: (tabId) => {
+        this.closeDocument(tabId);
+      }
+    };
+  });
+
+  protected readonly pageConfig = computed(() =>
+    ErpPageLayoutBuilder.create((b) =>
+      b.setMain(ErpTabsComponent, { config: this.tabsConfig() })
+    )
+  );
+
+  private openDocument(doc: MockDocument): void {
+    const existing = this.openTabs().find((t) => t.document.id === doc.id);
+    if (existing) {
+      // Document already open, switch to its active tab
+      this.activeTabId.set(existing.tabId);
+    } else {
+      // Generate instance-based tabId to circumvent the closedTabIds limitation in ErpTabsComponent
+      const tabId = `doc-${doc.id}-${Date.now()}`;
+      this.openTabs.update((tabs) => [...tabs, { tabId, document: doc }]);
+      this.activeTabId.set(tabId);
+    }
+  }
+
+  private closeDocument(tabId: string): void {
+    this.openTabs.update((tabs) => tabs.filter((t) => t.tabId !== tabId));
+  }
 }

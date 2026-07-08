@@ -1,1 +1,24 @@
-{}
+{
+  "base": {
+    "tabs": {
+      "list": "Lista dokumentów",
+      "detail": "Dokument: {{title}}",
+      "basicInfo": "Dane Podstawowe",
+      "accountingDescription": "Opis księgowy",
+      "substantiveDescription": "Opis merytoryczny",
+      "history": "Historia"
+    },
+    "list": {
+      "title": "Tytuł",
+      "author": "Autor",
+      "createdAt": "Data utworzenia",
+      "actions": "Akcje",
+      "open": "Otwórz"
+    },
+    "detail": {
+      "author": "Autor: {{author}}",
+      "createdAt": "Utworzono: {{date}}",
+      "content": "Treść dokumentu:"
+    }
+  }
+}

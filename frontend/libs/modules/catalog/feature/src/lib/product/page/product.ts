@@ -23,9 +23,11 @@ import { ProductFilterComponent } from './filters/product-filter.component';
   template: `<erp-page-layout [config]="pageConfig" />`,
   styles: [`
     :host {
-      flex-grow: 1;
-      display: block;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
       height: 100%;
+      min-height: 0;
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,10 +1,13 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, inject, effect, signal } from '@angular/core';
+import { TUI_DARK_MODE } from '@taiga-ui/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ThemeService {
   private readonly _themeKey = 'erp-theme';
+  private readonly _darkMode = inject(TUI_DARK_MODE);
+
   public isDarkMode = signal<boolean>(this._getInitialTheme());
 
   public constructor() {
@@ -24,11 +27,7 @@ export class ThemeService {
   }
 
   private _updateTheme(isDark: boolean): void {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    this._darkMode.set(isDark);
   }
 
   public toggleTheme(): void {

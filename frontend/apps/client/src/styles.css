@@ -1,20 +1,15 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'tailwindcss';
-@import 'tailwindcss-primeui';
 
 /* Reset domyślnych marginesów */
 @layer base {
   html,
-  body {
-    @apply m-0 p-0 h-full w-full overflow-hidden;
+  body,
+  app-root,
+  tui-root {
+    @apply m-0 p-0 h-full w-full overflow-hidden block;
   }
 }
-/* Integracja z PrimeNG */
-@layer tailwind-base, primeng, tailwind-utilities;
-
-/* @layer tailwind-base {
-  @import 'tailwindcss/preflight.css';
-} */
 
 @custom-variant dark (&:is(.dark *));
 

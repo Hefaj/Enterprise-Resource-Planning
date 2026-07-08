@@ -40,18 +40,7 @@ const config: ModuleFederationConfig = {
       },
     },
 
-    // 4. PRIMENG (KRYTYCZNE!)
-    // Bez tego serwisy PrimeNG takie jak DialogService (dla modali),
-    // MessageService (dla toastów) i ConfirmationService będą miały
-    // osobną instancję w każdym MFE. To powoduje zepsucie UI.
-    {
-      libraryName: 'primeng',
-      sharedConfig: {
-        singleton: true,
-        strictVersion: true,
-        requiredVersion: 'auto',
-      },
-    },
+
   ],
 };
 

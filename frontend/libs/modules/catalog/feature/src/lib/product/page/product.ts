@@ -64,7 +64,7 @@ export class ProductComponent {
         component: WarrantyTabComponent,
         icon: '@tui.shield-check',
       })
-      .setInitialValue('exclusion')
+      .setInitialValue('products')
       .setOnTabChange(noop)
   );
 

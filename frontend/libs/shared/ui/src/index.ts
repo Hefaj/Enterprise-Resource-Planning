@@ -26,6 +26,7 @@ export * from './lib/atoms/erp-drawer';
 // export * from './lib/atoms/erp-list';
 // export * from './lib/atoms/erp-menu';
 // export * from './lib/atoms/erp-menubar';
+export * from './lib/atoms/erp-menu-bar';
 // export * from './lib/atoms/erp-multi-select';
 // export * from './lib/atoms/erp-panel-menu';
 // export * from './lib/atoms/erp-select';

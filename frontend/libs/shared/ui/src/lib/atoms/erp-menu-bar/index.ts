@@ -1,6 +1,5 @@
 export type {
   ErpMenuBarItemAppearance,
-  ErpMenuBarDirection,
   ErpMenuBarItemConfig,
   ErpMenuBarConfig,
 } from './erp-menu-bar.types';

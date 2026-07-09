@@ -10,11 +10,6 @@ import { ErpMenuBarComponent, ErpMenuBarBuilder } from '@erp/shared/ui';
     <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1.5rem;">
       <h3>Test komponentu ErpMenuBar (Poziomy)</h3>
       <erp-menu-bar [config]="horizontalMenu" />
-
-      <h3>Test komponentu ErpMenuBar (Pionowy)</h3>
-      <div style="width: 250px;">
-        <erp-menu-bar [config]="verticalMenu" />
-      </div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,7 +17,6 @@ import { ErpMenuBarComponent, ErpMenuBarBuilder } from '@erp/shared/ui';
 export class ProductTabComponent {
   protected readonly horizontalMenu = ErpMenuBarBuilder.create((b) =>
     b
-      .setDirection('horizontal')
       .addItem((i) =>
         i
           .setLabel('Akcje podstawowe')
@@ -96,43 +90,21 @@ export class ProductTabComponent {
               .setLabel('Status systemu')
               .setIconStart('@tui.activity')
               .setAppearance('info')
+              .addChild((cc) =>
+                cc
+                  .setLabel('Submenu 1')
+                  .setFn(() => console.log('Submenu 1 clicked'))
+                  .addChild((ccc) => ccc.setLabel('Submenu 1.1').setFn(() => console.log('Submenu 1.1 clicked')))
+              )
+              .addChild((cc) =>
+                cc
+                  .setLabel('Submenu 2')
+                  .setFn(() => console.log('Submenu 2 clicked'))
+                  .addChild((ccc) =>
+                    ccc.setLabel('Submenu 2.1').setFn(() => console.log('Submenu 2.1 clicked')).addChild((cccc) => cccc.setLabel('Submenu 2.1.1').setFn(() => console.log('Submenu 2.1.1 clicked')))
+                  )
+              )
           )
-      )
-  );
-
-  protected readonly verticalMenu = ErpMenuBarBuilder.create((b) =>
-    b
-      .setDirection('vertical')
-      .addItem((i) =>
-        i.setLabel('Profil').setIconStart('@tui.user').setFn(() => console.log('Profil clicked'))
-      )
-      .addItem((i) =>
-        i
-          .setLabel('Ustawienia')
-          .setIconStart('@tui.settings')
-          .addChild((c) =>
-            c
-              .setLabel('Konto')
-              .setSubLabel('Zarządzanie hasłem i e-mailem')
-              .setCloseOnClick(false)
-              .setFn(async () => {
-                console.log('Async operation started...');
-                await new Promise((resolve) => setTimeout(resolve, 3000));
-                console.log('Async operation completed!');
-              })
-          )
-          .addSeparator()
-          .addChild((c) =>
-            c.setLabel('Powiadomienia')
-          )
-      )
-      .addSeparator()
-      .addItem((i) =>
-        i
-          .setLabel('Wyloguj')
-          .setIconStart('@tui.log-out')
-          .setAppearance('warning')
-          .setFn(() => console.log('Logout clicked'))
       )
   );
 }

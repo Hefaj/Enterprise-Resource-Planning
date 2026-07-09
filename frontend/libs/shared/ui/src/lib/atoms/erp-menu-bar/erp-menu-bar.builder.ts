@@ -3,7 +3,6 @@ import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpIcon } from '../../base/erp-icon.types';
 import {
   ErpMenuBarConfig,
-  ErpMenuBarDirection,
   ErpMenuBarItemAppearance,
   ErpMenuBarItemConfig,
 } from './erp-menu-bar.types';
@@ -172,15 +171,4 @@ export class ErpMenuBarBuilder extends ErpBaseBuilder<ErpMenuBarConfig> {
     return this;
   }
 
-  /**
-   * Ustawia kierunek rozłożenia elementów poziomu 0 w pasku menu.
-   * Dostępne wartości:
-   * - 'horizontal': elementy ułożone obok siebie (poziomo - domyślne)
-   * - 'vertical': elementy ułożone jeden pod drugim (pionowo)
-   * @param direction Orientacja menu.
-   */
-  public setDirection(direction: MaybeSignal<ErpMenuBarDirection>): this {
-    this._data.direction = direction;
-    return this;
-  }
 }

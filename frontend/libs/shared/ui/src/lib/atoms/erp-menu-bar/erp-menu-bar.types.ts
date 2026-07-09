@@ -6,10 +6,6 @@ import { ErpIcon } from '../../base/erp-icon.types';
  */
 export type ErpMenuBarItemAppearance = 'normal' | 'warning' | 'info';
 
-/**
- * Typ określający ułożenie (kierunek) elementów menu poziomu 0.
- */
-export type ErpMenuBarDirection = 'horizontal' | 'vertical';
 
 /**
  * Konfiguracja pojedynczego elementu w menu.
@@ -83,9 +79,4 @@ export interface ErpMenuBarConfig {
    * Elementy menu poziomu 0.
    */
   items: ErpMenuBarItemConfig[];
-
-  /**
-   * Kierunek rozłożenia elementów na poziomie 0 ('horizontal' | 'vertical'). Domyślnie 'horizontal'.
-   */
-  direction?: MaybeSignal<ErpMenuBarDirection>;
 }

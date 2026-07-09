@@ -1,1 +1,1 @@
-export * from './lib/entry';
+export * from './lib/inventory.component';

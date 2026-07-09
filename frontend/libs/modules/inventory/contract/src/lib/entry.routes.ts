@@ -4,6 +4,6 @@ export const remoteRoutes: Route[] = [
   {
     path: '',
     data: { breadcrumb: 'WMS' },
-    loadComponent: () => import('@erp/inventory/feature').then((m) => m.RemoteEntry),
+    loadComponent: () => import('@erp/inventory/feature').then((m) => m.InventoryComponent),
   },
 ];

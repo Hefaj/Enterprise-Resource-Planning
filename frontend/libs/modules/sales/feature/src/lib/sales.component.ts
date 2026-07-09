@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 
 @Component({
-  imports: [],
-  selector: 'erp-sales-entry',
+  selector: 'erp-sales-placeholder',
+  standalone: true,
   template: `sales`,
   styles: [`
     :host {
       display: block;
-      height: 100%;
+      padding: 1rem;
     }
   `],
 })
-export class RemoteEntry {}
+export class SalesComponent {}

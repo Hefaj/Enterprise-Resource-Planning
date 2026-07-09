@@ -112,6 +112,17 @@ Kluczowe pola do zweryfikowania:
 - `serve.dependsOn` = `["client:serve"]`
 - `build.options.customWebpackConfig.path` → `webpack.config.ts`
 - `build.configurations.production.customWebpackConfig.path` → `webpack.prod.config.ts`
+- **Ustawienia Budżetów**: Zwiększ limity budżetów w konfiguracji `production` dla typu `initial` do `1mb` (warning) i `2mb` (error) z powodu dołączania deweloperskich i współdzielonych paczek w trybie standalone:
+  ```json
+  "budgets": [
+    {
+      "type": "initial",
+      "maximumWarning": "1mb",
+      "maximumError": "2mb"
+    },
+    ...
+  ]
+  ```
 
 ### 3.2 `module-federation.config.ts`
 
@@ -168,31 +179,79 @@ import('./bootstrap').catch((err) => console.error(err));
 ```ts
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
-import { RemoteEntry } from '@erp/MODULE_NAME/feature';
+import { AppComponent } from './app/app.component';
 
-bootstrapApplication(RemoteEntry, appConfig).catch((err) => console.error(err));
+bootstrapApplication(AppComponent, appConfig).catch((err) => console.error(err));
 ```
 
-### 3.7 `src/app/app.config.ts`
+### 3.7 `src/app/app.component.ts`
+
+Stwórz lokalny komponent `AppComponent` służący jako opakowanie dla widoków standalone w `<tui-root>` (wymagany przez Taiga UI):
+
+```ts
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { TuiRoot } from '@taiga-ui/core';
+
+@Component({
+  selector: 'erp-MODULE_NAME-entry', // Musi dokładnie pasować do selektora w index.html
+  standalone: true,
+  imports: [RouterOutlet, TuiRoot],
+  template: `
+    <tui-root>
+      <router-outlet></router-outlet>
+    </tui-root>
+  `,
+  styles: [`
+    :host {
+      display: block;
+      height: 100vh;
+    }
+  `],
+})
+export class AppComponent {}
+```
+
+### 3.8 `src/app/app.config.ts`
+
+Używamy dostawcy `provideRemoteDevSupport()` z `@erp/shared/ui` do automatycznego zarejestrowania wymaganych paczek (Transloco, HttpClient, Taiga UI) w trybie standalone:
 
 ```ts
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideTaiga } from '@taiga-ui/core';
 import { remoteRoutes } from '@erp/MODULE_NAME/contract';
 import { API_BASE_URL } from '@erp/MODULE_NAME/data-access';
+import { provideRemoteDevSupport } from '@erp/shared/ui';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideRemoteDevSupport(),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
-    provideTaiga(),
-    { provide: API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na odpowiedni port BFF dla tego modułu (np. 5250)
+    { provide: API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na port BFF modułu (np. 5250)
   ],
 };
 ```
 
-### 3.8 `src/index.html`
+### 3.9 `src/styles.css`
+
+Zresetuj marginesy oraz dodaj pełną wysokość, aby tui-root oraz strona standalone zajmowały cały ekran:
+
+```css
+/* Reset domyślnych marginesów i pełna wysokość dla tui-root */
+html,
+body,
+erp-MODULE_NAME-entry,
+tui-root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: block;
+}
+```
+
+### 3.10 `src/index.html`
 
 ```html
 <!doctype html>

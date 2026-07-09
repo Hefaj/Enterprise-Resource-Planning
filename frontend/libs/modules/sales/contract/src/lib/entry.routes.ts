@@ -4,6 +4,6 @@ export const remoteRoutes: Route[] = [
   {
     path: '',
     data: { breadcrumb: 'Sprzedaż' },
-    loadComponent: () => import('@erp/sales/feature').then((m) => m.RemoteEntry),
+    loadComponent: () => import('@erp/sales/feature').then((m) => m.SalesComponent),
   },
 ];

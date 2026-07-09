@@ -8,32 +8,33 @@ trigger: manual
 
 ## Krok 4: Uzupełnij pliki bibliotek
 
-### 4.1 Feature — `RemoteEntry` component
+### 4.1 Feature — Pierwszy komponent strony (Page Component)
 
-Plik: `frontend/libs/modules/MODULE_NAME/feature/src/lib/entry.ts`
+Stwórz pierwszy komponent dla głównej strony modułu w bibliotece `feature` (np. `WarehouseComponent` dla modułu `warehouse`):
+
+Plik: `frontend/libs/modules/MODULE_NAME/feature/src/lib/MODULE_NAME.component.ts`
 
 ```ts
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+
 @Component({
-  imports: [RouterModule],
-  selector: 'erp-MODULE_NAME-entry',
-  template: `<router-outlet></router-outlet>`,
+  selector: 'erp-MODULE_NAME-placeholder',
+  standalone: true,
+  template: `MODULE_NAME works!`,
   styles: [`
     :host {
       display: block;
-      height: 100%;
+      padding: 1rem;
     }
   `],
 })
-export class RemoteEntry {
-}
+export class MODULE_NAMEComponent {}
 ```
 
 Plik: `frontend/libs/modules/MODULE_NAME/feature/src/index.ts`
 
 ```ts
-export * from './lib/entry';
+export * from './lib/MODULE_NAME.component';
 ```
 
 ### 4.2 Contract — Routes i Menu
@@ -55,9 +56,14 @@ export const remoteRoutes: Route[] = [
         pathMatch: 'full',
         redirectTo: 'dashboard',
       },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('@erp/MODULE_NAME/feature').then((m) => m.MODULE_NAMEComponent),
+      },
     ],
   },
 ];
+```
 ```
 
 Plik: `frontend/libs/modules/MODULE_NAME/contract/src/lib/entry.menu.ts`
@@ -238,9 +244,13 @@ npx nx serve MODULE_NAME
 - [ ] Aplikacja MFE w `frontend/apps/modules/MODULE_NAME`
 - [ ] `module-federation.config.ts` — exposes `./contract`
 - [ ] `webpack.config.ts` i `webpack.prod.config.ts` — używają `createModuleFederationConfig`
-- [ ] `bootstrap.ts` — importuje `RemoteEntry` z `@erp/MODULE_NAME/feature`
-- [ ] `app.config.ts` — importuje `remoteRoutes` z `@erp/MODULE_NAME/contract`
-- [ ] `entry.ts` w feature — komponent `RemoteEntry` z `<router-outlet>`
+- [ ] `bootstrap.ts` — importuje i uruchamia lokalny `AppComponent`
+- [ ] `app.component.ts` — stworzony lokalnie w aplikacji remote z `<tui-root>` i `<router-outlet>`
+- [ ] `styles.css` — zresetowane marginesy i ustawione `height: 100%` dla `tui-root`, `html`, `body` i selektora entry
+- [ ] Budżety produkcyjne w `project.json` remote zwiększone do `1mb` (warning) i `2mb` (error)
+- [ ] `app.config.ts` (remote) — rejestruje `provideRemoteDevSupport()` z `@erp/shared/ui`
+- [ ] `app.config.ts` (remote) — importuje `remoteRoutes` z `@erp/MODULE_NAME/contract`
+- [ ] Pierwszy komponent strony w `feature` (np. `MODULE_NAME.component.ts`) i jego export w `index.ts`
 - [ ] `entry.routes.ts`, `entry.menu.ts` i `entry.modals.ts` w contract (oraz ich poprawne eksporty w `index.ts`)
 - [ ] `module-federation.manifest.json` — wpis z portem
 - [ ] `app.routes.ts` (client) — nowy path z `loadRemote`
@@ -249,6 +259,7 @@ npx nx serve MODULE_NAME
 - [ ] `tsconfig.base.json` — 5 aliasów `@erp/MODULE_NAME/*`
 - [ ] `project.json` każdej biblioteki — poprawne tagi
 - [ ] Port unikatowy
+
 
 ## Mapa portów (aktualna)
 

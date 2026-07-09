@@ -8,6 +8,6 @@ export * from './lib/product/page/product';
 
 // export * from './lib/product/modal';
 
-export * from './lib/entry';
 export * from './lib/product/translation';
+
 

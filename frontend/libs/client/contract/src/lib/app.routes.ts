@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Route } from '@angular/router';
 import { erpAuthGuard, erpGuestGuard } from '@erp/shared/auth';
-import { loadRemote } from '@module-federation/enhanced/runtime';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 
 export const appRoutes: Route[] = [
   {
@@ -30,27 +30,51 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'sales',
-        loadChildren: () => loadRemote<typeof import('@erp/sales/contract')>('sales/contract').then((m) => m!.remoteRoutes),
+        loadChildren: () =>
+          loadRemoteModule({
+            remoteName: 'sales',
+            exposedModule: './contract',
+          }).then((m) => m.remoteRoutes),
       },
       {
         path: 'inventory',
-        loadChildren: () => loadRemote<typeof import('@erp/inventory/contract')>('inventory/contract').then((m) => m!.remoteRoutes),
+        loadChildren: () =>
+          loadRemoteModule({
+            remoteName: 'inventory',
+            exposedModule: './contract',
+          }).then((m) => m.remoteRoutes),
       },
       {
         path: 'catalog',
-        loadChildren: () => loadRemote<typeof import('@erp/catalog/contract')>('catalog/contract').then((m) => m!.remoteRoutes),
+        loadChildren: () =>
+          loadRemoteModule({
+            remoteName: 'catalog',
+            exposedModule: './contract',
+          }).then((m) => m.remoteRoutes),
       },
       {
         path: 'dms',
-        loadChildren: () => loadRemote<typeof import('@erp/dms/contract')>('dms/contract').then((m) => m!.remoteRoutes),
+        loadChildren: () =>
+          loadRemoteModule({
+            remoteName: 'dms',
+            exposedModule: './contract',
+          }).then((m) => m.remoteRoutes),
       },
       {
         path: 'task-management',
-        loadChildren: () => loadRemote<typeof import('@erp/task-management/contract')>('task-management/contract').then((m) => m!.remoteRoutes),
+        loadChildren: () =>
+          loadRemoteModule({
+            remoteName: 'task-management',
+            exposedModule: './contract',
+          }).then((m) => m.remoteRoutes),
       },
       {
         path: 'notification',
-        loadChildren: () => loadRemote<typeof import('@erp/notification/contract')>('notification/contract').then((m) => m!.remoteRoutes),
+        loadChildren: () =>
+          loadRemoteModule({
+            remoteName: 'notification',
+            exposedModule: './contract',
+          }).then((m) => m.remoteRoutes),
       },
     ],
   },

@@ -17,7 +17,6 @@ export default [
           // Pozwalamy linterowi na swobodne importy w plikach konfiguracyjnych
           allow: [
             '^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$',
-            '^.*module-federation\\.shared$',
             '@ngrx/.*'
           ],
 

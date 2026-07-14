@@ -3,7 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { TuiRoot } from '@taiga-ui/core';
 
 @Component({
-  selector: 'erp-catalog-entry',
+  selector: 'app-catalog-entry',
   standalone: true,
   imports: [RouterOutlet, TuiRoot],
   template: `

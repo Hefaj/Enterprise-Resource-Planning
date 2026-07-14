@@ -4,11 +4,6 @@
   },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
-    "@angular-devkit/build-angular:browser": {
-      "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["default", "^default"]
-    },
     "@nx/eslint:lint": {
       "cache": true,
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json", "{workspaceRoot}/.eslintignore", "{workspaceRoot}/eslint.config.mjs"]
@@ -16,17 +11,6 @@
     "@nx/vitest:test": {
       "cache": true,
       "inputs": ["default", "^default"]
-    },
-    "@nx/angular:webpack-browser": {
-      "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": [
-        "default",
-        "^default",
-        {
-          "env": "NX_MF_DEV_REMOTES"
-        }
-      ]
     },
     "@angular/build:application": {
       "cache": true,

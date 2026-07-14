@@ -4,86 +4,37 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "frontend/apps/modules/sales/src",
-  "tags": ["scope:sales", "type:app"],
+  "tags": [
+    "scope:sales",
+    "type:app"
+  ],
   "targets": {
     "build": {
-      "executor": "@nx/angular:webpack-browser",
-      "outputs": ["{options.outputPath}"],
+      "executor": "@angular-architects/native-federation:build",
       "options": {
-        "outputPath": "dist/frontend/apps/modules/sales",
-        "index": "frontend/apps/modules/sales/src/index.html",
-        "main": "frontend/apps/modules/sales/src/main.ts",
-        "tsConfig": "frontend/apps/modules/sales/tsconfig.app.json",
-        "allowedCommonJsDependencies": ["@module-federation/enhanced/runtime"],
-        "assets": [
-          {
-            "glob": "**/*",
-            "input": "frontend/apps/modules/sales/public"
-          },
-          {
-            "glob": "**/*",
-            "input": "node_modules/@taiga-ui/icons/src",
-            "output": "assets/taiga-ui/icons"
-          }
-        ],
-        "styles": [
-          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
-          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
-          "frontend/apps/modules/sales/src/styles.css"
-        ],
-        "customWebpackConfig": {
-          "path": "frontend/apps/modules/sales/webpack.config.ts"
-        }
+        "cacheExternalArtifacts": true
       },
       "configurations": {
         "production": {
-          "budgets": [
-            {
-              "type": "initial",
-              "maximumWarning": "1mb",
-              "maximumError": "2mb"
-            },
-            {
-              "type": "anyComponentStyle",
-              "maximumWarning": "4kb",
-              "maximumError": "8kb"
-            }
-          ],
-          "outputHashing": "all",
-          "customWebpackConfig": {
-            "path": "frontend/apps/modules/sales/webpack.prod.config.ts"
-          }
+          "target": "sales:esbuild:production"
         },
         "development": {
-          "buildOptimizer": false,
-          "optimization": false,
-          "vendorChunk": true,
-          "extractLicenses": false,
-          "sourceMap": true,
-          "namedChunks": true
+          "target": "sales:esbuild:development",
+          "dev": true
         }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
-      "continuous": true,
-      "executor": "@nx/angular:dev-server",
+      "executor": "@angular-architects/native-federation:build",
       "options": {
-        "port": 4203,
-        "publicHost": "http://localhost:4203",
-        "headers": {
-          "Access-Control-Allow-Origin": "*"
-        }
-      },
-      "configurations": {
-        "production": {
-          "buildTarget": "sales:build:production"
-        },
-        "development": {
-          "buildTarget": "sales:build:development"
-        }
-      },
-      "defaultConfiguration": "development"
+        "target": "sales:serve-original:development",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 0
+      }
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
@@ -96,7 +47,9 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
       "options": {
         "reportsDirectory": "../../../../coverage/frontend/apps/modules/sales"
       }
@@ -118,6 +71,81 @@
           "buildTarget": "sales:build:production"
         }
       }
+    },
+    "esbuild": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/frontend/apps/modules/sales",
+        "index": "frontend/apps/modules/sales/src/index.html",
+        "tsConfig": "frontend/apps/modules/sales/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "frontend/apps/modules/sales/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "node_modules/@taiga-ui/icons/src",
+            "output": "assets/taiga-ui/icons"
+          }
+        ],
+        "styles": [
+          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
+          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+          "frontend/apps/modules/sales/src/styles.css"
+        ],
+        "polyfills": [
+          "es-module-shims"
+        ],
+        "browser": "frontend/apps/modules/sales/src/main.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "1mb",
+              "maximumError": "2mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-original": {
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "options": {
+        "port": 4203,
+        "publicHost": "http://localhost:4203",
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "sales:esbuild:production"
+        },
+        "development": {
+          "buildTarget": "sales:esbuild:development"
+        }
+      },
+      "defaultConfiguration": "development"
     }
   }
 }

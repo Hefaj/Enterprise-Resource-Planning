@@ -4,86 +4,37 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "frontend/apps/modules/notification/src",
-  "tags": ["scope:notification", "type:app"],
+  "tags": [
+    "scope:notification",
+    "type:app"
+  ],
   "targets": {
     "build": {
-      "executor": "@nx/angular:webpack-browser",
-      "outputs": ["{options.outputPath}"],
+      "executor": "@angular-architects/native-federation:build",
       "options": {
-        "outputPath": "dist/frontend/apps/modules/notification",
-        "index": "frontend/apps/modules/notification/src/index.html",
-        "main": "frontend/apps/modules/notification/src/main.ts",
-        "tsConfig": "frontend/apps/modules/notification/tsconfig.app.json",
-        "allowedCommonJsDependencies": ["@module-federation/enhanced/runtime"],
-        "assets": [
-          {
-            "glob": "**/*",
-            "input": "frontend/apps/modules/notification/public"
-          },
-          {
-            "glob": "**/*",
-            "input": "node_modules/@taiga-ui/icons/src",
-            "output": "assets/taiga-ui/icons"
-          }
-        ],
-        "styles": [
-          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
-          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
-          "frontend/apps/modules/notification/src/styles.css"
-        ],
-        "customWebpackConfig": {
-          "path": "frontend/apps/modules/notification/webpack.config.ts"
-        }
+        "cacheExternalArtifacts": true
       },
       "configurations": {
         "production": {
-          "budgets": [
-            {
-              "type": "initial",
-              "maximumWarning": "1mb",
-              "maximumError": "2mb"
-            },
-            {
-              "type": "anyComponentStyle",
-              "maximumWarning": "4kb",
-              "maximumError": "8kb"
-            }
-          ],
-          "outputHashing": "all",
-          "customWebpackConfig": {
-            "path": "frontend/apps/modules/notification/webpack.prod.config.ts"
-          }
+          "target": "notification:esbuild:production"
         },
         "development": {
-          "buildOptimizer": false,
-          "optimization": false,
-          "vendorChunk": true,
-          "extractLicenses": false,
-          "sourceMap": true,
-          "namedChunks": true
+          "target": "notification:esbuild:development",
+          "dev": true
         }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
-      "continuous": true,
-      "executor": "@nx/angular:dev-server",
+      "executor": "@angular-architects/native-federation:build",
       "options": {
-        "port": 4206,
-        "publicHost": "http://localhost:4206",
-        "headers": {
-          "Access-Control-Allow-Origin": "*"
-        }
-      },
-      "configurations": {
-        "production": {
-          "buildTarget": "notification:build:production"
-        },
-        "development": {
-          "buildTarget": "notification:build:development"
-        }
-      },
-      "defaultConfiguration": "development"
+        "target": "notification:serve-original:development",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 0
+      }
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
@@ -96,7 +47,9 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
       "options": {
         "reportsDirectory": "../../../../coverage/frontend/apps/modules/notification"
       }
@@ -118,6 +71,81 @@
           "buildTarget": "notification:build:production"
         }
       }
+    },
+    "esbuild": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/frontend/apps/modules/notification",
+        "index": "frontend/apps/modules/notification/src/index.html",
+        "tsConfig": "frontend/apps/modules/notification/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "frontend/apps/modules/notification/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "node_modules/@taiga-ui/icons/src",
+            "output": "assets/taiga-ui/icons"
+          }
+        ],
+        "styles": [
+          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
+          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+          "frontend/apps/modules/notification/src/styles.css"
+        ],
+        "polyfills": [
+          "es-module-shims"
+        ],
+        "browser": "frontend/apps/modules/notification/src/main.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "1mb",
+              "maximumError": "2mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-original": {
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "options": {
+        "port": 4206,
+        "publicHost": "http://localhost:4206",
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "notification:esbuild:production"
+        },
+        "development": {
+          "buildTarget": "notification:esbuild:development"
+        }
+      },
+      "defaultConfiguration": "development"
     }
   }
 }

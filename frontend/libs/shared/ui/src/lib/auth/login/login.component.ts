@@ -15,13 +15,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// PrimeNG v18+
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { PasswordModule } from 'primeng/password';
-import { CheckboxModule } from 'primeng/checkbox';
-import { MessageModule } from 'primeng/message';
+import { TuiIcon } from '@taiga-ui/core';
 import { Router } from '@angular/router';
 import { ErpAuthService } from '@erp/shared/auth';
 
@@ -56,7 +50,7 @@ interface Ripple {
 @Component({
   selector: 'erp-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, PasswordModule, CheckboxModule, MessageModule],
+  imports: [CommonModule, FormsModule, TuiIcon],
   template: `
     <div
       class="relative w-full h-screen overflow-hidden bg-[#010103] flex items-center justify-center font-sans select-none perspective-[1000px]"
@@ -84,9 +78,11 @@ interface Ripple {
         <div class="text-center mb-12">
           <div class="relative inline-flex mb-6 group-hover:scale-110 transition-transform duration-500">
             <div class="absolute inset-0 bg-cyan-500/30 blur-[40px] rounded-full animate-pulse"></div>
-            <i
-              class="pi pi-database text-6xl text-cyan-400 relative z-10 drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]"
-            ></i>
+            <tui-icon
+              icon="@tui.database"
+              class="text-6xl text-cyan-400 relative z-10 drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]"
+              style="font-size: 3.75rem; width: 3.75rem; height: 3.75rem;"
+            />
           </div>
           <h1 class="text-4xl font-black tracking-[0.25em] uppercase italic text-white drop-shadow-md">
             ERP<span class="text-cyan-500">.OS</span>
@@ -103,43 +99,61 @@ interface Ripple {
         >
           <div class="space-y-5">
             <div class="flex flex-col gap-2 group/input">
-              <span class="p-input-icon-left w-full relative">
-                <i
-                  class="pi pi-shield text-cyan-500/40 group-focus-within/input:text-cyan-400 transition-colors z-10"
-                ></i>
+              <span class="relative w-full block">
+                <tui-icon
+                  icon="@tui.shield"
+                  class="absolute left-5 top-1/2 -translate-y-1/2 text-cyan-500/40 group-focus-within/input:text-cyan-400 transition-colors z-10"
+                  style="width: 1.25rem; height: 1.25rem;"
+                />
                 <input
-                  pInputText
                   type="text"
                   [(ngModel)]="email"
                   name="email"
                   placeholder="Access Identity"
-                  class="w-full !bg-black/30 !border-white/5 !text-white !rounded-2xl !p-5  focus:!bg-black/50 focus:!border-cyan-500/50 focus:!shadow-[0_0_20px_rgba(34,211,238,0.15)] !transition-all"
+                  class="w-full bg-black/30 border border-white/5 text-white rounded-2xl p-5 pl-14 focus:bg-black/50 focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(34,211,238,0.15)] transition-all outline-none"
                 />
               </span>
             </div>
 
             <div class="flex flex-col gap-2 group/input">
               <span class="relative w-full block">
-                <p-password
+                <tui-icon
+                  icon="@tui.lock"
+                  class="absolute left-5 top-1/2 -translate-y-1/2 text-cyan-500/40 group-focus-within/input:text-cyan-400 transition-colors z-10"
+                  style="width: 1.25rem; height: 1.25rem;"
+                />
+                <input
+                  [type]="showPassword() ? 'text' : 'password'"
                   [(ngModel)]="password"
                   name="password"
-                  [toggleMask]="true"
-                  [feedback]="false"
                   placeholder="Security Token"
-                  styleClass="w-full"
-                  inputStyleClass="w-full !bg-black/30 !border-white/5 !text-white !rounded-2xl !p-5 focus:!bg-black/50 focus:!border-cyan-500/50 focus:!shadow-[0_0_20px_rgba(34,211,238,0.15)] !transition-all"
-                ></p-password>
+                  class="w-full bg-black/30 border border-white/5 text-white rounded-2xl p-5 pl-14 pr-14 focus:bg-black/50 focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(34,211,238,0.15)] transition-all outline-none"
+                />
+                <button
+                  type="button"
+                  (click)="showPassword.set(!showPassword())"
+                  class="absolute right-5 top-1/2 -translate-y-1/2 bg-transparent border-none outline-none cursor-pointer text-cyan-500/40 hover:text-cyan-400 transition-colors"
+                >
+                  <tui-icon
+                    [icon]="showPassword() ? '@tui.eye-off' : '@tui.eye'"
+                    style="width: 1.25rem; height: 1.25rem;"
+                  />
+                </button>
               </span>
             </div>
           </div>
 
           <button
-            pButton
             type="submit"
-            [loading]="isLoading()"
-            class="w-full !mt-3 !py-6 !rounded-2xl !bg-cyan-600 hover:!bg-cyan-500 !text-white !border-none !font-black !text-xs !tracking-[0.45em] !shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] !transition-colors active:scale-95"
+            [disabled]="isLoading()"
+            class="w-full mt-3 py-6 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white border-none font-black text-xs tracking-[0.45em] shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            EXECUTE LOGIN
+            @if (isLoading()) {
+              <span class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+              LOADING...
+            } @else {
+              EXECUTE LOGIN
+            }
           </button>
         </form>
       </div>
@@ -157,10 +171,6 @@ interface Ripple {
         --primary-400: #22d3ee;
         --primary-500: #06b6d4;
         --primary-600: #0891b2;
-      }
-      ::ng-deep .p-checkbox .p-checkbox-box {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
       }
       .login-error-state {
         border-color: rgba(239, 68, 68, 0.4) !important;
@@ -183,7 +193,7 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
   loginError = signal(false);
   isWarping = signal(false); // Nowy state: tryb lotu
   isWarpFlash = signal(false); // Nowy state: błysk przejścia do MFE
-
+  showPassword = signal(false);
   private ctx!: CanvasRenderingContext2D;
   private points: Point[] = [];
   private staticStars: StaticStar[] = [];

@@ -2,10 +2,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../../dist/out-tsc",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "target": "es2022"
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../../libs/shared/data-access/src/index.ts",
+    "../../../libs/modules/sales/feature/src/index.ts"
+  ],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",

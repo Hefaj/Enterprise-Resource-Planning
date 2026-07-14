@@ -2,10 +2,26 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "target": "es2022"
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../libs/client/contract/src/index.ts",
+    "../../libs/shared/ui/src/index.ts",
+    "../../libs/client/util/src/index.ts",
+    "../../libs/shared/auth/src/index.ts",
+    "../../libs/client/feature/src/index.ts",
+    "../../libs/shared/ui/src/lib/atoms/erp-button/index.ts",
+    "../../libs/shared/ui/src/lib/atoms/erp-breadcrumb/index.ts",
+    "../../libs/shared/ui/src/lib/atoms/erp-drawer/index.ts",
+    "../../libs/shared/data-access/src/index.ts",
+    "../../libs/client/ui/src/index.ts",
+    "../../libs/modules/catalog/data-access/src/index.ts",
+    "../../libs/modules/notification/data-access/src/index.ts"
+  ],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",

@@ -1,6 +1,6 @@
 import { Component, OnInit, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { loadRemote } from '@module-federation/enhanced/runtime';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 
 @Component({
   selector: 'erp-job-popover-lazy',

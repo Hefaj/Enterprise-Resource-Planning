@@ -1,0 +1,21 @@
+{
+  "name": "Enterprise-Resource-Planning",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "tags": [
+    "scope:shared",
+    "scope:host",
+    "scope:catalog",
+    "scope:inventory",
+    "scope:sales",
+    "scope:dms",
+    "scope:task-management",
+    "scope:notification",
+    "type:util",
+    "type:ui",
+    "type:data-access",
+    "type:feature",
+    "type:contract",
+    "type:auth",
+    "type:env"
+  ]
+}

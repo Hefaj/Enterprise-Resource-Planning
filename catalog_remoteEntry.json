@@ -1,0 +1,2323 @@
+{
+  "name": "catalog",
+  "shared": [
+    {
+      "packageName": "@angular/cdk/clipboard",
+      "outFileName": "_angular_cdk_clipboard.eyrrgPCrc9-dev.js",
+      "requiredVersion": "^22.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.2",
+      "bundle": "browser-angular_cdk"
+    },
+    {
+      "packageName": "@angular/cdk/coercion",
+      "outFileName": "_angular_cdk_coercion.uZMayz1CJA-dev.js",
+      "requiredVersion": "^22.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.2",
+      "bundle": "browser-angular_cdk"
+    },
+    {
+      "packageName": "@angular/common",
+      "outFileName": "_angular_common.3NiCR8-ZCC-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_common"
+    },
+    {
+      "packageName": "@angular/common/http",
+      "outFileName": "_angular_common_http.tEmN0PKi5C-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_common"
+    },
+    {
+      "packageName": "@angular/forms",
+      "outFileName": "_angular_forms.nwGxp4kahc-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_forms"
+    },
+    {
+      "packageName": "@angular/forms/signals",
+      "outFileName": "_angular_forms_signals.ASG34wcnSp-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_forms"
+    },
+    {
+      "packageName": "@angular/platform-browser",
+      "outFileName": "_angular_platform_browser.7-Q9mA8J1p-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_platform_browser"
+    },
+    {
+      "packageName": "@angular/router",
+      "outFileName": "_angular_router.ngev-gVded-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_router"
+    },
+    {
+      "packageName": "@jsverse/transloco",
+      "outFileName": "_jsverse_transloco.zLaICia4lp-dev.js",
+      "requiredVersion": "^8.4.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "8.4.0",
+      "bundle": "browser-jsverse_transloco"
+    },
+    {
+      "packageName": "@maskito/angular",
+      "outFileName": "_maskito_angular.b8cRsw9e-f-dev.js",
+      "requiredVersion": "^5.3.1",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.3.1",
+      "bundle": "browser-maskito_angular"
+    },
+    {
+      "packageName": "@maskito/core",
+      "outFileName": "_maskito_core.3EreEig43U-dev.js",
+      "requiredVersion": "^5.3.1",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.3.1",
+      "bundle": "browser-maskito_core"
+    },
+    {
+      "packageName": "@ngrx/operators",
+      "outFileName": "_ngrx_operators.yujBq2ON3T-dev.js",
+      "requiredVersion": "^21.1.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "21.1.1",
+      "bundle": "browser-ngrx_operators"
+    },
+    {
+      "packageName": "@ngrx/signals",
+      "outFileName": "_ngrx_signals.b7y2E6ynzc-dev.js",
+      "requiredVersion": "^21.1.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "21.1.1",
+      "bundle": "browser-ngrx_signals"
+    },
+    {
+      "packageName": "@ngrx/signals/rxjs-interop",
+      "outFileName": "_ngrx_signals_rxjs_interop.AvZahmwqH9-dev.js",
+      "requiredVersion": "^21.1.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "21.1.1",
+      "bundle": "browser-ngrx_signals"
+    },
+    {
+      "packageName": "@taiga-ui/cdk",
+      "outFileName": "_taiga_ui_cdk.PpXDOtlGkd-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/classes",
+      "outFileName": "_taiga_ui_cdk_classes.R_gRaopuMa-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/constants",
+      "outFileName": "_taiga_ui_cdk_constants.TfsBdBvgC9-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/date-time",
+      "outFileName": "_taiga_ui_cdk_date_time.reDsxDLh0y-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives",
+      "outFileName": "_taiga_ui_cdk_directives.sFU1dPhbpE-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/observables",
+      "outFileName": "_taiga_ui_cdk_observables.u2fb2i3p-I-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/pipes",
+      "outFileName": "_taiga_ui_cdk_pipes.BJ1Z8HkszI-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/portals",
+      "outFileName": "_taiga_ui_cdk_portals.Ioc2dSKE65-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/tokens",
+      "outFileName": "_taiga_ui_cdk_tokens.S5on81xP93-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/utils",
+      "outFileName": "_taiga_ui_cdk_utils.Ws-RNIk_pU-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/active-zone",
+      "outFileName": "_taiga_ui_cdk_directives_active_zone.dA6oo9tUal-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/animated",
+      "outFileName": "_taiga_ui_cdk_directives_animated.YyENMCwWEF-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/auto-focus",
+      "outFileName": "_taiga_ui_cdk_directives_auto_focus.CSYWRvm6a8-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/control",
+      "outFileName": "_taiga_ui_cdk_directives_control._m4pnfEVp8-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/copy-processor",
+      "outFileName": "_taiga_ui_cdk_directives_copy_processor.OI006u2aDM-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/element",
+      "outFileName": "_taiga_ui_cdk_directives_element.QX6lej-mdH-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/focus-trap",
+      "outFileName": "_taiga_ui_cdk_directives_focus_trap.lzKSYFa4Us-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/font-size",
+      "outFileName": "_taiga_ui_cdk_directives_font_size.Ic7SX1dXYD-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/high-dpi",
+      "outFileName": "_taiga_ui_cdk_directives_high_dpi.-vPl6fqGPb-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/hovered",
+      "outFileName": "_taiga_ui_cdk_directives_hovered.gXt3gkIcSY-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/id",
+      "outFileName": "_taiga_ui_cdk_directives_id.BxML887occ-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/item",
+      "outFileName": "_taiga_ui_cdk_directives_item.8GhsZZm7Cu-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/media",
+      "outFileName": "_taiga_ui_cdk_directives_media.6DLAhQX6It-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/native-validator",
+      "outFileName": "_taiga_ui_cdk_directives_native_validator.dLYM7uulIm-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/obscured",
+      "outFileName": "_taiga_ui_cdk_directives_obscured.zfIK_RUEV7-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/pan",
+      "outFileName": "_taiga_ui_cdk_directives_pan.3AnfgoxdX0-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/platform",
+      "outFileName": "_taiga_ui_cdk_directives_platform.bNyO8-BOj_-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/resizer",
+      "outFileName": "_taiga_ui_cdk_directives_resizer.Lzl5l7Omk9-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/swipe",
+      "outFileName": "_taiga_ui_cdk_directives_swipe.FPPecSuHL--dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/transitioned",
+      "outFileName": "_taiga_ui_cdk_directives_transitioned.JlA9V2DRQJ-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/truncate",
+      "outFileName": "_taiga_ui_cdk_directives_truncate.j6qVB4MaP4-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/validator",
+      "outFileName": "_taiga_ui_cdk_directives_validator.7JMl5t2MPJ-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/value-changes",
+      "outFileName": "_taiga_ui_cdk_directives_value_changes.N73cPuyCER-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/vcr",
+      "outFileName": "_taiga_ui_cdk_directives_vcr.zcZ_fedMLM-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/visual-viewport",
+      "outFileName": "_taiga_ui_cdk_directives_visual_viewport.-vNPtHZAAf-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/with-styles",
+      "outFileName": "_taiga_ui_cdk_directives_with_styles.CsyR12q2ot-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/directives/zoom",
+      "outFileName": "_taiga_ui_cdk_directives_zoom.0ZuEJNiuOh-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/pipes/filter",
+      "outFileName": "_taiga_ui_cdk_pipes_filter.wVqfmfA3Ht-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/pipes/mapper",
+      "outFileName": "_taiga_ui_cdk_pipes_mapper.5wNo2iH4Bf-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/pipes/obfuscate",
+      "outFileName": "_taiga_ui_cdk_pipes_obfuscate.Fn8NsdH81--dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/utils/di",
+      "outFileName": "_taiga_ui_cdk_utils_di.yFAAtGnIHE-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/utils/dom",
+      "outFileName": "_taiga_ui_cdk_utils_dom.nRQJsuYIWi-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/utils/focus",
+      "outFileName": "_taiga_ui_cdk_utils_focus.4849_BeOKd-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/utils/math",
+      "outFileName": "_taiga_ui_cdk_utils_math.x4GvJngZWZ-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/cdk/utils/miscellaneous",
+      "outFileName": "_taiga_ui_cdk_utils_miscellaneous.9DrjLRDXwb-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_cdk"
+    },
+    {
+      "packageName": "@taiga-ui/core",
+      "outFileName": "_taiga_ui_core.zeJAJ9XL1H-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/classes",
+      "outFileName": "_taiga_ui_core_classes.UmUG3QXD8n-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components",
+      "outFileName": "_taiga_ui_core_components.eVZh5_CFVg-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives",
+      "outFileName": "_taiga_ui_core_directives.qZ1ZTFLdZe-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/pipes",
+      "outFileName": "_taiga_ui_core_pipes.phXdSiScj3-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/portals",
+      "outFileName": "_taiga_ui_core_portals.J5M4GZ92lk-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/services",
+      "outFileName": "_taiga_ui_core_services.PPzPcS7Rel-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/tokens",
+      "outFileName": "_taiga_ui_core_tokens.-khv9xZYU--dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/utils",
+      "outFileName": "_taiga_ui_core_utils.ctFLM-8uS5-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/button",
+      "outFileName": "_taiga_ui_core_components_button.FllhzMb5c8-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/calendar",
+      "outFileName": "_taiga_ui_core_components_calendar.Hs-1pD_c6q-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/carousel",
+      "outFileName": "_taiga_ui_core_components_carousel.g6eRG5hfBa-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/cell",
+      "outFileName": "_taiga_ui_core_components_cell.fmID9JnuxG-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/checkbox",
+      "outFileName": "_taiga_ui_core_components_checkbox.rgaq5-SSnM-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/data-list",
+      "outFileName": "_taiga_ui_core_components_data_list.yCuJt_zVR1-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/error",
+      "outFileName": "_taiga_ui_core_components_error.3Q5Rp5C7Hh-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/expand",
+      "outFileName": "_taiga_ui_core_components_expand.YL8RquOaPY-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/icon",
+      "outFileName": "_taiga_ui_core_components_icon.paa99RSTio-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/input",
+      "outFileName": "_taiga_ui_core_components_input.hWdjNB5SN3-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/label",
+      "outFileName": "_taiga_ui_core_components_label.sXcnR43zSw-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/link",
+      "outFileName": "_taiga_ui_core_components_link.zTycOLse0V-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/loader",
+      "outFileName": "_taiga_ui_core_components_loader.h_IfzckffX-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/notification",
+      "outFileName": "_taiga_ui_core_components_notification.-LnddtlQrw-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/radio",
+      "outFileName": "_taiga_ui_core_components_radio.Ia2ljezt9X-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/root",
+      "outFileName": "_taiga_ui_core_components_root.02AYsdRPj3-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/scrollbar",
+      "outFileName": "_taiga_ui_core_components_scrollbar.qQF-Ckn82a-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/slider",
+      "outFileName": "_taiga_ui_core_components_slider.wXJ2HheBQ5-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/spin-button",
+      "outFileName": "_taiga_ui_core_components_spin_button.B6uG7lx9dR-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/textfield",
+      "outFileName": "_taiga_ui_core_components_textfield.nJp8ISYJY4-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/components/title",
+      "outFileName": "_taiga_ui_core_components_title.lkxahMtcDv-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives/appearance",
+      "outFileName": "_taiga_ui_core_directives_appearance.WqOwveJg0q-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives/button-x",
+      "outFileName": "_taiga_ui_core_directives_button_x.NBbo2FTSce-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives/group",
+      "outFileName": "_taiga_ui_core_directives_group.f8_D2gaFUD-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives/date-format",
+      "outFileName": "_taiga_ui_core_directives_date_format.sNAxEa9I-Q-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives/icons",
+      "outFileName": "_taiga_ui_core_directives_icons.C-ZdgVhEbK-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives/items-handlers",
+      "outFileName": "_taiga_ui_core_directives_items_handlers.jTzmEI_s0E-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/directives/number-format",
+      "outFileName": "_taiga_ui_core_directives_number_format.fvL1Xk3dGr-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/pipes/filter-by-input",
+      "outFileName": "_taiga_ui_core_pipes_filter_by_input.6GN1eahQ8T-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/pipes/format-number",
+      "outFileName": "_taiga_ui_core_pipes_format_number.QlQ7wOJ1Jw-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/portals/alert",
+      "outFileName": "_taiga_ui_core_portals_alert.gGepO-CBYm-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/portals/dialog",
+      "outFileName": "_taiga_ui_core_portals_dialog.MMksQJ9Hls-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/portals/dropdown",
+      "outFileName": "_taiga_ui_core_portals_dropdown.fPW9H2vm03-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/portals/hint",
+      "outFileName": "_taiga_ui_core_portals_hint.Ch1GijOT3Y-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/portals/modal",
+      "outFileName": "_taiga_ui_core_portals_modal.VyPn1u1wXf-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/portals/popup",
+      "outFileName": "_taiga_ui_core_portals_popup.wvATn198HN-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/utils/dom",
+      "outFileName": "_taiga_ui_core_utils_dom.2UOf01XbXv-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/utils/format",
+      "outFileName": "_taiga_ui_core_utils_format.ykJaqvJiOD-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/core/utils/miscellaneous",
+      "outFileName": "_taiga_ui_core_utils_miscellaneous.rS8xpivq6O-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_core"
+    },
+    {
+      "packageName": "@taiga-ui/event-plugins",
+      "outFileName": "_taiga_ui_event_plugins.OgKDP5raZ2-dev.js",
+      "requiredVersion": "5.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.0.0",
+      "bundle": "browser-taiga_ui_event_plugins"
+    },
+    {
+      "packageName": "@taiga-ui/i18n/tokens",
+      "outFileName": "_taiga_ui_i18n_tokens.WueA-KjKpI-dev.js",
+      "requiredVersion": "^5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_i18n"
+    },
+    {
+      "packageName": "@taiga-ui/i18n/utils",
+      "outFileName": "_taiga_ui_i18n_utils.ybEt6-MQY1-dev.js",
+      "requiredVersion": "^5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_i18n"
+    },
+    {
+      "packageName": "@taiga-ui/i18n/languages/english",
+      "outFileName": "_taiga_ui_i18n_languages_english.0RC1N_IPWv-dev.js",
+      "requiredVersion": "^5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_i18n"
+    },
+    {
+      "packageName": "@taiga-ui/kit",
+      "outFileName": "_taiga_ui_kit.RCvo7KA-Dj-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components",
+      "outFileName": "_taiga_ui_kit_components.6O1ptdbxuP-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives",
+      "outFileName": "_taiga_ui_kit_directives.QglNZpVc8e-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes",
+      "outFileName": "_taiga_ui_kit_pipes.X6ehZLNT_I-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/tokens",
+      "outFileName": "_taiga_ui_kit_tokens.P5GhRZMj2B-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/utils",
+      "outFileName": "_taiga_ui_kit_utils.PGbaAngJtW-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/accordion",
+      "outFileName": "_taiga_ui_kit_components_accordion.1E3JdKb6-n-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/action-bar",
+      "outFileName": "_taiga_ui_kit_components_action_bar.K4urKPyGjj-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/avatar",
+      "outFileName": "_taiga_ui_kit_components_avatar.3WJ3ZLKYik-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/badge",
+      "outFileName": "_taiga_ui_kit_components_badge.MhUo1HvBHb-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/badge-notification",
+      "outFileName": "_taiga_ui_kit_components_badge_notification.LdsvA1fInz-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/badged-content",
+      "outFileName": "_taiga_ui_kit_components_badged_content.k8ZqKTyTD8-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/block",
+      "outFileName": "_taiga_ui_kit_components_block.ulyccKvWBm-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/breadcrumbs",
+      "outFileName": "_taiga_ui_kit_components_breadcrumbs.U_Ns_PZ4Z--dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/button-loading",
+      "outFileName": "_taiga_ui_kit_components_button_loading.Z05sP6WFAt-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/calendar-month",
+      "outFileName": "_taiga_ui_kit_components_calendar_month.WkLa0a0QGZ-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/calendar-range",
+      "outFileName": "_taiga_ui_kit_components_calendar_range.cenTolN_Sj-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/chip",
+      "outFileName": "_taiga_ui_kit_components_chip.4aKm_ZxWrD-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/combo-box",
+      "outFileName": "_taiga_ui_kit_components_combo_box.5iliMBMcfM-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/comment",
+      "outFileName": "_taiga_ui_kit_components_comment.bEimrFOB6N-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/compass",
+      "outFileName": "_taiga_ui_kit_components_compass.waAwb5Q77N-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/confirm",
+      "outFileName": "_taiga_ui_kit_components_confirm.fY3Bm3pNl2-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/copy",
+      "outFileName": "_taiga_ui_kit_components_copy.2o6ey3XdL9-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/counter",
+      "outFileName": "_taiga_ui_kit_components_counter.-VTzF2Cjcd-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/data-list-wrapper",
+      "outFileName": "_taiga_ui_kit_components_data_list_wrapper.zO75PqlUHW-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/drawer",
+      "outFileName": "_taiga_ui_kit_components_drawer.X_iV0sgke9-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/files",
+      "outFileName": "_taiga_ui_kit_components_files.Sgh9SOQmRS-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/filter",
+      "outFileName": "_taiga_ui_kit_components_filter.fA6Ox_aGMY-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/fullscreen",
+      "outFileName": "_taiga_ui_kit_components_fullscreen.9zIFEQvACs-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-chip",
+      "outFileName": "_taiga_ui_kit_components_input_chip.H6hLFITYET-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-color",
+      "outFileName": "_taiga_ui_kit_components_input_color.IOR2KrfNTi-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-date",
+      "outFileName": "_taiga_ui_kit_components_input_date.J3zcqXHtK0-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-date-multi",
+      "outFileName": "_taiga_ui_kit_components_input_date_multi.6c-vsxdd7j-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-date-range",
+      "outFileName": "_taiga_ui_kit_components_input_date_range.n7klKn3AKJ-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-date-time",
+      "outFileName": "_taiga_ui_kit_components_input_date_time.LDb5qtxo3M-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-inline",
+      "outFileName": "_taiga_ui_kit_components_input_inline.0N1KpD4CTw-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-month",
+      "outFileName": "_taiga_ui_kit_components_input_month.yvldNfMuDe-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-month-range",
+      "outFileName": "_taiga_ui_kit_components_input_month_range.BVE4SqOUo2-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-number",
+      "outFileName": "_taiga_ui_kit_components_input_number.itfe1YeRgz-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-phone",
+      "outFileName": "_taiga_ui_kit_components_input_phone.IQ2QhkkIS8-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-phone-international",
+      "outFileName": "_taiga_ui_kit_components_input_phone_international.BBaMDnubr7-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-pin",
+      "outFileName": "_taiga_ui_kit_components_input_pin.kw2EQNGK6S-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-range",
+      "outFileName": "_taiga_ui_kit_components_input_range.CRUynA3kF3-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-slider",
+      "outFileName": "_taiga_ui_kit_components_input_slider.SJVvsJ3DzM-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-year",
+      "outFileName": "_taiga_ui_kit_components_input_year.bWJGlfcr7c-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/items-with-more",
+      "outFileName": "_taiga_ui_kit_components_items_with_more.CWrHJw03DT-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/input-time",
+      "outFileName": "_taiga_ui_kit_components_input_time.n1_Xk_AgZj-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/like",
+      "outFileName": "_taiga_ui_kit_components_like.zMAW5y2dpo-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/line-clamp",
+      "outFileName": "_taiga_ui_kit_components_line_clamp.iUhuYKdoRw-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/message",
+      "outFileName": "_taiga_ui_kit_components_message.W82-Yl2cZt-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/multi-select",
+      "outFileName": "_taiga_ui_kit_components_multi_select.PgG94G-_Q0-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/notification-middle",
+      "outFileName": "_taiga_ui_kit_components_notification_middle.83cJ74YAJ9-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/pager",
+      "outFileName": "_taiga_ui_kit_components_pager.Pko5lo6Lmd-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/pagination",
+      "outFileName": "_taiga_ui_kit_components_pagination.Db0P8jeZ5a-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/pin",
+      "outFileName": "_taiga_ui_kit_components_pin.jHCIFd6OiD-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/pincode",
+      "outFileName": "_taiga_ui_kit_components_pincode.ZvrCuBo3o5-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/preview",
+      "outFileName": "_taiga_ui_kit_components_preview.zr0MD2_P2M-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/progress",
+      "outFileName": "_taiga_ui_kit_components_progress.lcvkPnKmQP-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/pulse",
+      "outFileName": "_taiga_ui_kit_components_pulse.K0qgYPDAXm-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/push",
+      "outFileName": "_taiga_ui_kit_components_push.ywt_8GkMsk-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/radio-list",
+      "outFileName": "_taiga_ui_kit_components_radio_list.CAQryNEDDT-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/range",
+      "outFileName": "_taiga_ui_kit_components_range.YwVU6MpTJN-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/rating",
+      "outFileName": "_taiga_ui_kit_components_rating.BqWcH8s7cB-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/routable-dialog",
+      "outFileName": "_taiga_ui_kit_components_routable_dialog.lrh65yvFwp-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/segmented",
+      "outFileName": "_taiga_ui_kit_components_segmented.i3S01zcwRf-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/select",
+      "outFileName": "_taiga_ui_kit_components_select.0DBsm8WNRX-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/shrink-wrap",
+      "outFileName": "_taiga_ui_kit_components_shrink_wrap.uDE0WnSPjd-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/status",
+      "outFileName": "_taiga_ui_kit_components_status.3RLtoDr-ML-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/stepper",
+      "outFileName": "_taiga_ui_kit_components_stepper.1DKM9cTieF-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/switch",
+      "outFileName": "_taiga_ui_kit_components_switch.0iQNXAdhvP-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/tabs",
+      "outFileName": "_taiga_ui_kit_components_tabs.91VGa0Yoze-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/textarea",
+      "outFileName": "_taiga_ui_kit_components_textarea.JV1WidF5LG-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/tiles",
+      "outFileName": "_taiga_ui_kit_components_tiles.NGP3TmAggN-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/timeline",
+      "outFileName": "_taiga_ui_kit_components_timeline.HiJ9bn3hyr-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/toast",
+      "outFileName": "_taiga_ui_kit_components_toast.XVwr2P8JmV-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/components/tree",
+      "outFileName": "_taiga_ui_kit_components_tree.0ABWUj7dSp-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/appearance-proxy",
+      "outFileName": "_taiga_ui_kit_directives_appearance_proxy.Yz8iQpxmj0-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/button-group",
+      "outFileName": "_taiga_ui_kit_directives_button_group.B62q83M0kk-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/button-select",
+      "outFileName": "_taiga_ui_kit_directives_button_select.cqUgk3xKwF-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/chevron",
+      "outFileName": "_taiga_ui_kit_directives_chevron.50heDRf97y-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/connected",
+      "outFileName": "_taiga_ui_kit_directives_connected.d_7XZbit7N-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/data-list-dropdown-manager",
+      "outFileName": "_taiga_ui_kit_directives_data_list_dropdown_manager.F8hsbimAdj-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/fade",
+      "outFileName": "_taiga_ui_kit_directives_fade.EN-NmpB8Rl-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/fluid-typography",
+      "outFileName": "_taiga_ui_kit_directives_fluid_typography.rs8Zq-OmVv-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/highlight",
+      "outFileName": "_taiga_ui_kit_directives_highlight.IqyNN-TGsk-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/password",
+      "outFileName": "_taiga_ui_kit_directives_password.YhZKeaK_si-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/present",
+      "outFileName": "_taiga_ui_kit_directives_present.wNMbH5VIdG-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/sensitive",
+      "outFileName": "_taiga_ui_kit_directives_sensitive.jz8vosQtWt-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/shimmer",
+      "outFileName": "_taiga_ui_kit_directives_shimmer.2fbx9qyunI-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/skeleton",
+      "outFileName": "_taiga_ui_kit_directives_skeleton.5AFyCh4k6g-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/tooltip",
+      "outFileName": "_taiga_ui_kit_directives_tooltip.mJl8RO7OaG-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/unfinished-validator",
+      "outFileName": "_taiga_ui_kit_directives_unfinished_validator.5gvKxIZsYR-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/directives/unmask-handler",
+      "outFileName": "_taiga_ui_kit_directives_unmask_handler.EC08WrFtqf-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/auto-color",
+      "outFileName": "_taiga_ui_kit_pipes_auto_color.UBnb00MaPT-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/emails",
+      "outFileName": "_taiga_ui_kit_pipes_emails.-Fxt2urd_T-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/flag",
+      "outFileName": "_taiga_ui_kit_pipes_flag.4UuaAsVmFC-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/hide-selected",
+      "outFileName": "_taiga_ui_kit_pipes_hide_selected.QVpoD023U5-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/initials",
+      "outFileName": "_taiga_ui_kit_pipes_initials.XoIyLuRwCa-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/sort-countries",
+      "outFileName": "_taiga_ui_kit_pipes_sort_countries.nDUNkuU7O9-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/stringify",
+      "outFileName": "_taiga_ui_kit_pipes_stringify.9-CCHriD-7-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/kit/pipes/stringify-content",
+      "outFileName": "_taiga_ui_kit_pipes_stringify_content.6my0Iai67U-dev.js",
+      "requiredVersion": "5.13.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.13.0",
+      "bundle": "browser-taiga_ui_kit"
+    },
+    {
+      "packageName": "@taiga-ui/polymorpheus",
+      "outFileName": "_taiga_ui_polymorpheus.8FgoSXUJcQ-dev.js",
+      "requiredVersion": "5.0.1",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "5.0.1",
+      "bundle": "browser-taiga_ui_polymorpheus"
+    },
+    {
+      "packageName": "rxjs",
+      "outFileName": "rxjs.gikNhUbY2L-dev.js",
+      "requiredVersion": "~7.8.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "7.8.2",
+      "bundle": "browser-rxjs"
+    },
+    {
+      "packageName": "rxjs/operators",
+      "outFileName": "rxjs_operators.W0wcRXDX0I-dev.js",
+      "requiredVersion": "~7.8.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "7.8.2",
+      "bundle": "browser-rxjs"
+    },
+    {
+      "packageName": "@angular/core",
+      "outFileName": "_angular_core.tTxHlU0Fbn-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_core"
+    },
+    {
+      "packageName": "@angular/core/event-dispatch-contract.min.js",
+      "outFileName": "_angular_core_event_dispatch_contract_min_js.3Vt1y1QE3L-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_core"
+    },
+    {
+      "packageName": "@angular/core/primitives/di",
+      "outFileName": "_angular_core_primitives_di.Fv_tYDYbC3-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_core"
+    },
+    {
+      "packageName": "@angular/core/primitives/event-dispatch",
+      "outFileName": "_angular_core_primitives_event_dispatch.rwfnlXqCCe-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_core"
+    },
+    {
+      "packageName": "@angular/core/primitives/signals",
+      "outFileName": "_angular_core_primitives_signals.Mlo2LBxXp9-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_core"
+    },
+    {
+      "packageName": "@angular/core/rxjs-interop",
+      "outFileName": "_angular_core_rxjs_interop.K7IPSfo2jA-dev.js",
+      "requiredVersion": "22.0.4",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "22.0.4",
+      "bundle": "browser-angular_core"
+    },
+    {
+      "packageName": "@erp/shared/data-access",
+      "outFileName": "_erp_shared_data_access.js",
+      "requiredVersion": "~1.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.0.0",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/shared/data-access/src/index.ts"
+      }
+    },
+    {
+      "packageName": "@erp/shared/auth",
+      "outFileName": "_erp_shared_auth.js",
+      "requiredVersion": "~1.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.0.0",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/shared/auth/src/index.ts"
+      }
+    },
+    {
+      "packageName": "@erp/catalog/feature",
+      "outFileName": "_erp_catalog_feature.js",
+      "requiredVersion": "~1.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.0.0",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/modules/catalog/feature/src/index.ts"
+      }
+    },
+    {
+      "packageName": "@erp/shared/ui",
+      "outFileName": "_erp_shared_ui.js",
+      "requiredVersion": "~1.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.0.0",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/shared/ui/src/index.ts"
+      }
+    },
+    {
+      "packageName": "@erp/shared/ui/erp-button",
+      "outFileName": "_erp_shared_ui_erp_button.js",
+      "requiredVersion": "~1.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.0.0",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/shared/ui/src/lib/atoms/erp-button/index.ts"
+      }
+    },
+    {
+      "packageName": "@erp/catalog/data-access",
+      "outFileName": "_erp_catalog_data_access.js",
+      "requiredVersion": "~1.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.0.0",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/modules/catalog/data-access/src/index.ts"
+      }
+    },
+    {
+      "packageName": "@erp/catalog/util",
+      "outFileName": "_erp_catalog_util.js",
+      "requiredVersion": "~1.0.0",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.0.0",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/modules/catalog/util/src/index.ts"
+      }
+    }
+  ],
+  "exposes": [
+    {
+      "key": "./contract",
+      "outFileName": "contract.js",
+      "dev": {
+        "entryPoint": "/home/hefaj/Pulpit/git/Enterprise-Resource-Planning/frontend/libs/modules/catalog/contract/src/index.ts"
+      }
+    }
+  ],
+  "buildNotificationsEndpoint": "/@angular-architects/native-federation:build-notifications",
+  "chunks": {
+    "browser-angular_common": [
+      "chunk-XSBDSYS4.js"
+    ],
+    "browser-angular_forms": [
+      "chunk-W3UQFLG2.js"
+    ],
+    "browser-ngrx_signals": [
+      "chunk-VUJOFXKG.js"
+    ],
+    "browser-taiga_ui_cdk": [
+      "chunk-GPAPWSGD.js",
+      "chunk-YIHOWM63.js",
+      "chunk-FLD3PJNN.js",
+      "chunk-UV5CEJT2.js",
+      "chunk-RKQM462D.js",
+      "chunk-6SLWG3JK.js",
+      "chunk-3VRQT7OW.js",
+      "chunk-PPDCHNJO.js",
+      "chunk-TWC4KVWZ.js",
+      "chunk-AVQWOU7O.js",
+      "chunk-ALAOR5LQ.js",
+      "chunk-O5RUFS65.js",
+      "chunk-X3RJYXWM.js",
+      "chunk-VOSPQKAQ.js",
+      "chunk-YDTTTLVP.js",
+      "chunk-74JIT4AN.js",
+      "chunk-D6QEBEK2.js",
+      "chunk-LERXITVX.js",
+      "chunk-TJ3V3QOX.js",
+      "chunk-JOKHP7EP.js",
+      "chunk-R4RQ7PRT.js",
+      "chunk-MRV6ZWSD.js",
+      "chunk-X3Z5SQMC.js",
+      "chunk-JBI4XDYD.js",
+      "chunk-FV2XANSM.js",
+      "chunk-SJC54CWZ.js",
+      "chunk-O4WDBWEC.js",
+      "chunk-WH6YHJB2.js",
+      "chunk-WRSVYLW2.js",
+      "chunk-CMNSO6VX.js",
+      "chunk-ZRRL2FQE.js",
+      "chunk-QCYXTLJ4.js",
+      "chunk-7ZW4N75U.js",
+      "chunk-7FVJGRNB.js",
+      "chunk-VK3JAXLF.js",
+      "chunk-YPPEUN4W.js",
+      "chunk-ZD7VTXHX.js",
+      "chunk-A4GM5N6K.js",
+      "chunk-MGLSNZPP.js",
+      "chunk-2BHR5WBH.js",
+      "chunk-K5OTSWI6.js",
+      "chunk-ZVPARANO.js",
+      "chunk-KMIHJP5W.js",
+      "chunk-JRQI7JRC.js",
+      "chunk-TG73MTQD.js",
+      "chunk-4RW6GD3R.js",
+      "chunk-VUJOFXKG.js"
+    ],
+    "browser-taiga_ui_core": [
+      "chunk-WHMHJC7S.js",
+      "chunk-RATS6FFH.js",
+      "chunk-YMQGN75A.js",
+      "chunk-A4Z4I4YX.js",
+      "chunk-AGGYQNUN.js",
+      "chunk-EXOTWTXO.js",
+      "chunk-PZV65HWY.js",
+      "chunk-JVT5T356.js",
+      "chunk-WJLSEFMN.js",
+      "chunk-MBUYAERU.js",
+      "chunk-NWYAESAR.js",
+      "chunk-ICCNIOE6.js",
+      "chunk-EMW5U2MQ.js",
+      "chunk-ETTGUZ5I.js",
+      "chunk-RQ2XKJAN.js",
+      "chunk-BWE6DKAS.js",
+      "chunk-WDWYXPYZ.js",
+      "chunk-WAS2CEV2.js",
+      "chunk-VKOFDILR.js",
+      "chunk-QCP5RYUI.js",
+      "chunk-FXYIBQNC.js",
+      "chunk-NW3LAKES.js",
+      "chunk-GPZMRCJ2.js",
+      "chunk-C2J2SNAQ.js",
+      "chunk-UABOLJCU.js",
+      "chunk-BQWIDSCN.js",
+      "chunk-46PAY6SM.js",
+      "chunk-4PV5ZC7E.js",
+      "chunk-YKE75HQO.js",
+      "chunk-WGNH2QVT.js",
+      "chunk-GOLTBJRN.js",
+      "chunk-3UK5EIPA.js",
+      "chunk-WY5EFDUP.js",
+      "chunk-P4XE4EIM.js",
+      "chunk-YC4TOMB3.js",
+      "chunk-4RJW3PSL.js",
+      "chunk-5B7DZQRS.js",
+      "chunk-BRC72YYK.js",
+      "chunk-HNBZBXRL.js",
+      "chunk-FPDH33NT.js",
+      "chunk-G6ENDNSU.js",
+      "chunk-G3ZBCKOM.js",
+      "chunk-V22ZLVPT.js",
+      "chunk-KS6LJ27I.js",
+      "chunk-4ELTLJSM.js",
+      "chunk-XKXEPLKV.js",
+      "chunk-4KF5QW5P.js",
+      "chunk-V7EXS3YT.js",
+      "chunk-4JIXNHZG.js",
+      "chunk-WDMUDEB6.js"
+    ],
+    "browser-taiga_ui_i18n": [
+      "chunk-EGQA7PLM.js",
+      "chunk-TU6NSCJR.js"
+    ],
+    "browser-taiga_ui_kit": [
+      "chunk-JWBTHBGF.js",
+      "chunk-HHHOEMLH.js",
+      "chunk-XKKJZBCN.js",
+      "chunk-2IRPFHXS.js",
+      "chunk-EM4URY74.js",
+      "chunk-MHVSGC4F.js",
+      "chunk-WYIVN76V.js",
+      "chunk-FWRGX64C.js",
+      "chunk-XIMMN4EB.js",
+      "chunk-4EVPFZ2R.js",
+      "chunk-XR7A2UMH.js",
+      "chunk-QK34AZBD.js",
+      "chunk-M6UOUDBG.js",
+      "chunk-YABVR3PX.js",
+      "chunk-AHXNIQEM.js",
+      "chunk-2SOVBM4G.js",
+      "chunk-LP4OOCGJ.js",
+      "chunk-46XIACUA.js",
+      "chunk-ASZQTOU7.js",
+      "chunk-3QJAGEGX.js",
+      "chunk-BRBP256T.js",
+      "chunk-A7SYZF5G.js",
+      "chunk-O2SHW5TN.js",
+      "chunk-SQ7XL53U.js",
+      "chunk-GVLDH7LG.js",
+      "chunk-MMMAOYVF.js",
+      "chunk-6VFSILJ7.js",
+      "chunk-K53LMY66.js",
+      "chunk-H23CV2S7.js",
+      "chunk-UF35K2U7.js",
+      "chunk-AP5NLCIV.js",
+      "chunk-RPF23UAQ.js",
+      "chunk-HMEQY3OI.js",
+      "chunk-4UCHNLAI.js",
+      "chunk-WSN2PNFN.js",
+      "chunk-ECHM5KQD.js",
+      "chunk-M5LZ6IDZ.js",
+      "chunk-K4U2SBOD.js",
+      "chunk-O7Q7KMIC.js",
+      "chunk-KOOKOJFR.js",
+      "chunk-K6BGRP6C.js",
+      "chunk-5ZYKXR5I.js",
+      "chunk-HFWGCOCA.js",
+      "chunk-F36JP2SE.js",
+      "chunk-6DKRXXIQ.js",
+      "chunk-PXT5JWYT.js",
+      "chunk-JF43I55Z.js",
+      "chunk-JADO7RYT.js",
+      "chunk-VEGVZE57.js",
+      "chunk-BSR2KYDQ.js",
+      "chunk-6U5G6EUA.js",
+      "chunk-MW2PTXVP.js",
+      "chunk-RJNDNGRI.js",
+      "chunk-YZMFIGBC.js",
+      "chunk-SA5SN6U6.js",
+      "chunk-NJL6DUIC.js",
+      "chunk-RSNBWBBK.js",
+      "chunk-WIKJRTOD.js",
+      "chunk-MNRTA4RE.js",
+      "chunk-R73BN3MZ.js",
+      "chunk-F2S46FHF.js",
+      "chunk-VJ3XRFX4.js",
+      "chunk-5S7YSH5A.js",
+      "chunk-TYYUOBLG.js",
+      "chunk-YF4A3HZ7.js",
+      "chunk-EUWODLNY.js",
+      "chunk-PLDB4EMZ.js",
+      "chunk-GS3R5RZ6.js",
+      "chunk-MAM7OCTE.js",
+      "chunk-VZHRUFOQ.js",
+      "chunk-AVESHE7U.js",
+      "chunk-QNVBTONT.js",
+      "chunk-J5RAFYLW.js",
+      "chunk-WA4RBLOJ.js",
+      "chunk-M5CFIZE5.js",
+      "chunk-RYFH4GAR.js",
+      "chunk-H7PLDVD2.js",
+      "chunk-V6NRPHQ3.js",
+      "chunk-2CIAUVNP.js",
+      "chunk-KFVV2352.js",
+      "chunk-XISKAXBV.js",
+      "chunk-3OSFIA6Q.js",
+      "chunk-NPK4MP4V.js",
+      "chunk-UOCPC5VU.js",
+      "chunk-HSHI7ER4.js",
+      "chunk-B7NIMSNA.js",
+      "chunk-ZN5TBQCN.js",
+      "chunk-NZHA6EON.js",
+      "chunk-KHZBR5MD.js",
+      "chunk-I6V47KMS.js",
+      "chunk-LRYJYF3J.js",
+      "chunk-FUSVEYAP.js",
+      "chunk-PDNMRTBS.js",
+      "chunk-O2PFCJNW.js",
+      "chunk-KGSY27GG.js",
+      "chunk-633FQPEJ.js",
+      "chunk-ZU7U62NE.js",
+      "chunk-EPPMCZTA.js",
+      "chunk-DW5LA7YI.js",
+      "chunk-JEOYTNXV.js",
+      "chunk-APCSBJKU.js",
+      "chunk-QCDPMVQ2.js",
+      "chunk-XEGUCZMZ.js",
+      "chunk-UUGQV6IN.js",
+      "chunk-YHP6BBOE.js",
+      "chunk-WDMUDEB6.js"
+    ],
+    "browser-rxjs": [
+      "chunk-OIX7CRAK.js"
+    ],
+    "browser-angular_core": [
+      "chunk-PZKLF7GF.js",
+      "chunk-JLJKEPEP.js",
+      "chunk-GCM4E6XZ.js",
+      "chunk-RKGRBBHJ.js",
+      "chunk-FMGVFGPW.js"
+    ],
+    "mapping-or-exposed": [
+      "pl-PL-UDIUVPHC.js",
+      "en-US-C7KPSKXR.js",
+      "pl-PL-QLS7WQ6U.js",
+      "en-US-5SPVSTYT.js",
+      "chunk-EVA3EQML.js",
+      "chunk-Y5RQAIA6.js"
+    ]
+  }
+}

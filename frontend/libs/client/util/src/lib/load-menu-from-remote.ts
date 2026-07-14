@@ -1,11 +1,14 @@
 import { RemoteModuleConfig } from './remote-module-config.interface';
 import { ErpNavigationItem } from '@erp/shared/data-access';
-import { loadRemote } from '@module-federation/enhanced/runtime';
 import { EntryMenuModule } from './entry-menu-module';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 
 export async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNavigationItem | null> {
   try {
-    const module = await loadRemote<EntryMenuModule>(config.routePrefix);
+    const module = await loadRemoteModule<EntryMenuModule>({
+      remoteName: config.routePrefix,
+      exposedModule: './contract',
+    });
 
     if (module?.remoteMenu) {
       const prefixedMenu = applyRoutePrefixToMenu(module.remoteMenu, config.routePrefix);

@@ -6,7 +6,7 @@ trigger: always_on
 
 ## Przegląd
 
-Projekt to **Angular NX Monorepo** z **Module Federation** (mikrofrontendy).  
+Projekt to **Angular NX Monorepo** z **Native Federation** (mikrofrontendy oparte na standardzie ESBuild / browser-native ESM).  
 Workspace root: katalog zawierający `nx.json`, `tsconfig.base.json`, `eslint.config.mjs`.  
 Frontend jest w podkatalogu `frontend/`.
 
@@ -17,25 +17,24 @@ frontend/
 ├── apps/
 │   ├── client/                      # HOST application (port 4200)
 │   │   ├── public/
-│   │   │   └── module-federation.manifest.json  # Rejestr remotów (dynamiczny MF)
+│   │   │   └── module-federation.manifest.json  # Rejestr remotów (dynamiczny manifest Native Federation)
 │   │   ├── src/
-│   │   │   ├── main.ts              # Ładuje manifest → registerRemotes → bootstrap
+│   │   │   ├── main.ts              # Inicjalizuje federację → initFederation → bootstrap
 │   │   │   ├── bootstrap.ts         # bootstrapApplication(App, appConfig)
 │   │   │   └── app/
 │   │   │       ├── app.config.ts    # Providery, router (appRoutes z @erp/client/contract)
 │   │   │       ├── STARTUP.ts       # APP_INITIALIZER — ładuje menu z remotów
 │   │   │       └── app.ts           # Root component (router-outlet)
-│   │   ├── module-federation.config.ts
-│   │   └── webpack.config.ts
+│   │   ├── federation.config.mjs    # Konfiguracja współdzielenia Native Federation dla hosta
+│   │   └── vite.config.mts          # Konfiguracja deweloperska/testowa (Vite/Vitest)
 │   │
-│   ├── modules/
-│   │   ├── catalog/                 # REMOTE app (port 4201)
-│   │   ├── inventory/               # REMOTE app (port 4202)
-│   │   ├── sales/                   # REMOTE app (port 4203)
-│   │   ├── dms/                     # REMOTE app (port 4204)
-│   │   └── task-management/         # REMOTE app (port 4205)
-│   │
-│   └── module-federation.shared.ts  # Współdzielona konfiguracja MF
+│   └── modules/
+│       ├── catalog/                 # REMOTE app (port 4201)
+│       ├── inventory/               # REMOTE app (port 4202)
+│       ├── sales/                   # REMOTE app (port 4203)
+│       ├── dms/                     # REMOTE app (port 4204)
+│       ├── task-management/         # REMOTE app (port 4205)
+│       └── notification/            # REMOTE app (port 4206)
 │
 ├── libs/
 │   ├── client/                      # Biblioteki specyficzne dla hosta
@@ -51,7 +50,7 @@ frontend/
 │   │
 │   └── modules/
 │       ├── catalog/                 # Biblioteki modułu catalog
-│       │   ├── contract/            # Routes + Menu (eksponowane przez MF)
+│       │   ├── contract/            # Routes + Menu (eksponowane przez Native Federation)
 │       │   ├── feature/             # RemoteEntry + Page components
 │       │   ├── ui/                  # Prezentacyjne komponenty
 │       │   ├── data-access/         # API clients (NSwag), Stores
@@ -59,7 +58,8 @@ frontend/
 │       ├── inventory/
 │       ├── sales/
 │       ├── dms/
-│       └── task-management/
+│       ├── task-management/
+│       └── notification/
 ```
 
 ## Warstwy modułu (biblioteki)
@@ -76,24 +76,26 @@ util      →  util, data-access
 
 | Warstwa | Tag | Odpowiedzialność |
 |---------|-----|------------------|
-| **contract** | `type:contract` | Routing (`remoteRoutes`), menu (`remoteMenu`). Eksponowany przez Module Federation. |
+| **contract** | `type:contract` | Routing (`remoteRoutes`), menu (`remoteMenu`). Eksponowany przez Native Federation. |
 | **feature** | `type:feature` | Smart components (logika), `RemoteEntry`. Używa serwisów z data-access i komponentów z ui. |
 | **ui** | `type:ui` | Prezentacyjne (dumb) komponenty. Tylko `@Input`/`@Output`, brak serwisów. |
 | **data-access** | `type:data-access` | Serwisy HTTP (NSwag API Clients), Signal Stores, orchestratory. |
 | **util** | `type:util` | Funkcje pomocnicze, interfejsy, modele widokowe, stałe. |
 
-## Module Federation — jak działa
+## Native Federation — jak działa
 
-1. **Host (`client`)** startuje na porcie **4200**
-2. `main.ts` pobiera `module-federation.manifest.json` i rejestruje remoty dynamicznie
-3. `STARTUP.ts` ładuje `contract` z każdego remota (menu), tworzy nawigację
-4. Routing w `app.routes.ts` używa `loadRemote()` aby leniwie załadować `remoteRoutes` z każdego modułu
-5. Każdy **remote** eksponuje `./contract` wskazujący na `libs/modules/MODULE/contract/src/index.ts`
+1. **Host (`client`)** startuje na porcie **4200**.
+2. Plik `main.ts` wywołuje `initFederation('/module-federation.manifest.json')`. Pobiera on manifest z adresami remotów oraz ich plikami `remoteEntry.json`.
+3. Po pomyślnej inicjalizacji Native Federation, następuje dynamiczny import pliku `bootstrap.ts` i uruchomienie aplikacji Angular (`bootstrapApplication`).
+4. W trakcie startu, `STARTUP.ts` (APP_INITIALIZER) pobiera moduły kontraktów (`./contract`) z każdego aktywnego remota za pomocą metody `loadRemoteModule()`, rejestrując dynamicznie elementy menu i modalne ID.
+5. Routing zdefiniowany w `@erp/client/contract` (plik `app.routes.ts`) używa `loadRemoteModule()` z `@angular-architects/native-federation` do leniwego ładowania tras (`remoteRoutes`) poszczególnych modułów.
+6. Każdy **remote** w pliku `federation.config.mjs` eksponuje `./contract` wskazujący na punkt wejściowy swojej biblioteki kontraktu (`libs/modules/MODULE/contract/src/index.ts`).
+7. Bundling w trybie developerskim i produkcyjnym opiera się na **Esbuild** za pośrednictwem executora `@angular/build:application`, a Native Federation zarządza współdzieleniem zależności (zgodnie z sekcją `shared` w `federation.config.mjs`) generując natywne import mapy przeglądarki.
 
 ## Tagi i ESLint Boundaries
 
 Każdy projekt NX ma dwa tagi:
-- **scope**: domena (`scope:catalog`, `scope:shared`, `scope:host`)
+- **scope**: domena (`scope:catalog`, `scope:shared`, `scope:host`, `scope:notification`, itd.)
 - **type**: warstwa techniczna (`type:app`, `type:feature`, `type:contract`, `type:ui`, `type:data-access`, `type:util`)
 
 Reguła `scope:MODULE_NAME` pozwala importować tylko z `scope:shared` i `scope:MODULE_NAME`.  

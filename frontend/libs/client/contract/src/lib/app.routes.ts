@@ -2,6 +2,7 @@
 import { Route } from '@angular/router';
 import { erpAuthGuard, erpGuestGuard } from '@erp/shared/auth';
 import { loadRemoteModule } from '@angular-architects/native-federation';
+import { getCachedRemoteRoutes } from '@erp/shared/data-access';
 
 export const appRoutes: Route[] = [
   {
@@ -30,51 +31,69 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'sales',
-        loadChildren: () =>
-          loadRemoteModule({
+        loadChildren: () => {
+          const cached = getCachedRemoteRoutes('sales');
+          if (cached) return cached;
+          return loadRemoteModule({
             remoteName: 'sales',
             exposedModule: './contract',
-          }).then((m) => m.remoteRoutes),
+          }).then((m) => m.remoteRoutes);
+        },
       },
       {
         path: 'inventory',
-        loadChildren: () =>
-          loadRemoteModule({
+        loadChildren: () => {
+          const cached = getCachedRemoteRoutes('inventory');
+          if (cached) return cached;
+          return loadRemoteModule({
             remoteName: 'inventory',
             exposedModule: './contract',
-          }).then((m) => m.remoteRoutes),
+          }).then((m) => m.remoteRoutes);
+        },
       },
       {
         path: 'catalog',
-        loadChildren: () =>
-          loadRemoteModule({
+        loadChildren: () => {
+          const cached = getCachedRemoteRoutes('catalog');
+          if (cached) return cached;
+          return loadRemoteModule({
             remoteName: 'catalog',
             exposedModule: './contract',
-          }).then((m) => m.remoteRoutes),
+          }).then((m) => m.remoteRoutes);
+        },
       },
       {
         path: 'dms',
-        loadChildren: () =>
-          loadRemoteModule({
+        loadChildren: () => {
+          const cached = getCachedRemoteRoutes('dms');
+          if (cached) return cached;
+          return loadRemoteModule({
             remoteName: 'dms',
             exposedModule: './contract',
-          }).then((m) => m.remoteRoutes),
+          }).then((m) => m.remoteRoutes);
+        },
       },
       {
         path: 'task-management',
-        loadChildren: () =>
-          loadRemoteModule({
+        loadChildren: () => {
+          const cached = getCachedRemoteRoutes('task-management');
+          if (cached) return cached;
+          return loadRemoteModule({
             remoteName: 'task-management',
             exposedModule: './contract',
-          }).then((m) => m.remoteRoutes),
+          }).then((m) => m.remoteRoutes);
+        },
       },
       {
         path: 'notification',
-        loadChildren: () =>
-          loadRemoteModule({
+        loadChildren: () => {
+          const cached = getCachedRemoteRoutes('notification');
+          if (cached) return cached;
+          return loadRemoteModule({
             remoteName: 'notification',
             exposedModule: './contract',
-          }).then((m) => m.remoteRoutes),
+          }).then((m) => m.remoteRoutes);
+        },
       },
     ],
   },

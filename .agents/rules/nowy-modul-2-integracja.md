@@ -100,6 +100,16 @@ export async function registerModals(): Promise<any[]> {
   // return [MyModalDefinition];
   return [];
 }
+
+/**
+ * Asynchronicznie ładuje providery tłumaczeń dla modalu.
+ * Wywoływana przez ErpModalService przy lazy loadingu modalu z tego remota.
+ */
+export async function getModalProviders(): Promise<any[]> {
+  // const { provideMODULE_NAMETranslations } = await import('@erp/MODULE_NAME/feature');
+  // return provideMODULE_NAMETranslations();
+  return [];
+}
 ```
 
 Plik: `frontend/libs/modules/MODULE_NAME/contract/src/index.ts`
@@ -109,7 +119,7 @@ export * from './lib/entry.menu';
 
 export * from './lib/entry.routes';
 
-export { registerModals, remoteModalIds } from './lib/entry.modals';
+export { registerModals, remoteModalIds, getModalProviders } from './lib/entry.modals';
 ```
 
 ### 4.3 Data-Access, UI, Util
@@ -128,22 +138,37 @@ Upewnij się, że `src/index.ts` każdej biblioteki istnieje (może być pusty):
 
 ### 5.1 Manifest — `frontend/apps/client/public/module-federation.manifest.json`
 
-Dodaj wpis:
+Dodaj wpis (klucz to nazwa remota, wartość to URL `remoteEntry.json` — Native Federation):
 
 ```json
-"MODULE_NAME": "http://localhost:PORT/mf-manifest.json"
+"MODULE_NAME": "http://localhost:PORT/remoteEntry.json"
 ```
+
+> **UWAGA**: Używamy `remoteEntry.json` (Native Federation), nie `mf-manifest.json` (Webpack Module Federation).
 
 ### 5.2 Routing — `frontend/libs/client/contract/src/lib/app.routes.ts`
 
-Dodaj nowy `path` w tablicy `children` (wewnątrz route'a z `canActivate: [erpAuthGuard]`):
+Dodaj nowy `path` w tablicy `children` (wewnątrz route'a z `canActivate: [erpAuthGuard]`).
+
+**Wzorzec z cache (zapobiega deadlock przy podwójnym ładowaniu kontraktu):**
 
 ```ts
 {
   path: 'MODULE_NAME',
-  loadChildren: () => loadRemote<typeof import('@erp/MODULE_NAME/contract')>('MODULE_NAME/contract').then((m) => m!.remoteRoutes),
+  loadChildren: () => {
+    const cached = getCachedRemoteRoutes('MODULE_NAME');
+    if (cached) return cached;
+    return loadRemoteModule({
+      remoteName: 'MODULE_NAME',
+      exposedModule: './contract',
+    }).then((m) => m.remoteRoutes);
+  },
 },
 ```
+
+> **WAŻNE**: Funkcja `getCachedRemoteRoutes` pochodzi z `@erp/shared/data-access` i musi być zaimportowana na górze pliku. Mechanizm działa następująco:
+> - Podczas `STARTUP` (`APP_INITIALIZER`) kontrakt remota jest ładowany w celu pobrania menu — trasy są wtedy automatycznie zapisywane w cache przez `cacheRemoteRoutes('MODULE_NAME', module.remoteRoutes)` w `STARTUP.ts`.
+> - Kiedy router próbuje załadować trasy, znajduje gotowy cache i zwraca je synchronicznie — bez drugiego wywołania `loadRemoteModule`, które powodowałoby deadlock.
 
 ### 5.3 Konfiguracja modułów — `frontend/libs/client/contract/src/lib/REMOTE_MODULES_CONFIG.ts`
 
@@ -242,8 +267,9 @@ npx nx serve MODULE_NAME
 
 - [ ] 5 bibliotek wygenerowanych (`contract`, `feature`, `ui`, `data-access`, `util`)
 - [ ] Aplikacja MFE w `frontend/apps/modules/MODULE_NAME`
-- [ ] `module-federation.config.ts` — exposes `./contract`
-- [ ] `webpack.config.ts` i `webpack.prod.config.ts` — używają `createModuleFederationConfig`
+- [ ] **Usunięte** pliki Webpack MF (`module-federation.config.ts`, `webpack.config.ts`, `webpack.prod.config.ts`)
+- [ ] `federation.config.mjs` — Native Federation, `exposes: { './contract': '...' }`
+- [ ] `src/main.ts` (remote) — `initFederation()` **bez argumentu** + `import('./bootstrap')`
 - [ ] `bootstrap.ts` — importuje i uruchamia lokalny `AppComponent`
 - [ ] `app.component.ts` — stworzony lokalnie w aplikacji remote z `<tui-root>` i `<router-outlet>`
 - [ ] `styles.css` — zresetowane marginesy i ustawione `height: 100%` dla `tui-root`, `html`, `body` i selektora entry
@@ -251,10 +277,11 @@ npx nx serve MODULE_NAME
 - [ ] `app.config.ts` (remote) — rejestruje `provideRemoteDevSupport()` z `@erp/shared/ui`
 - [ ] `app.config.ts` (remote) — importuje `remoteRoutes` z `@erp/MODULE_NAME/contract`
 - [ ] Pierwszy komponent strony w `feature` (np. `MODULE_NAME.component.ts`) i jego export w `index.ts`
-- [ ] `entry.routes.ts`, `entry.menu.ts` i `entry.modals.ts` w contract (oraz ich poprawne eksporty w `index.ts`)
-- [ ] `module-federation.manifest.json` — wpis z portem
-- [ ] `app.routes.ts` (client) — nowy path z `loadRemote`
-- [ ] `REMOTE_MODULES_CONFIG.ts` — nowy wpis
+- [ ] `entry.routes.ts`, `entry.menu.ts` i `entry.modals.ts` w contract (oraz ich poprawne eksporty w `index.ts` — w tym `getModalProviders`)
+- [ ] `module-federation.manifest.json` — wpis z URL `http://localhost:PORT/remoteEntry.json`
+- [ ] `app.routes.ts` (client) — nowy path z `getCachedRemoteRoutes` + fallback `loadRemoteModule`
+- [ ] `REMOTE_MODULES_CONFIG.ts` — nowy wpis (aktywuje ładowanie kontraktu i cachowanie tras w STARTUP)
+- [ ] `remote-api.providers.ts` — nowy `API_BASE_URL` dla tego modułu
 - [ ] `eslint.config.mjs` (root) — reguła `scope:MODULE_NAME`
 - [ ] `tsconfig.base.json` — 5 aliasów `@erp/MODULE_NAME/*`
 - [ ] `project.json` każdej biblioteki — poprawne tagi

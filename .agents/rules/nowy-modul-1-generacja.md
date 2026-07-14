@@ -96,6 +96,11 @@ rm -rf frontend/apps/modules/MODULE_NAME-e2e
 # 2. Usuń lokalne pliki routingu i komponentów remote-entry z aplikacji
 rm -rf frontend/apps/modules/MODULE_NAME/src/app/app.routes.ts \
        frontend/apps/modules/MODULE_NAME/src/app/remote-entry
+
+# 3. Usuń pliki konfiguracyjne Webpack Module Federation (używamy Native Federation)
+rm -f frontend/apps/modules/MODULE_NAME/module-federation.config.ts \
+      frontend/apps/modules/MODULE_NAME/webpack.config.ts \
+      frontend/apps/modules/MODULE_NAME/webpack.prod.config.ts
 ```
 
 ---
@@ -108,11 +113,11 @@ Sprawdź i dostosuj pliki w `frontend/apps/modules/MODULE_NAME/`:
 
 Kluczowe pola do zweryfikowania:
 - `"name"` = `"MODULE_NAME"`, `"tags"` = `["scope:MODULE_NAME", "type:app"]`
-- `serve.options.port` = `PORT`, `serve.options.publicHost` = `"http://localhost:PORT"`
-- `serve.dependsOn` = `["client:serve"]`
-- `build.options.customWebpackConfig.path` → `webpack.config.ts`
-- `build.configurations.production.customWebpackConfig.path` → `webpack.prod.config.ts`
-- **Ustawienia Budżetów**: Zwiększ limity budżetów w konfiguracji `production` dla typu `initial` do `1mb` (warning) i `2mb` (error) z powodu dołączania deweloperskich i współdzielonych paczek w trybie standalone:
+- W target `serve`: `"target"` = `"MODULE_NAME:serve-original:development"`, `"port"` = `0` (port jest ustawiany w `serve-original`)
+- W target `serve-original`: `"port"` = `PORT`, `"publicHost"` = `"http://localhost:PORT"`
+- W target `esbuild`: `"outputPath"` = `"dist/frontend/apps/modules/MODULE_NAME"`
+- Executor build: `"executor"` = `"@angular-architects/native-federation:build"`
+- **Ustawienia Budżetów**: Zwiększ limity budżetów w konfiguracji `production`:
   ```json
   "budgets": [
     {
@@ -124,57 +129,153 @@ Kluczowe pola do zweryfikowania:
   ]
   ```
 
-### 3.2 `module-federation.config.ts`
+Wzorcowy `project.json` (skopiuj i dostosuj z innego modułu, np. `catalog`):
 
-```ts
-import { ModuleFederationConfig } from '@nx/module-federation';
+```json
+{
+  "name": "MODULE_NAME",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "frontend/apps/modules/MODULE_NAME/src",
+  "tags": ["scope:MODULE_NAME", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@angular-architects/native-federation:build",
+      "options": { "cacheExternalArtifacts": true },
+      "configurations": {
+        "production": { "target": "MODULE_NAME:esbuild:production" },
+        "development": { "target": "MODULE_NAME:esbuild:development", "dev": true }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-architects/native-federation:build",
+      "options": {
+        "target": "MODULE_NAME:serve-original:development",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 0
+      }
+    },
+    "esbuild": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/frontend/apps/modules/MODULE_NAME",
+        "index": "frontend/apps/modules/MODULE_NAME/src/index.html",
+        "tsConfig": "frontend/apps/modules/MODULE_NAME/tsconfig.app.json",
+        "assets": [
+          { "glob": "**/*", "input": "frontend/apps/modules/MODULE_NAME/public" },
+          { "glob": "**/*", "input": "node_modules/@taiga-ui/icons/src", "output": "assets/taiga-ui/icons" }
+        ],
+        "styles": [
+          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
+          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+          "frontend/apps/modules/MODULE_NAME/src/styles.css"
+        ],
+        "polyfills": ["es-module-shims"],
+        "browser": "frontend/apps/modules/MODULE_NAME/src/main.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            { "type": "initial", "maximumWarning": "1mb", "maximumError": "2mb" },
+            { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-original": {
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "options": {
+        "port": PORT,
+        "publicHost": "http://localhost:PORT",
+        "headers": { "Access-Control-Allow-Origin": "*" }
+      },
+      "configurations": {
+        "production": { "buildTarget": "MODULE_NAME:esbuild:production" },
+        "development": { "buildTarget": "MODULE_NAME:esbuild:development" }
+      },
+      "defaultConfiguration": "development"
+    }
+  }
+}
+```
 
-const config: ModuleFederationConfig = {
+### 3.2 `federation.config.mjs` ⭐ Native Federation
+
+> **WAŻNE**: Używamy **Native Federation** (`@angular-architects/native-federation`), a nie Webpack Module Federation. Plik `federation.config.mjs` zastępuje `module-federation.config.ts`.
+
+```js
+import { withNativeFederation, shareAll } from '@angular-architects/native-federation/config';
+
+export default withNativeFederation({
   name: 'MODULE_NAME',
+
   exposes: {
-    './contract': 'frontend/libs/modules/MODULE_NAME/contract/src/index.ts',
+    './contract': './frontend/libs/modules/MODULE_NAME/contract/src/index.ts',
   },
-};
 
-export default config;
+  shared: {
+    ...shareAll(
+      { singleton: true, strictVersion: true, requiredVersion: 'auto', build: 'package' },
+      {
+        overrides: {
+          '@angular/core': { singleton: true, strictVersion: true, requiredVersion: 'auto', build: 'package', includeSecondaries: { keepAll: true } },
+        },
+      },
+    ),
+  },
+
+  skip: [
+    'rxjs/ajax',
+    'rxjs/fetch',
+    'rxjs/testing',
+    'rxjs/webSocket',
+    '@ng-web-apis/common',
+    '@ng-web-apis/platform',
+    '@ng-web-apis/screen-orientation',
+    '@ng-web-apis/resize-observer',
+    '@ng-web-apis/mutation-observer',
+    '@taiga-ui/font-watcher',
+    '@maskito/kit',
+    'libphonenumber-js/core',
+    '@maskito/phone',
+    '@ng-web-apis/intersection-observer',
+    '@jsverse/utils',
+    '@softarc/native-federation/domain',
+  ],
+
+  features: {
+    denseChunking: true,
+  }
+});
 ```
 
-### 3.3 `webpack.config.ts`
+### 3.3 `src/main.ts` ⭐ Native Federation
 
 ```ts
-import { withModuleFederation } from '@nx/module-federation/angular';
-import { createModuleFederationConfig } from '../../module-federation.shared';
-import config from './module-federation.config';
+import { initFederation } from '@angular-architects/native-federation';
 
-export default withModuleFederation(createModuleFederationConfig(config), { dts: false });
+initFederation()
+  .then(() => import('./bootstrap'))
+  .catch((err) => console.error(err));
 ```
 
-### 3.4 `webpack.prod.config.ts`
+> **UWAGA**: Remote nie podaje URL manifestu — wywołuje `initFederation()` bez argumentu. Manifest (`/module-federation.manifest.json`) jest używany tylko przez **host** (`client`).
 
-```ts
-import { withModuleFederation } from '@nx/module-federation/angular';
-import { createModuleFederationConfig } from '../../module-federation.shared';
-import config from './module-federation.config';
-
-export default withModuleFederation(
-  createModuleFederationConfig({
-    ...config,
-    /*
-     * Remote overrides for production.
-     * e.g. remotes: [['app1', 'https://app1.example.com']]
-     */
-  }),
-  { dts: false },
-);
-```
-
-### 3.5 `src/main.ts`
-
-```ts
-import('./bootstrap').catch((err) => console.error(err));
-```
-
-### 3.6 `src/bootstrap.ts`
+### 3.4 `src/bootstrap.ts`
 
 ```ts
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -184,7 +285,7 @@ import { AppComponent } from './app/app.component';
 bootstrapApplication(AppComponent, appConfig).catch((err) => console.error(err));
 ```
 
-### 3.7 `src/app/app.component.ts`
+### 3.5 `src/app/app.component.ts`
 
 Stwórz lokalny komponent `AppComponent` służący jako opakowanie dla widoków standalone w `<tui-root>` (wymagany przez Taiga UI):
 
@@ -194,7 +295,7 @@ import { RouterOutlet } from '@angular/router';
 import { TuiRoot } from '@taiga-ui/core';
 
 @Component({
-  selector: 'erp-MODULE_NAME-entry', // Musi dokładnie pasować do selektora w index.html
+  selector: 'erp-MODULE_NAME-entry',
   standalone: true,
   imports: [RouterOutlet, TuiRoot],
   template: `
@@ -212,7 +313,7 @@ import { TuiRoot } from '@taiga-ui/core';
 export class AppComponent {}
 ```
 
-### 3.8 `src/app/app.config.ts`
+### 3.6 `src/app/app.config.ts`
 
 Używamy dostawcy `provideRemoteDevSupport()` z `@erp/shared/ui` do automatycznego zarejestrowania wymaganych paczek (Transloco, HttpClient, Taiga UI) w trybie standalone:
 
@@ -233,7 +334,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-### 3.9 `src/styles.css`
+### 3.7 `src/styles.css`
 
 Zresetuj marginesy oraz dodaj pełną wysokość, aby tui-root oraz strona standalone zajmowały cały ekran:
 
@@ -251,7 +352,7 @@ tui-root {
 }
 ```
 
-### 3.10 `src/index.html`
+### 3.8 `src/index.html`
 
 ```html
 <!doctype html>

@@ -1,5 +1,5 @@
 import { ApplicationConfig, LOCALE_ID, isDevMode, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withViewTransitions } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { appRoutes } from '@erp/client/contract';
 import { provideHttpClient } from '@angular/common/http';
 import { STARTUP } from './STARTUP';
@@ -21,7 +21,6 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       appRoutes,
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
-      withEnabledBlockingInitialNavigation(),
       withViewTransitions({
         skipInitialTransition: true, // Opcjonalne: pomija animację przy pierwszym ładowaniu
       }),

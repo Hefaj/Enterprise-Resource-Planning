@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
-import { ErpNavRegistryService, ErpNavigationItem } from '@erp/shared/data-access';
+import { ErpNavRegistryService, ErpNavigationItem, cacheRemoteRoutes } from '@erp/shared/data-access';
 // import { ErpModalService } from '@erp/shared/ui';
 import { ThemeService, LanguageService } from '@erp/client/util';
-import { loadRemote } from '@module-federation/enhanced/runtime';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
@@ -31,6 +31,7 @@ export async function STARTUP(): Promise<void> {
 interface EntryContractModule {
   remoteMenu?: ErpNavigationItem[];
   remoteModalIds?: string[];
+  remoteRoutes?: any[];
 }
 
 async function loadContractFromRemote(
@@ -38,7 +39,15 @@ async function loadContractFromRemote(
   // modalService: ErpModalService,
 ): Promise<ErpNavigationItem | null> {
   try {
-    const module = await loadRemote<EntryContractModule>(config.routePrefix + '/contract');
+    const module = (await loadRemoteModule({
+      remoteName: config.routePrefix,
+      exposedModule: './contract',
+    })) as EntryContractModule;
+
+    // Cache the remote routes for later use in routing
+    if (module?.remoteRoutes) {
+      cacheRemoteRoutes(config.id, module.remoteRoutes);
+    }
 
     // Rejestruj mapowanie modalId → modulePrefix (lekkie, tylko stringi)
     if (module?.remoteModalIds) {

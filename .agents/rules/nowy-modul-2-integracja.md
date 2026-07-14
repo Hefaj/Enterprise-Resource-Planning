@@ -269,6 +269,7 @@ npx nx serve MODULE_NAME
 - [ ] Aplikacja MFE w `frontend/apps/modules/MODULE_NAME`
 - [ ] **Usunięte** pliki Webpack MF (`module-federation.config.ts`, `webpack.config.ts`, `webpack.prod.config.ts`)
 - [ ] `federation.config.mjs` — Native Federation, `exposes: { './contract': '...' }`
+- [ ] `federation.config.mjs` — wewnętrzne biblioteki modułu (`@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util`) dodane do `skip` (wymagane dla Vite HMR)
 - [ ] `src/main.ts` (remote) — `initFederation()` **bez argumentu** + `import('./bootstrap')`
 - [ ] `bootstrap.ts` — importuje i uruchamia lokalny `AppComponent`
 - [ ] `app.component.ts` — stworzony lokalnie w aplikacji remote z `<tui-root>` i `<router-outlet>`

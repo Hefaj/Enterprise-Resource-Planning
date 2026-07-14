@@ -243,6 +243,13 @@ export default withNativeFederation({
     'rxjs/fetch',
     'rxjs/testing',
     'rxjs/webSocket',
+    // Skip module-internal libs so they are bundled inline and support Vite HMR
+    // (te biblioteki są używane tylko przez ten remote — nie muszą być shared)
+    '@erp/MODULE_NAME/feature',
+    '@erp/MODULE_NAME/data-access',
+    '@erp/MODULE_NAME/ui',
+    '@erp/MODULE_NAME/util',
+    // Add further packages you don't need at runtime
     '@ng-web-apis/common',
     '@ng-web-apis/platform',
     '@ng-web-apis/screen-orientation',
@@ -262,6 +269,8 @@ export default withNativeFederation({
   }
 });
 ```
+
+> **WAŻNE — HMR**: Wewnętrzne biblioteki modułu (`@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util`) **muszą** być w tablicy `skip`. Bez tego `shareAll()` rejestruje je jako shared modules — Native Federation pre-bundluje je do osobnych plików, które nie podlegają Vite HMR. Zmiany w kodzie nie odświeżają się w przeglądarce bez restartu dev servera. Biblioteki `@erp/shared/*` natomiast **nie powinny** być skipowane, bo są współdzielone między hostem i remote'ami.
 
 ### 3.3 `src/main.ts` ⭐ Native Federation
 

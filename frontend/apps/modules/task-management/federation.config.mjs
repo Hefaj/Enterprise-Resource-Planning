@@ -27,6 +27,11 @@ export default withNativeFederation({
     'rxjs/fetch',
     'rxjs/testing',
     'rxjs/webSocket',
+    // Skip module-internal libs so they are bundled inline and support Vite HMR
+    '@erp/task-management/feature',
+    '@erp/task-management/data-access',
+    '@erp/task-management/ui',
+    '@erp/task-management/util',
     // Add further packages you don't need at runtime
     '@ng-web-apis/common',
     '@ng-web-apis/platform',

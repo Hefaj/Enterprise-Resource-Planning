@@ -27,6 +27,11 @@ export default withNativeFederation({
     'rxjs/fetch',
     'rxjs/testing',
     'rxjs/webSocket',
+    // Skip module-internal libs so they are bundled inline and support Vite HMR
+    '@erp/dms/feature',
+    '@erp/dms/data-access',
+    '@erp/dms/ui',
+    '@erp/dms/util',
     // Add further packages you don't need at runtime
     '@ng-web-apis/common',
     '@ng-web-apis/platform',

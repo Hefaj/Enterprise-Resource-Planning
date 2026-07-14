@@ -23,6 +23,11 @@ export default withNativeFederation({
     'rxjs/fetch',
     'rxjs/testing',
     'rxjs/webSocket',
+    // Skip host-internal libs so they are bundled inline and support Vite HMR
+    '@erp/client/feature',
+    '@erp/client/contract',
+    '@erp/client/ui',
+    '@erp/client/util',
     // Add further packages you don't need at runtime
     '@ng-web-apis/common',
     '@ng-web-apis/platform',

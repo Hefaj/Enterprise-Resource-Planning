@@ -92,6 +92,22 @@ util      →  util, data-access
 6. Każdy **remote** w pliku `federation.config.mjs` eksponuje `./contract` wskazujący na punkt wejściowy swojej biblioteki kontraktu (`libs/modules/MODULE/contract/src/index.ts`).
 7. Bundling w trybie developerskim i produkcyjnym opiera się na **Esbuild** za pośrednictwem executora `@angular/build:application`, a Native Federation zarządza współdzieleniem zależności (zgodnie z sekcją `shared` w `federation.config.mjs`) generując natywne import mapy przeglądarki.
 
+### Skip wewnętrznych bibliotek modułu (HMR)
+
+`shareAll()` automatycznie rejestruje **wszystkie** workspace libraries (w tym `@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util`) jako shared modules. Native Federation pre-bundluje je do osobnych plików (np. `_erp_catalog_feature.js`), które **nie podlegają Vite HMR** — zmiany w tych bibliotekach nie odświeżają się w przeglądarce bez restartu dev servera.
+
+**Rozwiązanie**: W `federation.config.mjs` każdego remote'a (i hosta) dodaj wewnętrzne biblioteki modułu do tablicy `skip`. Dzięki temu zostaną zbundlowane inline z kodem aplikacji i będą odświeżane przez Vite HMR.
+
+| Biblioteka | Shared? | HMR? | Dlaczego? |
+|-----------|---------|------|-----------|
+| `@erp/MODULE_NAME/feature` | ❌ skip | ✅ tak | Używane tylko przez dany moduł |
+| `@erp/MODULE_NAME/data-access` | ❌ skip | ✅ tak | Używane tylko przez dany moduł |
+| `@erp/MODULE_NAME/ui` | ❌ skip | ✅ tak | Używane tylko przez dany moduł |
+| `@erp/MODULE_NAME/util` | ❌ skip | ✅ tak | Używane tylko przez dany moduł |
+| `@erp/client/feature`, `contract`, `ui`, `util` | ❌ skip | ✅ tak | Używane tylko przez hosta |
+| `@erp/shared/*` | ✅ shared | ❌ nie | Współdzielone między hostem i remote'ami — wymaga restartu |
+| `@angular/*`, `rxjs`, `@taiga-ui/*` | ✅ shared | ❌ nie | Zewnętrzne zależności |
+
 ## Tagi i ESLint Boundaries
 
 Każdy projekt NX ma dwa tagi:

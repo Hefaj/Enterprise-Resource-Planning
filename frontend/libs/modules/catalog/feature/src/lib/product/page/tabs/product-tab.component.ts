@@ -7,10 +7,9 @@ import { ErpMenuBarComponent, ErpMenuBarBuilder } from '@erp/shared/ui';
   standalone: true,
   imports: [CommonModule, ErpMenuBarComponent],
   template: `
-    <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1.5rem;">
-      <h3>Test komponentu ErpMenuBar (Poziomy)</h3>
       <erp-menu-bar [config]="horizontalMenu" />
-    </div>
+    <!-- <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1.5rem;">
+    </div> -->
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

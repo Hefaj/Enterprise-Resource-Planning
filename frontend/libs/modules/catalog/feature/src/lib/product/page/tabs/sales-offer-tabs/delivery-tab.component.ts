@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'erp-delivery-tab',
   standalone: true,
   imports: [CommonModule],
-  template: `<div style="padding: 1rem;">Delivery Tab Content</div>`,
+  template: `<div style="padding: 1rem;">Delivery Tab Content  !!</div>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeliveryTabComponent {}

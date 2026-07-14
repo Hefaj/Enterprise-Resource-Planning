@@ -70,7 +70,7 @@ async function loadContractFromRemote(
     return {
       id: config.id,
       label: `${config.label} (nieaktywny)`,
-      iconId: 'exclamation-triangle',
+      iconId: 'triangle-alert',
       disabled: true,
     };
   }

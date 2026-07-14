@@ -4,8 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "nx": "nx",
     "prepare": "nx g @nx-dotnet/core:restore",
     "translate:keys": "node tools/scripts/generate-translation-keys.js"
   },

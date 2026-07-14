@@ -7,8 +7,7 @@ import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer'
 import { SHARED_KEYS } from '@erp/shared/ui';
 import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-access';
 import { ThemeService, LanguageService, AppLanguage } from '@erp/client/util';
-import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent } from '@erp/client/ui';
-import { NavigationMenuComponent } from './navigation-menu.component';
+import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
 
 @Component({
   selector: 'erp-shell',
@@ -152,7 +151,7 @@ export class ShellLayoutComponent {
       .setTitle(SHARED_KEYS.navigation)
       .setOverlay(true)
       .setDirection('start')
-      .setComponent(NavigationMenuComponent)
+      .setComponent(ErpNavigationMenuComponent, { config: {items: this.navMenu, showSingle: true} })
       .setOnClose(() => this.menuOpen.set(false))
   );
 

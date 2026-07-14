@@ -1,13 +1,13 @@
 import { inject } from '@angular/core';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
 import { ErpNavRegistryService, ErpNavigationItem, cacheRemoteRoutes } from '@erp/shared/data-access';
-// import { ErpModalService } from '@erp/shared/ui';
+import { ErpModalService } from '@erp/shared/ui';
 import { ThemeService, LanguageService } from '@erp/client/util';
 import { loadRemoteModule } from '@angular-architects/native-federation';
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
-  // const modalService = inject(ErpModalService);
+  const modalService = inject(ErpModalService);
   inject(ThemeService); // Triggers initialization and effect
   inject(LanguageService); // Triggers language initialization and effect
 
@@ -18,7 +18,7 @@ export async function STARTUP(): Promise<void> {
     route: 'dashbord',
   });
 
-  const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadContractFromRemote(config/*, modalService*/));
+  const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadContractFromRemote(config, modalService));
   const remoteMenus = await Promise.all(loadPromises);
 
   for (const menu of remoteMenus) {
@@ -36,7 +36,7 @@ interface EntryContractModule {
 
 async function loadContractFromRemote(
   config: RemoteModuleConfig,
-  // modalService: ErpModalService,
+  modalService: ErpModalService,
 ): Promise<ErpNavigationItem | null> {
   try {
     const module = (await loadRemoteModule({
@@ -51,7 +51,7 @@ async function loadContractFromRemote(
 
     // Rejestruj mapowanie modalId → modulePrefix (lekkie, tylko stringi)
     if (module?.remoteModalIds) {
-      // modalService.registerModalIds(config.routePrefix, module.remoteModalIds);
+      modalService.registerModalIds(config.routePrefix, module.remoteModalIds);
     }
 
     if (module?.remoteMenu) {

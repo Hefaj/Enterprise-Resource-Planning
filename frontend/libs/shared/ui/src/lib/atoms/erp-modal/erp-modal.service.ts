@@ -1,0 +1,258 @@
+import {
+  ApplicationRef,
+  ComponentRef,
+  createComponent,
+  EnvironmentInjector,
+  inject,
+  Injectable,
+  Injector,
+  runInInjectionContext,
+} from '@angular/core';
+import { loadRemoteModule } from '@angular-architects/native-federation';
+import { ErpModalComponent } from './erp-modal.component';
+import { ErpModalConfig, ErpModalDefinition, ErpModalRef } from './erp-modal.types';
+
+/**
+ * Globalny serwis do otwierania modali z automatycznym lazy loadingiem modułów.
+ *
+ * Wszystkie modale są otwierane wyłącznie przez metodę `open(queueID, command, metadata)`,
+ * która w razie potrzeby automatycznie dociąga zdalny moduł (remote) za pomocą Module Federation.
+ *
+ * @example
+ * ```ts
+ * private modalService = inject(ErpModalService);
+ *
+ * // Otwieranie (z automatycznym lazy loadingiem modułu jeśli to konieczne):
+ * await this.modalService.open(SET_PRICE_MODAL_ID, {
+ *   products: [...],
+ *   price: null
+ * });
+ * ```
+ */
+@Injectable({ providedIn: 'root' })
+export class ErpModalService {
+  private readonly appRef = inject(ApplicationRef);
+  private readonly injector = inject(EnvironmentInjector);
+
+  /** Globalny rejestr definicji modali. */
+  private readonly _registry = new Map<string, ErpModalDefinition<any, any>>();
+
+  /** Mapa modalId → routePrefix remota. Budowana przy STARTUP z remoteModalIds. */
+  private readonly _modalIdToModule = new Map<string, string>();
+
+  /** Zbiór prefixów remotów, których modale zostały już załadowane. */
+  private readonly _loadedRemotes = new Set<string>();
+
+  /** Mapa modulePrefix → lista providerów zarejestrowanych dla modali z danego modułu. */
+  private readonly _moduleProviders = new Map<string, any[]>();
+
+  // ── Rejestracja ──
+
+  /**
+   * Rejestruje definicje modali w globalnym rejestrze.
+   * Wywoływane typowo w konstruktorze serwisu domenowego.
+   *
+   * @example
+   * ```ts
+   * constructor() {
+   *   inject(ErpModalService).register(
+   *     EDIT_SKU_DEFINITION,
+   *     EDIT_EAN_DEFINITION,
+   *   );
+   * }
+   * ```
+   */
+  public register(...definitions: ErpModalDefinition<any, any>[]): void {
+    for (const def of definitions) {
+      if (this._registry.has(def.id)) {
+        console.warn(`[ErpModalService] Modal "${def.id}" is already registered. Overwriting.`);
+      }
+      this._registry.set(def.id, def);
+    }
+  }
+
+  /**
+   * Rejestruje mapowanie modalId → routePrefix remota.
+   * Wywoływane przy STARTUP z remoteModalIds każdego modułu.
+   *
+   * @param modulePrefix routePrefix remota (np. 'catalog')
+   * @param modalIds tablica identyfikatorów modali z danego modułu
+   */
+  public registerModalIds(modulePrefix: string, modalIds: string[]): void {
+    for (const id of modalIds) {
+      this._modalIdToModule.set(id, modulePrefix);
+    }
+  }
+
+  // ── Otwieranie (zawsze przez lazyloading) ──
+
+  /**
+   * Otwiera modal na podstawie jego identyfikatora (queueID, np. hash MD5).
+   * Jeśli modal nie jest jeszcze zarejestrowany, lazy-ładuje definicje modali
+   * z odpowiedniego remota na podstawie mapy modalId → modulePrefix
+   * (budowanej przy STARTUP z remoteModalIds).
+   *
+   * @param queueID Identyfikator modalu (np. hash MD5)
+   * @param command Początkowy stan commanda
+   * @param metadata Opcjonalne metadane przekazywane do modalu
+   */
+  public async open<TCommand = any, TMetadata = any>(
+    queueID: string,
+    command: TCommand,
+    metadata?: TMetadata,
+  ): Promise<ErpModalRef<TCommand, TMetadata>> {
+    // 1. Sprawdź czy modal jest już zarejestrowany
+    if (this._registry.has(queueID)) {
+      return this._openDirect(queueID, command, metadata);
+    }
+
+    // 2. Znajdź moduł na podstawie mapy (budowanej przy STARTUP)
+    const modulePrefix = this._modalIdToModule.get(queueID);
+    if (!modulePrefix) {
+      throw new Error(
+        `[ErpModalService] Unknown modal ID: "${queueID}". ` +
+        `Not found in modalId → module mapping. ` +
+        `Make sure the remote module exports remoteModalIds in its contract.`
+      );
+    }
+
+    // 3. Lazy load definicji modali z remota (jeśli jeszcze nie załadowane)
+    if (!this._loadedRemotes.has(modulePrefix)) {
+      try {
+        const contractModule = await loadRemoteModule<{
+          registerModals?: () => Promise<any[]>;
+          getModalProviders?: () => Promise<any[]>;
+        }>({
+          remoteName: modulePrefix,
+          exposedModule: './contract',
+        });
+
+        if (contractModule?.getModalProviders) {
+          const providers = await contractModule.getModalProviders();
+          this._moduleProviders.set(modulePrefix, providers);
+        }
+
+        if (contractModule?.registerModals) {
+          const tokens = await contractModule.registerModals();
+          runInInjectionContext(this.injector, () => {
+            for (const token of tokens) {
+              this.register(inject(token));
+            }
+          });
+        }
+
+        this._loadedRemotes.add(modulePrefix);
+      } catch (error) {
+        throw new Error(
+          `[ErpModalService] Failed to load modals from "${modulePrefix}/contract" for queueID "${queueID}". ` +
+          `Is the remote module running? Error: ${error}`
+        );
+      }
+    }
+
+    // 4. Teraz modal powinien być zarejestrowany
+    if (!this._registry.has(queueID)) {
+      throw new Error(
+        `[ErpModalService] Modal "${queueID}" not found after loading "${modulePrefix}/contract". ` +
+        `Make sure registerModals() in "${modulePrefix}" returns the ModalDefinition token for this ID.`
+      );
+    }
+
+    return this._openDirect(queueID, command, metadata);
+  }
+
+  private _openDirect<TCommand, TMetadata>(
+    id: string,
+    command: TCommand,
+    metadata?: TMetadata
+  ): ErpModalRef<TCommand, TMetadata> {
+    const definition = this._registry.get(id);
+    if (!definition) {
+      throw new Error(`[ErpModalService] Modal "${id}" not found in registry.`);
+    }
+    const config = definition.build(command, metadata);
+
+    // Automatycznie doklej providery specyficzne dla modułu, w którym zdefiniowany jest ten modal
+    const modulePrefix = this._modalIdToModule.get(id);
+    if (modulePrefix) {
+      const moduleProviders = this._moduleProviders.get(modulePrefix);
+      if (moduleProviders && moduleProviders.length > 0) {
+        config.providers = [...(config.providers || []), ...moduleProviders];
+      }
+    }
+
+    return this._openInternal(config);
+  }
+
+  // ── Internals ──
+
+  private _openInternal<TCommand, TMetadata>(
+    config: ErpModalConfig<TCommand, TMetadata>
+  ): ErpModalRef<TCommand, TMetadata> {
+    // Tworzenie komponentu dynamicznie
+    let elementInjector: Injector | undefined = undefined;
+    if (config.providers && config.providers.length > 0) {
+      elementInjector = Injector.create({
+        providers: config.providers,
+        parent: this.injector,
+      });
+    }
+
+    const componentRef = createComponent(
+      ErpModalComponent,
+      {
+        environmentInjector: this.injector,
+        elementInjector,
+      }
+    ) as unknown as ComponentRef<ErpModalComponent<TCommand, TMetadata>>;
+
+    // Ustawienie configu
+    componentRef.setInput('config', config);
+
+    // Podpięcie do ApplicationRef (detekcja zmian)
+    this.appRef.attachView(componentRef.hostView);
+
+    // Inicjalizacja commanda i metadanych
+    componentRef.instance.initCommand();
+
+    // Dodanie do DOM
+    const domElement = (componentRef.hostView as any).rootNodes[0] as HTMLElement;
+    document.body.appendChild(domElement);
+
+    // Cleanup po zamknięciu
+    const checkAndCleanup = () => {
+      const interval = setInterval(() => {
+        if (!componentRef.instance.visible()) {
+          clearInterval(interval);
+          this._destroyModal(componentRef, domElement);
+        }
+      }, 100);
+    };
+    checkAndCleanup();
+
+    // Zwracamy referencję
+    const ref: ErpModalRef<TCommand, TMetadata> = {
+      close: () => {
+        componentRef.instance.visible.set(false);
+      },
+      command: componentRef.instance.commandSignal,
+      metadata: componentRef.instance.metadataSignal,
+    };
+
+    return ref;
+  }
+
+  private _destroyModal<TCommand, TMetadata>(
+    componentRef: ComponentRef<ErpModalComponent<TCommand, TMetadata>>,
+    domElement: HTMLElement
+  ): void {
+    setTimeout(() => {
+      this.appRef.detachView(componentRef.hostView);
+      componentRef.destroy();
+      if (domElement.parentNode) {
+        domElement.parentNode.removeChild(domElement);
+      }
+    }, 300);
+  }
+}
+

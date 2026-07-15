@@ -18,7 +18,9 @@ import {
   ErpStepContentConfig,
   // ErpInputTextBuilder,
   ErpModalStepBase,
+  ErpModalService,
 } from '@erp/shared/ui';
+import { SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 
 /**
  * Step komponent do seryjnej edycji ceny produktów.
@@ -39,6 +41,7 @@ import {
         }
       </div>
       <erp-step-content [contentConfig]="formContent" />
+      <button (click)="test()">Elo</button>
     </div>
   `,
   styles: [`
@@ -58,7 +61,17 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProductSetPriceCommand, SetPriceMetadata> {
+  public readonly modalService = inject(ErpModalService);
 
+  test() {
+    this.modalService.open<BatchCommandOfProductSetPriceCommand>(SET_PRICE_MODAL_ID, { products: [] })
+      .then(ref => {
+        console.log('[ProductTabComponent] Modal opened successfully!', ref);
+      })
+      .catch(err => {
+        console.error('[ProductTabComponent] Error opening modal:', err);
+      });
+  }
   /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
   private readonly _orchestrator = inject(CatalogProductOrchestrator);

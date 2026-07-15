@@ -113,7 +113,6 @@ export class ErpModalService {
     command: TCommand,
     metadata?: TMetadata,
   ): Promise<ErpModalRef<TCommand, TMetadata>> {
-    console.log('[ErpModalService] open called with queueID:', queueID, 'command:', command);
     // 1. Sprawdź czy modal jest już zarejestrowany
     if (this._registry.has(queueID)) {
       return this._openDirect(queueID, command, metadata);
@@ -204,7 +203,6 @@ export class ErpModalService {
   private _openInternal<TCommand, TMetadata>(
     config: ErpModalConfig<TCommand, TMetadata>
   ): ErpModalRef<TCommand, TMetadata> {
-    console.log('[ErpModalService] _openInternal with config:', config);
     let elementInjector: Injector | undefined = undefined;
     if (config.providers && config.providers.length > 0) {
       elementInjector = Injector.create({
@@ -219,10 +217,15 @@ export class ErpModalService {
     (config as any).commandSignal = commandSignal;
     (config as any).metadataSignal = metadataSignal;
 
+    const size = unwrapSignal(config.size) || 'md';
+    const appearance = size === 'full' ? 'fullscreen' : 'taiga';
+    const mappedSize = this._mapTuiSize(size);
+
     const subscription = this.dialogs.open(
       new PolymorpheusComponent(ErpModalComponent, elementInjector || this.injector),
       {
-        size: this._mapTuiSize(unwrapSignal(config.size) || 'md'),
+        size: mappedSize,
+        appearance: appearance,
         closable: false,
         dismissible: true,
         data: config,

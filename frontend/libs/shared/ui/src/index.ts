@@ -32,7 +32,7 @@ export * from './lib/atoms/erp-menu-bar';
 // export * from './lib/atoms/erp-select';
 export * from './lib/atoms/erp-tabs';
 // export * from './lib/atoms/erp-splitter';
-// export * from './lib/atoms/erp-stepper';
+export * from './lib/atoms/erp-stepper';
 // export * from './lib/atoms/erp-toggle-switch';
 // export * from './lib/atoms/erp-user-menu';
 // export * from './lib/atoms/erp-text';

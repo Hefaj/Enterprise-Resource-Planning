@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   OnDestroy,
   signal,
@@ -16,6 +17,7 @@ import { ErpButtonConfig } from '../erp-button/erp-button.types';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpModalConfig } from './erp-modal.types';
 import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpStepperComponent } from '../erp-stepper/erp-stepper.component';
 import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
 @Component({
@@ -27,6 +29,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     TuiIcon,
     ErpButtonComponent,
     ErpTranslatePipe,
+    ErpStepperComponent,
   ],
   template: `
     @let _title = title();
@@ -38,67 +41,47 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     @let _showFooter = showFooter();
     @let _sizeClass = sizeClass();
 
-    <div class="erp-modal" [class]="_sizeClass + (maximized() ? ' erp-modal--maximized' : '')">
+    <div class="erp-modal" [ngClass]="_sizeClass">
       <!-- ═══ HEADER ═══ -->
       <div class="erp-modal-header">
-        <div class="erp-modal-header__left">
-          <h2 class="erp-modal-header__title">
-            @for (item of _title; track $index) {
-              <span [class.erp-modal-header__segment--muted]="!$last">{{ item | erpTranslate }}</span>
-              @if (!$last) {
-                <span class="erp-modal-header__separator">></span>
-              }
-             }
-          </h2>
+        <div class="erp-modal-header__top-row">
+          <div class="erp-modal-header__left">
+            <h2 class="erp-modal-header__title">
+              @for (item of _title; track $index) {
+                <span [class.erp-modal-header__segment--muted]="!$last">{{ item | erpTranslate }}</span>
+                @if (!$last) {
+                  <span class="erp-modal-header__separator">></span>
+                }
+               }
+            </h2>
+          </div>
+
+          <div class="erp-modal-header__actions">
+            <button
+              class="erp-modal-header__maximize"
+              type="button"
+              (click)="toggleMaximize()"
+              [aria-label]="maximized() ? 'Zminimalizuj modal' : 'Zmaksymalizuj modal'"
+            >
+              <tui-icon [icon]="maximized() ? '@tui.minimize-2' : '@tui.maximize-2'" />
+            </button>
+            <button
+              class="erp-modal-header__close"
+              type="button"
+              (click)="handleCancel()"
+              aria-label="Zamknij modal"
+            >
+              <tui-icon icon="@tui.x" />
+            </button>
+          </div>
         </div>
 
         @if (_showStepper) {
-          <div class="erp-modal-header__stepper">
-            @for (step of _steps; track $index) {
-              <div
-                class="erp-modal-step-indicator"
-                [class.erp-modal-step-indicator--active]="$index === _currentStep"
-                [class.erp-modal-step-indicator--completed]="$index < _currentStep"
-              >
-                <div class="erp-modal-step-indicator__dot">
-                  @if ($index < _currentStep) {
-                    <tui-icon icon="@tui.check" />
-                  } @else {
-                    {{ $index + 1 }}
-                  }
-                </div>
-                <span class="erp-modal-step-indicator__label">
-                  {{ unwrapLabel(step.label) | erpTranslate }}
-                </span>
-              </div>
-              @if (!$last) {
-                <div
-                  class="erp-modal-step-separator"
-                  [class.erp-modal-step-separator--completed]="$index < _currentStep"
-                ></div>
-              }
-            }
-          </div>
+          <erp-stepper
+            [config]="stepperConfig()"
+            class="erp-modal-header__stepper"
+          />
         }
-
-        <div class="erp-modal-header__actions">
-          <button
-            class="erp-modal-header__maximize"
-            type="button"
-            (click)="maximized.set(!maximized())"
-            [aria-label]="maximized() ? 'Zminimalizuj modal' : 'Zmaksymalizuj modal'"
-          >
-            <tui-icon [icon]="maximized() ? '@tui.minimize-2' : '@tui.maximize-2'" />
-          </button>
-          <button
-            class="erp-modal-header__close"
-            type="button"
-            (click)="handleCancel()"
-            aria-label="Zamknij modal"
-          >
-            <tui-icon icon="@tui.x" />
-          </button>
-        </div>
       </div>
 
       <!-- ═══ BODY ═══ -->
@@ -141,11 +124,10 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       display: contents;
     }
 
-    /* ── Taiga UI Dialog card overrides ── */
     ::ng-deep {
-      tui-dialog-card,
-      dialog,
-      .t-dialog {
+      tui-dialog-card:not([data-appearance~=fullscreen]),
+      dialog:not([data-appearance~=fullscreen]),
+      .t-dialog:not([data-appearance~=fullscreen]) {
         padding: 0 !important;
         background: transparent !important;
         border: none !important;
@@ -159,69 +141,36 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     .erp-modal {
       border-radius: 12px;
       border: 1px solid var(--p-surface-200);
-      background: var(--p-surface-0);
-      box-shadow:
-        0 25px 50px -12px rgba(0, 0, 0, 0.25),
-        0 0 0 1px rgba(0, 0, 0, 0.03);
       overflow: hidden;
       display: flex;
       flex-direction: column;
       flex: 1 1 auto;
       width: 100%;
       box-sizing: border-box;
+      min-height: 200px;
     }
 
-    /* ── Dark mode structural overrides ── */
-    :host-context(.dark) .erp-modal,
-    :host-context([data-theme="dark"]) .erp-modal {
-      background: var(--p-surface-900, #18181b);
-      border-color: var(--p-surface-800, #27272a);
-      color: var(--p-surface-100, #f4f4f5);
-    }
-
-    /* ── Size variants with rigid heights ── */
-    .erp-modal--sm { width: 400px; max-width: 95vw; height: 400px; }
-    .erp-modal--md { width: 600px; max-width: 95vw; height: 500px; }
-    .erp-modal--lg { width: 800px; max-width: 95vw; height: 600px; }
-    .erp-modal--xl { width: 1100px; max-width: 95vw; height: 700px; }
-    .erp-modal--full { width: 95vw; height: 90vh; }
-
-    /* Fullscreen maximized mode */
-    .erp-modal--maximized {
-      width: 100vw !important;
-      height: 100vh !important;
-      max-width: 100vw !important;
-      max-height: 100vh !important;
-      border-radius: 0 !important;
-      border: none !important;
-    }
-
-    /* ── Header ── */
     .erp-modal-header {
       display: flex;
-      align-items: center;
-      padding: 1.25rem 1.5rem;
+      flex-direction: column;
+      align-items: stretch;
       gap: 1rem;
       width: 100%;
       box-sizing: border-box;
       border-bottom: 1px solid var(--p-surface-200);
-
-      :host-context(.dark) &,
-      :host-context([data-theme="dark"]) & {
-        border-color: var(--p-surface-800, #27272a);
-      }
     }
 
-    .erp-modal-header__left {
-      flex-shrink: 0;
+    .erp-modal-header__top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
     }
 
     .erp-modal-header__title {
       margin: 0;
       font-size: 1.125rem;
       font-weight: 600;
-      color: var(--p-surface-800);
-      line-height: 1.4;
       display: flex;
       align-items: center;
       gap: 0.375rem;
@@ -236,51 +185,31 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
 
     .erp-modal-header__segment--muted {
       color: var(--p-surface-500);
-      font-weight: 500;
-    }
-
-    .erp-modal-header__stepper {
-      display: flex;
-      align-items: center;
-      flex: 1;
-      justify-content: center;
-      gap: 0;
     }
 
     .erp-modal-header__actions {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-left: auto;
-      flex-shrink: 0;
     }
 
     .erp-modal-header__maximize,
     .erp-modal-header__close {
-      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       width: 2rem;
       height: 2rem;
-      border-radius: 6px;
       border: none;
       background: transparent;
-      color: var(--p-surface-500);
       cursor: pointer;
-      transition: all 0.15s ease;
 
       &:hover {
         background: var(--p-surface-100);
         color: var(--p-surface-900);
       }
-
-      tui-icon {
-        font-size: 0.875rem;
-      }
     }
 
-    /* ── Step indicators ── */
     .erp-modal-step-indicator {
       display: flex;
       align-items: center;
@@ -300,7 +229,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       border: 2px solid var(--p-surface-200);
       color: var(--p-surface-400);
       background: transparent;
-      transition: all 0.2s ease;
 
       tui-icon {
         width: 0.875rem;
@@ -312,7 +240,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       font-size: 0.8125rem;
       font-weight: 500;
       color: var(--p-surface-400);
-      transition: color 0.2s ease;
       white-space: nowrap;
     }
 
@@ -322,7 +249,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
         color: var(--p-primary-500);
         background: rgba(59, 130, 246, 0.08);
       }
-
       .erp-modal-step-indicator__label {
         color: var(--p-primary-500);
         font-weight: 600;
@@ -335,7 +261,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
         background: var(--p-green-500);
         color: #fff;
       }
-
       .erp-modal-step-indicator__label {
         color: var(--p-surface-700);
       }
@@ -345,16 +270,13 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       width: 2rem;
       height: 2px;
       background: var(--p-surface-200);
-      transition: background 0.2s ease;
     }
 
     .erp-modal-step-separator--completed {
       background: var(--p-green-500);
     }
 
-    /* ── Body ── */
     .erp-modal-body {
-      padding: 1.5rem;
       flex: 1 1 auto;
       overflow-y: auto;
       display: flex;
@@ -365,63 +287,37 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
-      animation: erpModalFadeIn 0.2s cubic-bezier(0, 0, 0.2, 1) forwards;
     }
 
-    @keyframes erpModalFadeIn {
-      0% {
-        opacity: 0;
-        transform: translateX(8px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    /* ── Footer ── */
     .erp-modal-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem 1.5rem;
       width: 100%;
       box-sizing: border-box;
       border-top: 1px solid var(--p-surface-200);
-
-      :host-context(.dark) &,
-      :host-context([data-theme="dark"]) & {
-        border-color: var(--p-surface-800, #27272a);
-      }
     }
 
-    .erp-modal-footer__left {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
+    .erp-modal-footer__left,
     .erp-modal-footer__right {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
-    /* ── Dark mode overrides for internal classes ── */
     :host-context(.dark),
     :host-context([data-theme="dark"]) {
-      .erp-modal-header__title {
-        color: var(--p-surface-100, #f4f4f5);
+      .erp-modal {
+        border-color: var(--p-surface-800, #27272a);
       }
-      .erp-modal-header__segment--muted {
-        color: var(--p-surface-400, #a1a1aa);
+      .erp-modal-header {
+        border-bottom-color: var(--p-surface-800, #27272a);
       }
-      .erp-modal-header__separator {
-        color: var(--p-surface-500, #71717a);
+      .erp-modal-footer {
+        border-top-color: var(--p-surface-800, #27272a);
       }
       .erp-modal-header__maximize,
       .erp-modal-header__close {
-        color: var(--p-surface-400, #a1a1aa);
         &:hover {
           background: var(--p-surface-800, #27272a);
           color: var(--p-surface-100, #f4f4f5);
@@ -429,18 +325,10 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       }
       .erp-modal-step-indicator__dot {
         border-color: var(--p-surface-700, #3f3f46);
-        color: var(--p-surface-400, #a1a1aa);
-      }
-      .erp-modal-step-indicator__label {
-        color: var(--p-surface-400, #a1a1aa);
       }
       .erp-modal-step-indicator--active {
         .erp-modal-step-indicator__dot {
           border-color: var(--p-primary-500, #3b82f6);
-          color: var(--p-primary-500, #3b82f6);
-          background: rgba(59, 130, 246, 0.15);
-        }
-        .erp-modal-step-indicator__label {
           color: var(--p-primary-500, #3b82f6);
         }
       }
@@ -448,7 +336,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
         .erp-modal-step-indicator__dot {
           border-color: var(--p-green-500, #22c55e);
           background: var(--p-green-500, #22c55e);
-          color: #fff;
         }
         .erp-modal-step-indicator__label {
           color: var(--p-surface-200, #e4e4e7);
@@ -493,6 +380,35 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
     const data = this.context.data as any;
     this.commandSignal = data.commandSignal || signal(data.command);
     this.metadataSignal = data.metadataSignal || signal(data.metadata);
+
+    const initialSize = unwrapSignal(data.size) || 'md';
+    if (initialSize === 'full') {
+      this.maximized.set(true);
+      (this.context as any).appearance = 'fullscreen';
+    }
+  }
+
+  public toggleMaximize(): void {
+    const nextMaximized = !this.maximized();
+    this.maximized.set(nextMaximized);
+
+    const data = this.context.data as any;
+    if (nextMaximized) {
+      (this.context as any).appearance = 'fullscreen';
+    } else {
+      (this.context as any).appearance = 'taiga';
+      const size = unwrapSignal(data.size) || 'md';
+      (this.context as any).size = this._mapTuiSize(size);
+    }
+  }
+
+  private _mapTuiSize(size: string): 's' | 'm' | 'l' {
+    if (size === 'sm') return 's';
+    if (size === 'md') return 'm';
+    if (size === 'lg') return 'l';
+    if (size === 'xl') return 'l';
+    if (size === 'full') return 'l';
+    return 'm';
   }
 
   // ── Computed properties ──
@@ -538,6 +454,15 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
     const map = this._stepCanGoNextMap();
     const stepSignal = map[this.currentStep()];
     return stepSignal ? stepSignal() : true;
+  });
+
+  protected stepperConfig = computed(() => {
+    const stepLabels = this.config().steps.map(step => this.unwrapLabel(step.label));
+    return {
+      steps: stepLabels,
+      activeItemIndex: this.currentStep(),
+      orientation: 'horizontal' as const,
+    };
   });
 
   // ── Button Configurations ──

@@ -32,7 +32,6 @@ export class ProductTabComponent {
   );
 
   private openSetPriceModal(): void {
-    console.log('[ProductTabComponent] openSetPriceModal clicked!');
     this.modalService.open<BatchCommandOfProductSetPriceCommand>(SET_PRICE_MODAL_ID, { products: [] })
       .then(ref => {
         console.log('[ProductTabComponent] Modal opened successfully!', ref);

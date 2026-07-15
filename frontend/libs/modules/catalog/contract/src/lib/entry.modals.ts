@@ -24,9 +24,8 @@ export const remoteModalIds: string[] = [
  * @returns Tablica tokenów DI (klas ModalDefinition) do zarejestrowania przez inject()
  */
 export async function registerModals(): Promise<any[]> {
-  // const { SetPriceModalDefinition, SetNameModalDefinition } = await import('@erp/catalog/feature');
-  // return [SetPriceModalDefinition, SetNameModalDefinition];
-  return [];
+  const { SetPriceModalDefinition, SetNameModalDefinition } = await import('@erp/catalog/feature');
+  return [SetPriceModalDefinition, SetNameModalDefinition];
 }
 
 export async function getModalProviders(): Promise<any[]> {

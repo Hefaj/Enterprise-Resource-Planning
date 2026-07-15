@@ -2,13 +2,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  input,
+  inject,
+  OnDestroy,
   signal,
   Signal,
   WritableSignal,
 } from '@angular/core';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
-import { TuiDialog, TuiIcon } from '@taiga-ui/core';
+import { TuiDialogContext, TuiIcon } from '@taiga-ui/core';
+import { POLYMORPHEUS_CONTEXT } from '@taiga-ui/polymorpheus';
 import { ErpButtonComponent } from '../erp-button/erp-button.component';
 import { ErpButtonConfig } from '../erp-button/erp-button.types';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
@@ -22,7 +24,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
   imports: [
     CommonModule,
     NgComponentOutlet,
-    TuiDialog,
     TuiIcon,
     ErpButtonComponent,
     ErpTranslatePipe,
@@ -37,115 +38,103 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     @let _showFooter = showFooter();
     @let _sizeClass = sizeClass();
 
-    <ng-template
-      let-observer
-      [tuiDialogOptions]="{
-        size: tuiSize(),
-        required: false,
-        closable: false,
-        dismissible: true
-      }"
-      [tuiDialog]="visible()"
-      (tuiDialogChange)="handleDialogChange($event)"
-    >
-      <div class="erp-modal" [class]="_sizeClass + (maximized() ? ' erp-modal--maximized' : '')">
-        <!-- ═══ HEADER ═══ -->
-        <div class="erp-modal-header">
-          <div class="erp-modal-header__left">
-            <h2 class="erp-modal-header__title">
-              @for (item of _title; track $index) {
-                <span [class.erp-modal-header__segment--muted]="!$last">{{ item | erpTranslate }}</span>
-                @if (!$last) {
-                  <span class="erp-modal-header__separator">></span>
-                }
-               }
-            </h2>
-          </div>
+    <div class="erp-modal" [class]="_sizeClass + (maximized() ? ' erp-modal--maximized' : '')">
+      <!-- ═══ HEADER ═══ -->
+      <div class="erp-modal-header">
+        <div class="erp-modal-header__left">
+          <h2 class="erp-modal-header__title">
+            @for (item of _title; track $index) {
+              <span [class.erp-modal-header__segment--muted]="!$last">{{ item | erpTranslate }}</span>
+              @if (!$last) {
+                <span class="erp-modal-header__separator">></span>
+              }
+             }
+          </h2>
+        </div>
 
-          @if (_showStepper) {
-            <div class="erp-modal-header__stepper">
-              @for (step of _steps; track $index) {
-                <div
-                  class="erp-modal-step-indicator"
-                  [class.erp-modal-step-indicator--active]="$index === _currentStep"
-                  [class.erp-modal-step-indicator--completed]="$index < _currentStep"
-                >
-                  <div class="erp-modal-step-indicator__dot">
-                    @if ($index < _currentStep) {
-                      <tui-icon icon="@tui.check" />
-                    } @else {
-                      {{ $index + 1 }}
-                    }
-                  </div>
-                  <span class="erp-modal-step-indicator__label">
-                    {{ unwrapLabel(step.label) | erpTranslate }}
-                  </span>
+        @if (_showStepper) {
+          <div class="erp-modal-header__stepper">
+            @for (step of _steps; track $index) {
+              <div
+                class="erp-modal-step-indicator"
+                [class.erp-modal-step-indicator--active]="$index === _currentStep"
+                [class.erp-modal-step-indicator--completed]="$index < _currentStep"
+              >
+                <div class="erp-modal-step-indicator__dot">
+                  @if ($index < _currentStep) {
+                    <tui-icon icon="@tui.check" />
+                  } @else {
+                    {{ $index + 1 }}
+                  }
                 </div>
-                @if (!$last) {
-                  <div
-                    class="erp-modal-step-separator"
-                    [class.erp-modal-step-separator--completed]="$index < _currentStep"
-                  ></div>
-                }
-              }
-            </div>
-          }
-
-          <div class="erp-modal-header__actions">
-            <button
-              class="erp-modal-header__maximize"
-              type="button"
-              (click)="maximized.set(!maximized())"
-              [aria-label]="maximized() ? 'Zminimalizuj modal' : 'Zmaksymalizuj modal'"
-            >
-              <tui-icon [icon]="maximized() ? '@tui.minimize-2' : '@tui.maximize-2'" />
-            </button>
-            <button
-              class="erp-modal-header__close"
-              type="button"
-              (click)="handleCancel()"
-              aria-label="Zamknij modal"
-            >
-              <tui-icon icon="@tui.x" />
-            </button>
-          </div>
-        </div>
-
-        <!-- ═══ BODY ═══ -->
-        <div class="erp-modal-body">
-          @for (step of _steps; track $index) {
-            @if ($index === _currentStep) {
-              <div class="erp-modal-body__content">
-                <ng-container
-                  *ngComponentOutlet="step.component; inputs: getStepInputs($index)"
-                />
+                <span class="erp-modal-step-indicator__label">
+                  {{ unwrapLabel(step.label) | erpTranslate }}
+                </span>
               </div>
+              @if (!$last) {
+                <div
+                  class="erp-modal-step-separator"
+                  [class.erp-modal-step-separator--completed]="$index < _currentStep"
+                ></div>
+              }
             }
-          }
-        </div>
-
-        <!-- ═══ FOOTER ═══ -->
-        @if (_showFooter) {
-          <div class="erp-modal-footer">
-            <div class="erp-modal-footer__left">
-              <erp-button [config]="cancelBtnConfig()" />
-            </div>
-
-            <div class="erp-modal-footer__right">
-              @if (_showStepper && !_isFirstStep) {
-                <erp-button [config]="backBtnConfig()" />
-              }
-
-              @if (_isLastStep) {
-                <erp-button [config]="saveBtnConfig()" />
-              } @else {
-                <erp-button [config]="nextBtnConfig()" />
-              }
-            </div>
           </div>
         }
+
+        <div class="erp-modal-header__actions">
+          <button
+            class="erp-modal-header__maximize"
+            type="button"
+            (click)="maximized.set(!maximized())"
+            [aria-label]="maximized() ? 'Zminimalizuj modal' : 'Zmaksymalizuj modal'"
+          >
+            <tui-icon [icon]="maximized() ? '@tui.minimize-2' : '@tui.maximize-2'" />
+          </button>
+          <button
+            class="erp-modal-header__close"
+            type="button"
+            (click)="handleCancel()"
+            aria-label="Zamknij modal"
+          >
+            <tui-icon icon="@tui.x" />
+          </button>
+        </div>
       </div>
-    </ng-template>
+
+      <!-- ═══ BODY ═══ -->
+      <div class="erp-modal-body">
+        @for (step of _steps; track $index) {
+          @if ($index === _currentStep) {
+            <div class="erp-modal-body__content">
+              <ng-container
+                *ngComponentOutlet="step.component; inputs: getStepInputs($index)"
+              />
+            </div>
+          }
+        }
+      </div>
+
+      <!-- ═══ FOOTER ═══ -->
+      @if (_showFooter) {
+        <div class="erp-modal-footer">
+          <div class="erp-modal-footer__left">
+            <erp-button [config]="cancelBtnConfig()" />
+          </div>
+
+          <div class="erp-modal-footer__right">
+            @if (_showStepper && !_isFirstStep) {
+              <erp-button [config]="backBtnConfig()" />
+            }
+
+            @if (_isLastStep) {
+              <erp-button [config]="saveBtnConfig()" />
+            } @else {
+              <erp-button [config]="nextBtnConfig()" />
+            }
+          </div>
+        </div>
+      }
+    </div>
   `,
   styles: `
     :host {
@@ -475,11 +464,10 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ErpModalComponent<TCommand = any, TMetadata = any> {
-  public config = input.required<ErpModalConfig<TCommand, TMetadata>>();
+export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDestroy {
+  private readonly context = inject<TuiDialogContext<any, ErpModalConfig>>(POLYMORPHEUS_CONTEXT);
 
-  /** Widoczność modalu — zarządzana przez serwis. */
-  public visible = signal(true);
+  public config = computed(() => this.context.data);
 
   /** Stan maksymalizacji modalu. */
   public maximized = signal(false);
@@ -498,6 +486,14 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
 
   /** Mapa canGoNext Signal per step index. */
   private _stepCanGoNextMap = signal<Record<number, Signal<boolean>>>({});
+
+  private resolved = false;
+
+  constructor() {
+    const data = this.context.data as any;
+    this.commandSignal = data.commandSignal || signal(data.command);
+    this.metadataSignal = data.metadataSignal || signal(data.metadata);
+  }
 
   // ── Computed properties ──
 
@@ -538,16 +534,6 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
     return `erp-modal--${size}`;
   });
 
-  protected tuiSize = computed(() => {
-    const size = unwrapSignal(this.config().size) || 'md';
-    if (size === 'sm') return 's';
-    if (size === 'md') return 'm';
-    if (size === 'lg') return 'l';
-    if (size === 'xl') return 'l'; // Custom sizing via CSS classes
-    if (size === 'full') return 'l'; // Custom sizing via CSS classes
-    return 'm';
-  });
-
   protected canGoNext = computed(() => {
     const map = this._stepCanGoNextMap();
     const stepSignal = map[this.currentStep()];
@@ -585,14 +571,6 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
     disabled: !this.canGoNext(),
     fn: () => this.goNext(),
   }));
-
-  /** Inicjalizuje commandSignal i metadataSignal z konfiguracji. Wywoływane przez serwis. */
-  public initCommand(): void {
-    const cmd = this.config().command;
-    this.commandSignal = signal(cmd as TCommand) as WritableSignal<TCommand>;
-    const meta = this.config().metadata;
-    this.metadataSignal = signal(meta as TMetadata) as WritableSignal<TMetadata>;
-  }
 
   /** Zwraca inputy przekazywane do step component via ngComponentOutlet. */
   protected getStepInputs(stepIndex: number): Record<string, any> {
@@ -655,7 +633,8 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
         }
       }
     }
-    this.visible.set(false);
+    this.resolved = true;
+    this.context.$implicit.complete();
   }
 
   protected handleCancel(): void {
@@ -664,12 +643,16 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> {
     if (onCancel) {
       onCancel();
     }
-    this.visible.set(false);
+    this.resolved = true;
+    this.context.$implicit.complete();
   }
 
-  protected handleDialogChange(visible: boolean): void {
-    if (!visible) {
-      this.handleCancel();
+  ngOnDestroy(): void {
+    if (!this.resolved) {
+      const onCancel = this.config().onCancel;
+      if (onCancel) {
+        onCancel();
+      }
     }
   }
 }

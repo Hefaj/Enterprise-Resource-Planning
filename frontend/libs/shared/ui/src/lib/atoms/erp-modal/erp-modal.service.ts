@@ -1,16 +1,18 @@
 import {
-  ApplicationRef,
-  ComponentRef,
-  createComponent,
   EnvironmentInjector,
   inject,
   Injectable,
   Injector,
   runInInjectionContext,
+  signal,
+  WritableSignal,
 } from '@angular/core';
 import { loadRemoteModule } from '@angular-architects/native-federation';
+import { TuiDialogService } from '@taiga-ui/core';
+import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { ErpModalComponent } from './erp-modal.component';
 import { ErpModalConfig, ErpModalDefinition, ErpModalRef } from './erp-modal.types';
+import { unwrapSignal } from '../../base/erp-signal-utils';
 
 /**
  * Globalny serwis do otwierania modali z automatycznym lazy loadingiem modułów.
@@ -31,8 +33,8 @@ import { ErpModalConfig, ErpModalDefinition, ErpModalRef } from './erp-modal.typ
  */
 @Injectable({ providedIn: 'root' })
 export class ErpModalService {
-  private readonly appRef = inject(ApplicationRef);
   private readonly injector = inject(EnvironmentInjector);
+  private readonly dialogs = inject(TuiDialogService);
 
   /** Globalny rejestr definicji modali. */
   private readonly _registry = new Map<string, ErpModalDefinition<any, any>>();
@@ -101,6 +103,7 @@ export class ErpModalService {
     command: TCommand,
     metadata?: TMetadata,
   ): Promise<ErpModalRef<TCommand, TMetadata>> {
+    console.log('[ErpModalService] open called with queueID:', queueID, 'command:', command);
     // 1. Sprawdź czy modal jest już zarejestrowany
     if (this._registry.has(queueID)) {
       return this._openDirect(queueID, command, metadata);
@@ -189,7 +192,7 @@ export class ErpModalService {
   private _openInternal<TCommand, TMetadata>(
     config: ErpModalConfig<TCommand, TMetadata>
   ): ErpModalRef<TCommand, TMetadata> {
-    // Tworzenie komponentu dynamicznie
+    console.log('[ErpModalService] _openInternal with config:', config);
     let elementInjector: Injector | undefined = undefined;
     if (config.providers && config.providers.length > 0) {
       elementInjector = Injector.create({
@@ -198,61 +201,39 @@ export class ErpModalService {
       });
     }
 
-    const componentRef = createComponent(
-      ErpModalComponent,
+    const commandSignal = signal(config.command) as WritableSignal<TCommand>;
+    const metadataSignal = signal(config.metadata) as WritableSignal<TMetadata>;
+
+    (config as any).commandSignal = commandSignal;
+    (config as any).metadataSignal = metadataSignal;
+
+    const subscription = this.dialogs.open(
+      new PolymorpheusComponent(ErpModalComponent, elementInjector || this.injector),
       {
-        environmentInjector: this.injector,
-        elementInjector,
+        size: this._mapTuiSize(unwrapSignal(config.size) || 'md'),
+        closable: false,
+        dismissible: true,
+        data: config,
       }
-    ) as unknown as ComponentRef<ErpModalComponent<TCommand, TMetadata>>;
+    ).subscribe();
 
-    // Ustawienie configu
-    componentRef.setInput('config', config);
-
-    // Podpięcie do ApplicationRef (detekcja zmian)
-    this.appRef.attachView(componentRef.hostView);
-
-    // Inicjalizacja commanda i metadanych
-    componentRef.instance.initCommand();
-
-    // Dodanie do DOM
-    const domElement = (componentRef.hostView as any).rootNodes[0] as HTMLElement;
-    document.body.appendChild(domElement);
-
-    // Cleanup po zamknięciu
-    const checkAndCleanup = () => {
-      const interval = setInterval(() => {
-        if (!componentRef.instance.visible()) {
-          clearInterval(interval);
-          this._destroyModal(componentRef, domElement);
-        }
-      }, 100);
-    };
-    checkAndCleanup();
-
-    // Zwracamy referencję
     const ref: ErpModalRef<TCommand, TMetadata> = {
       close: () => {
-        componentRef.instance.visible.set(false);
+        subscription.unsubscribe();
       },
-      command: componentRef.instance.commandSignal,
-      metadata: componentRef.instance.metadataSignal,
+      command: commandSignal,
+      metadata: metadataSignal,
     };
 
     return ref;
   }
 
-  private _destroyModal<TCommand, TMetadata>(
-    componentRef: ComponentRef<ErpModalComponent<TCommand, TMetadata>>,
-    domElement: HTMLElement
-  ): void {
-    setTimeout(() => {
-      this.appRef.detachView(componentRef.hostView);
-      componentRef.destroy();
-      if (domElement.parentNode) {
-        domElement.parentNode.removeChild(domElement);
-      }
-    }, 300);
+  private _mapTuiSize(size: string): 's' | 'm' | 'l' {
+    if (size === 'sm') return 's';
+    if (size === 'md') return 'm';
+    if (size === 'lg') return 'l';
+    if (size === 'xl') return 'l';
+    if (size === 'full') return 'l';
+    return 'm';
   }
 }
-

@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpMenuBarComponent, ErpMenuBarBuilder } from '@erp/shared/ui';
+import { ErpMenuBarComponent, ErpMenuBarBuilder, ErpModalService } from '@erp/shared/ui';
+import { SET_PRICE_MODAL_ID } from '@erp/catalog/util';
+import { BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 
 @Component({
   selector: 'erp-product-tab',
@@ -8,12 +10,12 @@ import { ErpMenuBarComponent, ErpMenuBarBuilder } from '@erp/shared/ui';
   imports: [CommonModule, ErpMenuBarComponent],
   template: `
       <erp-menu-bar [config]="horizontalMenu" />
-    <!-- <div style="padding: 1rem; display: flex; flex-direction: column; gap: 1.5rem;">
-    </div> -->
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductTabComponent {
+  private readonly modalService = inject(ErpModalService);
+
   protected readonly horizontalMenu = ErpMenuBarBuilder.create((b) =>
     b
       .addItem((i) =>
@@ -21,6 +23,23 @@ export class ProductTabComponent {
           .setLabel('Dodaj produkt')
           .setIconStart('@tui.plus')
       )
+      .addItem((i) =>
+        i
+          .setLabel('Ustaw ceny')
+          .setIconStart('@tui.dollar-sign')
+          .setFn(() => this.openSetPriceModal())
+      )
   );
+
+  private openSetPriceModal(): void {
+    console.log('[ProductTabComponent] openSetPriceModal clicked!');
+    this.modalService.open<BatchCommandOfProductSetPriceCommand>(SET_PRICE_MODAL_ID, { products: [] })
+      .then(ref => {
+        console.log('[ProductTabComponent] Modal opened successfully!', ref);
+      })
+      .catch(err => {
+        console.error('[ProductTabComponent] Error opening modal:', err);
+      });
+  }
 }
 

@@ -6,7 +6,7 @@ export * from './lib/product/page/product';
 // export * from './lib/product/page/tabs/delivery-options-tab.component';
 // export * from './lib/product/page/tabs/warranty-tab.component';
 
-// export * from './lib/product/modal';
+export * from './lib/product/modal';
 
 export * from './lib/product/translation';
 

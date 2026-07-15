@@ -55,6 +55,14 @@ export class ErpDrawerBuilder extends ErpBaseBuilder<ErpDrawerConfig<any>> {
   }
 
   /**
+   * Określa, czy szuflada powinna się automatycznie zamknąć w momencie zmiany ścieżki (nawigacji).
+   */
+  public setCloseOnNavigation(closeOnNavigation: MaybeSignal<boolean>): this {
+    this._data.closeOnNavigation = closeOnNavigation;
+    return this;
+  }
+
+  /**
    * Ustawia funkcję zwrotną (callback) wywoływaną podczas zamykania szuflady.
    */
   public setOnClose(onClose: () => void): this {

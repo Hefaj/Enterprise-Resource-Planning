@@ -7,7 +7,7 @@ import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-u
 import { ErpStepContentConfig, ErpStepContentElement, ErpGridAreasConfig, ErpFormFieldType } from './erp-step-content.types';
 // import { ErpSplitterBuilder } from '../../atoms/erp-splitter/erp-splitter.builder';
 // import { ErpCardBuilder } from '../../atoms/erp-card/erp-card.builder';
-// import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
+import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
 // import { ErpSplitterComponent } from '../../atoms/erp-splitter/erp-splitter.component';
 // import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
 // import { ErpInputTextComponent } from '../../atoms/erp-input-text/erp-input-text.component';
@@ -206,17 +206,17 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
    * @param value — Klucz tłumaczenia lub obiekt Translatable
    * @param options — Opcje layoutu: slot, colSpan, styleClass, style
    */
-  // public addText(
-  //   value: MaybeSignal<Translatable>,
-  //   options?: ErpElementLayoutOptions
-  // ): this {
-  //   this.addComponent(
-  //     ErpTextComponent,
-  //     { config: { value } } as any,
-  //     options
-  //   );
-  //   return this;
-  // }
+  public addText(
+    value: MaybeSignal<Translatable>,
+    options?: ErpElementLayoutOptions
+  ): this {
+    this.addComponent(
+      ErpTextComponent,
+      { config: { value } } as any,
+      options
+    );
+    return this;
+  }
 
   // /**
   //  * Dodaje splitter budowany przez ErpSplitterBuilder.

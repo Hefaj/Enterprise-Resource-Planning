@@ -9,5 +9,6 @@ export interface ErpDrawerConfig<TComponent = any> {
   direction?: MaybeSignal<'start' | 'end'>;
   component?: Type<TComponent>;
   inputs?: ErpComponentSignalInputs<TComponent>;
+  closeOnNavigation?: MaybeSignal<boolean>;
   onClose?: () => void;
 }

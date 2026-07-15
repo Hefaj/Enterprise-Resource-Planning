@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { TuiRoot } from '@taiga-ui/core';
-import { ThemeService } from '@erp/client/util';
 
 @Component({
   imports: [RouterModule, TuiRoot],
@@ -10,5 +9,4 @@ import { ThemeService } from '@erp/client/util';
   styleUrl: './app.scss',
 })
 export class App {
-  private readonly _themeService = inject(ThemeService);
 }

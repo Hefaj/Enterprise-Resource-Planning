@@ -13,7 +13,7 @@ import { BatchCommandOfProductSetNameCommand, CatalogProductOrchestrator } from 
 import { SetNameMetadata } from './set-name.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
-  // ErpTextComponent,
+  ErpTextComponent,
   ErpStepContentComponent,
   ErpStepContentBuilder,
   ErpStepContentConfig,
@@ -21,6 +21,7 @@ import {
   // ErpToggleSwitchBuilder,
   // ErpTextBuilder,
   ErpModalStepBase,
+  ErpTextBuilder,
 } from '@erp/shared/ui';
 
 /**
@@ -32,17 +33,15 @@ import {
 @Component({
   selector: 'erp-catalog-set-name-step',
   standalone: true,
-  imports: [CommonModule, ErpStepContentComponent, 
-    // ErpTextComponent
-  ],
+  imports: [CommonModule, ErpStepContentComponent, ErpTextComponent],
   template: `
     @let _products = products();
  
     <div class="set-name-step">
       <p class="set-name-step__message">
-        <!-- <erp-text [config]="{ value: keys.commands.setName.editMessage }" /> -->
-        <strong>{{ _products.length }}</strong>
-        <!-- <erp-text [config]="{ value: _products.length === 1 ? keys.commands.setName.productSuffixSingle : keys.commands.setName.productSuffixPlural }" />: -->
+        <erp-text [config]="{ value: keys.commands.setName.editMessage }" />
+        <strong> {{ _products.length }} </strong>
+        <erp-text [config]="{ value: _products.length === 1 ? keys.commands.setName.productSuffixSingle : keys.commands.setName.productSuffixPlural }" />:
       </p>
  
       <div class="set-name-step__badges">
@@ -110,10 +109,10 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
       })
       
       // 1. Text element
-      // .addText(PRODUCT_KEYS.commands.setName.editMessage, {
-      //   slot: 'header',
-      //   styleClass: 'text-primary font-bold text-lg',
-      // })
+      .addText(PRODUCT_KEYS.commands.setName.editMessage, {
+        slot: 'header',
+        styleClass: 'text-primary font-bold text-lg',
+      })
       
       // 2. Divider element
       .addDivider({ slot: 'divider' })
@@ -123,8 +122,8 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
         .setLayout('grid')
         .setGridCols(2)
         .setGap('1rem')
-        // .addText('shared.table.empty', { styleClass: 'text-sm text-gray-500' })
-        // .addText(PRODUCT_KEYS.commands.setName.productSuffixSingle, { styleClass: 'text-sm' })
+        .addText('shared.table.empty', { styleClass: 'text-sm text-gray-500' })
+        .addText(PRODUCT_KEYS.commands.setName.productSuffixSingle, { styleClass: 'text-sm' })
       , { slot: 'sec', title: 'Sekcja demonstracyjna grid' })
       
       // 4. Form fields directly in layout
@@ -197,13 +196,13 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
       // , { slot: 'splitter' })
  
       // 7. Component element directly
-      // .addComponent(ErpTextComponent, {
-      //   config: ErpTextBuilder.create(tb => tb
-      //     .setValue('Komponent wstrzyknięty bezpośrednio przez addComponent')
-      //     .setTag('p')
-      //     .setClass('text-muted italic')
-      //   )
-      // }, { slot: 'comp' })
+      .addComponent(ErpTextComponent, {
+        config: ErpTextBuilder.create(tb => tb
+          .setValue('Komponent wstrzyknięty bezpośrednio przez addComponent')
+          .setTag('p')
+          .setClass('text-muted italic')
+        )
+      }, { slot: 'comp' })
     );
     super(config);
     this.formContent = config;

@@ -6,7 +6,7 @@ import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button'
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
 import { SHARED_KEYS } from '@erp/shared/ui';
 import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-access';
-import { ThemeService, LanguageService, AppLanguage } from '@erp/client/util';
+import { AppLanguage, AppSettingsService } from '@erp/client/util';
 import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
 
 @Component({
@@ -37,12 +37,11 @@ import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, E
   }
 })
 export class ShellLayoutComponent {
-  private readonly _themeService = inject(ThemeService);
-  private readonly _languageService = inject(LanguageService);
+  private readonly _appSettings = inject(AppSettingsService);
   private readonly _breadcrumbService = inject(ErpBreadcrumbService);
   private readonly _navRegistry = inject(ErpNavRegistryService);
 
-  public readonly isDarkMode = this._themeService.isDarkMode;
+  public readonly isDarkMode = this._appSettings.isDarkMode;
   public readonly navMenu = this._navRegistry.$navMenu;
   public readonly menuOpen = signal(false);
 
@@ -118,13 +117,13 @@ export class ShellLayoutComponent {
           {
             id: 'lang-pl',
             label: SHARED_KEYS.settings.language.pl,
-            active: computed(() => this._languageService.language() === 'pl-PL'),
+            active: computed(() => this._appSettings.language() === 'pl-PL'),
             fn: () => this.setLanguage('pl-PL')
           },
           {
             id: 'lang-en',
             label: SHARED_KEYS.settings.language.en,
-            active: computed(() => this._languageService.language() === 'en-US'),
+            active: computed(() => this._appSettings.language() === 'en-US'),
             fn: () => this.setLanguage('en-US')
           }
         ]
@@ -152,15 +151,16 @@ export class ShellLayoutComponent {
       .setOverlay(true)
       .setDirection('start')
       .setComponent(ErpNavigationMenuComponent, { config: {items: this.navMenu, showSingle: true} })
+      .setCloseOnNavigation(true)
       .setOnClose(() => this.menuOpen.set(false))
   );
 
   public toggleTheme(): void {
-    this._themeService.toggleTheme();
+    this._appSettings.setDarkMode(!this.isDarkMode());
   }
 
   public setLanguage(lang: AppLanguage): void {
-    this._languageService.setLanguage(lang);
+    this._appSettings.setLanguage(lang);
   }
 
   public reportIssue(): void {

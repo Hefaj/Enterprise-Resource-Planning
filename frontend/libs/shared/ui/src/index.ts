@@ -35,7 +35,7 @@ export * from './lib/atoms/erp-tabs';
 export * from './lib/atoms/erp-stepper';
 // export * from './lib/atoms/erp-toggle-switch';
 // export * from './lib/atoms/erp-user-menu';
-// export * from './lib/atoms/erp-text';
+export * from './lib/atoms/erp-text';
 // export * from './lib/atoms/erp-popover';
 
 // // Molecules

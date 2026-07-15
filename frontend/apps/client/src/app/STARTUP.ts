@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
 import { ErpNavRegistryService, ErpNavigationItem } from '@erp/shared/data-access';
 import { ErpModalService } from '@erp/shared/ui';
-import { ThemeService, LanguageService } from '@erp/client/util';
+import { AppSettingsService } from '@erp/client/util';
 
 /**
  * Rejestr dynamicznych loaderów kontraktów.
@@ -20,8 +20,7 @@ const CONTRACT_LOADERS: Record<string, () => Promise<any>> = {
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
   const modalService = inject(ErpModalService);
-  inject(ThemeService); // Triggers initialization and effect
-  inject(LanguageService); // Triggers language initialization and effect
+  inject(AppSettingsService); // Triggers theme and language initialization and effects
 
   menuRegistry.register({
     id: 'dashbord',

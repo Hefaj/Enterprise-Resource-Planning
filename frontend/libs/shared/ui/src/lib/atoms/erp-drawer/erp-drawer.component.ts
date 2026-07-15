@@ -1,5 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TuiDrawer } from '@taiga-ui/kit';
 import { TuiPopup } from '@taiga-ui/core';
 import { ErpButtonComponent, ErpButtonBuilder } from '../erp-button';
@@ -18,12 +21,18 @@ import { ErpDrawerConfig } from './erp-drawer.types';
     ErpTranslatePipe
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    ::ng-deep .erp-drawer-popup .t-content {
+      padding: 0 !important;
+    }
+  `],
   template: `
     @let openVal = _open();
     @let componentVal = _component();
     
     <tui-drawer
       *tuiPopup="openVal"
+      class="erp-drawer-popup"
       [overlay]="_overlay()"
       [direction]="_direction()"
       (click.self)="handleClose()"
@@ -57,6 +66,9 @@ import { ErpDrawerConfig } from './erp-drawer.types';
 export class ErpDrawerComponent {
   readonly config = input.required<ErpDrawerConfig>();
 
+  private readonly _router = inject(Router, { optional: true });
+  private readonly _destroyRef = inject(DestroyRef);
+
   protected readonly _open = computed(() => unwrapSignal(this.config().open) ?? false);
   protected readonly _title = computed(() => unwrapSignal(this.config().title));
   protected readonly _overlay = computed(() => unwrapSignal(this.config().overlay) ?? true);
@@ -70,6 +82,18 @@ export class ErpDrawerComponent {
       .setIconStart('@tui.x')
       .setFn(() => this.handleClose())
   );
+
+  constructor() {
+    this._router?.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      takeUntilDestroyed(this._destroyRef)
+    ).subscribe(() => {
+      const closeOnNav = unwrapSignal(this.config().closeOnNavigation) ?? false;
+      if (closeOnNav) {
+        this.handleClose();
+      }
+    });
+  }
 
   protected handleClose(): void {
     const onClose = this.config().onClose;

@@ -1,16 +1,45 @@
-<!-- <div class="flex flex-col gap-4">
-  <erp-input-text
-    [config]="textConfig"
-    [control]="control"
+<div class="flex flex-col gap-6 p-6 max-w-md">
+  <h3 class="text-xl font-bold">Testy Formularzy Taiga UI</h3>
+
+  <erp-input
+    [config]="inputConfig"
+    [control]="inputControl"
   />
 
-  <erp-input-text
-    [config]="textConfig2"
-    [control]="control2"
+  <erp-switch
+    [config]="switchConfig"
+    [control]="switchControl"
   />
-</div> -->
 
-@for (a of btnConfigs; track a) {
-  <erp-button [config]="a" />
-} 
-dashboard
+  @if (switchControl.value) {
+    <erp-input
+      [config]="additionalConfig"
+      [control]="additionalControl"
+    />
+  }
+
+  <erp-input-color
+    [config]="colorConfig"
+    [control]="colorControl"
+  />
+
+  <erp-checkbox
+    [config]="checkboxConfig"
+    [control]="checkboxControl"
+  />
+
+  <erp-button
+    [config]="submitBtnConfig"
+  />
+  
+  <div class="flex flex-col gap-1 p-3 rounded text-sm" [style.background]="'var(--tui-background-neutral-2)'">
+    <div class="font-bold">Stan kontrolek:</div>
+    <div>Input: "{{ inputControl.value }}" (status: {{ inputControl.status }})</div>
+    <div>Switch: {{ switchControl.value }} (status: {{ switchControl.status }})</div>
+    @if (switchControl.value) {
+      <div>Dodatkowe: "{{ additionalControl.value }}" (status: {{ additionalControl.status }})</div>
+    }
+    <div>Kolor: {{ colorControl.value }} (status: {{ colorControl.status }})</div>
+    <div>Checkbox: {{ checkboxControl.value }} (status: {{ checkboxControl.status }})</div>
+  </div>
+</div>

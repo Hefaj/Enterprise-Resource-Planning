@@ -373,6 +373,9 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
   /** Mapa canGoNext Signal per step index. */
   private _stepCanGoNextMap = signal<Record<number, Signal<boolean>>>({});
 
+  /** Mapa callbacków markAllAsTouched per step index. */
+  private _stepMarkAllAsTouchedMap: Record<number, () => void> = {};
+
   private resolved = false;
 
   constructor() {
@@ -484,7 +487,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
     appearance: 'primary',
     iconStart: '@tui.check',
     loading: this.internalLoading(),
-    disabled: !this.canGoNext(),
+    disabled: this.internalLoading(),
     fn: () => this.handleSave(),
   }));
 
@@ -492,7 +495,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
     label: this.nextLabel(),
     appearance: 'primary',
     iconEnd: '@tui.arrow-right',
-    disabled: !this.canGoNext(),
+    disabled: false,
     fn: () => this.goNext(),
   }));
 
@@ -507,6 +510,9 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
           ...map,
           [stepIndex]: canGoNextSignal
         }));
+      },
+      registerMarkAllAsTouched: (fn: () => void) => {
+        this._stepMarkAllAsTouchedMap[stepIndex] = fn;
       },
     };
 
@@ -525,7 +531,13 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
   // ── Nawigacja ──
 
   protected goNext(): void {
-    if (!this.canGoNext()) return;
+    if (!this.canGoNext()) {
+      const markAllAsTouched = this._stepMarkAllAsTouchedMap[this.currentStep()];
+      if (markAllAsTouched) {
+        markAllAsTouched();
+      }
+      return;
+    }
     const next = this.currentStep() + 1;
     if (next < this.config().steps.length) {
       this.currentStep.set(next);
@@ -540,7 +552,13 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
   }
 
   protected async handleSave(): Promise<void> {
-    if (!this.canGoNext()) return;
+    if (!this.canGoNext()) {
+      const markAllAsTouched = this._stepMarkAllAsTouchedMap[this.currentStep()];
+      if (markAllAsTouched) {
+        markAllAsTouched();
+      }
+      return;
+    }
 
     const onSave = this.config().onSave;
     let saveResult: any = undefined;

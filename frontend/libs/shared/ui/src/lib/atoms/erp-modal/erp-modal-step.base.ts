@@ -15,11 +15,24 @@ export abstract class ErpModalStepBase<
   public readonly command = input.required<WritableSignal<TCommand>>();
   public readonly metadata = input.required<WritableSignal<TMetadata>>();
   public readonly registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
+  public readonly registerMarkAllAsTouched = input<((fn: () => void) => void) | null>(null);
 
   protected constructor(formConfig?: ErpStepContentConfig) {
     if (formConfig) {
       ErpStepContentBuilder.bindForm(formConfig, {
         registerCanGoNext: this.registerCanGoNext,
+      });
+
+      effect(() => {
+        const registerFn = this.registerMarkAllAsTouched();
+        if (registerFn) {
+          registerFn(() => {
+            formConfig.formGroup.markAllAsTouched();
+            Object.keys(formConfig.formGroup.controls).forEach(key => {
+              formConfig.formGroup.get(key)?.updateValueAndValidity({ emitEvent: true });
+            });
+          });
+        }
       });
     }
   }

@@ -20,6 +20,14 @@ export class ProductTabComponent {
     b
       .addItem((i) =>
         i
+          .setLabel('Produkt aktywny')
+          .setFn(() => {
+            console.log('Kliknieto');
+          })
+       )
+      .addSeparator()
+      .addItem((i) =>
+        i
           .setLabel('Ustaw nazwe')
           .setIconStart('@tui.bookmark')
           .setFn(() => this.openSetNameModal())

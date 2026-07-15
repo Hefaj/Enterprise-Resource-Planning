@@ -10,52 +10,57 @@ import { ErpStepContentConfig, ErpStepContentElement, ErpGridAreasConfig, ErpFor
 import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
 // import { ErpSplitterComponent } from '../../atoms/erp-splitter/erp-splitter.component';
 // import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
-// import { ErpInputTextComponent } from '../../atoms/erp-input-text/erp-input-text.component';
+import { ErpInputComponent } from '../../form/erp-input/erp-input.component';
 // import { ErpSelectComponent } from '../../atoms/erp-select/erp-select.component';
 // import { ErpDatePickerComponent } from '../../atoms/erp-datepicker/erp-datepicker.component';
 // import { ErpMultiSelectComponent } from '../../atoms/erp-multi-select/erp-multi-select.component';
 // import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete/erp-auto-complete.component';
 // import { ErpListboxComponent } from '../../atoms/erp-listbox/erp-listbox.component';
-// import { ErpToggleSwitchComponent } from '../../atoms/erp-toggle-switch/erp-toggle-switch.component';
-// import { ErpInputTextBuilder } from '../../atoms/erp-input-text/erp-input-text.builder';
+import { ErpSwitchComponent } from '../../form/erp-switch/erp-switch.component';
+import { ErpInputBuilder } from '../../form/erp-input/erp-input.builder';
 // import { ErpSelectBuilder } from '../../atoms/erp-select/erp-select.builder';
 // import { ErpDatePickerBuilder } from '../../atoms/erp-datepicker/erp-datepicker.builder';
 // import { ErpMultiSelectBuilder } from '../../atoms/erp-multi-select/erp-multi-select.builder';
 // import { ErpAutoCompleteBuilder } from '../../atoms/erp-auto-complete/erp-auto-complete.builder';
 // import { ErpListboxBuilder } from '../../atoms/erp-listbox/erp-listbox.builder';
-// import { ErpToggleSwitchBuilder } from '../../atoms/erp-toggle-switch/erp-toggle-switch.builder';
+import { ErpSwitchBuilder } from '../../form/erp-switch/erp-switch.builder';
+import { ErpInputColorComponent } from '../../form/erp-input-color/erp-input-color.component';
+import { ErpInputColorBuilder } from '../../form/erp-input-color/erp-input-color.builder';
 
 /** Mapowanie typów pól formularza na odpowiadające im komponenty atomowe UI. */
 const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type<any>> = {
-  // text: ErpInputTextComponent,
+  text: ErpInputComponent,
   // select: ErpSelectComponent,
   // datepicker: ErpDatePickerComponent,
   // multiselect: ErpMultiSelectComponent,
   // autocomplete: ErpAutoCompleteComponent,
   // listbox: ErpListboxComponent,
-  // toggle: ErpToggleSwitchComponent,
+  switch: ErpSwitchComponent,
+  color: ErpInputColorComponent,
 } as any;
 
 /** Mapowanie typów pól na odpowiadające im klasy Builderów */
 export interface ErpFormFieldBuilderMap {
-  // text: ErpInputTextBuilder;
+  text: ErpInputBuilder;
   // select: ErpSelectBuilder;
   // datepicker: ErpDatePickerBuilder;
   // multiselect: ErpMultiSelectBuilder;
   // autocomplete: ErpAutoCompleteBuilder;
   // listbox: ErpListboxBuilder;
-  // toggle: ErpToggleSwitchBuilder;
+  switch: ErpSwitchBuilder;
+  color: ErpInputColorBuilder;
 }
 
 /** Konstruktory builderów na potrzeby automatycznego tworzenia instancji */
 const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFormFieldBuilderMap, new () => any> = {
-  // text: ErpInputTextBuilder,
+  text: ErpInputBuilder,
   // select: ErpSelectBuilder,
   // datepicker: ErpDatePickerBuilder,
   // multiselect: ErpMultiSelectBuilder,
   // autocomplete: ErpAutoCompleteBuilder,
   // listbox: ErpListboxBuilder,
-  // toggle: ErpToggleSwitchBuilder,
+  switch: ErpSwitchBuilder,
+  color: ErpInputColorBuilder,
 } as any;
 
 /**
@@ -263,59 +268,59 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   //   return this;
   // }
 
-  // /**
-  //  * Dodaje pojedyncze, płaskie pole formularza z wbudowanym typem (text, select, datepicker itp.).
-  //  * Wszystkie pola dodane za pomocą tej metody współdzielą jedną centralną instancję FormGroup.
-  //  *
-  //  * @param key — Unikalny klucz kontrolki w FormGroup
-  //  * @param fieldType — Typ kontrolki formularza
-  //  * @param config — Konfiguracja specyficzna dla danej kontrolki
-  //  * @param options — Opcje: slot, colSpan, wartość domyślna, walidatory, style
-  //  */
-  // public addFormField<TType extends keyof ErpFormFieldBuilderMap>(
-  //   key: string,
-  //   fieldType: TType,
-  //   config:
-  //     | ErpFormFieldBuilderMap[TType]
-  //     | ReturnType<ErpFormFieldBuilderMap[TType]['build']>
-  //     | ((builder: ErpFormFieldBuilderMap[TType]) => void),
-  //   options: ErpElementLayoutOptions & {
-  //     defaultValue?: any;
-  //     validators?: any[];
-  //     value?: MaybeSignal<any> | (() => any);
-  //     onChange?: (value: any) => void;
-  //   } = {}
-  // ): this {
-  //   let builderInstance: any;
-  //   if (typeof config === 'function') {
-  //     const BuilderConstructor = FIELD_BUILDER_CONSTRUCTORS[fieldType];
-  //     if (!BuilderConstructor) {
-  //       throw new Error(`Brak zdefiniowanego konstruktora buildera dla typu pola: ${fieldType}`);
-  //     }
-  //     builderInstance = new BuilderConstructor();
-  //     config(builderInstance);
-  //   } else {
-  //     builderInstance = config;
-  //   }
+  /**
+   * Dodaje pojedyncze, płaskie pole formularza z wbudowanym typem (text, select, datepicker itp.).
+   * Wszystkie pola dodane za pomocą tej metody współdzielą jedną centralną instancję FormGroup.
+   *
+   * @param key — Unikalny klucz kontrolki w FormGroup
+   * @param fieldType — Typ kontrolki formularza
+   * @param config — Konfiguracja specyficzna dla danej kontrolki
+   * @param options — Opcje: slot, colSpan, wartość domyślna, walidatory, style
+   */
+  public addFormField<TType extends keyof ErpFormFieldBuilderMap>(
+    key: string,
+    fieldType: TType,
+    config:
+      | ErpFormFieldBuilderMap[TType]
+      | ReturnType<ErpFormFieldBuilderMap[TType]['build']>
+      | ((builder: ErpFormFieldBuilderMap[TType]) => void),
+    options: ErpElementLayoutOptions & {
+      defaultValue?: any;
+      validators?: any[];
+      value?: MaybeSignal<any> | (() => any);
+      onChange?: (value: any) => void;
+    } = {}
+  ): this {
+    let builderInstance: any;
+    if (typeof config === 'function') {
+      const BuilderConstructor = FIELD_BUILDER_CONSTRUCTORS[fieldType];
+      if (!BuilderConstructor) {
+        throw new Error(`Brak zdefiniowanego konstruktora buildera dla typu pola: ${fieldType}`);
+      }
+      builderInstance = new BuilderConstructor();
+      config(builderInstance);
+    } else {
+      builderInstance = config;
+    }
 
-  //   const extractedConfig = this._extract(builderInstance);
-  //   this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
+    const extractedConfig = this._extract(builderInstance);
+    this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
 
-  //   this._pushElement({
-  //     type: 'formField',
-  //     key,
-  //     fieldType,
-  //     component: FIELD_TYPE_COMPONENT_MAP[fieldType],
-  //     config: extractedConfig,
-  //     value: options.value,
-  //     onChange: options.onChange,
-  //     slot: options.slot,
-  //     colSpan: options.colSpan,
-  //     styleClass: options.styleClass,
-  //     style: options.style,
-  //   });
-  //   return this;
-  // }
+    this._pushElement({
+      type: 'formField',
+      key,
+      fieldType,
+      component: FIELD_TYPE_COMPONENT_MAP[fieldType],
+      config: extractedConfig,
+      value: options.value,
+      onChange: options.onChange,
+      slot: options.slot,
+      colSpan: options.colSpan,
+      styleClass: options.styleClass,
+      style: options.style,
+    });
+    return this;
+  }
 
   /**
    * Dodaje pojedyncze customowe pole formularza (z własnym komponentem).

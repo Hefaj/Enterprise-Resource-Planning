@@ -17,9 +17,9 @@ import {
   ErpStepContentComponent,
   ErpStepContentBuilder,
   ErpStepContentConfig,
-  // ErpInputTextBuilder,
-  // ErpToggleSwitchBuilder,
-  // ErpTextBuilder,
+  ErpInputBuilder,
+  ErpSwitchBuilder,
+  ErpInputColorBuilder,
   ErpModalStepBase,
   ErpTextBuilder,
 } from '@erp/shared/ui';
@@ -113,7 +113,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
         slot: 'header',
         styleClass: 'text-primary font-bold text-lg',
       })
-      
+
       // 2. Divider element
       .addDivider({ slot: 'divider' })
       
@@ -127,39 +127,47 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
       , { slot: 'sec', title: 'Sekcja demonstracyjna grid' })
       
       // 4. Form fields directly in layout
-      // .addSection(sectionForm => {
-      //   sectionForm
-      //   .addFormField('name', 'text',
-      //     ErpInputTextBuilder.create(ib => ib
-      //       .setPlaceholder(PRODUCT_KEYS.commands.setName.namePlaceholder)
-      //       .setErrorMessages({ required: PRODUCT_KEYS.validations.nameRequired })
-      //     ),
-      //     {
-      //       validators: [Validators.required],
-      //       value: () => this.command()().commands?.at(0)?.name,
-      //       onChange: (value) => {
-      //         this.command().update((cmd) => {
-      //           const commands = (cmd['products'] as { uuid: string; sku: string; name: string }[] || []).map((p: any) => ({
-      //             uuid: p.uuid,
-      //             name: value ?? '',
-      //           }));
-      //           return {
-      //             ...cmd,
-      //             name: value,
-      //             commands,
-      //           };
-      //         });
-      //       }
-      //     }
-      //   )
-      //   .addFormField('isActive', 'toggle',
-      //     ErpToggleSwitchBuilder.create(tb => tb
-      //       .setPlaceholder('Aktywny')
-      //       .setHint('Zaznacz aby aktywować')
-      //     ),
-      //     { defaultValue: true }
-      //   )
-      // }, { slot: 'form' })
+      .addSection(sectionForm => {
+        sectionForm
+        .addFormField('name', 'text',
+          ib => ib
+            .setPlaceholder(PRODUCT_KEYS.commands.setName.namePlaceholder)
+            .setErrorMessages({ required: PRODUCT_KEYS.validations.nameRequired })
+          ,
+          {
+            validators: [Validators.required],
+            value: () => this.command()().commands?.at(0)?.name,
+            onChange: (value) => {
+              this.command().update((cmd) => {
+                const commands = (cmd['products'] as { uuid: string; sku: string; name: string }[] || []).map((p: any) => ({
+                  uuid: p.uuid,
+                  name: value ?? '',
+                }));
+                return {
+                  ...cmd,
+                  name: value,
+                  commands,
+                };
+              });
+            }
+          }
+        )
+        .addFormField('isActive', 'switch',
+          tb => tb
+            .setLabel('Aktywny')
+            .setHint('Zaznacz aby aktywować')
+            .setValue(true)
+          ,
+          { defaultValue: true }
+        )
+        .addFormField('colorCode', 'color',
+          cb => cb
+            .setLabel('Kolor produktu')
+            .setPlaceholder('#ff0000')
+          ,
+          { defaultValue: '#3f51b5' }
+        )
+      }, { slot: 'form' })
  
       // 5. Card element
       // .addCard(c => c

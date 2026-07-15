@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal, Directive, Input } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { TuiActiveZone } from '@taiga-ui/cdk';
-import { TuiButton, TuiIcon, TuiDropdown, TuiDataList } from '@taiga-ui/core';
+import { TuiIcon, TuiDropdown, TuiDataList } from '@taiga-ui/core';
 import { TuiLoader } from '@taiga-ui/core/components/loader';
 import { TuiHintDirective } from '@taiga-ui/core/portals/hint';
 import { unwrapSignal, MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpMenuBarConfig, ErpMenuBarItemConfig } from './erp-menu-bar.types';
+import { ErpButtonComponent } from '../erp-button/erp-button.component';
+import { ErpButtonConfig } from '../erp-button/erp-button.types';
 
 @Directive({
   selector: '[erpActiveZoneExporter]',
@@ -28,35 +30,25 @@ export class ErpActiveZoneExporter {
     NgTemplateOutlet,
     TuiActiveZone,
     ErpActiveZoneExporter,
-    TuiButton,
     TuiIcon,
     TuiDropdown,
     TuiDataList,
     TuiLoader,
     TuiHintDirective,
-    ErpTranslatePipe
+    ErpTranslatePipe,
+    ErpButtonComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @for (item of _items(); track $index) {
-      @let labelVal = (unwrap(item.label) | erpTranslate) || '';
-      @let subLabelVal = (unwrap(item.subLabel) | erpTranslate) || '';
-      @let hintVal = (unwrap(item.hint) | erpTranslate) || '';
       @let isDisabled = unwrap(item.disabled) ?? false;
       @let hasChildren = item.children && item.children.length > 0;
-      @let iconEndVal = getIconEnd(item);
 
       @if (unwrap(item.separator)) {
         <div class="erp-menu-bar__separator-vertical" role="separator"></div>
       } @else if (hasChildren) {
-        <button
-          tuiButton
-          type="button"
-          appearance="flat"
-          [disabled]="false"
-          (click)="handleDisabledClick($event, item)"
-          [iconStart]="unwrap(item.iconStart) ?? ''"
-          [iconEnd]="iconEndVal ?? ''"
+        <erp-button
+          [config]="getButtonConfig(item, $index)"
           tuiDropdownAuto
           [tuiDropdown]="!isDisabled ? subMenuTmp : null"
           [tuiDropdownOpen]="activeDropdownIndex() === $index"
@@ -67,61 +59,18 @@ export class ErpActiveZoneExporter {
           [class.erp-menu-bar__item--warning]="unwrap(item.appearance) === 'warning'"
           [class.erp-menu-bar__item--info]="unwrap(item.appearance) === 'info'"
         >
-          <div class="erp-menu-bar__content">
-            <span class="erp-menu-bar__label">{{ labelVal }}</span>
-            @if (subLabelVal) {
-              <span class="erp-menu-bar__sub-label">{{ subLabelVal }}</span>
-            }
-          </div>
-
-          @if (hintVal) {
-            <tui-icon
-              icon="@tui.info"
-              [tuiHint]="hintVal"
-              class="erp-menu-bar__hint-icon"
-              (click)="$event.stopPropagation(); $event.preventDefault()"
-            />
-          }
-
           <ng-template #subMenuTmp>
             <ng-container *ngTemplateOutlet="menuList; context: { items: item.children, parentActiveZone: topActiveZone }"></ng-container>
           </ng-template>
-        </button>
+        </erp-button>
       } @else {
-        <button
-          tuiButton
-          type="button"
-          appearance="flat"
-          [disabled]="false"
-          (click)="handleItemClick(item, $index, $event)"
+        <erp-button
+          [config]="getButtonConfig(item, $index)"
           [class.erp-menu-bar__item--disabled]="isDisabled"
           [class.erp-menu-bar__item--warning]="unwrap(item.appearance) === 'warning'"
           [class.erp-menu-bar__item--info]="unwrap(item.appearance) === 'info'"
           class="erp-menu-bar__button-leaf"
-        >
-          <tui-loader [loading]="loadingStates()[$index] || false" size="s" [inheritColor]="true" [overlay]="true" class="erp-menu-bar__loader">
-            @if (unwrap(item.iconStart)) {
-              <tui-icon [icon]="unwrap(item.iconStart)!" class="erp-menu-bar__icon-start" />
-            }
-            <div class="erp-menu-bar__content">
-              <span class="erp-menu-bar__label">{{ labelVal }}</span>
-              @if (subLabelVal) {
-                <span class="erp-menu-bar__sub-label">{{ subLabelVal }}</span>
-              }
-            </div>
-            @if (hintVal) {
-              <tui-icon
-                icon="@tui.info"
-                [tuiHint]="hintVal"
-                class="erp-menu-bar__hint-icon"
-                (click)="$event.stopPropagation(); $event.preventDefault()"
-              />
-            }
-            @if (iconEndVal) {
-              <tui-icon [icon]="iconEndVal" class="erp-menu-bar__icon-end" />
-            }
-          </tui-loader>
-        </button>
+        />
       }
     }
 
@@ -184,6 +133,7 @@ export class ErpActiveZoneExporter {
               <button
                 tuiOption
                 type="button"
+                size="m"
                 [disabled]="false"
                 (click)="handleNestedItemClick(child, $event)"
                 [class.erp-menu-bar-item--disabled]="childIsDisabled"
@@ -228,19 +178,15 @@ export class ErpActiveZoneExporter {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: var(--tui-background-base);
+      // background: var(--tui-background-base);
       border: 1px solid var(--tui-border-normal);
       border-radius: var(--tui-radius-m);
       padding: 0.5rem;
     }
 
-    button[tuiButton] {
-      display: inline-flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 0.5rem;
-      text-align: left;
-      min-width: 200px;
+    erp-button {
+      display: inline-block;
+      min-width: 150px;
     }
 
     button.erp-menu-bar__button-leaf {
@@ -534,11 +480,27 @@ export class ErpMenuBarComponent {
     }
   }
 
-  protected async handleItemClick(item: ErpMenuBarItemConfig, index: number, event: MouseEvent): Promise<void> {
+  protected getButtonConfig(item: ErpMenuBarItemConfig, index: number): ErpButtonConfig {
+    const hasChildren = item.children && item.children.length > 0;
+    return {
+      label: item.label,
+      iconStart: item.iconStart,
+      iconEnd: this.getIconEnd(item) as any,
+      disabled: item.disabled,
+      appearance: 'outline',
+      size: 'm',
+      loading: computed(() => this.loadingStates()[index] || false),
+      fn: hasChildren ? undefined : () => this.handleItemClick(item, index)
+    };
+  }
+
+  protected async handleItemClick(item: ErpMenuBarItemConfig, index: number, event?: MouseEvent): Promise<void> {
     if (this.unwrap(item.disabled)) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }
       return;
     }
 
@@ -546,8 +508,10 @@ export class ErpMenuBarComponent {
     if (!fn) return;
 
     if (this.loadingStates()[index]) {
-      event.preventDefault();
-      event.stopPropagation();
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       return;
     }
 

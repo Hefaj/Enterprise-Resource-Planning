@@ -154,7 +154,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      gap: 1rem;
       width: 100%;
       box-sizing: border-box;
       border-bottom: 1px solid var(--p-surface-200);

@@ -31,7 +31,7 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'pl-PL' },
     {
       provide: TUI_LANGUAGE,
-      useFactory: (service: LanguageService) => service.tuiLanguage$,
+      useFactory: (service: LanguageService) => service.tuiLanguage,
       deps: [LanguageService],
     },
     ...remoteApiProviders,

@@ -29,6 +29,8 @@
       "@erp/shared/ui/erp-drawer": ["frontend/libs/shared/ui/src/lib/atoms/erp-drawer/index.ts"],
       "@erp/shared/ui/erp-tabs": ["frontend/libs/shared/ui/src/lib/atoms/erp-tabs/index.ts"],
       "@erp/shared/ui/erp-input": ["frontend/libs/shared/ui/src/lib/form/erp-input/index.ts"],
+      "@erp/shared/ui/erp-switch": ["frontend/libs/shared/ui/src/lib/form/erp-switch/index.ts"],
+      "@erp/shared/ui/erp-input-color": ["frontend/libs/shared/ui/src/lib/form/erp-input-color/index.ts"],
       "@erp/shared/auth": ["frontend/libs/shared/auth/src/index.ts"],
       "@erp/shared/data-access": ["frontend/libs/shared/data-access/src/index.ts"],
       "@erp/catalog/ui": ["frontend/libs/modules/catalog/ui/src/index.ts"],

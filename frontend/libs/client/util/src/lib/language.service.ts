@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, inject, signal, effect, computed } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { TUI_POLISH_LANGUAGE, TUI_ENGLISH_LANGUAGE, TuiLanguage } from '@taiga-ui/i18n';
 import { BehaviorSubject } from 'rxjs';
@@ -13,6 +13,11 @@ export class LanguageService {
   private readonly _translocoService = inject(TranslocoService);
 
   public language = signal<AppLanguage>(this._getInitialLanguage());
+
+  public readonly tuiLanguage = computed<TuiLanguage>(() => {
+    const lang = this.language();
+    return lang === 'pl-PL' ? TUI_POLISH_LANGUAGE : TUI_ENGLISH_LANGUAGE;
+  });
 
   private readonly _tuiLanguage$ = new BehaviorSubject<TuiLanguage>(TUI_POLISH_LANGUAGE);
   public readonly tuiLanguage$ = this._tuiLanguage$.asObservable();

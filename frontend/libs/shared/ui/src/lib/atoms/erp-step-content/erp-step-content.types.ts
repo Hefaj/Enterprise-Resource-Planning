@@ -1,7 +1,7 @@
 import { Type } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
-export type ErpFormFieldType = 'text' | 'select' | 'datepicker' | 'multiselect' | 'autocomplete' | 'listbox' | 'toggle' | 'custom';
+export type ErpFormFieldType = 'text' | 'select' | 'datepicker' | 'multiselect' | 'autocomplete' | 'listbox' | 'switch' | 'color' | 'custom';
 
 /**
  * Discriminated union elementów treści stepu.

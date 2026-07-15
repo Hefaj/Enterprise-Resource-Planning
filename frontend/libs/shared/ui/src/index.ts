@@ -4,6 +4,8 @@ export * from './lib/base/erp-icon.types';
 
 // Form
 export * from './lib/form/erp-input';
+export * from './lib/form/erp-switch';
+export * from './lib/form/erp-input-color';
 
 // export * from './lib/layouts/erp-host-layout';
 export * from './lib/layouts/erp-page-layout';
@@ -33,7 +35,6 @@ export * from './lib/atoms/erp-menu-bar';
 export * from './lib/atoms/erp-tabs';
 // export * from './lib/atoms/erp-splitter';
 export * from './lib/atoms/erp-stepper';
-// export * from './lib/atoms/erp-toggle-switch';
 // export * from './lib/atoms/erp-user-menu';
 export * from './lib/atoms/erp-text';
 // export * from './lib/atoms/erp-popover';

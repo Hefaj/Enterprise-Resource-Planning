@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, inject, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, inject, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -63,7 +63,7 @@ import { ErpDrawerConfig } from './erp-drawer.types';
     </tui-drawer>
   `
 })
-export class ErpDrawerComponent {
+export class ErpDrawerComponent implements OnInit {
   readonly config = input.required<ErpDrawerConfig>();
 
   private readonly _router = inject(Router, { optional: true });
@@ -83,7 +83,9 @@ export class ErpDrawerComponent {
       .setFn(() => this.handleClose())
   );
 
-  constructor() {
+  constructor() {}
+
+  ngOnInit(): void {
     this._router?.events.pipe(
       filter((event) => event instanceof NavigationEnd),
       takeUntilDestroyed(this._destroyRef)

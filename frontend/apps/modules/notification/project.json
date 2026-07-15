@@ -10,69 +10,6 @@
   ],
   "targets": {
     "build": {
-      "executor": "@angular-architects/native-federation:build",
-      "options": {
-        "cacheExternalArtifacts": true
-      },
-      "configurations": {
-        "production": {
-          "target": "notification:esbuild:production"
-        },
-        "development": {
-          "target": "notification:esbuild:development",
-          "dev": true
-        }
-      },
-      "defaultConfiguration": "production"
-    },
-    "serve": {
-      "executor": "@angular-architects/native-federation:build",
-      "options": {
-        "target": "notification:serve-original:development",
-        "rebuildDelay": 500,
-        "cacheExternalArtifacts": true,
-        "dev": true,
-        "devServer": true,
-        "port": 0
-      }
-    },
-    "extract-i18n": {
-      "executor": "@angular-devkit/build-angular:extract-i18n",
-      "options": {
-        "buildTarget": "notification:build"
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": [
-        "{options.reportsDirectory}"
-      ],
-      "options": {
-        "reportsDirectory": "../../../../coverage/frontend/apps/modules/notification"
-      }
-    },
-    "serve-static": {
-      "continuous": true,
-      "executor": "@nx/web:file-server",
-      "defaultConfiguration": "production",
-      "options": {
-        "buildTarget": "notification:build",
-        "port": 4206,
-        "watch": false
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "notification:build:development"
-        },
-        "production": {
-          "buildTarget": "notification:build:production"
-        }
-      }
-    },
-    "esbuild": {
       "executor": "@angular/build:application",
       "outputs": [
         "{options.outputPath}"
@@ -96,9 +33,6 @@
           "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
           "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
           "frontend/apps/modules/notification/src/styles.css"
-        ],
-        "polyfills": [
-          "es-module-shims"
         ],
         "browser": "frontend/apps/modules/notification/src/main.ts"
       },
@@ -127,9 +61,9 @@
       },
       "defaultConfiguration": "production"
     },
-    "serve-original": {
+    "serve": {
       "continuous": true,
-      "executor": "@nx/angular:dev-server",
+      "executor": "@angular-devkit/build-angular:dev-server",
       "options": {
         "port": 4206,
         "publicHost": "http://localhost:4206",
@@ -139,13 +73,31 @@
       },
       "configurations": {
         "production": {
-          "buildTarget": "notification:esbuild:production"
+          "buildTarget": "notification:build:production"
         },
         "development": {
-          "buildTarget": "notification:esbuild:development"
+          "buildTarget": "notification:build:development"
         }
       },
       "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "notification:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "../../../../coverage/frontend/apps/modules/notification"
+      }
     }
   }
 }

@@ -24,7 +24,16 @@ export default [
             // --- 1. ZASADY DOMENOWE (SCOPE) ---
             {
               sourceTag: 'scope:host',
-              onlyDependOnLibsWithTags: ['scope:shared', 'scope:host'],
+              onlyDependOnLibsWithTags: [
+                'scope:shared',
+                'scope:host',
+                'scope:catalog',
+                'scope:inventory',
+                'scope:sales',
+                'scope:dms',
+                'scope:task-management',
+                'scope:notification'
+              ],
             },
             {
               sourceTag: 'scope:catalog',
@@ -62,7 +71,7 @@ export default [
             },
             {
               sourceTag: 'type:contract',
-              onlyDependOnLibsWithTags: ['type:feature', 'type:ui', 'type:auth', 'type:data-access', 'type:util', 'type:env'],
+              onlyDependOnLibsWithTags: ['type:contract', 'type:feature', 'type:ui', 'type:auth', 'type:data-access', 'type:util', 'type:env'],
             },
             {
               sourceTag: 'type:feature',

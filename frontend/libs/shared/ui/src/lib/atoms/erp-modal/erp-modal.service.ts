@@ -7,7 +7,6 @@ import {
   signal,
   WritableSignal,
 } from '@angular/core';
-import { loadRemoteModule } from '@angular-architects/native-federation';
 import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { ErpModalComponent } from './erp-modal.component';
@@ -48,7 +47,18 @@ export class ErpModalService {
   /** Mapa modulePrefix → lista providerów zarejestrowanych dla modali z danego modułu. */
   private readonly _moduleProviders = new Map<string, any[]>();
 
+  /** Rejestr dynamicznych loaderów kontraktów. */
+  private readonly _contractLoaders = new Map<string, () => Promise<any>>();
+
   // ── Rejestracja ──
+
+  /**
+   * Rejestruje loader kontraktu dla danego modułu.
+   * Używane w trybie monolitu, aby móc leniwie ładować kontrakty bez Native Federation.
+   */
+  public registerContractLoader(modulePrefix: string, loader: () => Promise<any>): void {
+    this._contractLoaders.set(modulePrefix, loader);
+  }
 
   /**
    * Rejestruje definicje modali w globalnym rejestrze.
@@ -122,13 +132,15 @@ export class ErpModalService {
     // 3. Lazy load definicji modali z remota (jeśli jeszcze nie załadowane)
     if (!this._loadedRemotes.has(modulePrefix)) {
       try {
-        const contractModule = await loadRemoteModule<{
+        const loader = this._contractLoaders.get(modulePrefix);
+        if (!loader) {
+          throw new Error(`No contract loader registered for "${modulePrefix}"`);
+        }
+
+        const contractModule = await loader() as {
           registerModals?: () => Promise<any[]>;
           getModalProviders?: () => Promise<any[]>;
-        }>({
-          remoteName: modulePrefix,
-          exposedModule: './contract',
-        });
+        };
 
         if (contractModule?.getModalProviders) {
           const providers = await contractModule.getModalProviders();
@@ -147,8 +159,8 @@ export class ErpModalService {
         this._loadedRemotes.add(modulePrefix);
       } catch (error) {
         throw new Error(
-          `[ErpModalService] Failed to load modals from "${modulePrefix}/contract" for queueID "${queueID}". ` +
-          `Is the remote module running? Error: ${error}`
+          `[ErpModalService] Failed to load modals for "${modulePrefix}" and queueID "${queueID}". ` +
+          `Error: ${error}`
         );
       }
     }

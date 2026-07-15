@@ -1,8 +1,0 @@
-{
-  "catalog": "http://localhost:4201/remoteEntry.json",
-  "inventory": "http://localhost:4202/remoteEntry.json",
-  "sales": "http://localhost:4203/remoteEntry.json",
-  "dms": "http://localhost:4204/remoteEntry.json",
-  "task-management": "http://localhost:4205/remoteEntry.json",
-  "notification": "http://localhost:4206/remoteEntry.json"
-}

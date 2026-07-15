@@ -10,69 +10,6 @@
   ],
   "targets": {
     "build": {
-      "executor": "@angular-architects/native-federation:build",
-      "options": {
-        "cacheExternalArtifacts": true
-      },
-      "configurations": {
-        "production": {
-          "target": "catalog:esbuild:production"
-        },
-        "development": {
-          "target": "catalog:esbuild:development",
-          "dev": true
-        }
-      },
-      "defaultConfiguration": "production"
-    },
-    "serve": {
-      "executor": "@angular-architects/native-federation:build",
-      "options": {
-        "target": "catalog:serve-original:development",
-        "rebuildDelay": 500,
-        "cacheExternalArtifacts": true,
-        "dev": true,
-        "devServer": true,
-        "port": 0
-      }
-    },
-    "extract-i18n": {
-      "executor": "@angular-devkit/build-angular:extract-i18n",
-      "options": {
-        "buildTarget": "catalog:build"
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": [
-        "{options.reportsDirectory}"
-      ],
-      "options": {
-        "reportsDirectory": "../../../../coverage/frontend/apps/modules/catalog"
-      }
-    },
-    "serve-static": {
-      "continuous": true,
-      "executor": "@nx/web:file-server",
-      "defaultConfiguration": "production",
-      "options": {
-        "buildTarget": "catalog:build",
-        "port": 4201,
-        "watch": false
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "catalog:build:development"
-        },
-        "production": {
-          "buildTarget": "catalog:build:production"
-        }
-      }
-    },
-    "esbuild": {
       "executor": "@angular/build:application",
       "outputs": [
         "{options.outputPath}"
@@ -96,9 +33,6 @@
           "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
           "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
           "frontend/apps/modules/catalog/src/styles.css"
-        ],
-        "polyfills": [
-          "es-module-shims"
         ],
         "browser": "frontend/apps/modules/catalog/src/main.ts"
       },
@@ -127,9 +61,9 @@
       },
       "defaultConfiguration": "production"
     },
-    "serve-original": {
+    "serve": {
       "continuous": true,
-      "executor": "@nx/angular:dev-server",
+      "executor": "@angular-devkit/build-angular:dev-server",
       "options": {
         "port": 4201,
         "publicHost": "http://localhost:4201",
@@ -139,13 +73,31 @@
       },
       "configurations": {
         "production": {
-          "buildTarget": "catalog:esbuild:production"
+          "buildTarget": "catalog:build:production"
         },
         "development": {
-          "buildTarget": "catalog:esbuild:development"
+          "buildTarget": "catalog:build:development"
         }
       },
       "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "catalog:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "../../../../coverage/frontend/apps/modules/catalog"
+      }
     }
   }
 }

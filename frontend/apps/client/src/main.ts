@@ -1,6 +1,5 @@
-(window as any).ngDevMode = (window as any).ngDevMode || false;
-import { initFederation } from '@angular-architects/native-federation';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { App } from './app/app';
 
-initFederation('/module-federation.manifest.json')
-  .then(() => import('./bootstrap'))
-  .catch((err) => console.error(err));
+bootstrapApplication(App, appConfig).catch((err) => console.error(err));

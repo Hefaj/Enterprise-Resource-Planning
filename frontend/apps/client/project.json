@@ -10,60 +10,6 @@
   ],
   "targets": {
     "build": {
-      "executor": "@angular-architects/native-federation:build",
-      "options": {
-        "cacheExternalArtifacts": true
-      },
-      "configurations": {
-        "production": {
-          "target": "client:esbuild:production"
-        },
-        "development": {
-          "target": "client:esbuild:development",
-          "dev": true
-        }
-      },
-      "defaultConfiguration": "production"
-    },
-    "serve": {
-      "executor": "@angular-architects/native-federation:build",
-      "options": {
-        "target": "client:serve-original:development",
-        "rebuildDelay": 500,
-        "cacheExternalArtifacts": true,
-        "dev": true,
-        "devServer": true,
-        "port": 0
-      }
-    },
-    "extract-i18n": {
-      "executor": "@angular-devkit/build-angular:extract-i18n",
-      "options": {
-        "buildTarget": "client:build"
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": [
-        "{options.reportsDirectory}"
-      ],
-      "options": {
-        "reportsDirectory": "../../../coverage/frontend/apps/client"
-      }
-    },
-    "serve-static": {
-      "continuous": true,
-      "executor": "@nx/web:file-server",
-      "options": {
-        "buildTarget": "client:build",
-        "port": 4200,
-        "spa": true
-      }
-    },
-    "esbuild": {
       "executor": "@angular/build:application",
       "outputs": [
         "{options.outputPath}"
@@ -88,9 +34,6 @@
           "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
           "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
           "frontend/apps/client/src/styles.css"
-        ],
-        "polyfills": [
-          "es-module-shims"
         ],
         "browser": "frontend/apps/client/src/main.ts"
       },
@@ -119,25 +62,39 @@
       },
       "defaultConfiguration": "production"
     },
-    "serve-original": {
+    "serve": {
       "continuous": true,
-      "executor": "@nx/angular:dev-server",
+      "executor": "@angular-devkit/build-angular:dev-server",
       "options": {
-        "port": 4200,
-        "publicHost": "http://localhost:4200",
-        "headers": {
-          "Access-Control-Allow-Origin": "*"
-        }
+        "port": 4200
       },
       "configurations": {
         "production": {
-          "buildTarget": "client:esbuild:production"
+          "buildTarget": "client:build:production"
         },
         "development": {
-          "buildTarget": "client:esbuild:development"
+          "buildTarget": "client:build:development"
         }
       },
       "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "client:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "../../../coverage/frontend/apps/client"
+      }
     }
   }
 }

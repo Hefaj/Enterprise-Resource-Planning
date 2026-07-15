@@ -1,9 +1,21 @@
 import { inject } from '@angular/core';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
-import { ErpNavRegistryService, ErpNavigationItem, cacheRemoteRoutes } from '@erp/shared/data-access';
+import { ErpNavRegistryService, ErpNavigationItem } from '@erp/shared/data-access';
 import { ErpModalService } from '@erp/shared/ui';
 import { ThemeService, LanguageService } from '@erp/client/util';
-import { loadRemoteModule } from '@angular-architects/native-federation';
+
+/**
+ * Rejestr dynamicznych loaderów kontraktów.
+ * Umożliwia łatwą migrację między monolitem (import) a mikrofrontendem (loadRemoteModule).
+ */
+const CONTRACT_LOADERS: Record<string, () => Promise<any>> = {
+  catalog: () => import('@erp/catalog/contract'),
+  inventory: () => import('@erp/inventory/contract'),
+  sales: () => import('@erp/sales/contract'),
+  dms: () => import('@erp/dms/contract'),
+  'task-management': () => import('@erp/task-management/contract'),
+  notification: () => import('@erp/notification/contract'),
+};
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
@@ -18,7 +30,12 @@ export async function STARTUP(): Promise<void> {
     route: 'dashbord',
   });
 
-  const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadContractFromRemote(config, modalService));
+  // Rejestracja loaderów w serwisie modali
+  for (const [prefix, loader] of Object.entries(CONTRACT_LOADERS)) {
+    modalService.registerContractLoader(prefix, loader);
+  }
+
+  const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadContractDirect(config.routePrefix, config, modalService));
   const remoteMenus = await Promise.all(loadPromises);
 
   for (const menu of remoteMenus) {
@@ -34,20 +51,19 @@ interface EntryContractModule {
   remoteRoutes?: any[];
 }
 
-async function loadContractFromRemote(
+async function loadContractDirect(
+  modulePrefix: string,
   config: RemoteModuleConfig,
   modalService: ErpModalService,
 ): Promise<ErpNavigationItem | null> {
   try {
-    const module = (await loadRemoteModule({
-      remoteName: config.routePrefix,
-      exposedModule: './contract',
-    })) as EntryContractModule;
-
-    // Cache the remote routes for later use in routing
-    if (module?.remoteRoutes) {
-      cacheRemoteRoutes(config.id, module.remoteRoutes);
+    const loader = CONTRACT_LOADERS[modulePrefix];
+    if (!loader) {
+      console.warn(`[STARTUP] Brak rejestracji loadera kontraktu dla ${modulePrefix}`);
+      return null;
     }
+
+    const module = (await loader()) as EntryContractModule;
 
     // Rejestruj mapowanie modalId → modulePrefix (lekkie, tylko stringi)
     if (module?.remoteModalIds) {

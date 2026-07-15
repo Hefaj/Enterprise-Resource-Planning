@@ -14,7 +14,6 @@
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "~2.1.2",
     "@analogjs/vitest-angular": "~2.1.2",
-    "@angular-architects/native-federation": "^22.0.4",
     "@angular-devkit/architect": "^0.2200.0",
     "@angular-devkit/build-angular": "~22.0.0",
     "@angular-devkit/core": "~22.0.0",
@@ -46,8 +45,6 @@
     "@nx/web": "22.5.4",
     "@playwright/test": "^1.36.0",
     "@schematics/angular": "~22.0.0",
-    "@softarc/native-federation": "^4.2.1",
-    "@softarc/native-federation-orchestrator": "^4.2.2",
     "@swc-node/register": "~1.11.1",
     "@swc/core": "~1.15.5",
     "@swc/helpers": "~0.5.18",

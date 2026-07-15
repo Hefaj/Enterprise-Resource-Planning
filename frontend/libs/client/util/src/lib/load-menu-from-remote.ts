@@ -1,30 +1,11 @@
 import { RemoteModuleConfig } from './remote-module-config.interface';
 import { ErpNavigationItem } from '@erp/shared/data-access';
 import { EntryMenuModule } from './entry-menu-module';
-import { loadRemoteModule } from '@angular-architects/native-federation';
+// import { loadRemoteModule } from '@angular-architects/native-federation';
 
 export async function loadMenuFromRemote(config: RemoteModuleConfig): Promise<ErpNavigationItem | null> {
-  try {
-    const module = await loadRemoteModule<EntryMenuModule>({
-      remoteName: config.routePrefix,
-      exposedModule: './contract',
-    });
-
-    if (module?.remoteMenu) {
-      const prefixedMenu = applyRoutePrefixToMenu(module.remoteMenu, config.routePrefix);
-
-      return {
-        id: config.id,
-        label: config.label,
-        children: prefixedMenu,
-      };
-    }
-
-    return null;
-  } catch (error) {
-    console.warn(`[MFE Gateway] Nie udało się załadować manifestu menu z ${config.routePrefix}.`, error);
-    return null;
-  }
+  // @deprecated Monolit nie korzysta z dynamicznego ładowania menu w ten sposób.
+  return null;
 }
 
 function applyRoutePrefixToMenu(items: ErpNavigationItem[], prefix: string): ErpNavigationItem[] {

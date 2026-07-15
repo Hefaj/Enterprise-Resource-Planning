@@ -1,6 +1,6 @@
 import { Type, effect, computed, Signal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormGroup, FormControl } from '@angular/forms';
+import { FormGroup, FormControl, ValidatorFn } from '@angular/forms';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-utils';
@@ -51,6 +51,28 @@ export interface ErpFormFieldBuilderMap {
   color: ErpInputColorBuilder;
 }
 
+/** Mapowanie typów pól na typy ich wartości */
+export interface ErpFormFieldValueMap {
+  text: string;
+  switch: boolean;
+  color: string;
+}
+
+/** Opcje dla pola formularza zawierające ustawienia layoutu oraz powiązań formularza */
+export interface ErpFormFieldOptions<TValue> extends ErpElementLayoutOptions {
+  /** Domyślna wartość, którą zostanie zainicjalizowana kontrolka w FormGroup. */
+  defaultValue?: TValue;
+  
+  /** Tablica walidatorów Angulara (np. [Validators.required, Validators.min(0)]). */
+  validators?: ValidatorFn[];
+  
+  /** Reaktywne powiązanie wartości (sygnał lub funkcja-getter) synchronizowane do formularza. */
+  value?: MaybeSignal<TValue> | (() => TValue);
+  
+  /** Callback uruchamiany przy każdej zmianie wartości w formularzu (tylko kiedy pole jest poprawne). */
+  onChange?: (value: TValue) => void;
+}
+
 /** Konstruktory builderów na potrzeby automatycznego tworzenia instancji */
 const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFormFieldBuilderMap, new () => any> = {
   text: ErpInputBuilder,
@@ -62,6 +84,7 @@ const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFormFieldBuilderMap, new () =>
   switch: ErpSwitchBuilder,
   color: ErpInputColorBuilder,
 } as any;
+
 
 /**
  * Opcje layoutu elementu (wspólne dla addComponent, addText, addForm, itp.).
@@ -284,12 +307,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
       | ErpFormFieldBuilderMap[TType]
       | ReturnType<ErpFormFieldBuilderMap[TType]['build']>
       | ((builder: ErpFormFieldBuilderMap[TType]) => void),
-    options: ErpElementLayoutOptions & {
-      defaultValue?: any;
-      validators?: any[];
-      value?: MaybeSignal<any> | (() => any);
-      onChange?: (value: any) => void;
-    } = {}
+    options: ErpFormFieldOptions<ErpFormFieldValueMap[TType]> = {}
   ): this {
     let builderInstance: any;
     if (typeof config === 'function') {

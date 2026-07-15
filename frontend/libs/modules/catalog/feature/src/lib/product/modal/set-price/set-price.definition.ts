@@ -25,7 +25,8 @@ export class SetPriceModalDefinition implements ErpModalDefinition<BatchCommandO
         .addStep(PRODUCT_KEYS.commands.setPrice.label, SetPriceStepComponent)
         .addStep(PRODUCT_KEYS.commands.setPrice.label, SetPriceStepComponent)
         .setSaveLabel(PRODUCT_KEYS.commands.setPrice.submitButton)
-        .setOnSave(async (command): Promise<void> => {
+        .setOnSave(async (command) => {
+          return '123';
           // await this._orchestrator.setPriceMultiple(command, SET_PRICE_MODAL_ID);
         });
     });

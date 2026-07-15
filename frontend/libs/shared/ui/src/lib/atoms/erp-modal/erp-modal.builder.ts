@@ -21,7 +21,7 @@ import { ErpStepContentComponent } from '../erp-step-content/erp-step-content.co
  * );
  * ```
  */
-export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBuilder<ErpModalConfig<TCommand, TMetadata>> {
+export class ErpModalBuilder<TCommand = any, TMetadata = any, TResult = any> extends ErpBaseBuilder<ErpModalConfig<TCommand, TMetadata, TResult>> {
 
   constructor() {
     super();
@@ -133,7 +133,7 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
   }
 
   /** Ustawia callback wywoływany po kliknięciu Zapisz. Może być async. */
-  public setOnSave(callback: (command: TCommand, metadata?: TMetadata) => void | Promise<void>): this {
+  public setOnSave(callback: (command: TCommand, metadata?: TMetadata) => TResult | Promise<TResult>): this {
     this._data.onSave = callback;
     return this;
   }
@@ -169,10 +169,10 @@ export class ErpModalBuilder<TCommand = any, TMetadata = any> extends ErpBaseBui
    * );
    * ```
    */
-  public static modal<TCommand = any, TMetadata = any>(
-    configure?: (builder: ErpModalBuilder<TCommand, TMetadata>) => void
-  ): ErpModalConfig<TCommand, TMetadata> {
-    const builder = new ErpModalBuilder<TCommand, TMetadata>();
+  public static modal<TCommand = any, TMetadata = any, TResult = any>(
+    configure?: (builder: ErpModalBuilder<TCommand, TMetadata, TResult>) => void
+  ): ErpModalConfig<TCommand, TMetadata, TResult> {
+    const builder = new ErpModalBuilder<TCommand, TMetadata, TResult>();
     configure?.(builder);
     return builder.build();
   }

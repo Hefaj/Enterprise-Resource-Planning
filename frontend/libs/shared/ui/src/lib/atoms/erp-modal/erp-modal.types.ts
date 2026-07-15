@@ -26,7 +26,7 @@ export type ErpModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
  * Główna konfiguracja modalu.
  * @template TCommand Typ commanda (obiektu danych) edytowanego przez stepy.
  */
-export interface ErpModalConfig<TCommand = any, TMetadata = any> {
+export interface ErpModalConfig<TCommand = any, TMetadata = any, TResult = any> {
   /** Tytuł wyświetlany w nagłówku modalu (jako pojedyncza nazwa lub chlebki/breadcrumb). */
   title: MaybeSignal<Translatable | Translatable[]>;
   /** Lista kroków modalu (min. 1). */
@@ -50,7 +50,7 @@ export interface ErpModalConfig<TCommand = any, TMetadata = any> {
 
   // ── Callbacki ──
   /** Callback wywoływany po kliknięciu Zapisz. Może być async — modal pokaże loading. */
-  onSave?: (command: TCommand, metadata?: TMetadata) => void | Promise<void>;
+  onSave?: (command: TCommand, metadata?: TMetadata) => TResult | Promise<TResult>;
   /** Callback wywoływany po zamknięciu modalu (X lub Anuluj). */
   onCancel?: () => void;
 
@@ -64,13 +64,15 @@ export interface ErpModalConfig<TCommand = any, TMetadata = any> {
  * Referencja do otwartego modalu zwracana przez ErpModalService.
  * Pozwala programistycznie zamknąć modal i odczytać stan commanda.
  */
-export interface ErpModalRef<TCommand = any, TMetadata = any> {
+export interface ErpModalRef<TCommand = any, TMetadata = any, TResult = any> {
   /** Zamyka modal programistycznie. */
   close: () => void;
   /** WritableSignal z aktualnym stanem commanda. */
   command: WritableSignal<TCommand>;
   /** WritableSignal z aktualnym stanem metadanych. */
   metadata: WritableSignal<TMetadata>;
+  /** Promise resolving when the modal is closed, containing command, metadata, and saved status. */
+  closed: Promise<{ command: TCommand; metadata?: TMetadata; saved: boolean; result?: TResult }>;
 }
 
 /**
@@ -95,9 +97,9 @@ export interface ErpModalRef<TCommand = any, TMetadata = any> {
  * };
  * ```
  */
-export interface ErpModalDefinition<TCommand = any, TMetadata = any> {
+export interface ErpModalDefinition<TCommand = any, TMetadata = any, TResult = any> {
   /** Unikalny identyfikator modalu (np. 'catalog.product.edit-sku'). */
   id: string;
   /** Funkcja budująca ErpModalConfig na podstawie commanda i metadanych. */
-  build: (command: TCommand, metadata?: TMetadata) => ErpModalConfig<TCommand, TMetadata>;
+  build: (command: TCommand, metadata?: TMetadata) => ErpModalConfig<TCommand, TMetadata, TResult>;
 }

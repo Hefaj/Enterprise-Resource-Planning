@@ -108,14 +108,14 @@ export class ErpModalService {
    * @param command Początkowy stan commanda
    * @param metadata Opcjonalne metadane przekazywane do modalu
    */
-  public async open<TCommand = any, TMetadata = any>(
+  public async open<TCommand = any, TMetadata = any, TResult = any>(
     queueID: string,
     command: TCommand,
     metadata?: TMetadata,
-  ): Promise<ErpModalRef<TCommand, TMetadata>> {
+  ): Promise<ErpModalRef<TCommand, TMetadata, TResult>> {
     // 1. Sprawdź czy modal jest już zarejestrowany
     if (this._registry.has(queueID)) {
-      return this._openDirect(queueID, command, metadata);
+      return this._openDirect<TCommand, TMetadata, TResult>(queueID, command, metadata);
     }
 
     // 2. Znajdź moduł na podstawie mapy (budowanej przy STARTUP)
@@ -172,14 +172,14 @@ export class ErpModalService {
       );
     }
 
-    return this._openDirect(queueID, command, metadata);
+    return this._openDirect<TCommand, TMetadata, TResult>(queueID, command, metadata);
   }
 
-  private _openDirect<TCommand, TMetadata>(
+  private _openDirect<TCommand, TMetadata, TResult>(
     id: string,
     command: TCommand,
     metadata?: TMetadata
-  ): ErpModalRef<TCommand, TMetadata> {
+  ): ErpModalRef<TCommand, TMetadata, TResult> {
     const definition = this._registry.get(id);
     if (!definition) {
       throw new Error(`[ErpModalService] Modal "${id}" not found in registry.`);
@@ -195,14 +195,14 @@ export class ErpModalService {
       }
     }
 
-    return this._openInternal(config);
+    return this._openInternal<TCommand, TMetadata, TResult>(config);
   }
 
   // ── Internals ──
 
-  private _openInternal<TCommand, TMetadata>(
-    config: ErpModalConfig<TCommand, TMetadata>
-  ): ErpModalRef<TCommand, TMetadata> {
+  private _openInternal<TCommand, TMetadata, TResult>(
+    config: ErpModalConfig<TCommand, TMetadata, TResult>
+  ): ErpModalRef<TCommand, TMetadata, TResult> {
     let elementInjector: Injector | undefined = undefined;
     if (config.providers && config.providers.length > 0) {
       elementInjector = Injector.create({
@@ -221,6 +221,13 @@ export class ErpModalService {
     const appearance = size === 'full' ? 'fullscreen' : 'taiga';
     const mappedSize = this._mapTuiSize(size);
 
+    let closedResolve!: (value: { command: TCommand; metadata?: TMetadata; saved: boolean; result?: TResult }) => void;
+    const closedPromise = new Promise<{ command: TCommand; metadata?: TMetadata; saved: boolean; result?: TResult }>((resolve) => {
+      closedResolve = resolve;
+    });
+
+    let lastResult: { command: TCommand; metadata?: TMetadata; saved: boolean; result?: TResult } | null = null;
+
     const subscription = this.dialogs.open(
       new PolymorpheusComponent(ErpModalComponent, elementInjector || this.injector),
       {
@@ -230,14 +237,35 @@ export class ErpModalService {
         dismissible: true,
         data: config,
       }
-    ).subscribe();
+    ).subscribe({
+      next: (val: any) => {
+        lastResult = val;
+      },
+      complete: () => {
+        if (lastResult) {
+          closedResolve(lastResult);
+        } else {
+          closedResolve({
+            command: commandSignal(),
+            metadata: metadataSignal(),
+            saved: false
+          });
+        }
+      }
+    });
 
-    const ref: ErpModalRef<TCommand, TMetadata> = {
+    const ref: ErpModalRef<TCommand, TMetadata, TResult> = {
       close: () => {
         subscription.unsubscribe();
+        closedResolve({
+          command: commandSignal(),
+          metadata: metadataSignal(),
+          saved: false
+        });
       },
       command: commandSignal,
       metadata: metadataSignal,
+      closed: closedPromise
     };
 
     return ref;

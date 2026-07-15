@@ -544,6 +544,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
     if (!this.canGoNext()) return;
 
     const onSave = this.config().onSave;
+    let saveResult: any = undefined;
     if (onSave) {
       const result = onSave(
         this.commandSignal?.() as TCommand,
@@ -552,13 +553,21 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
       if (result instanceof Promise) {
         this.internalLoading.set(true);
         try {
-          await result;
+          saveResult = await result;
         } finally {
           this.internalLoading.set(false);
         }
+      } else {
+        saveResult = result;
       }
     }
     this.resolved = true;
+    this.context.$implicit.next({
+      command: this.commandSignal?.() as TCommand,
+      metadata: this.metadataSignal?.() as TMetadata,
+      saved: true,
+      result: saveResult
+    });
     this.context.$implicit.complete();
   }
 
@@ -569,6 +578,11 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
       onCancel();
     }
     this.resolved = true;
+    this.context.$implicit.next({
+      command: this.commandSignal?.() as TCommand,
+      metadata: this.metadataSignal?.() as TMetadata,
+      saved: false
+    });
     this.context.$implicit.complete();
   }
 
@@ -578,6 +592,11 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
       if (onCancel) {
         onCancel();
       }
+      this.context.$implicit.next({
+        command: this.commandSignal?.() as TCommand,
+        metadata: this.metadataSignal?.() as TMetadata,
+        saved: false
+      });
     }
   }
 }

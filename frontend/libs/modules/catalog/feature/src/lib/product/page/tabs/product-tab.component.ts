@@ -35,6 +35,10 @@ export class ProductTabComponent {
     this.modalService.open<BatchCommandOfProductSetPriceCommand>(SET_PRICE_MODAL_ID, { products: [] })
       .then(ref => {
         console.log('[ProductTabComponent] Modal opened successfully!', ref);
+
+        ref.closed.then(result => {
+          console.log('[ProductTabComponent] Modal closed with result:', result);
+        });
       })
       .catch(err => {
         console.error('[ProductTabComponent] Error opening modal:', err);

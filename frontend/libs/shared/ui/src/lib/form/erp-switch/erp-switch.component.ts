@@ -3,13 +3,12 @@ import {
   Component,
   computed,
   effect,
-  inject,
+  forwardRef,
   input,
-  model,
+  signal,
   untracked,
 } from '@angular/core';
-import { FormValueControl, FORM_FIELD } from '@angular/forms/signals';
-import { FormsModule } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TuiSwitch } from '@taiga-ui/kit';
 import { TuiIcon } from '@taiga-ui/core/components/icon';
 import { TuiErrorComponent } from '@taiga-ui/core/components/error';
@@ -17,12 +16,13 @@ import { TuiHintDirective } from '@taiga-ui/core/portals/hint';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpSwitchConfig } from './erp-switch.types';
+import { noop } from 'rxjs';
 
 @Component({
   selector: 'erp-switch',
   standalone: true,
   imports: [
-    FormsModule,
+    ReactiveFormsModule,
     TuiSwitch,
     TuiIcon,
     TuiErrorComponent,
@@ -30,6 +30,13 @@ import { ErpSwitchConfig } from './erp-switch.types';
     ErpTranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => ErpSwitchComponent),
+      multi: true,
+    },
+  ],
   template: `
     @let tooltipText = (_tooltip() | erpTranslate) || '';
     @let errorText = (_error() | erpTranslate) || '';
@@ -40,8 +47,7 @@ import { ErpSwitchConfig } from './erp-switch.types';
         <input
           tuiSwitch
           type="checkbox"
-          [disabled]="_disabled()"
-          [(ngModel)]="value"
+          [formControl]="activeControl()"
           [size]="_size()"
           (blur)="onBlur()"
         />
@@ -101,51 +107,101 @@ import { ErpSwitchConfig } from './erp-switch.types';
     }
   `],
 })
-export class ErpSwitchComponent implements FormValueControl<boolean> {
+export class ErpSwitchComponent implements ControlValueAccessor {
   readonly config = input.required<ErpSwitchConfig>();
+  readonly control = input<FormControl | null>(null);
 
-  readonly value = model<boolean>(false);
+  readonly internalControl = new FormControl();
+  readonly activeControl = computed(() => this.control() || this.internalControl);
+  private readonly stateTrigger = signal(0);
 
-  private readonly formField = inject(FORM_FIELD, { optional: true });
+  private _onChange: (value: boolean) => void = noop;
+  protected onTouched: () => void = noop;
 
   constructor() {
     effect(() => {
       const configVal = unwrapSignal(this.config().value);
       if (configVal !== undefined) {
         untracked(() => {
-          this.value.set(configVal);
+          this.activeControl().setValue(configVal, { emitEvent: false });
+          this.stateTrigger.update(v => v + 1);
         });
       }
+    });
+
+    effect(() => {
+      const isDisabled = unwrapSignal(this.config().disabled);
+      untracked(() => {
+        if (isDisabled) {
+          this.activeControl().disable({ emitEvent: false });
+        } else {
+          this.activeControl().enable({ emitEvent: false });
+        }
+        this.stateTrigger.update(v => v + 1);
+      });
+    });
+
+    effect((onCleanup) => {
+      const ctrl = this.activeControl();
+      const sub1 = ctrl.valueChanges.subscribe(() => {
+        this.stateTrigger.update(v => v + 1);
+      });
+      const sub2 = ctrl.statusChanges.subscribe(() => {
+        this.stateTrigger.update(v => v + 1);
+      });
+      onCleanup(() => {
+        sub1.unsubscribe();
+        sub2.unsubscribe();
+      });
+    });
+
+    this.internalControl.valueChanges.subscribe((val) => {
+      this._onChange(val);
     });
   }
 
   protected onBlur(): void {
-    this.formField?.state().markAsTouched();
+    this.onTouched();
+    this.stateTrigger.update(v => v + 1);
   }
-
-  protected readonly _disabled = computed(() =>
-    unwrapSignal(this.config().disabled) || (this.formField?.state().disabled() ?? false)
-  );
 
   protected readonly _label = computed(() => unwrapSignal(this.config().label));
   protected readonly _tooltip = computed(() => unwrapSignal(this.config().tooltip));
   protected readonly _size = computed(() => unwrapSignal(this.config().size) ?? 'm');
 
   protected readonly _error = computed(() => {
-    const isTouched = this.formField?.state().touched() ?? false;
-    const fieldErrors = this.formField?.errors() ?? [];
-    if (isTouched && fieldErrors.length > 0) {
-      const firstError = fieldErrors[0];
-      const errorMessages = unwrapSignal(this.config().errorMessages);
-      if (errorMessages && errorMessages[firstError.kind]) {
-        return errorMessages[firstError.kind];
-      }
-      return firstError.message || firstError.kind;
+    this.stateTrigger();
+    const ctrl = this.activeControl();
+    const isTouched = ctrl.touched || ctrl.dirty;
+    const errors = ctrl.errors;
+    if (isTouched && errors) {
+      const firstErrorKey = Object.keys(errors)[0];
+      const errorMessages = unwrapSignal(this.config().errorMessages) || {};
+      return errorMessages[firstErrorKey] || `Błąd walidacji: ${firstErrorKey}`;
     }
     return undefined;
   });
 
   protected readonly _invalid = computed(() =>
-    !!this._error() || (this.formField?.state().invalid() ?? false)
+    !!this._error()
   );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public writeValue(val: any): void {
+    this.internalControl.setValue(val, { emitEvent: false });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public registerOnChange(fn: any): void {
+    this._onChange = fn;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  public setDisabledState(isDisabled: boolean): void {
+    isDisabled ? this.internalControl.disable({ emitEvent: false }) : this.internalControl.enable({ emitEvent: false });
+  }
 }

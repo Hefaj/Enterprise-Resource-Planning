@@ -571,6 +571,8 @@ export interface ProductDto {
 export interface ProductSetNameCommand {
     uuid?: string;
     name?: string;
+    isActive?: boolean;
+    color?: string;
 
     [key: string]: any;
 }

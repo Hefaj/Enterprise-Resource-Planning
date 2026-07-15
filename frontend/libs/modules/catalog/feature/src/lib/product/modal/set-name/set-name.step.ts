@@ -3,11 +3,8 @@ import {
   Component,
   computed,
   inject,
-  input,
-  Signal,
-  WritableSignal,
 } from '@angular/core';
-import { Validators } from '@angular/forms';
+import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BatchCommandOfProductSetNameCommand, CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { SetNameMetadata } from './set-name.definition';
@@ -17,12 +14,18 @@ import {
   ErpStepContentComponent,
   ErpStepContentBuilder,
   ErpStepContentConfig,
-  ErpInputBuilder,
-  ErpSwitchBuilder,
-  ErpInputColorBuilder,
   ErpModalStepBase,
   ErpTextBuilder,
 } from '@erp/shared/ui';
+
+/** Customowy walidator sprawdzający, czy nazwa nie zawiera słowa "test" */
+function noTestValidator(control: AbstractControl): ValidationErrors | null {
+  const val = control.value || '';
+  if (val.toLowerCase().includes('test')) {
+    return { noTest: true };
+  }
+  return null;
+}
 
 /**
  * Step komponent do seryjnej edycji nazwy produktów.
@@ -131,17 +134,41 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
         sectionForm
         .addFormField('name', 'text',
           ib => ib
+            .setLabel('Nazwa produktu')
             .setPlaceholder(PRODUCT_KEYS.commands.setName.namePlaceholder)
-            .setErrorMessages({ required: PRODUCT_KEYS.validations.nameRequired })
+            .setHint('Wpisz nową nazwę dla zaznaczonych produktów')
+            .setTooltip('Podpowiedź: Nazwa powinna być unikalna')
+            .setIconStart('@tui.pencil')
+            .setErrorMessages({
+              required: PRODUCT_KEYS.validations.nameRequired,
+              noTest: 'Nazwa nie może zawierać słowa "test"!'
+            })
           ,
           {
-            validators: [Validators.required],
-            value: () => this.command()().commands?.at(0)?.name,
+            validators: [Validators.required, noTestValidator],
+            value: () => {
+              const cmd = this.command()();
+              if (cmd['name'] !== undefined) {
+                return cmd['name'];
+              }
+              const firstCmdName = cmd.commands?.at(0)?.name;
+              if (firstCmdName !== undefined) {
+                return firstCmdName;
+              }
+              const productsList = this.products();
+              if (productsList.length === 1) {
+                const name = productsList[0].name;
+                return name && name !== 'Ładowanie...' ? name : '';
+              }
+              return '';
+            },
             onChange: (value) => {
               this.command().update((cmd) => {
-                const commands = (cmd['products'] as { uuid: string; sku: string; name: string }[] || []).map((p: any) => ({
+                const commands = (cmd['products'] as any[] || []).map((p: any) => ({
                   uuid: p.uuid,
                   name: value ?? '',
+                  isActive: cmd.commands?.find(c => c.uuid === p.uuid)?.isActive ?? true,
+                  color: cmd.commands?.find(c => c.uuid === p.uuid)?.color ?? '#3f51b5',
                 }));
                 return {
                   ...cmd,
@@ -153,19 +180,70 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
           }
         )
         .addFormField('isActive', 'switch',
-          tb => tb
+          sb => sb
             .setLabel('Aktywny')
-            .setHint('Zaznacz aby aktywować')
-            .setValue(true)
+            .setHint('Zaznacz, aby aktywować produkt')
+            .setTooltip('Zmienia status widoczności produktu')
+            .setErrorMessages({ required: 'To pole jest wymagane do zaznaczenia (musi być aktywne)' })
           ,
-          { defaultValue: true }
+          {
+            defaultValue: true,
+            validators: [Validators.requiredTrue],
+            value: () => {
+              const cmd = this.command()();
+              if (cmd['isActive'] !== undefined) {
+                return cmd['isActive'];
+              }
+              const firstCmdActive = cmd.commands?.at(0)?.isActive;
+              if (firstCmdActive !== undefined) {
+                return firstCmdActive;
+              }
+              return true;
+            },
+            onChange: (value) => {
+              this.command().update((cmd) => {
+                const commands = (cmd['products'] as any[] || []).map((p: any) => ({
+                  uuid: p.uuid,
+                  name: cmd.commands?.find(c => c.uuid === p.uuid)?.name ?? '',
+                  isActive: !!value,
+                  color: cmd.commands?.find(c => c.uuid === p.uuid)?.color ?? '#3f51b5',
+                }));
+                return {
+                  ...cmd,
+                  isActive: !!value,
+                  commands,
+                };
+              });
+            }
+          }
         )
-        .addFormField('colorCode', 'color',
+        .addFormField('color', 'color',
           cb => cb
             .setLabel('Kolor produktu')
-            .setPlaceholder('#ff0000')
+            .setTooltip('Kolor identyfikacyjny produktu')
           ,
-          { defaultValue: '#3f51b5' }
+          {
+            defaultValue: '#3f51b5',
+            validators: [Validators.required],
+            value: () => {
+              const cmd = this.command()();
+              return cmd.commands?.at(0)?.color ?? '#3f51b5';
+            },
+            onChange: (value) => {
+              this.command().update((cmd) => {
+                const commands = (cmd['products'] as any[] || []).map((p: any) => ({
+                  uuid: p.uuid,
+                  name: cmd.commands?.find(c => c.uuid === p.uuid)?.name ?? '',
+                  isActive: cmd.commands?.find(c => c.uuid === p.uuid)?.isActive ?? true,
+                  color: value ?? '#3f51b5',
+                }));
+                return {
+                  ...cmd,
+                  commands,
+                };
+              });
+            }
+          }
         )
       }, { slot: 'form' })
  

@@ -108,7 +108,6 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
         columns: '1fr 1fr',
         gap: '1.5rem',
       })
-      .setStyleClass('demo-step-content-root')
       
       // 1. Text element
       // .addText(PRODUCT_KEYS.commands.setName.editMessage, {

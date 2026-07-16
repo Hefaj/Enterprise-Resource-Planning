@@ -90,7 +90,7 @@ import { noop } from 'rxjs';
       </tui-textfield>
 
       @if (errorText) {
-        <tui-error [error]="errorText" />
+        <tui-error [error]="errorText" [class.erp-shake]="shake()" (animationend)="onShakeEnd($event)"/>
       }
 
       @if (hintText) {
@@ -101,6 +101,22 @@ import { noop } from 'rxjs';
   styles: [`
     :host {
       display: block;
+    }
+
+    @keyframes erp-form-shake {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      15%, 45%, 75% {
+        transform: translateX(-4px);
+      }
+      30%, 60%, 90% {
+        transform: translateX(4px);
+      }
+    }
+
+    .erp-shake {
+      animation: erp-form-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
     }
 
     .erp-input-wrapper {
@@ -128,7 +144,10 @@ export class ErpInputComponent implements ControlValueAccessor {
   readonly activeControl = computed(() => this.control() || this.internalControl);
 
   protected readonly showPassword = signal<boolean>(false);
+  protected readonly shake = signal<boolean>(false);
   private readonly stateTrigger = signal(0);
+  private lastValueChangeTime = 0;
+  private lastShakeTime = 0;
 
   private _onChange: (value: string) => void = noop;
   protected onTouched: () => void = noop;
@@ -159,20 +178,67 @@ export class ErpInputComponent implements ControlValueAccessor {
     effect((onCleanup) => {
       const ctrl = this.activeControl();
       const sub1 = ctrl.valueChanges.subscribe(() => {
+        this.lastValueChangeTime = Date.now();
         this.stateTrigger.update(v => v + 1);
       });
       const sub2 = ctrl.statusChanges.subscribe(() => {
         this.stateTrigger.update(v => v + 1);
+        const isTyping = (Date.now() - this.lastValueChangeTime) < 50;
+        if (!isTyping && this._invalid()) {
+          this.triggerShakeIfInvalid();
+        }
       });
+
+      const originalMarkAsTouched = ctrl.markAsTouched.bind(ctrl);
+      const originalMarkAllAsTouched = ctrl.markAllAsTouched.bind(ctrl);
+
+      ctrl.markAsTouched = (opts?: { onlySelf?: boolean }) => {
+        originalMarkAsTouched(opts);
+        this.stateTrigger.update(v => v + 1);
+        this.triggerShakeIfInvalid();
+      };
+      ctrl.markAllAsTouched = () => {
+        originalMarkAllAsTouched();
+        this.stateTrigger.update(v => v + 1);
+        this.triggerShakeIfInvalid();
+      };
+
       onCleanup(() => {
         sub1.unsubscribe();
         sub2.unsubscribe();
+        ctrl.markAsTouched = originalMarkAsTouched;
+        ctrl.markAllAsTouched = originalMarkAllAsTouched;
       });
     });
 
     this.internalControl.valueChanges.subscribe((val) => {
       this._onChange(val);
     });
+  }
+
+  protected triggerShakeIfInvalid(): void {
+    if (!this._invalid()) {
+      return;
+    }
+    const now = Date.now();
+    if (now - this.lastShakeTime < 100) {
+      return;
+    }
+    this.lastShakeTime = now;
+
+    if (this.shake()) {
+      this.shake.set(false);
+      setTimeout(() => this.shake.set(true), 10);
+    } else {
+      this.shake.set(true);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected onShakeEnd(event: any): void {
+    if (event?.animationName === 'erp-form-shake') {
+      this.shake.set(false);
+    }
   }
 
   protected onBlur(): void {

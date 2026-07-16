@@ -28,6 +28,26 @@
     [control]="checkboxControl"
   />
 
+  <erp-datepicker
+    [config]="singleDatePickerConfig"
+    [control]="singleDateControl"
+  />
+
+  <erp-datepicker
+    [config]="rangeDatePickerConfig"
+    [control]="rangeDateControl"
+  />
+
+  <erp-datepicker
+    [config]="multipleDatePickerConfig"
+    [control]="multipleDateControl"
+  />
+
+  <erp-datepicker
+    [config]="dateTimeDatePickerConfig"
+    [control]="dateTimeDateControl"
+  />
+
   <erp-button
     [config]="submitBtnConfig"
   />
@@ -41,5 +61,9 @@
     }
     <div>Kolor: {{ colorControl.value }} (status: {{ colorControl.status }})</div>
     <div>Checkbox: {{ checkboxControl.value }} (status: {{ checkboxControl.status }})</div>
+    <div>Pojedyncza data: {{ singleDateControl.value?.toString() }} (status: {{ singleDateControl.status }})</div>
+    <div>Zakres dat: {{ rangeDateControl.value?.toString() }} (status: {{ rangeDateControl.status }})</div>
+    <div>Wielokrotna data: {{ multipleDateControl.value?.toString() }} (status: {{ multipleDateControl.status }})</div>
+    <div>Data i czas: {{ dateTimeDateControl.value?.toString() }} (status: {{ dateTimeDateControl.status }})</div>
   </div>
 </div>

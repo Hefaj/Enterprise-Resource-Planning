@@ -38,7 +38,8 @@ import { ErpCheckboxConfig } from './erp-checkbox.types';
     },
   ],
   template: `
-    @let tooltipText = (_tooltip() | erpTranslate) || '';
+    @let hintText = (tooltip() | erpTranslate) || '';
+    @let actualHintText = (_hint() | erpTranslate) || '';
     @let errorText = (_error() | erpTranslate) || '';
     @let labelText = (_label() | erpTranslate) || '';
 
@@ -54,10 +55,10 @@ import { ErpCheckboxConfig } from './erp-checkbox.types';
         @if (labelText) {
           <span class="label-text">{{ labelText }}</span>
         }
-        @if (_tooltip() && tooltipText) {
+        @if (tooltip() && hintText) {
           <tui-icon
             icon="@tui.circle-help"
-            [tuiHint]="tooltipText"
+            [tuiHint]="hintText"
             class="tooltip-icon"
           />
         }
@@ -65,6 +66,10 @@ import { ErpCheckboxConfig } from './erp-checkbox.types';
 
       @if (errorText) {
         <tui-error [error]="errorText" />
+      }
+
+      @if (actualHintText) {
+        <div class="erp-checkbox-hint">{{ actualHintText }}</div>
       }
     </div>
   `,
@@ -100,6 +105,12 @@ import { ErpCheckboxConfig } from './erp-checkbox.types';
     .tooltip-icon {
       color: var(--tui-text-secondary);
       cursor: help;
+    }
+
+    .erp-checkbox-hint {
+      font: var(--tui-typography-body-xs);
+      color: var(--tui-text-secondary);
+      margin-top: 0.125rem;
     }
 
     tui-error {
@@ -166,7 +177,8 @@ export class ErpCheckboxComponent implements ControlValueAccessor {
   }
 
   protected readonly _label = computed(() => unwrapSignal(this.config().label));
-  protected readonly _tooltip = computed(() => unwrapSignal(this.config().tooltip));
+  protected readonly tooltip = computed(() => unwrapSignal(this.config().tooltip));
+  protected readonly _hint = computed(() => unwrapSignal(this.config().hint));
   protected readonly _size = computed(() => unwrapSignal(this.config().size) ?? 'm');
 
   protected readonly _error = computed(() => {

@@ -8,16 +8,6 @@ export class ErpCheckboxBuilder extends ErpInputBaseBuilder<ErpCheckboxConfig> {
     return this;
   }
 
-  public setDisabled(disabled: MaybeSignal<boolean>): this {
-    this._data.disabled = disabled;
-    return this;
-  }
-
-  public setTooltip(tooltip: MaybeSignal<Translatable | undefined>): this {
-    this._data.tooltip = tooltip;
-    return this;
-  }
-
   public setValue(value: MaybeSignal<boolean>): this {
     this._data.value = value;
     return this;

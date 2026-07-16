@@ -7,7 +7,6 @@ export type ErpInputType = 'text' | 'password';
 
 export interface ErpInputConfig extends ErpInputBase {
   disabled?: MaybeSignal<boolean>;
-  tooltip?: MaybeSignal<Translatable | undefined>;
   iconStart?: MaybeSignal<ErpIcon | undefined>;
   iconEnd?: MaybeSignal<ErpIcon | undefined>;
   size?: MaybeSignal<ErpInputSize>;

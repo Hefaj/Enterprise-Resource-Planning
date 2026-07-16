@@ -47,6 +47,7 @@ import { noop } from 'rxjs';
   template: `
     @let placeholderText = (_placeholder() | erpTranslate) || '';
     @let tooltipText = (_tooltip() | erpTranslate) || '';
+    @let hintText = (_hint() | erpTranslate) || '';
     @let errorText = (_error() | erpTranslate) || '';
     @let labelText = (_label() | erpTranslate) || '';
 
@@ -91,6 +92,10 @@ import { noop } from 'rxjs';
       @if (errorText) {
         <tui-error [error]="errorText" />
       }
+
+      @if (hintText) {
+        <div class="erp-input-hint">{{ hintText }}</div>
+      }
     </div>
   `,
   styles: [`
@@ -102,6 +107,12 @@ import { noop } from 'rxjs';
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+    }
+
+    .erp-input-hint {
+      font: var(--tui-typography-body-xs);
+      color: var(--tui-text-secondary);
+      margin-top: 0.125rem;
     }
 
     tui-error {
@@ -172,6 +183,7 @@ export class ErpInputComponent implements ControlValueAccessor {
   protected readonly _placeholder = computed(() => unwrapSignal(this.config().placeholder));
   protected readonly _label = computed(() => unwrapSignal(this.config().label));
   protected readonly _tooltip = computed(() => unwrapSignal(this.config().tooltip));
+  protected readonly _hint = computed(() => unwrapSignal(this.config().hint));
   protected readonly _iconStart = computed(() => unwrapSignal(this.config().iconStart));
   protected readonly _iconEnd = computed(() => unwrapSignal(this.config().iconEnd));
   protected readonly _size = computed(() => unwrapSignal(this.config().size) ?? 'm');

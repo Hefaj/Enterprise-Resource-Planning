@@ -16,22 +16,6 @@ export class ErpSwitchBuilder extends ErpInputBaseBuilder<ErpSwitchConfig> {
   }
 
   /**
-   * Kontroluje stan zablokowania/wyłączenia przełącznika.
-   */
-  public setDisabled(disabled: MaybeSignal<boolean>): this {
-    this._data.disabled = disabled;
-    return this;
-  }
-
-  /**
-   * Ustawia podpowiedź (tooltip) dla przełącznika.
-   */
-  public setTooltip(tooltip: MaybeSignal<Translatable | undefined>): this {
-    this._data.tooltip = tooltip;
-    return this;
-  }
-
-  /**
    * Ustawia domyślną/inicjalną wartość logiczną przełącznika.
    */
   public setValue(value: MaybeSignal<boolean>): this {

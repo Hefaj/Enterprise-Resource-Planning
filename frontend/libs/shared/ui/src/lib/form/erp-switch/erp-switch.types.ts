@@ -6,7 +6,6 @@ export type ErpSwitchSize = 's' | 'm';
 export interface ErpSwitchConfig extends ErpInputBase {
   label?: MaybeSignal<Translatable | undefined>;
   disabled?: MaybeSignal<boolean>;
-  tooltip?: MaybeSignal<Translatable | undefined>;
   value?: MaybeSignal<boolean>;
   size?: MaybeSignal<ErpSwitchSize>;
 }

@@ -16,22 +16,6 @@ export class ErpInputColorBuilder extends ErpInputBaseBuilder<ErpInputColorConfi
   }
 
   /**
-   * Kontroluje stan zablokowania/wyłączenia pola.
-   */
-  public setDisabled(disabled: MaybeSignal<boolean>): this {
-    this._data.disabled = disabled;
-    return this;
-  }
-
-  /**
-   * Ustawia podpowiedź (tooltip) dla pola.
-   */
-  public setTooltip(tooltip: MaybeSignal<Translatable | undefined>): this {
-    this._data.tooltip = tooltip;
-    return this;
-  }
-
-  /**
    * Ustawia domyślną/inicjalną wartość koloru (np. hex `#ffffff`).
    */
   public setValue(value: MaybeSignal<string>): this {

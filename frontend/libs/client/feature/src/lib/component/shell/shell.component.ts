@@ -2,7 +2,7 @@ import { Component, signal, inject, computed } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp-breadcrumb';
-import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui/erp-button';
+import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui';
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
 import { SHARED_KEYS } from '@erp/shared/ui';
 import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-access';

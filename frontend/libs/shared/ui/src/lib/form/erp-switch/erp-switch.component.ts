@@ -39,6 +39,7 @@ import { noop } from 'rxjs';
   ],
   template: `
     @let tooltipText = (_tooltip() | erpTranslate) || '';
+    @let hintText = (_hint() | erpTranslate) || '';
     @let errorText = (_error() | erpTranslate) || '';
     @let labelText = (_label() | erpTranslate) || '';
 
@@ -65,6 +66,10 @@ import { noop } from 'rxjs';
 
       @if (errorText) {
         <tui-error [error]="errorText" />
+      }
+
+      @if (hintText) {
+        <div class="erp-switch-hint">{{ hintText }}</div>
       }
     </div>
   `,
@@ -100,6 +105,12 @@ import { noop } from 'rxjs';
     .tooltip-icon {
       color: var(--tui-text-secondary);
       cursor: help;
+    }
+
+    .erp-switch-hint {
+      font: var(--tui-typography-body-xs);
+      color: var(--tui-text-secondary);
+      margin-top: 0.125rem;
     }
 
     tui-error {
@@ -167,6 +178,7 @@ export class ErpSwitchComponent implements ControlValueAccessor {
 
   protected readonly _label = computed(() => unwrapSignal(this.config().label));
   protected readonly _tooltip = computed(() => unwrapSignal(this.config().tooltip));
+  protected readonly _hint = computed(() => unwrapSignal(this.config().hint));
   protected readonly _size = computed(() => unwrapSignal(this.config().size) ?? 'm');
 
   protected readonly _error = computed(() => {

@@ -137,7 +137,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
             .setLabel('Nazwa produktu')
             .setPlaceholder(PRODUCT_KEYS.commands.setName.namePlaceholder)
             .setHint('Wpisz nową nazwę dla zaznaczonych produktów')
-            .setTooltip('Podpowiedź: Nazwa powinna być unikalna')
+            // .setTooltip('Podpowiedź: Nazwa powinna być unikalna')
             .setIconStart('@tui.pencil')
             .setErrorMessages({
               required: PRODUCT_KEYS.validations.nameRequired,
@@ -183,7 +183,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
           sb => sb
             .setLabel('Aktywny')
             .setHint('Zaznacz, aby aktywować produkt')
-            .setTooltip('Zmienia status widoczności produktu')
+            // .setTooltip('Zmienia status widoczności produktu')
             .setErrorMessages({ required: 'To pole jest wymagane do zaznaczenia (musi być aktywne)' })
           ,
           {
@@ -220,7 +220,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
         .addFormField('color', 'color',
           cb => cb
             .setLabel('Kolor produktu')
-            .setTooltip('Kolor identyfikacyjny produktu')
+            .setHint('Kolor identyfikacyjny produktu')
           ,
           {
             defaultValue: '#3f51b5',

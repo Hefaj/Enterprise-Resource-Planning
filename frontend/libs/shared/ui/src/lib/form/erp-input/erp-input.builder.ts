@@ -9,24 +9,6 @@ import { ErpInputConfig, ErpInputSize, ErpInputType } from './erp-input.types';
  */
 export class ErpInputBuilder extends ErpInputBaseBuilder<ErpInputConfig> {
   /**
-   * Ustawia stan wyłączenia (disabled) pola wejściowego.
-   * @param disabled Statyczna wartość logiczna lub sygnał (Signal).
-   */
-  public setDisabled(disabled: MaybeSignal<boolean>): this {
-    this._data.disabled = disabled;
-    return this;
-  }
-
-  /**
-   * Konfiguruje podpowiedź (tooltip) wyświetlaną na ikonie pomocy pola.
-   * @param tooltip Tekst podpowiedzi lub klucz tłumaczenia.
-   */
-  public setTooltip(tooltip: MaybeSignal<Translatable | undefined>): this {
-    this._data.tooltip = tooltip;
-    return this;
-  }
-
-  /**
    * Ustawia ikonę początkową (wyświetlaną po lewej stronie).
    * @param icon Wybrana ikona z definicji ERP_ICONS.
    */

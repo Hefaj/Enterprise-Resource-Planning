@@ -15,6 +15,8 @@ import {
   ErpCheckboxBuilder,
   ErpDatePickerComponent,
   ErpDatePickerBuilder,
+  ErpInputNumberComponent,
+  ErpInputNumberBuilder,
 } from '@erp/shared/ui';
 
 @Component({
@@ -29,8 +31,19 @@ import {
     ErpInputColorComponent,
     ErpCheckboxComponent,
     ErpDatePickerComponent,
+    ErpInputNumberComponent,
   ],
   templateUrl: './dashboard.component.html',
+  styles: `
+    :host {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  `
 })
 export class DashboardComponent {
   public readonly inputControl = new FormControl('', [Validators.required]);
@@ -116,6 +129,51 @@ export class DashboardComponent {
       .setMode('datetime')
   );
 
+  // Kontrolki ErpInputNumber
+  public readonly integerControl = new FormControl<number | null>(5, [Validators.required, Validators.min(0), Validators.max(50)]);
+  public readonly integerConfig = ErpInputNumberBuilder.create((b) =>
+    b
+      .setLabel('Liczba całkowita (dodatnia, 0-50)')
+      .setPlaceholder('Wpisz liczbę całkowitą')
+      .setMode('integer')
+      .setSign('positive')
+      .setStepper(true)
+      .setMin(0)
+      .setMax(50)
+      .setStep(1)
+      .setHint('Wymagane, zakres 0-50, krok 1')
+      .setTooltip('Podpowiedź dla liczby całkowitej')
+      .setErrorMessages({ required: 'Wartość jest wymagana!', min: 'Minimum 0!', max: 'Maksimum 50!' })
+  );
+
+  public readonly decimalControl = new FormControl<number | null>(1.234, [Validators.required]);
+  public readonly decimalConfig = ErpInputNumberBuilder.create((b) =>
+    b
+      .setLabel('Liczba zmiennoprzecinkowa (3 miejsca, -10 do 10)')
+      .setPlaceholder('Wpisz liczbę ułamkową')
+      .setMode('decimal')
+      .setDecimals(3)
+      .setSign('any')
+      .setStepper(true)
+      .setMin(-10)
+      .setMax(10)
+      .setStep(0.005)
+      .setHint('Wymagane, zakres -10 do 10, krok 0.005')
+      .setTooltip('Podpowiedź dla liczby ułamkowej')
+      .setErrorMessages({ required: 'Wartość jest wymagana!' })
+  );
+
+  public readonly negativeControl = new FormControl<number | null>(-20);
+  public readonly negativeConfig = ErpInputNumberBuilder.create((b) =>
+    b
+      .setLabel('Tylko ujemne (bez steppera)')
+      .setPlaceholder('Wpisz liczbę ujemną')
+      .setMode('integer')
+      .setSign('negative')
+      .setStepper(false)
+      .setHint('Ograniczenie do wartości ujemnych')
+  );
+
   public readonly testForm = new FormGroup({
     input: this.inputControl,
     switch: this.switchControl,
@@ -126,6 +184,9 @@ export class DashboardComponent {
     rangeDate: this.rangeDateControl,
     multipleDate: this.multipleDateControl,
     dateTimeDate: this.dateTimeDateControl,
+    integer: this.integerControl,
+    decimal: this.decimalControl,
+    negative: this.negativeControl,
   });
 
   public readonly submitBtnConfig: ErpButtonConfig = ErpButtonBuilder.create(b => b

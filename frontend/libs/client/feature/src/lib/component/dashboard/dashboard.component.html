@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-6 p-6 max-w-md">
+<div class="flex flex-col gap-6 p-6 w-md">
   <h3 class="text-xl font-bold">Testy Formularzy Taiga UI</h3>
 
   <erp-input
@@ -48,6 +48,23 @@
     [control]="dateTimeDateControl"
   />
 
+  <h4 class="text-lg font-semibold mt-4">Przykłady erp-input-number</h4>
+
+  <erp-input-number
+    [config]="integerConfig"
+    [control]="integerControl"
+  />
+
+  <erp-input-number
+    [config]="decimalConfig"
+    [control]="decimalControl"
+  />
+
+  <erp-input-number
+    [config]="negativeConfig"
+    [control]="negativeControl"
+  />
+
   <erp-button
     [config]="submitBtnConfig"
   />
@@ -65,5 +82,8 @@
     <div>Zakres dat: {{ rangeDateControl.value?.toString() }} (status: {{ rangeDateControl.status }})</div>
     <div>Wielokrotna data: {{ multipleDateControl.value?.toString() }} (status: {{ multipleDateControl.status }})</div>
     <div>Data i czas: {{ dateTimeDateControl.value?.toString() }} (status: {{ dateTimeDateControl.status }})</div>
+    <div>Integer Input: {{ integerControl.value }} (status: {{ integerControl.status }})</div>
+    <div>Decimal Input: {{ decimalControl.value }} (status: {{ decimalControl.status }})</div>
+    <div>Negative Input: {{ negativeControl.value }} (status: {{ negativeControl.status }})</div>
   </div>
 </div>

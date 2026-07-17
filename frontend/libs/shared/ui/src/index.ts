@@ -4,6 +4,7 @@ export * from './lib/base/erp-icon.types';
 
 // Form
 export * from './lib/form/erp-input';
+export * from './lib/form/erp-input-number';
 export * from './lib/form/erp-switch';
 export * from './lib/form/erp-input-color';
 export * from './lib/form/erp-checkbox';

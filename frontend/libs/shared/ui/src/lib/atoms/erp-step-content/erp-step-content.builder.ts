@@ -11,31 +11,18 @@ import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
 // import { ErpSplitterComponent } from '../../atoms/erp-splitter/erp-splitter.component';
 // import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
 import { ErpInputComponent } from '../../form/erp-input/erp-input.component';
-// import { ErpSelectComponent } from '../../atoms/erp-select/erp-select.component';
-// import { ErpDatePickerComponent } from '../../atoms/erp-datepicker/erp-datepicker.component';
-// import { ErpMultiSelectComponent } from '../../atoms/erp-multi-select/erp-multi-select.component';
-// import { ErpAutoCompleteComponent } from '../../atoms/erp-auto-complete/erp-auto-complete.component';
-// import { ErpListboxComponent } from '../../atoms/erp-listbox/erp-listbox.component';
 import { ErpSwitchComponent } from '../../form/erp-switch/erp-switch.component';
 import { ErpInputBuilder } from '../../form/erp-input/erp-input.builder';
-// import { ErpSelectBuilder } from '../../atoms/erp-select/erp-select.builder';
-// import { ErpDatePickerBuilder } from '../../atoms/erp-datepicker/erp-datepicker.builder';
-// import { ErpMultiSelectBuilder } from '../../atoms/erp-multi-select/erp-multi-select.builder';
-// import { ErpAutoCompleteBuilder } from '../../atoms/erp-auto-complete/erp-auto-complete.builder';
-// import { ErpListboxBuilder } from '../../atoms/erp-listbox/erp-listbox.builder';
 import { ErpSwitchBuilder } from '../../form/erp-switch/erp-switch.builder';
 import { ErpInputColorComponent } from '../../form/erp-input-color/erp-input-color.component';
 import { ErpInputColorBuilder } from '../../form/erp-input-color/erp-input-color.builder';
 import { ErpCheckboxComponent, ErpCheckboxBuilder } from '../../form/erp-checkbox';
+import { ErpInputNumberComponent, ErpInputNumberBuilder } from '../../form/erp-input-number';
 
 /** Mapowanie typów pól formularza na odpowiadające im komponenty atomowe UI. */
 const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type<any>> = {
   text: ErpInputComponent,
-  // select: ErpSelectComponent,
-  // datepicker: ErpDatePickerComponent,
-  // multiselect: ErpMultiSelectComponent,
-  // autocomplete: ErpAutoCompleteComponent,
-  // listbox: ErpListboxComponent,
+  number: ErpInputNumberComponent,
   switch: ErpSwitchComponent,
   color: ErpInputColorComponent,
   checkbox: ErpCheckboxComponent,
@@ -44,11 +31,7 @@ const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type
 /** Mapowanie typów pól na odpowiadające im klasy Builderów */
 export interface ErpFormFieldBuilderMap {
   text: ErpInputBuilder;
-  // select: ErpSelectBuilder;
-  // datepicker: ErpDatePickerBuilder;
-  // multiselect: ErpMultiSelectBuilder;
-  // autocomplete: ErpAutoCompleteBuilder;
-  // listbox: ErpListboxBuilder;
+  number: ErpInputNumberBuilder;
   switch: ErpSwitchBuilder;
   color: ErpInputColorBuilder;
   checkbox: ErpCheckboxBuilder;
@@ -57,6 +40,7 @@ export interface ErpFormFieldBuilderMap {
 /** Mapowanie typów pól na typy ich wartości */
 export interface ErpFormFieldValueMap {
   text: string;
+  number: number | null;
   switch: boolean;
   color: string;
   checkbox: boolean;
@@ -80,11 +64,7 @@ export interface ErpFormFieldOptions<TValue> extends ErpElementLayoutOptions {
 /** Konstruktory builderów na potrzeby automatycznego tworzenia instancji */
 const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFormFieldBuilderMap, new () => any> = {
   text: ErpInputBuilder,
-  // select: ErpSelectBuilder,
-  // datepicker: ErpDatePickerBuilder,
-  // multiselect: ErpMultiSelectBuilder,
-  // autocomplete: ErpAutoCompleteBuilder,
-  // listbox: ErpListboxBuilder,
+  number: ErpInputNumberBuilder,
   switch: ErpSwitchBuilder,
   color: ErpInputColorBuilder,
   checkbox: ErpCheckboxBuilder,

@@ -65,6 +65,28 @@
     [control]="negativeControl"
   />
 
+  <h4 class="text-lg font-semibold mt-4">Przykłady erp-select</h4>
+
+  <erp-select
+    [config]="singleSelectConfig"
+    [control]="singleSelectControl"
+  />
+
+  <erp-select
+    [config]="multiSelectConfig"
+    [control]="multiSelectControl"
+  />
+
+  <erp-select
+    [config]="summaryMultiSelectConfig"
+    [control]="summaryMultiSelectControl"
+  />
+
+  <erp-select
+    [config]="virtualSelectConfig"
+    [control]="virtualSelectControl"
+  />
+
   <erp-button
     [config]="submitBtnConfig"
   />
@@ -85,5 +107,9 @@
     <div>Integer Input: {{ integerControl.value }} (status: {{ integerControl.status }})</div>
     <div>Decimal Input: {{ decimalControl.value }} (status: {{ decimalControl.status }})</div>
     <div>Negative Input: {{ negativeControl.value }} (status: {{ negativeControl.status }})</div>
+    <div>Single Select: {{ singleSelectControl.value }} (status: {{ singleSelectControl.status }})</div>
+    <div>Multi Select: {{ multiSelectControl.value?.join(', ') }} (status: {{ multiSelectControl.status }})</div>
+    <div>Summary Multi Select: {{ summaryMultiSelectControl.value?.join(', ') }} (status: {{ summaryMultiSelectControl.status }})</div>
+    <div>Virtual Select: {{ virtualSelectControl.value }} (status: {{ virtualSelectControl.status }})</div>
   </div>
 </div>

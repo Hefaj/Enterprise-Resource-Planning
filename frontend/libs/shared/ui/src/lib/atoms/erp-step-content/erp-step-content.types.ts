@@ -1,7 +1,7 @@
 import { Type } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
-export type ErpFormFieldType = 'text' | 'number' | 'switch' | 'color' | 'checkbox' | 'custom';
+export type ErpFormFieldType = 'text' | 'number' | 'switch' | 'color' | 'checkbox' | 'select' | 'custom';
 
 /**
  * Discriminated union elementów treści stepu.

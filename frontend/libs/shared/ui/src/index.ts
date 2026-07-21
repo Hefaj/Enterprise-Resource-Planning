@@ -9,6 +9,8 @@ export * from './lib/form/erp-switch';
 export * from './lib/form/erp-input-color';
 export * from './lib/form/erp-checkbox';
 export * from './lib/form/erp-datepicker';
+export * from './lib/form/erp-select';
+
 
 // export * from './lib/layouts/erp-host-layout';
 export * from './lib/layouts/erp-page-layout';

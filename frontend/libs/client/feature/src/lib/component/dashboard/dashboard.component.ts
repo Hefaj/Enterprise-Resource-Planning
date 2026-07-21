@@ -17,6 +17,8 @@ import {
   ErpDatePickerBuilder,
   ErpInputNumberComponent,
   ErpInputNumberBuilder,
+  ErpSelectComponent,
+  ErpSelectBuilder,
 } from '@erp/shared/ui';
 
 @Component({
@@ -32,6 +34,7 @@ import {
     ErpCheckboxComponent,
     ErpDatePickerComponent,
     ErpInputNumberComponent,
+    ErpSelectComponent,
   ],
   templateUrl: './dashboard.component.html',
   styles: `
@@ -174,6 +177,58 @@ export class DashboardComponent {
       .setHint('Ograniczenie do wartości ujemnych')
   );
 
+  // Kontrolki ErpSelect
+  public readonly singleSelectControl = new FormControl<string | null>('Polska', [Validators.required]);
+  public readonly singleSelectConfig = ErpSelectBuilder.create((b) =>
+    b
+      .setLabel('Pojedynczy wybór (Polska, Niemcy...)')
+      .setPlaceholder('Wybierz kraj')
+      .setItems(['Polska', 'Niemcy', 'Francja', 'Hiszpania', 'Włochy'])
+      .setStrategy('single')
+      .setSearchable(true)
+      .setHint('Wybór pojedynczy z wyszukiwarką')
+      .setTooltip('Podpowiedź dla pola select')
+      .setErrorMessages({ required: 'Wybór kraju jest wymagany!' })
+  );
+
+  public readonly multiSelectControl = new FormControl<string[]>(['Administrator', 'Deweloper']);
+  public readonly multiSelectConfig = ErpSelectBuilder.create((b) =>
+    b
+      .setLabel('Wielokrotny wybór w chipach (max 5)')
+      .setPlaceholder('Wybierz role')
+      .setItems(['Administrator', 'Deweloper', 'Analityk', 'Tester', 'Manager', 'Szef'])
+      .setStrategy('multi')
+      .setMaxChipsCount(5)
+      .setHint('Wszystkie wybrane role widoczne jako chipy')
+  );
+
+  public readonly summaryMultiSelectControl = new FormControl<string[]>([
+    'Odczyt', 'Zapis', 'Edycja', 'Usuwanie'
+  ]);
+  public readonly summaryMultiSelectConfig = ErpSelectBuilder.create((b) =>
+    b
+      .setLabel('Wielokrotny wybór z podsumowaniem (Wariant A)')
+      .setPlaceholder('Wybierz uprawnienia')
+      .setItems(['Odczyt', 'Zapis', 'Edycja', 'Usuwanie', 'Eksport', 'Import'])
+      .setStrategy('multi')
+      .setMaxChipsCount(2)
+      .setHint('Przekroczono max 2 chipy -> wyświetla "Wybranych elementów (4)"')
+  );
+
+  public readonly virtualSelectControl = new FormControl<string | null>(null);
+  public readonly virtualSelectConfig = ErpSelectBuilder.create((b) =>
+    b
+      .setLabel('Select z wirtualizacją (1,000 opcji)')
+      .setPlaceholder('Szukaj magazynu...')
+      .setItems(Array.from({ length: 1000 }, (_, i) => `Magazyn #${i + 1}`))
+      .setStrategy('single')
+      .setVirtualScroll(true)
+      .setItemSize(40)
+      .setSearchable(true)
+      .setHeaderContent('Lista dostępnych magazynów ERP')
+      .setHint('CDK Virtual Scroll przy 1,000 pozycjach')
+  );
+
   public readonly testForm = new FormGroup({
     input: this.inputControl,
     switch: this.switchControl,
@@ -187,6 +242,10 @@ export class DashboardComponent {
     integer: this.integerControl,
     decimal: this.decimalControl,
     negative: this.negativeControl,
+    singleSelect: this.singleSelectControl,
+    multiSelect: this.multiSelectControl,
+    summaryMultiSelect: this.summaryMultiSelectControl,
+    virtualSelect: this.virtualSelectControl,
   });
 
   public readonly submitBtnConfig: ErpButtonConfig = ErpButtonBuilder.create(b => b

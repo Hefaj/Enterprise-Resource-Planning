@@ -50,7 +50,19 @@ export class ErpModalService {
   /** Rejestr dynamicznych loaderów kontraktów. */
   private readonly _contractLoaders = new Map<string, () => Promise<any>>();
 
+  /** Domyślny prefix modułu dla trybu standalone dev (kiedy aplikacja remote jest uruchamiana bezpośrednio). */
+  private _defaultDevModulePrefix?: string;
+
   // ── Rejestracja ──
+
+  /**
+   * Ustawia domyślny prefix modułu dla trybu standalone dev.
+   * Jeśli podczas otwierania modalu modalId nie zostanie odnaleziony w mapie modalId → routePrefix
+   * (bo np. aplikacja działa jako osobny remote bez hosta), serwis użyje tego domyślnego prefiksu.
+   */
+  public setDefaultDevModule(modulePrefix: string): void {
+    this._defaultDevModulePrefix = modulePrefix;
+  }
 
   /**
    * Rejestruje loader kontraktu dla danego modułu.
@@ -118,8 +130,12 @@ export class ErpModalService {
       return this._openDirect<TCommand, TMetadata, TResult>(queueID, command, metadata);
     }
 
-    // 2. Znajdź moduł na podstawie mapy (budowanej przy STARTUP)
-    const modulePrefix = this._modalIdToModule.get(queueID);
+    // 2. Znajdź moduł na podstawie mapy (budowanej przy STARTUP) lub użyj domyślnego modułu z trybu standalone dev
+    let modulePrefix = this._modalIdToModule.get(queueID);
+    if (!modulePrefix && this._defaultDevModulePrefix) {
+      modulePrefix = this._defaultDevModulePrefix;
+    }
+
     if (!modulePrefix) {
       throw new Error(
         `[ErpModalService] Unknown modal ID: "${queueID}". ` +

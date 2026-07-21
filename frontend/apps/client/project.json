@@ -10,71 +10,130 @@
   ],
   "targets": {
     "build": {
-      "executor": "@angular/build:application",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "options": {
-        "outputPath": "dist/frontend/apps/client",
-        "index": "frontend/apps/client/src/index.html",
-        "tsConfig": "frontend/apps/client/tsconfig.app.json",
-        "inlineStyleLanguage": "scss",
-        "assets": [
-          {
-            "glob": "**/*",
-            "input": "frontend/apps/client/public"
-          },
-          {
-            "glob": "**/*",
-            "input": "node_modules/@taiga-ui/icons/src",
-            "output": "assets/taiga-ui/icons"
-          }
-        ],
-        "styles": [
-          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
-          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
-          "frontend/apps/client/src/styles.css"
-        ],
-        "browser": "frontend/apps/client/src/main.ts"
+      "metadata": {
+        "description": "PRODUKCJA/MFE: Buduje hosta w trybie mikrofrontendów z Native Federation"
       },
+      "executor": "@angular-architects/native-federation:build",
+      "options": { "cacheExternalArtifacts": true },
       "configurations": {
-        "production": {
-          "budgets": [
-            {
-              "type": "initial",
-              "maximumWarning": "500kb",
-              "maximumError": "1mb"
-            },
-            {
-              "type": "anyComponentStyle",
-              "maximumWarning": "4kb",
-              "maximumError": "8kb"
-            }
-          ],
-          "outputHashing": "all"
-        },
-        "development": {
-          "optimization": false,
-          "extractLicenses": false,
-          "sourceMap": true,
-          "namedChunks": true
-        }
+        "production": { "target": "client:esbuild:production" },
+        "development": { "target": "client:esbuild:development", "dev": true },
+        "mfe": { "target": "client:esbuild:mfe", "dev": true }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
+      "metadata": {
+        "description": "MONOLIT (DEV): Uruchamia całą aplikację jako jeden monolit (wszystkie moduły wkompilowane w hosta na porcie 4200)"
+      },
       "continuous": true,
       "executor": "@angular-devkit/build-angular:dev-server",
       "options": {
         "port": 4200
       },
       "configurations": {
+        "production": { "buildTarget": "client:build:production" },
+        "development": { "buildTarget": "client:esbuild:development" }
+      },
+      "defaultConfiguration": "development"
+    },
+    "serve-mfe": {
+      "metadata": {
+        "description": "MIKROFRONTEND (HOST): Uruchamia hosta w trybie Native Federation (pobiera remoty z manifestu na porcie 4200)"
+      },
+      "executor": "@angular-architects/native-federation:build",
+      "options": {
+        "target": "client:serve-original:mfe",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 0
+      }
+    },
+    "esbuild": {
+      "metadata": {
+        "description": "PRODUKCJA/DEV MONOLIT BUILD: Buduje hosta natywnym esbuildem wraz ze wkompilowanymi wszystkimi modułami"
+      },
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/frontend/apps/client",
+        "index": "frontend/apps/client/src/index.html",
+        "tsConfig": "frontend/apps/client/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          { "glob": "**/*", "input": "frontend/apps/client/public" },
+          { "glob": "**/*", "input": "node_modules/@taiga-ui/icons/src", "output": "assets/taiga-ui/icons" }
+        ],
+        "styles": [
+          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
+          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+          "frontend/apps/client/src/styles.css"
+        ],
+        "polyfills": ["es-module-shims"],
+        "browser": "frontend/apps/client/src/main.ts"
+      },
+      "configurations": {
         "production": {
-          "buildTarget": "client:build:production"
+          "budgets": [
+            { "type": "initial", "maximumWarning": "1mb", "maximumError": "2mb" },
+            { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "frontend/apps/client/src/main.ts",
+              "with": "frontend/apps/client/src/main.mfe.ts"
+            },
+            {
+              "replace": "frontend/libs/client/contract/src/lib/module-loaders.ts",
+              "with": "frontend/libs/client/contract/src/lib/module-loaders.mfe.ts"
+            }
+          ]
         },
         "development": {
-          "buildTarget": "client:build:development"
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        },
+        "mfe": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true,
+          "fileReplacements": [
+            {
+              "replace": "frontend/apps/client/src/main.ts",
+              "with": "frontend/apps/client/src/main.mfe.ts"
+            },
+            {
+              "replace": "frontend/libs/client/contract/src/lib/module-loaders.ts",
+              "with": "frontend/libs/client/contract/src/lib/module-loaders.mfe.ts"
+            }
+          ]
         }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-original": {
+      "metadata": {
+        "description": "DEV SERVER (WEWNĘTRZNY): Standardowy serwer deweloperski Angular używany pod spodem przez Native Federation do serwowania hosta"
+      },
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "options": {
+        "port": 4200,
+        "publicHost": "http://localhost:4200",
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
+      },
+      "configurations": {
+        "production": { "buildTarget": "client:esbuild:production" },
+        "development": { "buildTarget": "client:esbuild:development" },
+        "mfe": { "buildTarget": "client:esbuild:mfe" }
       },
       "defaultConfiguration": "development"
     },

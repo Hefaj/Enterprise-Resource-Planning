@@ -10,58 +10,22 @@
   ],
   "targets": {
     "build": {
-      "executor": "@angular/build:application",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "options": {
-        "outputPath": "dist/frontend/apps/modules/task-management",
-        "index": "frontend/apps/modules/task-management/src/index.html",
-        "tsConfig": "frontend/apps/modules/task-management/tsconfig.app.json",
-        "assets": [
-          {
-            "glob": "**/*",
-            "input": "frontend/apps/modules/task-management/public"
-          },
-          {
-            "glob": "**/*",
-            "input": "node_modules/@taiga-ui/icons/src",
-            "output": "assets/taiga-ui/icons"
-          }
-        ],
-        "styles": [
-          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
-          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
-          "frontend/apps/modules/task-management/src/styles.css"
-        ],
-        "browser": "frontend/apps/modules/task-management/src/main.ts"
+      "metadata": {
+        "description": "PRODUKCJA/MFE: Buduje moduł z użyciem Native Federation (generuje remoteEntry.json i manifest)"
       },
+      "executor": "@angular-architects/native-federation:build",
+      "options": { "cacheExternalArtifacts": true },
       "configurations": {
-        "production": {
-          "budgets": [
-            {
-              "type": "initial",
-              "maximumWarning": "1mb",
-              "maximumError": "2mb"
-            },
-            {
-              "type": "anyComponentStyle",
-              "maximumWarning": "4kb",
-              "maximumError": "8kb"
-            }
-          ],
-          "outputHashing": "all"
-        },
-        "development": {
-          "optimization": false,
-          "extractLicenses": false,
-          "sourceMap": true,
-          "namedChunks": true
-        }
+        "production": { "target": "task-management:esbuild:production" },
+        "development": { "target": "task-management:esbuild:development", "dev": true },
+        "mfe": { "target": "task-management:esbuild:mfe", "dev": true }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
+      "metadata": {
+        "description": "MONOLIT (DEV): Uruchamia remote jako zwykłą aplikację na porcie modułu (bez Native Federation)"
+      },
       "continuous": true,
       "executor": "@angular-devkit/build-angular:dev-server",
       "options": {
@@ -72,12 +36,112 @@
         }
       },
       "configurations": {
+        "production": { "buildTarget": "task-management:build:production" },
+        "development": { "buildTarget": "task-management:esbuild:development" }
+      },
+      "defaultConfiguration": "development"
+    },
+    "serve-mfe": {
+      "metadata": {
+        "description": "Uruchamia równolegle ten remote (MFE) oraz hosta (client)"
+      },
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run task-management:serve-mfe-remote",
+          "nx run client:serve-mfe"
+        ],
+        "parallel": true
+      }
+    },
+    "serve-mfe-remote": {
+      "metadata": {
+        "description": "Uruchamia wyłącznie ten remote jako mikrofrontend (bez hosta)"
+      },
+      "executor": "@angular-architects/native-federation:build",
+      "options": {
+        "target": "task-management:serve-original:mfe",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 4205
+      }
+    },
+    "esbuild": {
+      "metadata": {
+        "description": "DEV/MONOLIT BUILD: Buduje moduł natywnym esbuildem jako monolityczną aplikację Angular (bez federacji)"
+      },
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/frontend/apps/modules/task-management",
+        "index": "frontend/apps/modules/task-management/src/index.html",
+        "tsConfig": "frontend/apps/modules/task-management/tsconfig.app.json",
+        "assets": [
+          { "glob": "**/*", "input": "frontend/apps/modules/task-management/public" },
+          { "glob": "**/*", "input": "node_modules/@taiga-ui/icons/src", "output": "assets/taiga-ui/icons" }
+        ],
+        "styles": [
+          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
+          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+          "frontend/apps/modules/task-management/src/styles.css"
+        ],
+        "polyfills": ["es-module-shims"],
+        "browser": "frontend/apps/modules/task-management/src/main.ts"
+      },
+      "configurations": {
         "production": {
-          "buildTarget": "task-management:build:production"
+          "budgets": [
+            { "type": "initial", "maximumWarning": "1mb", "maximumError": "2mb" },
+            { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "frontend/apps/modules/task-management/src/main.ts",
+              "with": "frontend/apps/modules/task-management/src/main.mfe.ts"
+            }
+          ]
         },
         "development": {
-          "buildTarget": "task-management:build:development"
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        },
+        "mfe": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true,
+          "fileReplacements": [
+            {
+              "replace": "frontend/apps/modules/task-management/src/main.ts",
+              "with": "frontend/apps/modules/task-management/src/main.mfe.ts"
+            }
+          ]
         }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-original": {
+      "metadata": {
+        "description": "DEV SERVER (WEWNĘTRZNY): Standardowy serwer deweloperski Angular używany pod spodem przez Native Federation do serwowania remota"
+      },
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "options": {
+        "port": 4205,
+        "publicHost": "http://localhost:4205",
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
+      },
+      "configurations": {
+        "production": { "buildTarget": "task-management:esbuild:production" },
+        "development": { "buildTarget": "task-management:esbuild:development" },
+        "mfe": { "buildTarget": "task-management:esbuild:mfe" }
       },
       "defaultConfiguration": "development"
     },

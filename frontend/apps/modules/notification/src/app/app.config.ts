@@ -6,7 +6,10 @@ import { provideRemoteDevSupport } from '@erp/shared/ui';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRemoteDevSupport(),
+    provideRemoteDevSupport({
+      modulePrefix: 'notification',
+      contractLoader: () => import('@erp/notification/contract'),
+    }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
     { provide: API_BASE_URL, useValue: 'http://localhost:5250' },

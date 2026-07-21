@@ -2,11 +2,13 @@
 trigger: manual
 ---
 
-# Przepis: Nowy moduł — Część 2: Biblioteki, integracja i weryfikacja
+# Przepis: Nowy moduł — Część 2: Biblioteki, integracja i weryfikacja (Architektura Hybrydowa Monolit / MFE)
 
-> **Część 1**: `nowy-modul-1-generacja.md` — parametry, komendy NX, pliki aplikacji.
+> **Część 1**: `nowy-modul-1-generacja.md` — parametry wejściowe, komendy NX, konfiguracja targetów hybrydowych `project.json`, `main.ts` i `main.mfe.ts`.
 
-## Krok 4: Uzupełnij pliki bibliotek
+---
+
+## Krok 4: Uzupełnij pliki bibliotek (`libs/modules/MODULE_NAME/`)
 
 ### 4.1 Feature — Pierwszy komponent strony (Page Component)
 
@@ -35,9 +37,12 @@ Plik: `frontend/libs/modules/MODULE_NAME/feature/src/index.ts`
 
 ```ts
 export * from './lib/MODULE_NAME.component';
+export * from './lib/translation';
 ```
 
-### 4.2 Contract — Routes i Menu
+---
+
+### 4.2 Contract — Routes, Menu i Modale ⭐ Eksportowane przez Native Federation
 
 Plik: `frontend/libs/modules/MODULE_NAME/contract/src/lib/entry.routes.ts`
 
@@ -64,7 +69,6 @@ export const remoteRoutes: Route[] = [
   },
 ];
 ```
-```
 
 Plik: `frontend/libs/modules/MODULE_NAME/contract/src/lib/entry.menu.ts`
 
@@ -85,15 +89,15 @@ Plik: `frontend/libs/modules/MODULE_NAME/contract/src/lib/entry.modals.ts`
 ```ts
 /**
  * Identyfikatory modali tego modułu.
- * Służy do budowania globalnej mapy modalId → modulePrefix w ErpModalService.
+ * Służą do budowania globalnej mapy modalId → modulePrefix w ErpModalService podczas startu aplikacji.
  */
 export const remoteModalIds: string[] = [
-  // Dodaj stałe ID modali z @erp/MODULE_NAME/util
+  // Dodaj stałe ID modali eksportowane z @erp/MODULE_NAME/util
 ];
 
 /**
- * Asynchronicznie ładuje i zwraca tokeny DI definicji modali tego modułu.
- * Używana przez ErpModalService do lazy loadingu.
+ * Asynchronicznie ładuje i zwraca definicje komponentów/builderów modali tego modułu.
+ * Wywoływana przez ErpModalService przy lazy loadingu dialogów.
  */
 export async function registerModals(): Promise<any[]> {
   // const { MyModalDefinition } = await import('@erp/MODULE_NAME/feature');
@@ -102,13 +106,12 @@ export async function registerModals(): Promise<any[]> {
 }
 
 /**
- * Asynchronicznie ładuje providery tłumaczeń dla modalu.
- * Wywoływana przez ErpModalService przy lazy loadingu modalu z tego remota.
+ * Asynchronicznie ładuje providery tłumaczeń dla modali z tego remota.
+ * W architekturze MFE ErpModalService automatycznie wstrzykuje te providery do child injectora dialogu.
  */
 export async function getModalProviders(): Promise<any[]> {
-  // const { provideMODULE_NAMETranslations } = await import('@erp/MODULE_NAME/feature');
-  // return provideMODULE_NAMETranslations();
-  return [];
+  const { provideMODULE_NAMETranslations } = await import('@erp/MODULE_NAME/feature');
+  return provideMODULE_NAMETranslations();
 }
 ```
 
@@ -116,15 +119,15 @@ Plik: `frontend/libs/modules/MODULE_NAME/contract/src/index.ts`
 
 ```ts
 export * from './lib/entry.menu';
-
 export * from './lib/entry.routes';
-
 export { registerModals, remoteModalIds, getModalProviders } from './lib/entry.modals';
 ```
 
+---
+
 ### 4.3 Data-Access, UI, Util
 
-Upewnij się, że `src/index.ts` każdej biblioteki istnieje (może być pusty):
+Upewnij się, że plik `src/index.ts` każdej z pozostałych bibliotek istnieje (może być na start pusty lub eksportować podstawowe typy):
 
 ```ts
 // frontend/libs/modules/MODULE_NAME/data-access/src/index.ts
@@ -134,60 +137,120 @@ Upewnij się, że `src/index.ts` każdej biblioteki istnieje (może być pusty):
 
 ---
 
-## Krok 5: Zarejestruj moduł w aplikacji Client (Host)
+### 4.4 Konfiguracja Tłumaczeń (Transloco + Generator) ⭐ `RULE[tlumaczenia.md]`
+
+Wszystkie teksty widoczne dla użytkownika w nowym module muszą korzystać z typowanych kluczy Transloco.
+
+1. Utwórz strukturę katalogów `translation/` wewnątrz biblioteki `feature`:
+   ```
+   frontend/libs/modules/MODULE_NAME/feature/src/lib/translation/
+   ├── index.ts
+   ├── pl-PL.json
+   └── en-US.json
+   ```
+
+2. Plik `pl-PL.json`:
+   ```json
+   {
+     "dashboard": {
+       "title": "MODULE_LABEL"
+     }
+   }
+   ```
+
+3. Plik `en-US.json`:
+   ```json
+   {
+     "dashboard": {
+       "title": "MODULE_LABEL"
+     }
+   }
+   ```
+
+4. Plik `index.ts` (rejestracja scope'u tłumaczeń modułu wraz ze współdzielonym scope'em `shared`):
+   ```ts
+   import { provideTranslocoScope } from '@jsverse/transloco';
+
+   export function provideMODULE_NAMETranslations() {
+     return [
+       provideTranslocoScope({
+         scope: 'MODULE_NAME',
+         loader: {
+           en: () => import('./en-US.json'),
+           pl: () => import('./pl-PL.json'),
+         },
+       }),
+       provideTranslocoScope('shared'),
+     ];
+   }
+   ```
+
+5. **Wygeneruj typowane klucze (`keys.ts`)**:
+   Z poziomu głównego katalogu monorepo uruchom generator tłumaczeń:
+   ```bash
+   pnpm translate:keys
+   ```
+   Skrypt przeskanuje repozytorium i wygeneruje plik `keys.ts` (`MODULE_NAME_KEYS`) w katalogu `translation/`.
+
+---
+
+## Krok 5: Zarejestruj moduł w aplikacji Client (Host) ⭐ Rejestracja Hybrydowa
 
 ### 5.1 Manifest — `frontend/apps/client/public/module-federation.manifest.json`
 
-Dodaj wpis (klucz to nazwa remota, wartość to URL `remoteEntry.json` — Native Federation):
+Dodaj wpis wskazujący na URL pliku `remoteEntry.json` remota (używany w trybie MFE / `production`):
 
 ```json
 "MODULE_NAME": "http://localhost:PORT/remoteEntry.json"
 ```
 
-> **UWAGA**: Używamy `remoteEntry.json` (Native Federation), nie `mf-manifest.json` (Webpack Module Federation).
+### 5.2 Loader — `frontend/libs/client/contract/src/lib/module-loaders.ts` ⭐ Tryb Monolit (DEV)
 
-### 5.2 Routing — `frontend/libs/client/contract/src/lib/app.routes.ts`
+W trybie Monolitu host ładuje kontrakty bezpośrednio przez statyczne importy ESM. Dodaj nowy wpis do mapy `MODULE_LOADERS`:
 
-Dodaj nowy `path` w tablicy `children` (wewnątrz route'a z `canActivate: [erpAuthGuard]`).
+```ts
+export const MODULE_LOADERS: Record<string, () => Promise<any>> = {
+  // ...istniejące moduły...
+  'MODULE_NAME': () => import('@erp/MODULE_NAME/contract'),
+};
+```
 
-**Wzorzec z cache (zapobiega deadlock przy podwójnym ładowaniu kontraktu):**
+> **UWAGA**: W pliku [`module-loaders.mfe.ts`](file:///c:/repos/Enterprise-Resource-Planning/frontend/libs/client/contract/src/lib/module-loaders.mfe.ts) (obsługującym tryb MFE) nie musisz nic dodawać — funkcja `loadModuleContract` dynamicznie wywołuje `loadRemoteModule({ remoteName: modulePrefix, exposedModule: './contract' })` dla dowolnego zarejestrowanego prefiksu!
+
+### 5.3 Routing — `frontend/libs/client/contract/src/lib/app.routes.ts`
+
+Dodaj nową ścieżkę do tablicy `children` wewnątrz głównego layoutu. Używamy centralnej funkcji `loadModuleRoutes('MODULE_NAME')`:
 
 ```ts
 {
   path: 'MODULE_NAME',
-  loadChildren: () => {
-    const cached = getCachedRemoteRoutes('MODULE_NAME');
-    if (cached) return cached;
-    return loadRemoteModule({
-      remoteName: 'MODULE_NAME',
-      exposedModule: './contract',
-    }).then((m) => m.remoteRoutes);
-  },
+  loadChildren: () => loadModuleRoutes('MODULE_NAME'),
 },
 ```
 
-> **WAŻNE**: Funkcja `getCachedRemoteRoutes` pochodzi z `@erp/shared/data-access` i musi być zaimportowana na górze pliku. Mechanizm działa następująco:
-> - Podczas `STARTUP` (`APP_INITIALIZER`) kontrakt remota jest ładowany w celu pobrania menu — trasy są wtedy automatycznie zapisywane w cache przez `cacheRemoteRoutes('MODULE_NAME', module.remoteRoutes)` w `STARTUP.ts`.
-> - Kiedy router próbuje załadować trasy, znajduje gotowy cache i zwraca je synchronicznie — bez drugiego wywołania `loadRemoteModule`, które powodowałoby deadlock.
+### 5.4 Konfiguracja modułów — `frontend/libs/client/contract/src/lib/REMOTE_MODULES_CONFIG.ts`
 
-### 5.3 Konfiguracja modułów — `frontend/libs/client/contract/src/lib/REMOTE_MODULES_CONFIG.ts`
-
-Dodaj wpis do tablicy `REMOTE_MODULES_CONFIG`:
+Dodaj obiekt konfiguracji do tablicy `REMOTE_MODULES_CONFIG`:
 
 ```ts
 { id: 'MODULE_NAME', label: 'MODULE_LABEL', routePrefix: 'MODULE_NAME' },
 ```
 
-### 5.4 Konfiguracja API_BASE_URL — `frontend/apps/client/src/app/remote-api.providers.ts`
+> **Dlaczego to ważne?**
+> - W trakcie startu (`STARTUP.ts`) aplikacja automatycznie pobiera kontrakt remota za pomocą `loadModuleContract('MODULE_NAME')`.
+> - Rejestruje elementy menu w centralnym nawigatorze oraz identyfikatory modali (`remoteModalIds`) w `ErpModalService`.
+> - Zapisuje centralny loader (`registerContractLoader`), dzięki czemu otwieranie modali w trybie rozproszonym (MFE) działa bezbłędnie wraz z izolowanym wstrzykiwaniem tłumaczeń!
 
-Dodaj import tokenu i podaj go w tablicy `remoteApiProviders`, aby poprawnie konfigurować bazowy URL do endpointów BFF:
+### 5.5 Konfiguracja API_BASE_URL — `frontend/apps/client/src/app/remote-api.providers.ts`
+
+Dodaj import tokenu i zarejestruj bazowy URL do endpointów BFF (np. port 5250):
 
 ```ts
 import { API_BASE_URL as MODULE_NAME_API_BASE_URL } from '@erp/MODULE_NAME/data-access';
 
 export const remoteApiProviders: Provider[] = [
   // ...
-  { provide: MODULE_NAME_API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na odpowiedni port BFF dla tego modułu (np. 5250)
+  { provide: MODULE_NAME_API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' },
 ];
 ```
 
@@ -197,7 +260,7 @@ export const remoteApiProviders: Provider[] = [
 
 Plik: `eslint.config.mjs` (w katalogu głównym workspace)
 
-1. Dodaj nową regułę domenową w sekcji `depConstraints` (w bloku `--- 1. ZASADY DOMENOWE (SCOPE) ---`):
+Dodaj nową regułę domenową w bloku `--- 1. ZASADY DOMENOWE (SCOPE) ---` (przed regułą `scope:shared`):
 
 ```js
 {
@@ -206,23 +269,11 @@ Plik: `eslint.config.mjs` (w katalogu głównym workspace)
 },
 ```
 
-Umieść ją **przed** regułą `scope:shared`.
-
-2. Upewnij się, że w konfiguracji reguły `@nx/enforce-module-boundaries` w sekcji `allow` dodano regułę pozwalającą na importowanie pliku shared module federation bez wywoływania błędów lintera (`'^.*module-federation\\.shared$'`):
-
-```js
-allow: [
-  '^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$',
-  '^.*module-federation\\.shared$',
-  '@ngrx/.*'
-],
-```
-
 ---
 
 ## Krok 7: Aktualizuj `tsconfig.base.json`
 
-Dodaj aliasy w `compilerOptions.paths`:
+Upewnij się, że w `compilerOptions.paths` znajdują się poprawne aliasy TS:
 
 ```json
 "@erp/MODULE_NAME/contract": ["frontend/libs/modules/MODULE_NAME/contract/src/index.ts"],
@@ -232,62 +283,54 @@ Dodaj aliasy w `compilerOptions.paths`:
 "@erp/MODULE_NAME/util": ["frontend/libs/modules/MODULE_NAME/util/src/index.ts"]
 ```
 
-> **UWAGA**: Generator NX dodaje te wpisy automatycznie, ale często z krótkimi, niepoprawnymi nazwami (np. `"contract": [...]` zamiast `"@erp/MODULE_NAME/contract": [...]`).
-> **Musisz ręcznie zweryfikować te wpisy w `tsconfig.base.json`** i poprawić je na format z prefiksem `@erp/MODULE_NAME/`.
-> Dodatkowo generator aplikacji remote może dodać automatyczny alias `"MODULE_NAME/Routes"` — należy go bezwzględnie usunąć z `tsconfig.base.json`.
+> **UWAGA**: Generator NX automatycznie dodaje wpisy do `tsconfig.base.json`, ale często z krótkimi, błędnymi nazwami (np. `"contract": [...]` zamiast `"@erp/MODULE_NAME/contract": [...]`). **Musisz zweryfikować te wpisy i poprawić je na format z prefiksem `@erp/MODULE_NAME/`**. Dodatkowo usuń automatycznie dodany alias typu `"MODULE_NAME/Routes"`, jeśli się pojawił.
 
 ---
 
 ## Krok 8: Weryfikacja
 
-> **UWAGA**: Zanim uruchomisz komendy weryfikacji, zaleca się zresetować cache NX daemon za pomocą `npx nx reset`. Zapobiegnie to problemom typu "Could not find project MODULE_NAME" z powodu nieodświeżonego grafu projektów.
+Zanim uruchomisz komendy weryfikacji, **zresetuj cache NX daemon** (`npx nx reset`), aby graf projektów rozpoznał nowy moduł i jego aliasy.
 
 ```bash
 # 0. Reset cache NX
 npx nx reset
 
-# 1. Graph zależności
-npx nx graph
-
-# 2. Lint
+# 1. Sprawdź poprawność reguł ESLint
 npx nx lint MODULE_NAME
-npx nx lint MODULE_NAME-feature
 npx nx lint MODULE_NAME-contract
+npx nx lint MODULE_NAME-feature
 
-# 3. Build
-npx nx build MODULE_NAME
+# 2. Weryfikacja builda i uruchomienia w trybie MONOLIT (DEV)
+npx nx run client:esbuild:development
+# Lub odpal domyślny serwer dev monolitu:
+npx nx serve client
 
-# 4. Serve
-npx nx serve MODULE_NAME
+# 3. Weryfikacja builda w trybie MIKROFRONTENDÓW (PROD/MFE)
+npx nx run MODULE_NAME:build:production
+npx nx run client:build:production
 ```
 
 ---
 
-## Checklist
+## Checklist Końcowa
 
 - [ ] 5 bibliotek wygenerowanych (`contract`, `feature`, `ui`, `data-access`, `util`)
-- [ ] Aplikacja MFE w `frontend/apps/modules/MODULE_NAME`
-- [ ] **Usunięte** pliki Webpack MF (`module-federation.config.ts`, `webpack.config.ts`, `webpack.prod.config.ts`)
-- [ ] `federation.config.mjs` — Native Federation, `exposes: { './contract': '...' }`
-- [ ] `federation.config.mjs` — wewnętrzne biblioteki modułu (`@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util`) dodane do `skip` (wymagane dla Vite HMR)
-- [ ] `src/main.ts` (remote) — `initFederation()` **bez argumentu** + `import('./bootstrap')`
-- [ ] `bootstrap.ts` — importuje i uruchamia lokalny `AppComponent`
-- [ ] `app.component.ts` — stworzony lokalnie w aplikacji remote z `<tui-root>` i `<router-outlet>`
-- [ ] `styles.css` — zresetowane marginesy i ustawione `height: 100%` dla `tui-root`, `html`, `body` i selektora entry
-- [ ] Budżety produkcyjne w `project.json` remote zwiększone do `1mb` (warning) i `2mb` (error)
-- [ ] `app.config.ts` (remote) — rejestruje `provideRemoteDevSupport()` z `@erp/shared/ui`
-- [ ] `app.config.ts` (remote) — importuje `remoteRoutes` z `@erp/MODULE_NAME/contract`
-- [ ] Pierwszy komponent strony w `feature` (np. `MODULE_NAME.component.ts`) i jego export w `index.ts`
-- [ ] `entry.routes.ts`, `entry.menu.ts` i `entry.modals.ts` w contract (oraz ich poprawne eksporty w `index.ts` — w tym `getModalProviders`)
+- [ ] Aplikacja remote w `frontend/apps/modules/MODULE_NAME` z wyczyszczonymi plikami boilerplate i e2e
+- [ ] `project.json` (remote) — targety (`build`, `serve`, `serve-mfe`, `serve-mfe-remote`, `esbuild`, `serve-original`) skonfigurowane na port `PORT`
+- [ ] `federation.config.mjs` — eksponuje `./contract`, a wewnętrzne biblioteki (`@erp/MODULE_NAME/*`) są w sekcji `skip`
+- [ ] `src/main.ts` (`import('./bootstrap')`) oraz `src/main.mfe.ts` (`initFederation()`) podmieniane przez `fileReplacements`
+- [ ] `entry.routes.ts`, `entry.menu.ts` i `entry.modals.ts` (w tym `getModalProviders`) utworzone w `contract` i wyeksportowane w `index.ts`
+- [ ] Tłumaczenia Transloco utworzone w `feature/src/lib/translation/` i wygenerowane przez `pnpm translate:keys`
 - [ ] `module-federation.manifest.json` — wpis z URL `http://localhost:PORT/remoteEntry.json`
-- [ ] `app.routes.ts` (client) — nowy path z `getCachedRemoteRoutes` + fallback `loadRemoteModule`
-- [ ] `REMOTE_MODULES_CONFIG.ts` — nowy wpis (aktywuje ładowanie kontraktu i cachowanie tras w STARTUP)
-- [ ] `remote-api.providers.ts` — nowy `API_BASE_URL` dla tego modułu
-- [ ] `eslint.config.mjs` (root) — reguła `scope:MODULE_NAME`
-- [ ] `tsconfig.base.json` — 5 aliasów `@erp/MODULE_NAME/*`
-- [ ] `project.json` każdej biblioteki — poprawne tagi
-- [ ] Port unikatowy
+- [ ] `module-loaders.ts` — dodana funkcja importująca `@erp/MODULE_NAME/contract`
+- [ ] `app.routes.ts` (client) — dodany route z `loadChildren: () => loadModuleRoutes('MODULE_NAME')`
+- [ ] `REMOTE_MODULES_CONFIG.ts` — dodany obiekt z `routePrefix: 'MODULE_NAME'`
+- [ ] `remote-api.providers.ts` — zarejestrowany port BFF dla `API_BASE_URL` modułu
+- [ ] `eslint.config.mjs` — reguła `scope:MODULE_NAME`
+- [ ] `tsconfig.base.json` — 5 poprawnych aliasów `@erp/MODULE_NAME/*`
+- [ ] `npx nx lint MODULE_NAME` oraz buildy weryfikacyjne (`esbuild:development` i `build:production`) zakończone sukcesem
 
+---
 
 ## Mapa portów (aktualna)
 
@@ -299,4 +342,5 @@ npx nx serve MODULE_NAME
 | sales | 4203 |
 | dms | 4204 |
 | task-management | 4205 |
-| **nowy moduł** | **następny wolny (4206+)** |
+| notification | 4206 |
+| **nowy moduł** | **następny wolny (4207+)** |

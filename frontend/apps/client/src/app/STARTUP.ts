@@ -1,21 +1,8 @@
 import { inject } from '@angular/core';
-import { REMOTE_MODULES_CONFIG, RemoteModuleConfig } from '@erp/client/contract';
+import { REMOTE_MODULES_CONFIG, RemoteModuleConfig, loadModuleContract } from '@erp/client/contract';
 import { ErpNavRegistryService, ErpNavigationItem } from '@erp/shared/data-access';
 import { ErpModalService } from '@erp/shared/ui';
 import { AppSettingsService } from '@erp/client/util';
-
-/**
- * Rejestr dynamicznych loaderów kontraktów.
- * Umożliwia łatwą migrację między monolitem (import) a mikrofrontendem (loadRemoteModule).
- */
-const CONTRACT_LOADERS: Record<string, () => Promise<any>> = {
-  catalog: () => import('@erp/catalog/contract'),
-  inventory: () => import('@erp/inventory/contract'),
-  sales: () => import('@erp/sales/contract'),
-  dms: () => import('@erp/dms/contract'),
-  'task-management': () => import('@erp/task-management/contract'),
-  notification: () => import('@erp/notification/contract'),
-};
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
@@ -29,9 +16,9 @@ export async function STARTUP(): Promise<void> {
     route: 'dashbord',
   });
 
-  // Rejestracja loaderów w serwisie modali
-  for (const [prefix, loader] of Object.entries(CONTRACT_LOADERS)) {
-    modalService.registerContractLoader(prefix, loader);
+  // Rejestracja centralnych loaderów w serwisie modali (działa w trybie Monolit i w MFE)
+  for (const config of REMOTE_MODULES_CONFIG) {
+    modalService.registerContractLoader(config.routePrefix, () => loadModuleContract(config.routePrefix));
   }
 
   const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadContractDirect(config.routePrefix, config, modalService));
@@ -47,7 +34,7 @@ export async function STARTUP(): Promise<void> {
 interface EntryContractModule {
   remoteMenu?: ErpNavigationItem[];
   remoteModalIds?: string[];
-  remoteRoutes?: any[];
+  remoteRoutes?: unknown[];
 }
 
 async function loadContractDirect(
@@ -56,13 +43,11 @@ async function loadContractDirect(
   modalService: ErpModalService,
 ): Promise<ErpNavigationItem | null> {
   try {
-    const loader = CONTRACT_LOADERS[modulePrefix];
-    if (!loader) {
-      console.warn(`[STARTUP] Brak rejestracji loadera kontraktu dla ${modulePrefix}`);
+    const module = (await loadModuleContract(modulePrefix)) as EntryContractModule;
+    if (!module) {
+      console.warn(`[STARTUP] Brak kontraktu dla ${modulePrefix}`);
       return null;
     }
-
-    const module = (await loader()) as EntryContractModule;
 
     // Rejestruj mapowanie modalId → modulePrefix (lekkie, tylko stringi)
     if (module?.remoteModalIds) {

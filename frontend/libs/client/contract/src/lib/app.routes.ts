@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Route } from '@angular/router';
 import { erpAuthGuard, erpGuestGuard } from '@erp/shared/auth';
+import { loadModuleRoutes } from './module-loaders';
 
 export const appRoutes: Route[] = [
   {
@@ -29,27 +30,27 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'sales',
-        loadChildren: () => import('@erp/sales/contract').then((m) => m.remoteRoutes),
+        loadChildren: () => loadModuleRoutes('sales'),
       },
       {
         path: 'inventory',
-        loadChildren: () => import('@erp/inventory/contract').then((m) => m.remoteRoutes),
+        loadChildren: () => loadModuleRoutes('inventory'),
       },
       {
         path: 'catalog',
-        loadChildren: () => import('@erp/catalog/contract').then((m) => m.remoteRoutes),
+        loadChildren: () => loadModuleRoutes('catalog'),
       },
       {
         path: 'dms',
-        loadChildren: () => import('@erp/dms/contract').then((m) => m.remoteRoutes),
+        loadChildren: () => loadModuleRoutes('dms'),
       },
       {
         path: 'task-management',
-        loadChildren: () => import('@erp/task-management/contract').then((m) => m.remoteRoutes),
+        loadChildren: () => loadModuleRoutes('task-management'),
       },
       {
         path: 'notification',
-        loadChildren: () => import('@erp/notification/contract').then((m) => m.remoteRoutes),
+        loadChildren: () => loadModuleRoutes('notification'),
       },
     ],
   },

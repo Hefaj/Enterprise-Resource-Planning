@@ -5,7 +5,10 @@ import { provideRemoteDevSupport } from '@erp/shared/ui';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRemoteDevSupport(),
+    provideRemoteDevSupport({
+      modulePrefix: 'sales',
+      contractLoader: () => import('@erp/sales/contract'),
+    }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
   ],

@@ -178,7 +178,7 @@ export class ErpActiveZoneExporter {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      // background: var(--tui-background-base);
+      /* background: var(--tui-background-base); */
       border: 1px solid var(--tui-border-normal);
       border-radius: var(--tui-radius-m);
       padding: 0.5rem;

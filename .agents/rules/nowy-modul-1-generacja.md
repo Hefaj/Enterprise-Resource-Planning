@@ -2,9 +2,9 @@
 trigger: manual
 ---
 
-# Przepis: Nowy moduł — Część 1: Generacja i konfiguracja aplikacji
+# Przepis: Nowy moduł — Część 1: Generacja i konfiguracja aplikacji (Architektura Hybrydowa Monolit / MFE)
 
-> **Część 2**: `nowy-modul-2-integracja.md` — pliki bibliotek, rejestracja w Client, ESLint, tsconfig, weryfikacja.
+> **Część 2**: `nowy-modul-2-integracja.md` — pliki bibliotek, tłumaczenia Transloco, rejestracja w Client (module-loaders, manifest, routing), ESLint, tsconfig, weryfikacja.
 
 ## Parametry wejściowe
 
@@ -23,44 +23,44 @@ trigger: manual
 | App path | `frontend/apps/modules/MODULE_NAME` | `frontend/apps/modules/warehouse` |
 | Lib path | `frontend/libs/modules/MODULE_NAME` | `frontend/libs/modules/warehouse` |
 | Selektor entry | `erp-MODULE_NAME-entry` | `erp-warehouse-entry` |
-| Klasa entry | `RemoteEntry` | `RemoteEntry` |
+| Klasa entry | `AppComponent` | `AppComponent` |
 
 ---
 
 ## Krok 1: Wygeneruj biblioteki (5 warstw)
 
-Generuj z katalogu **root workspace** (tam gdzie `nx.json`). Każdy moduł ma 5 bibliotek:
+Generuj z katalogu **root workspace** (tam gdzie `nx.json`). Każdy moduł składa się z 5 bibliotek, a zależności między nimi są wymuszane przez ESLint (`@nx/enforce-module-boundaries`):
 
 ```bash
-# 1. Contract
+# 1. Contract (routing, menu, modale — eksponowane przez Native Federation)
 npx nx generate @nx/angular:library \
   --name=contract \
   --directory=frontend/libs/modules/MODULE_NAME/contract \
   --tags="scope:MODULE_NAME,type:contract" \
   --prefix=erp --standalone --skipModule --no-interactive
 
-# 2. Feature
+# 2. Feature (smart components, logika biznesowa, definicje modali)
 npx nx generate @nx/angular:library \
   --name=feature \
   --directory=frontend/libs/modules/MODULE_NAME/feature \
   --tags="scope:MODULE_NAME,type:feature" \
   --prefix=erp --standalone --skipModule --no-interactive
 
-# 3. UI
+# 3. UI (prezentacyjne / dumb components Taiga UI)
 npx nx generate @nx/angular:library \
   --name=ui \
   --directory=frontend/libs/modules/MODULE_NAME/ui \
   --tags="scope:MODULE_NAME,type:ui" \
   --prefix=erp --standalone --skipModule --no-interactive
 
-# 4. Data-Access
+# 4. Data-Access (serwisy HTTP API Clients, Signal Stores)
 npx nx generate @nx/angular:library \
   --name=data-access \
   --directory=frontend/libs/modules/MODULE_NAME/data-access \
   --tags="scope:MODULE_NAME,type:data-access" \
   --prefix=erp --standalone --skipModule --no-interactive
 
-# 5. Util
+# 5. Util (funkcje pomocnicze, interfejsy, modele widokowe, stałe)
 npx nx generate @nx/angular:library \
   --name=util \
   --directory=frontend/libs/modules/MODULE_NAME/util \
@@ -68,7 +68,7 @@ npx nx generate @nx/angular:library \
   --prefix=erp --standalone --skipModule --no-interactive
 ```
 
-> **UWAGA**: Sprawdź `project.json` każdej biblioteki — `name` powinno być `MODULE_NAME-WARSTWA` (np. `warehouse-feature`). Popraw ręcznie jeśli trzeba.
+> **UWAGA**: Sprawdź `project.json` każdej wygenerowanej biblioteki — pole `name` powinno mieć format `MODULE_NAME-WARSTWA` (np. `warehouse-feature`). Popraw ręcznie, jeśli generator nadał inną nazwę.
 
 ---
 
@@ -83,11 +83,9 @@ npx nx generate @nx/angular:remote \
   --prefix=app --standalone --no-interactive
 ```
 
-> Jeśli `@nx/angular:remote` nie działa — wygeneruj zwykłą aplikację i skonfiguruj MF ręcznie (Krok 3).
-
 ### Krok 2.1: Czyszczenie kodu boilerplate i e2e
 
-Generator `@nx/angular:remote` tworzy nieużywane lokalne pliki routingu i e2e. Ponieważ cała logika modułu jest przechowywana w dedykowanych bibliotekach (`contract`, `feature` itp.), musisz je usunąć, aby zachować czystość repozytorium:
+Generator `@nx/angular:remote` tworzy nieużywane lokalne pliki routingu i e2e. Ponieważ cała logika modułu jest przechowywana w dedykowanych bibliotekach (`contract`, `feature` itp.), musisz je usunąć:
 
 ```bash
 # 1. Usuń wygenerowany projekt e2e (nieużywany w monorepo)
@@ -107,59 +105,95 @@ rm -f frontend/apps/modules/MODULE_NAME/module-federation.config.ts \
 
 ## Krok 3: Skonfiguruj pliki aplikacji
 
-Sprawdź i dostosuj pliki w `frontend/apps/modules/MODULE_NAME/`:
+W naszej hybrydowej architekturze aplikacja remote musi obsługiwać zarówno bezpośrednie serwowanie w trybie **Monolitu na dev (`development`)** jak i serwowanie jako niezależne **Mikrofrontendy (`production` / `mfe`)**.
 
-### 3.1 `project.json`
+Dostosuj pliki w `frontend/apps/modules/MODULE_NAME/`:
 
-Kluczowe pola do zweryfikowania:
+### 3.1 `project.json` ⭐ Targety Hybrydowe (`build`, `serve`, `serve-mfe`, `esbuild`, `serve-original`)
+
+Kluczowe elementy konfiguracji:
 - `"name"` = `"MODULE_NAME"`, `"tags"` = `["scope:MODULE_NAME", "type:app"]`
-- W target `serve`: `"target"` = `"MODULE_NAME:serve-original:development"`, `"port"` = `0` (port jest ustawiany w `serve-original`)
-- W target `serve-original`: `"port"` = `PORT`, `"publicHost"` = `"http://localhost:PORT"`
-- W target `esbuild`: `"outputPath"` = `"dist/frontend/apps/modules/MODULE_NAME"`
-- Executor build: `"executor"` = `"@angular-architects/native-federation:build"`
-- **Ustawienia Budżetów**: Zwiększ limity budżetów w konfiguracji `production`:
-  ```json
-  "budgets": [
-    {
-      "type": "initial",
-      "maximumWarning": "1mb",
-      "maximumError": "2mb"
-    },
-    ...
-  ]
-  ```
+- Target `"build"`: używa `@angular-architects/native-federation:build` (`production` / `mfe`).
+- Target `"serve"`: używa `@angular-devkit/build-angular:dev-server` z `buildTarget: "MODULE_NAME:esbuild:development"` (czysty dev-server monolitu/standalone na porcie `PORT` z nagłówkami CORS).
+- Target `"serve-mfe"`: używa `nx:run-commands` do równoległego uruchomienia remota (`MODULE_NAME:serve-mfe-remote`) oraz hosta (`client:serve-mfe`).
+- Target `"serve-mfe-remote"`: używa `@angular-architects/native-federation:build` z `target: "MODULE_NAME:serve-original:mfe"` (serwowanie remota w trybie mikrofrontendu na porcie `PORT`).
+- Target `"esbuild"`: czysty `@angular/build:application`. W konfiguracjach `production` oraz `mfe` zawiera sekcję `"fileReplacements"` podmieniającą wejście na `main.mfe.ts`.
+- Target `"serve-original"`: `@nx/angular:dev-server` na porcie `PORT` z nagłówkami CORS (`Access-Control-Allow-Origin: *`).
 
-Wzorcowy `project.json` (skopiuj i dostosuj z innego modułu, np. `catalog`):
+Wzorcowy `project.json`:
 
 ```json
 {
   "name": "MODULE_NAME",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "frontend/apps/modules/MODULE_NAME/src",
   "tags": ["scope:MODULE_NAME", "type:app"],
   "targets": {
     "build": {
+      "metadata": {
+        "description": "PRODUKCJA/MFE: Buduje moduł z użyciem Native Federation (generuje remoteEntry.json i manifest)"
+      },
       "executor": "@angular-architects/native-federation:build",
       "options": { "cacheExternalArtifacts": true },
       "configurations": {
         "production": { "target": "MODULE_NAME:esbuild:production" },
-        "development": { "target": "MODULE_NAME:esbuild:development", "dev": true }
+        "development": { "target": "MODULE_NAME:esbuild:development", "dev": true },
+        "mfe": { "target": "MODULE_NAME:esbuild:mfe", "dev": true }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
+      "metadata": {
+        "description": "MONOLIT (DEV): Uruchamia remote jako zwykłą aplikację na porcie modułu (bez Native Federation)"
+      },
+      "continuous": true,
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "options": {
+        "port": PORT,
+        "publicHost": "http://localhost:PORT",
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
+      },
+      "configurations": {
+        "production": { "buildTarget": "MODULE_NAME:build:production" },
+        "development": { "buildTarget": "MODULE_NAME:esbuild:development" }
+      },
+      "defaultConfiguration": "development"
+    },
+    "serve-mfe": {
+      "metadata": {
+        "description": "Uruchamia równolegle ten remote (MFE) oraz hosta (client)"
+      },
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run MODULE_NAME:serve-mfe-remote",
+          "nx run client:serve-mfe"
+        ],
+        "parallel": true
+      }
+    },
+    "serve-mfe-remote": {
+      "metadata": {
+        "description": "Uruchamia wyłącznie ten remote jako mikrofrontend (bez hosta)"
+      },
       "executor": "@angular-architects/native-federation:build",
       "options": {
-        "target": "MODULE_NAME:serve-original:development",
+        "target": "MODULE_NAME:serve-original:mfe",
         "rebuildDelay": 500,
         "cacheExternalArtifacts": true,
         "dev": true,
         "devServer": true,
-        "port": 0
+        "port": PORT
       }
     },
     "esbuild": {
+      "metadata": {
+        "description": "DEV/MONOLIT BUILD: Buduje moduł natywnym esbuildem jako monolityczną aplikację Angular (bez federacji)"
+      },
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -184,38 +218,80 @@ Wzorcowy `project.json` (skopiuj i dostosuj z innego modułu, np. `catalog`):
             { "type": "initial", "maximumWarning": "1mb", "maximumError": "2mb" },
             { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "frontend/apps/modules/MODULE_NAME/src/main.ts",
+              "with": "frontend/apps/modules/MODULE_NAME/src/main.mfe.ts"
+            }
+          ]
         },
         "development": {
           "optimization": false,
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true
+        },
+        "mfe": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true,
+          "fileReplacements": [
+            {
+              "replace": "frontend/apps/modules/MODULE_NAME/src/main.ts",
+              "with": "frontend/apps/modules/MODULE_NAME/src/main.mfe.ts"
+            }
+          ]
         }
       },
       "defaultConfiguration": "production"
     },
     "serve-original": {
+      "metadata": {
+        "description": "DEV SERVER (WEWNĘTRZNY): Standardowy serwer deweloperski Angular używany pod spodem przez Native Federation do serwowania remota"
+      },
       "continuous": true,
       "executor": "@nx/angular:dev-server",
       "options": {
         "port": PORT,
         "publicHost": "http://localhost:PORT",
-        "headers": { "Access-Control-Allow-Origin": "*" }
+        "headers": {
+          "Access-Control-Allow-Origin": "*"
+        }
       },
       "configurations": {
         "production": { "buildTarget": "MODULE_NAME:esbuild:production" },
-        "development": { "buildTarget": "MODULE_NAME:esbuild:development" }
+        "development": { "buildTarget": "MODULE_NAME:esbuild:development" },
+        "mfe": { "buildTarget": "MODULE_NAME:esbuild:mfe" }
       },
       "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "MODULE_NAME:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../../../coverage/frontend/apps/modules/MODULE_NAME"
+      }
     }
   }
 }
 ```
 
-### 3.2 `federation.config.mjs` ⭐ Native Federation
+### 3.2 `federation.config.mjs` ⭐ Native Federation z zachowaniem Vite HMR
 
-> **WAŻNE**: Używamy **Native Federation** (`@angular-architects/native-federation`), a nie Webpack Module Federation. Plik `federation.config.mjs` zastępuje `module-federation.config.ts`.
+Używamy **Native Federation** (`@angular-architects/native-federation`). Plik `federation.config.mjs` eksponuje wyłącznie punkt wejściowy biblioteki `contract` (`./contract`).
+
+> **WAŻNE — Vite HMR**: Wewnętrzne biblioteki modułu (`@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util`) **muszą** być umieszczone w tablicy `skip`. Bez tego `shareAll()` rejestruje je jako shared modules — Native Federation pre-bundluje je do zewnętrznych chunków, które nie podlegają odświeżaniu Vite HMR na dev-serwerze bez restartu.
 
 ```js
 import { withNativeFederation, shareAll } from '@angular-architects/native-federation/config';
@@ -233,6 +309,7 @@ export default withNativeFederation({
       {
         overrides: {
           '@angular/core': { singleton: true, strictVersion: true, requiredVersion: 'auto', build: 'package', includeSecondaries: { keepAll: true } },
+          '@angular/common/locales/pl': { singleton: true, strictVersion: true, requiredVersion: 'auto', build: 'package' },
         },
       },
     ),
@@ -244,12 +321,11 @@ export default withNativeFederation({
     'rxjs/testing',
     'rxjs/webSocket',
     // Skip module-internal libs so they are bundled inline and support Vite HMR
-    // (te biblioteki są używane tylko przez ten remote — nie muszą być shared)
     '@erp/MODULE_NAME/feature',
     '@erp/MODULE_NAME/data-access',
     '@erp/MODULE_NAME/ui',
     '@erp/MODULE_NAME/util',
-    // Add further packages you don't need at runtime
+    // Skip external libs not shared at runtime
     '@ng-web-apis/common',
     '@ng-web-apis/platform',
     '@ng-web-apis/screen-orientation',
@@ -270,19 +346,29 @@ export default withNativeFederation({
 });
 ```
 
-> **WAŻNE — HMR**: Wewnętrzne biblioteki modułu (`@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util`) **muszą** być w tablicy `skip`. Bez tego `shareAll()` rejestruje je jako shared modules — Native Federation pre-bundluje je do osobnych plików, które nie podlegają Vite HMR. Zmiany w kodzie nie odświeżają się w przeglądarce bez restartu dev servera. Biblioteki `@erp/shared/*` natomiast **nie powinny** być skipowane, bo są współdzielone między hostem i remote'ami.
+### 3.3 `src/main.ts` (Monolit DEV) oraz `src/main.mfe.ts` (Mikrofrontend PROD/MFE) ⭐ Podwójny punkt wejściowy
 
-### 3.3 `src/main.ts` ⭐ Native Federation
+W systemie hybrydowym utrzymujemy dwa wejścia do aplikacji:
+
+#### `src/main.ts` — używany w trybie Monolitu (domyślny `development`)
+Nie ładuje manifestu ani nie inicjalizuje Native Federation. Bezpośrednio wywołuje `bootstrap.ts`:
 
 ```ts
+import('./bootstrap').catch((err) => console.error(err));
+```
+
+#### `src/main.mfe.ts` — używany w trybie Mikrofrontendów (`production` / `mfe` via `fileReplacements`)
+Inicjalizuje `initFederation()` bez argumentu (ponieważ remote serwuje jedynie `remoteEntry.json` i nie potrzebuje manifestu):
+
+```ts
+((window as unknown) as Record<string, unknown>)['ngDevMode'] =
+  ((window as unknown) as Record<string, unknown>)['ngDevMode'] ?? false;
 import { initFederation } from '@angular-architects/native-federation';
 
 initFederation()
   .then(() => import('./bootstrap'))
-  .catch((err) => console.error(err));
+  .catch((err: unknown) => console.error(err));
 ```
-
-> **UWAGA**: Remote nie podaje URL manifestu — wywołuje `initFederation()` bez argumentu. Manifest (`/module-federation.manifest.json`) jest używany tylko przez **host** (`client`).
 
 ### 3.4 `src/bootstrap.ts`
 
@@ -296,7 +382,7 @@ bootstrapApplication(AppComponent, appConfig).catch((err) => console.error(err))
 
 ### 3.5 `src/app/app.component.ts`
 
-Stwórz lokalny komponent `AppComponent` służący jako opakowanie dla widoków standalone w `<tui-root>` (wymagany przez Taiga UI):
+Lokalny komponent `AppComponent` służący jako opakowanie dla widoków standalone w `<tui-root>`:
 
 ```ts
 import { Component } from '@angular/core';
@@ -324,7 +410,7 @@ export class AppComponent {}
 
 ### 3.6 `src/app/app.config.ts`
 
-Używamy dostawcy `provideRemoteDevSupport()` z `@erp/shared/ui` do automatycznego zarejestrowania wymaganych paczek (Transloco, HttpClient, Taiga UI) w trybie standalone:
+Używamy dostawcy `provideRemoteDevSupport()` z `@erp/shared/ui` do automatycznej konfiguracji podstawowych usług (Transloco, HttpClient, Taiga UI) oraz automatycznej rejestracji modali modułu w `ErpModalService` przy samodzielnym uruchomieniu remota:
 
 ```ts
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
@@ -335,7 +421,10 @@ import { provideRemoteDevSupport } from '@erp/shared/ui';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRemoteDevSupport(),
+    provideRemoteDevSupport({
+      modulePrefix: 'MODULE_NAME',
+      contractLoader: () => import('@erp/MODULE_NAME/contract'),
+    }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
     { provide: API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na port BFF modułu (np. 5250)
@@ -344,8 +433,6 @@ export const appConfig: ApplicationConfig = {
 ```
 
 ### 3.7 `src/styles.css`
-
-Zresetuj marginesy oraz dodaj pełną wysokość, aby tui-root oraz strona standalone zajmowały cały ekran:
 
 ```css
 /* Reset domyślnych marginesów i pełna wysokość dla tui-root */
@@ -379,7 +466,7 @@ tui-root {
 </html>
 ```
 
-### 3.9 `eslint.config.mjs` (aplikacja — prefix `app`, import z `../../../../eslint.config.mjs`)
+### 3.9 `eslint.config.mjs` (w katalogu aplikacji)
 
 ```js
 import nx from '@nx/eslint-plugin';
@@ -402,7 +489,7 @@ export default [
 
 ### 3.10 `tsconfig.app.json`
 
-Ponieważ usunęliśmy wygenerowany plik `entry.routes.ts` z katalogu `remote-entry`, musisz wyczyścić pole `"files"` w konfiguracji tsconfig aplikacji i dostosować wersję docelową standardu ES (`"es2022"`):
+Ponieważ usunęliśmy wygenerowane pliki routingu i remote-entry, wyczyść pole `"files"` i dostosuj wersję standardu ES (`"es2022"`):
 
 ```json
 {
@@ -434,4 +521,4 @@ Ponieważ usunęliśmy wygenerowany plik `entry.routes.ts` z katalogu `remote-en
 
 ---
 
-**→ Przejdź do `nowy-modul-2-integracja.md`** — kroki 4–8.
+**→ Przejdź do `nowy-modul-2-integracja.md`** — kroki 4–8 (uzupełnienie bibliotek, tłumaczenia Transloco, rejestracja w Client i testy).

@@ -1,8 +1,9 @@
-import { Provider, Injectable, isDevMode, EnvironmentProviders } from '@angular/core';
+import { Provider, Injectable, isDevMode, EnvironmentProviders, inject, provideAppInitializer } from '@angular/core';
 import { provideTranslocoScope, Translation, TranslocoLoader, provideTransloco } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTaiga } from '@taiga-ui/core';
+import { ErpModalService } from '../atoms/erp-modal/erp-modal.service';
 
 export { SHARED_KEYS } from './keys';
 
@@ -24,8 +25,16 @@ export function provideSharedTranslations(): Provider {
   });
 }
 
-export function provideRemoteDevSupport(): (Provider | EnvironmentProviders)[] {
-  return [
+export interface RemoteDevSupportOptions {
+  modulePrefix?: string;
+  remoteModalIds?: string[];
+  registerModals?: () => Promise<any[]>;
+  getModalProviders?: () => Promise<any[]>;
+  contractLoader?: () => Promise<any>;
+}
+
+export function provideRemoteDevSupport(options?: RemoteDevSupportOptions): (Provider | EnvironmentProviders)[] {
+  const providers: (Provider | EnvironmentProviders)[] = [
     provideHttpClient(),
     provideTaiga(),
     provideTransloco({
@@ -39,5 +48,37 @@ export function provideRemoteDevSupport(): (Provider | EnvironmentProviders)[] {
     }),
     provideSharedTranslations(),
   ];
+
+  if (options?.modulePrefix) {
+    providers.push(
+      provideAppInitializer(async () => {
+        const modalService = inject(ErpModalService);
+        modalService.setDefaultDevModule(options.modulePrefix!);
+
+        if (options.contractLoader) {
+          modalService.registerContractLoader(options.modulePrefix!, options.contractLoader);
+          try {
+            const contract = await options.contractLoader();
+            if (contract?.remoteModalIds) {
+              modalService.registerModalIds(options.modulePrefix!, contract.remoteModalIds);
+            }
+          } catch (err) {
+            console.warn(`[RemoteDevSupport] Failed to load contract for "${options.modulePrefix}"`, err);
+          }
+        } else {
+          modalService.registerContractLoader(options.modulePrefix!, async () => ({
+            remoteModalIds: options.remoteModalIds ?? [],
+            registerModals: options.registerModals ?? (async () => []),
+            getModalProviders: options.getModalProviders ?? (async () => []),
+          }));
+          if (options.remoteModalIds) {
+            modalService.registerModalIds(options.modulePrefix!, options.remoteModalIds);
+          }
+        }
+      })
+    );
+  }
+
+  return providers;
 }
 

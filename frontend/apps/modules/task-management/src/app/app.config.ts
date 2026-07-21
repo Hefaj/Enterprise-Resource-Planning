@@ -5,7 +5,10 @@ import { provideRemoteDevSupport } from '@erp/shared/ui';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRemoteDevSupport(),
+    provideRemoteDevSupport({
+      modulePrefix: 'task-management',
+      contractLoader: () => import('@erp/task-management/contract'),
+    }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
   ],

@@ -5,13 +5,10 @@ import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpStepContentConfig, ErpStepContentElement, ErpGridAreasConfig, ErpFormFieldType } from './erp-step-content.types';
-// import { ErpSplitterBuilder } from '../../atoms/erp-splitter/erp-splitter.builder';
-// import { ErpCardBuilder } from '../../atoms/erp-card/erp-card.builder';
 import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
-// import { ErpSplitterComponent } from '../../atoms/erp-splitter/erp-splitter.component';
-// import { ErpCardComponent } from '../../atoms/erp-card/erp-card.component';
 import { ErpInputComponent } from '../../form/erp-input/erp-input.component';
 import { ErpSwitchComponent } from '../../form/erp-switch/erp-switch.component';
+
 import { ErpInputBuilder } from '../../form/erp-input/erp-input.builder';
 import { ErpSwitchBuilder } from '../../form/erp-switch/erp-switch.builder';
 import { ErpInputColorComponent } from '../../form/erp-input-color/erp-input-color.component';
@@ -231,50 +228,6 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
     return this;
   }
 
-  // /**
-  //  * Dodaje splitter budowany przez ErpSplitterBuilder.
-  //  * Wewnętrznie tworzy `ErpSplitterComponent` renderowany przez `ngComponentOutlet`.
-  //  *
-  //  * @param configure — Callback konfigurujący ErpSplitterBuilder
-  //  * @param options — Opcje layoutu: slot, colSpan, styleClass, style
-  //  *
-  //  * @example
-  //  * ```ts
-  //  * .addSplitter(sp => sp
-  //  *   .setLayout('horizontal')
-  //  *   .addPanel({ size: 40, component: ListComponent, config: { items } })
-  //  *   .addPanel({ size: 60, component: DetailComponent, config: { id } })
-  //  * , { slot: 'details' })
-  //  * ```
-  //  */
-  // public addSplitter(configure: (builder: ErpSplitterBuilder) => void, options?: ErpElementLayoutOptions): this {
-  //   const builder = new ErpSplitterBuilder();
-  //   configure(builder);
-  //   this.addComponent(
-  //     ErpSplitterComponent,
-  //     { config: builder.build() } as any,
-  //     options
-  //   );
-  //   return this;
-  // }
-
-  // /**
-  //  * Dodaje kartę budowaną przez ErpCardBuilder.
-  //  * Wewnętrznie tworzy `ErpCardComponent` renderowany przez `ngComponentOutlet`.
-  //  *
-  //  * @param configure — Callback konfigurujący ErpCardBuilder
-  //  * @param options — Opcje layoutu: slot, colSpan, styleClass, style
-  //  */
-  // public addCard(configure: (builder: ErpCardBuilder) => void, options?: ErpElementLayoutOptions): this {
-  //   const builder = new ErpCardBuilder();
-  //   configure(builder);
-  //   this.addComponent(
-  //     ErpCardComponent,
-  //     { config: builder.build() } as any,
-  //     options
-  //   );
-  //   return this;
-  // }
 
   /**
    * Dodaje pojedyncze, płaskie pole formularza z wbudowanym typem (text, select, datepicker itp.).

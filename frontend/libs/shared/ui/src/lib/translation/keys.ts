@@ -48,4 +48,9 @@ export const SHARED_KEYS = {
       loading: 'shared.settings.loading',
       reportIssue: 'shared.settings.reportIssue',
     },
+    inputPicker: {
+      empty: 'shared.inputPicker.empty',
+      selectedCount: 'shared.inputPicker.selectedCount',
+      loadingMore: 'shared.inputPicker.loadingMore',
+    },
   } as const;

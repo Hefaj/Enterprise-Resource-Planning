@@ -15,6 +15,7 @@ import { ErpInputColorComponent } from '../../form/erp-input-color/erp-input-col
 import { ErpInputColorBuilder } from '../../form/erp-input-color/erp-input-color.builder';
 import { ErpCheckboxComponent, ErpCheckboxBuilder } from '../../form/erp-checkbox';
 import { ErpInputNumberComponent, ErpInputNumberBuilder } from '../../form/erp-input-number';
+import { ErpInputPickerComponent, ErpInputPickerBuilder } from '../../form/erp-input-picker';
 
 /** Mapowanie typów pól formularza na odpowiadające im komponenty atomowe UI. */
 const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type<any>> = {
@@ -23,6 +24,7 @@ const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type
   switch: ErpSwitchComponent,
   color: ErpInputColorComponent,
   checkbox: ErpCheckboxComponent,
+  inputPicker: ErpInputPickerComponent,
 } as any;
 
 /** Mapowanie typów pól na odpowiadające im klasy Builderów */
@@ -32,6 +34,7 @@ export interface ErpFormFieldBuilderMap {
   switch: ErpSwitchBuilder;
   color: ErpInputColorBuilder;
   checkbox: ErpCheckboxBuilder;
+  inputPicker: ErpInputPickerBuilder;
 }
 
 /** Mapowanie typów pól na typy ich wartości */
@@ -41,6 +44,7 @@ export interface ErpFormFieldValueMap {
   switch: boolean;
   color: string;
   checkbox: boolean;
+  inputPicker: any;
 }
 
 /** Opcje dla pola formularza zawierające ustawienia layoutu oraz powiązań formularza */
@@ -65,6 +69,7 @@ const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFormFieldBuilderMap, new () =>
   switch: ErpSwitchBuilder,
   color: ErpInputColorBuilder,
   checkbox: ErpCheckboxBuilder,
+  inputPicker: ErpInputPickerBuilder,
 } as any;
 
 

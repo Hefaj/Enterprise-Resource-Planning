@@ -65,6 +65,42 @@
     [control]="negativeControl"
   />
 
+  <h4 class="text-lg font-semibold mt-4">Przykłady erp-input-picker</h4>
+
+  <erp-input-picker
+    [config]="singlePickerConfig"
+    [control]="singlePickerControl"
+  />
+
+  <erp-input-picker
+    [config]="multiPickerConfig"
+    [control]="multiPickerControl"
+  />
+
+  <h4 class="text-lg font-semibold mt-4">Przykłady erp-input-picker z wirtualizacją (10 000 elementów)</h4>
+
+  <erp-input-picker
+    [config]="virtualSinglePickerConfig"
+    [control]="virtualSinglePickerControl"
+  />
+
+  <erp-input-picker
+    [config]="virtualMultiPickerConfig"
+    [control]="virtualMultiPickerControl"
+  />
+
+  <h4 class="text-lg font-semibold mt-4">Przykłady erp-input-picker z paginacją asynchroniczną (search + get na 5000 pozycji)</h4>
+
+  <erp-input-picker
+    [config]="asyncSinglePickerConfig"
+    [control]="asyncSinglePickerControl"
+  />
+
+  <erp-input-picker
+    [config]="asyncMultiPickerConfig"
+    [control]="asyncMultiPickerControl"
+  />
+
   <erp-button
     [config]="submitBtnConfig"
   />
@@ -85,5 +121,11 @@
     <div>Integer Input: {{ integerControl.value }} (status: {{ integerControl.status }})</div>
     <div>Decimal Input: {{ decimalControl.value }} (status: {{ decimalControl.status }})</div>
     <div>Negative Input: {{ negativeControl.value }} (status: {{ negativeControl.status }})</div>
+    <div>Single Picker (Magazyn ID): {{ singlePickerControl.value }} (status: {{ singlePickerControl.status }})</div>
+    <div>Multi Picker (Kategorie IDs): {{ multiPickerControl.value?.join(', ') }} (status: {{ multiPickerControl.status }})</div>
+    <div>Virtual Single Picker (Produkt ID): {{ virtualSinglePickerControl.value }} (status: {{ virtualSinglePickerControl.status }})</div>
+    <div>Virtual Multi Picker (Produkty IDs): {{ virtualMultiPickerControl.value?.join(', ') }} (status: {{ virtualMultiPickerControl.status }})</div>
+    <div>Async Single Picker (Produkt UUID): {{ asyncSinglePickerControl.value }} (status: {{ asyncSinglePickerControl.status }})</div>
+    <div>Async Multi Picker (Produkty UUIDs): {{ asyncMultiPickerControl.value?.join(', ') }} (status: {{ asyncMultiPickerControl.status }})</div>
   </div>
 </div>

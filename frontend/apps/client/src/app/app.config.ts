@@ -41,6 +41,9 @@ export const appConfig: ApplicationConfig = {
         defaultLang: 'pl-PL' as AppLanguage,
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
+        missingHandler: {
+          logMissingKey: false,
+        },
       },
       loader: TranslocoInlineLoader,
     }),

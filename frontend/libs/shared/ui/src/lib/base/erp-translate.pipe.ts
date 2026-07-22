@@ -17,11 +17,11 @@ export class ErpTranslatePipe extends TranslocoPipe implements PipeTransform {
     super(service, providerScope, providerLang, cdr);
   }
 
-  override transform(value: Translatable | null | undefined): string {
+  override transform(value: Translatable | null | undefined, params?: any): string {
     if (!value) return '';
     if (typeof value === 'string') {
-      return super.transform(value);
+      return super.transform(value, params);
     }
-    return super.transform(value.key, value.params);
+    return super.transform(value.key, value.params || params);
   }
 }

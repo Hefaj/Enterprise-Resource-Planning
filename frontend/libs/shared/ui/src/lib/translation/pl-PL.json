@@ -2,7 +2,7 @@
   "table": {
     "search": "Szukaj...",
     "empty": "Brak danych do wyświetlenia",
-    "paginationReport": "Pokazuję {first} do {last} z {totalRecords} rekordów"
+    "paginationReport": "Pokazuję {{first}} do {{last}} z {{totalRecords}} rekordów"
   },
   "tabs": {
     "empty": "Brak zakładek do wyświetlenia",
@@ -42,5 +42,11 @@
     },
     "loading": "Wczytywanie...",
     "reportIssue": "Zgłoś problem"
+  },
+  "inputPicker": {
+    "empty": "Brak wyników",
+    "selectedCount": "Zaznaczone ({{count}})",
+    "loadingMore": "Ładowanie kolejnych pozycji..."
   }
 }
+

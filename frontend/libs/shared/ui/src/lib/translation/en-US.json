@@ -2,7 +2,7 @@
   "table": {
     "search": "Search...",
     "empty": "No data to display",
-    "paginationReport": "Showing {first} to {last} of {totalRecords} records"
+    "paginationReport": "Showing {{first}} to {{last}} of {{totalRecords}} records"
   },
   "tabs": {
     "empty": "No tabs to display",
@@ -42,5 +42,11 @@
     },
     "loading": "Loading...",
     "reportIssue": "Report issue"
+  },
+  "inputPicker": {
+    "empty": "No results",
+    "selectedCount": "Selected ({{count}})",
+    "loadingMore": "Loading more items..."
   }
 }
+

@@ -257,7 +257,7 @@ export class ErpTableSelectionCell {
           [style.width.px]="table.getTotalSize()"
         >
           <colgroup>
-            @for (col of table.getVisibleLeafColumns(); track col.id) {
+            @for (col of _getOrderedColumns(); track col.id) {
               <col [style.width.px]="col.getSize()" />
             }
           </colgroup>
@@ -269,7 +269,7 @@ export class ErpTableSelectionCell {
             >
               @for (headerGroup of table.getHeaderGroups(); track headerGroup.id) {
                 <tr>
-                  @for (header of headerGroup.headers; track header.id) {
+                  @for (header of _getOrderedHeaders(headerGroup); track header.id) {
                     @if (!header.isPlaceholder) {
                       <th
                         class="erp-table__header-cell relative p-3 text-sm font-semibold whitespace-nowrap select-none group"
@@ -414,7 +414,7 @@ export class ErpTableSelectionCell {
                     (click)="onRowClickEvent(row.original)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
                   >
-                    @for (cell of row.getVisibleCells(); track cell.id) {
+                    @for (cell of _getOrderedCells(row); track cell.id) {
                       <td 
                         class="erp-table__cell p-3 text-sm {{ $any(cell.column.columnDef.meta)?.['cellClass'] || '' }}"
                         [style.width.px]="cell.column.getSize()"
@@ -454,7 +454,7 @@ export class ErpTableSelectionCell {
                     (click)="onRowClickEvent(row.original)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
                   >
-                    @for (cell of row.getVisibleCells(); track cell.id) {
+                    @for (cell of _getOrderedCells(row); track cell.id) {
                       <td 
                         class="erp-table__cell p-3 text-sm {{ $any(cell.column.columnDef.meta)?.['cellClass'] || '' }}"
                         [style.width.px]="cell.column.getSize()"
@@ -485,7 +485,7 @@ export class ErpTableSelectionCell {
               <tfoot class="erp-table__footer bg-(--erp-table-header-bg) z-20 sticky bottom-[-1px]">
                 @for (footerGroup of table.getFooterGroups(); track footerGroup.id) {
                   <tr>
-                    @for (footer of footerGroup.headers; track footer.id) {
+                    @for (footer of _getOrderedHeaders(footerGroup); track footer.id) {
                       <td
                         class="erp-table__footer-cell relative p-3 border-t border-(--erp-table-border) text-sm font-semibold whitespace-nowrap"
                         [style.width.px]="footer.getSize()"
@@ -602,6 +602,29 @@ export class ErpTableComponent<T> {
     return rightCols.length > 0 ? rightCols[0].id : null;
   });
 
+  protected _getOrderedColumns() {
+    return [
+      ...this.table.getLeftVisibleLeafColumns(),
+      ...this.table.getCenterVisibleLeafColumns(),
+      ...this.table.getRightVisibleLeafColumns()
+    ];
+  }
+
+  protected _getOrderedHeaders(headerGroup: any) {
+    const left = headerGroup.headers.filter((h: any) => h.column.getIsPinned() === 'left');
+    const center = headerGroup.headers.filter((h: any) => !h.column.getIsPinned());
+    const right = headerGroup.headers.filter((h: any) => h.column.getIsPinned() === 'right');
+    return [...left, ...center, ...right];
+  }
+
+  protected _getOrderedCells(row: any) {
+    return [
+      ...row.getLeftVisibleCells(),
+      ...row.getCenterVisibleCells(),
+      ...row.getRightVisibleCells()
+    ];
+  }
+
   // Signals for Table State
   protected _sorting = signal<SortingState>([]);
   private _pagination = signal<PaginationState>({ pageIndex: 0, pageSize: 20 });
@@ -612,12 +635,14 @@ export class ErpTableComponent<T> {
   private _columnFilters = signal<ColumnFiltersState>([]);
   private _lastSelectedRowId = signal<string | null>(null);
   private _columnPinning = signal<ColumnPinningState>({ left: [], right: [] });
+  private _isInitialized = false;
 
   constructor() {
     // Initialize state from config if provided
     effect(() => {
-      const state = this.config().initialState;
-      if (state) {
+      const config = this.config();
+      const state = config.initialState;
+      if (state && !this._isInitialized) {
         untracked(() => {
           if (state.sorting) {
             this._sorting.set(state.sorting.map(s => ({ id: s.columnId, desc: s.direction === 'desc' })));
@@ -644,9 +669,9 @@ export class ErpTableComponent<T> {
       }
       
       // Default pagination if not set by state
-      if (!state?.pagination) {
+      if (!state?.pagination && !this._isInitialized) {
         untracked(() => {
-          const newSize = this.config().defaultPageSize ?? 20;
+          const newSize = config.defaultPageSize ?? 20;
           if (this._pagination().pageSize !== newSize) {
             this._pagination.update(p => ({ ...p, pageSize: newSize }));
           }
@@ -705,6 +730,8 @@ export class ErpTableComponent<T> {
         if (!state?.columnVisibility) this._columnVisibility.set(newVisibility);
         if (!state?.columnOrder) this._columnOrder.set(finalOrder);
         this._columnPinning.set(newPinning);
+        
+        this._isInitialized = true;
       });
     });
 
@@ -983,9 +1010,9 @@ export class ErpTableComponent<T> {
     overscan: 5,
   }));
 
-  // Column Menu Info for Toolbar
   protected _columnMenuInfo = computed(() => {
     const leafCols = this._flattenLeafColumns();
+    const order = this._columnOrder();
     
     const mapColumn = (colOrGroup: ErpColumnDef<any> | ErpColumnGroupDef<any>): any => {
       if (colOrGroup.id === '__selection') return null;
@@ -997,13 +1024,26 @@ export class ErpTableComponent<T> {
           
         if (children.length === 0) return null;
         
+        children.sort((a, b) => {
+          const aIdx = order.indexOf(a.id);
+          const bIdx = order.indexOf(b.id);
+          if (aIdx === -1) return 1;
+          if (bIdx === -1) return -1;
+          return aIdx - bIdx;
+        });
+        
         const visible = children.some((c: any) => c.visible);
+        
+        const allLeft = children.length > 0 && children.every((c: any) => c.pin === 'left');
+        const allRight = children.length > 0 && children.every((c: any) => c.pin === 'right');
+        const groupPin = allLeft ? 'left' : (allRight ? 'right' : false);
+
         return {
           id: colOrGroup.id,
           header: unwrapSignal(colOrGroup.header) as string,
           visible,
           disableHiding: children.every((c: any) => c.disableHiding),
-          pin: false,
+          pin: groupPin,
           isGroup: true,
           children
         };
@@ -1025,9 +1065,21 @@ export class ErpTableComponent<T> {
       }
     };
 
-    return this.config().columns
+    const items = this.config().columns
       .map(c => mapColumn(c))
       .filter(c => c !== null);
+      
+    items.sort((a, b) => {
+      const aId = a.isGroup ? a.children[0].id : a.id;
+      const bId = b.isGroup ? b.children[0].id : b.id;
+      const aIdx = order.indexOf(aId);
+      const bIdx = order.indexOf(bId);
+      if (aIdx === -1) return 1;
+      if (bIdx === -1) return -1;
+      return aIdx - bIdx;
+    });
+    
+    return items;
   });
 
   // Handlers

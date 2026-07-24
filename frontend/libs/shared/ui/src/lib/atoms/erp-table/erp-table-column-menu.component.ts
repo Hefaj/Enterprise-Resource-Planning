@@ -47,12 +47,12 @@ export interface ErpColumnMenuItem {
         @for (item of columns(); track item.id) {
           @if (item.isGroup) {
             <div tuiOption cdkDrag class="flex flex-col w-full !p-0 border-b border-(--tui-border-normal) last:border-b-0">
-              <div 
-                class="flex items-center justify-between gap-4 w-full p-2 px-3 bg-(--tui-background-neutral-1) cursor-pointer"
-                [class.opacity-50]="item.disableHiding"
-                (click)="!item.disableHiding && toggleGroup(item, !item.visible)"
-              >
-                <div class="flex items-center gap-2 flex-1 overflow-hidden">
+              <div class="flex items-center justify-between gap-4 w-full p-2 px-3 bg-(--tui-background-neutral-1) cursor-pointer hover:bg-(--tui-background-neutral-1-hover) group/parent">
+                <div 
+                  class="flex items-center gap-2 flex-1 overflow-hidden"
+                  [class.opacity-50]="item.disableHiding"
+                  (click)="!item.disableHiding && toggleGroup(item, !item.visible)"
+                >
                   <tui-icon
                     cdkDragHandle
                     icon="@tui.grip-vertical"
@@ -66,6 +66,22 @@ export interface ErpColumnMenuItem {
                     [class.text-(--tui-text-tertiary)]="!item.visible"
                   />
                   <span class="truncate font-semibold">{{ item.header }}</span>
+                </div>
+                <div class="flex items-center gap-1 opacity-0 group-hover/parent:opacity-100 transition-opacity pr-3" [class.!opacity-100]="item.pin">
+                  <tui-icon
+                    icon="@tui.arrow-left"
+                    class="w-4 h-4 cursor-pointer hover:text-(--tui-text-action)"
+                    [class.text-(--tui-text-action)]="item.pin === 'left'"
+                    (click)="toggleGroupPin($event, item, item.pin === 'left' ? false : 'left')"
+                    title="Przypnij grupę do lewej"
+                  />
+                  <tui-icon
+                    icon="@tui.arrow-right"
+                    class="w-4 h-4 cursor-pointer hover:text-(--tui-text-action)"
+                    [class.text-(--tui-text-action)]="item.pin === 'right'"
+                    (click)="toggleGroupPin($event, item, item.pin === 'right' ? false : 'right')"
+                    title="Przypnij grupę do prawej"
+                  />
                 </div>
               </div>
               <div class="flex flex-col pl-6" cdkDropList (cdkDropListDropped)="onDropChild($event, item)">
@@ -91,22 +107,6 @@ export interface ErpColumnMenuItem {
                       <span class="truncate">{{ child.header }}</span>
                     </div>
                     
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-3" [class.!opacity-100]="child.pin">
-                      <tui-icon
-                        icon="@tui.arrow-left"
-                        class="w-4 h-4 cursor-pointer hover:text-(--tui-text-action)"
-                        [class.text-(--tui-text-action)]="child.pin === 'left'"
-                        (click)="togglePin($event, child.id, child.pin === 'left' ? false : 'left')"
-                        title="Przypnij do lewej"
-                      />
-                      <tui-icon
-                        icon="@tui.arrow-right"
-                        class="w-4 h-4 cursor-pointer hover:text-(--tui-text-action)"
-                        [class.text-(--tui-text-action)]="child.pin === 'right'"
-                        (click)="togglePin($event, child.id, child.pin === 'right' ? false : 'right')"
-                        title="Przypnij do prawej"
-                      />
-                    </div>
                   </div>
                 }
               </div>
@@ -160,7 +160,7 @@ export class ErpTableColumnMenuComponent {
   columns = input.required<ErpColumnMenuItem[]>();
   
   visibilityChange = output<{ id: string; visible: boolean }[]>();
-  pinChange = output<{ id: string; pin: 'left' | 'right' | false }>();
+  pinChange = output<{ id: string; pin: 'left' | 'right' | false }[]>();
   orderChange = output<string[]>();
 
   protected open = signal(false);
@@ -183,7 +183,15 @@ export class ErpTableColumnMenuComponent {
   protected togglePin(event: Event, id: string, pin: 'left' | 'right' | false) {
     event.stopPropagation();
     event.preventDefault();
-    this.pinChange.emit({ id, pin });
+    this.pinChange.emit([{ id, pin }]);
+  }
+
+  protected toggleGroupPin(event: Event, item: ErpColumnMenuItem, pin: 'left' | 'right' | false) {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!item.children) return;
+    const changes = item.children.map(child => ({ id: child.id, pin }));
+    this.pinChange.emit(changes);
   }
 
   protected onDrop(event: CdkDragDrop<any>) {

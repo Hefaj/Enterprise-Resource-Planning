@@ -99,105 +99,126 @@ export class ProductTabComponent {
       .setItemCount(this.totalCount)
       .setLoading(this.loading)
 
-      // ── Stałe kolumny ──
-      .addColumn(c => c
-        .setId('sku')
-        .setAccessorKey('sku')
-        .setHeader('SKU')
-        .setPin('left')
-        .setSize(120)
+      // ── Identyfikacja ──
+      .addColumnGroup(g => g
+        .setId('identification')
+        .setHeader('Identyfikacja')
+        .addColumn(c => c
+          .setId('sku')
+          .setAccessorKey('sku')
+          .setHeader('SKU')
+          .setSize(120)
+        )
+        .addColumn(c => c
+          .setId('barcode')
+          .setAccessorKey('barcode')
+          .setHeader('Kod kreskowy (EAN)')
+          .setSize(180)
+        )
+        .addColumn(c => c
+          .setId('name')
+          .setAccessorKey('name')
+          .setHeader('Nazwa produktu')
+          .setSize(250)
+        )
       )
-      .addColumn(c => c
-        .setId('name')
-        .setAccessorKey('name')
-        .setHeader('Nazwa produktu')
-        .setSize(250)
-      )
-      .addColumn(c => c
-        .setId('categories')
-        .setAccessorKey('categories')
-        .setHeader('Kategorie')
-        .setEnableSorting(false)
-        .setSize(160)
-        .setCellRichContent((categories: { name: string, isMain: boolean }[]) => ({
-          lines: categories.map(cat => ({
-            text: cat.name,
-            chips: cat.isMain 
-              ? [{ 
-                  text: 'Kategoria Główna', 
-                  shortText: 'Główna', 
-                  description: 'Kategoria wiodąca przypisana do tego produktu jako główna oś analizy.',
-                  appearance: 'accent', 
-                  size: 's' as const
-                }] 
-              : undefined
+
+      // ── Kategoryzacja i Status ──
+      .addColumnGroup(g => g
+        .setId('categorization')
+        .setHeader('Szczegóły Handlowe')
+        .addColumn(c => c
+          .setId('categories')
+          .setAccessorKey('categories')
+          .setHeader('Kategorie')
+          .setEnableSorting(false)
+          .setSize(160)
+          .setCellRichContent((categories: { name: string, isMain: boolean }[]) => ({
+            lines: categories.map(cat => ({
+              text: cat.name,
+              chips: cat.isMain 
+                ? [{ 
+                    text: 'Kategoria Główna', 
+                    shortText: 'Główna', 
+                    description: 'Kategoria wiodąca przypisana do tego produktu jako główna oś analizy.',
+                    appearance: 'accent', 
+                    size: 's' as const
+                  }] 
+                : undefined
+            }))
           }))
-        }))
+        )
+        .addColumn(c => c
+          .setId('status')
+          .setAccessorKey('status')
+          .setHeader('Status')
+          .setSize(130)
+          .setCellRichContent((status: string) => {
+            const isAvailable = status === 'Dostępny';
+            const isWithdrawn = status === 'Wycofany';
+            return {
+              lines: [{ text: status }],
+              cellChips: [{ 
+                text: isAvailable ? 'Status aktywny' : (isWithdrawn ? 'Status archiwum' : 'Status oczekujący'), 
+                shortText: isAvailable ? 'Aktywny' : (isWithdrawn ? 'Arch.' : 'Oczek.'), 
+                description: isAvailable 
+                  ? 'Produkt jest obecnie dostępny do sprzedaży.' 
+                  : (isWithdrawn ? 'Produkt został wycofany z oferty.' : 'Produkt oczekuje na weryfikację.'),
+                appearance: isAvailable ? 'positive' : (isWithdrawn ? 'neutral' : 'warning'),
+                size: 's' as const
+              }]
+            };
+          })
+        )
+        .addColumn(c => c
+          .setId('price')
+          .setAccessorKey('price')
+          .setHeader('Cena (PLN)')
+          .setSubHeader('Netto')
+          .setSize(120)
+        )
       )
-      .addColumn(c => c
-        .setId('price')
-        .setAccessorKey('price')
-        .setHeader('Cena (PLN)')
-        .setSubHeader('Netto')
-        .setSize(120)
+
+      // ── Logistyka i Magazyn ──
+      .addColumnGroup(g => g
+        .setId('logistics')
+        .setHeader('Logistyka i Magazyn')
+        .addColumn(c => c
+          .setId('stock')
+          .setAccessorKey('stock')
+          .setHeader('Stan magazynowy')
+          .setSize(150)
+        )
+        .addColumn(c => c
+          .setId('supplier')
+          .setAccessorKey('supplier')
+          .setHeader('Dostawca')
+          .setSize(180)
+        )
+        .addColumn(c => c
+          .setId('weight')
+          .setAccessorKey('weight')
+          .setHeader('Waga (kg)')
+          .setSize(110)
+        )
+        .addColumn(c => c
+          .setId('dimensions')
+          .setAccessorKey('dimensions')
+          .setHeader('Wymiary (cm)')
+          .setSize(140)
+        )
       )
-      .addColumn(c => c
-        .setId('status')
-        .setAccessorKey('status')
-        .setHeader('Status')
-        .setSize(130)
-        .setCellRichContent((status: string) => {
-          const isAvailable = status === 'Dostępny';
-          const isWithdrawn = status === 'Wycofany';
-          return {
-            lines: [{ text: status }],
-            cellChips: [{ 
-              text: isAvailable ? 'Status aktywny' : (isWithdrawn ? 'Status archiwum' : 'Status oczekujący'), 
-              shortText: isAvailable ? 'Aktywny' : (isWithdrawn ? 'Arch.' : 'Oczek.'), 
-              description: isAvailable 
-                ? 'Produkt jest obecnie dostępny do sprzedaży.' 
-                : (isWithdrawn ? 'Produkt został wycofany z oferty.' : 'Produkt oczekuje na weryfikację.'),
-              appearance: isAvailable ? 'positive' : (isWithdrawn ? 'neutral' : 'warning'),
-              size: 's' as const
-            }]
-          };
-        })
-      )
-      .addColumn(c => c
-        .setId('stock')
-        .setAccessorKey('stock')
-        .setHeader('Stan magazynowy')
-        .setSize(150)
-      )
-      .addColumn(c => c
-        .setId('supplier')
-        .setAccessorKey('supplier')
-        .setHeader('Dostawca')
-        .setSize(180)
-      )
-      .addColumn(c => c
-        .setId('weight')
-        .setAccessorKey('weight')
-        .setHeader('Waga (kg)')
-        .setSize(110)
-      )
-      .addColumn(c => c
-        .setId('dimensions')
-        .setAccessorKey('dimensions')
-        .setHeader('Wymiary (cm)')
-        .setSize(140)
-      )
-      .addColumn(c => c
-        .setId('barcode')
-        .setAccessorKey('barcode')
-        .setHeader('Kod kreskowy (EAN)')
-        .setSize(180)
-      )
-      .addColumn(c => c
-        .setId('addedDate')
-        .setAccessorKey('addedDate')
-        .setHeader('Data dodania')
-        .setSize(140)
+
+      // ── Systemowe ──
+      .addColumnGroup(g => g
+        .setId('system')
+        .setHeader('Systemowe')
+        .addColumn(c => c
+          .setId('addedDate')
+          .setAccessorKey('addedDate')
+          .setHeader('Data dodania')
+          .setSize(140)
+        )
       );
 
     // ── Dynamiczne kolumny atrybutów (grupa) ──

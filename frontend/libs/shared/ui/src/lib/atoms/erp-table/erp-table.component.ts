@@ -1,6 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Directive,
+  Input,
+  AfterViewInit,
+  inject,
   computed,
   effect,
   ElementRef,
@@ -32,20 +36,38 @@ import {
 } from '@tanstack/angular-table';
 import { injectVirtualizer } from '@tanstack/angular-virtual';
 
-import { TuiCheckbox, TuiRadio } from '@taiga-ui/core';
+import { TuiCheckbox, TuiRadio, TuiDropdown, TuiButton, TuiAppearance } from '@taiga-ui/core';
 import { TuiIcon } from '@taiga-ui/core';
-import { TuiSkeleton } from '@taiga-ui/kit';
+import { TuiSkeleton, TuiChip } from '@taiga-ui/kit';
 
 import {
   ErpTableConfig,
   ErpTableState,
   ErpPaginationState,
+  ErpCellChip,
 } from './erp-table.types';
 import { ErpTablePaginationComponent } from './erp-table-pagination.component';
 import { ErpTableColumnMenuComponent } from './erp-table-column-menu.component';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
-import { ErpBadgedCellComponent } from './erp-badged-cell.component';
+import { ErpChipCellComponent } from './erp-chip-cell.component';
+
+@Directive({
+  selector: '[erpVirtualMeasure]',
+  standalone: true
+})
+export class ErpVirtualMeasureDirective implements AfterViewInit {
+  private el = inject(ElementRef);
+  
+  @Input('erpVirtualMeasure') virtualizer!: any;
+  @Input() index!: number;
+
+  ngAfterViewInit() {
+    if (this.virtualizer) {
+      this.virtualizer.measureElement(this.el.nativeElement);
+    }
+  }
+}
 
 @Component({
   selector: 'erp-table-selection-cell',
@@ -107,9 +129,14 @@ export class ErpTableSelectionCell {
     FlexRenderDirective,
     TuiIcon,
     TuiSkeleton,
+    TuiChip,
+    TuiButton,
+    TuiDropdown,
+    TuiAppearance,
     ErpTranslatePipe,
     ErpTablePaginationComponent,
     ErpTableColumnMenuComponent,
+    ErpVirtualMeasureDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./erp-table.component.scss'],
@@ -140,6 +167,77 @@ export class ErpTableSelectionCell {
               (orderChange)="onColumnMenuDrop($event)"
             />
           }
+
+          @if (_legendItems().length > 0) {
+            <button
+              tuiButton
+              appearance="outline"
+              size="s"
+              iconStart="@tui.info"
+              [tuiDropdown]="legendDropdown"
+              [tuiDropdownOpen]="legendOpen()"
+              (tuiDropdownOpenChange)="legendOpen.set($event)"
+              class="ml-2"
+            >
+              {{ 'Legenda' }}
+            </button>
+            
+            <ng-template #legendDropdown>
+              <div class="p-4 bg-(--tui-background-elevated-1) border border-(--tui-border-normal) rounded-md shadow-lg min-w-[200px]">
+                <h3 class="font-bold mb-3 text-sm">Legenda</h3>
+                <div class="flex flex-col gap-3">
+                  @for (item of _legendItems(); track $index) {
+                    <div class="flex items-start gap-3">
+                      <span 
+                        tuiChip 
+                        [size]="'s'" 
+                        [tuiAppearance]="item.appearance || 'info'"
+                        class="shrink-0"
+                      >
+                        {{ (item.shortText || item.text) | erpTranslate }}
+                      </span>
+                      <span class="text-sm text-(--tui-text-secondary) mt-0.5">
+                        {{ (item.description || item.text) | erpTranslate }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </ng-template>
+          }
+
+          <button
+            tuiButton
+            appearance="outline"
+            size="s"
+            iconStart="@tui.circle-help"
+            [tuiDropdown]="helpDropdown"
+            [tuiDropdownOpen]="helpOpen()"
+            (tuiDropdownOpenChange)="helpOpen.set($event)"
+            class="ml-2"
+          >
+            {{ 'shared.table.help.button' | erpTranslate }}
+          </button>
+          
+          <ng-template #helpDropdown>
+            <div class="p-4 max-w-sm bg-(--tui-background-elevated-1) border border-(--tui-border-normal) rounded-md shadow-lg">
+              <h3 class="font-bold mb-2">{{ 'shared.table.help.title' | erpTranslate }}</h3>
+              <ul class="text-sm space-y-2 list-disc pl-4 text-(--tui-text-secondary)">
+                @if (config().enableMultiSort ?? true) {
+                  <li><strong>{{ 'shared.table.help.multiSortTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.multiSortDesc' | erpTranslate }}</li>
+                }
+                @if (config().enableColumnResizing ?? true) {
+                  <li><strong>{{ 'shared.table.help.resizingTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.resizingDesc' | erpTranslate }}</li>
+                }
+                @if (config().enableColumnVisibility ?? true) {
+                  <li><strong>{{ 'shared.table.help.visibilityTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.visibilityDesc' | erpTranslate }}</li>
+                }
+                @if (config().selectionMode === 'multi') {
+                  <li><strong>{{ 'shared.table.help.multiSelectTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.multiSelectDesc' | erpTranslate }}</li>
+                }
+              </ul>
+            </div>
+          </ng-template>
         </div>
       </div>
 
@@ -193,12 +291,23 @@ export class ErpTableSelectionCell {
                           
                           <!-- Sort icon -->
                           @if (header.column.getCanSort()) {
-                            <tui-icon 
-                              [icon]="header.column.getIsSorted() === 'asc' ? '@tui.arrow-up' : header.column.getIsSorted() === 'desc' ? '@tui.arrow-down' : '@tui.arrow-up-down'" 
-                              class="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              [class.opacity-100]="header.column.getIsSorted()"
-                              [class.text-(--tui-text-action)]="header.column.getIsSorted()"
-                            />
+                            <div class="relative flex items-center shrink-0">
+                              <tui-icon 
+                                [icon]="header.column.getIsSorted() === 'asc' ? '@tui.arrow-up' : header.column.getIsSorted() === 'desc' ? '@tui.arrow-down' : '@tui.arrow-up-down'" 
+                                class="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                [class.opacity-100]="header.column.getIsSorted()"
+                                [class.text-(--tui-text-action)]="header.column.getIsSorted()"
+                              />
+                              @if (header.column.getSortIndex() !== -1 && _sorting().length > 1) {
+                                <span 
+                                  tuiBadge
+                                  appearance="accent"
+                                  class="absolute -top-1.5 -right-2.5 transform scale-[0.8] origin-center z-10 px-1 py-0 leading-none min-w-[1.25rem] flex items-center justify-center font-bold"
+                                >
+                                  {{ header.column.getSortIndex() + 1 }}
+                                </span>
+                              }
+                            </div>
                           }
                         </div>
                         
@@ -261,6 +370,9 @@ export class ErpTableSelectionCell {
                 @for (virtualRow of virtualizer().getVirtualItems(); track virtualRow.key) {
                   @let row = table.getRowModel().rows[virtualRow.index];
                   <tr 
+                    [erpVirtualMeasure]="virtualizer()"
+                    [index]="virtualRow.index"
+                    [attr.data-index]="virtualRow.index"
                     class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
                     [class.bg-(--erp-table-row-selected)]="row.getIsSelected()"
                     (click)="onRowClickEvent(row.original)"
@@ -391,7 +503,52 @@ export class ErpTableComponent<T> {
   protected _stickyHeader = computed(() => this.config().stickyHeader ?? true);
   protected _tableHeight = computed(() => unwrapSignal(this.config().tableHeight) ?? 'auto');
   protected _emptyMessage = computed(() => unwrapSignal(this.config().emptyMessage) ?? 'shared.table.empty');
-  protected _skeletonRows = computed(() => this.config().skeletonRows ?? this._pagination().pageSize);
+  protected _skeletonRows = computed(() => this.config().skeletonRows ?? 5);
+
+  protected helpOpen = signal(false);
+  protected legendOpen = signal(false);
+
+  protected _legendItems = computed(() => {
+    const items = this.items();
+    const cols = this.config().columns;
+    const manualLegend = unwrapSignal(this.config().legendItems) ?? [];
+    
+    const autoItems: ErpCellChip[] = [];
+    
+    for (const item of items) {
+      for (const col of cols) {
+        if (col.cellRichContent) {
+          const val = col.accessorFn ? col.accessorFn(item) : (col.accessorKey ? (item as any)[col.accessorKey] : undefined);
+          const rich = col.cellRichContent(val, item);
+          
+          if (rich.cellChips) {
+            autoItems.push(...rich.cellChips);
+          }
+          if (rich.lines) {
+            for (const line of rich.lines) {
+              if (line.chips) {
+                autoItems.push(...line.chips);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    const all = [...autoItems, ...manualLegend];
+    const uniqueMap = new Map<string, ErpCellChip>();
+    
+    for (const chip of all) {
+      const key = String(chip.text) + '_' + String(chip.appearance);
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, chip);
+      }
+    }
+    
+    return Array.from(uniqueMap.values());
+  });
+
+  // Pagination defaults
   protected _pageSizeOptions = computed(() => this.config().pageSizeOptions ?? [10, 20, 50, 100]);
   protected _enableColumnReordering = computed(() => this.config().enableColumnReordering ?? true);
   protected _enableColumnVisibility = computed(() => this.config().enableColumnVisibility ?? true);
@@ -410,7 +567,7 @@ export class ErpTableComponent<T> {
   });
 
   // Signals for Table State
-  private _sorting = signal<SortingState>([]);
+  protected _sorting = signal<SortingState>([]);
   private _pagination = signal<PaginationState>({ pageIndex: 0, pageSize: 20 });
   private _columnVisibility = signal<VisibilityState>({});
   private _columnOrder = signal<string[]>([]);
@@ -595,7 +752,7 @@ export class ErpTableComponent<T> {
         cell: col.cell
           ? ({ row }) => flexRenderComponent(col.cell!, { inputs: { row: row.original, ...col.cellInputs } })
           : col.cellRichContent
-          ? ({ getValue, row }) => flexRenderComponent(ErpBadgedCellComponent, {
+          ? ({ getValue, row }) => flexRenderComponent(ErpChipCellComponent, {
               inputs: { content: col.cellRichContent!(getValue(), row.original) }
             })
           : col.cellFormatter

@@ -15,8 +15,10 @@ export interface ErpPaginationState {
 
 export type ErpSelectionMode = 'none' | 'single' | 'multi';
 
-export interface ErpCellBadge {
+export interface ErpCellChip {
   text: Translatable;
+  shortText?: Translatable;
+  description?: Translatable;
   appearance?: string;
   size?: 's' | 'm';
   icon?: string;
@@ -24,12 +26,12 @@ export interface ErpCellBadge {
 
 export interface ErpCellLine {
   text: string;
-  badges?: ErpCellBadge[];
+  chips?: ErpCellChip[];
 }
 
 export interface ErpCellRichContent {
   lines: ErpCellLine[];
-  cellBadges?: ErpCellBadge[];
+  cellChips?: ErpCellChip[];
 }
 
 export type ErpColumnPin = 'left' | 'right' | false;
@@ -99,4 +101,5 @@ export interface ErpTableConfig<TData = any> {
   onFilterChange?: (state: Record<string, any>) => void;
   onSelectionChange?: (items: TData[]) => void;
   onStateChange?: (state: ErpTableState) => void;
+  legendItems?: MaybeSignal<ErpCellChip[]>;
 }

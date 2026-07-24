@@ -7,10 +7,10 @@ export type {
   ErpSortState,
   ErpPaginationState,
   ErpSelectionMode,
-  ErpCellBadge,
+  ErpCellChip,
   ErpCellLine,
   ErpCellRichContent,
 } from './erp-table.types';
 export { ErpTableBuilder, ErpColumnBuilder } from './erp-table.builder';
 export { ErpTableComponent } from './erp-table.component';
-export { ErpBadgedCellComponent } from './erp-badged-cell.component';
+export { ErpChipCellComponent } from './erp-chip-cell.component';

@@ -19,7 +19,19 @@
     "noSort": "No sorting",
     "sortAsc": "Sort ascending",
     "sortDesc": "Sort descending",
-    "resetFilters": "Reset filters"
+    "resetFilters": "Reset filters",
+    "help": {
+      "button": "Help",
+      "title": "Table capabilities",
+      "multiSortTitle": "Multi-column sorting",
+      "multiSortDesc": "Hold the SHIFT key and click on column headers.",
+      "resizingTitle": "Column resizing",
+      "resizingDesc": "Drag the right edge of the column header.",
+      "visibilityTitle": "Column management",
+      "visibilityDesc": "Use the columns button to hide, pin or reorder them (by dragging).",
+      "multiSelectTitle": "Mass selection",
+      "multiSelectDesc": "Select the first row, then hold SHIFT and select the last one."
+    }
   },
   "tabs": {
     "empty": "No tabs to display",

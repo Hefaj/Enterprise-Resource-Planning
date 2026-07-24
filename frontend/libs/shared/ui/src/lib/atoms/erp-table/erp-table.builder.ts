@@ -11,6 +11,7 @@ import {
   ErpPaginationState,
   ErpSortState,
   ErpCellRichContent,
+  ErpCellChip,
 } from './erp-table.types';
 
 /**
@@ -447,6 +448,15 @@ export class ErpTableBuilder<TData = any> extends ErpBaseBuilder<ErpTableConfig<
     this._data.onFilterChange = fn;
     return this;
   }
+
+  /**
+   * Wstrzykuje dodatkowe (lub ręczne) elementy do legendy tabeli.
+   */
+  public setLegendItems(items: MaybeSignal<ErpCellChip[]>): this {
+    this._data.legendItems = items;
+    return this;
+  }
+
 
   /**
    * Zdarzenie zmiany zaznaczenia wierszy.

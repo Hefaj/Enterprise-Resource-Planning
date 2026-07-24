@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpMenuBarComponent, ErpMenuBarBuilder, ErpModalService, ErpTableComponent, ErpTableBuilder } from '@erp/shared/ui';
+import { ErpMenuBarComponent, ErpMenuBarBuilder, ErpModalService, ErpTableComponent, ErpTableBuilder, ErpTableState } from '@erp/shared/ui';
 import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 import { BatchCommandOfProductSetNameCommand, BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
 
@@ -79,12 +79,19 @@ export class ProductTabComponent {
       .setId('categories')
       .setAccessorKey('categories')
       .setHeader('Kategorie')
+      .setEnableSorting(false)
       .setSize(160)
       .setCellRichContent((categories: { name: string, isMain: boolean }[]) => ({
         lines: categories.map(cat => ({
           text: cat.name,
-          badges: cat.isMain 
-            ? [{ text: 'Główna', appearance: 'accent', size: 's' }] 
+          chips: cat.isMain 
+            ? [{ 
+                text: 'Kategoria Główna', 
+                shortText: 'Główna', 
+                description: 'Kategoria wiodąca przypisana do tego produktu jako główna oś analizy.',
+                appearance: 'accent', 
+                size: 's' 
+              }] 
             : undefined
         }))
       }))
@@ -106,8 +113,12 @@ export class ProductTabComponent {
         const isWithdrawn = status === 'Wycofany';
         return {
           lines: [{ text: status }],
-          cellBadges: [{ 
-            text: isAvailable ? 'Aktywny' : (isWithdrawn ? 'Archiwum' : 'Oczekujący'), 
+          cellChips: [{ 
+            text: isAvailable ? 'Status aktywny' : (isWithdrawn ? 'Status archiwum' : 'Status oczekujący'), 
+            shortText: isAvailable ? 'Aktywny' : (isWithdrawn ? 'Arch.' : 'Oczek.'), 
+            description: isAvailable 
+              ? 'Produkt jest obecnie dostępny do sprzedaży.' 
+              : (isWithdrawn ? 'Produkt został wycofany z oferty.' : 'Produkt oczekuje na weryfikację.'),
             appearance: isAvailable ? 'positive' : (isWithdrawn ? 'neutral' : 'warning'),
             size: 's' 
           }]
@@ -150,10 +161,18 @@ export class ProductTabComponent {
       .setHeader('Data dodania')
       .setSize(140)
     )
+    .setLegendItems([
+      {
+        text: 'Niestandardowy status',
+        shortText: 'Manual',
+        description: 'Ten element został dodany do legendy całkowicie ręcznie w kodzie, z pominięciem automatycznego zbierania.',
+        appearance: 'destructive'
+      }
+    ])
     .setOnStateChange(state => this.onTableStateChange(state))
     .build();
 
-  onTableStateChange(state: any): void {
+  onTableStateChange(state: ErpTableState): void {
     this.loading.set(true);
     
     // Symulacja opóźnienia z backendu
@@ -162,12 +181,14 @@ export class ProductTabComponent {
       
       // Sortowanie po stronie serwera
       if (state.sorting && state.sorting.length > 0) {
-        const sort = state.sorting[0];
         filtered.sort((a: any, b: any) => {
-          const aVal = a[sort.id];
-          const bVal = b[sort.id];
-          if (aVal < bVal) return sort.desc ? 1 : -1;
-          if (aVal > bVal) return sort.desc ? -1 : 1;
+          for (const sort of state.sorting) {
+            const aVal = a[sort.columnId];
+            const bVal = b[sort.columnId];
+            
+            if (aVal < bVal) return sort.direction === 'desc' ? 1 : -1;
+            if (aVal > bVal) return sort.direction === 'desc' ? -1 : 1;
+          }
           return 0;
         });
       }
@@ -220,7 +241,9 @@ const ALL_PRODUCTS = Array.from({ length: 250 }, (_, i) => ({
   categories: [
     { name: ['Elektronika', 'Meble', 'Narzędzia', 'Odzież'][i % 4], isMain: true },
     { name: ['Wyprzedaż', 'Nowości', 'Polecane', 'Bestsellery'][(i + 1) % 4], isMain: false },
-    ...(i % 3 === 0 ? [{ name: 'Ostatnie sztuki', isMain: false }] : [])
+    ...(i % 3 === 0 ? [{ name: 'Ostatnie sztuki', isMain: false }] : []),
+    // Skrajny przypadek: co dziesiąty produkt ma kilkanaście kategorii
+    ...(i % 10 === 0 ? Array.from({ length: 15 }, (_, j) => ({ name: `Podkategoria Atrybutu ${j + 1}`, isMain: false })) : [])
   ],
   price: 99.99 + (i * 2.5),
   status: ['Dostępny', 'Niedostępny', 'Wycofany'][i % 3],

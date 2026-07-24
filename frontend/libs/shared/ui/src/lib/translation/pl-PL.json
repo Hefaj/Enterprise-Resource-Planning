@@ -19,7 +19,19 @@
     "noSort": "Brak sortowania",
     "sortAsc": "Sortuj rosnąco",
     "sortDesc": "Sortuj malejąco",
-    "resetFilters": "Resetuj filtry"
+    "resetFilters": "Resetuj filtry",
+    "help": {
+      "button": "Pomoc",
+      "title": "Możliwości tabeli",
+      "multiSortTitle": "Sortowanie wielu kolumn",
+      "multiSortDesc": "Przytrzymaj klawisz SHIFT i kliknij na nagłówki kolumn.",
+      "resizingTitle": "Zmiana szerokości",
+      "resizingDesc": "Przeciągnij prawą krawędź nagłówka kolumny.",
+      "visibilityTitle": "Zarządzanie kolumnami",
+      "visibilityDesc": "Użyj przycisku kolumn by ukryć, przypiąć lub zmienić ich kolejność (przeciągając).",
+      "multiSelectTitle": "Zaznaczanie masowe",
+      "multiSelectDesc": "Zaznacz pierwszy wiersz, a następnie przytrzymaj SHIFT i zaznacz ostatni."
+    }
   },
   "tabs": {
     "empty": "Brak zakładek do wyświetlenia",

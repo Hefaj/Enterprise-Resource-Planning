@@ -25,6 +25,18 @@ export const SHARED_KEYS = {
       sortAsc: 'shared.table.sortAsc',
       sortDesc: 'shared.table.sortDesc',
       resetFilters: 'shared.table.resetFilters',
+      help: {
+        button: 'shared.table.help.button',
+        title: 'shared.table.help.title',
+        multiSortTitle: 'shared.table.help.multiSortTitle',
+        multiSortDesc: 'shared.table.help.multiSortDesc',
+        resizingTitle: 'shared.table.help.resizingTitle',
+        resizingDesc: 'shared.table.help.resizingDesc',
+        visibilityTitle: 'shared.table.help.visibilityTitle',
+        visibilityDesc: 'shared.table.help.visibilityDesc',
+        multiSelectTitle: 'shared.table.help.multiSelectTitle',
+        multiSelectDesc: 'shared.table.help.multiSelectDesc',
+      },
     },
     tabs: {
       empty: 'shared.tabs.empty',

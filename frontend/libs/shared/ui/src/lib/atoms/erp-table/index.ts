@@ -3,6 +3,7 @@ export type {
   ErpTableState,
   ErpTableMode,
   ErpColumnDef,
+  ErpColumnGroupDef,
   ErpColumnPin,
   ErpSortState,
   ErpPaginationState,
@@ -11,6 +12,7 @@ export type {
   ErpCellLine,
   ErpCellRichContent,
 } from './erp-table.types';
-export { ErpTableBuilder, ErpColumnBuilder } from './erp-table.builder';
+export { isColumnGroupDef } from './erp-table.types';
+export { ErpTableBuilder, ErpColumnBuilder, ErpColumnGroupBuilder } from './erp-table.builder';
 export { ErpTableComponent } from './erp-table.component';
 export { ErpChipCellComponent } from './erp-chip-cell.component';

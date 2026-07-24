@@ -4,6 +4,7 @@ import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import {
   ErpTableConfig,
   ErpColumnDef,
+  ErpColumnGroupDef,
   ErpTableMode,
   ErpSelectionMode,
   ErpTableState,
@@ -12,6 +13,7 @@ import {
   ErpSortState,
   ErpCellRichContent,
   ErpCellChip,
+  isColumnGroupDef,
 } from './erp-table.types';
 
 /**
@@ -29,7 +31,7 @@ export class ErpColumnBuilder<TData = any> extends ErpBaseBuilder<ErpColumnDef<T
   /**
    * Ustawia unikalny identyfikator kolumny.
    */
-  public setId(id: string): this {
+  public setId(id: Extract<keyof TData, string> | (string & {})): this {
     this._data.id = id;
     return this;
   }
@@ -37,7 +39,7 @@ export class ErpColumnBuilder<TData = any> extends ErpBaseBuilder<ErpColumnDef<T
   /**
    * Ustawia klucz dostępu do danych w obiekcie wiersza.
    */
-  public setAccessorKey(key: keyof TData & string): this {
+  public setAccessorKey(key: Extract<keyof TData, string> | (string & {})): this {
     this._data.accessorKey = key;
     return this;
   }
@@ -185,6 +187,47 @@ export class ErpColumnBuilder<TData = any> extends ErpBaseBuilder<ErpColumnDef<T
 }
 
 /**
+ * Budowniczy grupy kolumn w tabeli ERP.
+ * Umożliwia grupowanie kilku kolumn pod wspólnym nagłówkiem (multi-row header).
+ */
+export class ErpColumnGroupBuilder<TData = any> extends ErpBaseBuilder<ErpColumnGroupDef<TData>> {
+  constructor() {
+    super();
+    this._data.columns = [];
+  }
+
+  /**
+   * Ustawia unikalny identyfikator grupy.
+   */
+  public setId(id: string): this {
+    this._data.id = id;
+    return this;
+  }
+
+  /**
+   * Ustawia tekst nagłówka grupy (wyświetlany w wierszu nadrzędnym, rozciągnięty colspan).
+   */
+  public setHeader(header: MaybeSignal<Translatable>): this {
+    this._data.header = header;
+    return this;
+  }
+
+  /**
+   * Dodaje kolumnę potomną do grupy.
+   */
+  public addColumn(configureOrDef: ErpColumnDef<TData> | ((col: ErpColumnBuilder<TData>) => void)): this {
+    if (typeof configureOrDef === 'function') {
+      const builder = new ErpColumnBuilder<TData>();
+      configureOrDef(builder);
+      this._data.columns!.push(builder.build());
+    } else {
+      this._data.columns!.push(configureOrDef);
+    }
+    return this;
+  }
+}
+
+/**
  * Główny budowniczy tabeli ERP. Zwraca konfigurację (ErpTableConfig) do przekazania do komponentu.
  */
 export class ErpTableBuilder<TData = any> extends ErpBaseBuilder<ErpTableConfig<TData>> {
@@ -252,8 +295,22 @@ export class ErpTableBuilder<TData = any> extends ErpBaseBuilder<ErpTableConfig<
   /**
    * Nadpisuje wszystkie kolumny tablicą gotowych definicji.
    */
-  public setColumns(columns: ErpColumnDef<TData>[]): this {
+  public setColumns(columns: (ErpColumnDef<TData> | ErpColumnGroupDef<TData>)[]): this {
     this._data.columns = columns;
+    return this;
+  }
+
+  /**
+   * Dodaje grupę kolumn z wspólnym nagłówkiem nadrzędnym (multi-row header).
+   */
+  public addColumnGroup(configureOrDef: ErpColumnGroupDef<TData> | ((group: ErpColumnGroupBuilder<TData>) => void)): this {
+    if (typeof configureOrDef === 'function') {
+      const builder = new ErpColumnGroupBuilder<TData>();
+      configureOrDef(builder);
+      this._data.columns!.push(builder.build());
+    } else {
+      this._data.columns!.push(configureOrDef);
+    }
     return this;
   }
 

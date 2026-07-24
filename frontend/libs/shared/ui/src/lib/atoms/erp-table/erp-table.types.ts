@@ -38,7 +38,7 @@ export type ErpColumnPin = 'left' | 'right' | false;
 
 export interface ErpColumnDef<TData = any> {
   id: string;
-  accessorKey?: keyof TData & string;
+  accessorKey?: Extract<keyof TData, string> | (string & {});
   accessorFn?: (row: TData) => any;
   header: MaybeSignal<Translatable>;
   subHeader?: MaybeSignal<Translatable>;
@@ -59,6 +59,24 @@ export interface ErpColumnDef<TData = any> {
   align?: 'left' | 'center' | 'right';
 }
 
+/**
+ * Definicja grupy kolumn — pozwala pogrupować kilka kolumn pod wspólnym nagłówkiem.
+ * W nagłówku tabeli renderowany jest wiersz nadrzędny z etykietą grupy (colspan),
+ * a pod nim wiersz z poszczególnymi kolumnami potomnymi.
+ */
+export interface ErpColumnGroupDef<TData = any> {
+  id: string;
+  header: MaybeSignal<Translatable>;
+  columns: ErpColumnDef<TData>[];
+}
+
+/**
+ * Type guard sprawdzający czy definicja kolumny jest grupą.
+ */
+export function isColumnGroupDef<TData>(def: ErpColumnDef<TData> | ErpColumnGroupDef<TData>): def is ErpColumnGroupDef<TData> {
+  return 'columns' in def && Array.isArray((def as any).columns);
+}
+
 export interface ErpTableState {
   sorting: ErpSortState[];
   pagination: ErpPaginationState;
@@ -73,7 +91,7 @@ export interface ErpTableConfig<TData = any> {
   items?: MaybeSignal<TData[]>;
   itemCount?: MaybeSignal<number>;
   loading?: MaybeSignal<boolean>;
-  columns: ErpColumnDef<TData>[];
+  columns: (ErpColumnDef<TData> | ErpColumnGroupDef<TData>)[];
   mode: ErpTableMode;
   pageSizeOptions?: number[];
   defaultPageSize?: number;

@@ -45,6 +45,9 @@ import {
   ErpTableState,
   ErpPaginationState,
   ErpCellChip,
+  ErpColumnDef,
+  ErpColumnGroupDef,
+  isColumnGroupDef,
 } from './erp-table.types';
 import { ErpTablePaginationComponent } from './erp-table-pagination.component';
 import { ErpTableColumnMenuComponent } from './erp-table-column-menu.component';
@@ -162,7 +165,7 @@ export class ErpTableSelectionCell {
             <div class="h-6 w-px bg-(--erp-table-border) hidden md:block mx-2"></div>
             <erp-table-column-menu
               [columns]="_columnMenuInfo()"
-              (visibilityChange)="onVisibilityChange($event.id, $event.visible)"
+              (visibilityChange)="onVisibilityChange($event)"
               (pinChange)="onPinChange($event.id, $event.pin)"
               (orderChange)="onColumnMenuDrop($event)"
             />
@@ -253,6 +256,11 @@ export class ErpTableSelectionCell {
           [class.erp-table--bordered]="_bordered()"
           [style.width.px]="table.getTotalSize()"
         >
+          <colgroup>
+            @for (col of table.getVisibleLeafColumns(); track col.id) {
+              <col [style.width.px]="col.getSize()" />
+            }
+          </colgroup>
             <!-- <thead> -->
             <thead 
               class="erp-table__header bg-(--erp-table-header-bg) z-30"
@@ -262,74 +270,102 @@ export class ErpTableSelectionCell {
               @for (headerGroup of table.getHeaderGroups(); track headerGroup.id) {
                 <tr>
                   @for (header of headerGroup.headers; track header.id) {
-                    <th
-                      class="erp-table__header-cell relative p-3 border-b border-(--erp-table-border) text-sm font-semibold whitespace-nowrap select-none group"
-                      [style.width.px]="header.getSize()"
-                      [attr.data-pinned]="header.column.getIsPinned()"
-                      [class.erp-table__header-cell--pinned-left]="header.column.getIsPinned() === 'left'"
-                      [class.erp-table__header-cell--pinned-right]="header.column.getIsPinned() === 'right'"
-                      [class.erp-table__header-cell--pinned-left-last]="header.column.id === _lastLeftPinnedColumnId()"
-                      [class.erp-table__header-cell--pinned-right-first]="header.column.id === _firstRightPinnedColumnId()"
-                      [class.!overflow-visible]="header.id === '__selection'"
-                      [class.top-0]="_stickyHeader()"
-                      [style.left.px]="header.column.getIsPinned() === 'left' ? header.column.getStart('left') : null"
-                      [style.right.px]="header.column.getIsPinned() === 'right' ? header.column.getAfter('right') : null"
-                    >
+                    @if (!header.isPlaceholder) {
+                      <th
+                        class="erp-table__header-cell relative p-3 text-sm font-semibold whitespace-nowrap select-none group"
+                        [colSpan]="header.colSpan"
+                        [style.width.px]="header.colSpan === 1 ? header.getSize() : null"
+                        [attr.data-pinned]="header.column.getIsPinned()"
+                        [class.erp-table__header-cell--pinned-left]="header.column.getIsPinned() === 'left'"
+                        [class.erp-table__header-cell--pinned-right]="header.column.getIsPinned() === 'right'"
+                        [class.erp-table__header-cell--pinned-left-last]="header.column.id === _lastLeftPinnedColumnId()"
+                        [class.erp-table__header-cell--pinned-right-first]="header.column.id === _firstRightPinnedColumnId()"
+                        [class.!overflow-visible]="header.id === '__selection'"
+                        [class.erp-table__header-cell--group]="header.colSpan > 1"
+                        [style.left.px]="header.column.getIsPinned() === 'left' ? header.column.getStart('left') : null"
+                        [style.right.px]="header.column.getIsPinned() === 'right' ? header.column.getAfter('right') : null"
+                      >
 
-
-                      <div class="flex flex-col min-w-0 w-full" [class.items-end]="$any(header.column.columnDef.meta)?.['align'] === 'right'" [class.items-center]="$any(header.column.columnDef.meta)?.['align'] === 'center'">
-                        <!-- Zawartość nagłówka (Sortowanie) -->
-                        <div 
-                          class="flex items-center gap-1 cursor-pointer hover:text-(--tui-text-action) min-w-0"
-                          (click)="header.column.getToggleSortingHandler()?.($event)"
-                        >
-                          <span class="truncate block">
-                            <ng-container *flexRender="header.column.columnDef.header; props: header.getContext(); let headerValue">
-                              {{ headerValue }}
-                            </ng-container>
-                          </span>
-                          
-                          <!-- Sort icon -->
-                          @if (header.column.getCanSort()) {
-                            <div class="relative flex items-center shrink-0">
-                              <tui-icon 
-                                [icon]="header.column.getIsSorted() === 'asc' ? '@tui.arrow-up' : header.column.getIsSorted() === 'desc' ? '@tui.arrow-down' : '@tui.arrow-up-down'" 
-                                class="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                [class.opacity-100]="header.column.getIsSorted()"
-                                [class.text-(--tui-text-action)]="header.column.getIsSorted()"
-                              />
-                              @if (header.column.getSortIndex() !== -1 && _sorting().length > 1) {
-                                <span 
-                                  tuiBadge
-                                  appearance="accent"
-                                  class="absolute -top-1.5 -right-2.5 transform scale-[0.8] origin-center z-10 px-1 py-0 leading-none min-w-[1.25rem] flex items-center justify-center font-bold"
-                                >
-                                  {{ header.column.getSortIndex() + 1 }}
-                                </span>
+                        @if (header.subHeaders && header.subHeaders.length > 0) {
+                          <!-- Nagłówek grupy (parent) — bez sortowania i resizera -->
+                          <div class="flex items-center gap-1 min-w-0">
+                            <span class="truncate block text-xs uppercase tracking-wider text-(--tui-text-secondary)">
+                              <ng-container *flexRender="header.column.columnDef.header; props: header.getContext(); let headerValue">
+                                {{ headerValue }}
+                              </ng-container>
+                            </span>
+                          </div>
+                        } @else {
+                          <!-- Nagłówek kolumny liścia (leaf) — z sortowaniem i resizerem -->
+                          <div class="flex flex-col min-w-0 w-full" [class.items-end]="$any(header.column.columnDef.meta)?.['align'] === 'right'" [class.items-center]="$any(header.column.columnDef.meta)?.['align'] === 'center'">
+                            <!-- Zawartość nagłówka (Sortowanie) -->
+                            <div 
+                              class="flex items-center gap-1 cursor-pointer hover:text-(--tui-text-action) min-w-0"
+                              (click)="header.column.getToggleSortingHandler()?.($event)"
+                            >
+                              <span class="truncate block">
+                                <ng-container *flexRender="header.column.columnDef.header; props: header.getContext(); let headerValue">
+                                  {{ headerValue }}
+                                </ng-container>
+                              </span>
+                              
+                              <!-- Sort icon -->
+                              @if (header.column.getCanSort()) {
+                                <div class="relative flex items-center shrink-0">
+                                  <tui-icon 
+                                    [icon]="header.column.getIsSorted() === 'asc' ? '@tui.arrow-up' : header.column.getIsSorted() === 'desc' ? '@tui.arrow-down' : '@tui.arrow-up-down'" 
+                                    class="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    [class.opacity-100]="header.column.getIsSorted()"
+                                    [class.text-(--tui-text-action)]="header.column.getIsSorted()"
+                                  />
+                                  @if (header.column.getSortIndex() !== -1 && _sorting().length > 1) {
+                                    <span 
+                                      tuiBadge
+                                      appearance="accent"
+                                      class="absolute -top-1.5 -right-2.5 transform scale-[0.8] origin-center z-10 px-1 py-0 leading-none min-w-[1.25rem] flex items-center justify-center font-bold"
+                                    >
+                                      {{ header.column.getSortIndex() + 1 }}
+                                    </span>
+                                  }
+                                </div>
                               }
                             </div>
-                          }
-                        </div>
-                        
-                        <!-- Podtytuł (SubHeader) -->
-                        @if ($any(header.column.columnDef.meta)?.['subHeader']; as subHeader) {
-                          <span class="text-[0.6875rem] leading-none mt-0.5 text-(--tui-text-tertiary) truncate block font-normal w-full" [class.text-right]="$any(header.column.columnDef.meta)?.['align'] === 'right'" [class.text-center]="$any(header.column.columnDef.meta)?.['align'] === 'center'">
-                            {{ subHeader | erpTranslate }}
-                          </span>
-                        }
-                      </div>
+                            
+                            <!-- Podtytuł (SubHeader) -->
+                            @if ($any(header.column.columnDef.meta)?.['subHeader']; as subHeader) {
+                              <span class="text-[0.6875rem] leading-none mt-0.5 text-(--tui-text-tertiary) truncate block font-normal w-full" [class.text-right]="$any(header.column.columnDef.meta)?.['align'] === 'right'" [class.text-center]="$any(header.column.columnDef.meta)?.['align'] === 'center'">
+                                {{ subHeader | erpTranslate }}
+                              </span>
+                            }
+                          </div>
 
-                      <!-- Resizer -->
-                      @if (header.column.getCanResize()) {
-                        <div
-                          class="erp-table__resizer absolute right-0 top-0 h-full w-3 cursor-col-resize select-none touch-none"
-                          [class.is-resizing]="header.column.getIsResizing()"
-                          (mousedown)="header.getResizeHandler()($event)"
-                          (touchstart)="header.getResizeHandler()($event)"
-                          (click)="$event.stopPropagation()"
-                        ></div>
-                      }
-                    </th>
+                          <!-- Resizer -->
+                          @if (header.column.getCanResize()) {
+                            <div
+                              class="erp-table__resizer absolute right-0 top-0 h-full w-3 cursor-col-resize select-none touch-none"
+                              [class.is-resizing]="header.column.getIsResizing()"
+                              (mousedown)="header.getResizeHandler()($event)"
+                              (touchstart)="header.getResizeHandler()($event)"
+                              (click)="$event.stopPropagation()"
+                            ></div>
+                          }
+                        }
+                      </th>
+                    } @else {
+                      <!-- Placeholder header (pusta komórka w wierszu grupowym dla kolumn bez grupy) -->
+                      <th
+                        class="erp-table__header-cell relative p-3"
+                        [colSpan]="header.colSpan"
+                        [style.width.px]="header.getSize()"
+                        [attr.data-pinned]="header.column.getIsPinned()"
+                        [class.erp-table__header-cell--pinned-left]="header.column.getIsPinned() === 'left'"
+                        [class.erp-table__header-cell--pinned-right]="header.column.getIsPinned() === 'right'"
+                        [class.erp-table__header-cell--pinned-left-last]="header.column.id === _lastLeftPinnedColumnId()"
+                        [class.erp-table__header-cell--pinned-right-first]="header.column.id === _firstRightPinnedColumnId()"
+                        [style.left.px]="header.column.getIsPinned() === 'left' ? header.column.getStart('left') : null"
+                        [style.right.px]="header.column.getIsPinned() === 'right' ? header.column.getAfter('right') : null"
+                      ></th>
+                    }
                   }
                 </tr>
               }
@@ -510,13 +546,13 @@ export class ErpTableComponent<T> {
 
   protected _legendItems = computed(() => {
     const items = this.items();
-    const cols = this.config().columns;
+    const leafCols = this._flattenLeafColumns();
     const manualLegend = unwrapSignal(this.config().legendItems) ?? [];
     
     const autoItems: ErpCellChip[] = [];
     
     for (const item of items) {
-      for (const col of cols) {
+      for (const col of leafCols) {
         if (col.cellRichContent) {
           const val = col.accessorFn ? col.accessorFn(item) : (col.accessorKey ? (item as any)[col.accessorKey] : undefined);
           const rich = col.cellRichContent(val, item);
@@ -552,7 +588,7 @@ export class ErpTableComponent<T> {
   protected _pageSizeOptions = computed(() => this.config().pageSizeOptions ?? [10, 20, 50, 100]);
   protected _enableColumnReordering = computed(() => this.config().enableColumnReordering ?? true);
   protected _enableColumnVisibility = computed(() => this.config().enableColumnVisibility ?? true);
-  protected _hasFooter = computed(() => this.config().columns.some(c => c.footer !== undefined));
+  protected _hasFooter = computed(() => this._flattenLeafColumns().some(c => c.footer !== undefined));
 
   protected _lastLeftPinnedColumnId = computed(() => {
     const cols = this.table().getVisibleLeafColumns();
@@ -610,37 +646,65 @@ export class ErpTableComponent<T> {
       // Default pagination if not set by state
       if (!state?.pagination) {
         untracked(() => {
-          this._pagination.update(p => ({ ...p, pageSize: this.config().defaultPageSize ?? 20 }));
+          const newSize = this.config().defaultPageSize ?? 20;
+          if (this._pagination().pageSize !== newSize) {
+            this._pagination.update(p => ({ ...p, pageSize: newSize }));
+          }
         });
       }
       
       // Default column visibility & order
       untracked(() => {
-        const defaultVisibility: VisibilityState = {};
-        const defaultOrder: string[] = [];
-        const defaultPinning: ColumnPinningState = { left: [], right: [] };
+        const currentVisibility = this._columnVisibility();
+        const currentOrder = this._columnOrder();
+        
+        const newVisibility: VisibilityState = { ...currentVisibility };
+        const newOrder: string[] = [];
+        const newPinning: ColumnPinningState = { left: [], right: [] };
         
         if (this.config().selectionMode !== 'none') {
-          defaultOrder.push('__selection');
-          defaultPinning.left!.push('__selection');
+          if (!newOrder.includes('__selection')) newOrder.push('__selection');
+          newPinning.left!.push('__selection');
         }
         
-        for (const col of this.config().columns) {
-          if (col.visible === false) {
-            defaultVisibility[col.id] = false;
-          }
-          defaultOrder.push(col.id);
-          
-          if (col.pin === 'left') {
-            defaultPinning.left!.push(col.id);
-          } else if (col.pin === 'right') {
-            defaultPinning.right!.push(col.id);
+        for (const colOrGroup of this.config().columns) {
+          if (isColumnGroupDef(colOrGroup)) {
+            // Grupa: iterujemy po liściach
+            for (const col of colOrGroup.columns) {
+              if (col.visible === false && currentVisibility[col.id] === undefined) {
+                newVisibility[col.id] = false;
+              }
+              if (!newOrder.includes(col.id)) newOrder.push(col.id);
+              
+              if (col.pin === 'left') {
+                newPinning.left!.push(col.id);
+              } else if (col.pin === 'right') {
+                newPinning.right!.push(col.id);
+              }
+            }
+          } else {
+            const col = colOrGroup;
+            if (col.visible === false && currentVisibility[col.id] === undefined) {
+              newVisibility[col.id] = false;
+            }
+            if (!newOrder.includes(col.id)) newOrder.push(col.id);
+            
+            if (col.pin === 'left') {
+              newPinning.left!.push(col.id);
+            } else if (col.pin === 'right') {
+              newPinning.right!.push(col.id);
+            }
           }
         }
         
-        if (!state?.columnVisibility) this._columnVisibility.set(defaultVisibility);
-        if (!state?.columnOrder) this._columnOrder.set(defaultOrder);
-        this._columnPinning.set(defaultPinning);
+        // Preserve any existing order that is still valid (existing columns)
+        const finalOrder = currentOrder.length > 0 
+          ? [...currentOrder.filter(id => newOrder.includes(id)), ...newOrder.filter(id => !currentOrder.includes(id))] 
+          : newOrder;
+
+        if (!state?.columnVisibility) this._columnVisibility.set(newVisibility);
+        if (!state?.columnOrder) this._columnOrder.set(finalOrder);
+        this._columnPinning.set(newPinning);
       });
     });
 
@@ -741,42 +805,75 @@ export class ErpTableComponent<T> {
       });
     }
 
-    // Data Columns
-    for (const col of config.columns) {
-      cols.push({
-        id: col.id,
-        accessorKey: col.accessorKey as string,
-        accessorFn: col.accessorFn,
-        header: () => unwrapSignal(col.header),
-        footer: col.footer ? () => unwrapSignal(col.footer) : undefined,
-        cell: col.cell
-          ? ({ row }) => flexRenderComponent(col.cell!, { inputs: { row: row.original, ...col.cellInputs } })
-          : col.cellRichContent
-          ? ({ getValue, row }) => flexRenderComponent(ErpChipCellComponent, {
-              inputs: { content: col.cellRichContent!(getValue(), row.original) }
-            })
-          : col.cellFormatter
-          ? ({ getValue, row }) => col.cellFormatter!(getValue(), row.original)
-          : ({ getValue }) => getValue(),
-        size: col.size ?? 150,
-        minSize: col.minSize ?? 80,
-        maxSize: col.maxSize,
-        enableSorting: col.enableSorting ?? true,
-        enableResizing: col.enableResizing ?? true,
-        enableHiding: !col.disableHiding,
-        meta: { 
-          pin: col.pin, 
-          align: col.align, 
-          subHeader: col.subHeader ? unwrapSignal(col.subHeader) : undefined,
-          cellClass: col.cellRichContent 
-            ? (col.cellClass ? col.cellClass + ' erp-table__cell--rich-content' : 'erp-table__cell--rich-content') 
-            : col.cellClass 
-        },
-      });
+    // Data Columns (flat + grouped)
+    for (const colOrGroup of config.columns) {
+      if (isColumnGroupDef(colOrGroup)) {
+        // Column Group — parent header with nested children
+        cols.push({
+          id: colOrGroup.id,
+          header: () => unwrapSignal(colOrGroup.header),
+          columns: colOrGroup.columns.map(col => this._mapErpColumnToTanstack(col)),
+        });
+      } else {
+        cols.push(this._mapErpColumnToTanstack(colOrGroup));
+      }
     }
 
     return cols;
   });
+
+  /**
+   * Mapuje pojedynczą definicję kolumny ERP na definicję TanStack.
+   * Wydzielone jako metoda, aby można było użyć zarówno dla flat, jak i grouped columns.
+   */
+  private _mapErpColumnToTanstack(col: ErpColumnDef<any>): ColumnDef<T> {
+    return {
+      id: col.id,
+      accessorKey: col.accessorKey as string,
+      accessorFn: col.accessorFn,
+      header: () => unwrapSignal(col.header),
+      footer: col.footer ? () => unwrapSignal(col.footer) : undefined,
+      cell: col.cell
+        ? ({ row }) => flexRenderComponent(col.cell!, { inputs: { row: row.original, ...col.cellInputs } })
+        : col.cellRichContent
+        ? ({ getValue, row }) => flexRenderComponent(ErpChipCellComponent, {
+            inputs: { content: col.cellRichContent!(getValue(), row.original) }
+          })
+        : col.cellFormatter
+        ? ({ getValue, row }) => col.cellFormatter!(getValue(), row.original)
+        : ({ getValue }) => getValue(),
+      size: col.size ?? 150,
+      minSize: col.minSize ?? 80,
+      maxSize: col.maxSize,
+      enableSorting: col.enableSorting ?? true,
+      enableResizing: col.enableResizing ?? true,
+      enableHiding: !col.disableHiding,
+      meta: { 
+        pin: col.pin, 
+        align: col.align, 
+        subHeader: col.subHeader ? unwrapSignal(col.subHeader) : undefined,
+        cellClass: col.cellRichContent 
+          ? (col.cellClass ? col.cellClass + ' erp-table__cell--rich-content' : 'erp-table__cell--rich-content') 
+          : col.cellClass 
+      },
+    };
+  }
+
+  /**
+   * Wydobywa wszystkie kolumny liściowe (leaf columns) z konfiguracji,
+   * w tym kolumny zagnieżdżone wewnątrz grup.
+   */
+  private _flattenLeafColumns(): ErpColumnDef<any>[] {
+    const result: ErpColumnDef<any>[] = [];
+    for (const colOrGroup of this.config().columns) {
+      if (isColumnGroupDef(colOrGroup)) {
+        result.push(...colOrGroup.columns);
+      } else {
+        result.push(colOrGroup);
+      }
+    }
+    return result;
+  }
 
   // Main Table Instance
   protected table = createAngularTable<T>(() => ({
@@ -888,20 +985,49 @@ export class ErpTableComponent<T> {
 
   // Column Menu Info for Toolbar
   protected _columnMenuInfo = computed(() => {
-    const configCols = this.config().columns;
-    return this.table().getAllLeafColumns()
-      .filter(col => col.id !== '__selection')
-      .map(col => {
-        const originalCol = configCols.find(c => c.id === col.id);
-        const headerText = originalCol ? unwrapSignal(originalCol.header) : col.id;
+    const leafCols = this._flattenLeafColumns();
+    
+    const mapColumn = (colOrGroup: ErpColumnDef<any> | ErpColumnGroupDef<any>): any => {
+      if (colOrGroup.id === '__selection') return null;
+      
+      if (isColumnGroupDef(colOrGroup)) {
+        const children = colOrGroup.columns
+          .map(c => mapColumn(c))
+          .filter(c => c !== null);
+          
+        if (children.length === 0) return null;
+        
+        const visible = children.some((c: any) => c.visible);
         return {
-          id: col.id,
-          header: headerText as string,
-          visible: col.getIsVisible(),
-          disableHiding: !col.getCanHide(),
-          pin: col.getIsPinned()
+          id: colOrGroup.id,
+          header: unwrapSignal(colOrGroup.header) as string,
+          visible,
+          disableHiding: children.every((c: any) => c.disableHiding),
+          pin: false,
+          isGroup: true,
+          children
         };
-      });
+      } else {
+        const tCol = this.table().getColumn(colOrGroup.id);
+        if (!tCol) return null;
+        
+        const originalCol = leafCols.find(c => c.id === colOrGroup.id);
+        const headerText = originalCol ? unwrapSignal(originalCol.header) : colOrGroup.id;
+        
+        return {
+          id: colOrGroup.id,
+          header: headerText as string,
+          visible: tCol.getIsVisible(),
+          disableHiding: !tCol.getCanHide(),
+          pin: tCol.getIsPinned(),
+          isGroup: false
+        };
+      }
+    };
+
+    return this.config().columns
+      .map(c => mapColumn(c))
+      .filter(c => c !== null);
   });
 
   // Handlers
@@ -909,8 +1035,12 @@ export class ErpTableComponent<T> {
     this.table().setPagination(event);
   }
 
-  protected onVisibilityChange(id: string, visible: boolean) {
-    this.table().getColumn(id)?.toggleVisibility(visible);
+  protected onVisibilityChange(changes: { id: string; visible: boolean }[]) {
+    const visibility = { ...this.table().getState().columnVisibility };
+    for (const change of changes) {
+      visibility[change.id] = change.visible;
+    }
+    this.table().setColumnVisibility(visibility);
   }
 
   protected onPinChange(id: string, pin: 'left' | 'right' | false) {

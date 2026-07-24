@@ -2,7 +2,24 @@
   "table": {
     "search": "Szukaj...",
     "empty": "Brak danych do wyświetlenia",
-    "paginationReport": "Pokazuję {{first}} do {{last}} z {{totalRecords}} rekordów"
+    "paginationReport": "Pokazuję {{first}} do {{last}} z {{totalRecords}} rekordów",
+    "rowsPerPage": "Wierszy na stronę",
+    "page": "Strona",
+    "of": "z",
+    "first": "Pierwsza",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "last": "Ostatnia",
+    "goToPage": "Przejdź do strony",
+    "selectAll": "Zaznacz wszystko",
+    "deselectAll": "Odznacz wszystko",
+    "selected": "Zaznaczono {{count}}",
+    "columnVisibility": "Widoczność kolumn",
+    "loading": "Ładowanie danych...",
+    "noSort": "Brak sortowania",
+    "sortAsc": "Sortuj rosnąco",
+    "sortDesc": "Sortuj malejąco",
+    "resetFilters": "Resetuj filtry"
   },
   "tabs": {
     "empty": "Brak zakładek do wyświetlenia",

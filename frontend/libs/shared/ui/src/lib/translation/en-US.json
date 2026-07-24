@@ -2,7 +2,24 @@
   "table": {
     "search": "Search...",
     "empty": "No data to display",
-    "paginationReport": "Showing {{first}} to {{last}} of {{totalRecords}} records"
+    "paginationReport": "Showing {{first}} to {{last}} of {{totalRecords}} records",
+    "rowsPerPage": "Rows per page",
+    "page": "Page",
+    "of": "of",
+    "first": "First",
+    "previous": "Previous",
+    "next": "Next",
+    "last": "Last",
+    "goToPage": "Go to page",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "selected": "Selected {{count}}",
+    "columnVisibility": "Column visibility",
+    "loading": "Loading data...",
+    "noSort": "No sorting",
+    "sortAsc": "Sort ascending",
+    "sortDesc": "Sort descending",
+    "resetFilters": "Reset filters"
   },
   "tabs": {
     "empty": "No tabs to display",

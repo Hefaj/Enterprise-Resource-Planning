@@ -42,6 +42,7 @@ export * from './lib/atoms/erp-stepper';
 // export * from './lib/atoms/erp-user-menu';
 export * from './lib/atoms/erp-text';
 // export * from './lib/atoms/erp-popover';
+export * from './lib/atoms/erp-table';
 
 // // Molecules
 // export * from './lib/molecules/erp-dynamic-filter';

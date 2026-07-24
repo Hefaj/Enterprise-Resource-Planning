@@ -1,0 +1,290 @@
+:host {
+  display: block;
+  --erp-table-bg: var(--tui-background-base);
+  --erp-table-header-bg: var(--tui-background-neutral-1);
+  --erp-table-border: var(--tui-border-normal);
+  --erp-table-row-hover: var(--tui-background-neutral-1-hover);
+  --erp-table-row-selected: var(--tui-status-info-pale);
+  --erp-table-stripe: var(--tui-background-neutral-1);
+  --erp-table-text: var(--tui-text-primary);
+  --erp-table-text-secondary: var(--tui-text-secondary);
+  --erp-table-radius: var(--tui-radius-l);
+}
+
+.erp-table-container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--erp-table-bg);
+  border: 1px solid var(--erp-table-border);
+  border-radius: var(--erp-table-radius);
+  overflow: hidden;
+  height: 100%;
+}
+
+.erp-table-scroll-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  
+  /* Scrollbar styling (optional, often handled globally) */
+}
+
+.erp-table {
+  table-layout: fixed;
+  border-spacing: 0;
+  color: var(--erp-table-text);
+  
+  &--striped .erp-table__row:nth-child(even) {
+    background-color: var(--erp-table-stripe);
+  }
+  
+  &--bordered {
+    .erp-table__header-cell,
+    .erp-table__footer-cell,
+    .erp-table__cell {
+      border-right: 1px solid var(--erp-table-border);
+      &:last-child {
+        border-right: none;
+      }
+    }
+  }
+}
+
+.erp-table--compact {
+  .erp-table__header-cell,
+  .erp-table__footer-cell,
+  .erp-table__cell {
+    padding: 0.5rem;
+  }
+}
+
+.erp-table__header {
+  box-shadow: 0 1px 0 var(--erp-table-border);
+}
+
+.erp-table__header-cell,
+.erp-table__footer-cell {
+  background: linear-gradient(var(--erp-table-header-bg), var(--erp-table-header-bg)), var(--erp-table-bg);
+  transition: background 0.2s;
+  border-right: 1px solid var(--erp-table-border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  
+  &:last-child {
+    border-right: none;
+  }
+  
+  &[data-pinned='left'] {
+    position: sticky;
+    z-index: 20;
+    border-right: none !important;
+    
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(var(--erp-table-border), var(--erp-table-border)), var(--erp-table-bg);
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+  
+  &[data-pinned='right'] {
+    position: sticky;
+    z-index: 20;
+    border-right: none !important;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(var(--erp-table-border), var(--erp-table-border)), var(--erp-table-bg);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(var(--erp-table-border), var(--erp-table-border)), var(--erp-table-bg);
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+}
+
+.erp-table__cell {
+  background: inherit; /* to inherit from row hover/stripe/selection */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  
+  &[data-pinned='left'] {
+    position: sticky;
+    z-index: 10;
+    border-right: none !important;
+    
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(var(--erp-table-border), var(--erp-table-border)), var(--erp-table-bg);
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+  
+  &[data-pinned='right'] {
+    position: sticky;
+    z-index: 10;
+    border-right: none !important;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(var(--erp-table-border), var(--erp-table-border)), var(--erp-table-bg);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(var(--erp-table-border), var(--erp-table-border)), var(--erp-table-bg);
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+}
+
+.erp-table__row {
+  background: var(--erp-table-bg);
+  
+  &:hover {
+    background: linear-gradient(var(--erp-table-row-hover), var(--erp-table-row-hover)), var(--erp-table-bg);
+  }
+  
+  &.bg-\(--erp-table-row-selected\) {
+    background: linear-gradient(var(--erp-table-row-selected), var(--erp-table-row-selected)), var(--erp-table-bg);
+  }
+}
+
+.erp-table__resizer {
+  touch-action: none;
+  /* Zwiększony hit-area (12px w HTML: w-3), sam uchwyt jest wyśrodkowany */
+  transform: translateX(50%);
+  z-index: 5;
+  background-color: transparent;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    background-color: transparent;
+    transition: background-color 0.2s;
+  }
+
+  &:hover::after,
+  &.is-resizing::after {
+    background-color: var(--tui-text-action);
+  }
+}
+
+/* Cdk Drag & Drop styles */
+.cdk-drag-preview {
+  opacity: 0 !important;
+}
+
+.cdk-drop-list-dragging .erp-table__header-cell:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.erp-table__drag-handle {
+  cursor: grab;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+  color: var(--tui-text-tertiary);
+  font-size: 1rem;
+  flex-shrink: 0;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.erp-table__header-cell:hover .erp-table__drag-handle {
+  opacity: 0.6;
+}
+
+.erp-table__header-cell:hover .erp-table__drag-handle:hover {
+  opacity: 1;
+  color: var(--tui-text-action);
+}
+
+/* Pin bounds highlighting */
+[data-pinned='left'].erp-table__header-cell--pinned-left-last,
+[data-pinned='left'].erp-table__footer-cell--pinned-left-last,
+[data-pinned='left'].erp-table__cell--pinned-left-last {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2px !important;
+    background: var(--tui-border-hover) !important;
+    pointer-events: none;
+    z-index: 2 !important;
+  }
+}
+
+[data-pinned='right'].erp-table__header-cell--pinned-right-first,
+[data-pinned='right'].erp-table__footer-cell--pinned-right-first,
+[data-pinned='right'].erp-table__cell--pinned-right-first {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 2px !important;
+    background: var(--tui-border-hover) !important;
+    pointer-events: none;
+    z-index: 2 !important;
+  }
+}
+
+/* Komórki z wieloliniową zawartością (rich content) */
+.erp-table__cell--rich-content {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}

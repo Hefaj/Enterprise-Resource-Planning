@@ -356,7 +356,7 @@ export class ErpTabsComponent {
           }
         }
       }
-    }, { allowSignalWrites: true });
+    });
 
     // Efekt reagujący na zmianę aktywnej zakładki → wywołanie callbacku.
     effect(() => {

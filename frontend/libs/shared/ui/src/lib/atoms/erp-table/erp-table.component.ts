@@ -166,7 +166,7 @@ export class ErpTableSelectionCell {
             <erp-table-column-menu
               [columns]="_columnMenuInfo()"
               (visibilityChange)="onVisibilityChange($event)"
-              (pinChange)="onPinChange($event.id, $event.pin)"
+              (pinChange)="onPinChange($event)"
               (orderChange)="onColumnMenuDrop($event)"
             />
           }
@@ -1095,8 +1095,10 @@ export class ErpTableComponent<T> {
     this.table().setColumnVisibility(visibility);
   }
 
-  protected onPinChange(id: string, pin: 'left' | 'right' | false) {
-    this.table().getColumn(id)?.pin(pin);
+  protected onPinChange(changes: { id: string; pin: 'left' | 'right' | false }[]) {
+    for (const change of changes) {
+      this.table().getColumn(change.id)?.pin(change.pin);
+    }
   }
 
   protected onColumnMenuDrop(newMenuOrder: string[]) {

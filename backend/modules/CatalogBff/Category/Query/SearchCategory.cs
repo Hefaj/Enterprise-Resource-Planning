@@ -28,14 +28,26 @@ public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, SearchResp
             query = query.Where(c => c.Name.Contains(req.Name, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (!string.IsNullOrWhiteSpace(req.SortField))
+        if (req.Sorts != null && req.Sorts.Any())
         {
-            var isDesc = req.SortOrder == -1;
-            query = req.SortField.ToLower() switch
+            var firstSort = req.Sorts.First();
+            var isDesc = firstSort.Order == -1;
+            var orderedQuery = firstSort.Field.ToLower() switch
             {
                 "name" => isDesc ? query.OrderByDescending(c => c.Name) : query.OrderBy(c => c.Name),
-                _ => query
+                _ => query.OrderBy(c => 0)
             };
+
+            foreach (var sort in req.Sorts.Skip(1))
+            {
+                var desc = sort.Order == -1;
+                orderedQuery = sort.Field.ToLower() switch
+                {
+                    "name" => desc ? orderedQuery.ThenByDescending(c => c.Name) : orderedQuery.ThenBy(c => c.Name),
+                    _ => orderedQuery.ThenBy(c => 0)
+                };
+            }
+            query = orderedQuery;
         }
 
         var totalCount = query.Count();

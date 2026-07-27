@@ -15,7 +15,7 @@ public class ProductSetNameCommand : ICommand<Guid>, IAggregateCommand
 
 public class ProductSetNameCommandHandler : CommandHandler<ProductSetNameCommand, Guid>
 {
-    public override Task<Guid> ExecuteAsync(ProductSetNameCommand cmd, CancellationToken ct)
+    public override async Task<Guid> ExecuteAsync(ProductSetNameCommand cmd, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(cmd.Name))
         {
@@ -30,27 +30,23 @@ public class ProductSetNameCommandHandler : CommandHandler<ProductSetNameCommand
 
         var jobUuid = Guid.NewGuid();
 
-        // Asynchroniczne delegowanie zadania w tle
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                // Symulacja czasu przetwarzania zadania asynchronicznego
-                await Task.Delay(3000);
+            // Symulacja czasu przetwarzania zadania asynchronicznego
+            await Task.Delay(3000, ct);
 
-                var idx = CatalogMockData.Products.FindIndex(p => p.Uuid == cmd.Uuid);
-                if (idx != -1)
-                {
-                    var existingProduct = CatalogMockData.Products[idx];
-                    CatalogMockData.Products[idx] = existingProduct with { Name = cmd.Name };
-                }
-            }
-            catch (Exception ex)
+            var idx = CatalogMockData.Products.FindIndex(p => p.Uuid == cmd.Uuid);
+            if (idx != -1)
             {
-                Console.WriteLine($"Błąd podczas asynchronicznej zmiany nazwy dla zadania {jobUuid}: {ex.Message}");
+                var existingProduct = CatalogMockData.Products[idx];
+                CatalogMockData.Products[idx] = existingProduct with { Name = cmd.Name };
             }
-        });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd podczas asynchronicznej zmiany nazwy dla zadania {jobUuid}: {ex.Message}");
+        }
 
-        return Task.FromResult(jobUuid);
+        return jobUuid;
     }
 }

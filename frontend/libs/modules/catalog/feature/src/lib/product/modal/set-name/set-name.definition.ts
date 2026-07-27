@@ -1,24 +1,24 @@
 import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
 import { SetNameStepComponent } from './set-name.step';
-import { CatalogProductOrchestrator, BatchCommandOfProductSetNameCommand } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, BatchCommandOfProductSetNameCommandAndSearchProductRequest } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation';
 import { SET_NAME_MODAL_ID } from '@erp/catalog/util';
 
 export type SetNameMetadata = Record<string, never>;
 
 @Injectable({ providedIn: 'root' })
-export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOfProductSetNameCommand, SetNameMetadata> {
+export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
   public readonly id = SET_NAME_MODAL_ID;
   private readonly _orchestrator = inject(CatalogProductOrchestrator);
 
-  public build(command: BatchCommandOfProductSetNameCommand, metadata?: SetNameMetadata): ErpModalConfig<BatchCommandOfProductSetNameCommand, SetNameMetadata> {
+  public build(command: BatchCommandOfProductSetNameCommandAndSearchProductRequest, metadata?: SetNameMetadata): ErpModalConfig<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
     const uuids = command['products']?.map((p: any) => p.uuid) ?? [];
     if (uuids.length > 0) {
       this._orchestrator.loadAsync(uuids).catch(err => console.error(err));
     }
 
-    return ErpModalBuilder.modal<BatchCommandOfProductSetNameCommand, SetNameMetadata>(b => b
+    return ErpModalBuilder.modal<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata>(b => b
       .setTitle([PRODUCT_KEYS.base.tabs.products, PRODUCT_KEYS.commands.setName.modalTitle])
       .setCommand(command)
       .setMetadata(metadata)

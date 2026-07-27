@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { BatchCommandOfProductSetNameCommand, CatalogProductOrchestrator } from '@erp/catalog/data-access';
+import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { SetNameMetadata } from './set-name.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
@@ -75,7 +75,7 @@ function noTestValidator(control: AbstractControl): ValidationErrors | null {
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProductSetNameCommand, SetNameMetadata> {
+export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
 
   /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
@@ -119,25 +119,14 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
 
       // 2. Divider element
       .addDivider({ slot: 'divider' })
-      
-      // 3. Section element with nested elements and grid layout
-      .addSection(s => s
-        .setLayout('grid')
-        .setGridCols(2)
-        .setGap('1rem')
-        .addText('shared.table.empty', { styleClass: 'text-sm text-gray-500' })
-        .addText(PRODUCT_KEYS.commands.setName.productSuffixSingle, { styleClass: 'text-sm' })
-      , { slot: 'sec', title: 'Sekcja demonstracyjna grid' })
-      
-      // 4. Form fields directly in layout
+
+      // 3. Form field for name
       .addSection(sectionForm => {
-        sectionForm
-        .addFormField('name', 'text',
+        sectionForm.addFormField('name', 'text',
           ib => ib
-            .setLabel('Nazwa produktu')
+            .setLabel(PRODUCT_KEYS.commands.setName.namePlaceholder)
             .setPlaceholder(PRODUCT_KEYS.commands.setName.namePlaceholder)
             .setHint('Wpisz nową nazwę dla zaznaczonych produktów')
-            // .setTooltip('Podpowiedź: Nazwa powinna być unikalna')
             .setIconStart('@tui.pencil')
             .setErrorMessages({
               required: PRODUCT_KEYS.validations.nameRequired,
@@ -148,12 +137,8 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
             validators: [Validators.required, noTestValidator],
             value: () => {
               const cmd = this.command()();
-              if (cmd['name'] !== undefined) {
-                return cmd['name'];
-              }
-              const firstCmdName = cmd.commands?.at(0)?.name;
-              if (firstCmdName !== undefined) {
-                return firstCmdName;
+              if (cmd['templateCommand'] && cmd['templateCommand'].name !== undefined) {
+                return cmd['templateCommand'].name;
               }
               const productsList = this.products();
               if (productsList.length === 1) {
@@ -164,131 +149,20 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
             },
             onChange: (value) => {
               this.command().update((cmd) => {
-                const commands = (cmd['products'] as any[] || []).map((p: any) => ({
-                  uuid: p.uuid,
-                  name: value ?? '',
-                  isActive: cmd.commands?.find(c => c.uuid === p.uuid)?.isActive ?? true,
-                  color: cmd.commands?.find(c => c.uuid === p.uuid)?.color ?? '#3f51b5',
-                }));
+                const uuids = (cmd['products'] as any[] || []).map((p: any) => p.uuid);
                 return {
                   ...cmd,
-                  name: value,
-                  commands,
-                };
-              });
-            }
-          }
-        )
-        .addFormField('isActive', 'switch',
-          sb => sb
-            .setLabel('Aktywny')
-            .setHint('Zaznacz, aby aktywować produkt')
-            // .setTooltip('Zmienia status widoczności produktu')
-            .setErrorMessages({ required: 'To pole jest wymagane do zaznaczenia (musi być aktywne)' })
-          ,
-          {
-            defaultValue: true,
-            validators: [Validators.requiredTrue],
-            value: () => {
-              const cmd = this.command()();
-              if (cmd['isActive'] !== undefined) {
-                return cmd['isActive'];
-              }
-              const firstCmdActive = cmd.commands?.at(0)?.isActive;
-              if (firstCmdActive !== undefined) {
-                return firstCmdActive;
-              }
-              return true;
-            },
-            onChange: (value) => {
-              this.command().update((cmd) => {
-                const commands = (cmd['products'] as any[] || []).map((p: any) => ({
-                  uuid: p.uuid,
-                  name: cmd.commands?.find(c => c.uuid === p.uuid)?.name ?? '',
-                  isActive: !!value,
-                  color: cmd.commands?.find(c => c.uuid === p.uuid)?.color ?? '#3f51b5',
-                }));
-                return {
-                  ...cmd,
-                  isActive: !!value,
-                  commands,
-                };
-              });
-            }
-          }
-        )
-        .addFormField('color', 'color',
-          cb => cb
-            .setLabel('Kolor produktu')
-            .setHint('Kolor identyfikacyjny produktu')
-          ,
-          {
-            defaultValue: '#3f51b5',
-            validators: [Validators.required],
-            value: () => {
-              const cmd = this.command()();
-              return cmd.commands?.at(0)?.color ?? '#3f51b5';
-            },
-            onChange: (value) => {
-              this.command().update((cmd) => {
-                const commands = (cmd['products'] as any[] || []).map((p: any) => ({
-                  uuid: p.uuid,
-                  name: cmd.commands?.find(c => c.uuid === p.uuid)?.name ?? '',
-                  isActive: cmd.commands?.find(c => c.uuid === p.uuid)?.isActive ?? true,
-                  color: value ?? '#3f51b5',
-                }));
-                return {
-                  ...cmd,
-                  commands,
+                  templateCommand: {
+                    name: value ?? ''
+                  },
+                  targetUuids: uuids
                 };
               });
             }
           }
         )
       }, { slot: 'form' })
- 
-      // 5. Card element
-      // .addCard(c => c
-      //   .setTitle('Karta demonstracyjna')
-      //   .setSubtitle('Podtytuł karty')
-      //   .setContentComponent(ErpTextComponent, {
-      //     config: ErpTextBuilder.create(tb => tb
-      //       .setValue('To jest treść karty wstrzyknięta jako komponent')
-      //     )
-      //   })
-      // , { slot: 'card' })
- 
-      // 6. Splitter element
-      // .addSplitter(sp => sp
-      //   .setLayout('horizontal')
-        // .addPanel({
-        //   size: 50,
-        //   component: ErpTextComponent,
-        //   config: {
-        //     config: ErpTextBuilder.create(tb => tb
-        //       .setValue('Lewy panel splittera')
-        //     )
-        //   },
-        // })
-      //   .addPanel({
-      //     size: 50,
-      //     component: ErpTextComponent,
-      //     config: {
-      //       config: ErpTextBuilder.create(tb => tb
-      //         .setValue('Prawy panel splittera')
-      //       )
-      //     },
-      //   })
-      // , { slot: 'splitter' })
- 
-      // 7. Component element directly
-      .addComponent(ErpTextComponent, {
-        config: ErpTextBuilder.create(tb => tb
-          .setValue('Komponent wstrzyknięty bezpośrednio przez addComponent')
-          .setTag('p')
-          .setClass('text-muted italic')
-        )
-      }, { slot: 'comp' })
+
     );
     super(config);
     this.formContent = config;

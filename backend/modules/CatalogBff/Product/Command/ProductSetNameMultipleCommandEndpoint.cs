@@ -1,9 +1,15 @@
 using FastEndpoints;
 using CatalogBff.Common;
+using CatalogBff.Product.Query;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CatalogBff.Product.Command;
 
-public class ProductSetNameMultipleCommandEndpoint : BatchEndpointBase<ProductSetNameCommand>
+public class ProductSetNameMultipleCommandEndpoint : BatchEndpointBase<ProductSetNameCommand, SearchProductRequest>
 {
     public override void Configure()
     {
@@ -11,6 +17,12 @@ public class ProductSetNameMultipleCommandEndpoint : BatchEndpointBase<ProductSe
         Group<ProductGroup>();
         Description(d => d
             .WithSummary("Seryjna aktualizacja nazw produktów z obsługą błędów cząstkowych")
-            .WithDescription("Umożliwia zmianę nazwy wielu produktów jednocześnie. Zwraca status 200 jeśli wszystkie się powiodły, 400 jeśli wszystkie zawiodły, lub 207 Multi-Status dla wyników mieszanych."));
+            .WithDescription("Umożliwia zmianę nazwy wielu produktów jednocześnie na podstawie filtrów, identyfikatorów lub konkretnych komend."));
+    }
+
+    protected override Task<IEnumerable<Guid>> GetUuidsFromFilterAsync(SearchProductRequest req, CancellationToken ct)
+    {
+        var query = CatalogMockData.Products.AsEnumerable().ApplyFilter(req);
+        return Task.FromResult(query.Select(p => p.Uuid));
     }
 }

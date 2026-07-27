@@ -27,12 +27,12 @@ export interface ICatalogBffClient {
      * Seryjna aktualizacja nazw produktów z obsługą błędów cząstkowych
      * @return OK
      */
-    productSetNameMultipleCommand(body: BatchCommandOfProductSetNameCommand): Observable<BatchResult>;
+    productSetNameMultipleCommand(body: BatchCommandOfProductSetNameCommandAndSearchProductRequest): Observable<BatchResult>;
     /**
      * Seryjna aktualizacja cen produktów z obsługą błędów cząstkowych
      * @return OK
      */
-    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommand): Observable<BatchResult>;
+    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommandAndSearchProductRequest): Observable<BatchResult>;
     /**
      * @return OK
      */
@@ -176,7 +176,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * Seryjna aktualizacja nazw produktów z obsługą błędów cząstkowych
      * @return OK
      */
-    productSetNameMultipleCommand(body: BatchCommandOfProductSetNameCommand): Observable<BatchResult> {
+    productSetNameMultipleCommand(body: BatchCommandOfProductSetNameCommandAndSearchProductRequest): Observable<BatchResult> {
         let url_ = this.baseUrl + "/product/product/batch-set-name";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -231,7 +231,7 @@ export class CatalogBffClient implements ICatalogBffClient {
      * Seryjna aktualizacja cen produktów z obsługą błędów cząstkowych
      * @return OK
      */
-    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommand): Observable<BatchResult> {
+    productSetPriceMultipleCommand(body: BatchCommandOfProductSetPriceCommandAndSearchProductRequest): Observable<BatchResult> {
         let url_ = this.baseUrl + "/product/product/batch-set-price";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -499,14 +499,20 @@ export class CatalogBffClient implements ICatalogBffClient {
     }
 }
 
-export interface BatchCommandOfProductSetNameCommand {
-    commands?: ProductSetNameCommand[];
+export interface BatchCommandOfProductSetNameCommandAndSearchProductRequest {
+    commands?: ProductSetNameCommand[] | undefined;
+    templateCommand?: ProductSetNameCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProductRequest | undefined;
 
     [key: string]: any;
 }
 
-export interface BatchCommandOfProductSetPriceCommand {
-    commands?: ProductSetPriceCommand[];
+export interface BatchCommandOfProductSetPriceCommandAndSearchProductRequest {
+    commands?: ProductSetPriceCommand[] | undefined;
+    templateCommand?: ProductSetPriceCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProductRequest | undefined;
 
     [key: string]: any;
 }
@@ -571,8 +577,6 @@ export interface ProductDto {
 export interface ProductSetNameCommand {
     uuid?: string;
     name?: string;
-    isActive?: boolean;
-    color?: string;
 
     [key: string]: any;
 }
@@ -588,8 +592,7 @@ export interface SearchCategoryRequest {
     name?: string | undefined;
     page?: number;
     pageSize?: number;
-    sortField?: string | undefined;
-    sortOrder?: number | undefined;
+    sorts?: SortOption[] | undefined;
 
     [key: string]: any;
 }
@@ -598,8 +601,7 @@ export interface SearchModelRequest {
     name?: string | undefined;
     page?: number;
     pageSize?: number;
-    sortField?: string | undefined;
-    sortOrder?: number | undefined;
+    sorts?: SortOption[] | undefined;
 
     [key: string]: any;
 }
@@ -612,8 +614,7 @@ export interface SearchProductRequest {
     availableFrom?: Date | undefined;
     page?: number;
     pageSize?: number;
-    sortField?: string | undefined;
-    sortOrder?: number | undefined;
+    sorts?: SortOption[] | undefined;
 
     [key: string]: any;
 }
@@ -621,6 +622,13 @@ export interface SearchProductRequest {
 export interface SearchResponse {
     uuids?: string[];
     totalCount?: number;
+
+    [key: string]: any;
+}
+
+export interface SortOption {
+    field?: string;
+    order?: number;
 
     [key: string]: any;
 }

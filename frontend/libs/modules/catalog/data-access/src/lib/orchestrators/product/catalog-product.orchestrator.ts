@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
-import { CatalogBffClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommand, BatchCommandOfProductSetNameCommand, BatchResult } from '../../api-client';
+import { CatalogBffClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchResult } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
@@ -174,7 +174,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
    * Wykonaj seryjne polecenie aktualizacji ceny dla wybranych produktów.
    */
   public async setPriceMultiple(
-    command: BatchCommandOfProductSetPriceCommand,
+    command: BatchCommandOfProductSetPriceCommandAndSearchProductRequest,
     queueID?: string,
   ): Promise<string> {
     const apiCall = (): Observable<string> => this._api.productSetPriceMultipleCommand(command).pipe(
@@ -192,7 +192,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
    * Wykonaj seryjne polecenie aktualizacji nazwy dla wybranych produktów.
    */
   public async setNameMultiple(
-    command: BatchCommandOfProductSetNameCommand,
+    command: BatchCommandOfProductSetNameCommandAndSearchProductRequest,
     queueID?: string,
   ): Promise<string> {
     const apiCall = (): Observable<string> => this._api.productSetNameMultipleCommand(command).pipe(

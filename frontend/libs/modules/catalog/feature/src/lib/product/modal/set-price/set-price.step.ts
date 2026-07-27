@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { BatchCommandOfProductSetPriceCommand, CatalogProductOrchestrator } from '@erp/catalog/data-access';
+import { BatchCommandOfProductSetPriceCommandAndSearchProductRequest, CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { SetPriceMetadata } from './set-price.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
@@ -60,11 +60,11 @@ import { SET_PRICE_MODAL_ID } from '@erp/catalog/util';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProductSetPriceCommand, SetPriceMetadata> {
+export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProductSetPriceCommandAndSearchProductRequest, SetPriceMetadata> {
   public readonly modalService = inject(ErpModalService);
 
   test() {
-    this.modalService.open<BatchCommandOfProductSetPriceCommand>(SET_PRICE_MODAL_ID, { products: [] })
+    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(SET_PRICE_MODAL_ID, { products: [] })
       .then(ref => {
         console.log('[ProductTabComponent] Modal opened successfully!', ref);
       })

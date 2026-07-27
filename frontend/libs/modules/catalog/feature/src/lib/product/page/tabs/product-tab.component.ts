@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CommonModule } from '@angular/common';
 import { ErpMenuBarComponent, ErpMenuBarBuilder, ErpModalService, ErpTableComponent, ErpTableBuilder, ErpTableState, ErpTableConfig } from '@erp/shared/ui';
 import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
-import { BatchCommandOfProductSetNameCommand, BatchCommandOfProductSetPriceCommand } from '@erp/catalog/data-access';
+import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest } from '@erp/catalog/data-access';
 
 /** Pojedynczy atrybut produktu z wieloma możliwymi wartościami. */
 interface ProductAttribute {
@@ -317,7 +317,7 @@ export class ProductTabComponent {
   }
 
   private openSetPriceModal(): void {
-    this.modalService.open<BatchCommandOfProductSetPriceCommand>(SET_PRICE_MODAL_ID, { products: [] })
+    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(SET_PRICE_MODAL_ID, { products: [] })
       .then(ref => {
         console.log('[ProductTabComponent] Modal opened successfully!', ref);
 
@@ -331,7 +331,7 @@ export class ProductTabComponent {
   }
 
   private openSetNameModal(): void {
-    this.modalService.open<BatchCommandOfProductSetNameCommand>(SET_NAME_MODAL_ID, { products: [] })
+    this.modalService.open<BatchCommandOfProductSetNameCommandAndSearchProductRequest>(SET_NAME_MODAL_ID, { products: [] })
       .then(ref => {
         console.log('[ProductTabComponent] Modal opened successfully!', ref);
 

@@ -1,7 +1,12 @@
 using FastEndpoints;
 using FastEndpoints.Swagger;
+using CatalogBff.Common.BackgroundJobs;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Rejestracja kolejki i serwisu wykonującego pracę w tle
+builder.Services.AddSingleton<IBackgroundTaskQueue>(ctx => new DefaultBackgroundTaskQueue(1000));
+builder.Services.AddHostedService<QueuedHostedService>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddFastEndpoints();

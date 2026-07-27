@@ -15,7 +15,7 @@ public class ProductSetPriceCommand : ICommand<Guid>, IAggregateCommand
 
 public class ProductSetPriceCommandHandler : CommandHandler<ProductSetPriceCommand, Guid>
 {
-    public override Task<Guid> ExecuteAsync(ProductSetPriceCommand cmd, CancellationToken ct)
+    public override async Task<Guid> ExecuteAsync(ProductSetPriceCommand cmd, CancellationToken ct)
     {
         if (cmd.Price < 0)
         {
@@ -30,27 +30,23 @@ public class ProductSetPriceCommandHandler : CommandHandler<ProductSetPriceComma
 
         var jobUuid = Guid.NewGuid();
 
-        // Asynchroniczne delegowanie zadania w tle
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                // Symulacja czasu przetwarzania zadania asynchronicznego
-                await Task.Delay(3000);
+            // Symulacja czasu przetwarzania zadania asynchronicznego
+            await Task.Delay(3000, ct);
 
-                var idx = CatalogMockData.Products.FindIndex(p => p.Uuid == cmd.Uuid);
-                if (idx != -1)
-                {
-                    var existingProduct = CatalogMockData.Products[idx];
-                    CatalogMockData.Products[idx] = existingProduct with { Price = cmd.Price };
-                }
-            }
-            catch (Exception ex)
+            var idx = CatalogMockData.Products.FindIndex(p => p.Uuid == cmd.Uuid);
+            if (idx != -1)
             {
-                Console.WriteLine($"Błąd podczas asynchronicznej zmiany ceny dla zadania {jobUuid}: {ex.Message}");
+                var existingProduct = CatalogMockData.Products[idx];
+                CatalogMockData.Products[idx] = existingProduct with { Price = cmd.Price };
             }
-        });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd podczas asynchronicznej zmiany ceny dla zadania {jobUuid}: {ex.Message}");
+        }
 
-        return Task.FromResult(jobUuid);
+        return jobUuid;
     }
 }

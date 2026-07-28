@@ -13,6 +13,7 @@ import {
   ErpCellRichContent,
   ErpCellChip,
   isColumnGroupDef,
+  ErpSelectionState,
 } from './erp-table.types';
 
 /**
@@ -490,14 +491,6 @@ export class ErpTableBuilder<TData = any> extends ErpBaseBuilder<ErpTableConfig<
   }
 
   /**
-   * Zdarzenie zmiany filtrów.
-   */
-  public setOnFilterChange(fn: (state: Record<string, any>) => void): this {
-    this._data.onFilterChange = fn;
-    return this;
-  }
-
-  /**
    * Wstrzykuje dodatkowe (lub ręczne) elementy do legendy tabeli.
    */
   public setLegendItems(items: MaybeSignal<ErpCellChip[]>): this {
@@ -505,11 +498,19 @@ export class ErpTableBuilder<TData = any> extends ErpBaseBuilder<ErpTableConfig<
     return this;
   }
 
+  /**
+   * Zewnętrzne filtry przypisane do tabeli.
+   */
+  public setFilters(filters: MaybeSignal<Record<string, any>>): this {
+    this._data.filters = filters;
+    return this;
+  }
+
 
   /**
    * Zdarzenie zmiany zaznaczenia wierszy.
    */
-  public setOnSelectionChange(fn: (items: TData[]) => void): this {
+  public setOnSelectionChange(fn: (state: ErpSelectionState<TData>) => void): this {
     this._data.onSelectionChange = fn;
     return this;
   }

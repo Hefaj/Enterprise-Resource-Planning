@@ -90,6 +90,8 @@ export class ProductTabComponent {
 
     const builder = new ErpTableBuilder<ProductListDto>()
       .setMode('server')
+      .setOnSelectionChange((state) => console.log(state))
+      .setFilters({ category: 'Elektronika', status: 'Dostępny' })
       .setEnableVirtualScroll(true)
       .setEstimatedRowHeight(80)
       .setDefaultPageSize(20)

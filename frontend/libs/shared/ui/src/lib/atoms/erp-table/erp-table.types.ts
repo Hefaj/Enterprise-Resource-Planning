@@ -15,6 +15,14 @@ export interface ErpPaginationState {
 
 export type ErpSelectionMode = 'none' | 'single' | 'multi';
 
+export interface ErpSelectionState<TData = any> {
+  mode: ErpTableMode;
+  isAllSelected: boolean;
+  selectedItems: TData[];
+  selectedIds: string[];
+  filters?: Record<string, any>;
+}
+
 export interface ErpCellChip {
   text: Translatable;
   shortText?: Translatable;
@@ -83,7 +91,7 @@ export interface ErpTableState {
   columnOrder: string[];
   columnSizing: Record<string, number>;
   filters: Record<string, any>;
-  selectedRowIds: Set<string> | string[];
+  selection: Pick<ErpSelectionState, 'isAllSelected' | 'selectedIds' | 'filters'>;
 }
 
 export interface ErpTableConfig<TData = any> {
@@ -115,8 +123,8 @@ export interface ErpTableConfig<TData = any> {
   trackBy?: (index: number, row: TData) => any;
   onPaginationChange?: (state: ErpPaginationState) => void;
   onSortChange?: (state: ErpSortState[]) => void;
-  onFilterChange?: (state: Record<string, any>) => void;
-  onSelectionChange?: (items: TData[]) => void;
+  onSelectionChange?: (state: ErpSelectionState<TData>) => void;
   onStateChange?: (state: ErpTableState) => void;
   legendItems?: MaybeSignal<ErpCellChip[]>;
+  filters?: MaybeSignal<Record<string, any>>;
 }

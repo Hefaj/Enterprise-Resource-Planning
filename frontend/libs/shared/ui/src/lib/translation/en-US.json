@@ -30,7 +30,9 @@
       "visibilityTitle": "Column management",
       "visibilityDesc": "Use the columns button to hide, pin or reorder them (by dragging).",
       "multiSelectTitle": "Mass selection",
-      "multiSelectDesc": "Select the first row, then hold SHIFT and select the last one."
+      "multiSelectDesc": "Select the first row, then hold SHIFT and select the last one.",
+      "serverSelectionTitle": "Server-side select all",
+      "serverSelectionDesc": "Selecting all results disables individual row deselection. This applies to all result pages based on current filters."
     }
   },
   "tabs": {

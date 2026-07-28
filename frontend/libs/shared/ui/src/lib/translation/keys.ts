@@ -36,6 +36,8 @@ export const SHARED_KEYS = {
         visibilityDesc: 'shared.table.help.visibilityDesc',
         multiSelectTitle: 'shared.table.help.multiSelectTitle',
         multiSelectDesc: 'shared.table.help.multiSelectDesc',
+        serverSelectionTitle: 'shared.table.help.serverSelectionTitle',
+        serverSelectionDesc: 'shared.table.help.serverSelectionDesc',
       },
     },
     tabs: {

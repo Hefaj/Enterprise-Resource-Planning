@@ -48,6 +48,7 @@ import {
   ErpColumnDef,
   ErpColumnGroupDef,
   isColumnGroupDef,
+  ErpSelectionState,
 } from './erp-table.types';
 import { ErpTablePaginationComponent } from './erp-table-pagination.component';
 import { ErpTableColumnMenuComponent } from './erp-table-column-menu.component';
@@ -236,6 +237,9 @@ export class ErpTableSelectionCell {
                 }
                 @if (config().selectionMode === 'multi') {
                   <li><strong>{{ 'shared.table.help.multiSelectTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.multiSelectDesc' | erpTranslate }}</li>
+                }
+                @if (config().selectionMode === 'multi' && _isServerMode()) {
+                  <li><strong>{{ 'shared.table.help.serverSelectionTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.serverSelectionDesc' | erpTranslate }}</li>
                 }
               </ul>
             </div>
@@ -634,6 +638,7 @@ export class ErpTableComponent<T> {
   private _columnFilters = signal<ColumnFiltersState>([]);
   private _lastSelectedRowId = signal<string | null>(null);
   private _columnPinning = signal<ColumnPinningState>({ left: [], right: [] });
+  protected _serverAllSelected = signal<boolean>(false);
   private _isInitialized = false;
 
   constructor() {
@@ -658,11 +663,15 @@ export class ErpTableComponent<T> {
           if (state.columnSizing) {
             this._columnSizing.set(state.columnSizing);
           }
-          // Mapping row ids to row selection format { 'id': true }
-          if (state.selectedRowIds) {
-            const rowSelection: RowSelectionState = {};
-            state.selectedRowIds.forEach(id => rowSelection[id] = true);
-            this._rowSelection.set(rowSelection);
+          // Restore selection
+          if (state.selection) {
+            if (this._isServerMode() && state.selection.isAllSelected) {
+              this._serverAllSelected.set(true);
+            } else if (state.selection.selectedIds) {
+              const rowSelection: RowSelectionState = {};
+              state.selection.selectedIds.forEach(id => rowSelection[id] = true);
+              this._rowSelection.set(rowSelection);
+            }
           }
         });
       }
@@ -724,12 +733,12 @@ export class ErpTableComponent<T> {
 
     // Effect to emit state changes (triggers data fetching in host components)
     effect(() => {
-      // Re-run effect only on pagination, sorting, or filter changes
+      // Re-run effect only on pagination or sorting changes
       const sorting = this._sorting().map(s => ({ columnId: s.id, direction: (s.desc ? 'desc' : 'asc') as 'asc' | 'desc' }));
       const pagination = this._pagination();
-      const filters = this._extractFilters(this._columnFilters());
 
       untracked(() => {
+        const filters = unwrapSignal(this.config().filters) ?? {};
         const state: ErpTableState = {
           sorting,
           pagination,
@@ -737,19 +746,51 @@ export class ErpTableComponent<T> {
           columnVisibility: this._columnVisibility(),
           columnOrder: this._columnOrder(),
           columnSizing: this._columnSizing(),
-          selectedRowIds: new Set(Object.keys(this._rowSelection()).filter(k => this._rowSelection()[k])),
+          selection: {
+            isAllSelected: this._isServerMode() ? this._serverAllSelected() : this.table.getIsAllRowsSelected(),
+            selectedIds: Object.keys(this._rowSelection()).filter(k => this._rowSelection()[k]),
+            filters: (this._isServerMode() && this._serverAllSelected()) ? filters : undefined
+          },
         };
         this.config().onStateChange?.(state);
       });
     });
   }
 
-  private _extractFilters(filters: ColumnFiltersState): Record<string, any> {
-    const res: Record<string, any> = {};
-    filters.forEach(f => {
-      res[f.id] = f.value;
+
+
+  private _emitSelectionChange() {
+    const isServer = this._isServerMode();
+    const idAccessor = this.config().rowIdAccessor;
+    
+    if (isServer && this._serverAllSelected()) {
+      this.config().onSelectionChange?.({
+        mode: 'server',
+        isAllSelected: true,
+        selectedItems: [],
+        selectedIds: [],
+        filters: unwrapSignal(this.config().filters) ?? {}
+      });
+      return;
+    }
+
+    const newVal = this._rowSelection();
+    const selectedIds = Object.keys(newVal).filter(k => newVal[k]);
+    const items = this.items();
+    let selectedItems: T[] = [];
+    if (idAccessor) {
+      const selectedSet = new Set(selectedIds);
+      selectedItems = items.filter(item => selectedSet.has(idAccessor(item)));
+    } else {
+      selectedItems = selectedIds.map(id => items[parseInt(id, 10)]).filter(Boolean);
+    }
+    
+    this.config().onSelectionChange?.({
+      mode: isServer ? 'server' : 'client',
+      isAllSelected: isServer ? false : this.table.getIsAllRowsSelected(),
+      selectedItems,
+      selectedIds,
     });
-    return res;
   }
 
   // Map ERP columns to TanStack columns
@@ -765,12 +806,22 @@ export class ErpTableComponent<T> {
           if (config.selectionMode === 'multi') {
             return flexRenderComponent(ErpTableSelectionCell, {
               inputs: {
-                checked: table.getIsAllRowsSelected(),
-                indeterminate: table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected(),
+                checked: this._isServerMode() ? this._serverAllSelected() : table.getIsAllRowsSelected(),
+                indeterminate: this._isServerMode() ? false : (table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()),
                 selectionMode: config.selectionMode,
               },
               outputs: {
-                changed: ({ checked }: { checked: boolean }) => table.toggleAllRowsSelected(checked)
+                changed: ({ checked }: { checked: boolean }) => {
+                  if (this._isServerMode()) {
+                    this._serverAllSelected.set(checked);
+                    if (!checked) {
+                      this._rowSelection.set({});
+                    }
+                    this._emitSelectionChange();
+                  } else {
+                    table.toggleAllRowsSelected(checked);
+                  }
+                }
               }
             });
           }
@@ -779,8 +830,8 @@ export class ErpTableComponent<T> {
         cell: ({ row, table }) => {
           return flexRenderComponent(ErpTableSelectionCell, {
             inputs: {
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
+              checked: (this._isServerMode() && this._serverAllSelected()) ? true : row.getIsSelected(),
+              disabled: (this._isServerMode() && this._serverAllSelected()) || !row.getCanSelect(),
               selectionMode: config.selectionMode,
             },
             outputs: {
@@ -954,31 +1005,7 @@ export class ErpTableComponent<T> {
       onRowSelectionChange: (updaterOrValue: any) => {
         const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(this._rowSelection()) : updaterOrValue;
         this._rowSelection.set(newVal);
-        
-        // Emit selected models
-        // O(n) scan to find selected items - in a real huge data scenario we might want row models
-        const selectedIds = Object.keys(newVal).filter(k => newVal[k]);
-        const idAccessor = this.config().rowIdAccessor;
-        const items = this.items();
-        
-        let selectedItems: T[] = [];
-        if (idAccessor) {
-          const selectedSet = new Set(selectedIds);
-          selectedItems = items.filter(item => selectedSet.has(idAccessor(item)));
-        } else {
-          // If no idAccessor, TanStack uses index as string
-          selectedItems = selectedIds.map(id => items[parseInt(id, 10)]).filter(Boolean);
-        }
-        
-        this.config().onSelectionChange?.(selectedItems);
-      },
-
-      onColumnFiltersChange: (updaterOrValue: any) => {
-        const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(this._columnFilters()) : updaterOrValue;
-        this._columnFilters.set(newVal);
-        if (this._isServerMode()) {
-          this.config().onFilterChange?.(this._extractFilters(newVal));
-        }
+        this._emitSelectionChange();
       },
 
       columnResizeMode: 'onChange',

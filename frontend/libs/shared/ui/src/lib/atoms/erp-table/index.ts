@@ -7,6 +7,7 @@ export type {
   ErpSortState,
   ErpPaginationState,
   ErpSelectionMode,
+  ErpSelectionState,
   ErpCellChip,
   ErpCellLine,
   ErpCellRichContent,

@@ -33,6 +33,7 @@ import {
   ColumnOrderState,
   ColumnPinningState,
   flexRenderComponent,
+  Row,
 } from '@tanstack/angular-table';
 import { injectVirtualizer } from '@tanstack/angular-virtual';
 
@@ -413,7 +414,7 @@ export class ErpTableSelectionCell {
                     [index]="virtualRow.index"
                     [attr.data-index]="virtualRow.index"
                     class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
-                    [class.bg-(--erp-table-row-selected)]="row.getIsSelected()"
+                    [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
                     (click)="onRowClickEvent(row.original)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
                   >
@@ -453,7 +454,7 @@ export class ErpTableSelectionCell {
                 @for (row of table.getRowModel().rows; track row.id) {
                   <tr 
                     class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
-                    [class.bg-(--erp-table-row-selected)]="row.getIsSelected()"
+                    [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
                     (click)="onRowClickEvent(row.original)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
                   >
@@ -791,6 +792,13 @@ export class ErpTableComponent<T> {
       selectedItems,
       selectedIds,
     });
+  }
+
+  isRowSelected(row: Row<T>): boolean {
+    if (this._isServerMode() && this._serverAllSelected()) {
+      return true;
+    }
+    return row.getIsSelected();
   }
 
   // Map ERP columns to TanStack columns

@@ -1,0 +1,183 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  effect,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+import {
+  ErpTableComponent,
+  ErpTableBuilder,
+  ErpTableState,
+  ErpTableConfig,
+  ErpSelectionState,
+} from '@erp/shared/ui';
+
+import {
+  CatalogProductOrchestrator,
+  ProductVM,
+  SearchProductRequest,
+  CategoryVM,
+} from '@erp/catalog/data-access';
+
+@Component({
+  selector: 'erp-category-product-table',
+  standalone: true,
+  imports: [CommonModule, ErpTableComponent],
+  template: `
+    <erp-table
+      class="block h-full w-full"
+      [config]="tableConfig()"
+    />
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CategoryProductTableComponent {
+  private readonly catalogProductOrchestrator = inject(CatalogProductOrchestrator);
+
+  /** Filtry przekazywane z zewnątrz (np. wyszukiwanie) */
+  filters = input<SearchProductRequest>({});
+
+  /** Zdarzenie zmiany zaznaczenia wybrane w tabeli */
+  selectionChange = output<ErpSelectionState<ProductVM>>();
+
+  // ── Stan wewnętrzny ──
+  private readonly currentUuids = signal<string[]>([]);
+  private readonly totalCount = signal<number>(0);
+  private readonly loading = signal<boolean>(false);
+
+  // Zapisany ostatni stan tabeli (paginacja, sortowanie)
+  private lastTableState: ErpTableState | null = null;
+
+  /** Zmapowane modele widoku z pobranych UUIDów */
+  items = computed<ProductVM[]>(() => {
+    const uuids = this.currentUuids();
+    const vmMap = this.catalogProductOrchestrator.getViewModel()();
+    
+    return uuids
+      .map(uuid => vmMap.get(uuid))
+      .filter((vm): vm is ProductVM => vm !== undefined);
+  });
+
+  constructor() {
+    // Reaguj na zmiany filtrów i pobierz dane z zachowaniem aktualnego stanu tabeli
+    effect(() => {
+      const currentFilters = this.filters();
+      this.fetchData(currentFilters, this.lastTableState);
+    });
+  }
+
+  tableConfig = computed<ErpTableConfig<ProductVM>>(() => {
+    return new ErpTableBuilder<ProductVM>()
+      .setMode('server')
+      .setEnableVirtualScroll(true)
+      .setEstimatedRowHeight(50)
+      .setDefaultPageSize(20)
+      .setPageSizeOptions([10, 20, 50, 100])
+      .setSelectionMode('multi')
+      .setItems(this.items)
+      .setItemCount(this.totalCount)
+      .setLoading(this.loading)
+      .setEmptyMessage('Brak produktów do wyświetlenia')
+
+      // ── Identyfikacja ──
+      .addColumnGroup((g) => g
+        .setId('identification')
+        .setHeader('Identyfikacja')
+        .addColumn((c) => c
+          .setId('sku')
+          .setAccessorKey('sku')
+          .setHeader('SKU')
+          .setSize(180)
+        )
+        .addColumn((c) => c
+          .setId('name')
+          .setAccessorKey('name')
+          .setHeader('Nazwa produktu')
+          .setSize(300)
+        )
+      )
+
+      // ── Szczegóły ──
+      .addColumnGroup((g) => g
+        .setId('details')
+        .setHeader('Szczegóły')
+        .addColumn((c) => c
+          .setId('categories')
+          .setAccessorKey('categories')
+          .setHeader('Kategorie')
+          .setEnableSorting(false)
+          .setSize(240)
+          .setCellRichContent((categories: CategoryVM[]) => {
+             if (!categories || categories.length === 0) return { lines: [{ text: '—' }] };
+             return {
+               lines: categories.map((cat) => ({
+                 text: cat.name,
+               }))
+             };
+          })
+        )
+        .addColumn((c) => c
+          .setId('status')
+          .setAccessorKey('status')
+          .setHeader('Status')
+          .setSize(150)
+        )
+        .addColumn((c) => c
+          .setId('price')
+          .setAccessorKey('price')
+          .setHeader('Cena')
+          .setAlign('right')
+          .setSize(150)
+        )
+      )
+      .setOnStateChange((state) => {
+        this.lastTableState = state;
+        this.fetchData(this.filters(), state);
+      })
+      .setOnSelectionChange((state) => {
+        this.selectionChange.emit(state);
+      })
+      .build();
+  });
+
+  private async fetchData(filters: SearchProductRequest, tableState: ErpTableState | null): Promise<void> {
+    this.loading.set(true);
+    try {
+      const request: SearchProductRequest = {
+        ...filters,
+        page: tableState?.pagination?.pageIndex ?? 0,
+        pageSize: tableState?.pagination?.pageSize ?? 20,
+      };
+
+      if (tableState?.sorting && tableState.sorting.length > 0) {
+        request.sorts = tableState.sorting.map((sort) => ({
+          field: sort.columnId,
+          order: sort.direction === 'asc' ? 1 : -1,
+        }));
+      }
+
+      const response = await this.catalogProductOrchestrator.searchAsync(request, {
+        autoLoad: true,
+        loadOptions: {
+          includeCategories: true,
+          includeModel: true,
+        },
+      });
+
+      this.currentUuids.set(response.uuids ?? []);
+      this.totalCount.set(response.totalCount ?? 0);
+    } catch (error) {
+      console.error('[CategoryProductTableComponent] Error fetching data:', error);
+      this.currentUuids.set([]);
+      this.totalCount.set(0);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+}

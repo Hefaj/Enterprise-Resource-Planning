@@ -76,6 +76,10 @@
       "pl": "Polski",
       "en": "English"
     },
+    "headerMode": {
+      "autoHide": "Ukrywaj nagłówek",
+      "fixed": "Przypnij nagłówek"
+    },
     "loading": "Wczytywanie...",
     "reportIssue": "Zgłoś problem"
   },

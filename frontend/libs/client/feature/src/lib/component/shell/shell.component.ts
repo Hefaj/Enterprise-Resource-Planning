@@ -5,7 +5,7 @@ import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp
 import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui';
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
 import { SHARED_KEYS } from '@erp/shared/ui';
-import { ErpBreadcrumbService, ErpNavRegistryService, AppLanguage } from '@erp/shared/data-access';
+import { ErpBreadcrumbService, ErpNavRegistryService, AppLanguage, ErpUserPreferencesService } from '@erp/shared/data-access';
 import { AppSettingsService } from '@erp/client/util';
 import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
 
@@ -31,6 +31,26 @@ import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, E
       background: var(--tui-background-neutral-1-hover) !important;
       font-weight: 600;
     }
+    .header-auto-hide {
+      position: absolute !important;
+      width: 100%;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    .header-hover-zone {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      z-index: 60;
+    }
+    .header-hover-zone:hover + header.header-auto-hide,
+    header.header-auto-hide:hover,
+    header.header-auto-hide:focus-within,
+    header.header-auto-hide:has([aria-expanded="true"]) {
+      transform: translateY(0);
+    }
   `],
   host: {
     style: 'display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden;'
@@ -40,10 +60,12 @@ export class ShellLayoutComponent {
   private readonly _appSettings = inject(AppSettingsService);
   private readonly _breadcrumbService = inject(ErpBreadcrumbService);
   private readonly _navRegistry = inject(ErpNavRegistryService);
+  private readonly _userPreferences = inject(ErpUserPreferencesService);
 
   public readonly isDarkMode = this._appSettings.isDarkMode;
   public readonly navMenu = this._navRegistry.$navMenu;
   public readonly menuOpen = signal(false);
+  public readonly headerMode = computed(() => this._userPreferences.headerMode ?? 'fixed');
 
   // Spółki
   public readonly currentCompany = signal<string>('Sklep Opon');
@@ -135,6 +157,12 @@ export class ShellLayoutComponent {
         children: this.dataLanguagesItems
       },
       {
+        id: 'header-mode',
+        label: computed(() => this.headerMode() === 'fixed' ? SHARED_KEYS.settings.headerMode.autoHide : SHARED_KEYS.settings.headerMode.fixed),
+        icon: computed(() => this.headerMode() === 'fixed' ? '@tui.arrow-up' : '@tui.pin'),
+        fn: () => this.toggleHeaderMode()
+      },
+      {
         id: 'report-issue',
         label: SHARED_KEYS.settings.reportIssue,
         icon: '@tui.message-circle',
@@ -157,6 +185,11 @@ export class ShellLayoutComponent {
 
   public toggleTheme(): void {
     this._appSettings.setDarkMode(!this.isDarkMode());
+  }
+
+  public toggleHeaderMode(): void {
+    const current = this.headerMode();
+    this._userPreferences.setHeaderMode(current === 'fixed' ? 'auto-hide' : 'fixed');
   }
 
   public setLanguage(lang: AppLanguage): void {

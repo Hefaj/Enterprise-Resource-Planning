@@ -1,6 +1,11 @@
-<div style="height: 100%; background: var(--tui-background-neutral-1); color: var(--tui-text-primary); font-family: var(--tui-font-heading); display: flex; flex-direction: column; overflow: hidden;">
+<div style="height: 100%; background: var(--tui-background-neutral-1); color: var(--tui-text-primary); font-family: var(--tui-font-heading); display: flex; flex-direction: column; overflow: hidden; position: relative;">
+  <!-- Shell Header Hover Zone -->
+  @if (headerMode() === 'auto-hide') {
+    <div class="header-hover-zone"></div>
+  }
+
   <!-- Shell Header -->
-  <header style="border-bottom: 1px solid var(--tui-border-normal); padding: 0.5rem 1rem; display: flex; align-items: center; justify-content: space-between; background: var(--tui-background-neutral-2); position: sticky; top: 0; z-index: 50;">
+  <header [class.header-auto-hide]="headerMode() === 'auto-hide'" style="border-bottom: 1px solid var(--tui-border-normal); padding: 0.5rem 1rem; display: flex; align-items: center; justify-content: space-between; background: var(--tui-background-base); position: sticky; top: 0; z-index: 50; box-sizing: border-box;">
     <!-- Left side: Breadcrumbs -->
     <div style="display: flex; align-items: center; gap: 1rem;">
       <!-- Navigation Menu Toggle Button -->

@@ -76,6 +76,10 @@
       "pl": "Polski",
       "en": "English"
     },
+    "headerMode": {
+      "autoHide": "Auto-hide header",
+      "fixed": "Pin header"
+    },
     "loading": "Loading...",
     "reportIssue": "Report issue"
   },

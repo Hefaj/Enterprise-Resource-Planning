@@ -81,6 +81,10 @@ export const SHARED_KEYS = {
         pl: 'shared.settings.language.pl',
         en: 'shared.settings.language.en',
       },
+      headerMode: {
+        autoHide: 'shared.settings.headerMode.autoHide',
+        fixed: 'shared.settings.headerMode.fixed',
+      },
       loading: 'shared.settings.loading',
       reportIssue: 'shared.settings.reportIssue',
     },

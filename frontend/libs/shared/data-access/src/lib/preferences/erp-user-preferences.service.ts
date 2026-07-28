@@ -4,6 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 export interface ErpUserPreferences {
   theme?: 'light' | 'dark';
   language?: string;
+  headerMode?: 'fixed' | 'auto-hide';
   tables?: Record<string, any>;
   filters?: Record<string, any>;
 }
@@ -50,6 +51,14 @@ export class ErpUserPreferencesService {
 
   public setLanguage(language: string): void {
     this._state.update((s) => ({ ...s, language }));
+  }
+
+  public get headerMode(): 'fixed' | 'auto-hide' | undefined {
+    return this._state().headerMode;
+  }
+
+  public setHeaderMode(headerMode: 'fixed' | 'auto-hide'): void {
+    this._state.update((s) => ({ ...s, headerMode }));
   }
 
   public getTableState(key: string): any {

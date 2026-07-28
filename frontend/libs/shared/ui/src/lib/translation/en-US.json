@@ -56,7 +56,12 @@
     "back": "Back"
   },
   "filters": {
-    "submit": "Filter"
+    "submit": "Filter",
+    "search": "Search",
+    "clear": "Clear all",
+    "savePreset": "Save preset",
+    "loadPreset": "Load preset",
+    "clearGroup": "Clear"
   },
   "navigation": "Navigation",
   "settings": {

@@ -62,6 +62,11 @@ export const SHARED_KEYS = {
     },
     filters: {
       submit: 'shared.filters.submit',
+      search: 'shared.filters.search',
+      clear: 'shared.filters.clear',
+      savePreset: 'shared.filters.savePreset',
+      loadPreset: 'shared.filters.loadPreset',
+      clearGroup: 'shared.filters.clearGroup',
     },
     navigation: 'shared.navigation',
     settings: {

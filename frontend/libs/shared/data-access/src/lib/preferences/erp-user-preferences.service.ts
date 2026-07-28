@@ -5,6 +5,7 @@ export interface ErpUserPreferences {
   theme?: 'light' | 'dark';
   language?: string;
   tables?: Record<string, any>;
+  filters?: Record<string, any>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -66,5 +67,38 @@ export class ErpUserPreferencesService {
         },
       };
     });
+  }
+
+  public getFilterState(key: string): any {
+    return this._state().filters?.[key];
+  }
+
+  public saveFilterState(key: string, filterState: any): void {
+    this._state.update((s) => {
+      const currentFilters = s.filters || {};
+      return {
+        ...s,
+        filters: {
+          ...currentFilters,
+          [key]: filterState,
+        },
+      };
+    });
+  }
+
+  public getFilterPresets(key: string): Record<string, any> {
+    return this.getFilterState(key) || {};
+  }
+
+  public saveFilterPreset(key: string, presetName: string, values: any): void {
+    const currentPresets = this.getFilterPresets(key);
+    this.saveFilterState(key, { ...currentPresets, [presetName]: values });
+  }
+
+  public deleteFilterPreset(key: string, presetName: string): void {
+    const currentPresets = this.getFilterPresets(key);
+    const newPresets = { ...currentPresets };
+    delete newPresets[presetName];
+    this.saveFilterState(key, newPresets);
   }
 }

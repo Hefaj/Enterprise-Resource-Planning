@@ -45,6 +45,7 @@ export * from './lib/atoms/erp-text';
 export * from './lib/atoms/erp-table';
 
 // // Molecules
+export * from './lib/molecules/erp-filter';
 // export * from './lib/molecules/erp-dynamic-filter';
 // export * from './lib/molecules/erp-tree-select';
 // export * from './lib/molecules/erp-action-buttons';

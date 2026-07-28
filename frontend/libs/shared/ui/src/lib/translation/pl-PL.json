@@ -56,7 +56,12 @@
     "back": "Wstecz"
   },
   "filters": {
-    "submit": "Filtruj"
+    "submit": "Filtruj",
+    "search": "Wyszukaj",
+    "clear": "Wyczyść wszystko",
+    "savePreset": "Zapisz profil",
+    "loadPreset": "Wczytaj profil",
+    "clearGroup": "Wyczyść"
   },
   "navigation": "Nawigacja",
   "settings": {

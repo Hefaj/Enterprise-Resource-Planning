@@ -1,13 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { ThemeService } from './theme.service';
-import { LanguageService, AppLanguage } from './language.service';
+import { ErpThemeService, ErpLanguageService, AppLanguage } from '@erp/shared/data-access';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AppSettingsService {
-  private readonly _themeService = inject(ThemeService);
-  private readonly _languageService = inject(LanguageService);
+  private readonly _themeService = inject(ErpThemeService);
+  private readonly _languageService = inject(ErpLanguageService);
 
   public language = this._languageService.language;
   public isDarkMode = this._themeService.isDarkMode;

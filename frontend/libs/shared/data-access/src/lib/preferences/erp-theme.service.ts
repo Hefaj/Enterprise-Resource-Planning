@@ -1,12 +1,14 @@
 import { Injectable, inject, effect, signal } from '@angular/core';
 import { TUI_DARK_MODE } from '@taiga-ui/core';
 
+import { ErpUserPreferencesService } from './erp-user-preferences.service';
+
 @Injectable({
   providedIn: 'root',
 })
-export class ThemeService {
-  private readonly _themeKey = 'erp-theme';
+export class ErpThemeService {
   private readonly _darkMode = inject(TUI_DARK_MODE);
+  private readonly _preferences = inject(ErpUserPreferencesService);
 
   public isDarkMode = signal<boolean>(this._getInitialTheme());
 
@@ -14,12 +16,12 @@ export class ThemeService {
     effect(() => {
       const dark = this.isDarkMode();
       this._updateTheme(dark);
-      localStorage.setItem(this._themeKey, dark ? 'dark' : 'light');
+      this._preferences.setTheme(dark ? 'dark' : 'light');
     });
   }
 
   private _getInitialTheme(): boolean {
-    const savedTheme = localStorage.getItem(this._themeKey);
+    const savedTheme = this._preferences.theme;
     if (savedTheme) {
       return savedTheme === 'dark';
     }

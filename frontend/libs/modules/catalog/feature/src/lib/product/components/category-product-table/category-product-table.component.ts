@@ -24,6 +24,7 @@ import {
   SearchProductRequest,
   CategoryVM,
 } from '@erp/catalog/data-access';
+import { ErpUserPreferencesService } from '@erp/shared/data-access';
 
 import { PRODUCT_KEYS } from '../../translation';
 
@@ -41,9 +42,13 @@ import { PRODUCT_KEYS } from '../../translation';
 })
 export class CategoryProductTableComponent {
   private readonly catalogProductOrchestrator = inject(CatalogProductOrchestrator);
+  private readonly preferences = inject(ErpUserPreferencesService);
 
   /** Filtry przekazywane z zewnątrz (np. wyszukiwanie) */
   filters = input<SearchProductRequest>({});
+
+  /** Klucz stanu tabeli (wymagany jeśli chcemy zachowywać stan) */
+  stateKey = input<string>();
 
   /** Zdarzenie zmiany zaznaczenia wybrane w tabeli */
   selectionChange = output<ErpSelectionState<ProductVM>>();
@@ -75,7 +80,14 @@ export class CategoryProductTableComponent {
   }
 
   tableConfig = computed<ErpTableConfig<ProductVM>>(() => {
-    return new ErpTableBuilder<ProductVM>()
+    const key = this.stateKey();
+    let initialState: Partial<ErpTableState> | undefined = undefined;
+    
+    if (key) {
+      initialState = this.preferences.getTableState(key);
+    }
+
+    const builder = new ErpTableBuilder<ProductVM>()
       .setMode('server')
       .setEnableVirtualScroll(true)
       .setEstimatedRowHeight(50)
@@ -137,15 +149,31 @@ export class CategoryProductTableComponent {
           .setAlign('right')
           .setSize(150)
         )
-      )
-      .setOnStateChange((state) => {
+      );
+
+      if (initialState) {
+        builder.setInitialState(initialState);
+      }
+
+      builder.setOnStateChange((state) => {
+        const dataStateChanged = !this.lastTableState ||
+          JSON.stringify(this.lastTableState.pagination) !== JSON.stringify(state.pagination) ||
+          JSON.stringify(this.lastTableState.sorting) !== JSON.stringify(state.sorting);
+
         this.lastTableState = state;
-        this.fetchData(this.filters(), state);
+        if (key) {
+          this.preferences.saveTableState(key, state);
+        }
+
+        if (dataStateChanged) {
+          this.fetchData(this.filters(), state);
+        }
       })
       .setOnSelectionChange((state) => {
         this.selectionChange.emit(state);
-      })
-      .build();
+      });
+
+      return builder.build();
   });
 
   private async fetchData(filters: SearchProductRequest, tableState: ErpTableState | null): Promise<void> {

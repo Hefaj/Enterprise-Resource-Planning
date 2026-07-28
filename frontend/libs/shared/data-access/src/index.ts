@@ -6,3 +6,7 @@ export * from './lib/erp-breadcrumb/erp-breadcrumb.service';
 export * from './lib/sync/signalr-sync.service';
 
 export * from './lib/orchestrator';
+
+export * from './lib/preferences/erp-user-preferences.service';
+export * from './lib/preferences/erp-theme.service';
+export * from './lib/preferences/erp-language.service';

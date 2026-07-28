@@ -734,9 +734,12 @@ export class ErpTableComponent<T> {
 
     // Effect to emit state changes (triggers data fetching in host components)
     effect(() => {
-      // Re-run effect only on pagination or sorting changes
+      // Re-run effect only on pagination, sorting, or column config changes
       const sorting = this._sorting().map(s => ({ columnId: s.id, direction: (s.desc ? 'desc' : 'asc') as 'asc' | 'desc' }));
       const pagination = this._pagination();
+      const columnVisibility = this._columnVisibility();
+      const columnOrder = this._columnOrder();
+      const columnSizing = this._columnSizing();
 
       untracked(() => {
         const filters = unwrapSignal(this.config().filters) ?? {};
@@ -744,9 +747,9 @@ export class ErpTableComponent<T> {
           sorting,
           pagination,
           filters,
-          columnVisibility: this._columnVisibility(),
-          columnOrder: this._columnOrder(),
-          columnSizing: this._columnSizing(),
+          columnVisibility,
+          columnOrder,
+          columnSizing,
           selection: {
             isAllSelected: this._isServerMode() ? this._serverAllSelected() : this.table.getIsAllRowsSelected(),
             selectedIds: Object.keys(this._rowSelection()).filter(k => this._rowSelection()[k]),

@@ -3,13 +3,15 @@ import { TranslocoService } from '@jsverse/transloco';
 import { TUI_POLISH_LANGUAGE, TUI_ENGLISH_LANGUAGE, TuiLanguage } from '@taiga-ui/i18n';
 import { BehaviorSubject } from 'rxjs';
 
+import { ErpUserPreferencesService } from './erp-user-preferences.service';
+
 export type AppLanguage = 'pl-PL' | 'en-US';
 
 @Injectable({
   providedIn: 'root',
 })
-export class LanguageService {
-  private readonly _langKey = 'erp-lang';
+export class ErpLanguageService {
+  private readonly _preferences = inject(ErpUserPreferencesService);
   private readonly _translocoService = inject(TranslocoService);
 
   public language = signal<AppLanguage>(this._getInitialLanguage());
@@ -25,7 +27,7 @@ export class LanguageService {
   public constructor() {
     effect(() => {
       const lang = this.language();
-      localStorage.setItem(this._langKey, lang);
+      this._preferences.setLanguage(lang);
       this._translocoService.setActiveLang(lang);
 
       const tuiLang = lang === 'pl-PL' ? TUI_POLISH_LANGUAGE : TUI_ENGLISH_LANGUAGE;
@@ -34,7 +36,7 @@ export class LanguageService {
   }
 
   private _getInitialLanguage(): AppLanguage {
-    const saved = localStorage.getItem(this._langKey);
+    const saved = this._preferences.language;
     return (saved === 'pl-PL' || saved === 'en-US') ? saved : 'pl-PL';
   }
 

@@ -10,7 +10,7 @@ import { provideSharedTranslations, TranslocoInlineLoader } from '@erp/shared/ui
 import { remoteApiProviders } from './remote-api.providers';
 import { provideTaiga } from '@taiga-ui/core';
 import { TUI_LANGUAGE } from '@taiga-ui/i18n';
-import { AppLanguage, LanguageService } from '@erp/client/util';
+import { ErpLanguageService, AppLanguage } from '@erp/shared/data-access';
 
 registerLocaleData(localePl);
 
@@ -31,8 +31,8 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'pl-PL' },
     {
       provide: TUI_LANGUAGE,
-      useFactory: (service: LanguageService) => service.tuiLanguage,
-      deps: [LanguageService],
+      useFactory: (service: ErpLanguageService) => service.tuiLanguage,
+      deps: [ErpLanguageService],
     },
     ...remoteApiProviders,
     provideTransloco({

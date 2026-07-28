@@ -5,8 +5,8 @@ import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp
 import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui';
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
 import { SHARED_KEYS } from '@erp/shared/ui';
-import { ErpBreadcrumbService, ErpNavRegistryService } from '@erp/shared/data-access';
-import { AppLanguage, AppSettingsService } from '@erp/client/util';
+import { ErpBreadcrumbService, ErpNavRegistryService, AppLanguage } from '@erp/shared/data-access';
+import { AppSettingsService } from '@erp/client/util';
 import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
 
 @Component({

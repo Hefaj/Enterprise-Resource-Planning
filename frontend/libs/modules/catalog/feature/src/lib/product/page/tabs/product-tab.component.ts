@@ -92,7 +92,7 @@ export class ProductTabComponent {
       .setMode('server')
       .setEnableVirtualScroll(true)
       .setEstimatedRowHeight(80)
-      .setDefaultPageSize(10)
+      .setDefaultPageSize(20)
       .setPageSizeOptions([10, 20, 50, 100])
       .setSelectionMode('multi')
       .setItems(this.items)
@@ -107,19 +107,19 @@ export class ProductTabComponent {
           .setId('sku')
           .setAccessorKey('sku')
           .setHeader('SKU')
-          .setSize(120)
+          .setSize(220)
         )
         .addColumn(c => c
           .setId('barcode')
           .setAccessorKey('barcode')
           .setHeader('Kod kreskowy (EAN)')
-          .setSize(180)
+          .setSize(280)
         )
         .addColumn(c => c
           .setId('name')
           .setAccessorKey('name')
           .setHeader('Nazwa produktu')
-          .setSize(250)
+          .setSize(350)
         )
       )
 
@@ -132,7 +132,7 @@ export class ProductTabComponent {
           .setAccessorKey('categories')
           .setHeader('Kategorie')
           .setEnableSorting(false)
-          .setSize(160)
+          .setSize(260)
           .setCellRichContent((categories: { name: string, isMain: boolean }[]) => ({
             lines: categories.map(cat => ({
               text: cat.name,
@@ -152,7 +152,7 @@ export class ProductTabComponent {
           .setId('status')
           .setAccessorKey('status')
           .setHeader('Status')
-          .setSize(130)
+          .setSize(230)
           .setCellRichContent((status: string) => {
             const isAvailable = status === 'Dostępny';
             const isWithdrawn = status === 'Wycofany';
@@ -175,7 +175,7 @@ export class ProductTabComponent {
           .setAccessorKey('price')
           .setHeader('Cena (PLN)')
           .setSubHeader('Netto')
-          .setSize(120)
+          .setSize(220)
         )
       )
 
@@ -187,25 +187,25 @@ export class ProductTabComponent {
           .setId('stock')
           .setAccessorKey('stock')
           .setHeader('Stan magazynowy')
-          .setSize(150)
+          .setSize(250)
         )
         .addColumn(c => c
           .setId('supplier')
           .setAccessorKey('supplier')
           .setHeader('Dostawca')
-          .setSize(180)
+          .setSize(280)
         )
         .addColumn(c => c
           .setId('weight')
           .setAccessorKey('weight')
           .setHeader('Waga (kg)')
-          .setSize(110)
+          .setSize(210)
         )
         .addColumn(c => c
           .setId('dimensions')
           .setAccessorKey('dimensions')
           .setHeader('Wymiary (cm)')
-          .setSize(140)
+          .setSize(240)
         )
       )
 
@@ -217,7 +217,7 @@ export class ProductTabComponent {
           .setId('addedDate')
           .setAccessorKey('addedDate')
           .setHeader('Data dodania')
-          .setSize(140)
+          .setSize(240)
         )
       );
 
@@ -236,7 +236,7 @@ export class ProductTabComponent {
               return attr?.values ?? [];
             })
             .setHeader(attrName)
-            .setSize(150)
+            .setSize(250)
             .setVisible(false)
             .setEnableSorting(false)
             .setCellRichContent((values: string[]) => {
@@ -365,15 +365,46 @@ const ATTRIBUTE_POOLS: Record<string, { name: string; values: string[] }[]> = {
     { name: 'Certyfikat', values: ['CE', 'ISO 9001'] },
   ],
   Odzież: [
-    { name: 'Rozmiar ramy', values: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+    { name: 'Rozmiar', values: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
     { name: 'Kolor', values: ['Czerwony', 'Niebieski', 'Zielony', 'Czarny', 'Biały'] },
     { name: 'Materiał', values: ['Bawełna', 'Poliester', 'Len', 'Wełna'] },
     { name: 'Sezon', values: ['Wiosna/Lato', 'Jesień/Zima', 'Całoroczny'] },
   ],
+  Zabawki: [
+    { name: 'Wiek', values: ['0-3', '3-6', '6-9', '9-12', '12+'] },
+    { name: 'Typ', values: ['Edukacyjne', 'Klocki', 'Lalki', 'Gry planszowe'] },
+    { name: 'Zasilanie', values: ['Baterie AA', 'Akumulator', 'Brak'] },
+  ],
+  Książki: [
+    { name: 'Okładka', values: ['Twarda', 'Miękka', 'Zintegrowana'] },
+    { name: 'Gatunek', values: ['Kryminał', 'Fantastyka', 'Reportaż', 'Literatura faktu'] },
+    { name: 'Język', values: ['Polski', 'Angielski', 'Niemiecki'] },
+  ],
+  Oświetlenie: [
+    { name: 'Gwint', values: ['E27', 'E14', 'GU10', 'LED zintegrowany'] },
+    { name: 'Barwa światła', values: ['Ciepła', 'Neutralna', 'Zimna'] },
+    { name: 'Moc (W)', values: ['5', '10', '15', '20', '40', '60'] },
+  ],
+  Kosmetyki: [
+    { name: 'Pojemność', values: ['50ml', '100ml', '200ml', '500ml'] },
+    { name: 'Typ cery', values: ['Sucha', 'Tłusta', 'Mieszana', 'Wrażliwa'] },
+    { name: 'Rodzaj', values: ['Wegańskie', 'Naturalne', 'Hipoalergiczne'] },
+  ],
+  Sport: [
+    { name: 'Dyscyplina', values: ['Bieganie', 'Pływanie', 'Kolarstwo', 'Siłownia'] },
+    { name: 'Płeć', values: ['Męskie', 'Damskie', 'Unisex'] },
+    { name: 'Poziom', values: ['Początkujący', 'Zaawansowany', 'Pro'] },
+  ],
+  Spożywcze: [
+    { name: 'Waga', values: ['100g', '250g', '500g', '1kg'] },
+    { name: 'Kraj pochodzenia', values: ['Polska', 'Hiszpania', 'Włochy', 'Niemcy'] },
+    { name: 'Cechy', values: ['Bio', 'Bez glutenu', 'Bez laktozy', 'Wegańskie'] },
+  ],
 };
 
 function generateAttributes(index: number): ProductAttribute[] {
-  const categoryName = ['Elektronika', 'Meble', 'Narzędzia', 'Odzież'][index % 4];
+  const categoryNames = ['Elektronika', 'Meble', 'Narzędzia', 'Odzież', 'Zabawki', 'Książki', 'Oświetlenie', 'Kosmetyki', 'Sport', 'Spożywcze'];
+  const categoryName = categoryNames[index % 10];
   const pool = ATTRIBUTE_POOLS[categoryName];
   if (!pool) return [];
 

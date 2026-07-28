@@ -6,14 +6,16 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TuiButton, TuiIcon } from '@taiga-ui/core';
+import { TuiButton, TuiIcon, TuiHint } from '@taiga-ui/core';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
+import { SHARED_KEYS } from '../../translation/keys';
 import { ErpPageLayoutConfig } from './erp-page-layout.types';
 
 @Component({
   selector: 'erp-page-layout',
   standalone: true,
-  imports: [CommonModule, TuiButton, TuiIcon],
+  imports: [CommonModule, TuiButton, TuiIcon, TuiHint, ErpTranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let sidebar = _leftSidebar();
@@ -44,6 +46,7 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
               appearance="flat"
               size="s"
               (click)="toggleSidebar()"
+              [tuiHint]="(collapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
             >
               <tui-icon [icon]="collapsed ? '@tui.list-filter' : '@tui.chevron-left'" />
             </button>
@@ -53,7 +56,7 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
                 appearance="flat"
                 size="s"
                 (click)="toggleSidebarMode()"
-                [title]="mode === 'push' ? 'Odepnij (tryb nachodzenia)' : 'Przypnij (tryb wypychania)'"
+                [tuiHint]="(mode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
               >
                 <tui-icon [icon]="mode === 'push' ? '@tui.pin' : '@tui.pin-off'" />
               </button>
@@ -165,6 +168,7 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
 })
 export class ErpPageLayoutComponent {
   readonly config = input.required<ErpPageLayoutConfig>();
+  protected readonly SHARED_KEYS = SHARED_KEYS;
 
   /** Wewnętrzny stan zwinięcia sidebara — używany gdy nie przekazano sidebarCollapsed z zewnątrz. */
   private readonly _internalCollapsed = signal(true);

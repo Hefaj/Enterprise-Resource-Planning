@@ -87,6 +87,12 @@
     "empty": "No results",
     "selectedCount": "Selected ({{count}})",
     "loadingMore": "Loading more items..."
+  },
+  "sidebar": {
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "pin": "Pin (push mode)",
+    "unpin": "Unpin (overlay mode)"
   }
 }
 

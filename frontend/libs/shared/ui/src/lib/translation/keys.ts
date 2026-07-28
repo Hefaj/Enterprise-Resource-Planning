@@ -93,4 +93,10 @@ export const SHARED_KEYS = {
       selectedCount: 'shared.inputPicker.selectedCount',
       loadingMore: 'shared.inputPicker.loadingMore',
     },
+    sidebar: {
+      expand: 'shared.sidebar.expand',
+      collapse: 'shared.sidebar.collapse',
+      pin: 'shared.sidebar.pin',
+      unpin: 'shared.sidebar.unpin',
+    },
   } as const;

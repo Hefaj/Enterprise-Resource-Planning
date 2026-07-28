@@ -87,6 +87,12 @@
     "empty": "Brak wyników",
     "selectedCount": "Zaznaczone ({{count}})",
     "loadingMore": "Ładowanie kolejnych pozycji..."
+  },
+  "sidebar": {
+    "expand": "Rozwiń",
+    "collapse": "Zwiń",
+    "pin": "Przypnij (tryb wypychania)",
+    "unpin": "Odepnij (tryb nachodzenia)"
   }
 }
 

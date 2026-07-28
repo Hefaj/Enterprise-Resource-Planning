@@ -8,7 +8,6 @@ import {
   ErpTableMode,
   ErpSelectionMode,
   ErpTableState,
-  ErpColumnPin,
   ErpPaginationState,
   ErpSortState,
   ErpCellRichContent,
@@ -166,14 +165,6 @@ export class ErpColumnBuilder<TData = any> extends ErpBaseBuilder<ErpColumnDef<T
    */
   public setDisableHiding(disabled: boolean): this {
     this._data.disableHiding = disabled;
-    return this;
-  }
-
-  /**
-   * Przypina kolumnę do lewej lub prawej krawędzi tabeli, co sprawia że pozostaje widoczna podczas przewijania w poziomie.
-   */
-  public setPin(pin: ErpColumnPin): this {
-    this._data.pin = pin;
     return this;
   }
 

@@ -34,7 +34,7 @@ export interface ErpCellRichContent {
   cellChips?: ErpCellChip[];
 }
 
-export type ErpColumnPin = 'left' | 'right' | false;
+
 
 export interface ErpColumnDef<TData = any> {
   id: string;
@@ -53,7 +53,6 @@ export interface ErpColumnDef<TData = any> {
   enableResizing?: boolean;
   visible?: boolean;
   disableHiding?: boolean;
-  pin?: ErpColumnPin;
   footer?: MaybeSignal<Translatable>;
   cellClass?: string;
   align?: 'left' | 'center' | 'right';

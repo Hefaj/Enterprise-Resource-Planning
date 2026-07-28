@@ -4,7 +4,6 @@ export type {
   ErpTableMode,
   ErpColumnDef,
   ErpColumnGroupDef,
-  ErpColumnPin,
   ErpSortState,
   ErpPaginationState,
   ErpSelectionMode,

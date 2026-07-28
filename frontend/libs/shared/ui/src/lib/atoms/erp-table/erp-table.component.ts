@@ -166,7 +166,6 @@ export class ErpTableSelectionCell {
             <erp-table-column-menu
               [columns]="_columnMenuInfo()"
               (visibilityChange)="onVisibilityChange($event)"
-              (pinChange)="onPinChange($event)"
               (orderChange)="onColumnMenuDrop($event)"
             />
           }
@@ -700,12 +699,6 @@ export class ErpTableComponent<T> {
                 newVisibility[col.id] = false;
               }
               if (!newOrder.includes(col.id)) newOrder.push(col.id);
-              
-              if (col.pin === 'left') {
-                newPinning.left!.push(col.id);
-              } else if (col.pin === 'right') {
-                newPinning.right!.push(col.id);
-              }
             }
           } else {
             const col = colOrGroup;
@@ -713,12 +706,6 @@ export class ErpTableComponent<T> {
               newVisibility[col.id] = false;
             }
             if (!newOrder.includes(col.id)) newOrder.push(col.id);
-            
-            if (col.pin === 'left') {
-              newPinning.left!.push(col.id);
-            } else if (col.pin === 'right') {
-              newPinning.right!.push(col.id);
-            }
           }
         }
         
@@ -876,7 +863,6 @@ export class ErpTableComponent<T> {
       enableResizing: col.enableResizing ?? true,
       enableHiding: !col.disableHiding,
       meta: { 
-        pin: col.pin, 
         align: col.align, 
         subHeader: col.subHeader ? unwrapSignal(col.subHeader) : undefined,
         cellClass: col.cellRichContent 
@@ -1034,16 +1020,11 @@ export class ErpTableComponent<T> {
         
         const visible = children.some((c: any) => c.visible);
         
-        const allLeft = children.length > 0 && children.every((c: any) => c.pin === 'left');
-        const allRight = children.length > 0 && children.every((c: any) => c.pin === 'right');
-        const groupPin = allLeft ? 'left' : (allRight ? 'right' : false);
-
         return {
           id: colOrGroup.id,
           header: unwrapSignal(colOrGroup.header) as string,
           visible,
           disableHiding: children.every((c: any) => c.disableHiding),
-          pin: groupPin,
           isGroup: true,
           children
         };
@@ -1059,7 +1040,6 @@ export class ErpTableComponent<T> {
           header: headerText as string,
           visible: tCol.getIsVisible(),
           disableHiding: !tCol.getCanHide(),
-          pin: tCol.getIsPinned(),
           isGroup: false
         };
       }
@@ -1093,12 +1073,6 @@ export class ErpTableComponent<T> {
       visibility[change.id] = change.visible;
     }
     this.table().setColumnVisibility(visibility);
-  }
-
-  protected onPinChange(changes: { id: string; pin: 'left' | 'right' | false }[]) {
-    for (const change of changes) {
-      this.table().getColumn(change.id)?.pin(change.pin);
-    }
   }
 
   protected onColumnMenuDrop(newMenuOrder: string[]) {

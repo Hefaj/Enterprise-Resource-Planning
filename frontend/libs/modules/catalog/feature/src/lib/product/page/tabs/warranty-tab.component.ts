@@ -93,7 +93,6 @@ export class WarrantyTabComponent {
       .setDisableHiding(true)
       .setAccessorKey('id')
       .setHeader('ID Gwarancji')
-      .setPin('left')
       .setSize(110)
     )
     .addColumn(c => c

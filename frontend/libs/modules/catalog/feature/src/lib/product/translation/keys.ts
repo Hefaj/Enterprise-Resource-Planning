@@ -30,10 +30,15 @@ export const PRODUCT_KEYS = {
         },
       },
       table: {
+        groups: {
+          identification: 'product.base.table.groups.identification',
+          details: 'product.base.table.groups.details',
+        },
         columns: {
           sku: 'product.base.table.columns.sku',
           name: 'product.base.table.columns.name',
           category: 'product.base.table.columns.category',
+          categories: 'product.base.table.columns.categories',
           modelName: 'product.base.table.columns.modelName',
           price: 'product.base.table.columns.price',
           availableFrom: 'product.base.table.columns.availableFrom',
@@ -41,6 +46,7 @@ export const PRODUCT_KEYS = {
           available: 'product.base.table.columns.available',
         },
         emptyMessage: 'product.base.table.emptyMessage',
+        emptyCell: 'product.base.table.emptyCell',
       },
       multimedia: {
         gallery: {

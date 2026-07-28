@@ -25,6 +25,8 @@ import {
   CategoryVM,
 } from '@erp/catalog/data-access';
 
+import { PRODUCT_KEYS } from '../../translation';
+
 @Component({
   selector: 'erp-category-product-table',
   standalone: true,
@@ -83,22 +85,22 @@ export class CategoryProductTableComponent {
       .setItems(this.items)
       .setItemCount(this.totalCount)
       .setLoading(this.loading)
-      .setEmptyMessage('Brak produktów do wyświetlenia')
+      .setEmptyMessage(PRODUCT_KEYS.base.table.emptyMessage)
 
       // ── Identyfikacja ──
       .addColumnGroup((g) => g
         .setId('identification')
-        .setHeader('Identyfikacja')
+        .setHeader(PRODUCT_KEYS.base.table.groups.identification)
         .addColumn((c) => c
           .setId('sku')
           .setAccessorKey('sku')
-          .setHeader('SKU')
+          .setHeader(PRODUCT_KEYS.base.table.columns.sku)
           .setSize(180)
         )
         .addColumn((c) => c
           .setId('name')
           .setAccessorKey('name')
-          .setHeader('Nazwa produktu')
+          .setHeader(PRODUCT_KEYS.base.table.columns.name)
           .setSize(300)
         )
       )
@@ -106,15 +108,15 @@ export class CategoryProductTableComponent {
       // ── Szczegóły ──
       .addColumnGroup((g) => g
         .setId('details')
-        .setHeader('Szczegóły')
+        .setHeader(PRODUCT_KEYS.base.table.groups.details)
         .addColumn((c) => c
           .setId('categories')
           .setAccessorKey('categories')
-          .setHeader('Kategorie')
+          .setHeader(PRODUCT_KEYS.base.table.columns.categories)
           .setEnableSorting(false)
           .setSize(240)
           .setCellRichContent((categories: CategoryVM[]) => {
-             if (!categories || categories.length === 0) return { lines: [{ text: '—' }] };
+             if (!categories || categories.length === 0) return { lines: [{ text: PRODUCT_KEYS.base.table.emptyCell }] };
              return {
                lines: categories.map((cat) => ({
                  text: cat.name,
@@ -125,13 +127,13 @@ export class CategoryProductTableComponent {
         .addColumn((c) => c
           .setId('status')
           .setAccessorKey('status')
-          .setHeader('Status')
+          .setHeader(PRODUCT_KEYS.base.table.columns.status)
           .setSize(150)
         )
         .addColumn((c) => c
           .setId('price')
           .setAccessorKey('price')
-          .setHeader('Cena')
+          .setHeader(PRODUCT_KEYS.base.table.columns.price)
           .setAlign('right')
           .setSize(150)
         )

@@ -295,7 +295,7 @@ export class ErpTableSelectionCell {
                           <div class="flex items-center gap-1 min-w-0">
                             <span class="truncate block text-xs uppercase tracking-wider text-(--tui-text-secondary)">
                               <ng-container *flexRender="header.column.columnDef.header; props: header.getContext(); let headerValue">
-                                {{ headerValue }}
+                                {{ headerValue | erpTranslate }}
                               </ng-container>
                             </span>
                           </div>
@@ -309,7 +309,7 @@ export class ErpTableSelectionCell {
                             >
                               <span class="truncate block">
                                 <ng-container *flexRender="header.column.columnDef.header; props: header.getContext(); let headerValue">
-                                  {{ headerValue }}
+                                  {{ headerValue | erpTranslate }}
                                 </ng-container>
                               </span>
                               

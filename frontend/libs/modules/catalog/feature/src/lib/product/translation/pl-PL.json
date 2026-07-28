@@ -25,17 +25,23 @@
       }
     },
     "table": {
+      "groups": {
+        "identification": "Identyfikacja",
+        "details": "Szczegóły"
+      },
       "columns": {
         "sku": "SKU",
         "name": "Nazwa produktu",
         "category": "Kategoria",
+        "categories": "Kategorie",
         "modelName": "Model",
         "price": "Cena netto",
         "availableFrom": "Dostępny od",
         "status": "Status",
         "available": "Dostępny"
       },
-      "emptyMessage": "Nie znaleziono produktów"
+      "emptyMessage": "Brak produktów do wyświetlenia",
+      "emptyCell": "—"
     },
     "multimedia": {
       "gallery": {

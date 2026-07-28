@@ -64,7 +64,7 @@ export interface ErpColumnMenuItem {
                     [class.text-(--tui-text-tertiary)]="!item.visible"
                     (click)="$event.stopPropagation(); !item.disableHiding && toggleGroup(item, !item.visible)"
                   />
-                  <span class="truncate font-semibold">{{ item.header }}</span>
+                  <span class="truncate font-semibold">{{ item.header | erpTranslate }}</span>
                 </div>
                 <tui-icon
                   [icon]="collapsedGroups()[item.id] ? '@tui.chevron-right' : '@tui.chevron-down'"
@@ -91,7 +91,7 @@ export interface ErpColumnMenuItem {
                         [class.text-(--tui-text-action)]="child.visible"
                         [class.text-(--tui-text-tertiary)]="!child.visible"
                       />
-                      <span class="truncate">{{ child.header }}</span>
+                      <span class="truncate">{{ child.header | erpTranslate }}</span>
                     </div>
                     
                   </div>
@@ -117,7 +117,7 @@ export interface ErpColumnMenuItem {
                   [class.text-(--tui-text-action)]="item.visible"
                   [class.text-(--tui-text-tertiary)]="!item.visible"
                 />
-                <span class="truncate">{{ item.header }}</span>
+                <span class="truncate">{{ item.header | erpTranslate }}</span>
               </div>
             </div>
           }

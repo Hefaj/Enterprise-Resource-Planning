@@ -159,7 +159,7 @@ export class ShellLayoutComponent {
       {
         id: 'header-mode',
         label: computed(() => this.headerMode() === 'fixed' ? SHARED_KEYS.settings.headerMode.autoHide : SHARED_KEYS.settings.headerMode.fixed),
-        icon: computed(() => this.headerMode() === 'fixed' ? '@tui.arrow-up' : '@tui.pin'),
+        icon: computed(() => this.headerMode() === 'fixed' ? '@tui.pin-off' : '@tui.pin'),
         fn: () => this.toggleHeaderMode()
       },
       {

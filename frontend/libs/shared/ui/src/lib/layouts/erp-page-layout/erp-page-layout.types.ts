@@ -29,4 +29,6 @@ export interface ErpPageLayoutConfig {
   sidebarWidth?: MaybeSignal<number>;
   /** Czy sidebar jest zwinięty/ukryty (domyślnie false). */
   sidebarCollapsed?: MaybeSignal<boolean>;
+  /** Tryb działania sidebara (push - przesuwa kontent, overlay - nachodzi na kontent). Domyślnie push. */
+  sidebarMode?: MaybeSignal<'push' | 'overlay'>;
 }

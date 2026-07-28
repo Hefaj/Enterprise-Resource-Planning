@@ -148,106 +148,6 @@ export class ErpTableSelectionCell {
   template: `
     <div class="erp-table-container" [class.erp-table--compact]="_compact()">
       
-      <!-- Toolbar -->
-      <div class="erp-table-toolbar flex flex-col md:flex-row justify-between items-center border-b border-(--erp-table-border)">
-        
-        <erp-table-pagination
-          class="flex-1 w-full"
-          [pageIndex]="table.getState().pagination.pageIndex"
-          [pageSize]="table.getState().pagination.pageSize"
-          [totalItems]="itemCount() || table.getPrePaginationRowModel().rows.length"
-          [pageSizeOptions]="_pageSizeOptions()"
-          (pageChange)="onPaginationChange($event)"
-        />
-
-        <div class="flex items-center gap-2 p-2 pl-0">
-          <!-- Dodatkowe akcje (content projection) -->
-
-          @if (_enableColumnVisibility()) {
-            <div class="h-6 w-px bg-(--erp-table-border) hidden md:block mx-2"></div>
-            <erp-table-column-menu
-              [columns]="_columnMenuInfo()"
-              (visibilityChange)="onVisibilityChange($event)"
-              (orderChange)="onColumnMenuDrop($event)"
-            />
-          }
-
-          @if (_legendItems().length > 0) {
-            <button
-              tuiButton
-              appearance="outline"
-              size="s"
-              iconStart="@tui.info"
-              [tuiDropdown]="legendDropdown"
-              [tuiDropdownOpen]="legendOpen()"
-              (tuiDropdownOpenChange)="legendOpen.set($event)"
-              class="ml-2"
-            >
-              {{ 'Legenda' }}
-            </button>
-            
-            <ng-template #legendDropdown>
-              <div class="p-4 bg-(--tui-background-elevated-1) border border-(--tui-border-normal) rounded-md shadow-lg min-w-[200px]">
-                <h3 class="font-bold mb-3 text-sm">Legenda</h3>
-                <div class="flex flex-col gap-3">
-                  @for (item of _legendItems(); track $index) {
-                    <div class="flex items-start gap-3">
-                      <span 
-                        tuiChip 
-                        [size]="'s'" 
-                        [tuiAppearance]="item.appearance || 'info'"
-                        class="shrink-0"
-                      >
-                        {{ (item.shortText || item.text) | erpTranslate }}
-                      </span>
-                      <span class="text-sm text-(--tui-text-secondary) mt-0.5">
-                        {{ (item.description || item.text) | erpTranslate }}
-                      </span>
-                    </div>
-                  }
-                </div>
-              </div>
-            </ng-template>
-          }
-
-          <button
-            tuiButton
-            appearance="outline"
-            size="s"
-            iconStart="@tui.circle-help"
-            [tuiDropdown]="helpDropdown"
-            [tuiDropdownOpen]="helpOpen()"
-            (tuiDropdownOpenChange)="helpOpen.set($event)"
-            class="ml-2"
-          >
-            {{ 'shared.table.help.button' | erpTranslate }}
-          </button>
-          
-          <ng-template #helpDropdown>
-            <div class="p-4 max-w-sm bg-(--tui-background-elevated-1) border border-(--tui-border-normal) rounded-md shadow-lg">
-              <h3 class="font-bold mb-2">{{ 'shared.table.help.title' | erpTranslate }}</h3>
-              <ul class="text-sm space-y-2 list-disc pl-4 text-(--tui-text-secondary)">
-                @if (config().enableMultiSort ?? true) {
-                  <li><strong>{{ 'shared.table.help.multiSortTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.multiSortDesc' | erpTranslate }}</li>
-                }
-                @if (config().enableColumnResizing ?? true) {
-                  <li><strong>{{ 'shared.table.help.resizingTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.resizingDesc' | erpTranslate }}</li>
-                }
-                @if (config().enableColumnVisibility ?? true) {
-                  <li><strong>{{ 'shared.table.help.visibilityTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.visibilityDesc' | erpTranslate }}</li>
-                }
-                @if (config().selectionMode === 'multi') {
-                  <li><strong>{{ 'shared.table.help.multiSelectTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.multiSelectDesc' | erpTranslate }}</li>
-                }
-                @if (config().selectionMode === 'multi' && _isServerMode()) {
-                  <li><strong>{{ 'shared.table.help.serverSelectionTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.serverSelectionDesc' | erpTranslate }}</li>
-                }
-              </ul>
-            </div>
-          </ng-template>
-        </div>
-      </div>
-
       <!-- Wrapper dla wirtualizacji / scrolla -->
       <div 
         #scrollElement 
@@ -519,6 +419,107 @@ export class ErpTableSelectionCell {
             }
           </table>
       </div>
+      <!-- Toolbar -->
+      <div class="erp-table-toolbar flex flex-col md:flex-row justify-between items-center border-t border-(--erp-table-border)">
+        
+        <erp-table-pagination
+          class="flex-1 w-full"
+          [pageIndex]="table.getState().pagination.pageIndex"
+          [pageSize]="table.getState().pagination.pageSize"
+          [totalItems]="itemCount() || table.getPrePaginationRowModel().rows.length"
+          [pageSizeOptions]="_pageSizeOptions()"
+          (pageChange)="onPaginationChange($event)"
+        />
+
+        <div class="flex items-center gap-2 p-2 pl-0">
+          <!-- Dodatkowe akcje (content projection) -->
+
+          @if (_enableColumnVisibility()) {
+            <div class="h-6 w-px bg-(--erp-table-border) hidden md:block mx-2"></div>
+            <erp-table-column-menu
+              [columns]="_columnMenuInfo()"
+              (visibilityChange)="onVisibilityChange($event)"
+              (orderChange)="onColumnMenuDrop($event)"
+            />
+          }
+
+          @if (_legendItems().length > 0) {
+            <button
+              tuiButton
+              appearance="outline"
+              size="s"
+              iconStart="@tui.info"
+              [tuiDropdown]="legendDropdown"
+              [tuiDropdownOpen]="legendOpen()"
+              (tuiDropdownOpenChange)="legendOpen.set($event)"
+              class="ml-2"
+            >
+              {{ 'Legenda' }}
+            </button>
+            
+            <ng-template #legendDropdown>
+              <div class="p-4 bg-(--tui-background-elevated-1) border border-(--tui-border-normal) rounded-md shadow-lg min-w-[200px]">
+                <h3 class="font-bold mb-3 text-sm">Legenda</h3>
+                <div class="flex flex-col gap-3">
+                  @for (item of _legendItems(); track $index) {
+                    <div class="flex items-start gap-3">
+                      <span 
+                        tuiChip 
+                        [size]="'s'" 
+                        [tuiAppearance]="item.appearance || 'info'"
+                        class="shrink-0"
+                      >
+                        {{ (item.shortText || item.text) | erpTranslate }}
+                      </span>
+                      <span class="text-sm text-(--tui-text-secondary) mt-0.5">
+                        {{ (item.description || item.text) | erpTranslate }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </ng-template>
+          }
+
+          <button
+            tuiButton
+            appearance="outline"
+            size="s"
+            iconStart="@tui.circle-help"
+            [tuiDropdown]="helpDropdown"
+            [tuiDropdownOpen]="helpOpen()"
+            (tuiDropdownOpenChange)="helpOpen.set($event)"
+            class="ml-2"
+          >
+            {{ 'shared.table.help.button' | erpTranslate }}
+          </button>
+          
+          <ng-template #helpDropdown>
+            <div class="p-4 max-w-sm bg-(--tui-background-elevated-1) border border-(--tui-border-normal) rounded-md shadow-lg">
+              <h3 class="font-bold mb-2">{{ 'shared.table.help.title' | erpTranslate }}</h3>
+              <ul class="text-sm space-y-2 list-disc pl-4 text-(--tui-text-secondary)">
+                @if (config().enableMultiSort ?? true) {
+                  <li><strong>{{ 'shared.table.help.multiSortTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.multiSortDesc' | erpTranslate }}</li>
+                }
+                @if (config().enableColumnResizing ?? true) {
+                  <li><strong>{{ 'shared.table.help.resizingTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.resizingDesc' | erpTranslate }}</li>
+                }
+                @if (config().enableColumnVisibility ?? true) {
+                  <li><strong>{{ 'shared.table.help.visibilityTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.visibilityDesc' | erpTranslate }}</li>
+                }
+                @if (config().selectionMode === 'multi') {
+                  <li><strong>{{ 'shared.table.help.multiSelectTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.multiSelectDesc' | erpTranslate }}</li>
+                }
+                @if (config().selectionMode === 'multi' && _isServerMode()) {
+                  <li><strong>{{ 'shared.table.help.serverSelectionTitle' | erpTranslate }}:</strong> {{ 'shared.table.help.serverSelectionDesc' | erpTranslate }}</li>
+                }
+              </ul>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+
 
     </div>
   `,

@@ -58,4 +58,12 @@ export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
     this._data.sidebarCollapsed = collapsed;
     return this;
   }
+
+  /**
+   * Ustawia tryb działania sidebara: 'push' (rozpycha zawartość) lub 'overlay' (nadchodzi na nią).
+   */
+  public setSidebarMode(mode: MaybeSignal<'push' | 'overlay'>): this {
+    this._data.sidebarMode = mode;
+    return this;
+  }
 }

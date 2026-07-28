@@ -13,7 +13,7 @@ import { ProductListViewStore } from '../product-list-view.store';
   template: `
     <div class="flex flex-col h-full w-full">
       <erp-menu-bar [config]="horizontalMenu" />
-      <div class="flex-1 p-4 overflow-hidden">
+      <div class="flex-1 py-4 overflow-hidden">
         <erp-category-product-table 
           stateKey="product-tab-main"
           [filters]="currentFilters()"

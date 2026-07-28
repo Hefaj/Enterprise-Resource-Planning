@@ -113,7 +113,7 @@ export class CategoryProductTableComponent {
           .setId('name')
           .setAccessorKey('name')
           .setHeader(PRODUCT_KEYS.base.table.columns.name)
-          .setSize(300)
+          // .setSize(300)
         )
       )
 

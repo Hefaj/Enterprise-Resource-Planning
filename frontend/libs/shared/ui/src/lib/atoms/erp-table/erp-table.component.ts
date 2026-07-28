@@ -13,6 +13,7 @@ import {
   signal,
   untracked,
   viewChild,
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -524,7 +525,7 @@ export class ErpTableSelectionCell {
     </div>
   `,
 })
-export class ErpTableComponent<T> {
+export class ErpTableComponent<T> implements AfterViewInit {
   config = input.required<ErpTableConfig<T>>();
 
   protected items = computed(() => unwrapSignal(this.config().items) ?? []);
@@ -760,6 +761,79 @@ export class ErpTableComponent<T> {
         this.config().onStateChange?.(state);
       });
     });
+  }
+
+  private _autoSized = false;
+  private _resizeObserver: ResizeObserver | null = null;
+  private destroyRef = inject(DestroyRef);
+
+  ngAfterViewInit() {
+    const el = this.scrollElement()?.nativeElement;
+    if (!el) return;
+
+    const config = this.config();
+    if (config.initialState?.columnSizing && Object.keys(config.initialState.columnSizing).length > 0) {
+      this._autoSized = true;
+      return;
+    }
+
+    this._resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 0 && !this._autoSized) {
+          this._autoSized = true;
+          this.calculateAutoColumnSizing(width);
+          this._resizeObserver?.disconnect();
+          break;
+        }
+      }
+    });
+
+    this._resizeObserver.observe(el);
+    this.destroyRef.onDestroy(() => this._resizeObserver?.disconnect());
+  }
+
+  private calculateAutoColumnSizing(totalWidth: number) {
+    const visibility = this._columnVisibility();
+    const leafCols = this._flattenLeafColumns();
+    const config = this.config();
+    
+    let fixedWidth = 0;
+    const autoCols: ErpColumnDef<any>[] = [];
+    
+    if (config.selectionMode !== 'none') {
+      fixedWidth += 48; // from tanstack selection column definition
+    }
+    
+    for (const col of leafCols) {
+      const isVisible = visibility[col.id] !== false;
+      if (!isVisible) continue;
+      
+      if (col.size !== undefined) {
+        fixedWidth += col.size;
+      } else {
+        autoCols.push(col);
+        fixedWidth += (col.minSize ?? 80);
+      }
+    }
+    
+    const remainingWidth = totalWidth - fixedWidth;
+    
+    if (remainingWidth > 0 && autoCols.length > 0) {
+      const extraPerCol = Math.floor(remainingWidth / autoCols.length);
+      const newSizing = { ...this._columnSizing() };
+      
+      for (let i = 0; i < autoCols.length; i++) {
+        const col = autoCols[i];
+        let newWidth = (col.minSize ?? 80) + extraPerCol;
+        if (i === autoCols.length - 1) {
+           newWidth += remainingWidth % autoCols.length; 
+        }
+        newSizing[col.id] = newWidth;
+      }
+      
+      this._columnSizing.set(newSizing);
+    }
   }
 
 

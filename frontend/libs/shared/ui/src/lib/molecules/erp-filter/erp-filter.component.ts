@@ -101,7 +101,7 @@ import { debounceTime } from 'rxjs/operators';
             
             <!-- Group Content -->
             <tui-expand [expanded]="isExpanded(group.key)">
-              <div class="px-3 pb-3 pt-0 grid gap-3 bg-[var(--tui-background-elevation-1)]" 
+              <div class="px-3 pb-3 pt-3 grid gap-3 bg-[var(--tui-background-elevation-1)]" 
                    [class]="unwrap(group.styleClass)" 
                    style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));">
                 @for (field of group.fields; track field.key) {

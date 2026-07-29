@@ -201,20 +201,14 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
       </tui-tabs>
 
       <div class="erp-tabs__content">
-        @if (isRendering()) {
-          <div class="erp-defer-loader-container">
-            <tui-loader size="l" />
-          </div>
-        } @else {
-          @if (activeTab(); as tab) {
-            @if (tab.component) {
-              @defer (on timer(30ms)) {
-                <ng-container *ngComponentOutlet="tab.component; inputs: tab.inputs" />
-              } @placeholder {
-                <div class="erp-defer-loader-container">
-                  <tui-loader size="l" />
-                </div>
-              }
+        @if (activeTab(); as tab) {
+          @if (tab.component) {
+            @defer (on timer(30ms)) {
+              <ng-container *ngComponentOutlet="tab.component; inputs: tab.inputs" />
+            } @placeholder {
+              <div class="erp-defer-loader-container">
+                <tui-loader size="l" />
+              </div>
             }
           }
         }
@@ -301,13 +295,9 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
 export class ErpTabsComponent {
   readonly config = input.required<ErpTabsConfig>();
 
-  /** Indeks aktywnej zakładki w tui-tabs (0-based). */
-  protected readonly activeIndex = signal(0);
-
   /** Identyfikator aktualnie aktywnej zakładki (top-level lub pod-zakładki). */
   protected readonly activeTabId = signal<string | null>(null);
-
-  protected readonly isRendering = signal(false);
+  protected readonly activeIndex = signal<number>(0);
 
   /** Lista widocznych (niezamkniętych) zakładek. */
   private readonly closedTabIds = signal<Set<string>>(new Set());
@@ -391,19 +381,9 @@ export class ErpTabsComponent {
     });
   }
 
-  private runWithLoader(fn: () => void): void {
-    this.isRendering.set(true);
-    setTimeout(() => {
-      fn();
-      this.isRendering.set(false);
-    }, 15);
-  }
-
   protected selectTab(tabId: string): void {
     if (this.activeTabId() === tabId) return;
-    this.runWithLoader(() => {
-      this.activeTabId.set(tabId);
-    });
+    this.activeTabId.set(tabId);
   }
 
   protected getActiveChildPath(tab: ErpTabItem): any[] | null {
@@ -422,13 +402,11 @@ export class ErpTabsComponent {
 
   protected selectChildTab(parent: ErpTabItem, child: ErpTabItem): void {
     if (this.activeTabId() === child.id) return;
-    this.runWithLoader(() => {
-      const parentIdx = this._visibleTabs().findIndex((t) => t.id === parent.id);
-      if (parentIdx >= 0) {
-        this.activeIndex.set(parentIdx);
-      }
-      this.activeTabId.set(child.id);
-    });
+    const parentIdx = this._visibleTabs().findIndex((t) => t.id === parent.id);
+    if (parentIdx >= 0) {
+      this.activeIndex.set(parentIdx);
+    }
+    this.activeTabId.set(child.id);
   }
 
   private filterClosedTabs(tabs: ErpTabItem[], closed: Set<string>): ErpTabItem[] {

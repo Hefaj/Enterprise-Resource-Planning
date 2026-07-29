@@ -12,7 +12,7 @@ import {
   ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TuiButton, TuiIcon, TuiHint } from '@taiga-ui/core';
+import { TuiButton, TuiIcon, TuiHint, TuiLoader } from '@taiga-ui/core';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { SHARED_KEYS } from '../../translation/keys';
@@ -22,7 +22,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
 @Component({
   selector: 'erp-page-layout',
   standalone: true,
-  imports: [CommonModule, TuiButton, TuiIcon, TuiHint, ErpTranslatePipe],
+  imports: [CommonModule, TuiButton, TuiIcon, TuiHint, TuiLoader, ErpTranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let leftSidebar = _leftSidebar();
@@ -77,7 +77,13 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
             }
           </div>
           <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="leftCollapsed">
-            <ng-container *ngComponentOutlet="leftSidebar.component; inputs: leftSidebar.inputs" />
+            @defer (on timer(30ms)) {
+              <ng-container *ngComponentOutlet="leftSidebar.component; inputs: leftSidebar.inputs" />
+            } @placeholder {
+              <div class="erp-defer-loader-container">
+                <tui-loader size="l" />
+              </div>
+            }
           </div>
           @if (!leftCollapsed && leftResizable) {
             <div class="erp-page-layout__resizer erp-page-layout__resizer--left" (mousedown)="startDrag($event, 'left')"></div>
@@ -87,7 +93,13 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
 
       <main class="erp-page-layout__main">
         @if (main) {
-          <ng-container *ngComponentOutlet="main.component; inputs: main.inputs" />
+          @defer (on timer(30ms)) {
+            <ng-container *ngComponentOutlet="main.component; inputs: main.inputs" />
+          } @placeholder {
+            <div class="erp-defer-loader-container">
+              <tui-loader size="l" />
+            </div>
+          }
         }
       </main>
 
@@ -124,7 +136,13 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
             </button>
           </div>
           <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="rightCollapsed">
-            <ng-container *ngComponentOutlet="rightSidebar.component; inputs: rightSidebar.inputs" />
+            @defer (on timer(30ms)) {
+              <ng-container *ngComponentOutlet="rightSidebar.component; inputs: rightSidebar.inputs" />
+            } @placeholder {
+              <div class="erp-defer-loader-container">
+                <tui-loader size="l" />
+              </div>
+            }
           </div>
         </aside>
       }
@@ -287,6 +305,14 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
     .erp-page-layout--right-overlay.erp-page-layout--has-right-sidebar .erp-page-layout__main {
       margin-right: 48px;
     }
+
+    .erp-defer-loader-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+    }
   `],
 })
 export class ErpPageLayoutComponent {
@@ -349,8 +375,13 @@ export class ErpPageLayoutComponent {
         
         if (layoutId) {
           const saved = this.prefsService.getState(ErpPreferencesType.PageLayout, layoutId);
-          if (saved?.leftWidth) leftW = saved.leftWidth;
-          if (saved?.rightWidth) rightW = saved.rightWidth;
+          if (saved?.leftWidth !== undefined) leftW = saved.leftWidth;
+          if (saved?.rightWidth !== undefined) rightW = saved.rightWidth;
+          
+          if (saved?.leftCollapsed !== undefined) this._internalLeftCollapsed.set(saved.leftCollapsed);
+          if (saved?.leftMode !== undefined) this._internalLeftMode.set(saved.leftMode);
+          if (saved?.rightCollapsed !== undefined) this._internalRightCollapsed.set(saved.rightCollapsed);
+          if (saved?.rightMode !== undefined) this._internalRightMode.set(saved.rightMode);
         }
         
         this._leftWidth.set(leftW);
@@ -376,20 +407,24 @@ export class ErpPageLayoutComponent {
 
   protected toggleLeftSidebar(): void {
     this._internalLeftCollapsed.update((v) => !v);
+    this.saveLayoutState();
   }
 
   protected toggleLeftSidebarMode(): void {
     const currentMode = this._leftMode();
     this._internalLeftMode.set(currentMode === 'push' ? 'overlay' : 'push');
+    this.saveLayoutState();
   }
 
   protected toggleRightSidebar(): void {
     this._internalRightCollapsed.update((v) => !v);
+    this.saveLayoutState();
   }
 
   protected toggleRightSidebarMode(): void {
     const currentMode = this._rightMode();
     this._internalRightMode.set(currentMode === 'push' ? 'overlay' : 'push');
+    this.saveLayoutState();
   }
 
   @HostListener('document:mousedown', ['$event'])
@@ -445,16 +480,24 @@ export class ErpPageLayoutComponent {
     const drag = this._dragState();
     if (drag) {
       this._dragState.set(null);
-      const layoutId = this.config().layoutId;
-      if (layoutId) {
-        clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(() => {
-          this.prefsService.saveState(ErpPreferencesType.PageLayout, layoutId, {
-            leftWidth: this._leftWidth(),
-            rightWidth: this._rightWidth()
-          });
-        }, 400);
-      }
+      this.saveLayoutState();
+    }
+  }
+
+  private saveLayoutState(): void {
+    const layoutId = this.config().layoutId;
+    if (layoutId) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = setTimeout(() => {
+        this.prefsService.saveState(ErpPreferencesType.PageLayout, layoutId, {
+          leftWidth: this._leftWidth(),
+          rightWidth: this._rightWidth(),
+          leftCollapsed: this._leftCollapsed(),
+          leftMode: this._leftMode(),
+          rightCollapsed: this._rightCollapsed(),
+          rightMode: this._rightMode()
+        });
+      }, 400);
     }
   }
 }

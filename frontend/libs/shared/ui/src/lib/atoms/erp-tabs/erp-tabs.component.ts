@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TuiTabs, TuiChevron, TuiDataListDropdownManager } from '@taiga-ui/kit';
-import { TuiIcon, TuiDropdown, TuiDataList } from '@taiga-ui/core';
+import { TuiIcon, TuiDropdown, TuiDataList, TuiLoader } from '@taiga-ui/core';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
@@ -24,6 +24,7 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
     TuiDataList,
     TuiDataListDropdownManager,
     TuiIcon,
+    TuiLoader,
     ErpTranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -200,9 +201,21 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
       </tui-tabs>
 
       <div class="erp-tabs__content">
-        @if (activeTab(); as tab) {
-          @if (tab.component) {
-            <ng-container *ngComponentOutlet="tab.component; inputs: tab.inputs" />
+        @if (isRendering()) {
+          <div class="erp-defer-loader-container">
+            <tui-loader size="l" />
+          </div>
+        } @else {
+          @if (activeTab(); as tab) {
+            @if (tab.component) {
+              @defer (on timer(30ms)) {
+                <ng-container *ngComponentOutlet="tab.component; inputs: tab.inputs" />
+              } @placeholder {
+                <div class="erp-defer-loader-container">
+                  <tui-loader size="l" />
+                </div>
+              }
+            }
           }
         }
       </div>
@@ -275,6 +288,14 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
       overflow: auto;
       min-height: 0;
     }
+
+    .erp-defer-loader-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+    }
   `],
 })
 export class ErpTabsComponent {
@@ -285,6 +306,8 @@ export class ErpTabsComponent {
 
   /** Identyfikator aktualnie aktywnej zakładki (top-level lub pod-zakładki). */
   protected readonly activeTabId = signal<string | null>(null);
+
+  protected readonly isRendering = signal(false);
 
   /** Lista widocznych (niezamkniętych) zakładek. */
   private readonly closedTabIds = signal<Set<string>>(new Set());
@@ -368,8 +391,19 @@ export class ErpTabsComponent {
     });
   }
 
+  private runWithLoader(fn: () => void): void {
+    this.isRendering.set(true);
+    setTimeout(() => {
+      fn();
+      this.isRendering.set(false);
+    }, 150);
+  }
+
   protected selectTab(tabId: string): void {
-    this.activeTabId.set(tabId);
+    if (this.activeTabId() === tabId) return;
+    this.runWithLoader(() => {
+      this.activeTabId.set(tabId);
+    });
   }
 
   protected getActiveChildPath(tab: ErpTabItem): any[] | null {
@@ -387,11 +421,14 @@ export class ErpTabsComponent {
   }
 
   protected selectChildTab(parent: ErpTabItem, child: ErpTabItem): void {
-    const parentIdx = this._visibleTabs().findIndex((t) => t.id === parent.id);
-    if (parentIdx >= 0) {
-      this.activeIndex.set(parentIdx);
-    }
-    this.activeTabId.set(child.id);
+    if (this.activeTabId() === child.id) return;
+    this.runWithLoader(() => {
+      const parentIdx = this._visibleTabs().findIndex((t) => t.id === parent.id);
+      if (parentIdx >= 0) {
+        this.activeIndex.set(parentIdx);
+      }
+      this.activeTabId.set(child.id);
+    });
   }
 
   private filterClosedTabs(tabs: ErpTabItem[], closed: Set<string>): ErpTabItem[] {

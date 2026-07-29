@@ -15,7 +15,6 @@ import { ExclusionTabComponent } from './tabs/sales-offer-tabs/exclusion-tab.com
 import { DeliveryTabComponent } from './tabs/sales-offer-tabs/delivery-tab.component';
 import { WarrantyTabComponent } from './tabs/warranty-tab.component';
 import { ProductFilterComponent } from './filters/product-filter.component';
-import { ProductSelectionPanelComponent } from './panels/product-selection-panel.component';
 
 @Component({
   standalone: true,
@@ -36,10 +35,6 @@ import { ProductSelectionPanelComponent } from './panels/product-selection-panel
 export class ProductComponent {
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
-      .addTab(PRODUCT_KEYS.base.tabs.products, 'products', {
-        component: ProductTabComponent,
-        icon: '@tui.shopping-bag',
-      })
       .addTab(PRODUCT_KEYS.base.tabs.multimedia, 'multimedia', {
         component: MultimediaTabComponent,
         icon: '@tui.image',
@@ -65,7 +60,7 @@ export class ProductComponent {
         component: WarrantyTabComponent,
         icon: '@tui.shield-check',
       })
-      .setInitialValue('products')
+      .setInitialValue('multimedia')
       .setOnTabChange(noop)
   );
 
@@ -75,10 +70,11 @@ export class ProductComponent {
     b
       .setLayoutId('catalog-products-page')
       .setLeftSidebar(ProductFilterComponent)
-      .setMain(ErpTabsComponent, { config: this.tabsConfig })
-      .setRightSidebar(ProductSelectionPanelComponent)
+      .setSidebarCollapsed(false)
+      .setMain(ProductTabComponent)
+      .setRightSidebar(ErpTabsComponent, { config: this.tabsConfig })
       .setLeftSidebarResizable(false)
-      .setRightSidebarMaxWidth(5000)
+      .setRightSidebarMaxWidth(1600)
       .setRightSidebarCollapsed(computed(() => {
         const selection = this.store.selection();
         return !(selection && selection.selectedItems && selection.selectedItems.length > 0);

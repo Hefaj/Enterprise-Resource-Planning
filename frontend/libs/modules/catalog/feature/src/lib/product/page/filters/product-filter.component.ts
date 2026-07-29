@@ -13,7 +13,6 @@ import { SearchProductRequest } from '@erp/catalog/data-access';
     <erp-filter 
       [config]="filterConfig" 
       [savedPresets]="savedPresets()"
-      (search)="onSearch($event)"
       (savePresetEvent)="onSavePreset($event)"
       (loadPresetEvent)="onLoadPreset($event)"
       (deletePresetEvent)="onDeletePreset($event)">
@@ -29,6 +28,8 @@ export class ProductFilterComponent implements OnInit {
 
   public readonly filterConfig: ErpFilterConfig = ErpFilterBuilder.create(b => b
     .setFilterKey('product-list')
+    .setOnSearch(val => this.onSearch(val))
+    .setLoading(this.store.loading)
     .addGroup('base', g => g
       .setTitle('Podstawowe filtry')
       .addFormField('searchQuery', 'text', f => f.setLabel('Szukaj').setPlaceholder('Nazwa produktu, SKU...').setIconStart('@tui.search'))

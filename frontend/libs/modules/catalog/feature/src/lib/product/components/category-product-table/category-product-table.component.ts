@@ -54,6 +54,9 @@ export class CategoryProductTableComponent {
   /** Zdarzenie zmiany zaznaczenia wybrane w tabeli */
   selectionChange = output<ErpSelectionState<ProductVM>>();
 
+  /** Zdarzenie emitowane podczas rozpoczęcia i zakończenia pobierania danych */
+  loadingChange = output<boolean>();
+
   // ── Stan wewnętrzny ──
   private readonly currentUuids = signal<string[]>([]);
   private readonly totalCount = signal<number>(0);
@@ -182,6 +185,7 @@ export class CategoryProductTableComponent {
 
   private async fetchData(filters: SearchProductRequest, tableState: ErpTableState | null): Promise<void> {
     this.loading.set(true);
+    this.loadingChange.emit(true);
     try {
       const request: SearchProductRequest = {
         ...filters,
@@ -212,6 +216,7 @@ export class CategoryProductTableComponent {
       this.totalCount.set(0);
     } finally {
       this.loading.set(false);
+      this.loadingChange.emit(false);
     }
   }
 }

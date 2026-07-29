@@ -24,4 +24,11 @@ export class ProductListViewStore {
   public setSelection(state: ErpSelectionState<ProductVM>): void {
     this.selection.set(state);
   }
+
+  // 3. Stan ładowania
+  public readonly loading = signal<boolean>(false);
+
+  public setLoading(isLoading: boolean): void {
+    this.loading.set(isLoading);
+  }
 }

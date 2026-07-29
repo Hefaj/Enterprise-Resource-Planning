@@ -34,4 +34,8 @@ export interface ErpFilterConfig {
   styleClass?: MaybeSignal<string>;
   /** Automatically emit search event when any filter changes */
   autoSearch?: MaybeSignal<boolean>;
+  /** Callback wywoływany po zatwierdzeniu wyszukiwania */
+  onSearch?: (values: any) => void;
+  /** Sygnał lub flaga określająca, czy dane są obecnie ładowane (blokuje przycisk wyszukiwania) */
+  isLoading?: MaybeSignal<boolean>;
 }

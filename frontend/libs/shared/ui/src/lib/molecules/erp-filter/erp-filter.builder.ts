@@ -62,6 +62,9 @@ const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFilterFormFieldBuilderMap, new
   inputPicker: ErpInputPickerBuilder,
 } as any;
 
+/**
+ * Builder służący do konfiguracji pojedynczej grupy filtrów (np. sekcji rozwijanej).
+ */
 export class ErpFilterGroupBuilder extends ErpBaseBuilder<Omit<ErpFilterGroup, 'key'>> {
   private _formGroup: FormGroup;
 
@@ -72,21 +75,42 @@ export class ErpFilterGroupBuilder extends ErpBaseBuilder<Omit<ErpFilterGroup, '
     this._data.isExpanded = true;
   }
 
+  /**
+   * Ustawia tytuł grupy filtrów wyświetlany w nagłówku sekcji.
+   * @param title Tytuł grupy (tekst, klucz tłumaczenia lub sygnał)
+   */
   public setTitle(title: MaybeSignal<Translatable>): this {
     this._data.title = title;
     return this;
   }
 
+  /**
+   * Określa, czy grupa filtrów ma być domyślnie rozwinięta po załadowaniu.
+   * @param expanded True, jeśli grupa ma być rozwinięta
+   */
   public setExpanded(expanded: MaybeSignal<boolean>): this {
     this._data.isExpanded = expanded;
     return this;
   }
 
+  /**
+   * Pozwala nadać niestandardowe klasy CSS dla kontenera grupy filtrów.
+   * @param styleClass Zbiór klas CSS
+   */
   public setStyleClass(styleClass: MaybeSignal<string>): this {
     this._data.styleClass = styleClass;
     return this;
   }
 
+  /**
+   * Dodaje standardowe pole formularza do grupy filtrów.
+   * Obsługuje wbudowane typy takie jak 'text', 'number', 'switch', 'color', 'checkbox' itp.
+   * 
+   * @param key Unikalny klucz kontrolki w formularzu
+   * @param fieldType Typ dodawanego pola (np. 'text', 'number')
+   * @param config Konfiguracja pola dostarczona poprzez buildera
+   * @param options Opcjonalne ustawienia (wartość domyślna, walidatory, klasy CSS, callback na zmianę)
+   */
   public addFormField<TType extends keyof ErpFilterFormFieldBuilderMap>(
     key: string,
     fieldType: TType,
@@ -131,6 +155,15 @@ export class ErpFilterGroupBuilder extends ErpBaseBuilder<Omit<ErpFilterGroup, '
     return this;
   }
 
+  /**
+   * Dodaje niestandardowy komponent jako pole formularza wewnątrz grupy filtrów.
+   * Pozwala na użycie dowolnego komponentu Angulara zgodnego ze standardem pól formularza.
+   * 
+   * @param key Unikalny klucz kontrolki w formularzu
+   * @param component Klasa komponentu (Typ)
+   * @param config Konfiguracja przekazywana do inputów niestandardowego komponentu
+   * @param options Opcjonalne ustawienia formularza (wartość domyślna, walidatory itp.)
+   */
   public addCustomFormField<TComp>(
     key: string,
     component: MaybeSignal<Type<TComp>>,
@@ -159,6 +192,10 @@ export class ErpFilterGroupBuilder extends ErpBaseBuilder<Omit<ErpFilterGroup, '
   }
 }
 
+/**
+ * Główny builder służący do konfiguracji całego panelu filtrów.
+ * Zarządza podziałem na grupy oraz zachowaniem wyszukiwania.
+ */
 export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
   public constructor(formGroup?: FormGroup) {
     super();
@@ -167,21 +204,58 @@ export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
     this._data.autoSearch = false;
   }
 
+  /**
+   * Ustawia unikalny klucz filtra.
+   * Służy m.in. do zapisywania preferencji użytkownika (stanu zwinięcia, szerokości czy ustawień layoutu).
+   * @param key Klucz identyfikujący ten zbiór filtrów w systemie
+   */
   public setFilterKey(key: string): this {
     this._data.filterKey = key;
     return this;
   }
 
+  /**
+   * Włącza lub wyłącza automatyczne wyszukiwanie przy każdej zmianie pola formularza.
+   * Jeśli ustawione na true, zmiana dowolnego filtra natychmiast zaaplikuje filtry (bez czekania na przycisk "Szukaj").
+   * @param autoSearch Flaga włączająca auto-szukanie
+   */
   public setAutoSearch(autoSearch: MaybeSignal<boolean>): this {
     this._data.autoSearch = autoSearch;
     return this;
   }
 
+  /**
+   * Ustawia funkcję wywoływaną podczas wyszukiwania (zatwierdzenia formularza).
+   * @param onSearch Callback przyjmujący wartości formularza
+   */
+  public setOnSearch(onSearch: (values: any) => void): this {
+    this._data.onSearch = onSearch;
+    return this;
+  }
+
+  /**
+   * Ustawia flagę ładowania. Gdy włączona, przycisk wyszukiwania otrzyma stan ładowania i będzie zablokowany.
+   * @param loading Sygnał lub boolean reprezentujący stan ładowania
+   */
+  public setLoading(loading: MaybeSignal<boolean>): this {
+    this._data.isLoading = loading;
+    return this;
+  }
+
+  /**
+   * Pozwala nadać niestandardowe klasy CSS dla całego komponentu filtrów.
+   * @param styleClass Zbiór klas CSS
+   */
   public setStyleClass(styleClass: MaybeSignal<string>): this {
     this._data.styleClass = styleClass;
     return this;
   }
 
+  /**
+   * Dodaje nową grupę pól formularza (sekcję) do panelu filtrów.
+   * @param key Unikalny klucz grupy w zbiorze filtrów
+   * @param configure Funkcja przyjmująca buildera pozwalająca zdefiniować zawartość tej grupy
+   */
   public addGroup(
     key: string,
     configure: (builder: ErpFilterGroupBuilder) => void

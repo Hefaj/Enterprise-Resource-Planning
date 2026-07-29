@@ -18,6 +18,7 @@ import { ProductListViewStore } from '../product-list-view.store';
           stateKey="product-tab-main"
           [filters]="currentFilters()"
           (selectionChange)="onSelectionChange($event)"
+          (loadingChange)="store.setLoading($event)"
           class="block h-full"
         />
       </div>
@@ -27,7 +28,7 @@ import { ProductListViewStore } from '../product-list-view.store';
 })
 export class ProductTabComponent {
   private readonly modalService = inject(ErpModalService);
-  private readonly store = inject(ProductListViewStore);
+  protected readonly store = inject(ProductListViewStore);
 
   protected readonly horizontalMenu = ErpMenuBarBuilder.create((b) =>
     b

@@ -2,6 +2,7 @@ import { Component, input, output, computed, OnInit, effect, signal, untracked, 
 import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { TuiButton, TuiDataList, TuiDropdown, TuiExpand, TuiHint, TuiIcon } from '@taiga-ui/core';
+import { TuiButtonLoading } from '@taiga-ui/kit';
 import { ErpFilterConfig, ErpFilterGroup } from './erp-filter.types';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
@@ -21,6 +22,7 @@ import { debounceTime } from 'rxjs/operators';
     TuiHint,
     TuiIcon,
     TuiButton,
+    TuiButtonLoading,
     ErpTranslatePipe,
     NgComponentOutlet
   ],
@@ -118,7 +120,7 @@ import { debounceTime } from 'rxjs/operators';
       <!-- Bottom actions -->
       <div class="mt-2 relative group">
         <div class="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-xl blur opacity-100 transition duration-300"></div>
-        <button tuiButton type="button" appearance="primary" size="l" class="w-full relative z-10" iconStart="@tui.search" (click)="onSearch()">
+        <button tuiButton type="button" appearance="primary" size="l" class="w-full relative z-10" iconStart="@tui.search" (click)="onSearch()" [loading]="isLoading()" [disabled]="isLoading()">
           {{ SHARED_KEYS.filters.search | erpTranslate }}
         </button>
       </div>
@@ -148,6 +150,7 @@ export class ErpFilterComponent implements OnInit {
   public readonly saveDropdownOpen = signal(false);
   public readonly loadDropdownOpen = signal(false);
   public readonly isClearAllDisabled = signal(true);
+  public readonly isLoading = computed(() => unwrapSignal(this.config().isLoading) || false);
   public readonly groupEmptyState = signal<Record<string, boolean>>({});
 
   private readonly expandedState = signal<Record<string, boolean>>({});
@@ -166,6 +169,7 @@ export class ErpFilterComponent implements OnInit {
           ).subscribe(val => {
             if (this.config().formGroup.valid) {
               this.search.emit(val);
+              this.config().onSearch?.(val);
             }
           });
         });
@@ -251,7 +255,9 @@ export class ErpFilterComponent implements OnInit {
 
   public onSearch(): void {
     if (this.config().formGroup.valid) {
-      this.search.emit(this.config().formGroup.value);
+      const value = this.config().formGroup.value;
+      this.search.emit(value);
+      this.config().onSearch?.(value);
     }
   }
 

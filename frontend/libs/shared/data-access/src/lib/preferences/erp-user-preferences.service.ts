@@ -1,6 +1,18 @@
 import { Injectable, signal, effect, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
+export enum ErpPreferencesType {
+  Table = 'tables',
+  Filter = 'filters',
+  PageLayout = 'pageLayouts',
+}
+
+export interface ErpPreferencesMap {
+  [ErpPreferencesType.Table]: any;
+  [ErpPreferencesType.Filter]: any;
+  [ErpPreferencesType.PageLayout]: any;
+}
+
 export interface ErpUserPreferences {
   theme?: 'light' | 'dark';
   language?: string;
@@ -62,70 +74,33 @@ export class ErpUserPreferencesService {
     this._state.update((s) => ({ ...s, headerMode }));
   }
 
-  public getTableState(key: string): any {
-    return this._state().tables?.[key];
+  public getState<T extends ErpPreferencesType>(type: T, key: string): ErpPreferencesMap[T] | undefined {
+    return this._state()[type]?.[key];
   }
 
-  public saveTableState(key: string, tableState: any): void {
-    this._state.update((s) => {
-      const currentTables = s.tables || {};
-      return {
-        ...s,
-        tables: {
-          ...currentTables,
-          [key]: tableState,
-        },
-      };
-    });
-  }
-
-  public getFilterState(key: string): any {
-    return this._state().filters?.[key];
-  }
-
-  public saveFilterState(key: string, filterState: any): void {
-    this._state.update((s) => {
-      const currentFilters = s.filters || {};
-      return {
-        ...s,
-        filters: {
-          ...currentFilters,
-          [key]: filterState,
-        },
-      };
-    });
+  public saveState<T extends ErpPreferencesType>(type: T, key: string, payload: ErpPreferencesMap[T]): void {
+    this._state.update((s) => ({
+      ...s,
+      [type]: {
+        ...(s[type] || {}),
+        [key]: payload,
+      },
+    }));
   }
 
   public getFilterPresets(key: string): Record<string, any> {
-    return this.getFilterState(key) || {};
+    return this.getState(ErpPreferencesType.Filter, key) || {};
   }
 
   public saveFilterPreset(key: string, presetName: string, values: any): void {
     const currentPresets = this.getFilterPresets(key);
-    this.saveFilterState(key, { ...currentPresets, [presetName]: values });
+    this.saveState(ErpPreferencesType.Filter, key, { ...currentPresets, [presetName]: values });
   }
 
   public deleteFilterPreset(key: string, presetName: string): void {
     const currentPresets = this.getFilterPresets(key);
     const newPresets = { ...currentPresets };
     delete newPresets[presetName];
-    this.saveFilterState(key, newPresets);
-  }
-
-  public getPageLayoutState(key: string): any {
-    return this._state().pageLayouts?.[key];
-  }
-
-  public savePageLayoutState(key: string, layoutState: any): void {
-    this._state.update((s) => {
-      const currentLayouts = s.pageLayouts || {};
-      return {
-        ...s,
-        pageLayouts: {
-          ...currentLayouts,
-          [key]: layoutState,
-        },
-      };
-    });
+    this.saveState(ErpPreferencesType.Filter, key, newPresets);
   }
 }

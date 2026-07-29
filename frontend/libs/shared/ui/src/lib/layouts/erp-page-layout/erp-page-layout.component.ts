@@ -17,7 +17,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { SHARED_KEYS } from '../../translation/keys';
 import { ErpPageLayoutConfig } from './erp-page-layout.types';
-import { ErpUserPreferencesService } from '@erp/shared/data-access';
+import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-access';
 
 @Component({
   selector: 'erp-page-layout',
@@ -297,6 +297,7 @@ export class ErpPageLayoutComponent {
 
   private readonly leftSidebarEl = viewChild<ElementRef<HTMLElement>>('leftSidebarEl');
   private readonly rightSidebarEl = viewChild<ElementRef<HTMLElement>>('rightSidebarEl');
+  private saveTimeout: any;
 
   protected readonly _dragState = signal<{ type: 'left' | 'right', startX: number, startWidth: number } | null>(null);
 
@@ -347,7 +348,7 @@ export class ErpPageLayoutComponent {
         let rightW = configRightW ?? 280;
         
         if (layoutId) {
-          const saved = this.prefsService.getPageLayoutState(layoutId);
+          const saved = this.prefsService.getState(ErpPreferencesType.PageLayout, layoutId);
           if (saved?.leftWidth) leftW = saved.leftWidth;
           if (saved?.rightWidth) rightW = saved.rightWidth;
         }
@@ -446,10 +447,13 @@ export class ErpPageLayoutComponent {
       this._dragState.set(null);
       const layoutId = this.config().layoutId;
       if (layoutId) {
-        this.prefsService.savePageLayoutState(layoutId, {
-          leftWidth: this._leftWidth(),
-          rightWidth: this._rightWidth()
-        });
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => {
+          this.prefsService.saveState(ErpPreferencesType.PageLayout, layoutId, {
+            leftWidth: this._leftWidth(),
+            rightWidth: this._rightWidth()
+          });
+        }, 400);
       }
     }
   }

@@ -24,7 +24,7 @@ import {
   SearchProductRequest,
   CategoryVM,
 } from '@erp/catalog/data-access';
-import { ErpUserPreferencesService } from '@erp/shared/data-access';
+import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-access';
 
 import { PRODUCT_KEYS } from '../../translation';
 
@@ -43,6 +43,7 @@ import { PRODUCT_KEYS } from '../../translation';
 export class CategoryProductTableComponent {
   private readonly catalogProductOrchestrator = inject(CatalogProductOrchestrator);
   private readonly preferences = inject(ErpUserPreferencesService);
+  private saveTimeout: any;
 
   /** Filtry przekazywane z zewnątrz (np. wyszukiwanie) */
   filters = input<SearchProductRequest>({});
@@ -84,7 +85,7 @@ export class CategoryProductTableComponent {
     let initialState: Partial<ErpTableState> | undefined = undefined;
     
     if (key) {
-      initialState = this.preferences.getTableState(key);
+      initialState = this.preferences.getState(ErpPreferencesType.Table, key);
     }
 
     const builder = new ErpTableBuilder<ProductVM>()
@@ -162,7 +163,10 @@ export class CategoryProductTableComponent {
 
         this.lastTableState = state;
         if (key) {
-          this.preferences.saveTableState(key, state);
+          clearTimeout(this.saveTimeout);
+          this.saveTimeout = setTimeout(() => {
+            this.preferences.saveState(ErpPreferencesType.Table, key, state);
+          }, 400);
         }
 
         if (dataStateChanged) {

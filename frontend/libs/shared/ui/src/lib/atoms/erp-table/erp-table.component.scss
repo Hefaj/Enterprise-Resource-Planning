@@ -205,18 +205,21 @@
   &::after {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    width: 2px;
-    background-color: transparent;
-    transition: background-color 0.2s;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 24px;
+    border-radius: 3px;
+    background-color: var(--tui-border-hover, #999);
+    opacity: 0;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
   }
 
   &:hover::after,
   &.is-resizing::after {
-    background-color: var(--tui-text-action);
+    background-color: var(--tui-background-accent-1, var(--tui-text-action, #0055ff));
+    opacity: 1;
   }
 }
 

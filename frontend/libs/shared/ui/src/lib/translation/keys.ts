@@ -67,6 +67,7 @@ export const SHARED_KEYS = {
       savePreset: 'shared.filters.savePreset',
       loadPreset: 'shared.filters.loadPreset',
       clearGroup: 'shared.filters.clearGroup',
+      presetOverwriteWarning: 'shared.filters.presetOverwriteWarning',
     },
     navigation: 'shared.navigation',
     settings: {

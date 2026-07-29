@@ -61,7 +61,8 @@
     "clear": "Clear all",
     "savePreset": "Save preset",
     "loadPreset": "Load preset",
-    "clearGroup": "Clear"
+    "clearGroup": "Clear",
+    "presetOverwriteWarning": "Preset \"{{name}}\" has identical filters. Saving under a new name will overwrite (rename) it."
   },
   "navigation": "Navigation",
   "settings": {

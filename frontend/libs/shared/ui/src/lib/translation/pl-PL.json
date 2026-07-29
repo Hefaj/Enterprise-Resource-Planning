@@ -61,7 +61,8 @@
     "clear": "Wyczyść wszystko",
     "savePreset": "Zapisz profil",
     "loadPreset": "Wczytaj profil",
-    "clearGroup": "Wyczyść"
+    "clearGroup": "Wyczyść",
+    "presetOverwriteWarning": "Profil \"{{name}}\" posiada identyczne filtry. Zapisanie pod nową nazwą nadpisze (zmieni) jego nazwę."
   },
   "navigation": "Nawigacja",
   "settings": {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErpTableComponent, ErpTableBuilder } from '@erp/shared/ui';
 
@@ -74,8 +74,16 @@ function generateWarranties(count: number): Warranty[] {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WarrantyTabComponent {
-  items = signal<Warranty[]>(generateWarranties(1000)); // Generuje 100 elementów domyślnie
+export class WarrantyTabComponent implements OnInit {
+  items = signal<Warranty[]>([]);
+  isLoading = signal(true);
+
+  ngOnInit(): void {
+    setTimeout(() => {
+      this.items.set(generateWarranties(1000));
+      this.isLoading.set(false);
+    }, 400); // Simulate network latency and offload synchronous blocking
+  }
 
   tableConfig = ErpTableBuilder.create<ErpTableBuilder<Warranty>>(table => {
     table
@@ -87,6 +95,7 @@ export class WarrantyTabComponent {
     .setSelectionMode('multi')
     // .setStriped(true)
     .setOnSelectionChange((state) => console.log(state))
+    .setLoading(this.isLoading)
     .setItems(this.items)
     .setItemCount(computed(() => this.items().length))
     .addColumn(c => c

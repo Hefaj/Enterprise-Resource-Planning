@@ -396,7 +396,7 @@ export class ErpTabsComponent {
     setTimeout(() => {
       fn();
       this.isRendering.set(false);
-    }, 150);
+    }, 15);
   }
 
   protected selectTab(tabId: string): void {

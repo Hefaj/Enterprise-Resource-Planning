@@ -43,13 +43,18 @@ import { debounceTime } from 'rxjs/operators';
           
           <div class="w-px h-5 bg-[var(--tui-border-normal)] mx-1"></div>
           
-          <button tuiIconButton type="button" appearance="flat" size="s" [tuiDropdown]="saveDropdown" [tuiDropdownOpen]="saveDropdownOpen()" (tuiDropdownOpenChange)="saveDropdownOpen.set($event)" [tuiHint]="SHARED_KEYS.filters.savePreset | erpTranslate">
+          <button tuiIconButton type="button" appearance="flat" size="s" [tuiDropdown]="saveDropdown" [tuiDropdownOpen]="saveDropdownOpen()" (tuiDropdownOpenChange)="saveDropdownOpen.set($event)" [disabled]="isClearAllDisabled()" [tuiHint]="SHARED_KEYS.filters.savePreset | erpTranslate">
             <tui-icon icon="@tui.download"></tui-icon>
           </button>
           
           <ng-template #saveDropdown>
-            <div class="p-3 flex flex-col gap-2 bg-[var(--tui-background-elevation-1)] rounded-md shadow-lg border border-[var(--tui-border-normal)]">
+            <div class="p-3 flex flex-col gap-2 bg-[var(--tui-background-elevation-1)] rounded-md shadow-lg border border-[var(--tui-border-normal)] w-[260px]">
                <span class="text-sm font-semibold">Zapisz jako</span>
+               @if (existingPresetNameWithSameFilters(); as existingName) {
+                 <div class="text-[0.75rem] leading-tight text-orange-500 bg-orange-500/10 p-2 rounded border border-orange-500/20">
+                   {{ SHARED_KEYS.filters.presetOverwriteWarning | erpTranslate: { name: existingName } }}
+                 </div>
+               }
                <div class="flex gap-2">
                   <input type="text" [formControl]="savePresetName" class="px-2 py-1 text-sm border border-[var(--tui-border-normal)] rounded-md bg-[var(--tui-background-base)] text-[var(--tui-text-primary)] min-w-[150px] outline-none focus:border-blue-500 transition-colors" placeholder="Nazwa..." (keydown.enter)="confirmSave()" />
                   <button tuiIconButton type="button" appearance="primary" size="s" (click)="confirmSave()" [disabled]="savePresetName.invalid">
@@ -152,6 +157,37 @@ export class ErpFilterComponent implements OnInit {
   public readonly isClearAllDisabled = signal(true);
   public readonly isLoading = computed(() => unwrapSignal(this.config().isLoading) || false);
   public readonly groupEmptyState = signal<Record<string, boolean>>({});
+  public readonly currentFormValue = signal<any>({});
+
+  public readonly existingPresetNameWithSameFilters = computed(() => {
+    const currentVal = this.currentFormValue();
+    const presets = this.savedPresets();
+    if (!presets || Object.keys(presets).length === 0) return null;
+
+    const normalize = (obj: any) => {
+      if (!obj) return '{}';
+      const res: any = {};
+      for (const k in obj) {
+        const v = obj[k];
+        if (v !== null && v !== undefined && v !== '') {
+          if (Array.isArray(v) && v.length === 0) continue;
+          if (v === false) continue;
+          res[k] = v;
+        }
+      }
+      return JSON.stringify(res, Object.keys(res).sort());
+    };
+
+    const currentNormalized = normalize(currentVal);
+    if (currentNormalized === '{}') return null;
+
+    for (const [name, value] of Object.entries(presets)) {
+      if (normalize(value) === currentNormalized) {
+        return name;
+      }
+    }
+    return null;
+  });
 
   private readonly expandedState = signal<Record<string, boolean>>({});
   private readonly destroyRef = inject(DestroyRef);
@@ -191,6 +227,7 @@ export class ErpFilterComponent implements OnInit {
   }
 
   private updateEmptyStates(val: any): void {
+    this.currentFormValue.set(val);
     this.isClearAllDisabled.set(this.checkIfEmpty(val));
     
     const groupStates: Record<string, boolean> = {};
@@ -281,6 +318,12 @@ export class ErpFilterComponent implements OnInit {
     if (this.config().formGroup.valid && this.savePresetName.valid) {
       const val = this.config().formGroup.value;
       const name = this.savePresetName.value!;
+      
+      const existing = this.existingPresetNameWithSameFilters();
+      if (existing && existing !== name) {
+        this.deletePresetEvent.emit(existing);
+      }
+      
       this.savePresetEvent.emit({ name, value: val });
       this.savePresetName.reset('');
       this.saveDropdownOpen.set(false);

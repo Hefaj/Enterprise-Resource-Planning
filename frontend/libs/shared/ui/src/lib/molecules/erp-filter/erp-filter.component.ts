@@ -25,7 +25,7 @@ import { debounceTime } from 'rxjs/operators';
     NgComponentOutlet
   ],
   template: `
-    <div class="erp-filter flex flex-col gap-3" [class]="rootStyleClass()">
+    <div class="erp-filter flex flex-col gap-3 px-2" [class]="rootStyleClass()">
       
       <!-- Top actions Toolbar (Clean, no card) -->
       <div class="flex justify-between items-center px-2 pt-3 mb-1">

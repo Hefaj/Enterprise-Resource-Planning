@@ -1,5 +1,5 @@
 import { Injectable, inject, Injector } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
@@ -161,10 +161,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     // Rozwiąż model z cache orkiestratora modeli
     let model: ModelVM | null = null;
     if (dto.modelUuid) {
-      const modelDto = this._modelSiblingOrchestrator['identityMap'].peek(dto.modelUuid);
-      if (modelDto) {
-        model = { ...modelDto };
-      }
+      model = this._modelSiblingOrchestrator.resolveModelVM(dto.modelUuid);
     }
 
     return { categories, model };
@@ -177,15 +174,26 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     command: BatchCommandOfProductSetPriceCommandAndSearchProductRequest,
     queueID?: string,
   ): Promise<string> {
-    const apiCall = (): Observable<string> => this._api.productSetPriceMultipleCommand(command).pipe(
-      map((res: BatchResult) => res.jobUuid || '')
-    );
-    return this.executeCommand(
-      'Ustawianie cen produktów',
-      apiCall,
-      undefined,
-      queueID
-    );
+    try {
+      const result = await firstValueFrom(
+        this._api.productSetPriceMultipleCommand(command)
+      );
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, {
+        commandName: 'catalog.product.commands.setPrice',
+        timestamp: new Date(),
+      });
+
+      return jobUuid;
+    } catch (err) {
+      this.addError({
+        operation: 'command',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+      throw err;
+    }
   }
 
   /**
@@ -195,14 +203,25 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     command: BatchCommandOfProductSetNameCommandAndSearchProductRequest,
     queueID?: string,
   ): Promise<string> {
-    const apiCall = (): Observable<string> => this._api.productSetNameMultipleCommand(command).pipe(
-      map((res: BatchResult) => res.jobUuid || '')
-    );
-    return this.executeCommand(
-      'Ustawianie nazw produktów',
-      apiCall,
-      undefined,
-      queueID
-    );
+    try {
+      const result = await firstValueFrom(
+        this._api.productSetNameMultipleCommand(command)
+      );
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, {
+        commandName: 'catalog.product.commands.setName',
+        timestamp: new Date(),
+      });
+
+      return jobUuid;
+    } catch (err) {
+      this.addError({
+        operation: 'command',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+      throw err;
+    }
   }
 }

@@ -4,6 +4,12 @@ import {
   computed,
   input,
   signal,
+  inject,
+  HostListener,
+  effect,
+  untracked,
+  viewChild,
+  ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TuiButton, TuiIcon, TuiHint } from '@taiga-ui/core';
@@ -11,6 +17,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { SHARED_KEYS } from '../../translation/keys';
 import { ErpPageLayoutConfig } from './erp-page-layout.types';
+import { ErpUserPreferencesService } from '@erp/shared/data-access';
 
 @Component({
   selector: 'erp-page-layout',
@@ -18,53 +25,63 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
   imports: [CommonModule, TuiButton, TuiIcon, TuiHint, ErpTranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @let sidebar = _leftSidebar();
+    @let leftSidebar = _leftSidebar();
+    @let rightSidebar = _rightSidebar();
     @let main = _main();
-    @let collapsed = _collapsed();
-    @let width = _sidebarWidth();
-    @let mode = _sidebarMode();
+    
+    @let leftCollapsed = _leftCollapsed();
+    @let leftMode = _leftMode();
+    @let leftResizable = _leftResizable();
+    
+    @let rightCollapsed = _rightCollapsed();
+    @let rightMode = _rightMode();
+    @let rightResizable = _rightResizable();
 
     <div
       class="erp-page-layout"
-      [class.erp-page-layout--collapsed]="collapsed"
-      [class.erp-page-layout--overlay]="mode === 'overlay'"
-      [class.erp-page-layout--has-sidebar]="!!sidebar"
+      [class.erp-page-layout--dragging]="!!_dragState()"
+      [class.erp-page-layout--left-collapsed]="leftCollapsed"
+      [class.erp-page-layout--left-overlay]="leftMode === 'overlay'"
+      [class.erp-page-layout--right-collapsed]="rightCollapsed"
+      [class.erp-page-layout--right-overlay]="rightMode === 'overlay'"
+      [class.erp-page-layout--has-left-sidebar]="!!leftSidebar"
+      [class.erp-page-layout--has-right-sidebar]="!!rightSidebar"
     >
-      @if (mode === 'overlay' && !collapsed) {
-        <div class="erp-page-layout__backdrop" (click)="toggleSidebar()"></div>
-      }
-
-      @if (sidebar) {
+      @if (leftSidebar) {
         <aside
-          class="erp-page-layout__sidebar"
-          [style.width.px]="collapsed ? 48 : width"
-          [style.min-width.px]="collapsed ? 48 : width"
+          #leftSidebarEl
+          class="erp-page-layout__sidebar erp-page-layout__sidebar--left"
+          [style.width.px]="leftCollapsed ? 48 : _leftWidth()"
+          [style.min-width.px]="leftCollapsed ? 48 : _leftWidth()"
         >
           <div class="erp-page-layout__sidebar-header">
             <button
               tuiIconButton
               appearance="flat"
               size="s"
-              (click)="toggleSidebar()"
-              [tuiHint]="(collapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
+              (click)="toggleLeftSidebar()"
+              [tuiHint]="(leftCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
             >
-              <tui-icon [icon]="collapsed ? '@tui.list-filter' : '@tui.chevron-left'" />
+              <tui-icon [icon]="leftCollapsed ? '@tui.list-filter' : '@tui.chevron-left'" />
             </button>
-            @if (!collapsed) {
+            @if (!leftCollapsed) {
               <button
                 tuiIconButton
                 appearance="flat"
                 size="s"
-                (click)="toggleSidebarMode()"
-                [tuiHint]="(mode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
+                (click)="toggleLeftSidebarMode()"
+                [tuiHint]="(leftMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
               >
-                <tui-icon [icon]="mode === 'push' ? '@tui.pin' : '@tui.pin-off'" />
+                <tui-icon [icon]="leftMode === 'push' ? '@tui.pin' : '@tui.pin-off'" />
               </button>
             }
           </div>
-          <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="collapsed">
-            <ng-container *ngComponentOutlet="sidebar.component; inputs: sidebar.inputs" />
+          <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="leftCollapsed">
+            <ng-container *ngComponentOutlet="leftSidebar.component; inputs: leftSidebar.inputs" />
           </div>
+          @if (!leftCollapsed && leftResizable) {
+            <div class="erp-page-layout__resizer erp-page-layout__resizer--left" (mousedown)="startDrag($event, 'left')"></div>
+          }
         </aside>
       }
 
@@ -73,6 +90,44 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
           <ng-container *ngComponentOutlet="main.component; inputs: main.inputs" />
         }
       </main>
+
+      @if (rightSidebar) {
+        <aside
+          #rightSidebarEl
+          class="erp-page-layout__sidebar erp-page-layout__sidebar--right"
+          [style.width.px]="rightCollapsed ? 48 : _rightWidth()"
+          [style.min-width.px]="rightCollapsed ? 48 : _rightWidth()"
+        >
+          @if (!rightCollapsed && rightResizable) {
+            <div class="erp-page-layout__resizer erp-page-layout__resizer--right" (mousedown)="startDrag($event, 'right')"></div>
+          }
+          <div class="erp-page-layout__sidebar-header">
+            @if (!rightCollapsed) {
+              <button
+                tuiIconButton
+                appearance="flat"
+                size="s"
+                (click)="toggleRightSidebarMode()"
+                [tuiHint]="(rightMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
+              >
+                <tui-icon [icon]="rightMode === 'push' ? '@tui.pin' : '@tui.pin-off'" />
+              </button>
+            }
+            <button
+              tuiIconButton
+              appearance="flat"
+              size="s"
+              (click)="toggleRightSidebar()"
+              [tuiHint]="(rightCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
+            >
+              <tui-icon [icon]="rightCollapsed ? '@tui.list-filter' : '@tui.chevron-right'" />
+            </button>
+          </div>
+          <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="rightCollapsed">
+            <ng-container *ngComponentOutlet="rightSidebar.component; inputs: rightSidebar.inputs" />
+          </div>
+        </aside>
+      }
     </div>
   `,
   styles: [`
@@ -91,11 +146,8 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
       overflow: hidden;
     }
 
-    .erp-page-layout__backdrop {
-      position: absolute;
-      inset: 0;
-      z-index: 90;
-      background: transparent;
+    .erp-page-layout--dragging {
+      user-select: none;
     }
 
     .erp-page-layout__sidebar {
@@ -107,20 +159,81 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
                   min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
                   box-shadow 0.25s ease;
       flex-shrink: 0;
-      border-inline-end: 1px solid var(--tui-border-normal);
       background: var(--tui-background-elevation-1);
       z-index: 100;
+      position: relative;
     }
 
-    .erp-page-layout--overlay .erp-page-layout__sidebar {
+    .erp-page-layout__sidebar--left {
+      border-inline-end: 1px solid var(--tui-border-normal);
+    }
+    
+    .erp-page-layout__sidebar--right {
+      border-inline-start: 1px solid var(--tui-border-normal);
+    }
+
+    .erp-page-layout--dragging .erp-page-layout__sidebar {
+      transition: none; /* Disable transition during drag */
+    }
+
+    /* Overlays */
+    .erp-page-layout--left-overlay .erp-page-layout__sidebar--left {
       position: absolute;
       left: 0;
       top: 0;
       bottom: 0;
     }
+    .erp-page-layout--right-overlay .erp-page-layout__sidebar--right {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+    }
     
-    .erp-page-layout--overlay:not(.erp-page-layout--collapsed) .erp-page-layout__sidebar {
+    .erp-page-layout--left-overlay:not(.erp-page-layout--left-collapsed) .erp-page-layout__sidebar--left,
+    .erp-page-layout--right-overlay:not(.erp-page-layout--right-collapsed) .erp-page-layout__sidebar--right {
       box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+    }
+    .erp-page-layout--right-overlay:not(.erp-page-layout--right-collapsed) .erp-page-layout__sidebar--right {
+      box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Resizers */
+    .erp-page-layout__resizer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: col-resize;
+      background-color: transparent;
+      z-index: 110;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .erp-page-layout__resizer::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 24px;
+      border-radius: 4px;
+      background-color: var(--tui-border-hover, #999);
+      opacity: 0.6;
+      transition: background-color 0.2s ease, opacity 0.2s ease;
+    }
+    
+    .erp-page-layout__resizer:hover::after,
+    .erp-page-layout--dragging .erp-page-layout__resizer::after {
+      background-color: var(--tui-background-accent-1, var(--tui-text-action, #0055ff));
+      opacity: 1;
+    }
+
+    .erp-page-layout__resizer--left {
+      right: 0;
+    }
+    .erp-page-layout__resizer--right {
+      left: 0;
     }
 
     .erp-page-layout__sidebar-header {
@@ -133,7 +246,14 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
       justify-content: center;
     }
 
-    .erp-page-layout:not(.erp-page-layout--collapsed) .erp-page-layout__sidebar-header {
+    .erp-page-layout:not(.erp-page-layout--left-collapsed) .erp-page-layout__sidebar--left .erp-page-layout__sidebar-header {
+      border-bottom-color: var(--tui-border-normal);
+      justify-content: space-between;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    .erp-page-layout:not(.erp-page-layout--right-collapsed) .erp-page-layout__sidebar--right .erp-page-layout__sidebar-header {
       border-bottom-color: var(--tui-border-normal);
       justify-content: space-between;
       padding-left: 0.5rem;
@@ -161,41 +281,176 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
       min-width: 0;
     }
 
-    .erp-page-layout--overlay.erp-page-layout--has-sidebar .erp-page-layout__main {
+    .erp-page-layout--left-overlay.erp-page-layout--has-left-sidebar .erp-page-layout__main {
       margin-left: 48px;
+    }
+    .erp-page-layout--right-overlay.erp-page-layout--has-right-sidebar .erp-page-layout__main {
+      margin-right: 48px;
     }
   `],
 })
 export class ErpPageLayoutComponent {
   readonly config = input.required<ErpPageLayoutConfig>();
   protected readonly SHARED_KEYS = SHARED_KEYS;
-
-  /** Wewnętrzny stan zwinięcia sidebara — używany gdy nie przekazano sidebarCollapsed z zewnątrz. */
-  private readonly _internalCollapsed = signal(true);
-  /** Wewnętrzny tryb działania sidebara (nadpisuje zewnętrzną konfigurację jeśli został kliknięty). */
-  private readonly _internalMode = signal<'push' | 'overlay' | null>(null);
-
-  protected readonly _leftSidebar = computed(() => this.config().leftSidebar);
-  protected readonly _main = computed(() => this.config().main);
-  protected readonly _sidebarWidth = computed(() => unwrapSignal(this.config().sidebarWidth) ?? 280);
   
-  protected readonly _sidebarMode = computed(() => {
-    const internal = this._internalMode();
+  private readonly prefsService = inject(ErpUserPreferencesService);
+
+  private readonly leftSidebarEl = viewChild<ElementRef<HTMLElement>>('leftSidebarEl');
+  private readonly rightSidebarEl = viewChild<ElementRef<HTMLElement>>('rightSidebarEl');
+
+  protected readonly _dragState = signal<{ type: 'left' | 'right', startX: number, startWidth: number } | null>(null);
+
+  protected readonly _leftWidth = signal<number>(280);
+  protected readonly _rightWidth = signal<number>(280);
+
+  // Left Sidebar Signals
+  private readonly _internalLeftCollapsed = signal(true);
+  private readonly _internalLeftMode = signal<'push' | 'overlay' | null>(null);
+  
+  protected readonly _leftSidebar = computed(() => this.config().leftSidebar);
+  protected readonly _leftResizable = computed(() => unwrapSignal(this.config().leftSidebarResizable) ?? true);
+  protected readonly _leftMinWidth = computed(() => unwrapSignal(this.config().leftSidebarMinWidth) ?? 100);
+  protected readonly _leftMaxWidth = computed(() => unwrapSignal(this.config().leftSidebarMaxWidth) ?? 800);
+  protected readonly _leftMode = computed(() => {
+    const internal = this._internalLeftMode();
     if (internal) return internal;
     return unwrapSignal(this.config().sidebarMode) ?? 'push';
   });
+  protected readonly _leftCollapsed = computed(() => this._internalLeftCollapsed());
 
-  protected readonly _collapsed = computed(() => {
-    const external = unwrapSignal(this.config().sidebarCollapsed);
-    return external ?? this._internalCollapsed();
+  // Right Sidebar Signals
+  private readonly _internalRightCollapsed = signal(true);
+  private readonly _internalRightMode = signal<'push' | 'overlay' | null>(null);
+  
+  protected readonly _rightSidebar = computed(() => this.config().rightSidebar);
+  protected readonly _rightResizable = computed(() => unwrapSignal(this.config().rightSidebarResizable) ?? true);
+  protected readonly _rightMinWidth = computed(() => unwrapSignal(this.config().rightSidebarMinWidth) ?? 100);
+  protected readonly _rightMaxWidth = computed(() => unwrapSignal(this.config().rightSidebarMaxWidth) ?? 800);
+  protected readonly _rightMode = computed(() => {
+    const internal = this._internalRightMode();
+    if (internal) return internal;
+    return unwrapSignal(this.config().rightSidebarMode) ?? 'push';
   });
+  protected readonly _rightCollapsed = computed(() => this._internalRightCollapsed());
 
-  protected toggleSidebar(): void {
-    this._internalCollapsed.update((v) => !v);
+  protected readonly _main = computed(() => this.config().main);
+
+  constructor() {
+    effect(() => {
+      const cfg = this.config();
+      const layoutId = cfg.layoutId;
+      const configLeftW = unwrapSignal(cfg.sidebarWidth);
+      const configRightW = unwrapSignal(cfg.rightSidebarWidth);
+      
+      untracked(() => {
+        let leftW = configLeftW ?? 280;
+        let rightW = configRightW ?? 280;
+        
+        if (layoutId) {
+          const saved = this.prefsService.getPageLayoutState(layoutId);
+          if (saved?.leftWidth) leftW = saved.leftWidth;
+          if (saved?.rightWidth) rightW = saved.rightWidth;
+        }
+        
+        this._leftWidth.set(leftW);
+        this._rightWidth.set(rightW);
+      });
+    });
+
+    // Sync external collapsed state with internal state so that it can be overridden
+    effect(() => {
+      const externalLeft = unwrapSignal(this.config().sidebarCollapsed);
+      if (externalLeft !== undefined) {
+        untracked(() => this._internalLeftCollapsed.set(externalLeft));
+      }
+    });
+
+    effect(() => {
+      const externalRight = unwrapSignal(this.config().rightSidebarCollapsed);
+      if (externalRight !== undefined) {
+        untracked(() => this._internalRightCollapsed.set(externalRight));
+      }
+    });
   }
 
-  protected toggleSidebarMode(): void {
-    const currentMode = this._sidebarMode();
-    this._internalMode.set(currentMode === 'push' ? 'overlay' : 'push');
+  protected toggleLeftSidebar(): void {
+    this._internalLeftCollapsed.update((v) => !v);
+  }
+
+  protected toggleLeftSidebarMode(): void {
+    const currentMode = this._leftMode();
+    this._internalLeftMode.set(currentMode === 'push' ? 'overlay' : 'push');
+  }
+
+  protected toggleRightSidebar(): void {
+    this._internalRightCollapsed.update((v) => !v);
+  }
+
+  protected toggleRightSidebarMode(): void {
+    const currentMode = this._rightMode();
+    this._internalRightMode.set(currentMode === 'push' ? 'overlay' : 'push');
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  protected onDocumentMouseDown(event: MouseEvent): void {
+    const target = event.target as Node;
+    
+    if (this._leftMode() === 'overlay' && !this._internalLeftCollapsed()) {
+      const leftEl = this.leftSidebarEl()?.nativeElement;
+      if (leftEl && !leftEl.contains(target)) {
+        this._internalLeftCollapsed.set(true);
+      }
+    }
+
+    if (this._rightMode() === 'overlay' && !this._internalRightCollapsed()) {
+      const rightEl = this.rightSidebarEl()?.nativeElement;
+      if (rightEl && !rightEl.contains(target)) {
+        this._internalRightCollapsed.set(true);
+      }
+    }
+  }
+
+  protected startDrag(event: MouseEvent, type: 'left' | 'right'): void {
+    event.preventDefault();
+    this._dragState.set({
+      type,
+      startX: event.clientX,
+      startWidth: type === 'left' ? this._leftWidth() : this._rightWidth()
+    });
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  protected onMouseMove(event: MouseEvent): void {
+    const drag = this._dragState();
+    if (!drag) return;
+    
+    if (drag.type === 'left') {
+      const delta = event.clientX - drag.startX;
+      const minW = this._leftMinWidth();
+      const maxW = this._leftMaxWidth();
+      const newWidth = Math.max(minW, Math.min(maxW, drag.startWidth + delta));
+      this._leftWidth.set(newWidth);
+    } else {
+      const delta = drag.startX - event.clientX; // drag left increases width
+      const minW = this._rightMinWidth();
+      const maxW = this._rightMaxWidth();
+      const newWidth = Math.max(minW, Math.min(maxW, drag.startWidth + delta));
+      this._rightWidth.set(newWidth);
+    }
+  }
+
+  @HostListener('document:mouseup')
+  protected onMouseUp(): void {
+    const drag = this._dragState();
+    if (drag) {
+      this._dragState.set(null);
+      const layoutId = this.config().layoutId;
+      if (layoutId) {
+        this.prefsService.savePageLayoutState(layoutId, {
+          leftWidth: this._leftWidth(),
+          rightWidth: this._rightWidth()
+        });
+      }
+    }
   }
 }

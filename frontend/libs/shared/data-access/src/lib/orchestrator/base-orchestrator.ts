@@ -21,8 +21,6 @@ import {
   OrchestratorConfig,
   OrchestratorError,
   LoadOptions,
-  Pagination,
-  JobMeta,
   DEFAULT_ORCHESTRATOR_CONFIG,
   ResolvedDeps,
   SharedSearchResponse,
@@ -77,6 +75,8 @@ export abstract class BaseOrchestrator<
   // ── Subskrypcja SignalR ──
   private _signalrSub: Subscription | null = null;
   private readonly _signalrRefreshInFlight = new Set<string>();
+
+  private readonly _signalVmCache = new Map<string, Signal<TViewModel>>();
 
   // ────────────────────────────────────────────────────────────────
   // Elementy abstrakcyjne — do zaimplementowania w klasach potomnych
@@ -164,7 +164,7 @@ export abstract class BaseOrchestrator<
         return updated;
       });
     } catch (err) {
-      this._addError({
+      this.addError({
         operation: 'load',
         message: err instanceof Error ? err.message : String(err),
         timestamp: new Date(),
@@ -193,7 +193,7 @@ export abstract class BaseOrchestrator<
 
       return response;
     } catch (err) {
-      this._addError({
+      this.addError({
         operation: 'search',
         message: err instanceof Error ? err.message : String(err),
         timestamp: new Date(),
@@ -241,17 +241,19 @@ export abstract class BaseOrchestrator<
     const result = new Map<string, Signal<TViewModel>>();
 
     for (const uuid of loaded) {
-      const dtoSignal = this.identityMap.get(uuid);
-      result.set(
-        uuid,
-        computed(() => {
+      let vmSignal = this._signalVmCache.get(uuid);
+      if (!vmSignal) {
+        const dtoSignal = this.identityMap.get(uuid);
+        vmSignal = computed(() => {
           const dto = dtoSignal();
           if (!dto) {
             return undefined as unknown as TViewModel;
           }
           return this.mapToViewModel(dto, this._resolveCurrentDeps(dto));
-        }),
-      );
+        });
+        this._signalVmCache.set(uuid, vmSignal);
+      }
+      result.set(uuid, vmSignal);
     }
 
     return result;
@@ -269,51 +271,6 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Publiczne API: Wykonywanie Poleceń (Commands)
-  // ────────────────────────────────────────────────────────────────
-
-  /**
-   * Wykonaj polecenie (command) przez API i zarejestruj zwrócony identyfikator UUID zadania (job).
-   *
-   * Wszystkie polecenia działają na zasadzie delegacji — API zwraca `jobUuid`,
-   * który jest śledzony w `JobService`.
-   *
-   * @param commandName Czytelna dla człowieka nazwa polecenia do śledzenia
-   * @param apiCall Funkcja wywołująca API i zwracająca Observable<string> (jobUuid)
-   * @param aggregateUuid Opcjonalny identyfikator UUID powiązanego agregatu
-   * @param queueID Opcjonalny identyfikator pochodnego modalu (identyfikator kolejki)
-   * @returns Identyfikator UUID zadania (job)
-   */
-  public async executeCommand(
-    commandName: string,
-    apiCall: () => Observable<string>,
-    aggregateUuid?: string,
-    queueID?: string,
-  ): Promise<string> {
-    try {
-      const jobUuid = await firstValueFrom(apiCall());
-
-      const meta: JobMeta = {
-        commandName,
-        aggregateUuid,
-        timestamp: new Date(),
-      };
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this._addError({
-        operation: 'command',
-        uuid: aggregateUuid,
-        message: err instanceof Error ? err.message : String(err),
-        timestamp: new Date(),
-      });
-      throw err;
-    }
-  }
-
-  // ────────────────────────────────────────────────────────────────
   // Protected: Rozwiązywanie Zależności (do nadpisania w klasach potomnych)
   // ────────────────────────────────────────────────────────────────
 
@@ -324,12 +281,14 @@ export abstract class BaseOrchestrator<
    * Przykład: CatalogProductOrchestrator nadpisuje tę metodę, aby ładować
    * kategorie i modele powiązane przez produktowe DTO.
    */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   protected async resolveEagerDependencies(
     _uuids: string[],
     _options: TLoadOptions,
   ): Promise<void> {
     // Domyślnie: brak eager loadingu. Nadpisywane w podklasach.
   }
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   /**
    * Nadpisz, aby rozwiązywać aktualne zależności dla mapowania ViewModel.
@@ -372,7 +331,7 @@ export abstract class BaseOrchestrator<
     try {
       await this.dataLoader.reloadAsync(toRefresh);
     } catch (err) {
-      this._addError({
+      this.addError({
         operation: 'signalr-refresh',
         message: err instanceof Error ? err.message : String(err),
         timestamp: new Date(),
@@ -389,7 +348,7 @@ export abstract class BaseOrchestrator<
   // Wewnętrzne: Zarządzanie Błędami
   // ────────────────────────────────────────────────────────────────
 
-  private _addError(error: OrchestratorError): void {
+  protected addError(error: OrchestratorError): void {
     console.error(`[${this.signature}]`, error.operation, error.message);
     this._errors.update(errors => [...errors.slice(-49), error]); // Zachowaj ostatnie 50
   }
@@ -407,5 +366,6 @@ export abstract class BaseOrchestrator<
     this._signalrSub?.unsubscribe();
     this.dataLoader.destroy();
     this.identityMap.clear();
+    this._signalVmCache.clear();
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import {
   ErpPageLayoutBuilder,
   ErpPageLayoutComponent,
@@ -15,6 +15,7 @@ import { ExclusionTabComponent } from './tabs/sales-offer-tabs/exclusion-tab.com
 import { DeliveryTabComponent } from './tabs/sales-offer-tabs/delivery-tab.component';
 import { WarrantyTabComponent } from './tabs/warranty-tab.component';
 import { ProductFilterComponent } from './filters/product-filter.component';
+import { ProductSelectionPanelComponent } from './panels/product-selection-panel.component';
 
 @Component({
   standalone: true,
@@ -68,10 +69,20 @@ export class ProductComponent {
       .setOnTabChange(noop)
   );
 
+  private readonly store = inject(ProductListViewStore);
+
   protected readonly pageConfig = ErpPageLayoutBuilder.create((b) =>
     b
+      .setLayoutId('catalog-products-page')
       .setLeftSidebar(ProductFilterComponent)
       .setMain(ErpTabsComponent, { config: this.tabsConfig })
+      .setRightSidebar(ProductSelectionPanelComponent)
+      .setLeftSidebarResizable(false)
+      .setRightSidebarMaxWidth(5000)
+      .setRightSidebarCollapsed(computed(() => {
+        const selection = this.store.selection();
+        return !(selection && selection.selectedItems && selection.selectedItems.length > 0);
+      }))
   );
 }
 

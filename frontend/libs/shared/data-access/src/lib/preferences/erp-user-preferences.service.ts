@@ -7,6 +7,7 @@ export interface ErpUserPreferences {
   headerMode?: 'fixed' | 'auto-hide';
   tables?: Record<string, any>;
   filters?: Record<string, any>;
+  pageLayouts?: Record<string, any>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -109,5 +110,22 @@ export class ErpUserPreferencesService {
     const newPresets = { ...currentPresets };
     delete newPresets[presetName];
     this.saveFilterState(key, newPresets);
+  }
+
+  public getPageLayoutState(key: string): any {
+    return this._state().pageLayouts?.[key];
+  }
+
+  public savePageLayoutState(key: string, layoutState: any): void {
+    this._state.update((s) => {
+      const currentLayouts = s.pageLayouts || {};
+      return {
+        ...s,
+        pageLayouts: {
+          ...currentLayouts,
+          [key]: layoutState,
+        },
+      };
+    });
   }
 }

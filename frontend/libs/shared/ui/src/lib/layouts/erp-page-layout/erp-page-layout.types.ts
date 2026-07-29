@@ -31,4 +31,28 @@ export interface ErpPageLayoutConfig {
   sidebarCollapsed?: MaybeSignal<boolean>;
   /** Tryb działania sidebara (push - przesuwa kontent, overlay - nachodzi na kontent). Domyślnie push. */
   sidebarMode?: MaybeSignal<'push' | 'overlay'>;
+  /** Czy lewy sidebar może być skalowany przez użytkownika (domyślnie true). */
+  leftSidebarResizable?: MaybeSignal<boolean>;
+  /** Minimalna szerokość lewego sidebara (domyślnie 100). */
+  leftSidebarMinWidth?: MaybeSignal<number>;
+  /** Maksymalna szerokość lewego sidebara (domyślnie 800). */
+  leftSidebarMaxWidth?: MaybeSignal<number>;
+
+  /** Komponent wyświetlany w prawym sidebarze. */
+  rightSidebar?: ErpPageLayoutSlot;
+  /** Szerokość prawego sidebara w px (domyślnie 280). */
+  rightSidebarWidth?: MaybeSignal<number>;
+  /** Czy prawy sidebar jest zwinięty/ukryty (domyślnie false). */
+  rightSidebarCollapsed?: MaybeSignal<boolean>;
+  /** Tryb działania prawego sidebara (push | overlay). Domyślnie push. */
+  rightSidebarMode?: MaybeSignal<'push' | 'overlay'>;
+  /** Czy prawy sidebar może być skalowany przez użytkownika (domyślnie true). */
+  rightSidebarResizable?: MaybeSignal<boolean>;
+  /** Minimalna szerokość prawego sidebara (domyślnie 100). */
+  rightSidebarMinWidth?: MaybeSignal<number>;
+  /** Maksymalna szerokość prawego sidebara (domyślnie 800). */
+  rightSidebarMaxWidth?: MaybeSignal<number>;
+
+  /** Opcjonalne ID layoutu, na podstawie którego zapisywane są ustawienia (szerokości) w UserPreferencesService. */
+  layoutId?: string;
 }

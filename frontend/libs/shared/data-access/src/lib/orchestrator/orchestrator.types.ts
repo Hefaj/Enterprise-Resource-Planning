@@ -93,10 +93,13 @@ export interface OrchestratorError {
 // Zarządzanie Zadaniami (Command → Job UUID)
 // ────────────────────────────────────────────────────────────────
 
+export type Translatable = string | { key: string; params?: Record<string, any> };
+
 export type JobStatus = 'pending' | 'completed' | 'failed';
 
 export interface JobMeta {
-  readonly commandName: string;
+  /** Klucz tłumaczenia Transloco identyfikujący komendę (np. 'product.commands.setPrice'). */
+  readonly commandName: Translatable;
   readonly aggregateUuid?: string;
   readonly timestamp: Date;
 }

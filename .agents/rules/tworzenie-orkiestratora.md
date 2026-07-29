@@ -55,10 +55,31 @@ Dla każdego agregatu powinny zostać zdefiniowane modele widokowe (w pliku np. 
 Aby zasilić te pola, nadpisujemy metodę rozwiązywania zależności tak by odczytywała gotowe dane z cache zaprzyjaźnionych orkiestratorów. Należy do tego użyć własnej implementacji mapowania lub w razie wsparcia przez implementację bazową `_resolveCurrentDeps(dto)`.
 
 ## 6. Realizacja Komend
-Metody do masowych aktualizacji bądź działań na zasobach tworzy się jako publiczne funkcje orkiestratora. Należy wtedy posługiwać się metodą `executeCommand(...)` pochodzącą z klasy bazowej, która wspiera system kolejkowania (JobService):
+Metody do masowych aktualizacji bądź działań na zasobach tworzy się jako publiczne metody async orkiestratora. Każda metoda samodzielnie:
+1. Wywołuje API przez `firstValueFrom`
+2. Rejestruje zadanie w `jobService.addJob()` z kluczem tłumaczenia Transloco
+3. Obsługuje błędy przez `this.addError()`
+
 ```typescript
-public async setPriceMultiple(command: BatchCommand, queueID?: string): Promise<string> {
-  const apiCall = () => this._api.productSetPriceCommand(command).pipe(map(res => res.jobUuid || ''));
-  return this.executeCommand('Ustawianie cen', apiCall, undefined, queueID);
+public async setPriceMultiple(
+  command: BatchCommand,
+  queueID?: string,
+): Promise<string> {
+  try {
+    const result = await firstValueFrom(this._api.productSetPriceCommand(command));
+    const jobUuid = result.jobUuid || '';
+    this.jobService.addJob(jobUuid, queueID, {
+      commandName: PRODUCT_KEYS.commands.setPrice,
+      timestamp: new Date(),
+    });
+    return jobUuid;
+  } catch (err) {
+    this.addError({
+      operation: 'command',
+      message: err instanceof Error ? err.message : String(err),
+      timestamp: new Date(),
+    });
+    throw err;
+  }
 }
 ```

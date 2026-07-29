@@ -46,4 +46,14 @@ export class CatalogModelOrchestrator extends BaseOrchestrator<
       ...dto
     };
   }
+
+  /**
+   * Rozwiąż UUID modelu do obiektu ModelVM.
+   * Używane przez CatalogProductOrchestrator do uzupełnienia Product.model.
+   * Zwraca model tylko jeśli jest już w pamięci podręcznej (cache).
+   */
+  public resolveModelVM(uuid: string): ModelVM | null {
+    const dto = this.identityMap.peek(uuid);
+    return dto ? { ...dto } : null;
+  }
 }

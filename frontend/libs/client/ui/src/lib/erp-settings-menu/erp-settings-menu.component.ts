@@ -42,7 +42,11 @@ import { CommonModule } from '@angular/common';
           @let childrenList = _unwrap(item.children);
           @let isDisabled = _unwrap(item.disabled);
 
-          @if (childrenList && childrenList.length > 0) {
+          @if (item.component) {
+            <div class="erp-settings-menu__custom-component">
+              <ng-container *ngComponentOutlet="item.component; inputs: item.inputs || {}" />
+            </div>
+          } @else if (childrenList && childrenList.length > 0) {
             <button
               tuiOption
               type="button"
@@ -121,6 +125,9 @@ import { CommonModule } from '@angular/common';
     .erp-settings-menu__check-icon {
       margin-inline-start: 0.5rem;
       color: var(--tui-text-action);
+    }
+    .erp-settings-menu__custom-component {
+      padding: 0.1rem;
     }
   `]
 })

@@ -1,6 +1,7 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, signal, inject, computed, effect, untracked } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormControl } from '@angular/forms';
 import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp-breadcrumb';
 import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui';
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
@@ -8,6 +9,7 @@ import { SHARED_KEYS } from '@erp/shared/ui';
 import { ErpBreadcrumbService, ErpNavRegistryService, AppLanguage, ErpUserPreferencesService } from '@erp/shared/data-access';
 import { AppSettingsService } from '@erp/client/util';
 import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
+import { ErpToggleGroupComponent, ErpToggleGroupBuilder } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-shell',
@@ -106,6 +108,12 @@ export class ShellLayoutComponent {
   });
 
   public constructor() {
+    this.fontSizeControl.valueChanges.subscribe(val => {
+      if (val) {
+        this._userPreferences.setFontSize(val as 's' | 'm' | 'l' | 'xl');
+      }
+    });
+
     // Symulacja pobierania danych języków z backendu po 3 sekundach
     setTimeout(() => {
       this._dataLanguages.set([
@@ -123,6 +131,18 @@ export class ShellLayoutComponent {
       .setFn(() => this.menuOpen.set(true))
   );
 
+  public readonly fontSizeControl = new FormControl(this._userPreferences.fontSize || 'm');
+
+  public readonly fontSizeConfig = ErpToggleGroupBuilder.create(b => b
+    .setMode('single')
+    .setDirection('horizontal')
+    .setSize('s')
+    .addItem(i => i.setValue('s').setText('S'))
+    .addItem(i => i.setValue('m').setText('M'))
+    .addItem(i => i.setValue('l').setText('L'))
+    .addItem(i => i.setValue('xl').setText('XL'))
+  );
+
   public readonly settingsMenuConfig: ErpSettingsMenuConfig = {
     items: [
       {
@@ -132,7 +152,16 @@ export class ShellLayoutComponent {
         fn: () => this.toggleTheme()
       },
       {
+        id: 'font-size',
+        component: ErpToggleGroupComponent,
+        inputs: { 
+          config: this.fontSizeConfig,
+          control: this.fontSizeControl
+        },
+      },
+      {
         id: 'language',
+        separator: true,
         label: SHARED_KEYS.settings.language.title,
         icon: '@tui.globe',
         children: [

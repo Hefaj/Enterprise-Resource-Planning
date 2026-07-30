@@ -10,6 +10,7 @@ export * from './lib/form/erp-input-color';
 export * from './lib/form/erp-checkbox';
 export * from './lib/form/erp-datepicker';
 export * from './lib/form/erp-input-picker';
+export * from './lib/form/erp-toggle-group';
 
 // export * from './lib/layouts/erp-host-layout';
 export * from './lib/layouts/erp-page-layout';

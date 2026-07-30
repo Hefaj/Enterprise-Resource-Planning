@@ -62,8 +62,7 @@ function generateWarranties(count: number): Warranty[] {
   standalone: true,
   imports: [CommonModule, ErpTableComponent],
   template: `
-    <div class="flex flex-col h-full w-full p-4 overflow-hidden">
-      <h2 class="text-xl font-bold mb-4 shrink-0">Warranty Records</h2>
+    <div class="flex flex-col h-full w-full overflow-hidden">
       <div class="flex-1 overflow-hidden">
         <erp-table
           class="block h-full"

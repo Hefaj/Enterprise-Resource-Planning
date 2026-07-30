@@ -56,6 +56,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
         >
           <div class="erp-page-layout__sidebar-header">
             <button
+              class="erp-page-layout__sidebar-btn-left"
               tuiIconButton
               appearance="flat"
               size="s"
@@ -66,6 +67,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
             </button>
             @if (!leftCollapsed) {
               <button
+                class="erp-page-layout__sidebar-btn-right"
                 tuiIconButton
                 appearance="flat"
                 size="s"
@@ -116,6 +118,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
           <div class="erp-page-layout__sidebar-header">
             @if (!rightCollapsed) {
               <button
+                class="erp-page-layout__sidebar-btn-left"
                 tuiIconButton
                 appearance="flat"
                 size="s"
@@ -126,6 +129,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
               </button>
             }
             <button
+              class="erp-page-layout__sidebar-btn-right"
               tuiIconButton
               appearance="flat"
               size="s"
@@ -267,22 +271,17 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
       height: 48px;
       flex-shrink: 0;
       border-bottom: 1px solid transparent;
-      transition: border-color 0.2s ease, justify-content 0.2s ease;
-      justify-content: center;
+      transition: border-color 0.2s ease;
+      padding: 0 0.5rem;
     }
 
-    .erp-page-layout:not(.erp-page-layout--left-collapsed) .erp-page-layout__sidebar--left .erp-page-layout__sidebar-header {
-      border-bottom-color: var(--tui-border-normal);
-      justify-content: space-between;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
-    }
-    
+    .erp-page-layout:not(.erp-page-layout--left-collapsed) .erp-page-layout__sidebar--left .erp-page-layout__sidebar-header,
     .erp-page-layout:not(.erp-page-layout--right-collapsed) .erp-page-layout__sidebar--right .erp-page-layout__sidebar-header {
       border-bottom-color: var(--tui-border-normal);
-      justify-content: space-between;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
+    }
+    
+    .erp-page-layout__sidebar-btn-right {
+      margin-left: auto;
     }
 
     .erp-page-layout__sidebar-content {

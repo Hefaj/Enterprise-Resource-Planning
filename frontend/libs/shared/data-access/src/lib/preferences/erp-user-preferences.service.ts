@@ -20,6 +20,7 @@ export interface ErpUserPreferences {
   tables?: Record<string, any>;
   filters?: Record<string, any>;
   pageLayouts?: Record<string, any>;
+  fontSize?: 's' | 'm' | 'l' | 'xl';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,6 +36,16 @@ export class ErpUserPreferencesService {
       effect(() => {
         const currentState = this._state();
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(currentState));
+      });
+
+      // Apply font size globally
+      effect(() => {
+        const size = this._state().fontSize || 'm';
+        let rootSize = '16px';
+        if (size === 's') rootSize = '14px';
+        if (size === 'l') rootSize = '18px';
+        if (size === 'xl') rootSize = '20px';
+        document.documentElement.style.fontSize = rootSize;
       });
     }
   }
@@ -72,6 +83,14 @@ export class ErpUserPreferencesService {
 
   public setHeaderMode(headerMode: 'fixed' | 'auto-hide'): void {
     this._state.update((s) => ({ ...s, headerMode }));
+  }
+
+  public get fontSize(): 's' | 'm' | 'l' | 'xl' | undefined {
+    return this._state().fontSize;
+  }
+
+  public setFontSize(fontSize: 's' | 'm' | 'l' | 'xl'): void {
+    this._state.update((s) => ({ ...s, fontSize }));
   }
 
   public getState<T extends ErpPreferencesType>(type: T, key: string): ErpPreferencesMap[T] | undefined {

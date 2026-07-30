@@ -36,7 +36,8 @@ export class ProductTabComponent {
       .addSeparator()
       .addItem((i) =>
         i
-          .setLabel('Produkt aktywny')
+          .setLabel('Dodaj')
+          .setIconStart('@tui.plus')
           .setFn(() => {
             console.log('Kliknieto');
           })

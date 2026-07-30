@@ -349,4 +349,24 @@ export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
     }
     return this;
   }
+
+  public setSavedPresets(presets: MaybeSignal<Record<string, any>>): this {
+    this._data.savedPresets = presets;
+    return this;
+  }
+
+  public setOnSavePreset(onSavePreset: (event: {name: string, value: any}) => void): this {
+    this._data.onSavePreset = onSavePreset;
+    return this;
+  }
+
+  public setOnLoadPreset(onLoadPreset: (presetName: string) => void): this {
+    this._data.onLoadPreset = onLoadPreset;
+    return this;
+  }
+
+  public setOnDeletePreset(onDeletePreset: (presetName: string) => void): this {
+    this._data.onDeletePreset = onDeletePreset;
+    return this;
+  }
 }

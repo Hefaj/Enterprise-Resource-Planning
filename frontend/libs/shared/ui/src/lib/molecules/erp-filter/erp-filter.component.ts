@@ -154,16 +154,11 @@ import { debounceTime } from 'rxjs/operators';
 })
 export class ErpFilterComponent implements OnInit {
   public readonly config = input.required<ErpFilterConfig>();
-  public readonly savedPresets = input<Record<string, any>>({});
-  
   public readonly search = output<any>();
-  public readonly savePresetEvent = output<{name: string, value: any}>();
-  public readonly loadPresetEvent = output<string>();
-  public readonly deletePresetEvent = output<string>();
 
   public readonly rootStyleClass = computed(() => unwrapSignal(this.config().styleClass) || '');
   public readonly groups = computed(() => this.config().groups);
-  public readonly presetKeys = computed(() => Object.keys(this.savedPresets() || {}));
+  public readonly presetKeys = computed(() => Object.keys(unwrapSignal(this.config().savedPresets) || {}));
   
   public readonly savePresetName = new FormControl('', Validators.required);
   public readonly saveDropdownOpen = signal(false);
@@ -175,7 +170,7 @@ export class ErpFilterComponent implements OnInit {
 
   public readonly existingPresetNameWithSameFilters = computed(() => {
     const currentVal = this.currentFormValue();
-    const presets = this.savedPresets();
+    const presets = unwrapSignal(this.config().savedPresets);
     if (!presets || Object.keys(presets).length === 0) return null;
 
     const normalize = (obj: any) => {
@@ -349,22 +344,22 @@ export class ErpFilterComponent implements OnInit {
       
       const existing = this.existingPresetNameWithSameFilters();
       if (existing && existing !== name) {
-        this.deletePresetEvent.emit(existing);
+        this.config().onDeletePreset?.(existing);
       }
       
-      this.savePresetEvent.emit({ name, value: val });
+      this.config().onSavePreset?.({ name, value: val });
       this.savePresetName.reset('');
       this.saveDropdownOpen.set(false);
     }
   }
 
   public confirmLoad(presetName: string): void {
-    this.loadPresetEvent.emit(presetName);
+    this.config().onLoadPreset?.(presetName);
     this.loadDropdownOpen.set(false);
   }
 
   public deletePreset(presetName: string, event: Event): void {
     event.stopPropagation();
-    this.deletePresetEvent.emit(presetName);
+    this.config().onDeletePreset?.(presetName);
   }
 }

@@ -10,13 +10,7 @@ import { SearchProductRequest } from '@erp/catalog/data-access';
   standalone: true,
   imports: [CommonModule, ErpFilterComponent],
   template: `
-    <erp-filter 
-      [config]="filterConfig" 
-      [savedPresets]="savedPresets()"
-      (savePresetEvent)="onSavePreset($event)"
-      (loadPresetEvent)="onLoadPreset($event)"
-      (deletePresetEvent)="onDeletePreset($event)">
-    </erp-filter>
+    <erp-filter [config]="filterConfig"></erp-filter>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -30,6 +24,10 @@ export class ProductFilterComponent implements OnInit {
     .setFilterKey('product-list')
     .setOnSearch(val => this.onSearch(val))
     .setLoading(this.store.loading)
+    .setSavedPresets(this.savedPresets)
+    .setOnSavePreset(val => this.onSavePreset(val))
+    .setOnLoadPreset(val => this.onLoadPreset(val))
+    .setOnDeletePreset(val => this.onDeletePreset(val))
     .addFormField('productId', 'inputPicker', f => f.setLabel('ID produktu'))
     .addFormField('modelId', 'text', f => f.setLabel('ID modelu'))
     .addFormField('productType', 'text', f => f.setLabel('Rodzaj produktu'))

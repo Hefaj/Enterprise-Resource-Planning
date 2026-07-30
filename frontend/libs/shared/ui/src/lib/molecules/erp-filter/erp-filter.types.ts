@@ -40,4 +40,12 @@ export interface ErpFilterConfig {
   onSearch?: (values: any) => void;
   /** Sygnał lub flaga określająca, czy dane są obecnie ładowane (blokuje przycisk wyszukiwania) */
   isLoading?: MaybeSignal<boolean>;
+  /** Signal lub obiekt zawierający zapisane presety */
+  savedPresets?: MaybeSignal<Record<string, any>>;
+  /** Callback do zapisywania presetu */
+  onSavePreset?: (event: {name: string, value: any}) => void;
+  /** Callback do ładowania presetu */
+  onLoadPreset?: (presetName: string) => void;
+  /** Callback do usuwania presetu */
+  onDeletePreset?: (presetName: string) => void;
 }

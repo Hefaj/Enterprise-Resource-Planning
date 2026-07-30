@@ -741,7 +741,9 @@ export class ErpTableComponent<T> implements AfterViewInit {
         
         if (this.config().selectionMode !== 'none') {
           if (!newOrder.includes('__selection')) newOrder.push('__selection');
-          newPinning.left!.push('__selection');
+          if (!this._rowSelectionOnClick()) {
+            newPinning.left!.push('__selection');
+          }
         }
         
         for (const colOrGroup of this.config().columns) {
@@ -772,6 +774,36 @@ export class ErpTableComponent<T> implements AfterViewInit {
         this._columnPinning.set(newPinning);
         
         this._isInitialized = true;
+      });
+    });
+    
+    // Dynamicznie przepinaj kolumnę zaznaczania
+    effect(() => {
+      const isRowSelection = this._rowSelectionOnClick();
+      
+      untracked(() => {
+        if (!this._isInitialized) return;
+        
+        const currentPinning = this._columnPinning();
+        const left = currentPinning.left ? [...currentPinning.left] : [];
+        let changed = false;
+        
+        if (isRowSelection) {
+          const idx = left.indexOf('__selection');
+          if (idx !== -1) {
+            left.splice(idx, 1);
+            changed = true;
+          }
+        } else {
+          if (this.config().selectionMode !== 'none' && !left.includes('__selection')) {
+            left.push('__selection');
+            changed = true;
+          }
+        }
+        
+        if (changed) {
+          this._columnPinning.set({ ...currentPinning, left });
+        }
       });
     });
 

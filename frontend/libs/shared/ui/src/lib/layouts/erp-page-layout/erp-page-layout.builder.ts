@@ -45,8 +45,8 @@ export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
   /**
    * Ustawia szerokość lewego sidebara w pikselach (domyślnie 280px).
    */
-  public setSidebarWidth(width: MaybeSignal<number>): this {
-    this._data.sidebarWidth = width;
+  public setLeftSidebarWidth(width: MaybeSignal<number>): this {
+    this._data.leftSidebarWidth = width;
     return this;
   }
 
@@ -54,16 +54,16 @@ export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
    * Kontroluje stan zwinięcia sidebara.
    * Gdy true — sidebar jest ukryty, a sekcja main zajmuje 100% szerokości.
    */
-  public setSidebarCollapsed(collapsed: MaybeSignal<boolean>): this {
-    this._data.sidebarCollapsed = collapsed;
+  public setLeftSidebarCollapsed(collapsed: MaybeSignal<boolean>): this {
+    this._data.leftSidebarCollapsed = collapsed;
     return this;
   }
 
   /**
    * Ustawia tryb działania sidebara: 'push' (rozpycha zawartość) lub 'overlay' (nadchodzi na nią).
    */
-  public setSidebarMode(mode: MaybeSignal<'push' | 'overlay'>): this {
-    this._data.sidebarMode = mode;
+  public setLeftSidebarMode(mode: MaybeSignal<'push' | 'overlay'>): this {
+    this._data.leftSidebarMode = mode;
     return this;
   }
 

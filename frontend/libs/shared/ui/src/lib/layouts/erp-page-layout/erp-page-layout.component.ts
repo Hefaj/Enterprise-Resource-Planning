@@ -74,7 +74,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
                 (click)="toggleLeftSidebarMode()"
                 [tuiHint]="(leftMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
               >
-                <tui-icon [icon]="leftMode === 'push' ? '@tui.pin' : '@tui.pin-off'" />
+                <tui-icon [icon]="leftMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
               </button>
             }
           </div>
@@ -125,7 +125,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
                 (click)="toggleRightSidebarMode()"
                 [tuiHint]="(rightMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
               >
-                <tui-icon [icon]="rightMode === 'push' ? '@tui.pin' : '@tui.pin-off'" />
+                <tui-icon [icon]="rightMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
               </button>
             }
             <button
@@ -348,7 +348,7 @@ export class ErpPageLayoutComponent {
   protected readonly _leftMode = computed(() => {
     const internal = this._internalLeftMode();
     if (internal) return internal;
-    return unwrapSignal(this.config().sidebarMode) ?? 'push';
+    return unwrapSignal(this.config().leftSidebarMode) ?? 'push';
   });
   protected readonly _leftCollapsed = computed(() => this._internalLeftCollapsed());
 
@@ -373,7 +373,7 @@ export class ErpPageLayoutComponent {
     effect(() => {
       const cfg = this.config();
       const layoutId = cfg.layoutId;
-      const configLeftW = unwrapSignal(cfg.sidebarWidth);
+      const configLeftW = unwrapSignal(cfg.leftSidebarWidth);
       const configRightW = unwrapSignal(cfg.rightSidebarWidth);
       
       const leftMin = unwrapSignal(cfg.leftSidebarMinWidth) ?? 100;
@@ -403,7 +403,7 @@ export class ErpPageLayoutComponent {
 
     // Sync external collapsed state with internal state so that it can be overridden
     effect(() => {
-      const externalLeft = unwrapSignal(this.config().sidebarCollapsed);
+      const externalLeft = unwrapSignal(this.config().leftSidebarCollapsed);
       if (externalLeft !== undefined) {
         untracked(() => this._internalLeftCollapsed.set(externalLeft));
       }

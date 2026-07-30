@@ -39,6 +39,10 @@ export const SHARED_KEYS = {
         serverSelectionTitle: 'shared.table.help.serverSelectionTitle',
         serverSelectionDesc: 'shared.table.help.serverSelectionDesc',
       },
+      settings: {
+        title: 'shared.table.settings.title',
+        rowSelectionOnClick: 'shared.table.settings.rowSelectionOnClick',
+      },
     },
     tabs: {
       empty: 'shared.tabs.empty',

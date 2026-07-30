@@ -33,6 +33,10 @@
       "multiSelectDesc": "Zaznacz pierwszy wiersz, a następnie przytrzymaj SHIFT i zaznacz ostatni.",
       "serverSelectionTitle": "Zaznaczanie wszystkich po stronie serwera",
       "serverSelectionDesc": "Zaznaczenie wszystkich wyników blokuje możliwość odznaczania pojedynczych wierszy. Obejmuje to wszystkie strony wyników bazując na bieżących filtrach."
+    },
+    "settings": {
+      "title": "Ustawienia tabeli",
+      "rowSelectionOnClick": "Zaznaczanie kliknięciem w wiersz"
     }
   },
   "tabs": {

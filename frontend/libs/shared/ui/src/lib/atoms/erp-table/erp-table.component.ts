@@ -57,6 +57,7 @@ import { ErpTableColumnMenuComponent } from './erp-table-column-menu.component';
 import { unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpChipCellComponent } from './erp-chip-cell.component';
+import { ErpSwitchComponent } from '../../form/erp-switch/erp-switch.component';
 
 @Directive({
   selector: '[erpVirtualMeasure]',
@@ -148,6 +149,7 @@ export class ErpTableSelectionCell {
     TuiButton,
     TuiDropdown,
     TuiAppearance,
+    ErpSwitchComponent,
     ErpTranslatePipe,
     ErpTablePaginationComponent,
     ErpTableColumnMenuComponent,
@@ -325,7 +327,7 @@ export class ErpTableSelectionCell {
                     [attr.data-index]="virtualRow.index"
                     class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
                     [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
-                    (click)="onRowClickEvent(row.original)"
+                    (click)="onRowClickEvent(row.original, $event)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
                   >
                     @for (cell of _getOrderedCells(row); track cell.id) {
@@ -365,7 +367,7 @@ export class ErpTableSelectionCell {
                   <tr 
                     class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
                     [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
-                    (click)="onRowClickEvent(row.original)"
+                    (click)="onRowClickEvent(row.original, $event)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
                   >
                     @for (cell of _getOrderedCells(row); track cell.id) {
@@ -495,6 +497,31 @@ export class ErpTableSelectionCell {
             tuiButton
             appearance="outline"
             size="s"
+            iconStart="@tui.settings"
+            [tuiDropdown]="settingsDropdown"
+            [tuiDropdownOpen]="settingsOpen()"
+            (tuiDropdownOpenChange)="settingsOpen.set($event)"
+            class="ml-2"
+          >
+          </button>
+          
+          <ng-template #settingsDropdown>
+            <div class="p-4 max-w-sm bg-(--tui-background-elevated-1) border border-(--tui-border-normal) rounded-md shadow-lg">
+              <h3 class="font-bold mb-3 text-sm">{{ 'shared.table.settings.title' | erpTranslate }}</h3>
+              <div class="flex flex-col gap-3">
+                <erp-switch 
+                  [config]="{ size: 's', label: 'shared.table.settings.rowSelectionOnClick' }" 
+                  [ngModel]="_rowSelectionOnClick()" 
+                  (ngModelChange)="onRowSelectionOnClickChange($event)" 
+                />
+              </div>
+            </div>
+          </ng-template>
+
+          <button
+            tuiButton
+            appearance="outline"
+            size="s"
             iconStart="@tui.circle-help"
             [tuiDropdown]="helpDropdown"
             [tuiDropdownOpen]="helpOpen()"
@@ -558,6 +585,8 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
   protected helpOpen = signal(false);
   protected legendOpen = signal(false);
+  protected settingsOpen = signal(false);
+  protected _rowSelectionOnClick = signal<boolean>(false);
 
   protected _legendItems = computed(() => {
     const items = this.items();
@@ -685,6 +714,9 @@ export class ErpTableComponent<T> implements AfterViewInit {
               this._rowSelection.set(rowSelection);
             }
           }
+          if (state.rowSelectionOnClick !== undefined) {
+            this._rowSelectionOnClick.set(state.rowSelectionOnClick);
+          }
         });
       }
       
@@ -751,6 +783,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
       const columnVisibility = this._columnVisibility();
       const columnOrder = this._columnOrder();
       const columnSizing = this._columnSizing();
+      const rowSelectionOnClick = this._rowSelectionOnClick();
 
       untracked(() => {
         const filters = unwrapSignal(this.config().filters) ?? {};
@@ -766,6 +799,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
             selectedIds: Object.keys(this._rowSelection()).filter(k => this._rowSelection()[k]),
             filters: (this._isServerMode() && this._serverAllSelected()) ? filters : undefined
           },
+          rowSelectionOnClick: this._rowSelectionOnClick(),
         };
         this.config().onStateChange?.(state);
       });
@@ -888,6 +922,30 @@ export class ErpTableComponent<T> implements AfterViewInit {
     return row.getIsSelected();
   }
 
+  private _handleRowSelection(row: Row<T>, checked: boolean, shiftKey: boolean) {
+    if (shiftKey && this._lastSelectedRowId()) {
+      const rows = this.table().getRowModel().rows;
+      const lastIndex = rows.findIndex(r => r.id === this._lastSelectedRowId());
+      const currentIndex = rows.findIndex(r => r.id === row.id);
+      
+      if (lastIndex !== -1 && currentIndex !== -1) {
+        const start = Math.min(lastIndex, currentIndex);
+        const end = Math.max(lastIndex, currentIndex);
+        
+        const newSelection = { ...this._rowSelection() };
+        for (let i = start; i <= end; i++) {
+          if (rows[i].getCanSelect()) {
+            newSelection[rows[i].id] = checked;
+          }
+        }
+        this.table().setRowSelection(newSelection);
+      }
+    } else {
+      row.toggleSelected(checked);
+    }
+    this._lastSelectedRowId.set(row.id);
+  }
+
   // Map ERP columns to TanStack columns
   private _tanstackColumns = computed<ColumnDef<T>[]>(() => {
     const cols: ColumnDef<T>[] = [];
@@ -931,27 +989,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
             },
             outputs: {
               changed: ({ checked, shiftKey }: { checked: boolean, shiftKey: boolean }) => {
-                if (shiftKey && this._lastSelectedRowId()) {
-                  const rows = table.getRowModel().rows;
-                  const lastIndex = rows.findIndex(r => r.id === this._lastSelectedRowId());
-                  const currentIndex = rows.findIndex(r => r.id === row.id);
-                  
-                  if (lastIndex !== -1 && currentIndex !== -1) {
-                    const start = Math.min(lastIndex, currentIndex);
-                    const end = Math.max(lastIndex, currentIndex);
-                    
-                    const newSelection = { ...this._rowSelection() };
-                    for (let i = start; i <= end; i++) {
-                      if (rows[i].getCanSelect()) {
-                        newSelection[rows[i].id] = checked;
-                      }
-                    }
-                    table.setRowSelection(newSelection);
-                  }
-                } else {
-                  row.toggleSelected(checked);
-                }
-                this._lastSelectedRowId.set(row.id);
+                this._handleRowSelection(row, checked, shiftKey);
               }
             }
           });
@@ -1230,8 +1268,20 @@ export class ErpTableComponent<T> implements AfterViewInit {
     }
   }
 
-  protected onRowClickEvent(row: T) {
-    this.config().onRowClick?.(row);
+  protected onRowSelectionOnClickChange(value: boolean) {
+    this._rowSelectionOnClick.set(value);
+  }
+
+  protected onRowClickEvent(rowOriginal: T, event: MouseEvent) {
+    this.config().onRowClick?.(rowOriginal);
+    if (this._rowSelectionOnClick() && this.config().selectionMode !== 'none') {
+      if (this._isServerMode() && this._serverAllSelected()) return;
+      const tanstackRow = this.table().getRowModel().rows.find(r => r.original === rowOriginal);
+      if (tanstackRow && tanstackRow.getCanSelect()) {
+        const checked = !tanstackRow.getIsSelected();
+        this._handleRowSelection(tanstackRow, checked, event.shiftKey);
+      }
+    }
   }
 
   protected onRowDoubleClickEvent(row: T) {

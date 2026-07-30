@@ -7,6 +7,7 @@ import {
   output,
   signal,
   effect,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -88,7 +89,7 @@ export class CategoryProductTableComponent {
     let initialState: Partial<ErpTableState> | undefined = undefined;
     
     if (key) {
-      initialState = this.preferences.getState(ErpPreferencesType.Table, key);
+      initialState = untracked(() => this.preferences.getState(ErpPreferencesType.Table, key));
     }
 
     const builder = new ErpTableBuilder<ProductVM>()

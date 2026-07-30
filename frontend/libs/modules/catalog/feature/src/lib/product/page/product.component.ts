@@ -70,7 +70,7 @@ export class ProductComponent {
     b
       .setLayoutId('catalog-products-page')
       .setLeftSidebar(ProductFilterComponent)
-      .setSidebarCollapsed(false)
+      .setLeftSidebarCollapsed(false)
       .setMain(ProductTabComponent)
       .setRightSidebar(ErpTabsComponent, { config: this.tabsConfig })
       .setLeftSidebarResizable(false)

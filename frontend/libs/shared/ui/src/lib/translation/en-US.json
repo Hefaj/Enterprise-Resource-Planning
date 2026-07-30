@@ -33,6 +33,10 @@
       "multiSelectDesc": "Select the first row, then hold SHIFT and select the last one.",
       "serverSelectionTitle": "Server-side select all",
       "serverSelectionDesc": "Selecting all results disables individual row deselection. This applies to all result pages based on current filters."
+    },
+    "settings": {
+      "title": "Table settings",
+      "rowSelectionOnClick": "Select row on click"
     }
   },
   "tabs": {

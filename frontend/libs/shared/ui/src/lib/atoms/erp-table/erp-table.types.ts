@@ -92,6 +92,7 @@ export interface ErpTableState {
   columnSizing: Record<string, number>;
   filters: Record<string, any>;
   selection: Pick<ErpSelectionState, 'isAllSelected' | 'selectedIds' | 'filters'>;
+  rowSelectionOnClick?: boolean;
 }
 
 export interface ErpTableConfig<TData = any> {

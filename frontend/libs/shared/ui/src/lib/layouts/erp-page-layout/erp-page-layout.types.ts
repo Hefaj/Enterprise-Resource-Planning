@@ -26,11 +26,11 @@ export interface ErpPageLayoutConfig {
   /** Komponent wyświetlany w głównej sekcji strony. */
   main?: ErpPageLayoutSlot;
   /** Szerokość sidebara w px (domyślnie 280). */
-  sidebarWidth?: MaybeSignal<number>;
+  leftSidebarWidth?: MaybeSignal<number>;
   /** Czy sidebar jest zwinięty/ukryty (domyślnie false). */
-  sidebarCollapsed?: MaybeSignal<boolean>;
+  leftSidebarCollapsed?: MaybeSignal<boolean>;
   /** Tryb działania sidebara (push - przesuwa kontent, overlay - nachodzi na kontent). Domyślnie push. */
-  sidebarMode?: MaybeSignal<'push' | 'overlay'>;
+  leftSidebarMode?: MaybeSignal<'push' | 'overlay'>;
   /** Czy lewy sidebar może być skalowany przez użytkownika (domyślnie true). */
   leftSidebarResizable?: MaybeSignal<boolean>;
   /** Minimalna szerokość lewego sidebara (domyślnie 100). */

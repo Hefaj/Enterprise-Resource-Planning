@@ -6,7 +6,7 @@ import { ErpSelectionState } from '@erp/shared/ui';
 export class ProductListViewStore {
   // 1. Stan globalnych filtrów strony
   public readonly filters = signal<Partial<SearchProductRequest>>({
-    modelId: 'asd', // domyślne dla testu
+    territoryCode: 'DE', // domyślne dla testu
   });
 
   public setFilters(newFilters: Partial<SearchProductRequest>): void {

@@ -173,8 +173,8 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                  min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) 0s,
+                  min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1) 0s,
                   box-shadow 0.25s ease;
       flex-shrink: 0;
       background: var(--tui-background-elevation-1);
@@ -188,6 +188,13 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
     
     .erp-page-layout__sidebar--right {
       border-inline-start: 1px solid var(--tui-border-normal);
+    }
+
+    .erp-page-layout--left-collapsed .erp-page-layout__sidebar--left,
+    .erp-page-layout--right-collapsed .erp-page-layout__sidebar--right {
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) 0.15s,
+                  min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1) 0.15s,
+                  box-shadow 0.25s ease;
     }
 
     .erp-page-layout--dragging .erp-page-layout__sidebar {
@@ -283,12 +290,13 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
       overflow-y: auto;
       overflow-x: hidden;
       opacity: 1;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.2s ease 0.25s;
     }
 
     .erp-page-layout__sidebar-content--hidden {
       opacity: 0;
       pointer-events: none;
+      transition: opacity 0.15s ease 0s;
     }
 
     .erp-page-layout__main {

@@ -32,7 +32,7 @@ export class ProductTabComponent {
 
   protected readonly horizontalMenu = ErpMenuBarBuilder.create((b) =>
     b
-      .addLabel('Produty')
+      .addLabel('Testowy nagłówek strony')
       .addSeparator()
       .addItem((i) =>
         i

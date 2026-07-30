@@ -37,7 +37,7 @@ export class ProductFilterComponent implements OnInit {
     .addFormField('model', 'text', f => f.setLabel('Model'))
     .addFormField('category', 'text', f => f.setLabel('Kategoria'))
     .addFormField('attribute', 'text', f => f.setLabel('Atrybut'))
-    .addFormField('productCode', 'text', f => f.setLabel('Kod produktu'))
+    .addFormField('productCode', 'text', f => f.setLabel('Kod produktu').setTooltip('test'))
     .addFormField('territoryCode', 'text', f => f.setLabel('Kod terytorium'))
     .addFormField('summaryReport', 'switch', f => f.setLabel('Raport sumujący'))
   );

@@ -218,13 +218,27 @@ export class ErpFilterComponent implements OnInit {
             takeUntilDestroyed()
           ).subscribe(val => {
             if (this.config().formGroup.valid) {
-              this.search.emit(val);
-              this.config().onSearch?.(val);
+              const sanitized = this.sanitizeValues(val);
+              this.search.emit(sanitized);
+              this.config().onSearch?.(sanitized);
             }
           });
         });
       }
     });
+  }
+
+  private sanitizeValues(val: any): any {
+    if (!val) return val;
+    const sanitized: any = {};
+    for (const key of Object.keys(val)) {
+      if (val[key] === '') {
+        sanitized[key] = null;
+      } else {
+        sanitized[key] = val[key];
+      }
+    }
+    return sanitized;
   }
 
   public ngOnInit(): void {
@@ -306,7 +320,7 @@ export class ErpFilterComponent implements OnInit {
 
   public onSearch(): void {
     if (this.config().formGroup.valid) {
-      const value = this.config().formGroup.value;
+      const value = this.sanitizeValues(this.config().formGroup.value);
       this.search.emit(value);
       this.config().onSearch?.(value);
     }
@@ -330,7 +344,7 @@ export class ErpFilterComponent implements OnInit {
 
   public confirmSave(): void {
     if (this.config().formGroup.valid && this.savePresetName.valid) {
-      const val = this.config().formGroup.value;
+      const val = this.sanitizeValues(this.config().formGroup.value);
       const name = this.savePresetName.value!;
       
       const existing = this.existingPresetNameWithSameFilters();

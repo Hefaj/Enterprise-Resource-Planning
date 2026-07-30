@@ -103,7 +103,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
                 <span class="erp-collapsed-chip">{{ SHARED_KEYS.inputPicker.selectedCount | erpTranslate: { count: selectedMultiCount() } }}</span>
               }
             } @else {
-              <span>{{ stringifyHandler(ctx.item) }}{{ ctx.index < selectedMultiCount() - 1 ? ', ' : '' }}</span>
+              <span>{{ stringifyHandler(ctx.item) }}{{ ctx.index < selectedMultiCount() - 1 ? ',\u00A0' : '' }}</span>
             }
           </ng-template>
           <input
@@ -329,6 +329,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       display: inline-block;
       font-weight: 500;
       white-space: nowrap;
+      margin-right: 0.5rem;
     }
 
     .erp-input-picker-hint {

@@ -8,11 +8,16 @@ namespace CatalogBff.Product.Query;
 
 public class SearchProductRequest : PagedRequest
 {
-    public string? Sku { get; set; }
-    public string? Name { get; set; }
+    public Guid? ProductId { get; set; }
+    public Guid? ModelId { get; set; }
+    public string? ProductType { get; set; }
+    public string? Manufacturer { get; set; }
+    public string? Model { get; set; }
     public string? Category { get; set; }
-    public decimal? Price { get; set; }
-    public DateTime? AvailableFrom { get; set; }
+    public string? Attribute { get; set; }
+    public string? ProductCode { get; set; }
+    public string? TerritoryCode { get; set; }
+    public bool? SummaryReport { get; set; }
 }
 
 public class SearchProductEndpoint : Endpoint<SearchProductRequest, SearchResponse>
@@ -75,17 +80,14 @@ public static class SearchProductRequestExtensions
 {
     public static IEnumerable<ProductDto> ApplyFilter(this IEnumerable<ProductDto> query, SearchProductRequest req)
     {
-        if (!string.IsNullOrWhiteSpace(req.Sku))
-            query = query.Where(p => p.Sku.Contains(req.Sku, StringComparison.OrdinalIgnoreCase));
+        if (req.ProductId.HasValue)
+            query = query.Where(p => p.Uuid == req.ProductId.Value);
 
-        if (!string.IsNullOrWhiteSpace(req.Name))
-            query = query.Where(p => p.Name.Contains(req.Name, StringComparison.OrdinalIgnoreCase));
+        if (req.ModelId.HasValue)
+            query = query.Where(p => p.ModelUuid == req.ModelId.Value);
 
-        if (req.Price.HasValue)
-            query = query.Where(p => p.Price <= req.Price.Value);
-
-        if (req.AvailableFrom.HasValue)
-            query = query.Where(p => p.AvailableFrom >= req.AvailableFrom.Value);
+        if (!string.IsNullOrWhiteSpace(req.ProductCode))
+            query = query.Where(p => p.Sku.Contains(req.ProductCode, StringComparison.OrdinalIgnoreCase) || p.Ean.Contains(req.ProductCode, StringComparison.OrdinalIgnoreCase));
 
         return query;
     }

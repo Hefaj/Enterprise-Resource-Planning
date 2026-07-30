@@ -74,8 +74,7 @@ export class ProductComponent {
       .setMain(ProductTabComponent)
       .setRightSidebar(ErpTabsComponent, { config: this.tabsConfig })
       .setLeftSidebarResizable(false)
-      .setLeftSidebarMinWidth(320)
-      .setRightSidebarMinWidth(450)
+      .setRightSidebarMinWidth(600)
       .setRightSidebarMaxWidth(1600)
       .setRightSidebarCollapsed(computed(() => {
         const selection = this.store.selection();

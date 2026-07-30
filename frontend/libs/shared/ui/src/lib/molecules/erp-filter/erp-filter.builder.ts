@@ -200,6 +200,7 @@ export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
   public constructor(formGroup?: FormGroup) {
     super();
     this._data.groups = [];
+    this._data.fields = [];
     this._data.formGroup = formGroup || new FormGroup({});
     this._data.autoSearch = false;
   }
@@ -248,6 +249,82 @@ export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
    */
   public setStyleClass(styleClass: MaybeSignal<string>): this {
     this._data.styleClass = styleClass;
+    return this;
+  }
+
+  /**
+   * Dodaje standardowe pole formularza bezpośrednio do panelu (bez grupy).
+   */
+  public addFormField<TType extends keyof ErpFilterFormFieldBuilderMap>(
+    key: string,
+    fieldType: TType,
+    config:
+      | ErpFilterFormFieldBuilderMap[TType]
+      | ReturnType<ErpFilterFormFieldBuilderMap[TType]['build']>
+      | ((builder: ErpFilterFormFieldBuilderMap[TType]) => void),
+    options: ErpFilterFormFieldOptions<ErpFilterFormFieldValueMap[TType]> = {}
+  ): this {
+    let builderInstance: any;
+    if (typeof config === 'function') {
+      const BuilderConstructor = FIELD_BUILDER_CONSTRUCTORS[fieldType];
+      if (!BuilderConstructor) {
+        throw new Error(`Brak zdefiniowanego konstruktora buildera dla typu pola: ${fieldType}`);
+      }
+      builderInstance = new BuilderConstructor();
+      config(builderInstance);
+    } else {
+      builderInstance = config;
+    }
+
+    const extractedConfig = this._extract(builderInstance);
+    
+    if (!this._data.formGroup!.contains(key)) {
+      this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
+    }
+
+    if (Array.isArray(this._data.fields)) {
+      this._data.fields.push({
+        type: 'formField',
+        key,
+        fieldType,
+        component: FIELD_TYPE_COMPONENT_MAP[fieldType],
+        config: extractedConfig,
+        value: options.value,
+        onChange: options.onChange,
+        colSpan: options.colSpan,
+        styleClass: options.styleClass,
+      });
+    }
+    return this;
+  }
+
+  /**
+   * Dodaje niestandardowe pole formularza bezpośrednio do panelu (bez grupy).
+   */
+  public addCustomFormField<TComp>(
+    key: string,
+    component: MaybeSignal<Type<TComp>>,
+    config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
+    options: ErpFilterFormFieldOptions<any> = {}
+  ): this {
+    const extractedConfig = this._extract(config);
+    if (!this._data.formGroup!.contains(key)) {
+      this._data.formGroup!.addControl(key, new FormControl(options.defaultValue ?? null, options.validators || []));
+    }
+
+    if (Array.isArray(this._data.fields)) {
+      this._data.fields.push({
+        type: 'formField',
+        key,
+        fieldType: 'custom',
+        component: unwrapSignal(component) as any,
+        config: extractedConfig,
+        value: options.value,
+        onChange: options.onChange,
+        colSpan: options.colSpan,
+        styleClass: options.styleClass,
+      });
+    }
     return this;
   }
 

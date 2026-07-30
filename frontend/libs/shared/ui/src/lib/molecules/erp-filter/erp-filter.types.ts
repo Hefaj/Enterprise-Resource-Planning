@@ -28,6 +28,8 @@ export interface ErpFilterConfig {
   filterKey: string;
   /** Groups of filters */
   groups: ErpFilterGroup[];
+  /** Optional flat fields not wrapped in a group */
+  fields?: ErpFilterFieldElement[];
   /** FormGroup managing all fields */
   formGroup: FormGroup;
   /** Custom root style class */

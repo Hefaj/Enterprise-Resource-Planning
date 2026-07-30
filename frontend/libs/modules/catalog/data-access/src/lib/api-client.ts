@@ -607,11 +607,16 @@ export interface SearchModelRequest {
 }
 
 export interface SearchProductRequest {
-    sku?: string | undefined;
-    name?: string | undefined;
     category?: string | undefined;
-    price?: number | undefined;
-    availableFrom?: Date | undefined;
+    productId?: string | undefined;
+    modelId?: string | undefined;
+    productType?: string | undefined;
+    manufacturer?: string | undefined;
+    model?: string | undefined;
+    attribute?: string | undefined;
+    productCode?: string | undefined;
+    territoryCode?: string | undefined;
+    summaryReport?: boolean | undefined;
     page?: number;
     pageSize?: number;
     sorts?: SortOption[] | undefined;

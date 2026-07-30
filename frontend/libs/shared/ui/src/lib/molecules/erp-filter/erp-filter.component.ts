@@ -83,44 +83,58 @@ import { debounceTime } from 'rxjs/operators';
         </div>
       </div>
 
+      <!-- Root Fields (No Group) -->
+      @if (config().fields && config().fields!.length > 0) {
+        <div class="px-3 pb-3 pt-3 grid gap-3 bg-[var(--tui-background-elevation-1)] rounded-xl border border-[var(--tui-border-normal)] shadow-sm mb-3" 
+             style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));">
+          @for (field of config().fields; track field.key) {
+            <div [class]="unwrap(field.styleClass)" [style.grid-column]="(unwrap(field.colSpan) || 1) > 1 ? 'span ' + unwrap(field.colSpan) : 'auto'">
+              <ng-container *ngComponentOutlet="field.component; inputs: { config: field.config, control: getControl(field.key) }"></ng-container>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Filter Groups (Unified Accordion) -->
-      <div class="flex flex-col rounded-xl border border-[var(--tui-border-normal)] bg-[var(--tui-background-elevation-1)] shadow-sm overflow-hidden">
-        @for (group of groups(); track group.key; let last = $last) {
-          <div class="flex flex-col" [class.border-b]="!last" style="border-color: var(--tui-border-normal);">
-            
-            <!-- Group Header -->
-            <div class="flex justify-between items-center w-full px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--tui-background-neutral-1)]" 
-                 (click)="toggleGroup(group.key)">
-              <span class="text-[0.95rem] font-medium tracking-wide select-none text-[var(--tui-text-primary)] truncate pr-2">
-                {{ (unwrap(group.title) | erpTranslate) || group.key }}
-              </span>
-              <div class="flex items-center gap-1 shrink-0">
-                <button tuiIconButton type="button" appearance="flat" size="s" [disabled]="groupEmptyState()[group.key]" (click)="clearGroup(group.key, $event)" [tuiHint]="SHARED_KEYS.filters.clearGroup | erpTranslate">
-                  <tui-icon icon="@tui.x"></tui-icon>
-                </button>
-                <div class="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-[var(--tui-background-neutral-2)]">
-                  <tui-icon icon="@tui.chevron-down" 
-                            class="text-[var(--tui-text-secondary)] transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]" 
-                            [class.rotate-180]="isExpanded(group.key)"></tui-icon>
+      @if (groups() && groups().length > 0) {
+        <div class="flex flex-col rounded-xl border border-[var(--tui-border-normal)] bg-[var(--tui-background-elevation-1)] shadow-sm overflow-hidden">
+          @for (group of groups(); track group.key; let last = $last) {
+            <div class="flex flex-col" [class.border-b]="!last" style="border-color: var(--tui-border-normal);">
+              
+              <!-- Group Header -->
+              <div class="flex justify-between items-center w-full px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--tui-background-neutral-1)]" 
+                   (click)="toggleGroup(group.key)">
+                <span class="text-[0.95rem] font-medium tracking-wide select-none text-[var(--tui-text-primary)] truncate pr-2">
+                  {{ (unwrap(group.title) | erpTranslate) || group.key }}
+                </span>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button tuiIconButton type="button" appearance="flat" size="s" [disabled]="groupEmptyState()[group.key]" (click)="clearGroup(group.key, $event)" [tuiHint]="SHARED_KEYS.filters.clearGroup | erpTranslate">
+                    <tui-icon icon="@tui.x"></tui-icon>
+                  </button>
+                  <div class="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-[var(--tui-background-neutral-2)]">
+                    <tui-icon icon="@tui.chevron-down" 
+                              class="text-[var(--tui-text-secondary)] transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]" 
+                              [class.rotate-180]="isExpanded(group.key)"></tui-icon>
+                  </div>
                 </div>
               </div>
+              
+              <!-- Group Content -->
+              <tui-expand [expanded]="isExpanded(group.key)">
+                <div class="px-3 pb-3 pt-3 grid gap-3 bg-[var(--tui-background-elevation-1)]" 
+                     [class]="unwrap(group.styleClass)" 
+                     style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));">
+                  @for (field of group.fields; track field.key) {
+                    <div [class]="unwrap(field.styleClass)" [style.grid-column]="(unwrap(field.colSpan) || 1) > 1 ? 'span ' + unwrap(field.colSpan) : 'auto'">
+                      <ng-container *ngComponentOutlet="field.component; inputs: { config: field.config, control: getControl(field.key) }"></ng-container>
+                    </div>
+                  }
+                </div>
+              </tui-expand>
             </div>
-            
-            <!-- Group Content -->
-            <tui-expand [expanded]="isExpanded(group.key)">
-              <div class="px-3 pb-3 pt-3 grid gap-3 bg-[var(--tui-background-elevation-1)]" 
-                   [class]="unwrap(group.styleClass)" 
-                   style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));">
-                @for (field of group.fields; track field.key) {
-                  <div [class]="unwrap(field.styleClass)" [style.grid-column]="(unwrap(field.colSpan) || 1) > 1 ? 'span ' + unwrap(field.colSpan) : 'auto'">
-                    <ng-container *ngComponentOutlet="field.component; inputs: { config: field.config, control: getControl(field.key) }"></ng-container>
-                  </div>
-                }
-              </div>
-            </tui-expand>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
 
       <!-- Bottom actions -->
       <div class="mt-2 relative group">

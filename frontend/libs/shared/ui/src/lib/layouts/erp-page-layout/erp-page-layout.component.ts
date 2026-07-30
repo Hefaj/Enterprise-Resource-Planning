@@ -369,9 +369,14 @@ export class ErpPageLayoutComponent {
       const configLeftW = unwrapSignal(cfg.sidebarWidth);
       const configRightW = unwrapSignal(cfg.rightSidebarWidth);
       
+      const leftMin = unwrapSignal(cfg.leftSidebarMinWidth) ?? 100;
+      const leftMax = unwrapSignal(cfg.leftSidebarMaxWidth) ?? 800;
+      const rightMin = unwrapSignal(cfg.rightSidebarMinWidth) ?? 100;
+      const rightMax = unwrapSignal(cfg.rightSidebarMaxWidth) ?? 800;
+
       untracked(() => {
-        let leftW = configLeftW ?? 280;
-        let rightW = configRightW ?? 280;
+        let leftW = configLeftW ?? Math.max(280, leftMin);
+        let rightW = configRightW ?? Math.max(280, rightMin);
         
         if (layoutId) {
           const saved = this.prefsService.getState(ErpPreferencesType.PageLayout, layoutId);
@@ -384,8 +389,8 @@ export class ErpPageLayoutComponent {
           if (saved?.rightMode !== undefined) this._internalRightMode.set(saved.rightMode);
         }
         
-        this._leftWidth.set(leftW);
-        this._rightWidth.set(rightW);
+        this._leftWidth.set(Math.max(leftMin, Math.min(leftMax, leftW)));
+        this._rightWidth.set(Math.max(rightMin, Math.min(rightMax, rightW)));
       });
     });
 

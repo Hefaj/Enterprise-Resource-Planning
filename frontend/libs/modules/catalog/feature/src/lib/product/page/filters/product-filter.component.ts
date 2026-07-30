@@ -30,32 +30,16 @@ export class ProductFilterComponent implements OnInit {
     .setFilterKey('product-list')
     .setOnSearch(val => this.onSearch(val))
     .setLoading(this.store.loading)
-    .addGroup('base', g => g
-      .setTitle('Podstawowe filtry')
-      .addFormField('searchQuery', 'text', f => f.setLabel('Szukaj').setPlaceholder('Nazwa produktu, SKU...').setIconStart('@tui.search'))
-      .addFormField('category', 'inputPicker', f => f
-        .setLabel('Kategoria')
-        .setStrategy('multi')
-        .setItems(['Elektronika', 'AGD', 'Ogród', 'Motoryzacja', 'Odzież', 'Zabawki'])
-      )
-      .addFormField('status', 'inputPicker', f => f
-        .setLabel('Status')
-        .setStrategy('single')
-        .setItems(['Dostępny', 'Niedostępny', 'W drodze', 'Wycofany'])
-      )
-    )
-    .addGroup('pricing', g => g
-      .setTitle('Ceny i promocje')
-      .addFormField('minPrice', 'number', f => f.setLabel('Cena od').setMode('decimal').setDecimals(2).setSign('positive'))
-      .addFormField('maxPrice', 'number', f => f.setLabel('Cena do').setMode('decimal').setDecimals(2).setSign('positive'))
-      .addFormField('onlyDiscounted', 'switch', f => f.setLabel('Tylko przecenione'))
-    )
-    .addGroup('inventory', g => g
-      .setTitle('Stan magazynowy')
-      .setExpanded(false)
-      .addFormField('minQuantity', 'number', f => f.setLabel('Minimalna ilość na stanie').setMode('integer').setSign('positive').setStepper(true).setStep(1))
-      .addFormField('inStock', 'switch', f => f.setLabel('Dostępne w magazynie').setValue(true))
-    )
+    .addFormField('productId', 'text', f => f.setLabel('ID produktu'))
+    .addFormField('modelId', 'text', f => f.setLabel('ID modelu'))
+    .addFormField('productType', 'text', f => f.setLabel('Rodzaj produktu'))
+    .addFormField('manufacturer', 'text', f => f.setLabel('Producent'))
+    .addFormField('model', 'text', f => f.setLabel('Model'))
+    .addFormField('category', 'text', f => f.setLabel('Kategoria'))
+    .addFormField('attribute', 'text', f => f.setLabel('Atrybut'))
+    .addFormField('productCode', 'text', f => f.setLabel('Kod produktu'))
+    .addFormField('territoryCode', 'text', f => f.setLabel('Kod terytorium'))
+    .addFormField('summaryReport', 'switch', f => f.setLabel('Raport sumujący'))
   );
 
   private get presetKey(): string {

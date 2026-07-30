@@ -8,6 +8,7 @@ import {
   signal,
   effect,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -62,6 +63,8 @@ export class CategoryProductTableComponent {
   private readonly currentUuids = signal<string[]>([]);
   private readonly totalCount = signal<number>(0);
   private readonly loading = signal<boolean>(false);
+  
+  private readonly tableComponent = viewChild(ErpTableComponent);
 
   // Zapisany ostatni stan tabeli (paginacja, sortowanie)
   private lastTableState: ErpTableState | null = null;
@@ -80,6 +83,11 @@ export class CategoryProductTableComponent {
     // Reaguj na zmiany filtrów i pobierz dane z zachowaniem aktualnego stanu tabeli
     effect(() => {
       const currentFilters = this.filters();
+      
+      untracked(() => {
+        this.tableComponent()?.clearSelection();
+      });
+
       this.fetchData(currentFilters, this.lastTableState);
     });
   }

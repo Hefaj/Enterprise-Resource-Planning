@@ -1319,4 +1319,13 @@ export class ErpTableComponent<T> implements AfterViewInit {
   protected onRowDoubleClickEvent(row: T) {
     this.config().onRowDoubleClick?.(row);
   }
+
+  public clearSelection(): void {
+    if (this._isServerMode()) {
+      this._serverAllSelected.set(false);
+    }
+    this._rowSelection.set({});
+    this.table().setRowSelection({});
+    this._emitSelectionChange();
+  }
 }

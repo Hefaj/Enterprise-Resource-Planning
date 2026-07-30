@@ -3,7 +3,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
-import { CatalogBffClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchResult } from '../../api-client';
+import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchResult } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
@@ -33,7 +33,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   SearchProductRequest,
   CatalogProductLoadOptions
 > {
-  private readonly _api = inject(CatalogBffClient);
+  private readonly _api = inject(CatalogClient);
   private readonly _injector = inject(Injector);
 
   // Leniwie ładowane sąsiednie orkiestratorzy w celu uniknięcia kołowej zależności

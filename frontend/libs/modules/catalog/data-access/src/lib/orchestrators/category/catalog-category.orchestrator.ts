@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps, LoadOptions } from '@erp/shared/data-access';
-import { CatalogBffClient, CategoryDto, SearchCategoryRequest, SearchResponse } from '../../api-client';
+import { CatalogClient, CategoryDto, SearchCategoryRequest, SearchResponse } from '../../api-client';
 import { CategoryVM } from './category.view-model';
 
 /**
@@ -25,7 +25,7 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
   SearchCategoryRequest,
   LoadOptions
 > {
-  private readonly _api = inject(CatalogBffClient);
+  private readonly _api = inject(CatalogClient);
 
   protected override readonly signature = 'catalog.category';
 

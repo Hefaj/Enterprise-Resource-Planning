@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BaseOrchestrator, OrchestratorConfig, LoadOptions } from '@erp/shared/data-access';
-import { NotificationBffClient, JobDto, SearchJobRequest, SearchResponse } from '../../api-client';
+import { NotificationClient, JobDto, SearchJobRequest, SearchResponse } from '../../api-client';
 import { JobVM } from './job.view-model';
 
 @Injectable({ providedIn: 'root' })
@@ -12,7 +12,7 @@ export class NotificationJobOrchestrator extends BaseOrchestrator<
   SearchJobRequest,
   LoadOptions
 > {
-  private readonly _api = inject(NotificationBffClient);
+  private readonly _api = inject(NotificationClient);
 
   protected override readonly signature = 'notification.job';
 

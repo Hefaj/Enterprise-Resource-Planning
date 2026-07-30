@@ -14,7 +14,7 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
-export interface ICatalogBffClient {
+export interface ICatalogClient {
     /**
      * @return OK
      */
@@ -54,7 +54,7 @@ export interface ICatalogBffClient {
 @Injectable({
     providedIn: 'root'
 })
-export class CatalogBffClient implements ICatalogBffClient {
+export class CatalogClient implements ICatalogClient {
     private http: HttpClient;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
@@ -607,12 +607,12 @@ export interface SearchModelRequest {
 }
 
 export interface SearchProductRequest {
-    category?: string | undefined;
     productId?: string | undefined;
     modelId?: string | undefined;
     productType?: string | undefined;
     manufacturer?: string | undefined;
     model?: string | undefined;
+    category?: string | undefined;
     attribute?: string | undefined;
     productCode?: string | undefined;
     territoryCode?: string | undefined;

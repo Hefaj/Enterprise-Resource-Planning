@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
@@ -7,11 +7,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{1AE8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{95AF1480-9F84-72C8-4930-CB7FF39A86E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogBff", "backend\modules\CatalogBff\CatalogBff.csproj", "{D01F96B2-8510-B2C6-4C70-3613A23A020F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog", "backend\modules\Catalog\Catalog.csproj", "{D01F96B2-8510-B2C6-4C70-3613A23A020F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SalesBff", "backend\modules\SalesBff\SalesBff.csproj", "{F766CF98-FC32-5A57-6C06-01EC5CCF8DDB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sales", "backend\modules\Sales\Sales.csproj", "{F766CF98-FC32-5A57-6C06-01EC5CCF8DDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationBff", "backend\modules\NotificationBff\NotificationBff.csproj", "{153E2282-AE5E-4A94-8D0E-D26AB6570823}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification", "backend\modules\Notification\Notification.csproj", "{153E2282-AE5E-4A94-8D0E-D26AB6570823}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

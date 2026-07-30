@@ -14,7 +14,7 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
-export interface INotificationBffClient {
+export interface INotificationClient {
     /**
      * @return OK
      */
@@ -28,7 +28,7 @@ export interface INotificationBffClient {
 @Injectable({
     providedIn: 'root'
 })
-export class NotificationBffClient implements INotificationBffClient {
+export class NotificationClient implements INotificationClient {
     private http: HttpClient;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
@@ -183,8 +183,7 @@ export interface SearchJobRequest {
     userId?: string | undefined;
     page?: number;
     pageSize?: number;
-    sortField?: string | undefined;
-    sortOrder?: number | undefined;
+    sorts?: SortOption[] | undefined;
 
     [key: string]: any;
 }
@@ -192,6 +191,13 @@ export interface SearchJobRequest {
 export interface SearchResponse {
     uuids?: string[];
     totalCount?: number;
+
+    [key: string]: any;
+}
+
+export interface SortOption {
+    field?: string;
+    order?: number;
 
     [key: string]: any;
 }

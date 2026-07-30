@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps, LoadOptions } from '@erp/shared/data-access';
-import { CatalogBffClient, ModelDto, SearchModelRequest, SearchResponse } from '../../api-client';
+import { CatalogClient, ModelDto, SearchModelRequest, SearchResponse } from '../../api-client';
 import { ModelVM } from './model.view-model';
 
 /**
@@ -18,7 +18,7 @@ export class CatalogModelOrchestrator extends BaseOrchestrator<
   SearchModelRequest,
   LoadOptions
 > {
-  private readonly _api = inject(CatalogBffClient);
+  private readonly _api = inject(CatalogClient);
 
   protected override readonly signature = 'catalog.model';
 

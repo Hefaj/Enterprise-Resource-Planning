@@ -268,7 +268,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
     .erp-page-layout__sidebar-header {
       display: flex;
       align-items: center;
-      height: 3rem;
+      height: 2.2rem;
       flex-shrink: 0;
       border-bottom: 1px solid transparent;
       transition: border-color 0.2s ease;

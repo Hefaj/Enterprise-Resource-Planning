@@ -13,7 +13,7 @@ import { ProductListViewStore } from '../product-list-view.store';
   template: `
     <div class="flex flex-col h-full w-full">
       <erp-menu-bar [config]="horizontalMenu" />
-      <div class="flex-1 py-4 overflow-hidden">
+      <div class="flex-1 overflow-hidden">
         <erp-category-product-table 
           stateKey="product-tab-main"
           [filters]="currentFilters()"
@@ -32,6 +32,8 @@ export class ProductTabComponent {
 
   protected readonly horizontalMenu = ErpMenuBarBuilder.create((b) =>
     b
+      .addLabel('Produty')
+      .addSeparator()
       .addItem((i) =>
         i
           .setLabel('Produkt aktywny')

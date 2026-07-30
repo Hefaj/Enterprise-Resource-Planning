@@ -293,7 +293,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
 
     .erp-page-layout__main {
       flex: 1;
-      padding: 0 1rem;
+      padding: 0 .5rem;
       height: 100%;
       overflow: auto;
       min-width: 0;

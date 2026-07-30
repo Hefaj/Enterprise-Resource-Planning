@@ -219,6 +219,7 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
     :host {
       display: flex;
       flex-direction: column;
+      padding-inline: .5rem;
       height: 100%;
       width: 100%;
     }

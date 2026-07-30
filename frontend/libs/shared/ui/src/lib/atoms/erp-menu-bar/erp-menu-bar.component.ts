@@ -44,7 +44,9 @@ export class ErpActiveZoneExporter {
       @let isDisabled = unwrap(item.disabled) ?? false;
       @let hasChildren = item.children && item.children.length > 0;
 
-      @if (unwrap(item.separator)) {
+      @if (item.isLabel) {
+        <span class="erp-menu-bar__label-text">{{ unwrap(item.label) | erpTranslate }}</span>
+      } @else if (unwrap(item.separator)) {
         <div class="erp-menu-bar__separator-vertical" role="separator"></div>
       } @else if (hasChildren) {
         <erp-button
@@ -178,9 +180,6 @@ export class ErpActiveZoneExporter {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      /* background: var(--tui-background-base); */
-      border: 1px solid var(--tui-border-normal);
-      border-radius: var(--tui-radius-m);
       padding: 0.5rem;
     }
 
@@ -222,6 +221,14 @@ export class ErpActiveZoneExporter {
     .erp-menu-bar__label {
       font: var(--tui-typography-ui-s);
       font-weight: 500;
+    }
+
+    .erp-menu-bar__label-text {
+      font-size: var(--text-lg);
+      font-weight: bold;
+      color: var(--tui-text-primary);
+      padding: 0 0.5rem;
+      white-space: nowrap;
     }
 
     .erp-menu-bar__sub-label {

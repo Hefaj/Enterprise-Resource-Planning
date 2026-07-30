@@ -171,4 +171,16 @@ export class ErpMenuBarBuilder extends ErpBaseBuilder<ErpMenuBarConfig> {
     return this;
   }
 
+  /**
+   * Dodaje zwykły tekst do paska menu (bez zachowania przycisku).
+   * @param label Etykieta tekstowa lub klucz tłumaczenia.
+   */
+  public addLabel(label: MaybeSignal<Translatable>): this {
+    if (!this._data.items) {
+      this._data.items = [];
+    }
+    this._data.items.push({ label, isLabel: true });
+    return this;
+  }
+
 }

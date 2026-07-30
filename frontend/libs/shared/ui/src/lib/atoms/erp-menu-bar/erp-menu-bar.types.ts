@@ -50,6 +50,11 @@ export interface ErpMenuBarItemConfig {
   separator?: MaybeSignal<boolean>;
 
   /**
+   * Określa, czy element jest zwykłą etykietą tekstową na pasku menu (zamiast przycisku).
+   */
+  isLabel?: boolean;
+
+  /**
    * Wygląd/stylizacja elementu menu ('normal' | 'warning' | 'info').
    */
   appearance?: MaybeSignal<ErpMenuBarItemAppearance>;

@@ -254,38 +254,7 @@
   color: var(--tui-text-action);
 }
 
-/* Pin bounds highlighting */
-[data-pinned='left'].erp-table__header-cell--pinned-left-last,
-[data-pinned='left'].erp-table__footer-cell--pinned-left-last,
-[data-pinned='left'].erp-table__cell--pinned-left-last {
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 2px !important;
-    background: var(--tui-border-hover) !important;
-    pointer-events: none;
-    z-index: 2 !important;
-  }
-}
 
-[data-pinned='right'].erp-table__header-cell--pinned-right-first,
-[data-pinned='right'].erp-table__footer-cell--pinned-right-first,
-[data-pinned='right'].erp-table__cell--pinned-right-first {
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 2px !important;
-    background: var(--tui-border-hover) !important;
-    pointer-events: none;
-    z-index: 2 !important;
-  }
-}
 
 /* Komórki z wieloliniową zawartością (rich content) */
 .erp-table__cell--rich-content {

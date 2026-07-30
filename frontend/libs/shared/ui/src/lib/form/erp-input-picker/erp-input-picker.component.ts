@@ -119,7 +119,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
               *tuiDropdown
               tuiMultiSelectGroup
               [size]="_size()"
-              [emptyContent]="emptyText"
+              [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
               @if (internalLoading() && filteredItems.length === 0) {
@@ -157,7 +157,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
               *tuiDropdown
               tuiMultiSelectGroup
               [size]="_size()"
-              [emptyContent]="emptyText"
+              [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
               @if (internalLoading() && filteredItems.length === 0) {
@@ -211,7 +211,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
             <tui-data-list
               *tuiDropdown
               [size]="_size()"
-              [emptyContent]="emptyText"
+              [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
               @if (internalLoading() && filteredItems.length === 0) {
@@ -248,7 +248,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
             <tui-data-list
               *tuiDropdown
               [size]="_size()"
-              [emptyContent]="emptyText"
+              [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
               @if (internalLoading() && filteredItems.length === 0) {
@@ -282,6 +282,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       <ng-template #itemContentTemplate let-item>
         <span class="erp-input-picker-item">{{ getDisplayString(item) }}</span>
       </ng-template>
+
+      <ng-template #emptyTuiContent></ng-template>
 
       @if (errorText) {
         <tui-error [error]="errorText" [class.erp-shake]="shake()" (animationend)="onShakeEnd($event)" />
@@ -380,6 +382,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 
     tui-error {
       font: var(--tui-typography-body-xs);
+    }
+
+    ::ng-deep tui-data-list .t-empty {
+      display: none !important;
     }
   `],
 })

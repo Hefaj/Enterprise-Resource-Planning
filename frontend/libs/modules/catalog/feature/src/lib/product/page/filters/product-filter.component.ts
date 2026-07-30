@@ -22,6 +22,7 @@ export class ProductFilterComponent implements OnInit {
 
   public readonly filterConfig: ErpFilterConfig = ErpFilterBuilder.create(b => b
     .setFilterKey('product-list')
+    .setInitialValues(this.store.filters)
     .setOnSearch(val => this.onSearch(val))
     .setLoading(this.store.loading)
     .setSavedPresets(this.savedPresets)

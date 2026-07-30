@@ -205,6 +205,17 @@ export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
     this._data.autoSearch = false;
   }
 
+  public override build(): ErpFilterConfig {
+    const config = super.build();
+    if (config.initialValues) {
+      const vals = unwrapSignal(config.initialValues);
+      if (vals) {
+        config.formGroup.patchValue(vals);
+      }
+    }
+    return config;
+  }
+
   /**
    * Ustawia unikalny klucz filtra.
    * Służy m.in. do zapisywania preferencji użytkownika (stanu zwinięcia, szerokości czy ustawień layoutu).
@@ -352,6 +363,11 @@ export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
 
   public setSavedPresets(presets: MaybeSignal<Record<string, any>>): this {
     this._data.savedPresets = presets;
+    return this;
+  }
+
+  public setInitialValues(values: MaybeSignal<Record<string, any>>): this {
+    this._data.initialValues = values;
     return this;
   }
 

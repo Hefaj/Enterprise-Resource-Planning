@@ -6,8 +6,7 @@ import { ErpSelectionState } from '@erp/shared/ui';
 export class ProductListViewStore {
   // 1. Stan globalnych filtrów strony
   public readonly filters = signal<Partial<SearchProductRequest>>({
-    category: 'Elektronika', // domyślne dla testu
-    status: 'Dostępny' // domyślne dla testu
+    modelId: 'asd', // domyślne dla testu
   });
 
   public setFilters(newFilters: Partial<SearchProductRequest>): void {

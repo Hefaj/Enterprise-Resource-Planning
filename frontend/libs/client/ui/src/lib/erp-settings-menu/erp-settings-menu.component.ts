@@ -36,7 +36,7 @@ import { CommonModule } from '@angular/common';
       <tui-data-list tuiDataListDropdownManager>
         @for (item of _items(); track item.id) {
           @if (item.separator) {
-            <hr class="erp-settings-menu__separator" />
+            <div class="erp-settings-menu__separator"></div>
           }
 
           @let childrenList = _unwrap(item.children);
@@ -111,8 +111,8 @@ import { CommonModule } from '@angular/common';
     }
     .erp-settings-menu__separator {
       margin: 0.25rem 0;
-      border: 0;
-      border-top: 1px solid var(--tui-border-normal);
+      height: 1px;
+      background-color: var(--tui-border-normal);
       opacity: 0.6;
     }
     .erp-settings-menu__icon {

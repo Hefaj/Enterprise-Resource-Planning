@@ -51,8 +51,8 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
         <aside
           #leftSidebarEl
           class="erp-page-layout__sidebar erp-page-layout__sidebar--left"
-          [style.width.px]="leftCollapsed ? 48 : _leftWidth()"
-          [style.min-width.px]="leftCollapsed ? 48 : _leftWidth()"
+          [style.width]="leftCollapsed ? '3rem' : _leftWidth() + 'px'"
+          [style.min-width]="leftCollapsed ? '3rem' : _leftWidth() + 'px'"
         >
           <div class="erp-page-layout__sidebar-header">
             <button
@@ -109,8 +109,8 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
         <aside
           #rightSidebarEl
           class="erp-page-layout__sidebar erp-page-layout__sidebar--right"
-          [style.width.px]="rightCollapsed ? 48 : _rightWidth()"
-          [style.min-width.px]="rightCollapsed ? 48 : _rightWidth()"
+          [style.width]="rightCollapsed ? '3rem' : _rightWidth() + 'px'"
+          [style.min-width]="rightCollapsed ? '3rem' : _rightWidth() + 'px'"
         >
           @if (!rightCollapsed && rightResizable) {
             <div class="erp-page-layout__resizer erp-page-layout__resizer--right" (mousedown)="startDrag($event, 'right')"></div>
@@ -268,7 +268,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
     .erp-page-layout__sidebar-header {
       display: flex;
       align-items: center;
-      height: 48px;
+      height: 3rem;
       flex-shrink: 0;
       border-bottom: 1px solid transparent;
       transition: border-color 0.2s ease;
@@ -307,10 +307,10 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
     }
 
     .erp-page-layout--left-overlay.erp-page-layout--has-left-sidebar .erp-page-layout__main {
-      margin-left: 48px;
+      margin-left: 3rem;
     }
     .erp-page-layout--right-overlay.erp-page-layout--has-right-sidebar .erp-page-layout__main {
-      margin-right: 48px;
+      margin-right: 3rem;
     }
 
     .erp-defer-loader-container {

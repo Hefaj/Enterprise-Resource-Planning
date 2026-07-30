@@ -153,6 +153,7 @@ export class ShellLayoutComponent {
       },
       {
         id: 'font-size',
+        separator: true,
         component: ErpToggleGroupComponent,
         inputs: { 
           config: this.fontSizeConfig,

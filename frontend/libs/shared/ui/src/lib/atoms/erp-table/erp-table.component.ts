@@ -104,6 +104,15 @@ export class ErpVirtualMeasureDirective implements AfterViewInit {
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    :host {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+  `]
 })
 export class ErpTableSelectionCell {
   checked = input<boolean>(false);
@@ -177,7 +186,7 @@ export class ErpTableSelectionCell {
                   @for (header of _getOrderedHeaders(headerGroup); track header.id) {
                     @if (!header.isPlaceholder) {
                       <th
-                        class="erp-table__header-cell relative p-3 text-sm font-semibold whitespace-nowrap select-none group"
+                        class="erp-table__header-cell relative p-3 text-sm font-semibold whitespace-nowrap select-none group {{ $any(header.column.columnDef.meta)?.['headerClass'] || '' }}"
                         [colSpan]="header.colSpan"
                         [style.width.px]="header.colSpan === 1 ? header.getSize() : null"
                         [attr.data-pinned]="header.column.getIsPinned()"
@@ -952,7 +961,12 @@ export class ErpTableComponent<T> implements AfterViewInit {
         maxSize: 48,
         enableSorting: false,
         enableResizing: false,
-        meta: { pin: 'left' },
+        meta: { 
+          pin: 'left',
+          align: 'center',
+          cellClass: '!px-0',
+          headerClass: '!px-0'
+        },
       });
     }
 

@@ -85,10 +85,18 @@ export class CategoryProductTableComponent {
       const currentFilters = this.filters();
       
       untracked(() => {
-        this.tableComponent()?.clearSelection();
+        try {
+          this.tableComponent()?.clearSelection();
+        } catch (e) {
+          // Ignoruj błąd gdy komponent tabeli nie ma jeszcze przekazanego inputa [config]
+        }
       });
 
-      this.fetchData(currentFilters, this.lastTableState);
+      // Nie pobieraj przy pierwszej inicjalizacji, zanim tabela nie wyemituje swojego początkowego stanu.
+      // Pobraniem danych przy pierwszym wejściu zajmie się builder.setOnStateChange
+      if (this.lastTableState !== null) {
+        this.fetchData(currentFilters, this.lastTableState);
+      }
     });
   }
 

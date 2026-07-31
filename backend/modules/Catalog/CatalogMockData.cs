@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Catalog;
 
@@ -32,133 +33,73 @@ public record ProductDto(
 
 public static class CatalogMockData
 {
-    public static readonly Guid CatElectronics = Guid.Parse("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d");
-    public static readonly Guid CatLaptops = Guid.Parse("b2c3d4e5-f67a-8b9c-0d1e-2f3a4b5c6d7e");
-    public static readonly Guid CatSmartphones = Guid.Parse("c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f");
-    public static readonly Guid CatHome = Guid.Parse("d4e5f67a-8b9c-0d1e-2f3a-4b5c6d7e8f90");
+    public static List<CategoryDto> Categories { get; private set; } = new();
+    public static List<ModelDto> Models { get; private set; } = new();
+    public static List<ProductDto> Products { get; private set; } = new();
 
-    public static readonly Guid ModelMbp = Guid.Parse("e5f67a8b-9c0d-1e2f-3a4b-5c6d7e8f901a");
-    public static readonly Guid ModelIphone = Guid.Parse("f67a8b9c-0d1e-2f3a-4b5c-6d7e8f901a2b");
-
-    public static readonly List<CategoryDto> Categories = new()
+    static CatalogMockData()
     {
-        new(CatElectronics, "Elektronika", null),
-        new(CatLaptops, "Laptopy", CatElectronics),
-        new(CatSmartphones, "Smartfony", CatElectronics),
-        new(CatHome, "Dom i Ogród", null)
-    };
+        GenerateData(150, 10, 5);
+    }
 
-    public static readonly List<ModelDto> Models = new()
+    public static void GenerateData(int productCount, int categoryCount, int modelCount)
     {
-        new(ModelMbp, "M3 Max 16 inch"),
-        new(ModelIphone, "iPhone 15 Pro")
-    };
+        var random = new Random();
 
-    public static readonly List<ProductDto> Products = GenerateMockProducts();
+        Categories = GenerateCategories(categoryCount);
+        Models = GenerateModels(modelCount);
+        Products = GenerateProducts(productCount, Categories, Models, random);
+    }
 
-    private static List<ProductDto> GenerateMockProducts()
+    private static List<CategoryDto> GenerateCategories(int count)
     {
-        var list = new List<ProductDto>
+        var list = new List<CategoryDto>();
+        for (int i = 0; i < count; i++)
         {
-            new(
-                Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                "Laptop ProMax 16\"",
-                new List<Guid> { CatElectronics, CatLaptops },
-                ModelMbp,
-                "ELE-001",
-                5499.99m,
-                new DateTime(2024, 3, 15),
-                "Aktywny",
-                true,
-                "5901234567890",
-                null
-            ),
-            new(
-                Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                "Monitor UltraWide 34\"",
-                new List<Guid> { CatElectronics },
-                null,
-                "ELE-002",
-                2899.00m,
-                new DateTime(2024, 1, 20),
-                "Aktywny",
-                true,
-                "5901234567891",
-                null
-            ),
-            new(
-                Guid.Parse("33333333-3333-3333-3333-333333333333"),
-                "Fotel Ergonomiczny ErgoPlus",
-                new List<Guid> { CatHome },
-                null,
-                "DOM-001",
-                1299.00m,
-                new DateTime(2024, 6, 1),
-                "Wycofany",
-                false,
-                "5901234567892",
-                null
-            ),
-            new(
-                Guid.Parse("44444444-4444-4444-4444-444444444444"),
-                "Klawiatura Mechaniczna RGB",
-                new List<Guid> { CatElectronics },
-                null,
-                "ELE-003",
-                449.99m,
-                new DateTime(2024, 2, 10),
-                "Aktywny",
-                true,
-                "5901234567893",
-                null
-            ),
-            new(
-                Guid.Parse("55555555-5555-5555-5555-555555555555"),
-                "Biurko Standing Desk 180cm",
-                new List<Guid> { CatHome },
-                null,
-                "DOM-002",
-                2199.00m,
-                new DateTime(2024, 4, 22),
-                "Aktywny",
-                true,
-                "5901234567894",
-                null
-            )
-        };
+            list.Add(new CategoryDto(Guid.NewGuid(), $"Kategoria {i + 1}", null));
+        }
+        return list;
+    }
 
-        for (int i = 6; i <= 150; i++)
+    private static List<ModelDto> GenerateModels(int count)
+    {
+        var list = new List<ModelDto>();
+        for (int i = 0; i < count; i++)
         {
-            var isElec = i % 2 == 0;
-            var categoryUuids = isElec
-                ? new List<Guid> { CatElectronics, CatLaptops }
-                : new List<Guid> { CatHome };
+            list.Add(new ModelDto(Guid.NewGuid(), $"Model {i + 1}"));
+        }
+        return list;
+    }
 
-            var sku = isElec ? $"ELE-{i:D3}" : $"DOM-{i:D3}";
-            var name = isElec ? $"Urządzenie elektroniczne v{i}" : $"Akcesorium domowe v{i}";
-            var price = 99.99m + (i * 15.5m);
-            var date = new DateTime(2024, 1, 1).AddDays(i);
-            var active = i % 3 != 0;
-            var status = active ? "Aktywny" : "Draft";
-            var ean = $"5901234567{i:D3}";
+    private static List<ProductDto> GenerateProducts(int count, List<CategoryDto> categories, List<ModelDto> models, Random random)
+    {
+        var list = new List<ProductDto>();
+        for (int i = 0; i < count; i++)
+        {
+            var numCategories = random.Next(1, Math.Min(4, categories.Count + 1));
+            var productCategories = categories.OrderBy(x => random.Next()).Take(numCategories).Select(x => x.Uuid).ToList();
+            
+            var assignModel = random.NextDouble() > 0.3;
+            Guid? modelUuid = assignModel && models.Any() ? models[random.Next(models.Count)].Uuid : null;
 
+            var active = random.NextDouble() > 0.2;
+            
             list.Add(new ProductDto(
                 Guid.NewGuid(),
-                name,
-                categoryUuids,
-                isElec && i % 4 == 0 ? ModelMbp : null,
-                sku,
-                price,
-                date,
-                status,
+                $"Produkt {i + 1}",
+                productCategories,
+                modelUuid,
+                $"SKU-{i + 1:D5}",
+                (decimal)Math.Round(random.NextDouble() * 10000 + 10, 2),
+                DateTime.Now.AddDays(-random.Next(1, 365)),
+                active ? "Aktywny" : "Draft",
                 active,
-                ean,
+                $"590{random.Next(100000000, 999999999)}",
                 null,
-                $"{(1.0 + i * 0.05):F1}kg",
-                i % 2 == 0 ? "Space Gray" : "Black"
+                $"{(random.NextDouble() * 10):F1}kg",
+                random.NextDouble() > 0.5 ? "Czarny" : "Biały"
             ));
         }
-
         return list;
     }
 }

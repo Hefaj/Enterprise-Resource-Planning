@@ -102,6 +102,7 @@ export class CategoryProductTableComponent {
 
     const builder = new ErpTableBuilder<ProductVM>()
       .setMode('server')
+      .setRowIdAccessor(x => x.uuid)
       .setEnableVirtualScroll(true)
       .setEstimatedRowHeight(50)
       .setDefaultPageSize(20)
@@ -111,6 +112,8 @@ export class CategoryProductTableComponent {
       .setItemCount(this.totalCount)
       .setLoading(this.loading)
       .setEmptyMessage(PRODUCT_KEYS.base.table.emptyMessage)
+
+      .addColumn((c) => c.setId('id').setAccessorKey('uuid').setHeader('UUID'))
 
       // ── Identyfikacja ──
       .addColumnGroup((g) => g

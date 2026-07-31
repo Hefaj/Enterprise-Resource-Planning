@@ -180,7 +180,15 @@ export class CategoryProductTableComponent {
         if (key) {
           clearTimeout(this.saveTimeout);
           this.saveTimeout = setTimeout(() => {
-            this.preferences.saveState(ErpPreferencesType.Table, key, state);
+            const stateToSave: ErpTableState = {
+              ...state,
+              selection: {
+                isAllSelected: false,
+                selectedIds: [],
+                filters: {},
+              },
+            };
+            this.preferences.saveState(ErpPreferencesType.Table, key, stateToSave);
           }, 400);
         }
 

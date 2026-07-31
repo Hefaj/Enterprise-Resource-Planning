@@ -87,7 +87,7 @@ export class WarrantyTabComponent implements OnInit {
   tableConfig = ErpTableBuilder.create<ErpTableBuilder<Warranty>>(table => {
     table
     .setMode('client') // Client mode for dummy data
-    .setDefaultPageSize(100)
+    .setDefaultPageSize(20)
     .setEnableVirtualScroll(true)
     .setPageSizeOptions([5, 10, 20, 50, 500])
     // .setSelectionMode('single')

@@ -1,4 +1,5 @@
 export * from './lib/base/erp-signal-utils';
+export * from './lib/base/erp-base-builder';
 export * from './lib/base/erp-translate.pipe';
 export * from './lib/base/erp-icon.types';
 
@@ -44,6 +45,8 @@ export * from './lib/atoms/erp-stepper';
 export * from './lib/atoms/erp-text';
 // export * from './lib/atoms/erp-popover';
 export * from './lib/atoms/erp-table';
+export * from './lib/atoms/erp-scroll-viewport';
+export * from './lib/atoms/erp-group-card';
 
 // // Molecules
 export * from './lib/molecules/erp-filter';

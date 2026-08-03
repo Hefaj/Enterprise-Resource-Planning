@@ -45,14 +45,26 @@
     },
     "multimedia": {
       "gallery": {
-        "title": "Photo gallery",
-        "subtitle": "Product pictures",
-        "description": "Manage main pictures, variants and display order in the store."
+        "title": "Photo Gallery",
+        "subtitle": "Product Photos",
+        "description": "Management of main photos, variants, and display order in the store."
       },
       "video": {
-        "title": "Video & 3D materials",
-        "subtitle": "Videos and models",
-        "description": "Add promotional/instructional videos and 3D/AR visualizations."
+        "title": "Video and 3D Materials",
+        "subtitle": "Video and Models",
+        "description": "Adding promotional and instructional videos, as well as 3D and AR visualizations."
+      },
+      "actions": {
+        "addFile": "Add file",
+        "remove": "Remove"
+      },
+      "panel": {
+        "emptyProduct": "No multimedia for this product.",
+        "emptySelection": "Select a product to view its multimedia.",
+        "bulkTitle": "Selected {{ count }} products",
+        "bulkDescription": "Too many products selected to display details at once. You can perform bulk actions on all selected products.",
+        "bulkAdd": "Add multimedia in bulk",
+        "bulkDelete": "Remove all multimedia"
       }
     },
     "delivery": {

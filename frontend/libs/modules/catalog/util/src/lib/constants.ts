@@ -1,0 +1,1 @@
+export const MAX_DETAILED_SELECTION = 50;

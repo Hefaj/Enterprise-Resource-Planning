@@ -561,6 +561,7 @@ export interface ProductDto {
     name: string;
     categoryUuids: string[];
     modelUuid: string | undefined;
+    multimediaUuids: string[];
     sku: string;
     price: number;
     availableFrom: Date | undefined;

@@ -53,6 +53,18 @@
         "title": "Materiały wideo i 3D",
         "subtitle": "Wideo oraz modele",
         "description": "Dodawanie filmów promocyjnych, instruktażowych oraz wizualizacji 3D i AR."
+      },
+      "actions": {
+        "addFile": "Dodaj plik",
+        "remove": "Usuń"
+      },
+      "panel": {
+        "emptyProduct": "Brak multimediów dla tego produktu.",
+        "emptySelection": "Zaznacz produkt aby zobaczyć jego multimedia.",
+        "bulkTitle": "Wybrano {{ count }} produktów",
+        "bulkDescription": "Zaznaczono zbyt wiele produktów, aby wyświetlić ich szczegóły jednocześnie. Możesz wykonać akcje masowe na wszystkich zaznaczonych produktach.",
+        "bulkAdd": "Dodaj multimedia masowo",
+        "bulkDelete": "Usuń wszystkie multimedia"
       }
     },
     "delivery": {

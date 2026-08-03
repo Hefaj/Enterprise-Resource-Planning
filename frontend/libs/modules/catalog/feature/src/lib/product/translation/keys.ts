@@ -59,6 +59,18 @@ export const PRODUCT_KEYS = {
           subtitle: 'product.base.multimedia.video.subtitle',
           description: 'product.base.multimedia.video.description',
         },
+        actions: {
+          addFile: 'product.base.multimedia.actions.addFile',
+          remove: 'product.base.multimedia.actions.remove',
+        },
+        panel: {
+          emptyProduct: 'product.base.multimedia.panel.emptyProduct',
+          emptySelection: 'product.base.multimedia.panel.emptySelection',
+          bulkTitle: 'product.base.multimedia.panel.bulkTitle',
+          bulkDescription: 'product.base.multimedia.panel.bulkDescription',
+          bulkAdd: 'product.base.multimedia.panel.bulkAdd',
+          bulkDelete: 'product.base.multimedia.panel.bulkDelete',
+        },
       },
       delivery: {
         shipping: {

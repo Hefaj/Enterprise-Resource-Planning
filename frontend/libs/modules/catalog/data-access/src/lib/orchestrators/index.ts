@@ -1,6 +1,8 @@
 // Catalog Orchestrators — public API
 
 export { CatalogProductOrchestrator } from './product/catalog-product.orchestrator';
+export { CatalogMultimediaOrchestrator } from './multimedia/catalog-multimedia.orchestrator';
+export type { MultimediaVM } from './multimedia/multimedia.view-model';
 export type { ProductVM, CatalogProductLoadOptions } from './product/product.view-model';
 
 export { CatalogModelOrchestrator } from './model/catalog-model.orchestrator';

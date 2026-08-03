@@ -39,7 +39,7 @@ public static class CatalogMockData
 
     static CatalogMockData()
     {
-        GenerateData(150, 10, 5);
+        GenerateData(1500, 20, 15);
     }
 
     public static void GenerateData(int productCount, int categoryCount, int modelCount)

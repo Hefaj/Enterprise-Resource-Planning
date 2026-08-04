@@ -6,7 +6,7 @@ import {
   ErpTabsComponent,
 } from '@erp/shared/ui';
 import { noop } from 'rxjs';
-import { ProductListViewStore } from './product-list-view.store';
+import { ProductStore } from './product.store';
 import { provideProductTranslations, PRODUCT_KEYS } from '../translation';
 
 import { ProductTabComponent } from './tabs/product-tab.component';
@@ -19,7 +19,7 @@ import { ProductFilterComponent } from './filters/product-filter.component';
 @Component({
   standalone: true,
   imports: [ErpPageLayoutComponent],
-  providers: [ProductListViewStore, provideProductTranslations()],
+  providers: [ProductStore, provideProductTranslations()],
   template: `<erp-page-layout [config]="pageConfig" />`,
   styles: [`
     :host {
@@ -64,7 +64,7 @@ export class ProductComponent {
       .setOnTabChange(noop)
   );
 
-  private readonly store = inject(ProductListViewStore);
+  private readonly store = inject(ProductStore);
 
   protected readonly pageConfig = ErpPageLayoutBuilder.create((b) =>
     b

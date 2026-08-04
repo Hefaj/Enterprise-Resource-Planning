@@ -14,7 +14,7 @@ import { ErpMediaThumbnailBuilder, ErpMediaThumbnailComponent } from '@erp/catal
 import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation/keys';
 import { ErpTranslatePipe } from '@erp/shared/ui';
-import { ProductListViewStore } from '../product-list-view.store';
+import { ProductStore } from '../product.store';
 
 @Component({
   selector: 'erp-multimedia-group',
@@ -62,7 +62,7 @@ export class MultimediaGroupComponent implements OnInit {
   /** Funkcja mierząca element z TanStack Virtual. */
   public readonly measureElement = input<((element: any) => void) | undefined>();
 
-  private readonly store = inject(ProductListViewStore);
+  private readonly store = inject(ProductStore);
   private readonly elRef = inject(ElementRef);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
 

@@ -4,7 +4,7 @@ import { ErpMenuBarComponent, ErpMenuBarBuilder, ErpModalService, ErpSelectionSt
 import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, SearchProductRequest, ProductVM } from '@erp/catalog/data-access';
 import { CategoryProductTableComponent } from '../../components/category-product-table/category-product-table.component';
-import { ProductListViewStore } from '../product-list-view.store';
+import { ProductStore } from '../product.store';
 
 @Component({
   selector: 'erp-product-tab',
@@ -28,7 +28,7 @@ import { ProductListViewStore } from '../product-list-view.store';
 })
 export class ProductTabComponent {
   private readonly modalService = inject(ErpModalService);
-  protected readonly store = inject(ProductListViewStore);
+  protected readonly store = inject(ProductStore);
 
   protected readonly horizontalMenu = ErpMenuBarBuilder.create((b) =>
     b

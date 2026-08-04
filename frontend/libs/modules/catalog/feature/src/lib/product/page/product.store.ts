@@ -3,7 +3,7 @@ import { SearchProductRequest, ProductVM } from '@erp/catalog/data-access';
 import { ErpSelectionState } from '@erp/shared/ui';
 
 @Injectable() // Rejestrowany na poziomie komponentu strony (Route/Page Component), aby żył tylko tyle co widok
-export class ProductListViewStore {
+export class ProductStore {
   // 1. Stan globalnych filtrów strony
   public readonly filters = signal<Partial<SearchProductRequest>>({
     territoryCode: 'DE', // domyślne dla testu

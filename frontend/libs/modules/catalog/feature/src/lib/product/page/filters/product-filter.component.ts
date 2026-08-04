@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@ang
 import { CommonModule } from '@angular/common';
 import { ErpFilterComponent, ErpFilterBuilder, ErpFilterConfig } from '@erp/shared/ui';
 import { ErpUserPreferencesService } from '@erp/shared/data-access';
-import { ProductListViewStore } from '../product-list-view.store';
+import { ProductStore } from '../product.store';
 import { SearchProductRequest } from '@erp/catalog/data-access';
 
 @Component({
@@ -15,7 +15,7 @@ import { SearchProductRequest } from '@erp/catalog/data-access';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFilterComponent implements OnInit {
-  private readonly store = inject(ProductListViewStore);
+  private readonly store = inject(ProductStore);
   private readonly preferencesService = inject(ErpUserPreferencesService);
 
   public readonly savedPresets = signal<Record<string, any>>({});

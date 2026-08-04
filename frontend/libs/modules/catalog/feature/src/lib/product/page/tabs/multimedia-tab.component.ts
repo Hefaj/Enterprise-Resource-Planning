@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProductListViewStore } from '../product-list-view.store';
+import { ProductStore } from '../product.store';
 import { MAX_DETAILED_SELECTION } from '@erp/catalog/util';
 import { ErpScrollViewportBuilder, ErpScrollViewportComponent } from '@erp/shared/ui';
 import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
@@ -74,7 +74,7 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultimediaTabComponent {
-  private readonly store = inject(ProductListViewStore);
+  private readonly store = inject(ProductStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
 
   protected readonly MAX_DETAILED_SELECTION = MAX_DETAILED_SELECTION;

@@ -5,9 +5,10 @@ import { MAX_DETAILED_SELECTION } from '@erp/catalog/util';
 import { ErpScrollViewportBuilder, ErpScrollViewportComponent } from '@erp/shared/ui';
 import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { MultimediaGroupComponent } from './multimedia-group.component';
-import { MultimediaBulkPanelComponent } from './multimedia-bulk-panel.component';
+import { ErpSelectionToolbarComponent } from '@erp/shared/ui';
 import { PRODUCT_KEYS } from '../../translation/keys';
 import { ErpTranslatePipe } from '@erp/shared/ui';
+import { TuiButton, TuiIcon } from '@taiga-ui/core';
 
 @Component({
   selector: 'erp-multimedia-tab',
@@ -16,8 +17,10 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
     CommonModule, 
     ErpScrollViewportComponent, 
     MultimediaGroupComponent, 
-    MultimediaBulkPanelComponent,
-    ErpTranslatePipe
+    ErpSelectionToolbarComponent,
+    ErpTranslatePipe,
+    TuiButton,
+    TuiIcon
   ],
   template: `
     <div class="erp-multimedia-tab">
@@ -26,18 +29,58 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
           <p>{{ (PRODUCT_KEYS.base.multimedia.panel.emptySelection | erpTranslate) || '' }}</p>
         </div>
       } 
-      @else if (_selectionCount() <= MAX_DETAILED_SELECTION) {
-        <!-- Tryb MULTI (TanStack Virtual) -->
-        <div class="erp-multimedia-tab__multi">
-          <erp-scroll-viewport [config]="scrollConfig">
-            <ng-template #erpScrollItem let-product let-index="index" let-measureFn="measureElement">
-              <erp-multimedia-group [product]="product" [measureElement]="measureFn" [attr.data-index]="index" />
-            </ng-template>
-          </erp-scroll-viewport>
+      @else {
+        <!-- Pasek akcji grupowych -->
+        @if (_subSelectionCount() > 0) {
+          <!-- Pasek dla wybranych zdjęć (podzaznaczenie) -->
+          <erp-selection-toolbar 
+            [count]="_subSelectionCount()" 
+            [active]="true" 
+            [translationKey]="'shared.selectionToolbar.selectedFiles'">
+            <button tuiButton size="s" appearance="destructive" (click)="onDeleteSelectedMedia()">
+              <tui-icon icon="@tui.trash" />
+              Usuń zaznaczone
+            </button>
+            <button tuiButton size="s" appearance="secondary" (click)="onClearMediaSelection()">
+              <tui-icon icon="@tui.x" />
+              Anuluj
+            </button>
+          </erp-selection-toolbar>
+        } @else if (_selectionCount() > 1) {
+          <!-- Pasek dla wybranych produktów -->
+          <erp-selection-toolbar [count]="_selectionCount()">
+            <button tuiButton size="s" appearance="primary" (click)="onAddMass()">
+              <tui-icon icon="@tui.plus" />
+              {{ (PRODUCT_KEYS.base.multimedia.panel.bulkAdd | erpTranslate) || '' }}
+            </button>
+            <button tuiButton size="s" appearance="destructive" (click)="onDeleteMass()">
+              <tui-icon icon="@tui.trash" />
+              {{ (PRODUCT_KEYS.base.multimedia.panel.bulkDelete | erpTranslate) || '' }}
+            </button>
+          </erp-selection-toolbar>
+        }
+
+        <div class="erp-multimedia-tab__content">
+          @if (_selectionCount() <= MAX_DETAILED_SELECTION) {
+            <!-- Tryb MULTI (TanStack Virtual) -->
+            <div class="erp-multimedia-tab__multi">
+              <erp-scroll-viewport [config]="scrollConfig">
+                <ng-template #erpScrollItem let-product let-index="index" let-measureFn="measureElement">
+                  <erp-multimedia-group [product]="product" [measureElement]="measureFn" [attr.data-index]="index" />
+                </ng-template>
+              </erp-scroll-viewport>
+            </div>
+          } @else {
+            <!-- Tryb skrócony dla bardzo wielu elementów -->
+            <div class="erp-multimedia-tab__bulk-placeholder">
+              <tui-icon icon="@tui.layers" class="erp-multimedia-tab__bulk-icon" />
+              <p class="erp-multimedia-tab__bulk-text">
+                Szczegóły ukryte ze względu na liczbę zaznaczonych elementów.<br>
+                Użyj górnego paska, aby zastosować zmiany dla wszystkich <strong>{{ _selectionCount() }}</strong> produktów.
+              </p>
+            </div>
+          }
         </div>
-      } @else {
-        <!-- Tryb BULK -->
-        <erp-multimedia-bulk-panel [count]="_selectionCount()" />
       }
     </div>
   `,
@@ -51,6 +94,8 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
       height: 100%;
       display: flex;
       flex-direction: column;
+      position: relative;
+      overflow: hidden;
     }
 
     .erp-multimedia-tab__empty {
@@ -62,13 +107,37 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
       font-size: 1.125rem;
     }
 
-    .erp-multimedia-tab__single {
-      overflow-y: auto;
+    .erp-multimedia-tab__content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
     }
 
     .erp-multimedia-tab__multi {
       flex: 1;
       height: 100%;
+    }
+
+    .erp-multimedia-tab__bulk-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .erp-multimedia-tab__bulk-icon {
+      font-size: 3rem;
+      color: var(--tui-text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .erp-multimedia-tab__bulk-text {
+      color: var(--tui-text-secondary);
+      line-height: 1.5;
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,6 +163,7 @@ export class MultimediaTabComponent {
     });
   });
   protected readonly _selectionCount = computed(() => this._selectedProducts().length);
+  protected readonly _subSelectionCount = computed(() => this.store.selectedMultimedia().size);
 
   // Zbiór UUID dla których już wywołaliśmy ładowanie
   private readonly loadedProductUuids = new Set<string>();
@@ -116,4 +186,23 @@ export class MultimediaTabComponent {
       }
     })
     .build();
+
+  protected onAddMass(): void {
+    console.log('Masowe dodawanie multimediów dla', this._selectionCount(), 'produktów');
+  }
+
+  protected onDeleteMass(): void {
+    console.log('Masowe usuwanie multimediów dla', this._selectionCount(), 'produktów');
+  }
+
+  protected onDeleteSelectedMedia(): void {
+    console.log('Usuwanie zaznaczonych multimediów:', this.store.selectedMultimedia());
+    // this.store.clearMultimediaSelection();
+  }
+
+  protected onClearMediaSelection(): void {
+    // Zakładam, że w store będzie metoda czyszcząca, tu na razie log
+    console.log('Czyszczenie zaznaczenia zdjęć');
+    // this.store.clearMultimediaSelection();
+  }
 }

@@ -50,6 +50,7 @@ export * from './lib/atoms/erp-group-card';
 
 // // Molecules
 export * from './lib/molecules/erp-filter';
+export * from './lib/molecules/erp-selection-toolbar';
 // export * from './lib/molecules/erp-dynamic-filter';
 // export * from './lib/molecules/erp-tree-select';
 // export * from './lib/molecules/erp-action-buttons';

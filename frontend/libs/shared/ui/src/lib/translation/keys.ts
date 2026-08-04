@@ -104,4 +104,8 @@ export const SHARED_KEYS = {
       pin: 'shared.sidebar.pin',
       unpin: 'shared.sidebar.unpin',
     },
+    selectionToolbar: {
+      selected: 'shared.selectionToolbar.selected',
+      selectedFiles: 'shared.selectionToolbar.selectedFiles',
+    },
   } as const;

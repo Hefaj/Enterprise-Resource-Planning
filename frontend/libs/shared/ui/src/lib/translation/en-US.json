@@ -98,6 +98,10 @@
     "collapse": "Collapse",
     "pin": "Pin (push mode)",
     "unpin": "Unpin (overlay mode)"
+  },
+  "selectionToolbar": {
+    "selected": "{{count}} items selected",
+    "selectedFiles": "{{count}} files selected"
   }
 }
 

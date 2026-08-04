@@ -98,6 +98,10 @@
     "collapse": "Zwiń",
     "pin": "Przypnij (tryb wypychania)",
     "unpin": "Odepnij (tryb nachodzenia)"
+  },
+  "selectionToolbar": {
+    "selected": "Wybrano {{count}} elementów",
+    "selectedFiles": "Wybrano {{count}} plików"
   }
 }
 

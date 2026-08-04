@@ -9,6 +9,8 @@ import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
 import { CatalogCategoryOrchestrator } from '../category/catalog-category.orchestrator';
 import { CatalogModelOrchestrator } from '../model/catalog-model.orchestrator';
+import { MultimediaVM } from '../multimedia/multimedia.view-model';
+import { CatalogMultimediaOrchestrator } from '../multimedia/catalog-multimedia.orchestrator';
 
 /**
  * Struktura rozwiązanych zależności do mapowania ViewModel produktu.
@@ -16,6 +18,7 @@ import { CatalogModelOrchestrator } from '../model/catalog-model.orchestrator';
 interface ProductResolvedDeps extends ResolvedDeps {
   categories: CategoryVM[];
   model: ModelVM | null;
+  multimedia: MultimediaVM[];
 }
 
 /**
@@ -39,6 +42,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   // Leniwie ładowane sąsiednie orkiestratorzy w celu uniknięcia kołowej zależności
   private _categoryOrchestrator: CatalogCategoryOrchestrator | null = null;
   private _modelOrchestrator: CatalogModelOrchestrator | null = null;
+  private _multimediaOrchestrator: CatalogMultimediaOrchestrator | null = null;
 
   protected override readonly signature = 'catalog.product';
 
@@ -68,6 +72,13 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     return this._modelOrchestrator;
   }
 
+  private get _multimediaSiblingOrchestrator(): CatalogMultimediaOrchestrator {
+    if (!this._multimediaOrchestrator) {
+      this._multimediaOrchestrator = this._injector.get(CatalogMultimediaOrchestrator);
+    }
+    return this._multimediaOrchestrator;
+  }
+
   // ────────────────────────────────────────────────────────────────
   // Abstrakcyjne implementacje
   // ────────────────────────────────────────────────────────────────
@@ -92,6 +103,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       ...dto,
       categories: deps.categories ?? [],
       model: deps.model ?? null,
+      multimedia: deps.multimedia ?? [],
     };
   }
 
@@ -115,6 +127,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     // Zbierz odwołania UUID z załadowanych produktów
     const categoryUuids = new Set<string>();
     const modelUuids = new Set<string>();
+    const multimediaUuids = new Set<string>();
 
     for (const uuid of uuids) {
       const dto = this.identityMap.peek(uuid);
@@ -129,6 +142,13 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       if (options.includeModel && dto.modelUuid) {
         modelUuids.add(dto.modelUuid);
       }
+
+      // Założenie: ProductDto posiada multimediaUuids
+      if (options.includeMultimedia && (dto as any).multimediaUuids) {
+        for (const mUuid of (dto as any).multimediaUuids) {
+          multimediaUuids.add(mUuid);
+        }
+      }
     }
 
     // Przekaż żądanie do sąsiednich orkiestratorów
@@ -141,6 +161,12 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     if (modelUuids.size > 0) {
       promises.push(
         this._modelSiblingOrchestrator.loadAsync([...modelUuids]),
+      );
+    }
+
+    if (multimediaUuids.size > 0) {
+      promises.push(
+        this._multimediaSiblingOrchestrator.loadAsync([...multimediaUuids]),
       );
     }
 
@@ -164,7 +190,12 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       model = this._modelSiblingOrchestrator.resolveModelVM(dto.modelUuid);
     }
 
-    return { categories, model };
+    // Rozwiąż multimedia z cache orkiestratora multimediów
+    const multimedia: MultimediaVM[] = (dto as any).multimediaUuids
+      ? this._multimediaSiblingOrchestrator.resolveMultimediaVMs((dto as any).multimediaUuids)
+      : [];
+
+    return { categories, model, multimedia };
   }
 
   /**

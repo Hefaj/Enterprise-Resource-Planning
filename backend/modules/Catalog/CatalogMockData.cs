@@ -19,6 +19,7 @@ public record ProductDto(
     Guid Uuid,
     string Name,
     List<Guid> CategoryUuids,
+    List<Guid> MultimediaUuids,
     Guid? ModelUuid,
     string Sku,
     decimal Price,
@@ -31,11 +32,24 @@ public record ProductDto(
     string Attr_Color = "Space Gray"
 );
 
+public record MultimediaDto(
+    Guid Uuid,
+    string FileName,
+    string MediaType,
+    string? ThumbnailUrl,
+    string OriginalUrl,
+    long FileSize,
+    string MimeType,
+    int SortOrder,
+    DateTime CreatedAt
+);
+
 public static class CatalogMockData
 {
     public static List<CategoryDto> Categories { get; private set; } = new();
     public static List<ModelDto> Models { get; private set; } = new();
     public static List<ProductDto> Products { get; private set; } = new();
+    public static List<MultimediaDto> Multimedias { get; private set; } = new();
 
     static CatalogMockData()
     {
@@ -48,6 +62,7 @@ public static class CatalogMockData
 
         Categories = GenerateCategories(categoryCount);
         Models = GenerateModels(modelCount);
+        Multimedias.Clear();
         Products = GenerateProducts(productCount, Categories, Models, random);
     }
 
@@ -83,11 +98,30 @@ public static class CatalogMockData
             Guid? modelUuid = assignModel && models.Any() ? models[random.Next(models.Count)].Uuid : null;
 
             var active = random.NextDouble() > 0.2;
+
+            var multimediaCount = random.Next(0, 5);
+            var multimediaUuids = Enumerable.Range(0, multimediaCount).Select(_ => Guid.NewGuid()).ToList();
+            
+            for (int j = 0; j < multimediaCount; j++)
+            {
+                Multimedias.Add(new MultimediaDto(
+                    multimediaUuids[j],
+                    $"File {j + 1} for Produkt {i + 1}.jpg",
+                    "image",
+                    "https://picsum.photos/200",
+                    "https://picsum.photos/800",
+                    random.Next(100000, 5000000),
+                    "image/jpeg",
+                    j,
+                    DateTime.Now.AddDays(-random.Next(1, 30))
+                ));
+            }
             
             list.Add(new ProductDto(
                 Guid.NewGuid(),
                 $"Produkt {i + 1}",
                 productCategories,
+                multimediaUuids,
                 modelUuid,
                 $"SKU-{i + 1:D5}",
                 (decimal)Math.Round(random.NextDouble() * 10000 + 10, 2),

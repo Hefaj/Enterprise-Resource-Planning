@@ -149,14 +149,19 @@ export class ErpScrollViewportComponent<TItem = any> {
   }));
 
   constructor() {
-    // Resetuj scroll na górę gdy lista elementów się zmieni (np. zmiana zaznaczenia)
+    // Resetuj scroll na górę gdy lista elementów (ich klucze) się zmieni (np. inna selekcja)
+    let prevKeys: string | null = null;
+    
     effect(() => {
-      // Odczytaj items aby zarejestrować dependency
-      this._items();
+      const items = this._items();
+      const keyFn = this.config().getItemKey;
+      const currentKeys = items.map((item, i) => keyFn ? keyFn(i, item) : i).join(',');
+
       const el = this.scrollElement()?.nativeElement;
-      if (el) {
+      if (el && prevKeys !== null && prevKeys !== currentKeys) {
         el.scrollTop = 0;
       }
+      prevKeys = currentKeys;
     });
   }
 }

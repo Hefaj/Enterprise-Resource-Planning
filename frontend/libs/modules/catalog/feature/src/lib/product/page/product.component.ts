@@ -60,7 +60,7 @@ export class ProductComponent {
         component: WarrantyTabComponent,
         icon: '@tui.shield-check',
       })
-      .setInitialValue('multimedia')
+      .setInitialValue('exclusion')
       .setOnTabChange(noop)
   );
 

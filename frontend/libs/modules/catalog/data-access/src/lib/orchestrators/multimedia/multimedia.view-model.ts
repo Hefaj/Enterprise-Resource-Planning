@@ -2,7 +2,6 @@ export type MediaType = 'image' | 'video' | 'audio' | 'document' | '3d-model' | 
 
 export interface MultimediaVM {
   uuid: string;
-  productUuid: string;
   fileName: string;
   mediaType: MediaType;
   thumbnailUrl: string | null;

@@ -1,6 +1,7 @@
 import { ProductDto } from '../../api-client';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
+import { MultimediaVM } from '../multimedia/multimedia.view-model';
 
 export interface ProductVM extends ProductDto {
   /** Rozwiązane odniesienia do kategorii (z categoryUuids). */
@@ -8,10 +9,14 @@ export interface ProductVM extends ProductDto {
 
   /** Rozwiązane odniesienie do modelu (z modelUuid) lub null. */
   readonly model: ModelVM | null;
+
+  /** Rozwiązane multimedia powiązane z produktem. */
+  readonly multimedia: MultimediaVM[];
 }
 
 export interface CatalogProductLoadOptions {
   readonly includeCategories?: boolean;
   readonly includeModel?: boolean;
+  readonly includeMultimedia?: boolean;
   [key: string]: boolean | undefined;
 }

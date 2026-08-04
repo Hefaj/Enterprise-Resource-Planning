@@ -126,7 +126,8 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
   public resolveCategoryVMs(uuids: string[]): CategoryVM[] {
     const result: CategoryVM[] = [];
     for (const uuid of uuids) {
-      const dto = this.identityMap.peek(uuid);
+      const dtoSignal = this.identityMap.get(uuid);
+      const dto = dtoSignal();
       if (dto) {
         result.push(this._mapWithDepthGuard(dto, 0));
       }

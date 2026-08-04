@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ProductListViewStore } from '../product-list-view.store';
 import { MAX_DETAILED_SELECTION } from '@erp/catalog/util';
 import { ErpScrollViewportBuilder, ErpScrollViewportComponent } from '@erp/shared/ui';
-import { CatalogMultimediaOrchestrator, ProductVM } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { MultimediaGroupComponent } from './multimedia-group.component';
 import { MultimediaBulkPanelComponent } from './multimedia-bulk-panel.component';
 import { PRODUCT_KEYS } from '../../translation/keys';
@@ -25,12 +25,8 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
         <div class="erp-multimedia-tab__empty">
           <p>{{ (PRODUCT_KEYS.base.multimedia.panel.emptySelection | erpTranslate) || '' }}</p>
         </div>
-      } @else if (_selectionCount() === 1) {
-        <!-- Tryb SINGLE -->
-        <div class="erp-multimedia-tab__single">
-          <erp-multimedia-group [product]="_selectedProducts()[0]" />
-        </div>
-      } @else if (_selectionCount() <= MAX_DETAILED_SELECTION) {
+      } 
+      @else if (_selectionCount() <= MAX_DETAILED_SELECTION) {
         <!-- Tryb MULTI (TanStack Virtual) -->
         <div class="erp-multimedia-tab__multi">
           <erp-scroll-viewport [config]="scrollConfig">
@@ -79,12 +75,24 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
 })
 export class MultimediaTabComponent {
   private readonly store = inject(ProductListViewStore);
-  private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
+  private readonly productOrchestrator = inject(CatalogProductOrchestrator);
 
   protected readonly MAX_DETAILED_SELECTION = MAX_DETAILED_SELECTION;
   protected readonly PRODUCT_KEYS = PRODUCT_KEYS;
   
-  protected readonly _selectedProducts = computed(() => this.store.selection()?.selectedItems || []);
+  protected readonly _selectedProducts = computed(() => {
+    const selectedItems = this.store.selection()?.selectedItems || [];
+    if (selectedItems.length === 0) return [];
+
+    const uuids = selectedItems.map(item => item.uuid);
+    const signalMap = this.productOrchestrator.getSignalViewModel();
+
+    return uuids.map(uuid => {
+      const vmSignal = signalMap.get(uuid);
+      const latestVm = vmSignal ? vmSignal() : null;
+      return latestVm || selectedItems.find(x => x.uuid === uuid)!;
+    });
+  });
   protected readonly _selectionCount = computed(() => this._selectedProducts().length);
 
   // Zbiór UUID dla których już wywołaliśmy ładowanie
@@ -96,7 +104,7 @@ export class MultimediaTabComponent {
     .setEstimateSize(250)
     .setOverscan(2)
     .setOnRangeChange((range) => {
-      // Lazy-load: ładuj multimedia tylko dla nowo widocznych grup
+      // Lazy-load: dociągnij produkty z wymuszeniem wczytania multimediów
       const uuidsToLoad = range.visibleKeys.filter((uuid: string) => !this.loadedProductUuids.has(uuid));
 
       if (uuidsToLoad.length > 0) {
@@ -104,7 +112,7 @@ export class MultimediaTabComponent {
           this.loadedProductUuids.add(uuid);
         }
         // Request batch load for the new uuids
-        this.multimediaOrchestrator.loadByProductUuids(uuidsToLoad);
+        this.productOrchestrator.loadAsync(uuidsToLoad, { includeMultimedia: true });
       }
     })
     .build();

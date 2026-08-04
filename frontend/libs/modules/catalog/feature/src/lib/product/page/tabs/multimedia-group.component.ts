@@ -11,8 +11,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ErpGroupCardBuilder, ErpGroupCardComponent } from '@erp/shared/ui';
 import { ErpMediaThumbnailBuilder, ErpMediaThumbnailComponent } from '@erp/catalog/ui';
-import { ProductVM } from '@erp/catalog/data-access';
-import { CatalogMultimediaOrchestrator } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation/keys';
 import { ErpTranslatePipe } from '@erp/shared/ui';
 import { ProductListViewStore } from '../product-list-view.store';
@@ -63,15 +62,15 @@ export class MultimediaGroupComponent implements OnInit {
   /** Funkcja mierząca element z TanStack Virtual. */
   public readonly measureElement = input<((element: any) => void) | undefined>();
 
-  private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
   private readonly store = inject(ProductListViewStore);
   private readonly elRef = inject(ElementRef);
+  private readonly productOrchestrator = inject(CatalogProductOrchestrator);
 
   protected readonly PRODUCT_KEYS = PRODUCT_KEYS;
 
   /** Signal z multimediami dla tego konkretnego produktu. */
   protected readonly _media = computed(() => {
-    return this.multimediaOrchestrator.getByProductUuid(this.product().uuid)();
+    return this.product().multimedia || [];
   });
 
   /** Konfiguracja dla ErpGroupCard. */
@@ -80,7 +79,7 @@ export class MultimediaGroupComponent implements OnInit {
       .setTitle(computed(() => this.product().name))
       .setSubtitle(computed(() => this.product().sku))
       .setIcon('@tui.package')
-      .setLoading(computed(() => this._media().length === 0 && this.multimediaOrchestrator.isLoading()))
+      .setLoading(computed(() => this._media().length === 0 && this.productOrchestrator.isLoading()))
       // Animujemy rozwinięcie, card zamyka się / otwiera
       .setOnToggle(() => this.triggerMeasure())
       // Przykładowe akcje dla grupy

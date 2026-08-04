@@ -1,13 +1,5 @@
-export type MediaType = 'image' | 'video' | 'audio' | 'document' | '3d-model' | 'unknown';
+import { MultimediaDto } from "../../api-client";
 
-export interface MultimediaVM {
-  uuid: string;
-  fileName: string;
-  mediaType: MediaType;
-  thumbnailUrl: string | null;
-  originalUrl: string;
-  fileSize: number;
-  mimeType: string;
-  sortOrder: number;
-  createdAt: Date;
+export interface MultimediaVM extends MultimediaDto {
+
 }

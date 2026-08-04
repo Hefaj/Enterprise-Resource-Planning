@@ -20,6 +20,7 @@ public record ProductDto(
     string Name,
     List<Guid> CategoryUuids,
     List<Guid> MultimediaUuids,
+    List<Guid> WarrantyUuids,
     Guid? ModelUuid,
     string Sku,
     decimal Price,
@@ -44,12 +45,20 @@ public record MultimediaDto(
     DateTime CreatedAt
 );
 
+public record WarrantyDto(
+    Guid Uuid,
+    string Name,
+    int DurationMonths,
+    string Description
+);
+
 public static class CatalogMockData
 {
     public static List<CategoryDto> Categories { get; private set; } = new();
     public static List<ModelDto> Models { get; private set; } = new();
     public static List<ProductDto> Products { get; private set; } = new();
     public static List<MultimediaDto> Multimedias { get; private set; } = new();
+    public static List<WarrantyDto> Warranties { get; private set; } = new();
 
     static CatalogMockData()
     {
@@ -63,7 +72,18 @@ public static class CatalogMockData
         Categories = GenerateCategories(categoryCount);
         Models = GenerateModels(modelCount);
         Multimedias.Clear();
+        Warranties = GenerateWarranties(10);
         Products = GenerateProducts(productCount, Categories, Models, random);
+    }
+
+    private static List<WarrantyDto> GenerateWarranties(int count)
+    {
+        var list = new List<WarrantyDto>();
+        for (int i = 0; i < count; i++)
+        {
+            list.Add(new WarrantyDto(Guid.NewGuid(), $"Gwarancja {i + 1}", (i % 3 + 1) * 12, $"Opis gwarancji {i + 1}"));
+        }
+        return list;
     }
 
     private static List<CategoryDto> GenerateCategories(int count)
@@ -116,12 +136,16 @@ public static class CatalogMockData
                     DateTime.Now.AddDays(-random.Next(1, 30))
                 ));
             }
+
+            var numWarranties = random.Next(0, 3);
+            var warrantyUuids = Warranties.OrderBy(x => random.Next()).Take(numWarranties).Select(x => x.Uuid).ToList();
             
             list.Add(new ProductDto(
                 Guid.NewGuid(),
                 $"Produkt {i + 1}",
                 productCategories,
                 multimediaUuids,
+                warrantyUuids,
                 modelUuid,
                 $"SKU-{i + 1:D5}",
                 (decimal)Math.Round(random.NextDouble() * 10000 + 10, 2),

@@ -1,6 +1,6 @@
 using FastEndpoints;
 
-namespace Catalog.Multimedia.Query;
+namespace Catalog.Multimedia;
 
 public class MultimediaGroup : Group
 {

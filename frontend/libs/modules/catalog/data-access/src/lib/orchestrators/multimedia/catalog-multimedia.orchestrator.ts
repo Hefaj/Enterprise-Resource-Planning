@@ -1,6 +1,6 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
 import { BaseOrchestrator } from '@erp/shared/data-access';
-import { MultimediaVM, MediaType } from './multimedia.view-model';
+import { MultimediaVM } from './multimedia.view-model';
 import { delay, Observable, of } from 'rxjs';
 
 import { CatalogClient, SearchResponse, MultimediaDto, SearchMultimediaRequest } from '../../api-client';
@@ -43,8 +43,8 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
     return {
       uuid: dto.uuid,
       fileName: dto.fileName,
-      mediaType: (dto.mediaType as MediaType) || 'unknown',
-      thumbnailUrl: dto.thumbnailUrl ?? null,
+      mediaType: dto.mediaType || 'unknown',
+      thumbnailUrl: dto.thumbnailUrl,
       originalUrl: dto.originalUrl,
       fileSize: dto.fileSize,
       mimeType: dto.mimeType,

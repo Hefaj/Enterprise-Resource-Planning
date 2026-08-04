@@ -11,6 +11,8 @@ import { CatalogCategoryOrchestrator } from '../category/catalog-category.orches
 import { CatalogModelOrchestrator } from '../model/catalog-model.orchestrator';
 import { MultimediaVM } from '../multimedia/multimedia.view-model';
 import { CatalogMultimediaOrchestrator } from '../multimedia/catalog-multimedia.orchestrator';
+import { WarrantyVM } from '../warranty/warranty.view-model';
+import { CatalogWarrantyOrchestrator } from '../warranty/catalog-warranty.orchestrator';
 
 /**
  * Struktura rozwiązanych zależności do mapowania ViewModel produktu.
@@ -19,6 +21,7 @@ interface ProductResolvedDeps extends ResolvedDeps {
   categories: CategoryVM[];
   model: ModelVM | null;
   multimedia: MultimediaVM[];
+  warranties: WarrantyVM[];
 }
 
 /**
@@ -43,6 +46,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   private _categoryOrchestrator: CatalogCategoryOrchestrator | null = null;
   private _modelOrchestrator: CatalogModelOrchestrator | null = null;
   private _multimediaOrchestrator: CatalogMultimediaOrchestrator | null = null;
+  private _warrantyOrchestrator: CatalogWarrantyOrchestrator | null = null;
 
   protected override readonly signature = 'catalog.product';
 
@@ -79,6 +83,13 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     return this._multimediaOrchestrator;
   }
 
+  private get _warrantySiblingOrchestrator(): CatalogWarrantyOrchestrator {
+    if (!this._warrantyOrchestrator) {
+      this._warrantyOrchestrator = this._injector.get(CatalogWarrantyOrchestrator);
+    }
+    return this._warrantyOrchestrator;
+  }
+
   // ────────────────────────────────────────────────────────────────
   // Abstrakcyjne implementacje
   // ────────────────────────────────────────────────────────────────
@@ -104,6 +115,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       categories: deps.categories ?? [],
       model: deps.model ?? null,
       multimedia: deps.multimedia ?? [],
+      warranties: deps.warranties ?? [],
     };
   }
 
@@ -128,6 +140,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     const categoryUuids = new Set<string>();
     const modelUuids = new Set<string>();
     const multimediaUuids = new Set<string>();
+    const warrantyUuids = new Set<string>();
 
     for (const uuid of uuids) {
       const dto = this.identityMap.peek(uuid);
@@ -144,9 +157,15 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       }
 
       // Założenie: ProductDto posiada multimediaUuids
-      if (options.includeMultimedia && (dto as any).multimediaUuids) {
-        for (const mUuid of (dto as any).multimediaUuids) {
+      if (options.includeMultimedia && dto.multimediaUuids) {
+        for (const mUuid of dto.multimediaUuids) {
           multimediaUuids.add(mUuid);
+        }
+      }
+
+      if (options.includeWarranties && dto.warrantyUuids) {
+        for (const wUuid of dto.warrantyUuids) {
+          warrantyUuids.add(wUuid);
         }
       }
     }
@@ -167,6 +186,12 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     if (multimediaUuids.size > 0) {
       promises.push(
         this._multimediaSiblingOrchestrator.loadAsync([...multimediaUuids]),
+      );
+    }
+
+    if (warrantyUuids.size > 0) {
+      promises.push(
+        this._warrantySiblingOrchestrator.loadAsync([...warrantyUuids]),
       );
     }
 
@@ -191,11 +216,16 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     }
 
     // Rozwiąż multimedia z cache orkiestratora multimediów
-    const multimedia: MultimediaVM[] = (dto as any).multimediaUuids
-      ? this._multimediaSiblingOrchestrator.resolveMultimediaVMs((dto as any).multimediaUuids)
+    const multimedia: MultimediaVM[] = dto.multimediaUuids
+      ? this._multimediaSiblingOrchestrator.resolveMultimediaVMs(dto.multimediaUuids)
       : [];
 
-    return { categories, model, multimedia };
+    // Rozwiąż gwarancje z cache orkiestratora gwarancji
+    const warranties: WarrantyVM[] = dto.warrantyUuids
+      ? this._warrantySiblingOrchestrator.resolveWarrantyVMs(dto.warrantyUuids)
+      : [];
+
+    return { categories, model, multimedia, warranties };
   }
 
   /**

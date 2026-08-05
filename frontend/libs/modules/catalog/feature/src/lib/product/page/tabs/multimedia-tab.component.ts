@@ -5,7 +5,7 @@ import { MAX_DETAILED_SELECTION } from '@erp/catalog/util';
 import { ErpScrollViewportBuilder, ErpScrollViewportComponent } from '@erp/shared/ui';
 import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { MultimediaGroupComponent } from './multimedia-group.component';
-import { ErpSelectionToolbarComponent } from '@erp/shared/ui';
+import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective } from '@erp/shared/ui';
 import { PRODUCT_KEYS } from '../../translation/keys';
 import { ErpTranslatePipe } from '@erp/shared/ui';
 import { TuiButton, TuiIcon } from '@taiga-ui/core';
@@ -17,50 +17,27 @@ import { TuiButton, TuiIcon } from '@taiga-ui/core';
     CommonModule, 
     ErpScrollViewportComponent, 
     MultimediaGroupComponent, 
-    ErpSelectionToolbarComponent,
+    ErpActionToolbarComponent,
+    ErpActionToolbarZoneDirective,
+    ErpActionToolbarContextDirective,
     ErpTranslatePipe,
     TuiButton,
     TuiIcon
   ],
   template: `
-    <div class="erp-multimedia-tab">
+    <div class="erp-multimedia-tab" erpActionToolbarZone [erpActionToolbarZoneLabel]="'Multimedia'">
       @if (_selectionCount() === 0) {
         <div class="erp-multimedia-tab__empty">
           <p>{{ (PRODUCT_KEYS.base.multimedia.panel.emptySelection | erpTranslate) || '' }}</p>
         </div>
       } 
       @else {
-        <!-- Pasek akcji grupowych -->
-        @if (_subSelectionCount() > 0) {
-          <!-- Pasek dla wybranych zdjęć (podzaznaczenie) -->
-          <erp-selection-toolbar 
-            [count]="_subSelectionCount()" 
-            [active]="true" 
-            [translationKey]="'shared.selectionToolbar.selectedFiles'">
-            <button tuiButton size="s" appearance="destructive" (click)="onDeleteSelectedMedia()">
-              <tui-icon icon="@tui.trash" />
-              Usuń zaznaczone
-            </button>
-            <button tuiButton size="s" appearance="secondary" (click)="onClearMediaSelection()">
-              <tui-icon icon="@tui.x" />
-              Anuluj
-            </button>
-          </erp-selection-toolbar>
-        } @else if (_selectionCount() > 1) {
-          <!-- Pasek dla wybranych produktów -->
-          <erp-selection-toolbar [count]="_selectionCount()">
-            <button tuiButton size="s" appearance="primary" (click)="onAddMass()">
-              <tui-icon icon="@tui.plus" />
-              {{ (PRODUCT_KEYS.base.multimedia.panel.bulkAdd | erpTranslate) || '' }}
-            </button>
-            <button tuiButton size="s" appearance="destructive" (click)="onDeleteMass()">
-              <tui-icon icon="@tui.trash" />
-              {{ (PRODUCT_KEYS.base.multimedia.panel.bulkDelete | erpTranslate) || '' }}
-            </button>
-          </erp-selection-toolbar>
-        }
+        <!-- Pasek akcji grupowych i multimediów -->
+        <div class="erp-multimedia-tab__toolbar">
+          <erp-action-toolbar [config]="toolbarConfig" />
+        </div>
 
-        <div class="erp-multimedia-tab__content">
+        <div class="erp-multimedia-tab__content" [erpActionToolbarContext]="toolbarConfig">
           @if (_selectionCount() <= MAX_DETAILED_SELECTION) {
             <!-- Tryb MULTI (TanStack Virtual) -->
             <div class="erp-multimedia-tab__multi">
@@ -105,6 +82,12 @@ import { TuiButton, TuiIcon } from '@taiga-ui/core';
       height: 100%;
       color: var(--tui-text-secondary);
       font-size: 1.125rem;
+    }
+
+    .erp-multimedia-tab__toolbar {
+      padding: 0 1.25rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
     }
 
     .erp-multimedia-tab__content {
@@ -164,6 +147,73 @@ export class MultimediaTabComponent {
   });
   protected readonly _selectionCount = computed(() => this._selectedProducts().length);
   protected readonly _subSelectionCount = computed(() => this.store.selectedMultimedia().size);
+  protected readonly _hideMassActions = computed(() => this._selectionCount() <= 1);
+
+  protected readonly toolbarConfig = ErpActionToolbarBuilder.create(b => b
+    .setMenuId('multimedia-toolbar')
+    .setSelectionCount(this._subSelectionCount)
+    .setSelectionLabel('shared.selectionToolbar.selectedFiles')
+    .setOnClearSelection(() => this.onClearMediaSelection())
+    .addDefaultGroup(g => g
+      .setId('mass-actions')
+      .setLabel('Masowe zarządzanie')
+      .addAction(a => a
+        .setId('mass-add')
+        .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkAdd)
+        .setIcon('@tui.plus')
+        .setAppearance('success')
+        .setHidden(this._hideMassActions)
+        .setFn(() => this.onAddMass())
+      )
+      .addAction(a => a
+        .setId('mass-delete')
+        .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkDelete)
+        .setIcon('@tui.trash')
+        .setAppearance('warning')
+        .setHidden(this._hideMassActions)
+        .setFn(() => this.onDeleteMass())
+      )
+    )
+    .addDefaultGroup(g => g
+      .setId('tools')
+      .setLabel('Narzędzia')
+      .addAction(a => a
+        .setId('scan')
+        .setLabel('Skanuj foldery')
+        .setIcon('@tui.scan')
+        .setFn(() => console.log('Skanuj'))
+      )
+      .addAction(a => a
+        .setId('thumbnails')
+        .setLabel('Generuj miniatury')
+        .setIcon('@tui.image')
+        .setFn(() => console.log('Miniatury'))
+      )
+    )
+    .addSelectionGroup(g => g
+      .setId('selection-actions')
+      .setLabel('Wybrane operacje')
+      .addAction(a => a
+        .setId('delete-selected')
+        .setLabel('Usuń zaznaczone')
+        .setIcon('@tui.trash')
+        .setAppearance('warning')
+        .setFn(() => this.onDeleteSelectedMedia())
+      )
+      .addAction(a => a
+        .setId('download')
+        .setLabel('Pobierz oryginały')
+        .setIcon('@tui.download')
+        .setFn(() => console.log('Pobierz'))
+      )
+      .addAction(a => a
+        .setId('optimize')
+        .setLabel('Optymalizuj wybrane')
+        .setIcon('@tui.wand')
+        .setFn(() => console.log('Optymalizuj'))
+      )
+    )
+  );
 
   // Zbiór UUID dla których już wywołaliśmy ładowanie
   private readonly loadedProductUuids = new Set<string>();

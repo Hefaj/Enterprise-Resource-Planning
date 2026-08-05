@@ -10,10 +10,14 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TuiIcon } from '@taiga-ui/core';
+import { TuiTabs } from '@taiga-ui/kit';
+import { TuiHintDirective } from '@taiga-ui/core/portals/hint';
 import { unwrapSignal, MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpButtonComponent } from '../../atoms/erp-button/erp-button.component';
 import { ErpButtonConfig } from '../../atoms/erp-button/erp-button.types';
+import { ErpInputComponent, ErpInputBuilder } from '../../form/erp-input';
 import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-access';
 import {
   ErpActionDef,
@@ -36,6 +40,7 @@ interface ConfiguratorItem {
   shortcut: string;
   defaultShortcut: string;
   indent: number;
+  isSelectionGroup?: boolean;
 }
 
 /**
@@ -53,8 +58,12 @@ interface ConfiguratorItem {
   imports: [
     CommonModule,
     FormsModule,
+    DragDropModule,
     TuiIcon,
+    TuiTabs,
+    TuiHintDirective,
     ErpButtonComponent,
+    ErpInputComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -83,10 +92,23 @@ interface ConfiguratorItem {
       <div class="erp-configurator__body">
         <!-- Panel lewy: Dostępne akcje -->
         <div class="erp-configurator__panel erp-configurator__panel--left">
-          <div class="erp-configurator__panel-header">Dostępne akcje</div>
+          <div class="erp-configurator__panel-tabs">
+            <tui-tabs [(activeItemIndex)]="activeTab">
+              <button tuiTab type="button">Standardowe</button>
+              <button tuiTab type="button">Zaznaczenie</button>
+            </tui-tabs>
+          </div>
+
+          <div class="erp-configurator__search">
+            <erp-input
+              [config]="searchInputConfig"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)"
+            />
+          </div>
 
           <div class="erp-configurator__list">
-            @for (item of _configuratorItems(); track item.id + item.type) {
+            @for (item of _filteredConfiguratorItems(); track item.id + item.type) {
               <div
                 class="erp-configurator__item"
                 [style.padding-left.rem]="0.75 + item.indent * 1"
@@ -106,7 +128,9 @@ interface ConfiguratorItem {
                   }
 
                   <span class="erp-configurator__item-label"
-                    [class.erp-configurator__item-label--group]="item.type === 'group' || item.type === 'dynamic-group'">
+                    [class.erp-configurator__item-label--group]="item.type === 'group' || item.type === 'dynamic-group'"
+                    [tuiHint]="item.label"
+                  >
                     {{ item.label }}
                   </span>
 
@@ -159,37 +183,24 @@ interface ConfiguratorItem {
         <div class="erp-configurator__panel erp-configurator__panel--right">
           <div class="erp-configurator__panel-header">Przypięte na pasku</div>
 
-          <div class="erp-configurator__list">
+          <div class="erp-configurator__list" cdkDropList (cdkDropListDropped)="dropPinned($event)">
             @for (item of _pinnedItems(); track item.id; let i = $index) {
-              <div class="erp-configurator__pinned-item">
+              <div class="erp-configurator__pinned-item" cdkDrag>
                 <span class="erp-configurator__pinned-index">{{ i + 1 }}.</span>
 
                 @if (item.icon) {
                   <tui-icon [icon]="item.icon" class="erp-configurator__item-icon" />
                 }
 
-                <span class="erp-configurator__pinned-label">{{ item.label }}</span>
+                <span class="erp-configurator__pinned-label" [tuiHint]="item.label">{{ item.label }}</span>
 
                 <div class="erp-configurator__pinned-controls">
-                  <button
-                    class="erp-configurator__move-btn"
-                    [disabled]="i === 0"
-                    (click)="movePinned(i, -1)"
-                    title="Przenieś w górę"
-                  >
-                    <tui-icon icon="@tui.chevron-up" />
-                  </button>
-                  <button
-                    class="erp-configurator__move-btn"
-                    [disabled]="i === _pinnedItems().length - 1"
-                    (click)="movePinned(i, 1)"
-                    title="Przenieś w dół"
-                  >
-                    <tui-icon icon="@tui.chevron-down" />
+                  <button class="erp-configurator__drag-handle" cdkDragHandle title="Przeciągnij">
+                    <tui-icon icon="@tui.grip-vertical" />
                   </button>
                   <button
                     class="erp-configurator__remove-btn"
-                    (click)="removePinned(i)"
+                    (click)="removePinned(item.id)"
                     title="Odepnij"
                   >
                     <tui-icon icon="@tui.x" />
@@ -223,7 +234,7 @@ interface ConfiguratorItem {
       width: calc(100% + 2 * var(--tui-padding, 1.5rem));
       margin: calc(-1 * var(--tui-padding, 1.5rem));
       max-width: 90vw;
-      max-height: 80vh;
+      height: 60vh;
     }
 
     .erp-configurator--maximized {
@@ -296,6 +307,11 @@ interface ConfiguratorItem {
       border-right: 1px solid var(--tui-border-normal);
     }
 
+    .erp-configurator__panel-tabs {
+      border-bottom: 1px solid var(--tui-border-normal);
+      padding: 0 0.5rem;
+    }
+
     .erp-configurator__panel-header {
       padding: 0.625rem 0.75rem;
       font: var(--tui-font-text-s);
@@ -304,6 +320,11 @@ interface ConfiguratorItem {
       text-transform: uppercase;
       letter-spacing: 0.04em;
       font-size: 0.6875rem;
+      border-bottom: 1px solid var(--tui-border-normal);
+    }
+
+    .erp-configurator__search {
+      padding: 0.75rem 1.25rem;
       border-bottom: 1px solid var(--tui-border-normal);
     }
 
@@ -521,6 +542,53 @@ interface ConfiguratorItem {
     .erp-configurator__footer-spacer {
       flex: 1;
     }
+    .erp-configurator__drag-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: none;
+      background: transparent;
+      color: var(--tui-text-tertiary);
+      cursor: grab;
+      border-radius: 0.25rem;
+    }
+
+    .erp-configurator__drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .erp-configurator__drag-handle:hover {
+      color: var(--tui-text-primary);
+      background: var(--tui-background-neutral-1-hover);
+    }
+
+    .cdk-drag-preview {
+      box-sizing: border-box;
+      border-radius: 0.5rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+      background: var(--tui-background-base);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+    }
+
+    .cdk-drag-placeholder {
+      opacity: 0.4;
+      background: var(--tui-background-neutral-1) !important;
+      border: 1px dashed var(--tui-border-focus) !important;
+      box-shadow: none !important;
+    }
+
+    .cdk-drag-animating {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    .erp-configurator__list.cdk-drop-list-dragging .erp-configurator__pinned-item:not(.cdk-drag-placeholder) {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
   `],
 })
 export class ErpActionToolbarConfiguratorComponent implements OnInit {
@@ -535,6 +603,9 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
 
   /** Emitowane po zapisaniu. */
   readonly saved = output<ErpToolbarUserPrefs>();
+
+  /** Domyślna zakładka do otwarcia (0 = domyślna, 1 = zaznaczenie). */
+  readonly initialTab = input<number>(0);
 
   private readonly preferencesService = inject(ErpUserPreferencesService);
 
@@ -557,6 +628,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
 
   private initialized = false;
 
+  protected readonly activeTab = signal(0);
   protected readonly maximized = signal(false);
 
   protected toggleMaximize(): void {
@@ -568,9 +640,17 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
     }
   }
 
+  protected readonly searchTerm = signal('');
+  
+  protected readonly searchInputConfig = ErpInputBuilder.create(b => b
+    .setIconStart('@tui.search')
+    .setPlaceholder('Szukaj akcji...')
+  );
+
   // ─── Inicjalizacja ────────────────────────────────
 
   ngOnInit(): void {
+    this.activeTab.set(this.initialTab());
     this.ensureInit();
   }
 
@@ -587,7 +667,8 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
 
     // Enabled map
     const enabled: Record<string, boolean> = {};
-    for (const group of config.defaultGroups) {
+    const allGroups = [...config.defaultGroups, ...(config.selectionGroups ?? [])];
+    for (const group of allGroups) {
       enabled[`group:${group.id}`] = !prefs?.hiddenGroupIds?.includes(group.id);
       for (const action of group.actions) {
         enabled[`action:${action.id}`] = !prefs?.hiddenActionIds?.includes(action.id);
@@ -645,8 +726,10 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
 
     const items: ConfiguratorItem[] = [];
 
-    // Statyczne grupy
-    for (const group of config.defaultGroups) {
+    // Statyczne grupy (domyślne oraz wywoływane przy zaznaczeniu)
+    const allGroups = [...config.defaultGroups, ...(config.selectionGroups ?? [])];
+    for (const group of allGroups) {
+      const isSelection = !!config.selectionGroups?.includes(group);
       items.push({
         id: group.id,
         label: this.resolveLabel(group.label),
@@ -657,6 +740,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
         shortcut: '',
         defaultShortcut: '',
         indent: 0,
+        isSelectionGroup: isSelection,
       });
 
       for (const action of group.actions) {
@@ -671,6 +755,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
           shortcut: shortcuts[action.id] ?? action.shortcut ?? '',
           defaultShortcut: action.shortcut ?? '',
           indent: 1,
+          isSelectionGroup: isSelection,
         });
       }
     }
@@ -687,6 +772,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
         shortcut: '',
         defaultShortcut: '',
         indent: 0,
+        isSelectionGroup: false,
       });
 
       for (const tmpl of dp.actionTemplate) {
@@ -701,6 +787,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
           shortcut: shortcuts[tmpl.id] ?? tmpl.shortcut ?? '',
           defaultShortcut: tmpl.shortcut ?? '',
           indent: 1,
+          isSelectionGroup: false,
         });
       }
     }
@@ -708,12 +795,50 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
     return items;
   });
 
+  protected readonly _filteredConfiguratorItems = computed<ConfiguratorItem[]>(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    const all = this._configuratorItems();
+    const currentTab = this.activeTab();
+    const isSelectionTab = currentTab === 1;
+
+    const tabItems = all.filter(i => !!i.isSelectionGroup === isSelectionTab);
+    
+    if (!term) return tabItems;
+
+    const result: ConfiguratorItem[] = [];
+    let currentGroup: ConfiguratorItem | null = null;
+    let groupAdded = false;
+
+    for (const item of tabItems) {
+      if (item.type === 'group' || item.type === 'dynamic-group') {
+        currentGroup = item;
+        groupAdded = false;
+        if (item.label.toLowerCase().includes(term)) {
+          result.push(item);
+          groupAdded = true;
+        }
+      } else {
+        if (item.label.toLowerCase().includes(term)) {
+          if (currentGroup && !groupAdded) {
+            result.push(currentGroup);
+            groupAdded = true;
+          }
+          result.push(item);
+        }
+      }
+    }
+    return result;
+  });
+
   protected readonly _pinnedItems = computed<ConfiguratorItem[]>(() => {
     const ids = this.pinnedIds();
     const all = this._configuratorItems();
+    const currentTab = this.activeTab();
+    const isSelectionTab = currentTab === 1;
+
     return ids
       .map(id => all.find(i => i.id === id && i.type === 'action'))
-      .filter((i): i is ConfiguratorItem => i !== undefined);
+      .filter((i): i is ConfiguratorItem => i !== undefined && !!i.isSelectionGroup === isSelectionTab);
   });
 
   // ─── Konfiguracja przycisków ──────────────────────
@@ -781,18 +906,32 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
     }
   }
 
-  protected movePinned(index: number, direction: -1 | 1): void {
+  protected dropPinned(event: CdkDragDrop<ConfiguratorItem[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    
+    const visibleItems = this._pinnedItems();
+    const draggedItemId = visibleItems[event.previousIndex].id;
+    const targetItemId = visibleItems[event.currentIndex].id;
+
     this.pinnedIds.update(ids => {
       const next = [...ids];
-      const targetIndex = index + direction;
-      if (targetIndex < 0 || targetIndex >= next.length) return ids;
-      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      const prevIdx = next.indexOf(draggedItemId);
+      const currIdx = next.indexOf(targetItemId);
+      if (prevIdx !== -1 && currIdx !== -1) {
+        next.splice(prevIdx, 1);
+        const insertIdx = next.indexOf(targetItemId);
+        if (event.previousIndex < event.currentIndex) {
+          next.splice(insertIdx + 1, 0, draggedItemId);
+        } else {
+          next.splice(insertIdx, 0, draggedItemId);
+        }
+      }
       return next;
     });
   }
 
-  protected removePinned(index: number): void {
-    this.pinnedIds.update(ids => ids.filter((_, i) => i !== index));
+  protected removePinned(itemId: string): void {
+    this.pinnedIds.update(ids => ids.filter(id => id !== itemId));
   }
 
   protected captureShortcut(event: KeyboardEvent, item: ConfiguratorItem): void {

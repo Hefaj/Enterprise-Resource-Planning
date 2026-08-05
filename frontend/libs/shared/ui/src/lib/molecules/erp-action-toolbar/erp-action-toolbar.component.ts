@@ -100,16 +100,7 @@ import {
           </ng-template>
         }
 
-        <div class="erp-action-toolbar__spacer"></div>
 
-        @if (isEffectivelyInZone() && _zoneLabel()) {
-          <div class="erp-action-toolbar__badge">⌨ {{ _zoneLabel() }}</div>
-        }
-
-        <!-- Przycisk „Usuń zaznaczenie" -->
-        @if (config().onClearSelection) {
-          <erp-button [config]="_clearSelectionButtonConfig" />
-        }
       } @else {
         <!-- ═══ TRYB DOMYŚLNY ═══ -->
 
@@ -142,30 +133,38 @@ import {
           </ng-template>
         }
 
-        <div class="erp-action-toolbar__spacer"></div>
+      }
 
-        @if (isEffectivelyInZone() && _zoneLabel()) {
-          <div class="erp-action-toolbar__badge">⌨ {{ _zoneLabel() }}</div>
-        }
+      <!-- WSPÓLNA CZĘŚĆ (Prawa strona) -->
+      <div class="erp-action-toolbar__spacer"></div>
 
-        <!-- Zębatka konfiguracji -->
-        @if (config().showConfigurator !== false) {
-          <button
-            class="erp-action-toolbar__configurator"
-            (click)="openConfigurator(configuratorTpl)"
-            title="Konfiguruj menu"
-          >
-            <tui-icon icon="@tui.settings" />
-          </button>
-          
-          <ng-template #configuratorTpl let-context>
-            <erp-action-toolbar-configurator 
-              [toolbarConfig]="config()" 
-              [dialogContext]="context"
-              (closed)="context.complete()" 
-            />
-          </ng-template>
-        }
+      @if (isEffectivelyInZone() && _zoneLabel()) {
+        <div class="erp-action-toolbar__badge">⌨ {{ _zoneLabel() }}</div>
+      }
+
+      <!-- Przycisk „Usuń zaznaczenie" -->
+      @if (_isSelectionMode() && config().onClearSelection) {
+        <erp-button [config]="_clearSelectionButtonConfig" />
+      }
+
+      <!-- Zębatka konfiguracji -->
+      @if (config().showConfigurator !== false) {
+        <button
+          class="erp-action-toolbar__configurator"
+          (click)="openConfigurator(configuratorTpl)"
+          title="Konfiguruj menu"
+        >
+          <tui-icon icon="@tui.settings" />
+        </button>
+        
+        <ng-template #configuratorTpl let-context>
+          <erp-action-toolbar-configurator 
+            [toolbarConfig]="config()" 
+            [dialogContext]="context"
+            [initialTab]="_isSelectionMode() ? 1 : 0"
+            (closed)="context.complete()" 
+          />
+        </ng-template>
       }
     </div>
   `,
@@ -375,22 +374,38 @@ export class ErpActionToolbarComponent implements OnInit, OnDestroy {
   // ─── Grupy akcji — SELECTION ─────────────────────
 
   protected readonly _selectionGroups = computed<ErpActionGroup[]>(() => {
-    return this.config().selectionGroups ?? [];
+    const groups = this.config().selectionGroups ?? [];
+    const prefs = this._userPrefs();
+
+    if (!prefs) return groups;
+
+    return groups
+      .filter(g => !prefs.hiddenGroupIds?.includes(g.id))
+      .map(g => ({
+        ...g,
+        actions: g.actions.filter(a => !prefs.hiddenActionIds?.includes(a.id)),
+      }));
   });
 
   private readonly _allSelectionActions = computed<ErpActionDef[]>(() => {
     return this._selectionGroups().flatMap(g => g.actions);
   });
 
-  /** Pinned akcje w trybie zaznaczenia (pierwsze 4 z pierwszej grupy). */
+  /** Pinned akcje w trybie zaznaczenia. */
   protected readonly _pinnedSelectionActions = computed<ErpActionDef[]>(() => {
-    const actions = this._allSelectionActions();
-    return actions.slice(0, 4);
+    const pinnedIds = this._effectivePinnedIds();
+    const allActions = this._allSelectionActions();
+    return pinnedIds
+      .map(id => allActions.find(a => a.id === id))
+      .filter((a): a is ErpActionDef => a !== undefined);
   });
 
   protected readonly _hasMoreSelectionActions = computed<boolean>(() => {
-    const actions = this._allSelectionActions();
-    return actions.length > 4;
+    const pinnedIds = this._effectivePinnedIds();
+    const allActions = this._allSelectionActions();
+    const hasUnpinned = allActions.some(a => !pinnedIds.includes(a.id));
+    const hasDynamic = (this.config().dynamicProviders ?? []).length > 0;
+    return hasUnpinned || hasDynamic;
   });
 
   // ─── Dynamiczne providery ─────────────────────────

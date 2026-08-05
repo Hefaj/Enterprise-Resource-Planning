@@ -11,8 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { TuiIcon, TuiDataList } from '@taiga-ui/core';
 import { TuiLoader } from '@taiga-ui/core/components/loader';
 import { TuiHintDirective } from '@taiga-ui/core/portals/hint';
-import { TuiTextfieldComponent } from '@taiga-ui/core/components/textfield';
-import { TuiInputDirective } from '@taiga-ui/core/components/input';
+import { ErpInputComponent, ErpInputBuilder } from '../../form/erp-input';
 import { unwrapSignal, MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import {
@@ -36,24 +35,19 @@ import {
     TuiDataList,
     TuiLoader,
     TuiHintDirective,
-    TuiTextfieldComponent,
-    TuiInputDirective,
     ErpTranslatePipe,
+    ErpInputComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="erp-mega-menu">
       <!-- Wyszukiwarka -->
       <div class="erp-mega-menu__search">
-        <tui-textfield iconStart="@tui.search">
-          <input
-            tuiInput
-            type="text"
-            [ngModel]="searchTerm()"
-            (ngModelChange)="searchTerm.set($event)"
-            placeholder="Szukaj akcji..."
-          />
-        </tui-textfield>
+        <erp-input
+          [config]="searchInputConfig"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+        />
       </div>
 
       <!-- Kolumny grup -->
@@ -234,6 +228,7 @@ import {
     .erp-mega-menu {
       display: flex;
       flex-direction: column;
+      min-width: 320px;
       max-width: 80vw;
       max-height: 60vh;
       background: var(--tui-background-base);
@@ -451,6 +446,11 @@ export class ErpActionToolbarMegaMenuComponent {
 
   /** Wyszukiwarka. */
   readonly searchTerm = signal('');
+
+  protected readonly searchInputConfig = ErpInputBuilder.create(b => b
+    .setIconStart('@tui.search')
+    .setPlaceholder('Szukaj akcji...')
+  );
 
   /** Stany ładowania poszczególnych akcji. */
   protected readonly loadingActions = signal<Set<string>>(new Set());

@@ -5,12 +5,14 @@ export enum ErpPreferencesType {
   Table = 'tables',
   Filter = 'filters',
   PageLayout = 'pageLayouts',
+  ActionToolbar = 'actionToolbars',
 }
 
 export interface ErpPreferencesMap {
   [ErpPreferencesType.Table]: any;
   [ErpPreferencesType.Filter]: any;
   [ErpPreferencesType.PageLayout]: any;
+  [ErpPreferencesType.ActionToolbar]: any;
 }
 
 export interface ErpUserPreferences {
@@ -20,6 +22,7 @@ export interface ErpUserPreferences {
   tables?: Record<string, any>;
   filters?: Record<string, any>;
   pageLayouts?: Record<string, any>;
+  actionToolbars?: Record<string, any>;
   fontSize?: 's' | 'm' | 'l' | 'xl';
 }
 

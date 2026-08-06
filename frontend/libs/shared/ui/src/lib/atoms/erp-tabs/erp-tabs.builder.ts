@@ -102,4 +102,14 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
     this._data.underline = underline;
     return this;
   }
+
+  /**
+   * Ustawia tryb wyświetlania zakładek.
+   * - 'horizontal' (domyślny): klasyczne tui-tabs na górze
+   * - 'vertical': pionowy Activity Bar z ikonkami po lewej stronie
+   */
+  public setLayout(layout: MaybeSignal<'horizontal' | 'vertical'>): this {
+    this._data.layout = layout;
+    return this;
+  }
 }

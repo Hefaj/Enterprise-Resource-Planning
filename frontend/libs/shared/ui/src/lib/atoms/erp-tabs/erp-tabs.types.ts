@@ -45,4 +45,6 @@ export interface ErpTabsConfig {
   size?: MaybeSignal<'m' | 'l'>;
   /** Czy wyświetlać podkreślenie aktywnej zakładki. */
   underline?: MaybeSignal<boolean>;
+  /** Tryb wyświetlania: 'horizontal' (domyślne tui-tabs) lub 'vertical' (Activity Bar z ikonkami). */
+  layout?: MaybeSignal<'horizontal' | 'vertical'>;
 }

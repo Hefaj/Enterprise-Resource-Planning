@@ -35,6 +35,7 @@ import { ProductFilterComponent } from './filters/product-filter.component';
 export class ProductComponent {
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
+      .setLayout('vertical')
       .addTab(PRODUCT_KEYS.base.tabs.multimedia, 'multimedia', {
         component: MultimediaTabComponent,
         icon: '@tui.image',

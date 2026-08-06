@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, signal, computed, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, OnInit, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpTableComponent, ErpTableBuilder } from '@erp/shared/ui';
+import { 
+  ErpTableComponent, 
+  ErpTableBuilder,
+  ErpActionToolbarComponent, 
+  ErpActionToolbarBuilder, 
+  ErpActionToolbarZoneDirective, 
+  ErpActionToolbarContextDirective, 
+  ErpSelectionState
+} from '@erp/shared/ui';
 
 interface Warranty {
   id: string;
@@ -60,22 +68,146 @@ function generateWarranties(count: number): Warranty[] {
 @Component({
   selector: 'erp-warranty-tab',
   standalone: true,
-  imports: [CommonModule, ErpTableComponent],
+  imports: [
+    CommonModule, 
+    ErpTableComponent,
+    ErpActionToolbarComponent,
+    ErpActionToolbarZoneDirective,
+    ErpActionToolbarContextDirective
+  ],
   template: `
-    <div class="flex flex-col h-full w-full overflow-hidden">
-      <div class="flex-1 overflow-hidden">
-        <erp-table
-          class="block h-full"
-          [config]="tableConfig"
-        />
+    <div class="h-full w-full p-2">
+      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone>
+        <erp-action-toolbar [config]="actionToolbar" />
+        <div class="flex-1 overflow-hidden" [erpActionToolbarContext]="actionToolbar">
+          <erp-table
+            class="block h-full"
+            [config]="tableConfig"
+          />
+        </div>
       </div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WarrantyTabComponent implements OnInit {
+  private readonly table = viewChild(ErpTableComponent);
+
   items = signal<Warranty[]>([]);
   isLoading = signal(true);
+  selection = signal<ErpSelectionState<Warranty> | null>(null);
+
+  protected readonly selectionCount = computed(() => this.selection()?.selectedItems?.length ?? 0);
+
+  protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
+    b
+      .setMenuId('warranty-tab-toolbar')
+      // --- GRUPY DOMYŚLNE ---
+      .addDefaultGroup((g) =>
+        g
+          .setId('crud')
+          .setLabel('Akcje')
+          .setIcon('@tui.layers')
+          .addAction((a) =>
+            a
+              .setId('add')
+              .setLabel('Dodaj nową gwarancję')
+              .setIcon('@tui.plus')
+              .setShortcut('Ctrl+N')
+              .setAppearance('success')
+              .setFn(() => console.log('Dodaj nową gwarancję'))
+          )
+          .addAction((a) =>
+            a
+              .setId('duplicate')
+              .setLabel('Duplikuj układ')
+              .setIcon('@tui.copy')
+              .setShortcut('Ctrl+D')
+              .setFn(() => console.log('Duplikuj'))
+          )
+      )
+      .addDefaultGroup((g) =>
+        g
+          .setId('import-export')
+          .setLabel('Eksport i Import')
+          .setIcon('@tui.download')
+          .addAction((a) =>
+            a
+              .setId('export-csv')
+              .setLabel('Eksportuj do CSV')
+              .setIcon('@tui.file-text')
+              .setFn(() => console.log('Eksport CSV'))
+          )
+          .addAction((a) =>
+            a
+              .setId('export-xml')
+              .setLabel('Eksportuj do XML')
+              .setIcon('@tui.file-code')
+              .setFn(() => console.log('Eksport XML'))
+          )
+          .addAction((a) =>
+            a
+              .setId('import')
+              .setLabel('Importuj z pliku')
+              .setIcon('@tui.upload')
+              .setSeparator(true)
+              .setFn(() => console.log('Import'))
+          )
+      )
+      .addDefaultGroup((g) =>
+        g
+          .setId('view-options')
+          .setLabel('Opcje widoku')
+          .setIcon('@tui.eye')
+          .addAction((a) =>
+            a
+              .setId('refresh')
+              .setLabel('Odśwież listę')
+              .setIcon('@tui.refresh-cw')
+              .setShortcut('F5')
+              .setAppearance('info')
+              .setFn(() => console.log('Odświeżam'))
+          )
+          .addAction((a) =>
+            a
+              .setId('view-archived')
+              .setLabel('Pokaż archiwalne')
+              .setIcon('@tui.archive')
+              .setFn(() => console.log('Pokaż archiwalne'))
+          )
+          .addAction((a) =>
+            a
+              .setId('extended-view')
+              .setLabel('Rozszerzony widok tabeli')
+              .setIcon('@tui.maximize')
+              .setFn(() => console.log('Rozszerzony widok'))
+          )
+      )
+      // --- GRUPY ZAZNACZENIA ---
+      .addSelectionGroup((g) =>
+        g
+          .setId('bulk-edit')
+          .setLabel('Edycja masowa')
+          .setIcon('@tui.pencil')
+          .addAction((a) =>
+            a
+              .setId('set-status')
+              .setLabel('Zmień status')
+              .setIcon('@tui.activity')
+              .setShortcut('Ctrl+E')
+              .setFn(() => console.log('Zmień status'))
+          )
+      )
+      // --- USTAWIENIA DODATKOWE ---
+      .setSelectionCount(this.selectionCount)
+      .setSelectionLabel('Wybrano gwarancji')
+      .setOnClearSelection(() => {
+         this.selection.set(null);
+         this.table()?.clearSelection();
+      })
+      .setPinnedActionIds(['add', 'set-status'])
+      .setEnableContextMenu(true)
+  );
 
   ngOnInit(): void {
     setTimeout(() => {
@@ -93,7 +225,10 @@ export class WarrantyTabComponent implements OnInit {
     // .setSelectionMode('single')
     .setSelectionMode('multi')
     // .setStriped(true)
-    .setOnSelectionChange((state) => console.log(state))
+    .setOnSelectionChange((state) => {
+      console.log(state);
+      this.selection.set(state);
+    })
     .setLoading(this.isLoading)
     .setItems(this.items)
     .setItemCount(computed(() => this.items().length))

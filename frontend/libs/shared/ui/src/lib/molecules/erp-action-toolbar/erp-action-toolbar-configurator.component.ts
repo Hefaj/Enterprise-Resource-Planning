@@ -18,6 +18,9 @@ import { unwrapSignal, MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpButtonComponent } from '../../atoms/erp-button/erp-button.component';
 import { ErpButtonConfig } from '../../atoms/erp-button/erp-button.types';
 import { ErpInputComponent, ErpInputBuilder } from '../../form/erp-input';
+import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
+import { TranslocoService } from '@jsverse/transloco';
+import { SHARED_KEYS } from '../../translation/keys';
 import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-access';
 import {
   ErpActionDef,
@@ -41,6 +44,7 @@ interface ConfiguratorItem {
   defaultShortcut: string;
   indent: number;
   isSelectionGroup?: boolean;
+  appearance?: string;
 }
 
 /**
@@ -64,6 +68,7 @@ interface ConfiguratorItem {
     TuiHintDirective,
     ErpButtonComponent,
     ErpInputComponent,
+    ErpTranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -71,18 +76,18 @@ interface ConfiguratorItem {
       <!-- Header -->
       <div class="erp-configurator__header">
         <tui-icon icon="@tui.settings" class="erp-configurator__header-icon" />
-        <h2 class="erp-configurator__title">Konfiguracja paska akcji</h2>
+        <h2 class="erp-configurator__title">{{ (SHARED_KEYS.actionToolbar.configurator.title | erpTranslate) || '' }}</h2>
         <button
           class="erp-configurator__maximize"
           (click)="toggleMaximize()"
-          [title]="maximized() ? 'Przywróć rozmiar' : 'Maksymalizuj'"
+          [title]="maximized() ? ((SHARED_KEYS.actionToolbar.configurator.restoreSize | erpTranslate) || '') : ((SHARED_KEYS.actionToolbar.configurator.maximize | erpTranslate) || '')"
         >
           <tui-icon [icon]="maximized() ? '@tui.minimize-2' : '@tui.maximize-2'" />
         </button>
         <button
           class="erp-configurator__close"
           (click)="onClose()"
-          title="Zamknij"
+          [title]="(SHARED_KEYS.actionToolbar.configurator.close | erpTranslate) || ''"
         >
           <tui-icon icon="@tui.x" />
         </button>
@@ -94,8 +99,8 @@ interface ConfiguratorItem {
         <div class="erp-configurator__panel erp-configurator__panel--left">
           <div class="erp-configurator__panel-tabs">
             <tui-tabs [(activeItemIndex)]="activeTab">
-              <button tuiTab type="button">Standardowe</button>
-              <button tuiTab type="button">Zaznaczenie</button>
+              <button tuiTab type="button">{{ (SHARED_KEYS.actionToolbar.configurator.tabs.standard | erpTranslate) || '' }}</button>
+              <button tuiTab type="button">{{ (SHARED_KEYS.actionToolbar.configurator.tabs.selection | erpTranslate) || '' }}</button>
             </tui-tabs>
           </div>
 
@@ -129,13 +134,16 @@ interface ConfiguratorItem {
 
                   <span class="erp-configurator__item-label"
                     [class.erp-configurator__item-label--group]="item.type === 'group' || item.type === 'dynamic-group'"
-                    [tuiHint]="item.label"
+                    [class.erp-configurator__item-label--warning]="item.appearance === 'warning'"
+                    [class.erp-configurator__item-label--info]="item.appearance === 'info'"
+                    [class.erp-configurator__item-label--success]="item.appearance === 'success'"
+                    [tuiHint]="(item.label | erpTranslate) || ''"
                   >
-                    {{ item.label }}
+                    {{ (item.label | erpTranslate) || '' }}
                   </span>
 
                   @if (item.type === 'dynamic-group') {
-                    <span class="erp-configurator__dynamic-badge">dyn.</span>
+                    <span class="erp-configurator__dynamic-badge">{{ (SHARED_KEYS.actionToolbar.megaMenu.dynamic | erpTranslate) || '' }}</span>
                   }
                 </label>
 
@@ -145,7 +153,7 @@ interface ConfiguratorItem {
                     class="erp-configurator__pin-btn"
                     [class.erp-configurator__pin-btn--active]="item.pinned"
                     (click)="togglePinned(item)"
-                    title="Przypnij na pasek"
+                    [title]="(SHARED_KEYS.actionToolbar.configurator.pinToToolbar | erpTranslate) || ''"
                   >
                     <tui-icon icon="@tui.pin" />
                   </button>
@@ -167,7 +175,7 @@ interface ConfiguratorItem {
                       <button
                         class="erp-configurator__shortcut-reset"
                         (click)="resetShortcut(item)"
-                        title="Resetuj skrót"
+                        [title]="(SHARED_KEYS.actionToolbar.configurator.resetShortcut | erpTranslate) || ''"
                       >
                         <tui-icon icon="@tui.rotate-ccw" />
                       </button>
@@ -181,7 +189,7 @@ interface ConfiguratorItem {
 
         <!-- Panel prawy: Pinned akcje -->
         <div class="erp-configurator__panel erp-configurator__panel--right">
-          <div class="erp-configurator__panel-header">Przypięte na pasku</div>
+          <div class="erp-configurator__panel-header">{{ (SHARED_KEYS.actionToolbar.configurator.pinnedActions | erpTranslate) || '' }}</div>
 
           <div class="erp-configurator__list" cdkDropList (cdkDropListDropped)="dropPinned($event)">
             @for (item of _pinnedItems(); track item.id; let i = $index) {
@@ -192,16 +200,16 @@ interface ConfiguratorItem {
                   <tui-icon [icon]="item.icon" class="erp-configurator__item-icon" />
                 }
 
-                <span class="erp-configurator__pinned-label" [tuiHint]="item.label">{{ item.label }}</span>
+                <span class="erp-configurator__pinned-label" [tuiHint]="(item.label | erpTranslate) || ''">{{ (item.label | erpTranslate) || '' }}</span>
 
                 <div class="erp-configurator__pinned-controls">
-                  <button class="erp-configurator__drag-handle" cdkDragHandle title="Przeciągnij">
+                  <button class="erp-configurator__drag-handle" cdkDragHandle [title]="(SHARED_KEYS.actionToolbar.configurator.drag | erpTranslate) || ''">
                     <tui-icon icon="@tui.grip-vertical" />
                   </button>
                   <button
                     class="erp-configurator__remove-btn"
                     (click)="removePinned(item.id)"
-                    title="Odepnij"
+                    [title]="(SHARED_KEYS.actionToolbar.configurator.unpin | erpTranslate) || ''"
                   >
                     <tui-icon icon="@tui.x" />
                   </button>
@@ -211,7 +219,7 @@ interface ConfiguratorItem {
 
             @if (_pinnedItems().length === 0) {
               <div class="erp-configurator__empty">
-                Brak przypiętych akcji. Użyj ikony 📌 aby przypiąć.
+                {{ (SHARED_KEYS.actionToolbar.configurator.noPinnedActions | erpTranslate) || '' }}
               </div>
             }
           </div>
@@ -369,9 +377,22 @@ interface ConfiguratorItem {
     .erp-configurator__item-label {
       flex: 1;
       font: var(--tui-font-text-s);
+      color: var(--tui-text-primary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .erp-configurator__item-label--warning {
+      color: var(--tui-text-negative);
+    }
+
+    .erp-configurator__item-label--info {
+      color: var(--tui-text-action);
+    }
+
+    .erp-configurator__item-label--success {
+      color: var(--tui-status-positive);
     }
 
     .erp-configurator__item-label--group {
@@ -592,6 +613,8 @@ interface ConfiguratorItem {
   `],
 })
 export class ErpActionToolbarConfiguratorComponent implements OnInit {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+  
   /** Konfiguracja toolbara (z definicjami akcji). */
   readonly toolbarConfig = input.required<ErpActionToolbarConfig>();
 
@@ -608,6 +631,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
   readonly initialTab = input<number>(0);
 
   private readonly preferencesService = inject(ErpUserPreferencesService);
+  private readonly transloco = inject(TranslocoService);
 
   // ─── Stan wewnętrzny ──────────────────────────────
 
@@ -644,7 +668,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
   
   protected readonly searchInputConfig = ErpInputBuilder.create(b => b
     .setIconStart('@tui.search')
-    .setPlaceholder('Szukaj akcji...')
+    .setPlaceholder(SHARED_KEYS.actionToolbar.configurator.searchPlaceholder)
   );
 
   // ─── Inicjalizacja ────────────────────────────────
@@ -756,6 +780,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
           defaultShortcut: action.shortcut ?? '',
           indent: 1,
           isSelectionGroup: isSelection,
+          appearance: unwrapSignal(action.appearance) as string | undefined,
         });
       }
     }
@@ -788,6 +813,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
           defaultShortcut: tmpl.shortcut ?? '',
           indent: 1,
           isSelectionGroup: false,
+          appearance: unwrapSignal(tmpl.appearance) as string | undefined,
         });
       }
     }
@@ -810,15 +836,17 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
     let groupAdded = false;
 
     for (const item of tabItems) {
+      const translatedLabel = this.transloco.translate(item.label).toLowerCase();
+      
       if (item.type === 'group' || item.type === 'dynamic-group') {
         currentGroup = item;
         groupAdded = false;
-        if (item.label.toLowerCase().includes(term)) {
+        if (translatedLabel.includes(term)) {
           result.push(item);
           groupAdded = true;
         }
       } else {
-        if (item.label.toLowerCase().includes(term)) {
+        if (translatedLabel.includes(term)) {
           if (currentGroup && !groupAdded) {
             result.push(currentGroup);
             groupAdded = true;
@@ -844,7 +872,7 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
   // ─── Konfiguracja przycisków ──────────────────────
 
   protected readonly _resetButtonConfig: ErpButtonConfig = {
-    label: 'Resetuj',
+    label: SHARED_KEYS.actionToolbar.configurator.reset,
     iconStart: '@tui.rotate-ccw',
     appearance: 'flat',
     size: 'm',
@@ -852,14 +880,14 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
   };
 
   protected readonly _cancelButtonConfig: ErpButtonConfig = {
-    label: 'Anuluj',
+    label: SHARED_KEYS.actionToolbar.configurator.cancel,
     appearance: 'outline',
     size: 'm',
     fn: () => this.onClose(),
   };
 
   protected readonly _saveButtonConfig: ErpButtonConfig = {
-    label: 'Zapisz',
+    label: SHARED_KEYS.actionToolbar.configurator.save,
     appearance: 'primary',
     size: 'm',
     fn: () => this.onSave(),

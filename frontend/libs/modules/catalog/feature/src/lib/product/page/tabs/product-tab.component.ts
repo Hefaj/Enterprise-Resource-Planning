@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, computed, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   ErpActionToolbarComponent, 
@@ -24,16 +24,18 @@ import { ProductStore } from '../product.store';
     CategoryProductTableComponent
   ],
   template: `
-    <div class="flex flex-col h-full w-full" erpActionToolbarZone [erpActionToolbarZoneLabel]="'Produkty'">
-      <erp-action-toolbar [config]="actionToolbar" />
-      <div class="flex-1 overflow-hidden" [erpActionToolbarContext]="actionToolbar">
-        <erp-category-product-table 
-          stateKey="product-tab-main"
-          [filters]="currentFilters()"
-          (selectionChange)="onSelectionChange($event)"
-          (loadingChange)="store.setLoading($event)"
-          class="block h-full"
-        />
+    <div class="h-full w-full p-2">
+      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone>
+        <erp-action-toolbar [config]="actionToolbar" />
+        <div class="flex-1 overflow-hidden" [erpActionToolbarContext]="actionToolbar">
+          <erp-category-product-table 
+            stateKey="product-tab-main"
+            [filters]="currentFilters()"
+            (selectionChange)="onSelectionChange($event)"
+            (loadingChange)="store.setLoading($event)"
+            class="block h-full"
+          />
+        </div>
       </div>
     </div>
   `,
@@ -42,6 +44,8 @@ import { ProductStore } from '../product.store';
 export class ProductTabComponent {
   private readonly modalService = inject(ErpModalService);
   protected readonly store = inject(ProductStore);
+
+  private readonly productTable = viewChild(CategoryProductTableComponent);
 
   protected readonly selectionCount = computed(() => this.store.selection()?.selectedItems?.length ?? 0);
 
@@ -235,6 +239,7 @@ export class ProductTabComponent {
            selectedItems: [],
            selectedIds: []
          } as ErpSelectionState<ProductVM>);
+         this.productTable()?.clearSelection();
       })
       .setPinnedActionIds(['add', 'set-name', 'set-price', 'activate'])
       .setEnableContextMenu(true)

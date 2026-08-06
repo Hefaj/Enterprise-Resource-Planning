@@ -54,29 +54,43 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
           [style.width]="leftCollapsed ? '3rem' : _leftWidth() + 'px'"
           [style.min-width]="leftCollapsed ? '3rem' : _leftWidth() + 'px'"
         >
-          <div class="erp-page-layout__sidebar-header">
-            <button
-              class="erp-page-layout__sidebar-btn-left"
-              tuiIconButton
-              appearance="flat"
-              size="s"
-              (click)="toggleLeftSidebar()"
-              [tuiHint]="(leftCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
-            >
-              <tui-icon [icon]="leftCollapsed ? '@tui.list-filter' : '@tui.chevron-left'" />
-            </button>
-            @if (!leftCollapsed) {
+          <div 
+            #leftHeaderEl
+            class="erp-page-layout__sidebar-header-wrapper"
+            [class.erp-page-layout__sidebar-header-wrapper--open]="leftCollapsed || _leftHeaderVisible()"
+          >
+            @if (!leftCollapsed && !_leftHeaderVisible()) {
+              <div 
+                class="erp-page-layout__sidebar-header-trigger"
+                (click)="_leftHeaderVisible.set(true)"
+              >
+                <div class="erp-page-layout__sidebar-header-trigger-line"></div>
+              </div>
+            }
+            <div class="erp-page-layout__sidebar-header">
               <button
-                class="erp-page-layout__sidebar-btn-right"
+                class="erp-page-layout__sidebar-btn-left"
                 tuiIconButton
                 appearance="flat"
                 size="s"
-                (click)="toggleLeftSidebarMode()"
-                [tuiHint]="(leftMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
+                (click)="toggleLeftSidebar()"
+                [tuiHint]="(leftCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
               >
-                <tui-icon [icon]="leftMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
+                <tui-icon [icon]="leftCollapsed ? '@tui.list-filter' : '@tui.chevron-left'" />
               </button>
-            }
+              @if (!leftCollapsed) {
+                <button
+                  class="erp-page-layout__sidebar-btn-right"
+                  tuiIconButton
+                  appearance="flat"
+                  size="s"
+                  (click)="toggleLeftSidebarMode()"
+                  [tuiHint]="(leftMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
+                >
+                  <tui-icon [icon]="leftMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
+                </button>
+              }
+            </div>
           </div>
           <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="leftCollapsed">
             @defer (on timer(30ms)) {
@@ -115,29 +129,43 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
           @if (!rightCollapsed && rightResizable) {
             <div class="erp-page-layout__resizer erp-page-layout__resizer--right" (mousedown)="startDrag($event, 'right')"></div>
           }
-          <div class="erp-page-layout__sidebar-header">
-            @if (!rightCollapsed) {
+          <div 
+            #rightHeaderEl
+            class="erp-page-layout__sidebar-header-wrapper"
+            [class.erp-page-layout__sidebar-header-wrapper--open]="rightCollapsed || _rightHeaderVisible()"
+          >
+            @if (!rightCollapsed && !_rightHeaderVisible()) {
+              <div 
+                class="erp-page-layout__sidebar-header-trigger"
+                (click)="_rightHeaderVisible.set(true)"
+              >
+                <div class="erp-page-layout__sidebar-header-trigger-line"></div>
+              </div>
+            }
+            <div class="erp-page-layout__sidebar-header">
+              @if (!rightCollapsed) {
+                <button
+                  class="erp-page-layout__sidebar-btn-left"
+                  tuiIconButton
+                  appearance="flat"
+                  size="s"
+                  (click)="toggleRightSidebarMode()"
+                  [tuiHint]="(rightMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
+                >
+                  <tui-icon [icon]="rightMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
+                </button>
+              }
               <button
-                class="erp-page-layout__sidebar-btn-left"
+                class="erp-page-layout__sidebar-btn-right"
                 tuiIconButton
                 appearance="flat"
                 size="s"
-                (click)="toggleRightSidebarMode()"
-                [tuiHint]="(rightMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
+                (click)="toggleRightSidebar()"
+                [tuiHint]="(rightCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
               >
-                <tui-icon [icon]="rightMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
+                <tui-icon [icon]="rightCollapsed ? '@tui.list-filter' : '@tui.chevron-right'" />
               </button>
-            }
-            <button
-              class="erp-page-layout__sidebar-btn-right"
-              tuiIconButton
-              appearance="flat"
-              size="s"
-              (click)="toggleRightSidebar()"
-              [tuiHint]="(rightCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
-            >
-              <tui-icon [icon]="rightCollapsed ? '@tui.list-filter' : '@tui.chevron-right'" />
-            </button>
+            </div>
           </div>
           <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="rightCollapsed">
             @defer (on timer(30ms)) {
@@ -265,19 +293,73 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
       left: 0;
     }
 
+    .erp-page-layout__sidebar-header-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+    }
+
+    .erp-page-layout--left-collapsed .erp-page-layout__sidebar--left .erp-page-layout__sidebar-header-wrapper,
+    .erp-page-layout--right-collapsed .erp-page-layout__sidebar--right .erp-page-layout__sidebar-header-wrapper {
+      position: relative;
+    }
+
+    .erp-page-layout__sidebar-header-trigger {
+      height: 12px;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      background: transparent;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .erp-page-layout__sidebar-header-trigger:hover {
+      opacity: 1;
+    }
+
+    .erp-page-layout__sidebar-header-trigger-line {
+      width: 40px;
+      height: 4px;
+      margin-top: 0;
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+      background-color: var(--tui-border-hover, #999);
+      transition: background-color 0.2s ease, width 0.2s ease;
+    }
+    
+    .erp-page-layout__sidebar-header-trigger:hover .erp-page-layout__sidebar-header-trigger-line {
+      background-color: var(--tui-background-accent-1, var(--tui-text-action, #0055ff));
+      width: 100%;
+      border-radius: 0;
+    }
+
     .erp-page-layout__sidebar-header {
       display: flex;
       align-items: center;
-      height: 2.2rem;
-      flex-shrink: 0;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.2s ease;
+      height: 0;
+      overflow: hidden;
+      background: var(--tui-background-elevation-1);
       padding: 0 0.5rem;
+      transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-bottom: 1px solid transparent;
     }
 
-    .erp-page-layout:not(.erp-page-layout--left-collapsed) .erp-page-layout__sidebar--left .erp-page-layout__sidebar-header,
-    .erp-page-layout:not(.erp-page-layout--right-collapsed) .erp-page-layout__sidebar--right .erp-page-layout__sidebar-header {
+    .erp-page-layout__sidebar-header-wrapper--open .erp-page-layout__sidebar-header {
+      height: 2.2rem;
       border-bottom-color: var(--tui-border-normal);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .erp-page-layout--left-collapsed .erp-page-layout__sidebar--left .erp-page-layout__sidebar-header-wrapper--open .erp-page-layout__sidebar-header,
+    .erp-page-layout--right-collapsed .erp-page-layout__sidebar--right .erp-page-layout__sidebar-header-wrapper--open .erp-page-layout__sidebar-header {
+      box-shadow: none;
+      border-bottom-color: transparent;
+      background: transparent;
     }
     
     .erp-page-layout__sidebar-btn-right {
@@ -300,7 +382,6 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
 
     .erp-page-layout__main {
       flex: 1;
-      padding: 0 .5rem;
       height: 100%;
       overflow: auto;
       min-width: 0;
@@ -330,8 +411,12 @@ export class ErpPageLayoutComponent {
 
   private readonly leftSidebarEl = viewChild<ElementRef<HTMLElement>>('leftSidebarEl');
   private readonly rightSidebarEl = viewChild<ElementRef<HTMLElement>>('rightSidebarEl');
+  private readonly leftHeaderEl = viewChild<ElementRef<HTMLElement>>('leftHeaderEl');
+  private readonly rightHeaderEl = viewChild<ElementRef<HTMLElement>>('rightHeaderEl');
   private saveTimeout: any;
 
+  protected readonly _leftHeaderVisible = signal(false);
+  protected readonly _rightHeaderVisible = signal(false);
   protected readonly _dragState = signal<{ type: 'left' | 'right', startX: number, startWidth: number } | null>(null);
 
   protected readonly _leftWidth = signal<number>(280);
@@ -419,23 +504,27 @@ export class ErpPageLayoutComponent {
 
   protected toggleLeftSidebar(): void {
     this._internalLeftCollapsed.update((v) => !v);
+    this._leftHeaderVisible.set(false);
     this.saveLayoutState();
   }
 
   protected toggleLeftSidebarMode(): void {
     const currentMode = this._leftMode();
     this._internalLeftMode.set(currentMode === 'push' ? 'overlay' : 'push');
+    this._leftHeaderVisible.set(false);
     this.saveLayoutState();
   }
 
   protected toggleRightSidebar(): void {
     this._internalRightCollapsed.update((v) => !v);
+    this._rightHeaderVisible.set(false);
     this.saveLayoutState();
   }
 
   protected toggleRightSidebarMode(): void {
     const currentMode = this._rightMode();
     this._internalRightMode.set(currentMode === 'push' ? 'overlay' : 'push');
+    this._rightHeaderVisible.set(false);
     this.saveLayoutState();
   }
 
@@ -454,6 +543,20 @@ export class ErpPageLayoutComponent {
       const rightEl = this.rightSidebarEl()?.nativeElement;
       if (rightEl && !rightEl.contains(target)) {
         this._internalRightCollapsed.set(true);
+      }
+    }
+
+    if (this._leftHeaderVisible()) {
+      const leftHeaderEl = this.leftHeaderEl()?.nativeElement;
+      if (leftHeaderEl && !leftHeaderEl.contains(target)) {
+        this._leftHeaderVisible.set(false);
+      }
+    }
+
+    if (this._rightHeaderVisible()) {
+      const rightHeaderEl = this.rightHeaderEl()?.nativeElement;
+      if (rightHeaderEl && !rightHeaderEl.contains(target)) {
+        this._rightHeaderVisible.set(false);
       }
     }
   }

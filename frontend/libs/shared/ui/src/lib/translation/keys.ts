@@ -108,4 +108,37 @@ export const SHARED_KEYS = {
       selected: 'shared.selectionToolbar.selected',
       selectedFiles: 'shared.selectionToolbar.selectedFiles',
     },
+    actionToolbar: {
+      configurator: {
+        title: 'shared.actionToolbar.configurator.title',
+        restoreSize: 'shared.actionToolbar.configurator.restoreSize',
+        maximize: 'shared.actionToolbar.configurator.maximize',
+        close: 'shared.actionToolbar.configurator.close',
+        tabs: {
+          standard: 'shared.actionToolbar.configurator.tabs.standard',
+          selection: 'shared.actionToolbar.configurator.tabs.selection',
+        },
+        searchPlaceholder: 'shared.actionToolbar.configurator.searchPlaceholder',
+        pinToToolbar: 'shared.actionToolbar.configurator.pinToToolbar',
+        resetShortcut: 'shared.actionToolbar.configurator.resetShortcut',
+        pinnedActions: 'shared.actionToolbar.configurator.pinnedActions',
+        drag: 'shared.actionToolbar.configurator.drag',
+        unpin: 'shared.actionToolbar.configurator.unpin',
+        noPinnedActions: 'shared.actionToolbar.configurator.noPinnedActions',
+        reset: 'shared.actionToolbar.configurator.reset',
+        cancel: 'shared.actionToolbar.configurator.cancel',
+        save: 'shared.actionToolbar.configurator.save',
+      },
+      megaMenu: {
+        searchPlaceholder: 'shared.actionToolbar.megaMenu.searchPlaceholder',
+        empty: 'shared.actionToolbar.megaMenu.empty',
+        dynamic: 'shared.actionToolbar.megaMenu.dynamic',
+      },
+      toolbar: {
+        selected: 'shared.actionToolbar.toolbar.selected',
+        more: 'shared.actionToolbar.toolbar.more',
+        clearSelection: 'shared.actionToolbar.toolbar.clearSelection',
+        configureMenu: 'shared.actionToolbar.toolbar.configureMenu',
+      },
+    },
   } as const;

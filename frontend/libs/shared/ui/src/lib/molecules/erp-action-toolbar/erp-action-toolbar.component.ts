@@ -8,18 +8,23 @@ import {
   OnInit,
   OnDestroy,
   HostListener,
+  ViewChildren,
+  ElementRef,
+  QueryList,
+  AfterViewInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TuiIcon, TuiDropdown, TuiDialogService } from '@taiga-ui/core';
+import { TuiIcon, TuiDropdown, TuiDialogService, TuiButton } from '@taiga-ui/core';
+import { TuiButtonLoading } from '@taiga-ui/kit';
 import { TuiActiveZone } from '@taiga-ui/cdk';
 import { unwrapSignal, MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
-import { ErpButtonComponent } from '../../atoms/erp-button/erp-button.component';
-import { ErpButtonConfig } from '../../atoms/erp-button/erp-button.types';
+// Usunięto importy ErpButtonComponent oraz ErpButtonConfig
 import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-access';
 import { ErpActionToolbarConfiguratorComponent } from './erp-action-toolbar-configurator.component';
 import { ErpActionToolbarMegaMenuComponent } from './erp-action-toolbar-mega-menu.component';
 import { ErpActionToolbarZoneDirective } from './erp-action-toolbar-zone.directive';
+import { SHARED_KEYS } from '../../translation/keys';
 import {
   ErpActionDef,
   ErpActionGroup,
@@ -47,7 +52,8 @@ import {
     TuiDropdown,
     TuiActiveZone,
     ErpTranslatePipe,
-    ErpButtonComponent,
+    TuiButton,
+    TuiButtonLoading,
     ErpActionToolbarMegaMenuComponent,
     ErpActionToolbarConfiguratorComponent,
   ],
@@ -67,28 +73,67 @@ import {
             {{ (unwrap(_selectionLabel()) | erpTranslate) || '' }}:
             <strong>{{ _selectionCount() }}</strong>
           </span>
+          @if (config().onClearSelection) {
+            <button
+              tuiIconButton
+              type="button"
+              appearance="flat"
+              size="s"
+              iconStart="@tui.x"
+              [title]="(SHARED_KEYS.actionToolbar.toolbar.clearSelection | erpTranslate) || ''"
+              (click)="config().onClearSelection?.()"
+              class="erp-action-toolbar__selection-clear"
+            >
+              Usuń
+            </button>
+          }
         </div>
 
         <div class="erp-action-toolbar__separator"></div>
 
         <!-- Pinned akcje zaznaczenia -->
-        <div class="erp-action-toolbar__pinned">
+        <div class="erp-action-toolbar__scroll-wrapper" 
+             [class.is-scrollable-left]="scrollableLeft()" 
+             [class.is-scrollable-right]="scrollableRight()">
+          <div class="erp-action-toolbar__pinned" #scrollContainer (scroll)="onScroll(scrollContainer)">
           @for (action of _pinnedSelectionActions(); track action.id) {
             @if (!unwrap(action.hidden)) {
-              <erp-button [config]="getButtonConfig(action)" />
+              <button 
+                tuiButton
+                type="button"
+                [appearance]="'flat'"
+                [size]="'m'"
+                [disabled]="unwrap(action.disabled) || isActionLoading(action)"
+                [loading]="isActionLoading(action)"
+                [iconStart]="unwrap(action.icon) ?? ''"
+                (click)="onActionClick(action)"
+                [class.erp-action-toolbar__btn--default]="!unwrap(action.appearance)"
+                [class.erp-action-toolbar__btn--warning]="unwrap(action.appearance) === 'warning'"
+                [class.erp-action-toolbar__btn--info]="unwrap(action.appearance) === 'info'"
+                [class.erp-action-toolbar__btn--success]="unwrap(action.appearance) === 'success'"
+              >
+                <span>{{ (unwrap(action.label) | erpTranslate) || '' }}</span>
+              </button>
             }
           }
+          </div>
         </div>
 
         <!-- Mega Menu zaznaczenia (jeżeli są dodatkowe) -->
         @if (_hasMoreSelectionActions()) {
-          <erp-button
-            [config]="_moreButtonConfig()"
+          <button
+            tuiButton
+            type="button"
+            appearance="flat"
+            size="m"
+            iconEnd="@tui.chevron-down"
             tuiDropdownAuto
             [tuiDropdown]="megaMenuTpl"
             [tuiDropdownOpen]="megaMenuOpen()"
             (tuiDropdownOpenChange)="megaMenuOpen.set($event)"
-          />
+          >
+            <span>{{ (SHARED_KEYS.actionToolbar.toolbar.more | erpTranslate) || '' }}</span>
+          </button>
           <ng-template #megaMenuTpl>
             <erp-action-toolbar-mega-menu
               [groups]="_selectionGroups()"
@@ -105,23 +150,48 @@ import {
         <!-- ═══ TRYB DOMYŚLNY ═══ -->
 
         <!-- Pinned akcje -->
-        <div class="erp-action-toolbar__pinned">
+        <div class="erp-action-toolbar__scroll-wrapper" 
+             [class.is-scrollable-left]="scrollableLeft()" 
+             [class.is-scrollable-right]="scrollableRight()">
+          <div class="erp-action-toolbar__pinned" #scrollContainer (scroll)="onScroll(scrollContainer)">
           @for (action of _pinnedDefaultActions(); track action.id) {
             @if (!unwrap(action.hidden)) {
-              <erp-button [config]="getButtonConfig(action)" />
+              <button 
+                tuiButton
+                type="button"
+                [appearance]="'flat'"
+                [size]="'m'"
+                [disabled]="unwrap(action.disabled) || isActionLoading(action)"
+                [loading]="isActionLoading(action)"
+                [iconStart]="unwrap(action.icon) ?? ''"
+                (click)="onActionClick(action)"
+                [class.erp-action-toolbar__btn--default]="!unwrap(action.appearance)"
+                [class.erp-action-toolbar__btn--warning]="unwrap(action.appearance) === 'warning'"
+                [class.erp-action-toolbar__btn--info]="unwrap(action.appearance) === 'info'"
+                [class.erp-action-toolbar__btn--success]="unwrap(action.appearance) === 'success'"
+              >
+                <span>{{ (unwrap(action.label) | erpTranslate) || '' }}</span>
+              </button>
             }
           }
+          </div>
         </div>
 
         <!-- Przycisk „Więcej akcji" → Mega Menu -->
         @if (_hasMoreDefaultActions()) {
-          <erp-button
-            [config]="_moreButtonConfig()"
+          <button
+            tuiButton
+            type="button"
+            appearance="flat"
+            size="m"
+            iconEnd="@tui.chevron-down"
             tuiDropdownAuto
             [tuiDropdown]="megaMenuTpl"
             [tuiDropdownOpen]="megaMenuOpen()"
             (tuiDropdownOpenChange)="megaMenuOpen.set($event)"
-          />
+          >
+            <span>{{ (SHARED_KEYS.actionToolbar.toolbar.more | erpTranslate) || '' }}</span>
+          </button>
           <ng-template #megaMenuTpl>
             <erp-action-toolbar-mega-menu
               [groups]="_defaultGroups()"
@@ -138,21 +208,12 @@ import {
       <!-- WSPÓLNA CZĘŚĆ (Prawa strona) -->
       <div class="erp-action-toolbar__spacer"></div>
 
-      @if (isEffectivelyInZone() && _zoneLabel()) {
-        <div class="erp-action-toolbar__badge">⌨ {{ _zoneLabel() }}</div>
-      }
-
-      <!-- Przycisk „Usuń zaznaczenie" -->
-      @if (_isSelectionMode() && config().onClearSelection) {
-        <erp-button [config]="_clearSelectionButtonConfig" />
-      }
-
       <!-- Zębatka konfiguracji -->
       @if (config().showConfigurator !== false) {
         <button
           class="erp-action-toolbar__configurator"
           (click)="openConfigurator(configuratorTpl)"
-          title="Konfiguruj menu"
+          [title]="(SHARED_KEYS.actionToolbar.toolbar.configureMenu | erpTranslate) || ''"
         >
           <tui-icon icon="@tui.settings" />
         </button>
@@ -174,6 +235,7 @@ import {
     }
 
     .erp-action-toolbar {
+      --erp-toolbar-bg: var(--tui-background-elevation-1);
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -186,7 +248,8 @@ import {
     }
 
     .erp-action-toolbar--selection {
-      background: color-mix(in srgb, var(--tui-text-action) 8%, var(--tui-background-base));
+      --erp-toolbar-bg: color-mix(in srgb, var(--tui-text-action) 8%, var(--tui-background-base));
+      background: var(--erp-toolbar-bg);
       border-color: color-mix(in srgb, var(--tui-text-action) 30%, transparent);
     }
 
@@ -214,18 +277,70 @@ import {
       font-weight: 500;
     }
 
+    .erp-action-toolbar__selection-clear {
+      margin-left: 0.25rem;
+      color: var(--tui-text-primary);
+    }
+
     .erp-action-toolbar__separator {
       width: 1px;
       align-self: stretch;
       background-color: var(--tui-border-normal);
       margin: 0.25rem 0.25rem;
     }
+    
+    .erp-action-toolbar__scroll-wrapper {
+      display: flex;
+      position: relative;
+      min-width: 0;
+    }
+
+    .erp-action-toolbar__scroll-wrapper::before,
+    .erp-action-toolbar__scroll-wrapper::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 1;
+    }
+
+    .erp-action-toolbar__scroll-wrapper::before {
+      left: 0;
+      background: linear-gradient(to right, var(--erp-toolbar-bg), transparent);
+    }
+
+    .erp-action-toolbar__scroll-wrapper::after {
+      right: 0;
+      background: linear-gradient(to left, var(--erp-toolbar-bg), transparent);
+    }
+
+    .erp-action-toolbar__scroll-wrapper.is-scrollable-left::before {
+      opacity: 1;
+    }
+
+    .erp-action-toolbar__scroll-wrapper.is-scrollable-right::after {
+      opacity: 1;
+    }
 
     .erp-action-toolbar__pinned {
       display: flex;
       align-items: center;
       gap: 0.375rem;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .erp-action-toolbar__pinned::-webkit-scrollbar {
+      display: none;
+    }
+
+    .erp-action-toolbar__pinned button {
+      flex-shrink: 0;
     }
 
     .erp-action-toolbar__spacer {
@@ -256,27 +371,31 @@ import {
       font-size: 1.125rem;
     }
 
-    .erp-action-toolbar__badge {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      padding: 0.125rem 0.5rem;
-      background: color-mix(in srgb, var(--tui-text-action) 12%, transparent);
-      color: var(--tui-text-action);
-      border-radius: 0.25rem;
-      pointer-events: none;
-      letter-spacing: 0.02em;
-      font-family: var(--tui-font-text);
-      animation: erpToolbarBadgeFadeIn 0.15s ease;
-      white-space: nowrap;
+    .erp-action-toolbar__btn--default {
+      --tui-text-action: var(--tui-text-primary);
+      --tui-text-action-hover: var(--tui-text-primary);
+    }
+    
+    .erp-action-toolbar__btn--warning {
+      --tui-text-primary: var(--tui-text-negative);
+      --tui-text-action: var(--tui-text-negative);
+      --tui-text-action-hover: var(--tui-text-negative-hover, var(--tui-text-negative));
     }
 
-    @keyframes erpToolbarBadgeFadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to   { opacity: 1; transform: scale(1); }
+    .erp-action-toolbar__btn--info {
+      --tui-text-primary: var(--tui-text-action);
+    }
+
+    .erp-action-toolbar__btn--success {
+      --tui-text-primary: var(--tui-status-positive);
+      --tui-text-action: var(--tui-status-positive);
+      --tui-text-action-hover: var(--tui-status-positive-hover, var(--tui-status-positive));
     }
   `],
 })
 export class ErpActionToolbarComponent implements OnInit, OnDestroy {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+  
   readonly config = input.required<ErpActionToolbarConfig>();
 
   private readonly preferencesService = inject(ErpUserPreferencesService);
@@ -293,8 +412,6 @@ export class ErpActionToolbarComponent implements OnInit, OnDestroy {
   protected readonly isEffectivelyInZone = computed(() => {
     return this.isInZone() || (this.zoneDirective?.isActive() ?? false);
   });
-
-  protected readonly _zoneLabel = computed(() => this.zoneDirective?.erpActionToolbarZoneLabel() ?? '');
 
   /** Obsługa skrótów klawiszowych. */
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -328,7 +445,7 @@ export class ErpActionToolbarComponent implements OnInit, OnDestroy {
   protected readonly _isSelectionMode = computed(() => this._selectionCount() > 0);
 
   protected readonly _selectionLabel = computed(() =>
-    this.config().selectionLabel ?? 'Zaznaczono'
+    this.config().selectionLabel ?? SHARED_KEYS.actionToolbar.toolbar.selected
   );
 
   // ─── Grupy akcji — DEFAULT ──────────────────────
@@ -424,43 +541,36 @@ export class ErpActionToolbarComponent implements OnInit, OnDestroy {
 
   // ─── Konfiguracje przycisków ──────────────────────
 
-  protected readonly _moreButtonConfig = computed<ErpButtonConfig>(() => ({
-    label: 'Więcej',
-    iconEnd: '@tui.chevron-down',
-    appearance: 'outline',
-    size: 'm',
-  }));
 
-  protected readonly _clearSelectionButtonConfig: ErpButtonConfig = {
-    label: 'Usuń zaznaczenie',
-    iconStart: '@tui.x',
-    appearance: 'flat',
-    size: 'm',
-    fn: () => this.config().onClearSelection?.(),
-  };
+  protected readonly loadingActions = signal<Set<string>>(new Set());
 
   protected unwrap<T>(val: MaybeSignal<T> | undefined): T | undefined {
     return unwrapSignal(val);
   }
 
-  protected getButtonConfig(action: ErpActionDef): ErpButtonConfig {
-    return {
-      label: action.label,
-      iconStart: action.icon,
-      disabled: action.disabled,
-      appearance: this.mapAppearance(action),
-      size: 'm',
-      fn: action.fn,
-    };
+  protected isActionLoading(action: ErpActionDef): boolean {
+    return this.loadingActions().has(action.id);
   }
 
-  private mapAppearance(action: ErpActionDef): ErpButtonConfig['appearance'] {
-    const appearance = unwrapSignal(action.appearance);
-    switch (appearance) {
-      case 'warning': return 'destructive';
-      case 'info': return 'secondary';
-      case 'success': return 'accent';
-      default: return 'outline';
+  protected async onActionClick(action: ErpActionDef): Promise<void> {
+    if (unwrapSignal(action.disabled)) return;
+    const fn = action.fn;
+    if (!fn) return;
+
+    if (this.isActionLoading(action)) return;
+
+    const result = fn();
+    if (result instanceof Promise) {
+      this.loadingActions.update(s => new Set(s).add(action.id));
+      try {
+        await result;
+      } finally {
+        this.loadingActions.update(s => {
+          const next = new Set(s);
+          next.delete(action.id);
+          return next;
+        });
+      }
     }
   }
 
@@ -490,14 +600,46 @@ export class ErpActionToolbarComponent implements OnInit, OnDestroy {
   }
 
   // ─── Keyboard Shortcuts ───────────────────────────
+  
+  @ViewChildren('scrollContainer') scrollContainers!: QueryList<ElementRef<HTMLElement>>;
+  
+  protected scrollableLeft = signal(false);
+  protected scrollableRight = signal(false);
+  
+  private resizeObserver?: ResizeObserver;
 
   ngOnInit(): void {
     this.keydownHandler = (e: KeyboardEvent) => this.handleKeydown(e);
-    // Rejestrujemy na document, ale sprawdzamy isInZone
     document.addEventListener('keydown', this.keydownHandler);
   }
 
+  ngAfterViewInit(): void {
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.checkScroll());
+      this.scrollContainers.changes.subscribe(() => this.updateObserver());
+      this.updateObserver();
+    }
+  }
+
+  private updateObserver(): void {
+    this.resizeObserver?.disconnect();
+    this.scrollContainers.forEach(c => this.resizeObserver?.observe(c.nativeElement));
+    this.checkScroll();
+  }
+
+  @HostListener('window:resize')
+  protected checkScroll(): void {
+    const el = this.scrollContainers?.first?.nativeElement;
+    if (el) this.onScroll(el);
+  }
+
+  protected onScroll(el: HTMLElement): void {
+    this.scrollableLeft.set(el.scrollLeft > 0);
+    this.scrollableRight.set(Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth);
+  }
+
   ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
     if (this.keydownHandler) {
       document.removeEventListener('keydown', this.keydownHandler);
       this.keydownHandler = null;

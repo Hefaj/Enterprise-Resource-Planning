@@ -69,6 +69,10 @@ export class CategoryProductTableComponent {
   // Zapisany ostatni stan tabeli (paginacja, sortowanie)
   private lastTableState: ErpTableState | null = null;
 
+  public clearSelection(): void {
+    this.tableComponent()?.clearSelection();
+  }
+
   /** Zmapowane modele widoku z pobranych UUIDów */
   items = computed<ProductVM[]>(() => {
     const uuids = this.currentUuids();

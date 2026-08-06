@@ -5,6 +5,7 @@ import {
   input,
   output,
   signal,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +15,8 @@ import { TuiHintDirective } from '@taiga-ui/core/portals/hint';
 import { ErpInputComponent, ErpInputBuilder } from '../../form/erp-input';
 import { unwrapSignal, MaybeSignal } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
+import { TranslocoService } from '@jsverse/transloco';
+import { SHARED_KEYS } from '../../translation/keys';
 import {
   ErpActionDef,
   ErpActionGroup,
@@ -63,7 +66,7 @@ import {
                 {{ (unwrap(group.label) | erpTranslate) || '' }}
               </span>
               @if (group.isDynamic) {
-                <span class="erp-mega-menu__dynamic-badge">dyn.</span>
+                <span class="erp-mega-menu__dynamic-badge">{{ (SHARED_KEYS.actionToolbar.megaMenu.dynamic | erpTranslate) || '' }}</span>
               }
             </div>
 
@@ -179,7 +182,7 @@ import {
               <span class="erp-mega-menu__group-label">
                 {{ (unwrap(dp.label) | erpTranslate) || '' }}
               </span>
-              <span class="erp-mega-menu__dynamic-badge">dyn.</span>
+              <span class="erp-mega-menu__dynamic-badge">{{ (SHARED_KEYS.actionToolbar.megaMenu.dynamic | erpTranslate) || '' }}</span>
             </div>
 
             <div class="erp-mega-menu__actions">
@@ -216,7 +219,7 @@ import {
               }
 
               @if (dp.items().length === 0) {
-                <div class="erp-mega-menu__empty">Brak elementów</div>
+                <div class="erp-mega-menu__empty">{{ (SHARED_KEYS.actionToolbar.megaMenu.empty | erpTranslate) || '' }}</div>
               }
             </div>
           </div>
@@ -228,7 +231,7 @@ import {
     .erp-mega-menu {
       display: flex;
       flex-direction: column;
-      min-width: 320px;
+      min-width: 280px;
       max-width: 80vw;
       max-height: 60vh;
       background: var(--tui-background-base);
@@ -426,6 +429,8 @@ import {
   `],
 })
 export class ErpActionToolbarMegaMenuComponent {
+  protected readonly SHARED_KEYS = SHARED_KEYS;
+  
   /** Grupy akcji do wyświetlenia. */
   readonly groups = input.required<ErpActionGroup[]>();
 
@@ -447,9 +452,11 @@ export class ErpActionToolbarMegaMenuComponent {
   /** Wyszukiwarka. */
   readonly searchTerm = signal('');
 
+  private readonly transloco = inject(TranslocoService);
+
   protected readonly searchInputConfig = ErpInputBuilder.create(b => b
     .setIconStart('@tui.search')
-    .setPlaceholder('Szukaj akcji...')
+    .setPlaceholder(SHARED_KEYS.actionToolbar.megaMenu.searchPlaceholder)
   );
 
   /** Stany ładowania poszczególnych akcji. */
@@ -467,7 +474,8 @@ export class ErpActionToolbarMegaMenuComponent {
         const filteredActions = group.actions.filter(a => {
           const label = unwrapSignal(a.label);
           const labelStr = typeof label === 'string' ? label : label?.key ?? '';
-          return labelStr.toLowerCase().includes(term);
+          const translatedLabel = this.transloco.translate(labelStr).toLowerCase();
+          return translatedLabel.includes(term);
         });
         return filteredActions.length > 0 ? { ...group, actions: filteredActions } : null;
       })
@@ -483,7 +491,10 @@ export class ErpActionToolbarMegaMenuComponent {
 
     return providers.filter(dp => {
       const items = dp.items();
-      return items.some(item => item.label.toLowerCase().includes(term));
+      return items.some(item => {
+        const translatedLabel = this.transloco.translate(item.label).toLowerCase();
+        return translatedLabel.includes(term);
+      });
     });
   });
 

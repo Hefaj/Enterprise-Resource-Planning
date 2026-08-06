@@ -21,108 +21,45 @@ import { TuiButton, TuiIcon } from '@taiga-ui/core';
     ErpActionToolbarZoneDirective,
     ErpActionToolbarContextDirective,
     ErpTranslatePipe,
-    TuiButton,
     TuiIcon
   ],
   template: `
-    <div class="erp-multimedia-tab" erpActionToolbarZone [erpActionToolbarZoneLabel]="'Multimedia'">
-      @if (_selectionCount() === 0) {
-        <div class="erp-multimedia-tab__empty">
-          <p>{{ (PRODUCT_KEYS.base.multimedia.panel.emptySelection | erpTranslate) || '' }}</p>
-        </div>
-      } 
-      @else {
-        <!-- Pasek akcji grupowych i multimediów -->
-        <div class="erp-multimedia-tab__toolbar">
+    <div class="h-full w-full p-2">
+      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone>
+        @if (_selectionCount() === 0) {
+          <div class="flex items-center justify-center h-full text-[var(--tui-text-secondary)] text-lg">
+            <p>{{ (PRODUCT_KEYS.base.multimedia.panel.emptySelection | erpTranslate) || '' }}</p>
+          </div>
+        } 
+        @else {
+          <!-- Pasek akcji grupowych i multimediów -->
           <erp-action-toolbar [config]="toolbarConfig" />
-        </div>
 
-        <div class="erp-multimedia-tab__content" [erpActionToolbarContext]="toolbarConfig">
-          @if (_selectionCount() <= MAX_DETAILED_SELECTION) {
-            <!-- Tryb MULTI (TanStack Virtual) -->
-            <div class="erp-multimedia-tab__multi">
-              <erp-scroll-viewport [config]="scrollConfig">
-                <ng-template #erpScrollItem let-product let-index="index" let-measureFn="measureElement">
-                  <erp-multimedia-group [product]="product" [measureElement]="measureFn" [attr.data-index]="index" />
-                </ng-template>
-              </erp-scroll-viewport>
-            </div>
-          } @else {
-            <!-- Tryb skrócony dla bardzo wielu elementów -->
-            <div class="erp-multimedia-tab__bulk-placeholder">
-              <tui-icon icon="@tui.layers" class="erp-multimedia-tab__bulk-icon" />
-              <p class="erp-multimedia-tab__bulk-text">
-                Szczegóły ukryte ze względu na liczbę zaznaczonych elementów.<br>
-                Użyj górnego paska, aby zastosować zmiany dla wszystkich <strong>{{ _selectionCount() }}</strong> produktów.
-              </p>
-            </div>
-          }
-        </div>
-      }
+          <div class="flex-1 overflow-hidden" [erpActionToolbarContext]="toolbarConfig">
+            @if (_selectionCount() <= MAX_DETAILED_SELECTION) {
+              <!-- Tryb MULTI (TanStack Virtual) -->
+              <div class="h-full w-full">
+                <erp-scroll-viewport [config]="scrollConfig">
+                  <ng-template #erpScrollItem let-product let-index="index" let-measureFn="measureElement">
+                    <erp-multimedia-group [product]="product" [measureElement]="measureFn" [attr.data-index]="index" />
+                  </ng-template>
+                </erp-scroll-viewport>
+              </div>
+            } @else {
+              <!-- Tryb skrócony dla bardzo wielu elementów -->
+              <div class="flex flex-col items-center justify-center h-full text-center p-8">
+                <tui-icon icon="@tui.layers" class="text-[3rem] text-[var(--tui-text-secondary)] mb-4" />
+                <p class="text-[var(--tui-text-secondary)] leading-relaxed">
+                  Szczegóły ukryte ze względu na liczbę zaznaczonych elementów.<br>
+                  Użyj górnego paska, aby zastosować zmiany dla wszystkich <strong>{{ _selectionCount() }}</strong> produktów.
+                </p>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-      height: 100%;
-    }
-    
-    .erp-multimedia-tab {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .erp-multimedia-tab__empty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--tui-text-secondary);
-      font-size: 1.125rem;
-    }
-
-    .erp-multimedia-tab__toolbar {
-      padding: 0 1.25rem;
-      margin-top: 1.25rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .erp-multimedia-tab__content {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-    }
-
-    .erp-multimedia-tab__multi {
-      flex: 1;
-      height: 100%;
-    }
-
-    .erp-multimedia-tab__bulk-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      text-align: center;
-      padding: 2rem;
-    }
-
-    .erp-multimedia-tab__bulk-icon {
-      font-size: 3rem;
-      color: var(--tui-text-secondary);
-      margin-bottom: 1rem;
-    }
-
-    .erp-multimedia-tab__bulk-text {
-      color: var(--tui-text-secondary);
-      line-height: 1.5;
-    }
-  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultimediaTabComponent {
@@ -159,18 +96,18 @@ export class MultimediaTabComponent {
       .setLabel('Masowe zarządzanie')
       .addAction(a => a
         .setId('mass-add')
-        .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkAdd)
+        // .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkAdd)
+        .setLabel('Dodaj multimedia masowo')
         .setIcon('@tui.plus')
         .setAppearance('success')
-        .setHidden(this._hideMassActions)
         .setFn(() => this.onAddMass())
       )
       .addAction(a => a
         .setId('mass-delete')
-        .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkDelete)
+        // .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkDelete)
+        .setLabel('Usuń wszystkie multimedia')
         .setIcon('@tui.trash')
         .setAppearance('warning')
-        .setHidden(this._hideMassActions)
         .setFn(() => this.onDeleteMass())
       )
     )

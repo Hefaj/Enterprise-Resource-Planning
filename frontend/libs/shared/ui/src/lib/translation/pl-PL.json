@@ -102,6 +102,39 @@
   "selectionToolbar": {
     "selected": "Wybrano {{count}} elementów",
     "selectedFiles": "Wybrano {{count}} plików"
+  },
+  "actionToolbar": {
+    "configurator": {
+      "title": "Konfiguracja paska akcji",
+      "restoreSize": "Przywróć rozmiar",
+      "maximize": "Maksymalizuj",
+      "close": "Zamknij",
+      "tabs": {
+        "standard": "Standardowe",
+        "selection": "Zaznaczenie"
+      },
+      "searchPlaceholder": "Szukaj akcji...",
+      "pinToToolbar": "Przypnij na pasek",
+      "resetShortcut": "Resetuj skrót",
+      "pinnedActions": "Przypięte na pasku",
+      "drag": "Przeciągnij",
+      "unpin": "Odepnij",
+      "noPinnedActions": "Brak przypiętych akcji. Użyj ikony 📌 aby przypiąć.",
+      "reset": "Resetuj",
+      "cancel": "Anuluj",
+      "save": "Zapisz"
+    },
+    "megaMenu": {
+      "searchPlaceholder": "Szukaj akcji...",
+      "empty": "Brak elementów",
+      "dynamic": "dyn."
+    },
+    "toolbar": {
+      "selected": "Zaznaczono",
+      "more": "Więcej",
+      "clearSelection": "Usuń zaznaczenie",
+      "configureMenu": "Konfiguruj menu"
+    }
   }
 }
 

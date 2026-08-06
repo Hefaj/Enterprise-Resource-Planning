@@ -4,6 +4,7 @@ import {
   inject,
   input,
   signal,
+  computed,
   OnInit,
   OnDestroy,
   Renderer2,
@@ -16,7 +17,7 @@ import {
  *
  * @example
  * ```html
- * <div erpActionToolbarZone [erpActionToolbarZoneLabel]="'Produkty'">
+ * <div erpActionToolbarZone>
  *   <erp-action-toolbar [config]="toolbarConfig" />
  *   <erp-table [config]="tableConfig" />
  * </div>
@@ -33,14 +34,15 @@ import {
   },
 })
 export class ErpActionToolbarZoneDirective implements OnInit, OnDestroy {
-  /**
-   * Opcjonalna etykieta wyświetlana jako badge w rogu obszaru
-   * kiedy user najedzie myszką (np. „Produkty ⌨").
-   */
-  readonly erpActionToolbarZoneLabel = input<string>('');
 
-  /** Czy mysz jest w obszarze. */
-  readonly isActive = signal(false);
+  /** Stan najechania myszą. */
+  private readonly _isHovered = signal(false);
+  
+  /** Stan otwartego menu kontekstowego. */
+  private readonly _isContextMenuOpen = signal(false);
+
+  /** Czy mysz jest w obszarze lub menu kontekstowe jest otwarte. */
+  readonly isActive = computed(() => this._isHovered() || this._isContextMenuOpen());
 
   private readonly el = inject(ElementRef<HTMLElement>);
   private readonly renderer = inject(Renderer2);
@@ -51,11 +53,19 @@ export class ErpActionToolbarZoneDirective implements OnInit, OnDestroy {
   ngOnDestroy(): void {}
 
   protected onMouseEnter(): void {
-    this.isActive.set(true);
+    this._isHovered.set(true);
   }
 
   protected onMouseLeave(): void {
-    this.isActive.set(false);
+    this._isHovered.set(false);
+  }
+
+  /**
+   * Zmienia stan otwartego menu kontekstowego.
+   * Używane przez ErpActionToolbarContextDirective, aby nie gubić focusu z obszaru.
+   */
+  public setContextMenuOpen(isOpen: boolean): void {
+    this._isContextMenuOpen.set(isOpen);
   }
 
   /**
@@ -71,13 +81,15 @@ export class ErpActionToolbarZoneDirective implements OnInit, OnDestroy {
     style.textContent = `
       .erp-action-toolbar-zone {
         position: relative;
-        transition: box-shadow 0.2s ease, outline 0.2s ease;
+        transition: box-shadow 0.2s ease, outline-color 0.2s ease;
         border-radius: 0.5rem;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px transparent;
       }
 
       .erp-action-toolbar-zone--active {
-        outline: 2px solid color-mix(in srgb, var(--tui-text-action) 25%, transparent);
-        outline-offset: 2px;
+        outline-color: color-mix(in srgb, var(--tui-text-action) 25%, transparent);
         box-shadow: 0 0 0 4px color-mix(in srgb, var(--tui-text-action) 8%, transparent);
       }
     `;

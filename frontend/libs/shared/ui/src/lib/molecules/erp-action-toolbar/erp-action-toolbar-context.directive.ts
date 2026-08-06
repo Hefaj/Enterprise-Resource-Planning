@@ -20,6 +20,7 @@ import {
   ErpToolbarUserPrefs,
 } from './erp-action-toolbar.types';
 import { ErpPreferencesType, ErpUserPreferencesService } from '@erp/shared/data-access';
+import { ErpActionToolbarZoneDirective } from './erp-action-toolbar-zone.directive';
 
 /**
  * Punkt danych wyświetlany w context menu.
@@ -59,6 +60,7 @@ export class ErpActionToolbarContextDirective implements OnInit, OnDestroy {
 
   private readonly el = inject(ElementRef<HTMLElement>);
   private readonly preferencesService = inject(ErpUserPreferencesService);
+  private readonly zone = inject(ErpActionToolbarZoneDirective, { optional: true });
 
   private contextMenuHandler: ((e: MouseEvent) => void) | null = null;
   private overlayElement: HTMLElement | null = null;
@@ -231,6 +233,8 @@ export class ErpActionToolbarContextDirective implements OnInit, OnDestroy {
       this.overlayElement.style.left = `${Math.max(4, adjustedX)}px`;
       this.overlayElement.style.top = `${Math.max(4, adjustedY)}px`;
     });
+    
+    this.zone?.setContextMenuOpen(true);
   }
 
   private buildMenuElement(items: ErpContextMenuItem[]): HTMLElement {
@@ -385,5 +389,6 @@ export class ErpActionToolbarContextDirective implements OnInit, OnDestroy {
       this.backdropElement.remove();
       this.backdropElement = null;
     }
+    this.zone?.setContextMenuOpen(false);
   }
 }

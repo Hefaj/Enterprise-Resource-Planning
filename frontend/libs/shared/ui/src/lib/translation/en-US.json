@@ -102,6 +102,39 @@
   "selectionToolbar": {
     "selected": "{{count}} items selected",
     "selectedFiles": "{{count}} files selected"
+  },
+  "actionToolbar": {
+    "configurator": {
+      "title": "Action toolbar configuration",
+      "restoreSize": "Restore size",
+      "maximize": "Maximize",
+      "close": "Close",
+      "tabs": {
+        "standard": "Standard",
+        "selection": "Selection"
+      },
+      "searchPlaceholder": "Search actions...",
+      "pinToToolbar": "Pin to toolbar",
+      "resetShortcut": "Reset shortcut",
+      "pinnedActions": "Pinned on toolbar",
+      "drag": "Drag",
+      "unpin": "Unpin",
+      "noPinnedActions": "No pinned actions. Use the 📌 icon to pin.",
+      "reset": "Reset",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "megaMenu": {
+      "searchPlaceholder": "Search actions...",
+      "empty": "No items",
+      "dynamic": "dyn."
+    },
+    "toolbar": {
+      "selected": "Selected",
+      "more": "More",
+      "clearSelection": "Clear selection",
+      "configureMenu": "Configure menu"
+    }
   }
 }
 

@@ -25,7 +25,7 @@ import { TuiButton, TuiIcon } from '@taiga-ui/core';
   ],
   template: `
     <div class="h-full w-full p-2">
-      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone>
+      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="toolbarConfig">
         @if (_selectionCount() === 0) {
           <div class="flex items-center justify-center h-full text-[var(--tui-text-secondary)] text-lg">
             <p>{{ (PRODUCT_KEYS.base.multimedia.panel.emptySelection | erpTranslate) || '' }}</p>
@@ -35,7 +35,7 @@ import { TuiButton, TuiIcon } from '@taiga-ui/core';
           <!-- Pasek akcji grupowych i multimediów -->
           <erp-action-toolbar [config]="toolbarConfig" />
 
-          <div class="flex-1 overflow-hidden" [erpActionToolbarContext]="toolbarConfig">
+          <div class="flex-1 overflow-hidden" >
             @if (_selectionCount() <= MAX_DETAILED_SELECTION) {
               <!-- Tryb MULTI (TanStack Virtual) -->
               <div class="h-full w-full">

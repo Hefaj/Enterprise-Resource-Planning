@@ -77,9 +77,9 @@ function generateWarranties(count: number): Warranty[] {
   ],
   template: `
     <div class="h-full w-full p-2">
-      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone>
+      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
         <erp-action-toolbar [config]="actionToolbar" />
-        <div class="flex-1 overflow-hidden" [erpActionToolbarContext]="actionToolbar">
+        <div class="flex-1 overflow-hidden" >
           <erp-table
             class="block h-full"
             [config]="tableConfig"

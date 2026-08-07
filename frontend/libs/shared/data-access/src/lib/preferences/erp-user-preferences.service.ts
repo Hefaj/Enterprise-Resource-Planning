@@ -6,6 +6,7 @@ export enum ErpPreferencesType {
   Filter = 'filters',
   PageLayout = 'pageLayouts',
   ActionToolbar = 'actionToolbars',
+  GridLayout = 'gridLayouts',
 }
 
 export interface ErpPreferencesMap {
@@ -13,6 +14,7 @@ export interface ErpPreferencesMap {
   [ErpPreferencesType.Filter]: any;
   [ErpPreferencesType.PageLayout]: any;
   [ErpPreferencesType.ActionToolbar]: any;
+  [ErpPreferencesType.GridLayout]: any;
 }
 
 export interface ErpUserPreferences {
@@ -23,6 +25,7 @@ export interface ErpUserPreferences {
   filters?: Record<string, any>;
   pageLayouts?: Record<string, any>;
   actionToolbars?: Record<string, any>;
+  gridLayouts?: Record<string, any>;
   fontSize?: 's' | 'm' | 'l' | 'xl';
 }
 

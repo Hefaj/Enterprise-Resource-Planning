@@ -1,4 +1,4 @@
-import { Type } from '@angular/core';
+import { Type, WritableSignal } from '@angular/core';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 import { ErpIcon } from '../../base/erp-icon.types';
@@ -47,4 +47,6 @@ export interface ErpTabsConfig {
   underline?: MaybeSignal<boolean>;
   /** Tryb wyświetlania: 'horizontal' (domyślne tui-tabs) lub 'vertical' (Activity Bar z ikonkami). */
   layout?: MaybeSignal<'horizontal' | 'vertical'>;
+  /** Opcjonalny zewnętrzny stan przechowujący ID aktywnej zakładki, przydatny do współdzielenia stanu między instancjami. */
+  state?: WritableSignal<string | null>;
 }

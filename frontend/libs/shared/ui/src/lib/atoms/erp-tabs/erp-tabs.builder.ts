@@ -1,4 +1,4 @@
-import { Type } from '@angular/core';
+import { Type, WritableSignal } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
@@ -110,6 +110,14 @@ export class ErpTabsBuilder extends ErpBaseBuilder<ErpTabsConfig> {
    */
   public setLayout(layout: MaybeSignal<'horizontal' | 'vertical'>): this {
     this._data.layout = layout;
+    return this;
+  }
+
+  /**
+   * Zapewnia zewnętrzny współdzielony stan przechowujący ID aktywnej zakładki.
+   */
+  public withSharedState(state: WritableSignal<string | null>): this {
+    this._data.state = state;
     return this;
   }
 }

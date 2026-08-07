@@ -12,6 +12,7 @@ import { provideTaiga } from '@taiga-ui/core';
 import { TUI_LANGUAGE } from '@taiga-ui/i18n';
 import { ErpLanguageService, AppLanguage } from '@erp/shared/data-access';
 
+
 registerLocaleData(localePl);
 
 export const appConfig: ApplicationConfig = {

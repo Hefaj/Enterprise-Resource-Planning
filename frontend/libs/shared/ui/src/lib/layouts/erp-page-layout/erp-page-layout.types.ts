@@ -21,6 +21,8 @@ export interface ErpPageLayoutSlot<TComponent = any> {
  * zajmuje całą dostępną przestrzeń.
  */
 export interface ErpPageLayoutConfig {
+  /** Komponent wyświetlany w górnym pasku (topbar). */
+  topbar?: ErpPageLayoutSlot;
   /** Komponent wyświetlany w lewym sidebarze (np. filtry). */
   leftSidebar?: ErpPageLayoutSlot;
   /** Komponent wyświetlany w głównej sekcji strony. */

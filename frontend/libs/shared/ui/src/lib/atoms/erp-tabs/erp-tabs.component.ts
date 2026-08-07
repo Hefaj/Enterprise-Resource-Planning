@@ -35,9 +35,10 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
     @let layoutVal = _layout();
 
     <div class="erp-tabs" [class.erp-tabs--vertical]="layoutVal === 'vertical'">
-      @if (layoutVal === 'horizontal') {
-        <tui-tabs
-          [(activeItemIndex)]="activeIndex"
+      @if (renderMode() !== 'content') {
+        @if (layoutVal === 'horizontal') {
+          <tui-tabs
+            [(activeItemIndex)]="activeIndex"
           [size]="sizeVal"
           [underline]="_underline()"
         >
@@ -205,6 +206,18 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
       } @else {
         <div class="erp-tabs__activity-bar">
           @for (tab of tabList; track tab.id) {
+            <ng-template #hintTemplate>
+              {{ (tab.label | erpTranslate) || '' }}
+              @if (getActiveChildPath(tab); as path) {
+                @for (segment of path; track segment; let last = $last) {
+                  @if ($first) { ( }
+                  {{ (segment | erpTranslate) || '' }}
+                  @if (!last) { &gt; }
+                  @if (last) { ) }
+                }
+              }
+            </ng-template>
+
             @if (!tab.children || tab.children.length === 0) {
               <button
                 type="button"
@@ -212,7 +225,7 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
                 [class.erp-tabs__activity-btn--active]="activeTabId() === tab.id"
                 [disabled]="tab.disabled ?? false"
                 (click)="selectTab(tab.id)"
-                [tuiHint]="(tab.label | erpTranslate) || ''"
+                [tuiHint]="hintTemplate"
               >
                 @if (tab.icon) {
                   <tui-icon [icon]="tab.icon" class="erp-tabs__activity-icon" />
@@ -220,94 +233,46 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
               </button>
             } @else {
               <button
-                tuiDropdownAuto
                 type="button"
                 class="erp-tabs__activity-btn"
                 [class.erp-tabs__activity-btn--active]="isTabOrChildActive(tab)"
+                [class.erp-tabs__activity-btn--expanded]="expandedTabId() === tab.id"
                 [disabled]="tab.disabled ?? false"
-                [tuiDropdown]="dropdown"
-                [tuiHint]="(tab.label | erpTranslate) || ''"
+                (click)="toggleExpanded(tab.id)"
+                [tuiHint]="hintTemplate"
               >
                 @if (tab.icon) {
                   <tui-icon [icon]="tab.icon" class="erp-tabs__activity-icon" />
                 }
-                
-                <ng-template #dropdown let-close>
-                  <tui-data-list tuiDataListDropdownManager>
-                    @for (child of tab.children; track child.id) {
-                      @if (child.children && child.children.length > 0) {
-                        <button
-                          tuiOption
-                          type="button"
-                          iconEnd="@tui.chevron-right"
-                          tuiDropdownAlign="end"
-                          tuiDropdownLimitWidth="auto"
-                          tuiDropdownManual
-                          tuiDropdownSided
-                          [tuiDropdown]="options"
-                          [disabled]="child.disabled ?? false"
-                        >
-                          @if (child.icon) {
-                            <tui-icon [icon]="child.icon" style="margin-inline-end: 0.5rem;" />
-                          }
-                          <span style="flex-grow: 1; text-align: left;">
-                            {{ (child.label | erpTranslate) || '' }}
-                          </span>
-                          @if (activeTabId() === child.id) {
-                            <tui-icon icon="@tui.check" style="margin-inline-end: 0.5rem; color: var(--tui-text-action);" />
-                          }
-
-                          <ng-template #options>
-                            <tui-data-list>
-                              @for (subChild of child.children; track subChild.id) {
-                                <button
-                                  tuiOption
-                                  type="button"
-                                  [disabled]="subChild.disabled ?? false"
-                                  (click)="selectChildTab(tab, subChild); close()"
-                                >
-                                  @if (subChild.icon) {
-                                    <tui-icon [icon]="subChild.icon" style="margin-inline-end: 0.5rem;" />
-                                  }
-                                  <span style="flex-grow: 1;">
-                                    {{ (subChild.label | erpTranslate) || '' }}
-                                  </span>
-                                  @if (activeTabId() === subChild.id) {
-                                    <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; margin-inline-end: 0.5rem; color: var(--tui-text-action);" />
-                                  }
-                                </button>
-                              }
-                            </tui-data-list>
-                          </ng-template>
-                        </button>
-                      } @else {
-                        <button
-                          tuiOption
-                          type="button"
-                          [disabled]="child.disabled ?? false"
-                          (click)="selectChildTab(tab, child); close()"
-                        >
-                          @if (child.icon) {
-                            <tui-icon [icon]="child.icon" style="margin-inline-end: 0.5rem;" />
-                          }
-                          <span style="flex-grow: 1;">
-                            {{ (child.label | erpTranslate) || '' }}
-                          </span>
-                          @if (activeTabId() === child.id) {
-                            <tui-icon icon="@tui.check" style="margin-inline-start: 0.5rem; margin-inline-end: 0.5rem; color: var(--tui-text-action);" />
-                          }
-                        </button>
-                      }
-                    }
-                  </tui-data-list>
-                </ng-template>
               </button>
+
+              @if (expandedTabId() === tab.id) {
+                <div class="erp-tabs__activity-children">
+                  @for (child of tab.children; track child.id) {
+                    <!-- Obsługa 1 poziomu zagłębień w pasku aktywności -->
+                    <button
+                      type="button"
+                      class="erp-tabs__activity-btn erp-tabs__activity-btn--child"
+                      [class.erp-tabs__activity-btn--active]="activeTabId() === child.id"
+                      [disabled]="child.disabled ?? false"
+                      (click)="selectChildTab(tab, child)"
+                      [tuiHint]="(child.label | erpTranslate) || ''"
+                    >
+                      @if (child.icon) {
+                        <tui-icon [icon]="child.icon" class="erp-tabs__activity-icon-child" />
+                      }
+                    </button>
+                  }
+                </div>
+              }
             }
           }
         </div>
       }
+      }
 
-      <div class="erp-tabs__content">
+      @if (renderMode() !== 'tabs') {
+        <div class="erp-tabs__content">
         @if (activeTab(); as tab) {
           @if (tab.component) {
             @defer (on timer(30ms)) {
@@ -320,6 +285,7 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
           }
         }
       </div>
+      }
     </div>
   `,
   styles: [`
@@ -399,6 +365,26 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
       height: 1.25rem;
     }
 
+    .erp-tabs__activity-children {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding: 0.25rem 0;
+      gap: 0.25rem;
+    }
+
+    .erp-tabs__activity-btn--child {
+      width: 40px;
+      height: 40px;
+    }
+
+    .erp-tabs__activity-icon-child {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+
     .erp-tabs__tab {
       display: inline-flex;
       align-items: center;
@@ -463,10 +449,18 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
 })
 export class ErpTabsComponent {
   readonly config = input.required<ErpTabsConfig>();
+  public readonly renderMode = input<'full' | 'tabs' | 'content'>('full');
 
-  /** Identyfikator aktualnie aktywnej zakładki (top-level lub pod-zakładki). */
-  protected readonly activeTabId = signal<string | null>(null);
+  protected readonly internalActiveTabId = signal<string | null>(null);
+  protected readonly configState = computed(() => this.config().state);
+  
+  protected readonly activeTabId = computed(() => {
+    const state = this.configState();
+    return state ? state() : this.internalActiveTabId();
+  });
+  
   protected readonly activeIndex = signal<number>(0);
+  protected readonly expandedTabId = signal<string | null>(null);
 
   /** Lista widocznych (niezamkniętych) zakładek. */
   private readonly closedTabIds = signal<Set<string>>(new Set());
@@ -502,46 +496,30 @@ export class ErpTabsComponent {
   });
 
   constructor() {
-    // Efekt synchronizujący initialValue → activeTabId / activeIndex po zmianie konfiguracji.
     effect(() => {
-      const config = this.config();
       const tabs = this._visibleTabs();
-      if (tabs.length === 0) return;
-
-      const initialId = config.initialValue || tabs[0].id;
-      let foundParentIdx = -1;
-      let foundTab: ErpTabItem | null = null;
-
-      for (let i = 0; i < tabs.length; i++) {
-        const t = tabs[i];
-        if (t.id === initialId) {
-          foundParentIdx = i;
-          foundTab = t;
-          break;
-        }
-        if (t.children) {
-          const child = this.findTabById(t.children, initialId);
-          if (child) {
-            foundParentIdx = i;
-            foundTab = child;
-            break;
-          }
+      const initial = unwrapSignal(this.config().initialValue);
+      
+      const state = this.configState();
+      if (!state?.() && !this.internalActiveTabId()) {
+        if (initial) {
+          if (state) state.set(initial);
+          else this.internalActiveTabId.set(initial);
+        } else if (tabs.length > 0) {
+          if (state) state.set(tabs[0].id);
+          else this.internalActiveTabId.set(tabs[0].id);
         }
       }
-
-      if (foundParentIdx >= 0) {
-        this.activeIndex.set(foundParentIdx);
-        if (foundTab) {
-          if (foundTab.children && foundTab.children.length > 0) {
-            this.activeTabId.set(this.getFirstLeafTab(foundTab).id);
-          } else {
-            this.activeTabId.set(foundTab.id);
-          }
+      
+      const active = this.activeTabId();
+      if (active) {
+        const idx = tabs.findIndex((t) => t.id === active);
+        if (idx !== -1 && idx !== this.activeIndex()) {
+          this.activeIndex.set(idx);
         }
       }
     });
 
-    // Efekt reagujący na zmianę aktywnej zakładki → wywołanie callbacku.
     effect(() => {
       const tab = this.activeTab();
       const fn = this.config().onTabChange;
@@ -551,9 +529,20 @@ export class ErpTabsComponent {
     });
   }
 
+  protected toggleExpanded(tabId: string): void {
+    this.expandedTabId.update(v => v === tabId ? null : tabId);
+  }
+
   protected selectTab(tabId: string): void {
-    if (this.activeTabId() === tabId) return;
-    this.activeTabId.set(tabId);
+    const state = this.configState();
+    if (state) {
+      state.set(tabId);
+    } else {
+      this.internalActiveTabId.set(tabId);
+    }
+    
+    const onChange = this.config().onTabChange;
+    if (onChange) onChange(tabId);
   }
 
   protected getActiveChildPath(tab: ErpTabItem): any[] | null {
@@ -576,7 +565,7 @@ export class ErpTabsComponent {
     if (parentIdx >= 0) {
       this.activeIndex.set(parentIdx);
     }
-    this.activeTabId.set(child.id);
+    this.selectTab(child.id);
   }
 
   protected isTabOrChildActive(tab: ErpTabItem): boolean {
@@ -674,12 +663,13 @@ export class ErpTabsComponent {
         if (firstLeaf) {
           const parentIdx = visibleTabs.findIndex((t) => t.id === visibleTabs[0].id || this.findTabById([t], firstLeaf.id));
           this.activeIndex.set(parentIdx >= 0 ? parentIdx : 0);
-          this.activeTabId.set(firstLeaf.id);
+          this.selectTab(firstLeaf.id);
         } else {
-          this.activeTabId.set(null);
+          // Jeśli brakuje zakładek, wywołujemy selectTab('') lub zostawiamy puste
+          this.selectTab('');
         }
       } else {
-        this.activeTabId.set(null);
+        this.selectTab('');
       }
     }
   }

@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import {
-  ErpPageLayoutBuilder,
-  ErpPageLayoutComponent,
+  ErpGridLayoutBuilder,
+  ErpGridLayoutComponent,
   ErpTabsBuilder,
   ErpTabsComponent,
 } from '@erp/shared/ui';
@@ -18,9 +18,9 @@ import { ProductFilterComponent } from './filters/product-filter.component';
 
 @Component({
   standalone: true,
-  imports: [ErpPageLayoutComponent],
+  imports: [ErpGridLayoutComponent],
   providers: [ProductStore, provideProductTranslations()],
-  template: `<erp-page-layout [config]="pageConfig" />`,
+  template: `<erp-grid-layout [config]="pageConfig" />`,
   styles: [`
     :host {
       display: flex;
@@ -33,9 +33,15 @@ import { ProductFilterComponent } from './filters/product-filter.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductComponent {
+  protected readonly activeTabId = signal<string | null>('products');
+
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
-      .setLayout('vertical')
+      .setLayout('horizontal')
+      .withSharedState(this.activeTabId)
+      .addTab('Lista produktów', 'products', {
+        icon: '@tui.list',
+      })
       .addTab(PRODUCT_KEYS.base.tabs.multimedia, 'multimedia', {
         component: MultimediaTabComponent,
         icon: '@tui.image',
@@ -67,20 +73,28 @@ export class ProductComponent {
 
   private readonly store = inject(ProductStore);
 
-  protected readonly pageConfig = ErpPageLayoutBuilder.create((b) =>
+  protected readonly pageConfig = ErpGridLayoutBuilder.create((b) =>
     b
       .setLayoutId('catalog-products-page')
-      .setLeftSidebar(ProductFilterComponent)
-      .setLeftSidebarCollapsed(false)
-      .setMain(ProductTabComponent)
-      .setRightSidebar(ErpTabsComponent, { config: this.tabsConfig })
-      .setLeftSidebarResizable(false)
-      .setRightSidebarMinWidth(600)
-      .setRightSidebarMaxWidth(1600)
-      .setRightSidebarCollapsed(computed(() => {
-        const selection = this.store.selection();
-        return !(selection && selection.selectedItems && selection.selectedItems.length > 0);
-      }))
+      .setShowBorders(true)
+      .setGrid({
+        areas: [
+          'filter tabs    tabs',
+          'filter content rightPanel',
+        ],
+        columns: '280px 1fr 280px',
+        rows: 'auto 1fr',
+        gap: '0',
+      })
+      .fill('filter', ProductFilterComponent)
+      .fill('tabs', ErpTabsComponent, { config: this.tabsConfig, renderMode: 'tabs' })
+      .fill('content', ProductTabComponent)
+      .fill('rightPanel', ErpTabsComponent, { config: this.tabsConfig, renderMode: 'content' }, {
+        resizable: 'left',
+        minWidth: 600,
+        maxWidth: 1600,
+        collapsed: computed(() => this.activeTabId() === 'products'),
+      })
   );
 }
 

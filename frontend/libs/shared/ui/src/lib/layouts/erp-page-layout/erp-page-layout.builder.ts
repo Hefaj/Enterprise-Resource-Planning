@@ -19,6 +19,18 @@ import { ErpPageLayoutConfig } from './erp-page-layout.types';
  */
 export class ErpPageLayoutBuilder extends ErpBaseBuilder<ErpPageLayoutConfig> {
   /**
+   * Ustawia komponent wyświetlany w górnym pasku (topbar).
+   * Drugi opcjonalny parametr pozwala przekazać silnie typowane wartości Inputów komponentu.
+   */
+  public setTopbar<TComponent>(
+    component: Type<TComponent>,
+    inputs?: ErpComponentSignalInputs<TComponent>
+  ): this {
+    this._data.topbar = { component, inputs };
+    return this;
+  }
+
+  /**
    * Ustawia komponent wyświetlany w lewym sidebarze (np. panel filtrów).
    * Drugi opcjonalny parametr pozwala przekazać silnie typowane wartości Inputów komponentu.
    */

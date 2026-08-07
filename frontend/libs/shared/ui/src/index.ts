@@ -14,6 +14,7 @@ export * from './lib/form/erp-input-picker';
 export * from './lib/form/erp-toggle-group';
 
 export * from './lib/layouts/erp-page-layout';
+export * from './lib/layouts/erp-grid-layout';
 
 export * from './lib/auth/login/login.component';
 

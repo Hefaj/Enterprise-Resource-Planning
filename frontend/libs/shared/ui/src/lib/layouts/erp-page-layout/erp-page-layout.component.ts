@@ -27,6 +27,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
   template: `
     @let leftSidebar = _leftSidebar();
     @let rightSidebar = _rightSidebar();
+    @let topbar = _topbar();
     @let main = _main();
     
     @let leftCollapsed = _leftCollapsed();
@@ -46,6 +47,7 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
       [class.erp-page-layout--right-overlay]="rightMode === 'overlay'"
       [class.erp-page-layout--has-left-sidebar]="!!leftSidebar"
       [class.erp-page-layout--has-right-sidebar]="!!rightSidebar"
+      [class.erp-page-layout--has-topbar]="!!topbar"
     >
       @if (leftSidebar) {
         <aside
@@ -107,77 +109,87 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
         </aside>
       }
 
-      <main class="erp-page-layout__main">
-        @if (main) {
-          @defer (on timer(30ms)) {
-            <ng-container *ngComponentOutlet="main.component; inputs: main.inputs" />
-          } @placeholder {
-            <div class="erp-defer-loader-container">
-              <tui-loader size="l" />
-            </div>
-          }
+      <div class="erp-page-layout__content-wrapper">
+        @if (topbar) {
+          <header class="erp-page-layout__topbar">
+            <ng-container *ngComponentOutlet="topbar.component; inputs: topbar.inputs" />
+          </header>
         }
-      </main>
 
-      @if (rightSidebar) {
-        <aside
-          #rightSidebarEl
-          class="erp-page-layout__sidebar erp-page-layout__sidebar--right"
-          [style.width]="rightCollapsed ? '3rem' : _rightWidth() + 'px'"
-          [style.min-width]="rightCollapsed ? '3rem' : _rightWidth() + 'px'"
-        >
-          @if (!rightCollapsed && rightResizable) {
-            <div class="erp-page-layout__resizer erp-page-layout__resizer--right" (mousedown)="startDrag($event, 'right')"></div>
-          }
-          <div 
-            #rightHeaderEl
-            class="erp-page-layout__sidebar-header-wrapper"
-            [class.erp-page-layout__sidebar-header-wrapper--open]="rightCollapsed || _rightHeaderVisible()"
-          >
-            @if (!rightCollapsed && !_rightHeaderVisible()) {
-              <div 
-                class="erp-page-layout__sidebar-header-trigger"
-                (click)="_rightHeaderVisible.set(true)"
-              >
-                <div class="erp-page-layout__sidebar-header-trigger-line"></div>
-              </div>
-            }
-            <div class="erp-page-layout__sidebar-header">
-              @if (!rightCollapsed) {
-                <button
-                  class="erp-page-layout__sidebar-btn-left"
-                  tuiIconButton
-                  appearance="flat"
-                  size="s"
-                  (click)="toggleRightSidebarMode()"
-                  [tuiHint]="(rightMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
-                >
-                  <tui-icon [icon]="rightMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
-                </button>
+        <div class="erp-page-layout__content-body">
+          <main class="erp-page-layout__main">
+            @if (main) {
+              @defer (on timer(30ms)) {
+                <ng-container *ngComponentOutlet="main.component; inputs: main.inputs" />
+              } @placeholder {
+                <div class="erp-defer-loader-container">
+                  <tui-loader size="l" />
+                </div>
               }
-              <button
-                class="erp-page-layout__sidebar-btn-right"
-                tuiIconButton
-                appearance="flat"
-                size="s"
-                (click)="toggleRightSidebar()"
-                [tuiHint]="(rightCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
-              >
-                <tui-icon [icon]="rightCollapsed ? '@tui.list-filter' : '@tui.chevron-right'" />
-              </button>
-            </div>
-          </div>
-          <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="rightCollapsed">
-            @defer (on timer(30ms)) {
-              <ng-container *ngComponentOutlet="rightSidebar.component; inputs: rightSidebar.inputs" />
-            } @placeholder {
-              <div class="erp-defer-loader-container">
-                <tui-loader size="l" />
-              </div>
             }
-          </div>
-        </aside>
-      }
+          </main>
+
+          @if (rightSidebar) {
+            <aside
+              #rightSidebarEl
+              class="erp-page-layout__sidebar erp-page-layout__sidebar--right"
+              [style.width]="rightCollapsed ? '3rem' : _rightWidth() + 'px'"
+              [style.min-width]="rightCollapsed ? '3rem' : _rightWidth() + 'px'"
+            >
+              @if (!rightCollapsed && rightResizable) {
+                <div class="erp-page-layout__resizer erp-page-layout__resizer--right" (mousedown)="startDrag($event, 'right')"></div>
+              }
+              <div 
+                #rightHeaderEl
+                class="erp-page-layout__sidebar-header-wrapper"
+                [class.erp-page-layout__sidebar-header-wrapper--open]="rightCollapsed || _rightHeaderVisible()"
+              >
+                @if (!rightCollapsed && !_rightHeaderVisible()) {
+                  <div 
+                    class="erp-page-layout__sidebar-header-trigger"
+                    (click)="_rightHeaderVisible.set(true)"
+                  >
+                    <div class="erp-page-layout__sidebar-header-trigger-line"></div>
+                  </div>
+                }
+                <div class="erp-page-layout__sidebar-header">
+                  @if (!rightCollapsed) {
+                    <button
+                      class="erp-page-layout__sidebar-btn-left"
+                      tuiIconButton
+                      appearance="flat"
+                      size="s"
+                      (click)="toggleRightSidebarMode()"
+                      [tuiHint]="(rightMode === 'push' ? SHARED_KEYS.sidebar.unpin : SHARED_KEYS.sidebar.pin) | erpTranslate"
+                    >
+                      <tui-icon [icon]="rightMode === 'push' ? '@tui.pin-off' : '@tui.pin'" />
+                    </button>
+                  }
+                  <button
+                    class="erp-page-layout__sidebar-btn-right"
+                    tuiIconButton
+                    appearance="flat"
+                    size="s"
+                    (click)="toggleRightSidebar()"
+                    [tuiHint]="(rightCollapsed ? SHARED_KEYS.sidebar.expand : SHARED_KEYS.sidebar.collapse) | erpTranslate"
+                  >
+                    <tui-icon [icon]="rightCollapsed ? '@tui.list-filter' : '@tui.chevron-right'" />
+                  </button>
+                </div>
+              </div>
+              <div class="erp-page-layout__sidebar-content" [class.erp-page-layout__sidebar-content--hidden]="rightCollapsed">
+                @defer (on timer(30ms)) {
+                  <ng-container *ngComponentOutlet="rightSidebar.component; inputs: rightSidebar.inputs" />
+                } @placeholder {
+                  <div class="erp-defer-loader-container">
+                    <tui-loader size="l" />
+                  </div>
+                }
+              </div>
+            </aside>
+          }
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -198,6 +210,32 @@ import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-
 
     .erp-page-layout--dragging {
       user-select: none;
+    }
+
+    .erp-page-layout__content-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      min-width: 0;
+      position: relative;
+    }
+
+    .erp-page-layout__topbar {
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--tui-border-normal);
+      background: var(--tui-background-elevation-1);
+      z-index: 50;
+      position: relative;
+    }
+
+    .erp-page-layout__content-body {
+      display: flex;
+      flex: 1;
+      height: 100%;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
     }
 
     .erp-page-layout__sidebar {
@@ -452,6 +490,7 @@ export class ErpPageLayoutComponent {
   });
   protected readonly _rightCollapsed = computed(() => this._internalRightCollapsed());
 
+  protected readonly _topbar = computed(() => this.config().topbar);
   protected readonly _main = computed(() => this.config().main);
 
   constructor() {

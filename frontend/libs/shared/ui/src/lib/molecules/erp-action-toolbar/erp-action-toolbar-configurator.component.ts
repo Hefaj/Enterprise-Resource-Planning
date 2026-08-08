@@ -257,8 +257,8 @@ interface ConfiguratorItem {
     .erp-configurator {
       display: flex;
       flex-direction: column;
-      width: calc(100% + 2 * var(--tui-padding, 1.5rem));
-      margin: calc(-1 * var(--tui-padding, 1.5rem));
+      width: calc(100% + 2 * var(--tui-padding, 1.75rem));
+      margin: calc(-1 * var(--tui-padding, 1.75rem));
       max-width: 90vw;
       height: 60vh;
     }

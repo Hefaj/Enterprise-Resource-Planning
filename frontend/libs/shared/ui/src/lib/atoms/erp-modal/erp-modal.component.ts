@@ -41,7 +41,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     @let _showFooter = showFooter();
     @let _sizeClass = sizeClass();
 
-    <div class="erp-modal" [ngClass]="_sizeClass">
+    <div class="erp-modal" [ngClass]="_sizeClass" [class.erp-modal--maximized]="maximized()">
       <!-- ═══ HEADER ═══ -->
       <div class="erp-modal-header">
         <div class="erp-modal-header__top-row">
@@ -124,30 +124,45 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       display: contents;
     }
 
-    ::ng-deep {
-      tui-dialog-card:not([data-appearance~=fullscreen]),
-      dialog:not([data-appearance~=fullscreen]),
-      .t-dialog:not([data-appearance~=fullscreen]) {
-        padding: 0 !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        overflow: visible !important;
-        max-width: none !important;
-        max-height: none !important;
-      }
-    }
-
     .erp-modal {
       border-radius: 12px;
-      border: 1px solid var(--p-surface-200);
       overflow: hidden;
       display: flex;
       flex-direction: column;
       flex: 1 1 auto;
-      width: 100%;
+      /* Negate the padding applied by Taiga UI dialog container */
+      width: calc(100% + 2 * var(--tui-padding, 1.75rem));
+      margin: calc(-1 * var(--tui-padding, 1.75rem));
       box-sizing: border-box;
       min-height: 200px;
+      background: var(--tui-background-base);
+    }
+
+    .erp-modal--maximized {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      margin: 0;
+      border-radius: 0;
+      border: none;
+      z-index: 9999;
+      background: var(--tui-background-base);
+    }
+
+    .erp-modal-header {
+      padding: 1rem 1.25rem;
+    }
+    
+    .erp-modal-body {
+      padding: 0;
+    }
+
+    .erp-modal-footer {
+      padding: 0.75rem 1.25rem;
     }
 
     .erp-modal-header {
@@ -156,7 +171,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       align-items: stretch;
       width: 100%;
       box-sizing: border-box;
-      border-bottom: 1px solid var(--p-surface-200);
+      border-bottom: 1px solid var(--tui-border-normal);
     }
 
     .erp-modal-header__top-row {
@@ -176,14 +191,14 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     }
 
     .erp-modal-header__separator {
-      color: var(--p-surface-400);
+      color: var(--tui-text-tertiary);
       font-weight: 400;
       font-size: 0.875rem;
       user-select: none;
     }
 
     .erp-modal-header__segment--muted {
-      color: var(--p-surface-500);
+      color: var(--tui-text-secondary);
     }
 
     .erp-modal-header__actions {
@@ -201,11 +216,13 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       height: 2rem;
       border: none;
       background: transparent;
+      color: var(--tui-text-secondary);
       cursor: pointer;
+      border-radius: 0.375rem;
 
       &:hover {
-        background: var(--p-surface-100);
-        color: var(--p-surface-900);
+        background: var(--tui-background-neutral-1-hover);
+        color: var(--tui-text-primary);
       }
     }
 
@@ -225,8 +242,8 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       border-radius: 50%;
       font-size: 0.75rem;
       font-weight: 600;
-      border: 2px solid var(--p-surface-200);
-      color: var(--p-surface-400);
+      border: 2px solid var(--tui-border-normal);
+      color: var(--tui-text-tertiary);
       background: transparent;
 
       tui-icon {
@@ -238,41 +255,41 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     .erp-modal-step-indicator__label {
       font-size: 0.8125rem;
       font-weight: 500;
-      color: var(--p-surface-400);
+      color: var(--tui-text-tertiary);
       white-space: nowrap;
     }
 
     .erp-modal-step-indicator--active {
       .erp-modal-step-indicator__dot {
-        border-color: var(--p-primary-500);
-        color: var(--p-primary-500);
+        border-color: var(--tui-text-action);
+        color: var(--tui-text-action);
         background: rgba(59, 130, 246, 0.08);
       }
       .erp-modal-step-indicator__label {
-        color: var(--p-primary-500);
+        color: var(--tui-text-action);
         font-weight: 600;
       }
     }
 
     .erp-modal-step-indicator--completed {
       .erp-modal-step-indicator__dot {
-        border-color: var(--p-green-500);
-        background: var(--p-green-500);
+        border-color: var(--tui-status-positive);
+        background: var(--tui-status-positive);
         color: #fff;
       }
       .erp-modal-step-indicator__label {
-        color: var(--p-surface-700);
+        color: var(--tui-text-primary);
       }
     }
 
     .erp-modal-step-separator {
       width: 2rem;
       height: 2px;
-      background: var(--p-surface-200);
+      background: var(--tui-border-normal);
     }
 
     .erp-modal-step-separator--completed {
-      background: var(--p-green-500);
+      background: var(--tui-status-positive);
     }
 
     .erp-modal-body {
@@ -294,7 +311,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       justify-content: space-between;
       width: 100%;
       box-sizing: border-box;
-      border-top: 1px solid var(--p-surface-200);
+      border-top: 1px solid var(--tui-border-normal);
     }
 
     .erp-modal-footer__left,
@@ -304,49 +321,6 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       gap: 0.5rem;
     }
 
-    :host-context(.dark),
-    :host-context([data-theme="dark"]) {
-      .erp-modal {
-        border-color: var(--p-surface-800, #27272a);
-      }
-      .erp-modal-header {
-        border-bottom-color: var(--p-surface-800, #27272a);
-      }
-      .erp-modal-footer {
-        border-top-color: var(--p-surface-800, #27272a);
-      }
-      .erp-modal-header__maximize,
-      .erp-modal-header__close {
-        &:hover {
-          background: var(--p-surface-800, #27272a);
-          color: var(--p-surface-100, #f4f4f5);
-        }
-      }
-      .erp-modal-step-indicator__dot {
-        border-color: var(--p-surface-700, #3f3f46);
-      }
-      .erp-modal-step-indicator--active {
-        .erp-modal-step-indicator__dot {
-          border-color: var(--p-primary-500, #3b82f6);
-          color: var(--p-primary-500, #3b82f6);
-        }
-      }
-      .erp-modal-step-indicator--completed {
-        .erp-modal-step-indicator__dot {
-          border-color: var(--p-green-500, #22c55e);
-          background: var(--p-green-500, #22c55e);
-        }
-        .erp-modal-step-indicator__label {
-          color: var(--p-surface-200, #e4e4e7);
-        }
-      }
-      .erp-modal-step-separator {
-        background: var(--p-surface-700, #3f3f46);
-      }
-      .erp-modal-step-separator--completed {
-        background: var(--p-green-500, #22c55e);
-      }
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -397,6 +371,7 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
     const data = this.context.data as any;
     if (nextMaximized) {
       (this.context as any).appearance = 'fullscreen';
+      (this.context as any).size = 'page';
     } else {
       (this.context as any).appearance = 'taiga';
       const size = unwrapSignal(data.size) || 'md';
@@ -404,12 +379,12 @@ export class ErpModalComponent<TCommand = any, TMetadata = any> implements OnDes
     }
   }
 
-  private _mapTuiSize(size: string): 's' | 'm' | 'l' {
+  private _mapTuiSize(size: string): any {
     if (size === 'sm') return 's';
     if (size === 'md') return 'm';
     if (size === 'lg') return 'l';
     if (size === 'xl') return 'l';
-    if (size === 'full') return 'l';
+    if (size === 'full') return 'page';
     return 'm';
   }
 

@@ -292,7 +292,7 @@ export class ErpModalService {
     if (size === 'md') return 'm';
     if (size === 'lg') return 'l';
     if (size === 'xl') return 'l';
-    if (size === 'full') return 'l';
+    if (size === 'full') return 'page' as any;
     return 'm';
   }
 }

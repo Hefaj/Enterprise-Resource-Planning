@@ -1,22 +1,38 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ProductStore } from '../product.store';
-import { MAX_DETAILED_SELECTION } from '@erp/catalog/util';
-import { ErpActionToolbarBuilder, ErpGroupPanelBuilder, ErpGroupPanelComponent } from '@erp/shared/ui';
-import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
-import { WarrantyGroupComponent } from './warranty-group.component';
+import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpSelectionState, ErpTableBuilder, ErpTableComponent } from '@erp/shared/ui';
+import { CatalogProductOrchestrator, ProductVM, WarrantyVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation/keys';
+
+/**
+ * Wiersz tabeli gwarancji — pojedyncza gwarancja + referencja do produktu, do którego należy
+ * (potrzebna, by pogrupować wiersze pod właściwym wierszem-rodzicem produktu).
+ */
+interface WarrantyRow {
+  productUuid: string;
+  warranty: WarrantyVM;
+}
 
 @Component({
   selector: 'erp-warranty-tab',
   standalone: true,
-  imports: [ErpGroupPanelComponent, WarrantyGroupComponent],
+  imports: [
+    ErpTableComponent, 
+    ErpActionToolbarComponent,
+    ErpActionToolbarZoneDirective,
+    ErpActionToolbarContextDirective,
+    ],
   template: `
     <div class="h-full w-full p-2">
-      <erp-group-panel [config]="panelConfig">
-        <ng-template #erpGroupItem let-product let-index="index" let-measureElement="measureElement">
-          <erp-warranty-group [product]="product" [measureElement]="measureElement" [attr.data-index]="index" />
-        </ng-template>
-      </erp-group-panel>
+      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="toolbarConfig">
+        <erp-action-toolbar [config]="toolbarConfig" />
+        <div class="flex-1 overflow-hidden" >
+          <erp-table
+            class="block h-full w-full"
+            [config]="tableConfig"
+          />
+        </div>
+      </div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,8 +54,18 @@ export class WarrantyTabComponent {
       return latestVm || selectedItems.find(x => x.uuid === uuid)!;
     });
   });
-  protected readonly _selectionCount = computed(() => this._selectedProducts().length);
+
+  /** Wszystkie gwarancje wszystkich zaznaczonych produktów — jedna wspólna, płaska lista wierszy. */
+  protected readonly _rows = computed<WarrantyRow[]>(() =>
+    this._selectedProducts().flatMap(product =>
+      (product.warranties ?? []).map(warranty => ({ productUuid: product.uuid, warranty }))
+    )
+  );
+
   protected readonly _subSelectionCount = computed(() => this.store.getAllSelectedWarrantiesCount());
+
+  // Zbiór UUID produktów, dla których już wywołaliśmy ładowanie gwarancji
+  private readonly loadedProductUuids = new Set<string>();
 
   protected readonly toolbarConfig = ErpActionToolbarBuilder.create((b) =>
     b
@@ -127,30 +153,63 @@ export class WarrantyTabComponent {
       .setEnableContextMenu(true)
   );
 
-  // Zbiór UUID dla których już wywołaliśmy ładowanie
-  private readonly loadedProductUuids = new Set<string>();
-
-  protected readonly panelConfig = ErpGroupPanelBuilder.create<ErpGroupPanelBuilder<ProductVM>>((b) =>
-    b
-      .setToolbar(this.toolbarConfig)
-      .setItems(this._selectedProducts)
-      .setGetItemKey((_, item) => item.uuid)
-      .setEstimateSize(220)
-      .setOverscan(2)
-      .setOnRangeChange((range) => {
-        // Lazy-load: dociągnij produkty z wymuszeniem wczytania gwarancji
-        const uuidsToLoad = range.visibleKeys.filter((uuid: string) => !this.loadedProductUuids.has(uuid));
-
-        if (uuidsToLoad.length > 0) {
-          for (const uuid of uuidsToLoad) {
-            this.loadedProductUuids.add(uuid);
-          }
-          this.productOrchestrator.loadAsync(uuidsToLoad, { includeWarranties: true });
-        }
-      })
-      .setEmptyState(PRODUCT_KEYS.base.warranty.panel.emptySelection, '@tui.mouse-pointer-click')
-      .setOverflow(MAX_DETAILED_SELECTION, PRODUCT_KEYS.base.warranty.panel.bulkDescription, '@tui.layers')
+  protected readonly tableConfig = ErpTableBuilder.create<ErpTableBuilder<WarrantyRow>>((table) =>
+    table
+      .setStateKey('product-tab-warranty')
+      .setMode('client')
+      .setSelectionMode('multi')
+      .setRowIdAccessor(r => `${r.productUuid}:${r.warranty.uuid}`)
+      .setItems(this._rows)
+      .setItemCount(computed(() => this._rows().length))
+      .setEnableVirtualScroll(true)
+      .setEstimatedRowHeight(48)
+      .setEmptyMessage(PRODUCT_KEYS.base.warranty.panel.emptySelection)
+      .setOnSelectionChange(state => this.onSelectionChange(state))
+      .addColumn(c => c
+        .setId('name')
+        .setAccessorFn((r: WarrantyRow) => r.warranty.name)
+        .setHeader('Nazwa gwarancji')
+        .setSize(220)
+      )
+      .addColumn(c => c
+        .setId('durationMonths')
+        .setAccessorFn((r: WarrantyRow) => r.warranty.durationMonths)
+        .setHeader('Okres (mc)')
+        .setCellClass('text-right')
+        .setSize(110)
+      )
+      .addColumn(c => c
+        .setId('description')
+        .setAccessorFn((r: WarrantyRow) => r.warranty.description)
+        .setHeader('Opis')
+        .setSize(400)
+      )
+      .setGroupedRows<ProductVM>(g => g
+        .setGroups(this._selectedProducts)
+        .setGetGroupKey(p => p.uuid)
+        .setGetRowGroupKey((r: WarrantyRow) => r.productUuid)
+        .setGetGroupTitle(p => p.name)
+        .setGetGroupSubtitle(p => p.sku)
+        .setGetGroupIcon(() => '@tui.shield-check')
+        .setIsGroupLoading(p => (p.warranties?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
+        .setDefaultExpanded(true)
+        .setLoadChildren(p => this.loadWarrantiesFor(p.uuid))
+      )
   );
+
+  private loadWarrantiesFor(uuid: string): void {
+    if (this.loadedProductUuids.has(uuid)) return;
+    this.loadedProductUuids.add(uuid);
+    this.productOrchestrator.loadAsync([uuid], { includeWarranties: true });
+  }
+
+  protected onSelectionChange(state: ErpSelectionState<WarrantyRow>): void {
+    const dict: Record<string, string[]> = {};
+    for (const item of state.selectedItems) {
+      (dict[item.productUuid] ??= []).push(item.warranty.uuid);
+    }
+    this.store.setAllWarrantySelections(dict);
+  }
 
   protected onDeleteSelectedWarranty(): void {
     console.log('Usuwanie zaznaczonych gwarancji:', this.store.selectedWarrantiesByProduct());

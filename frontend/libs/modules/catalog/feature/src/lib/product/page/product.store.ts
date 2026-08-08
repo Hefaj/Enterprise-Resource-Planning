@@ -75,21 +75,11 @@ export class ProductStore {
     });
   }
 
-  // 5. Zaznaczenia gwarancji
+  // 5. Zaznaczenia gwarancji (jedna wspólna tabela grupowana per produkt)
   public readonly selectedWarrantiesByProduct = signal<Record<string, string[]>>({});
 
-  public setWarrantySelectionForProduct(productUuid: string, selectedUuids: string[]): void {
-    const current = this.selectedWarrantiesByProduct()[productUuid] || [];
-    
-    // Zapobiegamy "infinite loops" jeśli zaznaczenie się nie zmieniło
-    if (current.length === selectedUuids.length && current.every(v => selectedUuids.includes(v))) {
-      return;
-    }
-
-    this.selectedWarrantiesByProduct.update(dict => ({
-      ...dict,
-      [productUuid]: selectedUuids
-    }));
+  public setAllWarrantySelections(dict: Record<string, string[]>): void {
+    this.selectedWarrantiesByProduct.set(dict);
   }
 
   public clearWarrantySelection(): void {

@@ -269,3 +269,105 @@
   border-bottom: none !important;
   box-shadow: inset 0 -2px 0 var(--tui-border-hover);
 }
+
+/* Sztuczny wiersz-rodzic grupy (groupedRows) — bez związku z kolumnami danych */
+.erp-table__group-row {
+  cursor: pointer;
+  background: var(--erp-table-header-bg);
+  border-bottom: 1px solid var(--erp-table-border);
+  border-top: 1px solid var(--erp-table-border);
+
+  &:hover {
+    background: linear-gradient(var(--erp-table-row-hover), var(--erp-table-row-hover)), var(--erp-table-header-bg);
+  }
+}
+
+.erp-table__group-cell {
+  padding: 0;
+}
+
+.erp-table__group-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  min-height: 2.5rem;
+}
+
+.erp-table__group-checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.erp-table__group-chevron {
+  flex-shrink: 0;
+  color: var(--erp-table-text-secondary);
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.erp-table__group-chevron--expanded {
+  transform: rotate(90deg);
+}
+
+.erp-table__group-icon {
+  flex-shrink: 0;
+  color: var(--erp-table-text-secondary);
+  font-size: 1.125rem;
+}
+
+.erp-table__group-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.erp-table__group-title {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--erp-table-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.erp-table__group-subtitle {
+  font-size: 0.6875rem;
+  color: var(--erp-table-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.erp-table__group-count {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--erp-table-text-secondary);
+  background: var(--erp-table-bg);
+  border: 1px solid var(--erp-table-border);
+  border-radius: 999px;
+  padding: 0.0625rem 0.5rem;
+}
+
+.erp-table__group-spinner {
+  flex-shrink: 0;
+  color: var(--erp-table-text-secondary);
+  font-size: 1rem;
+  animation: erp-table-spin 1s linear infinite;
+}
+
+.erp-table__group-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+@keyframes erp-table-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

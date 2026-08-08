@@ -41,6 +41,7 @@ import { injectVirtualizer } from '@tanstack/angular-virtual';
 import { TuiCheckbox, TuiRadio, TuiDropdown, TuiButton, TuiAppearance } from '@taiga-ui/core';
 import { TuiIcon } from '@taiga-ui/core';
 import { TuiSkeleton, TuiChip } from '@taiga-ui/kit';
+import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-access';
 
 import {
   ErpTableConfig,
@@ -51,13 +52,24 @@ import {
   ErpColumnGroupDef,
   isColumnGroupDef,
   ErpSelectionState,
+  ErpGroupedRowsConfig,
+  ErpGroupRowAction,
 } from './erp-table.types';
 import { ErpTablePaginationComponent } from './erp-table-pagination.component';
 import { ErpTableColumnMenuComponent } from './erp-table-column-menu.component';
-import { unwrapSignal } from '../../base/erp-signal-utils';
+import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { ErpChipCellComponent } from './erp-chip-cell.component';
 import { ErpSwitchComponent } from '../../form/erp-switch/erp-switch.component';
+
+/**
+ * Wiersz do wyrenderowania w jednej, wspólnej wirtualizowanej liście —
+ * albo sztuczny wiersz-rodzic grupy (`group`), albo zwykły wiersz danych
+ * przechodzący przez standardowy mechanizm kolumn (`leaf`).
+ */
+type FlatDisplayRow<T> =
+  | { kind: 'group'; group: any; key: string; expanded: boolean; totalCount: number; selectedCount: number; loading: boolean }
+  | { kind: 'leaf'; row: Row<T> };
 
 @Directive({
   selector: '[erpVirtualMeasure]',
@@ -154,6 +166,7 @@ export class ErpTableSelectionCell {
     ErpTablePaginationComponent,
     ErpTableColumnMenuComponent,
     ErpVirtualMeasureDirective,
+    ErpTableSelectionCell,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./erp-table.component.scss'],
@@ -289,7 +302,7 @@ export class ErpTableSelectionCell {
 
             <!-- <tbody> -->
             <tbody class="erp-table__body">
-              @if (table.getRowModel().rows.length === 0 && !loading()) {
+              @if (_flatDisplayRows().length === 0 && !loading()) {
                 <tr>
                   <td [colSpan]="table.getVisibleFlatColumns().length" class="p-8 text-center text-(--erp-table-text-secondary)">
                     {{ 'shared.table.empty' | erpTranslate }}
@@ -297,7 +310,7 @@ export class ErpTableSelectionCell {
                 </tr>
               }
               
-              @if (loading() && _skeletonRows() > 0 && table.getRowModel().rows.length === 0) {
+              @if (loading() && _skeletonRows() > 0 && _flatDisplayRows().length === 0) {
                 <!-- Skeleton rows -->
                 @for (s of [].constructor(_skeletonRows()); track $index) {
                   <tr class="border-b border-(--erp-table-border)">
@@ -318,42 +331,112 @@ export class ErpTableSelectionCell {
                     <td [colSpan]="table.getVisibleFlatColumns().length" [style.height.px]="virtualizer().getVirtualItems()[0].start"></td>
                   </tr>
                 }
-                
+
                 @for (virtualRow of virtualizer().getVirtualItems(); track virtualRow.key) {
-                  @let row = table.getRowModel().rows[virtualRow.index];
-                  <tr 
-                    [erpVirtualMeasure]="virtualizer()"
-                    [index]="virtualRow.index"
-                    [attr.data-index]="virtualRow.index"
-                    class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
-                    [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
-                    (click)="onRowClickEvent(row.original, $event)"
-                    (dblclick)="onRowDoubleClickEvent(row.original)"
-                    (contextmenu)="onRowContextMenuEvent(row.original, $event)"
-                  >
-                    @for (cell of _getOrderedCells(row); track cell.id) {
-                      <td 
-                        class="erp-table__cell p-3 text-sm {{ $any(cell.column.columnDef.meta)?.['cellClass'] || '' }}"
-                        [style.width.px]="cell.column.getSize()"
-                        [attr.data-pinned]="cell.column.getIsPinned()"
-                        [class.erp-table__cell--pinned-left]="cell.column.getIsPinned() === 'left'"
-                        [class.erp-table__cell--pinned-right]="cell.column.getIsPinned() === 'right'"
-                        [class.erp-table__cell--pinned-left-last]="cell.column.id === _lastLeftPinnedColumnId()"
-                        [class.erp-table__cell--pinned-right-first]="cell.column.id === _firstRightPinnedColumnId()"
-                        [class.!overflow-visible]="cell.column.id === '__selection'"
-                        [style.left.px]="cell.column.getIsPinned() === 'left' ? cell.column.getStart('left') : null"
-                        [style.right.px]="cell.column.getIsPinned() === 'right' ? cell.column.getAfter('right') : null"
-                        [class.text-right]="$any(cell.column.columnDef.meta)?.['align'] === 'right'"
-                        [class.text-center]="$any(cell.column.columnDef.meta)?.['align'] === 'center'"
-                      >
-                        <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellValue">
-                          <span [tuiSkeleton]="loading()" class="rounded-sm inline-flex items-center min-w-[3rem] min-h-[1.25rem] max-w-full">
-                            {{ cellValue }}
-                          </span>
-                        </ng-container>
+                  @let flatRow = _flatDisplayRows()[virtualRow.index];
+                  @if (flatRow.kind === 'group') {
+                    <!-- Sztuczny wiersz-rodzic grupy — bez związku z kolumnami danych -->
+                    <tr
+                      [erpVirtualMeasure]="virtualizer()"
+                      [index]="virtualRow.index"
+                      [attr.data-index]="virtualRow.index"
+                      class="erp-table__group-row"
+                      (click)="toggleGroupExpanded(flatRow.key)"
+                    >
+                      <td [colSpan]="table.getVisibleFlatColumns().length" class="erp-table__group-cell">
+                        <div class="erp-table__group-content">
+                          @if (config().selectionMode !== 'none') {
+                            <div class="erp-table__group-checkbox" (click)="$event.stopPropagation()">
+                              <erp-table-selection-cell
+                                [checked]="flatRow.totalCount > 0 && flatRow.selectedCount === flatRow.totalCount"
+                                [indeterminate]="flatRow.selectedCount > 0 && flatRow.selectedCount < flatRow.totalCount"
+                                [selectionMode]="'multi'"
+                                (changed)="toggleGroupSelection(flatRow.key, $event.checked, $event.shiftKey)"
+                              />
+                            </div>
+                          }
+
+                          <tui-icon
+                            icon="@tui.chevron-right"
+                            class="erp-table__group-chevron"
+                            [class.erp-table__group-chevron--expanded]="flatRow.expanded"
+                          />
+
+                          @if (_groupIcon(flatRow.group); as groupIcon) {
+                            <tui-icon [icon]="groupIcon" class="erp-table__group-icon" />
+                          }
+
+                          <div class="erp-table__group-titles">
+                            <span class="erp-table__group-title">{{ _groupTitle(flatRow.group) | erpTranslate }}</span>
+                            @if (_groupSubtitle(flatRow.group); as groupSubtitle) {
+                              <span class="erp-table__group-subtitle">{{ groupSubtitle | erpTranslate }}</span>
+                            }
+                          </div>
+
+                          @if (flatRow.loading) {
+                            <tui-icon icon="@tui.loader-circle" class="erp-table__group-spinner" />
+                          } @else if (flatRow.totalCount > 0) {
+                            <span class="erp-table__group-count">{{ flatRow.totalCount }}</span>
+                          }
+
+                          @if (_groupActions().length > 0) {
+                            <div class="erp-table__group-actions" (click)="$event.stopPropagation()">
+                              @for (action of _groupActions(); track action.label) {
+                                <button
+                                  tuiButton
+                                  type="button"
+                                  appearance="flat"
+                                  size="xs"
+                                  [disabled]="_isGroupActionDisabled(action, flatRow.group)"
+                                  (click)="onGroupActionClick(action, flatRow.group)"
+                                >
+                                  @if (action.icon) {
+                                    <tui-icon [icon]="action.icon" />
+                                  }
+                                  {{ action.label | erpTranslate }}
+                                </button>
+                              }
+                            </div>
+                          }
+                        </div>
                       </td>
-                    }
-                  </tr>
+                    </tr>
+                  } @else {
+                    @let row = flatRow.row;
+                    <tr
+                      [erpVirtualMeasure]="virtualizer()"
+                      [index]="virtualRow.index"
+                      [attr.data-index]="virtualRow.index"
+                      class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
+                      [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
+                      (click)="onRowClickEvent(row.original, $event)"
+                      (dblclick)="onRowDoubleClickEvent(row.original)"
+                      (contextmenu)="onRowContextMenuEvent(row.original, $event)"
+                    >
+                      @for (cell of _getOrderedCells(row); track cell.id) {
+                        <td
+                          class="erp-table__cell p-3 text-sm {{ $any(cell.column.columnDef.meta)?.['cellClass'] || '' }}"
+                          [style.width.px]="cell.column.getSize()"
+                          [attr.data-pinned]="cell.column.getIsPinned()"
+                          [class.erp-table__cell--pinned-left]="cell.column.getIsPinned() === 'left'"
+                          [class.erp-table__cell--pinned-right]="cell.column.getIsPinned() === 'right'"
+                          [class.erp-table__cell--pinned-left-last]="cell.column.id === _lastLeftPinnedColumnId()"
+                          [class.erp-table__cell--pinned-right-first]="cell.column.id === _firstRightPinnedColumnId()"
+                          [class.!overflow-visible]="cell.column.id === '__selection'"
+                          [style.left.px]="cell.column.getIsPinned() === 'left' ? cell.column.getStart('left') : null"
+                          [style.right.px]="cell.column.getIsPinned() === 'right' ? cell.column.getAfter('right') : null"
+                          [class.text-right]="$any(cell.column.columnDef.meta)?.['align'] === 'right'"
+                          [class.text-center]="$any(cell.column.columnDef.meta)?.['align'] === 'center'"
+                        >
+                          <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellValue">
+                            <span [tuiSkeleton]="loading()" class="rounded-sm inline-flex items-center min-w-[3rem] min-h-[1.25rem] max-w-full">
+                              {{ cellValue }}
+                            </span>
+                          </ng-container>
+                        </td>
+                      }
+                    </tr>
+                  }
                 }
 
                 <!-- Virtual Padding Bottom -->
@@ -436,14 +519,18 @@ export class ErpTableSelectionCell {
       <!-- Toolbar -->
       <div class="erp-table-toolbar flex flex-col md:flex-row justify-between items-center border-t border-(--erp-table-border)">
         
-        <erp-table-pagination
-          class="flex-1 w-full"
-          [pageIndex]="table.getState().pagination.pageIndex"
-          [pageSize]="table.getState().pagination.pageSize"
-          [totalItems]="itemCount() || table.getPrePaginationRowModel().rows.length"
-          [pageSizeOptions]="_pageSizeOptions()"
-          (pageChange)="onPaginationChange($event)"
-        />
+        @if (!_isGroupedMode()) {
+          <erp-table-pagination
+            class="flex-1 w-full"
+            [pageIndex]="table.getState().pagination.pageIndex"
+            [pageSize]="table.getState().pagination.pageSize"
+            [totalItems]="itemCount() || table.getPrePaginationRowModel().rows.length"
+            [pageSizeOptions]="_pageSizeOptions()"
+            (pageChange)="onPaginationChange($event)"
+          />
+        } @else {
+          <div class="flex-1 w-full"></div>
+        }
 
         <div class="flex items-center gap-2 p-2 pl-0">
           <!-- Dodatkowe akcje (content projection) -->
@@ -642,6 +729,93 @@ export class ErpTableComponent<T> implements AfterViewInit {
   protected _enableColumnVisibility = computed(() => this.config().enableColumnVisibility ?? true);
   protected _hasFooter = computed(() => this._flattenLeafColumns().some(c => c.footer !== undefined));
 
+  // ── Grouped rows (sztuczne wiersze-rodzice + jedna wspólna wirtualizacja) ──
+  protected _groupedRowsConfig = computed<ErpGroupedRowsConfig<any, T> | undefined>(() => this.config().groupedRows);
+  protected _isGroupedMode = computed(() => !!this._groupedRowsConfig());
+  protected _groups = computed<any[]>(() => unwrapSignal(this._groupedRowsConfig()?.groups) ?? []);
+  protected _groupActions = computed<ErpGroupRowAction<any>[]>(() => this._groupedRowsConfig()?.actions ?? []);
+
+  private readonly _expandedGroups = signal<Set<string>>(new Set());
+  private readonly _loadingGroups = signal<Set<string>>(new Set());
+  private readonly _seenGroupKeys = new Set<string>();
+  private readonly _requestedGroupLoads = new Set<string>();
+
+  /** Wiersze danych (dzieci) pogrupowane po kluczu grupy, z zachowaniem bieżącego sortowania. */
+  protected _childrenByGroup = computed(() => {
+    const cfg = this._groupedRowsConfig();
+    const map = new Map<string, Row<T>[]>();
+    if (!cfg) return map;
+    for (const row of this.table().getRowModel().rows) {
+      const key = cfg.getRowGroupKey(row.original);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(row);
+    }
+    return map;
+  });
+
+  /**
+   * Logiczna, pełna kolejność wierszy danych (bez nagłówków grup), używana wyłącznie
+   * do liczenia zakresów przy zaznaczaniu z Shift — niezależna od tego, czy dana grupa
+   * jest akurat zwinięta czy rozwinięta (zwinięta grupa nadal "zajmuje miejsce" w zakresie).
+   * W trybie bez grupowania to po prostu kolejność wierszy tabeli.
+   */
+  protected _logicalRowOrder = computed<Row<T>[]>(() => {
+    const cfg = this._groupedRowsConfig();
+    if (!cfg) {
+      return this.table().getRowModel().rows;
+    }
+
+    const childrenByGroup = this._childrenByGroup();
+    const result: Row<T>[] = [];
+    for (const group of this._groups()) {
+      const key = cfg.getGroupKey(group);
+      result.push(...(childrenByGroup.get(key) ?? []));
+    }
+    return result;
+  });
+
+  /**
+   * Spłaszczona lista wierszy do wyrenderowania w jednej wirtualizowanej liście —
+   * w trybie zwykłym to po prostu wiersze tabeli; w trybie grupowanym to
+   * wiersz-grupa + (jeśli rozwinięta) jej dzieci, dla każdej grupy po kolei.
+   */
+  protected _flatDisplayRows = computed<FlatDisplayRow<T>[]>(() => {
+    const cfg = this._groupedRowsConfig();
+    if (!cfg) {
+      return this.table().getRowModel().rows.map(row => ({ kind: 'leaf' as const, row }));
+    }
+
+    const childrenByGroup = this._childrenByGroup();
+    const expanded = this._expandedGroups();
+    const loadingGroups = this._loadingGroups();
+    const result: FlatDisplayRow<T>[] = [];
+
+    for (const group of this._groups()) {
+      const key = cfg.getGroupKey(group);
+      const children = childrenByGroup.get(key) ?? [];
+      const isExpanded = expanded.has(key);
+      const selectedCount = children.filter(r => r.getIsSelected()).length;
+
+      result.push({
+        kind: 'group',
+        group,
+        key,
+        expanded: isExpanded,
+        totalCount: children.length,
+        selectedCount,
+        loading: loadingGroups.has(key) || (cfg.isGroupLoading?.(group) ?? false),
+      });
+
+      if (isExpanded) {
+        for (const row of children) {
+          result.push({ kind: 'leaf', row });
+        }
+      }
+    }
+
+    return result;
+  });
+
   protected _lastLeftPinnedColumnId = computed(() => {
     const cols = this.table().getVisibleLeafColumns();
     const leftCols = cols.filter(c => c.getIsPinned() === 'left');
@@ -690,11 +864,16 @@ export class ErpTableComponent<T> implements AfterViewInit {
   protected _serverAllSelected = signal<boolean>(false);
   private _isInitialized = false;
 
+  private readonly preferencesService = inject(ErpUserPreferencesService);
+  private _saveStateTimeout: any;
+
   constructor() {
-    // Initialize state from config if provided
+    // Initialize state from config if provided (jawny initialState ma priorytet nad zapisanymi preferencjami)
     effect(() => {
       const config = this.config();
-      const state = config.initialState;
+      const key = config.stateKey;
+      const state: Partial<ErpTableState> | undefined = config.initialState
+        ?? (key ? untracked(() => this.preferencesService.getState(ErpPreferencesType.Table, key)) : undefined);
       if (state && !this._isInitialized) {
         untracked(() => {
           if (state.sorting) {
@@ -847,8 +1026,61 @@ export class ErpTableComponent<T> implements AfterViewInit {
           rightClickSelection: this._rightClickSelection(),
         };
         this.config().onStateChange?.(state);
+
+        const key = this.config().stateKey;
+        if (key) {
+          clearTimeout(this._saveStateTimeout);
+          this._saveStateTimeout = setTimeout(() => {
+            const stateToSave: ErpTableState = {
+              ...state,
+              // Zaznaczenie jest ulotne — nie zapisujemy go w preferencjach usera.
+              selection: { isAllSelected: false, selectedIds: [], filters: {} },
+            };
+            this.preferencesService.saveState(ErpPreferencesType.Table, key, stateToSave);
+          }, 400);
+        }
       });
     });
+
+    // Grouped rows: domyślne rozwinięcie nowo napotkanych grup (raz na grupę — nie nadpisuje ręcznego collapse).
+    effect(() => {
+      const cfg = this._groupedRowsConfig();
+      if (!cfg || cfg.defaultExpanded === false) return;
+      const groups = this._groups();
+
+      untracked(() => {
+        const next = new Set(this._expandedGroups());
+        let changed = false;
+        for (const group of groups) {
+          const key = cfg.getGroupKey(group);
+          if (!this._seenGroupKeys.has(key)) {
+            this._seenGroupKeys.add(key);
+            next.add(key);
+            changed = true;
+          }
+        }
+        if (changed) this._expandedGroups.set(next);
+      });
+    });
+
+    // Grouped rows: dociąganie dzieci grupy dopiero gdy jej wiersz stanie się widoczny w wirtualizerze.
+    effect(() => {
+      const cfg = this._groupedRowsConfig();
+      if (!cfg?.loadChildren) return;
+      const visibleItems = this.virtualizer().getVirtualItems();
+      const flatRows = this._flatDisplayRows();
+
+      untracked(() => {
+        for (const item of visibleItems) {
+          const flatRow = flatRows[item.index];
+          if (flatRow && flatRow.kind === 'group') {
+            this._ensureGroupChildrenLoaded(flatRow);
+          }
+        }
+      });
+    });
+
+    this.destroyRef.onDestroy(() => clearTimeout(this._saveStateTimeout));
   }
 
   private _autoSized = false;
@@ -969,7 +1201,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
   private _handleRowSelection(row: Row<T>, checked: boolean, shiftKey: boolean) {
     if (shiftKey && this._lastSelectedRowId()) {
-      const rows = this.table().getRowModel().rows;
+      const rows = this._logicalRowOrder();
       const lastIndex = rows.findIndex(r => r.id === this._lastSelectedRowId());
       const currentIndex = rows.findIndex(r => r.id === row.id);
       
@@ -1140,10 +1372,12 @@ export class ErpTableComponent<T> implements AfterViewInit {
       manualSorting: this._isServerMode(),
       manualFiltering: this._isServerMode(),
       rowCount: this.itemCount(),
-      
+
       getCoreRowModel: getCoreRowModel(),
       getSortedRowModel: this._isServerMode() ? undefined : getSortedRowModel(),
-      getPaginationRowModel: this._isServerMode() ? undefined : getPaginationRowModel(),
+      // W trybie grupowanym paginacja nie ma sensu (wiersze są dzielone na grupy, nie strony) —
+      // skalę obsługuje wyłącznie wirtualizacja.
+      getPaginationRowModel: (this._isServerMode() || this._isGroupedMode()) ? undefined : getPaginationRowModel(),
       getFilteredRowModel: this._isServerMode() ? undefined : getFilteredRowModel(),
 
       enableRowSelection: true,
@@ -1200,9 +1434,15 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
   // Virtualizer Instance
   protected virtualizer = injectVirtualizer(() => ({
-    count: this.table().getRowModel().rows.length,
+    count: this._flatDisplayRows().length,
     scrollElement: this.scrollElement()?.nativeElement,
-    estimateSize: () => this.config().estimatedRowHeight ?? 48,
+    estimateSize: (index: number) => {
+      const flatRow = this._flatDisplayRows()[index];
+      if (flatRow?.kind === 'group') {
+        return this._groupedRowsConfig()?.estimateGroupRowHeight ?? 56;
+      }
+      return this.config().estimatedRowHeight ?? 48;
+    },
     overscan: 5,
   }));
 
@@ -1355,6 +1595,110 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
   protected onRowDoubleClickEvent(row: T) {
     this.config().onRowDoubleClick?.(row);
+  }
+
+  // ── Grouped rows: renderowanie i interakcje ──
+
+  protected _groupTitle(group: any): Translatable {
+    return this._groupedRowsConfig()?.getGroupTitle(group) ?? '';
+  }
+
+  protected _groupSubtitle(group: any): Translatable | undefined {
+    return this._groupedRowsConfig()?.getGroupSubtitle?.(group);
+  }
+
+  protected _groupIcon(group: any): string | undefined {
+    return this._groupedRowsConfig()?.getGroupIcon?.(group);
+  }
+
+  protected toggleGroupExpanded(key: string): void {
+    const next = new Set(this._expandedGroups());
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    this._expandedGroups.set(next);
+  }
+
+  protected toggleGroupSelection(key: string, checked: boolean, shiftKey = false): void {
+    const cfg = this._groupedRowsConfig();
+    const childrenByGroup = this._childrenByGroup();
+
+    if (shiftKey && cfg) {
+      const anchorGroupKey = this._resolveAnchorGroupKey(cfg);
+      if (anchorGroupKey) {
+        const groupKeys = this._groups().map(g => cfg.getGroupKey(g));
+        const anchorIndex = groupKeys.indexOf(anchorGroupKey);
+        const targetIndex = groupKeys.indexOf(key);
+
+        if (anchorIndex !== -1 && targetIndex !== -1) {
+          const start = Math.min(anchorIndex, targetIndex);
+          const end = Math.max(anchorIndex, targetIndex);
+
+          const newSelection = { ...this._rowSelection() };
+          for (let i = start; i <= end; i++) {
+            for (const row of childrenByGroup.get(groupKeys[i]) ?? []) {
+              if (row.getCanSelect()) newSelection[row.id] = checked;
+            }
+          }
+          this._rowSelection.set(newSelection);
+          this._emitSelectionChange();
+          this._setSelectionAnchorToGroupEdge(key, childrenByGroup);
+          return;
+        }
+      }
+    }
+
+    const rows = childrenByGroup.get(key) ?? [];
+    const newSelection = { ...this._rowSelection() };
+    for (const row of rows) {
+      if (row.getCanSelect()) newSelection[row.id] = checked;
+    }
+    this._rowSelection.set(newSelection);
+    this._emitSelectionChange();
+    this._setSelectionAnchorToGroupEdge(key, childrenByGroup);
+  }
+
+  /** Rozwiązuje klucz grupy, do której należy ostatnio "dotknięty" wiersz (kotwica zakresu Shift). */
+  private _resolveAnchorGroupKey(cfg: ErpGroupedRowsConfig<any, T>): string | null {
+    const anchorId = this._lastSelectedRowId();
+    if (!anchorId) return null;
+    const anchorRow = this._logicalRowOrder().find(r => r.id === anchorId);
+    return anchorRow ? cfg.getRowGroupKey(anchorRow.original) : null;
+  }
+
+  /** Ustawia kotwicę zakresu Shift na ostatni (dolny) wiersz danej grupy. */
+  private _setSelectionAnchorToGroupEdge(key: string, childrenByGroup: Map<string, Row<T>[]>): void {
+    const rows = childrenByGroup.get(key) ?? [];
+    if (rows.length > 0) {
+      this._lastSelectedRowId.set(rows[rows.length - 1].id);
+    }
+  }
+
+  protected async onGroupActionClick(action: ErpGroupRowAction<any>, group: any): Promise<void> {
+    await action.onClick(group);
+  }
+
+  protected _isGroupActionDisabled(action: ErpGroupRowAction<any>, group: any): boolean {
+    return action.disabled?.(group) ?? false;
+  }
+
+  /** Zapewnia dociągnięcie dzieci danej grupy (jednorazowo), jeśli konfiguracja to wspiera. */
+  private _ensureGroupChildrenLoaded(flatRow: Extract<FlatDisplayRow<T>, { kind: 'group' }>): void {
+    const cfg = this._groupedRowsConfig();
+    if (!cfg?.loadChildren || flatRow.totalCount > 0 || this._requestedGroupLoads.has(flatRow.key)) return;
+
+    this._requestedGroupLoads.add(flatRow.key);
+    const loading = new Set(this._loadingGroups());
+    loading.add(flatRow.key);
+    this._loadingGroups.set(loading);
+
+    Promise.resolve(cfg.loadChildren(flatRow.group)).finally(() => {
+      const next = new Set(this._loadingGroups());
+      next.delete(flatRow.key);
+      this._loadingGroups.set(next);
+    });
   }
 
   public clearSelection(): void {

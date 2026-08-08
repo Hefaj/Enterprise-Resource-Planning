@@ -1,5 +1,6 @@
 import { Type, Signal } from '@angular/core';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpIcon } from '../../base/erp-icon.types';
 
 export type ErpTableMode = 'server' | 'client';
 
@@ -96,6 +97,56 @@ export interface ErpTableState {
   rightClickSelection?: boolean;
 }
 
+/**
+ * Akcja wyświetlana w wierszu grupy (np. "Dodaj gwarancję do produktu").
+ */
+export interface ErpGroupRowAction<TGroup = any> {
+  label: Translatable;
+  icon?: ErpIcon;
+  onClick: (group: TGroup) => void | Promise<void>;
+  disabled?: (group: TGroup) => boolean;
+}
+
+/**
+ * Konfiguracja trybu grupowanych wierszy — pozwala wyświetlić dane pogrupowane
+ * pod sztucznymi wierszami-rodzicami (bez związku z kolumnami tabeli),
+ * w jednej, wspólnej wirtualizowanej liście (jeden scrollbar).
+ *
+ * Rodzic (`TGroup`) to dowolny byt niezwiązany z `ErpColumnDef<TData>` — renderowany
+ * jako pełnoszerokościowy wiersz (tytuł/podtytuł/ikona/akcje), z checkboxem kaskadowo
+ * zaznaczającym wszystkie jego dzieci oraz przyciskiem rozwijania.
+ *
+ * Dzieci (`TData`) to zwykłe wiersze tabeli — przechodzą przez standardowy mechanizm kolumn.
+ */
+export interface ErpGroupedRowsConfig<TGroup = any, TData = any> {
+  /** Lista grup (rodziców) do wyświetlenia — w tej kolejności. */
+  groups: MaybeSignal<TGroup[]>;
+  /** Unikalny, stabilny klucz grupy. */
+  getGroupKey: (group: TGroup) => string;
+  /** Klucz grupy, do której należy dany wiersz danych (dziecko). */
+  getRowGroupKey: (row: TData) => string;
+  /** Tytuł wiersza grupy. */
+  getGroupTitle: (group: TGroup) => Translatable;
+  /** Opcjonalny podtytuł wiersza grupy (np. SKU/ID). */
+  getGroupSubtitle?: (group: TGroup) => Translatable | undefined;
+  /** Opcjonalna ikona wiersza grupy. */
+  getGroupIcon?: (group: TGroup) => ErpIcon | undefined;
+  /** Czy dana grupa jest w trakcie ładowania (np. sygnał z orkiestratora). */
+  isGroupLoading?: (group: TGroup) => boolean;
+  /** Akcje wyświetlane w wierszu grupy. */
+  actions?: ErpGroupRowAction<TGroup>[];
+  /** Czy grupy są domyślnie rozwinięte (domyślnie: true). */
+  defaultExpanded?: boolean;
+  /**
+   * Wywoływane, gdy wiersz grupy staje się widoczny w wirtualizerze, a jej dzieci
+   * nie są jeszcze załadowane (`getRowGroupKey` nie zwraca dla niej żadnych wierszy
+   * w `items`) — do dociągania danych "na żądanie".
+   */
+  loadChildren?: (group: TGroup) => void | Promise<void>;
+  /** Szacowana wysokość wiersza grupy w px (dla wirtualizera). Domyślnie 56. */
+  estimateGroupRowHeight?: number;
+}
+
 export interface ErpTableConfig<TData = any> {
   items?: MaybeSignal<TData[]>;
   itemCount?: MaybeSignal<number>;
@@ -120,6 +171,12 @@ export interface ErpTableConfig<TData = any> {
   emptyMessage?: MaybeSignal<Translatable>;
   skeletonRows?: number;
   initialState?: Partial<ErpTableState>;
+  /**
+   * Unikalny klucz stanu tabeli — jeśli podany, `erp-table` sam odczytuje i zapisuje
+   * (debounced) stan (paginacja, sortowanie, widoczność/kolejność/szerokość kolumn)
+   * w preferencjach użytkownika, bez potrzeby obsługi tego po stronie hosta.
+   */
+  stateKey?: string;
   onRowClick?: (row: TData) => void;
   onRowDoubleClick?: (row: TData) => void;
   trackBy?: (index: number, row: TData) => any;
@@ -129,4 +186,9 @@ export interface ErpTableConfig<TData = any> {
   onStateChange?: (state: ErpTableState) => void;
   legendItems?: MaybeSignal<ErpCellChip[]>;
   filters?: MaybeSignal<Record<string, any>>;
+  /**
+   * Włącza tryb grupowanych wierszy — dane wyświetlane pod sztucznymi wierszami-rodzicami
+   * w jednej, wspólnej wirtualizowanej liście. Wymaga `enableVirtualScroll: true`.
+   */
+  groupedRows?: ErpGroupedRowsConfig<any, TData>;
 }

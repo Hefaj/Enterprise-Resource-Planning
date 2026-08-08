@@ -1,6 +1,7 @@
 import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+import { ErpIcon } from '../../base/erp-icon.types';
 import {
   ErpTableConfig,
   ErpColumnDef,
@@ -14,6 +15,8 @@ import {
   ErpCellChip,
   isColumnGroupDef,
   ErpSelectionState,
+  ErpGroupedRowsConfig,
+  ErpGroupRowAction,
 } from './erp-table.types';
 
 /**
@@ -215,6 +218,88 @@ export class ErpColumnGroupBuilder<TData = any> extends ErpBaseBuilder<ErpColumn
     } else {
       this._data.columns!.push(configureOrDef);
     }
+    return this;
+  }
+}
+
+/**
+ * Budowniczy konfiguracji trybu grupowanych wierszy (`ErpTable.groupedRows`).
+ * Grupa (`TGroup`) to sztuczny byt-rodzic bez związku z kolumnami tabeli —
+ * renderowany jako pełnoszerokościowy wiersz z tytułem/podtytułem/checkboxem kaskadowym/expand.
+ */
+export class ErpGroupedRowsBuilder<TGroup = any, TData = any> extends ErpBaseBuilder<ErpGroupedRowsConfig<TGroup, TData>> {
+  constructor() {
+    super();
+    this._data.defaultExpanded = true;
+    this._data.actions = [];
+  }
+
+  /** Ustawia listę grup (rodziców) do wyświetlenia. */
+  public setGroups(groups: MaybeSignal<TGroup[]>): this {
+    this._data.groups = groups;
+    return this;
+  }
+
+  /** Ustawia funkcję zwracającą unikalny, stabilny klucz grupy. */
+  public setGetGroupKey(fn: (group: TGroup) => string): this {
+    this._data.getGroupKey = fn;
+    return this;
+  }
+
+  /** Ustawia funkcję zwracającą klucz grupy, do której należy dany wiersz danych. */
+  public setGetRowGroupKey(fn: (row: TData) => string): this {
+    this._data.getRowGroupKey = fn;
+    return this;
+  }
+
+  /** Ustawia funkcję zwracającą tytuł wiersza grupy. */
+  public setGetGroupTitle(fn: (group: TGroup) => Translatable): this {
+    this._data.getGroupTitle = fn;
+    return this;
+  }
+
+  /** Ustawia funkcję zwracającą podtytuł wiersza grupy (np. SKU/ID). */
+  public setGetGroupSubtitle(fn: (group: TGroup) => Translatable | undefined): this {
+    this._data.getGroupSubtitle = fn;
+    return this;
+  }
+
+  /** Ustawia funkcję zwracającą ikonę wiersza grupy. */
+  public setGetGroupIcon(fn: (group: TGroup) => ErpIcon | undefined): this {
+    this._data.getGroupIcon = fn;
+    return this;
+  }
+
+  /** Ustawia funkcję sygnalizującą stan ładowania danej grupy. */
+  public setIsGroupLoading(fn: (group: TGroup) => boolean): this {
+    this._data.isGroupLoading = fn;
+    return this;
+  }
+
+  /** Dodaje akcję wyświetlaną w wierszu grupy (np. "Dodaj"). */
+  public addAction(action: ErpGroupRowAction<TGroup>): this {
+    this._data.actions!.push(action);
+    return this;
+  }
+
+  /** Ustawia, czy grupy są domyślnie rozwinięte (domyślnie: true). */
+  public setDefaultExpanded(expanded: boolean): this {
+    this._data.defaultExpanded = expanded;
+    return this;
+  }
+
+  /**
+   * Ustawia funkcję wywoływaną, gdy wiersz grupy staje się widoczny w wirtualizerze,
+   * a jej dzieci nie są jeszcze załadowane — do dociągania danych na żądanie.
+   */
+  public setLoadChildren(fn: (group: TGroup) => void | Promise<void>): this {
+    this._data.loadChildren = fn;
+    return this;
+  }
+
+  /** Ustawia szacowaną wysokość wiersza grupy w px (dla wirtualizera). */
+  public setEstimateGroupRowHeight(height: number): this {
+    this._data.estimateGroupRowHeight = height;
     return this;
   }
 }
@@ -451,6 +536,15 @@ export class ErpTableBuilder<TData = any> extends ErpBaseBuilder<ErpTableConfig<
   }
 
   /**
+   * Ustawia unikalny klucz stanu tabeli — włącza automatyczny odczyt i (debounced) zapis
+   * stanu (paginacja, sortowanie, kolumny) w preferencjach użytkownika przez sam `erp-table`.
+   */
+  public setStateKey(key: string | undefined): this {
+    this._data.stateKey = key;
+    return this;
+  }
+
+  /**
    * Funkcja wykonywana w momencie pojedynczego kliknięcia na wiersz.
    */
   public setOnRowClick(fn: (row: TData) => void): this {
@@ -520,6 +614,21 @@ export class ErpTableBuilder<TData = any> extends ErpBaseBuilder<ErpTableConfig<
    */
   public setOnStateChange(fn: (state: ErpTableState) => void): this {
     this._data.onStateChange = fn;
+    return this;
+  }
+
+  /**
+   * Włącza tryb grupowanych wierszy (jedna wirtualizowana lista, sztuczne wiersze-rodzice
+   * bez związku z kolumnami + kaskadowa selekcja). Wymaga `enableVirtualScroll(true)`.
+   */
+  public setGroupedRows<TGroup = any>(configureOrDef: ErpGroupedRowsConfig<TGroup, TData> | ((b: ErpGroupedRowsBuilder<TGroup, TData>) => void)): this {
+    if (typeof configureOrDef === 'function') {
+      const builder = new ErpGroupedRowsBuilder<TGroup, TData>();
+      configureOrDef(builder);
+      this._data.groupedRows = builder.build();
+    } else {
+      this._data.groupedRows = configureOrDef;
+    }
     return this;
   }
 }

@@ -26,7 +26,6 @@ import {
   SearchProductRequest,
   CategoryVM,
 } from '@erp/catalog/data-access';
-import { ErpUserPreferencesService, ErpPreferencesType } from '@erp/shared/data-access';
 
 import { PRODUCT_KEYS } from '../../translation';
 
@@ -44,8 +43,6 @@ import { PRODUCT_KEYS } from '../../translation';
 })
 export class CategoryProductTableComponent {
   private readonly catalogProductOrchestrator = inject(CatalogProductOrchestrator);
-  private readonly preferences = inject(ErpUserPreferencesService);
-  private saveTimeout: any;
 
   /** Filtry przekazywane z zewnątrz (np. wyszukiwanie) */
   filters = input<SearchProductRequest>({});
@@ -105,16 +102,10 @@ export class CategoryProductTableComponent {
   }
 
   tableConfig = computed<ErpTableConfig<ProductVM>>(() => {
-    const key = this.stateKey();
-    let initialState: Partial<ErpTableState> | undefined = undefined;
-    
-    if (key) {
-      initialState = untracked(() => this.preferences.getState(ErpPreferencesType.Table, key));
-    }
-
     const builder = new ErpTableBuilder<ProductVM>()
       .setMode('server')
       .setRowIdAccessor(x => x.uuid)
+      .setStateKey(this.stateKey())
       .setEnableVirtualScroll(true)
       .setEstimatedRowHeight(50)
       .setDefaultPageSize(20)
@@ -179,30 +170,12 @@ export class CategoryProductTableComponent {
         )
       );
 
-      if (initialState) {
-        builder.setInitialState(initialState);
-      }
-
       builder.setOnStateChange((state) => {
         const dataStateChanged = !this.lastTableState ||
           JSON.stringify(this.lastTableState.pagination) !== JSON.stringify(state.pagination) ||
           JSON.stringify(this.lastTableState.sorting) !== JSON.stringify(state.sorting);
 
         this.lastTableState = state;
-        if (key) {
-          clearTimeout(this.saveTimeout);
-          this.saveTimeout = setTimeout(() => {
-            const stateToSave: ErpTableState = {
-              ...state,
-              selection: {
-                isAllSelected: false,
-                selectedIds: [],
-                filters: {},
-              },
-            };
-            this.preferences.saveState(ErpPreferencesType.Table, key, stateToSave);
-          }, 400);
-        }
 
         if (dataStateChanged) {
           this.fetchData(this.filters(), state);

@@ -9,7 +9,7 @@ CORE ARCHITECTURE PRINCIPLES:
 - Frontend: Micro-Frontend (MFE) architecture using Nx and Module Federation (Vite/Webpack).
 - UI/UX: Standalone Components, Signals-based state, Angular v21 Control Flow (@if, @for, @let).
 - Styling: Tailwind CSS v4 + TaigaUI (v5+).
-- Backend: .NET 10 C# with Backend-for-Frontend (BFF) patterns and Modular Monolith structure.
+- Backend: .NET 10 C# microservices — each module talks directly to its own module's API, no BFF/aggregation layer.
 - Coding Style: Clean Code, DRY, and "Single Config Builder" pattern for UI components.
 - Component library: Taiga UI (v5+) is used for all atomic/UI components.
 
@@ -40,7 +40,7 @@ When asked to create a component, strictly follow the "Single Config Builder" pa
 
 3. BACKEND INTEGRATION (.NET 10):
    - When proposing API: Use Minimal APIs, C# 14 features (if applicable), and Strong Typing for DTOs.
-   - Ensure DTOs match the Frontend Config requirements (BFF Pattern).
+   - Ensure DTOs match the Frontend Config requirements (calling the owning microservice's API directly — no BFF aggregation layer).
 
 4. MANDATORY OUTPUT FORMAT:
    - Provide a brief "Architectural Justification" for each solution.

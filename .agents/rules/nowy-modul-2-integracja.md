@@ -243,7 +243,7 @@ Dodaj obiekt konfiguracji do tablicy `REMOTE_MODULES_CONFIG`:
 
 ### 5.5 Konfiguracja API_BASE_URL — `frontend/apps/client/src/app/remote-api.providers.ts`
 
-Dodaj import tokenu i zarejestruj bazowy URL do endpointów BFF (np. port 5250):
+Dodaj import tokenu i zarejestruj bazowy URL do endpointów mikroserwisu modułu (np. port 5250):
 
 ```ts
 import { API_BASE_URL as MODULE_NAME_API_BASE_URL } from '@erp/MODULE_NAME/data-access';
@@ -325,7 +325,7 @@ npx nx run client:build:production
 - [ ] `module-loaders.ts` — dodana funkcja importująca `@erp/MODULE_NAME/contract`
 - [ ] `app.routes.ts` (client) — dodany route z `loadChildren: () => loadModuleRoutes('MODULE_NAME')`
 - [ ] `REMOTE_MODULES_CONFIG.ts` — dodany obiekt z `routePrefix: 'MODULE_NAME'`
-- [ ] `remote-api.providers.ts` — zarejestrowany port BFF dla `API_BASE_URL` modułu
+- [ ] `remote-api.providers.ts` — zarejestrowany port mikroserwisu API dla `API_BASE_URL` modułu
 - [ ] `eslint.config.mjs` — reguła `scope:MODULE_NAME`
 - [ ] `tsconfig.base.json` — 5 poprawnych aliasów `@erp/MODULE_NAME/*`
 - [ ] `npx nx lint MODULE_NAME` oraz buildy weryfikacyjne (`esbuild:development` i `build:production`) zakończone sukcesem

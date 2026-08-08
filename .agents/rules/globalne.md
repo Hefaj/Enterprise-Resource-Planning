@@ -12,7 +12,7 @@ trigger: always_on
 
 Every TaigaUI component must be styled using TaigaUI's styling properties, CSS variables (--tui-*), or scoped CSS/SCSS overrides.
 
-Write pure CSS/SCSS for styling. Do not use Tailwind unless explicitly asked.
+Use Tailwind CSS (v4) utility classes for layout, spacing, and general styling. Use TaigaUI's own styling properties, CSS variables (--tui-*), or scoped CSS/SCSS overrides for component-level design tokens that Tailwind can't express.
 
 Focus on mapping TaigaUI's components to my custom CSS classes or using TaigaUI's built-in design tokens.
 

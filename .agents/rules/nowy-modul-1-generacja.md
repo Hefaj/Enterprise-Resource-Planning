@@ -427,7 +427,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
-    { provide: API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na port BFF modułu (np. 5250)
+    { provide: API_BASE_URL, useValue: 'http://localhost:BACKEND_PORT' }, // Zmień BACKEND_PORT na port mikroserwisu API modułu (np. 5250)
   ],
 };
 ```

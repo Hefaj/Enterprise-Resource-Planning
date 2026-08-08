@@ -81,6 +81,13 @@ export interface ErpActionGroup {
    * ale nie konkretne instancje (bo pula jest zmienna w runtime).
    */
   isDynamic?: boolean;
+
+  /**
+   * Wyklucza grupę z wyszukiwania w Mega Menu.
+   * Używane np. dla grupy "Przypięte" — jej akcje są duplikatem akcji
+   * z innych grup, więc podczas wyszukiwania nie powinny się dublować w wynikach.
+   */
+  excludeFromSearch?: boolean;
 }
 
 // ─────────────────────────────────────────────────

@@ -135,6 +135,7 @@ export const SHARED_KEYS = {
         searchPlaceholder: 'shared.actionToolbar.megaMenu.searchPlaceholder',
         empty: 'shared.actionToolbar.megaMenu.empty',
         dynamic: 'shared.actionToolbar.megaMenu.dynamic',
+        pinned: 'shared.actionToolbar.megaMenu.pinned',
       },
       toolbar: {
         selected: 'shared.actionToolbar.toolbar.selected',

@@ -129,7 +129,8 @@
     "megaMenu": {
       "searchPlaceholder": "Search actions...",
       "empty": "No items",
-      "dynamic": "dyn."
+      "dynamic": "dyn.",
+      "pinned": "Pinned"
     },
     "toolbar": {
       "selected": "Selected",

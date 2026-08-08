@@ -513,6 +513,7 @@ export class ErpActionToolbarMegaMenuComponent implements AfterViewInit {
     if (!term) return groups;
 
     return groups
+      .filter(group => !group.excludeFromSearch)
       .map(group => {
         const filteredActions = group.actions.filter(a => {
           const label = unwrapSignal(a.label);

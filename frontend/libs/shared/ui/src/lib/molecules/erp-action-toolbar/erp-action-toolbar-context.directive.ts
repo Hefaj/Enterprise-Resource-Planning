@@ -14,11 +14,13 @@ import {
   ErpActionToolbarConfig,
   ErpToolbarUserPrefs,
   ErpActionGroup,
+  ErpActionDef,
   ErpDynamicActionProvider,
 } from './erp-action-toolbar.types';
 import { ErpPreferencesType, ErpUserPreferencesService } from '@erp/shared/data-access';
 import { ErpActionToolbarZoneDirective } from './erp-action-toolbar-zone.directive';
 import { ErpActionToolbarContextMenuComponent } from './erp-action-toolbar-context-menu.component';
+import { SHARED_KEYS } from '../../translation/keys';
 
 /**
  * Dyrektywa context menu (PPM) — reaguje na `contextmenu` event
@@ -55,7 +57,7 @@ export class ErpActionToolbarContextDirective implements OnInit, OnDestroy {
   });
 
   // ─── Filtrowanie ─────────────────────────
-  private readonly _groups = computed<ErpActionGroup[]>(() => {
+  private readonly _baseGroups = computed<ErpActionGroup[]>(() => {
     const config = this.erpActionToolbarContext();
     const prefs = this._userPrefs();
 
@@ -72,6 +74,42 @@ export class ErpActionToolbarContextDirective implements OnInit, OnDestroy {
         ...g,
         actions: g.actions.filter(a => !prefs.hiddenActionIds?.includes(a.id)),
       }));
+  });
+
+  /** Efektywne ID przypiętych akcji (user prefs > config default). */
+  private readonly _effectivePinnedIds = computed<string[]>(() => {
+    const prefs = this._userPrefs();
+    if (prefs?.pinnedActionIds?.length) {
+      return prefs.pinnedActionIds;
+    }
+    return this.erpActionToolbarContext().pinnedActionIds ?? [];
+  });
+
+  /** Grupa "Przypięte" — pierwsza grupa w menu PPM, jeśli są pinned akcje. */
+  private readonly _pinnedGroup = computed<ErpActionGroup | null>(() => {
+    const pinnedIds = this._effectivePinnedIds();
+    if (pinnedIds.length === 0) return null;
+
+    const allActions = this._baseGroups().flatMap(g => g.actions);
+    const actions = pinnedIds
+      .map(id => allActions.find(a => a.id === id))
+      .filter((a): a is ErpActionDef => a !== undefined);
+
+    if (actions.length === 0) return null;
+
+    return {
+      id: '__pinned__',
+      label: SHARED_KEYS.actionToolbar.megaMenu.pinned,
+      icon: '@tui.pin',
+      actions,
+      excludeFromSearch: true,
+    };
+  });
+
+  private readonly _groups = computed<ErpActionGroup[]>(() => {
+    const pinnedGroup = this._pinnedGroup();
+    const base = this._baseGroups();
+    return pinnedGroup ? [pinnedGroup, ...base] : base;
   });
 
   private readonly _dynamicProviders = computed<ErpDynamicActionProvider[]>(() => {

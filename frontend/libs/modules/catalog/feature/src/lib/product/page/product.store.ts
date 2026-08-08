@@ -74,4 +74,30 @@ export class ProductStore {
       return newSet;
     });
   }
+
+  // 5. Zaznaczenia gwarancji
+  public readonly selectedWarrantiesByProduct = signal<Record<string, string[]>>({});
+
+  public setWarrantySelectionForProduct(productUuid: string, selectedUuids: string[]): void {
+    const current = this.selectedWarrantiesByProduct()[productUuid] || [];
+    
+    // Zapobiegamy "infinite loops" jeśli zaznaczenie się nie zmieniło
+    if (current.length === selectedUuids.length && current.every(v => selectedUuids.includes(v))) {
+      return;
+    }
+
+    this.selectedWarrantiesByProduct.update(dict => ({
+      ...dict,
+      [productUuid]: selectedUuids
+    }));
+  }
+
+  public clearWarrantySelection(): void {
+    this.selectedWarrantiesByProduct.set({});
+  }
+
+  public getAllSelectedWarrantiesCount(): number {
+    const dict = this.selectedWarrantiesByProduct();
+    return Object.values(dict).reduce((acc, curr) => acc + curr.length, 0);
+  }
 }

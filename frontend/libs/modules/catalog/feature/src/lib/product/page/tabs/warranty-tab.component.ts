@@ -39,10 +39,14 @@ export class WarrantyTabComponent {
     });
   });
   protected readonly _selectionCount = computed(() => this._selectedProducts().length);
+  protected readonly _subSelectionCount = computed(() => this.store.getAllSelectedWarrantiesCount());
 
   protected readonly toolbarConfig = ErpActionToolbarBuilder.create((b) =>
     b
       .setMenuId('warranty-tab-toolbar')
+      .setSelectionCount(this._subSelectionCount)
+      .setSelectionLabel('shared.selectionToolbar.selectedItems')
+      .setOnClearSelection(() => this.onClearWarrantySelection())
       .addDefaultGroup((g) =>
         g
           .setId('crud')
@@ -108,6 +112,17 @@ export class WarrantyTabComponent {
               .setFn(() => console.log('Pokaż archiwalne'))
           )
       )
+      .addSelectionGroup(g => g
+        .setId('selection-actions')
+        .setLabel('Wybrane operacje')
+        .addAction(a => a
+          .setId('delete-selected')
+          .setLabel('Usuń zaznaczone')
+          .setIcon('@tui.trash')
+          .setAppearance('warning')
+          .setFn(() => this.onDeleteSelectedWarranty())
+        )
+      )
       .setPinnedActionIds(['add', 'refresh'])
       .setEnableContextMenu(true)
   );
@@ -136,4 +151,12 @@ export class WarrantyTabComponent {
       .setEmptyState(PRODUCT_KEYS.base.warranty.panel.emptySelection, '@tui.mouse-pointer-click')
       .setOverflow(MAX_DETAILED_SELECTION, PRODUCT_KEYS.base.warranty.panel.bulkDescription, '@tui.layers')
   );
+
+  protected onDeleteSelectedWarranty(): void {
+    console.log('Usuwanie zaznaczonych gwarancji:', this.store.selectedWarrantiesByProduct());
+  }
+
+  protected onClearWarrantySelection(): void {
+    this.store.clearWarrantySelection();
+  }
 }

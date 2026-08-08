@@ -108,6 +108,7 @@ export const SHARED_KEYS = {
     selectionToolbar: {
       selected: 'shared.selectionToolbar.selected',
       selectedFiles: 'shared.selectionToolbar.selectedFiles',
+      selectedItems: 'shared.selectionToolbar.selectedItems',
     },
     actionToolbar: {
       configurator: {

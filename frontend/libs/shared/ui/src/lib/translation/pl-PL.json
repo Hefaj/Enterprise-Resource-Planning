@@ -102,7 +102,8 @@
   },
   "selectionToolbar": {
     "selected": "Wybrano {{count}} elementów",
-    "selectedFiles": "Wybrano {{count}} plików"
+    "selectedFiles": "Wybrano {{count}} plików",
+    "selectedItems": "Wybrano {{count}} elementów"
   },
   "actionToolbar": {
     "configurator": {

@@ -7,10 +7,13 @@ import {
   OnInit,
   effect,
   ElementRef,
+  viewChild,
+  untracked,
 } from '@angular/core';
 import { ErpGroupCardBuilder, ErpGroupCardComponent, ErpTableBuilder, ErpTableComponent } from '@erp/shared/ui';
 import { CatalogProductOrchestrator, ProductVM, WarrantyVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation/keys';
+import { ProductStore } from '../product.store';
 
 /**
  * Pojedyncza grupa gwarancji jednego produktu — nagłówek (ErpGroupCard)
@@ -42,6 +45,8 @@ export class WarrantyGroupComponent implements OnInit {
 
   private readonly elRef = inject(ElementRef);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
+  private readonly store = inject(ProductStore);
+  private readonly tableComponent = viewChild(ErpTableComponent);
 
   /** Signal z gwarancjami dla tego konkretnego produktu. */
   protected readonly _warranties = computed(() => this.product().warranties || []);
@@ -63,10 +68,15 @@ export class WarrantyGroupComponent implements OnInit {
   protected readonly tableConfig = ErpTableBuilder.create<ErpTableBuilder<WarrantyVM>>((table) => {
     table
       .setMode('client')
-      .setDefaultPageSize(50)
+      .setDefaultPageSize(10)
+      .setSelectionMode('multi')
+      .setRowIdAccessor((row) => row.uuid)
       .setItems(this._warranties)
       .setItemCount(computed(() => this._warranties().length))
       .setEmptyMessage(PRODUCT_KEYS.base.warranty.panel.emptyProduct)
+      .setOnSelectionChange((state) => {
+        this.store.setWarrantySelectionForProduct(this.product().uuid, state.selectedIds);
+      })
       .addColumn((c) => c
         .setId('name')
         .setAccessorKey('name')
@@ -94,6 +104,20 @@ export class WarrantyGroupComponent implements OnInit {
     effect(() => {
       this._warranties();
       setTimeout(() => this.triggerMeasure(), 0);
+    });
+
+    effect(() => {
+      const dict = this.store.selectedWarrantiesByProduct();
+      const mySelection = dict[this.product().uuid];
+      if (!mySelection || mySelection.length === 0) {
+        untracked(() => {
+          try {
+            this.tableComponent()?.clearSelection();
+          } catch (e) {
+            // Ignoruj błąd gdy komponent tabeli nie ma jeszcze przekazanego inputa [config]
+          }
+        });
+      }
     });
   }
 

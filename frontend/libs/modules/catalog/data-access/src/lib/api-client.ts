@@ -819,7 +819,6 @@ export interface ProductDto {
     name: string;
     categoryUuids: string[];
     multimediaUuids: string[];
-    warrantyUuids: string[];
     modelUuid: string | undefined;
     sku: string;
     price: number;
@@ -830,6 +829,7 @@ export interface ProductDto {
     image: string | undefined;
     attr_Weight?: string;
     attr_Color?: string;
+    warranties: ProductWarrantyDto[];
 
     [key: string]: any;
 }
@@ -844,6 +844,13 @@ export interface ProductSetNameCommand {
 export interface ProductSetPriceCommand {
     uuid?: string;
     price?: number;
+
+    [key: string]: any;
+}
+
+export interface ProductWarrantyDto {
+    warrantyUuid: string;
+    durationMonths: number;
 
     [key: string]: any;
 }

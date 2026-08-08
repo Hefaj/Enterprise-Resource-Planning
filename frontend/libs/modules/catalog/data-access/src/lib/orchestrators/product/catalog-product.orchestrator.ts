@@ -11,7 +11,7 @@ import { CatalogCategoryOrchestrator } from '../category/catalog-category.orches
 import { CatalogModelOrchestrator } from '../model/catalog-model.orchestrator';
 import { MultimediaVM } from '../multimedia/multimedia.view-model';
 import { CatalogMultimediaOrchestrator } from '../multimedia/catalog-multimedia.orchestrator';
-import { WarrantyVM } from '../warranty/warranty.view-model';
+import { ProductWarrantyVM } from '../warranty/warranty.view-model';
 import { CatalogWarrantyOrchestrator } from '../warranty/catalog-warranty.orchestrator';
 
 /**
@@ -21,7 +21,7 @@ interface ProductResolvedDeps extends ResolvedDeps {
   categories: CategoryVM[];
   model: ModelVM | null;
   multimedia: MultimediaVM[];
-  warranties: WarrantyVM[];
+  warranties: ProductWarrantyVM[];
 }
 
 /**
@@ -163,9 +163,9 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
         }
       }
 
-      if (options.includeWarranties && dto.warrantyUuids) {
-        for (const wUuid of dto.warrantyUuids) {
-          warrantyUuids.add(wUuid);
+      if (options.includeWarranties && dto.warranties) {
+        for (const w of dto.warranties) {
+          warrantyUuids.add(w.warrantyUuid);
         }
       }
     }
@@ -221,8 +221,8 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       : [];
 
     // Rozwiąż gwarancje z cache orkiestratora gwarancji
-    const warranties: WarrantyVM[] = dto.warrantyUuids
-      ? this._warrantySiblingOrchestrator.resolveWarrantyVMs(dto.warrantyUuids)
+    const warranties: ProductWarrantyVM[] = dto.warranties
+      ? this._warrantySiblingOrchestrator.resolveWarrantyVMs(dto.warranties)
       : [];
 
     return { categories, model, multimedia, warranties };

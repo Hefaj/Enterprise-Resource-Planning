@@ -15,12 +15,17 @@ public record ModelDto(
     string Name
 );
 
+public record ProductWarrantyDto(
+    Guid WarrantyUuid,
+    int DurationMonths
+);
+
 public record ProductDto(
     Guid Uuid,
     string Name,
     List<Guid> CategoryUuids,
     List<Guid> MultimediaUuids,
-    List<Guid> WarrantyUuids,
+    List<ProductWarrantyDto> Warranties,
     Guid? ModelUuid,
     string Sku,
     decimal Price,
@@ -140,14 +145,20 @@ public static class CatalogMockData
             var hasManyWarranties = i < 5 || random.NextDouble() > 0.95;
             var numWarranties = hasManyWarranties ? random.Next(50, 101) : random.Next(0, 3);
             Console.WriteLine($"i={i}, numWarranties={numWarranties}, Warranties.Count={Warranties.Count}");
-            var warrantyUuids = Warranties.OrderBy(x => random.Next()).Take(numWarranties).Select(x => x.Uuid).ToList();
-            
+            var productWarranties = Warranties.OrderBy(x => random.Next()).Take(numWarranties)
+                .Select(w => new ProductWarrantyDto(
+                    w.Uuid,
+                    // W promocji gwarancja bywa wydłużona względem standardowego okresu z katalogu gwarancji
+                    random.NextDouble() > 0.8 ? w.DurationMonths * 2 : w.DurationMonths
+                ))
+                .ToList();
+
             list.Add(new ProductDto(
                 Guid.NewGuid(),
                 $"Produkt {i + 1}",
                 productCategories,
                 multimediaUuids,
-                warrantyUuids,
+                productWarranties,
                 modelUuid,
                 $"SKU-{i + 1:D5}",
                 (decimal)Math.Round(random.NextDouble() * 10000 + 10, 2),

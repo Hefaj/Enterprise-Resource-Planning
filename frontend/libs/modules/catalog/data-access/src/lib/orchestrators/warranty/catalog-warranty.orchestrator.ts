@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { BaseOrchestrator, LoadOptions } from '@erp/shared/data-access';
-import { WarrantyVM } from './warranty.view-model';
+import { ProductWarrantyVM, WarrantyVM } from './warranty.view-model';
 import { Observable } from 'rxjs';
 
-import { CatalogClient, SearchResponse, WarrantyDto, SearchWarrantyRequest } from '../../api-client';
+import { CatalogClient, ProductWarrantyDto, SearchResponse, WarrantyDto, SearchWarrantyRequest } from '../../api-client';
 
 @Injectable({
   providedIn: 'root'
@@ -15,15 +15,20 @@ export class CatalogWarrantyOrchestrator extends BaseOrchestrator<WarrantyDto, W
   private readonly apiClient = inject(CatalogClient);
 
   /**
-   * Rozwiązuje listę UUID gwarancji do obiektów WarrantyVM.
+   * Rozwiązuje listę przypisań produkt-gwarancja do obiektów ProductWarrantyVM,
+   * łącząc bazową gwarancję z katalogu z okresem trwania przypisanym do produktu.
    */
-  public resolveWarrantyVMs(uuids: string[]): WarrantyVM[] {
-    const result: WarrantyVM[] = [];
-    for (const uuid of uuids) {
-      const dtoSignal = this.identityMap.get(uuid);
+  public resolveWarrantyVMs(assignments: ProductWarrantyDto[]): ProductWarrantyVM[] {
+    const result: ProductWarrantyVM[] = [];
+    for (const assignment of assignments) {
+      const dtoSignal = this.identityMap.get(assignment.warrantyUuid);
       const dto = dtoSignal();
       if (dto) {
-        result.push(this.mapToViewModel(dto));
+        result.push({
+          ...this.mapToViewModel(dto),
+          warrantyUuid: assignment.warrantyUuid,
+          productDurationMonths: assignment.durationMonths,
+        });
       }
     }
     return result;

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ProductStore } from '../product.store';
 import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpSelectionState, ErpTableBuilder, ErpTableComponent } from '@erp/shared/ui';
-import { CatalogProductOrchestrator, ProductVM, WarrantyVM } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, ProductVM, ProductWarrantyVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation/keys';
 
 /**
@@ -10,7 +10,7 @@ import { PRODUCT_KEYS } from '../../translation/keys';
  */
 interface WarrantyRow {
   productUuid: string;
-  warranty: WarrantyVM;
+  warranty: ProductWarrantyVM;
 }
 
 @Component({
@@ -174,9 +174,16 @@ export class WarrantyTabComponent {
       .addColumn(c => c
         .setId('durationMonths')
         .setAccessorFn((r: WarrantyRow) => r.warranty.durationMonths)
-        .setHeader('Okres (mc)')
+        .setHeader('Standardowy okres (mc)')
         .setCellClass('text-right')
-        .setSize(110)
+        .setSize(150)
+      )
+      .addColumn(c => c
+        .setId('productDurationMonths')
+        .setAccessorFn((r: WarrantyRow) => r.warranty.productDurationMonths)
+        .setHeader('Okres dla produktu (mc)')
+        .setCellClass('text-right')
+        .setSize(150)
       )
       .addColumn(c => c
         .setId('description')

@@ -12,4 +12,4 @@ export { CatalogCategoryOrchestrator } from './category/catalog-category.orchest
 export type { CategoryVM } from './category/category.view-model';
 
 export { CatalogWarrantyOrchestrator } from './warranty/catalog-warranty.orchestrator';
-export type { WarrantyVM } from './warranty/warranty.view-model';
+export type { WarrantyVM, ProductWarrantyVM } from './warranty/warranty.view-model';

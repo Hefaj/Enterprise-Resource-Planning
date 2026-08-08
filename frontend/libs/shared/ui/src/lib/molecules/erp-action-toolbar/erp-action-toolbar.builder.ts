@@ -278,6 +278,7 @@ export class ErpActionToolbarBuilder extends ErpBaseBuilder<ErpActionToolbarConf
     this._data.defaultGroups = [];
     this._data.showConfigurator = true;
     this._data.enableContextMenu = false;
+    this._data.backdropClickThrough = true;
   }
 
   /** Ustawia unikalne ID całego toolbara. Jest to klucz niezbędny do zapisywania preferencji usera w localStorage/DB. */
@@ -364,6 +365,18 @@ export class ErpActionToolbarBuilder extends ErpBaseBuilder<ErpActionToolbarConf
    */
   public setEnableContextMenu(enable: boolean): this {
     this._data.enableContextMenu = enable;
+    return this;
+  }
+
+  /**
+   * Kontroluje, czy kliknięcie zamykające menu kontekstowe jest propagowane
+   * do elementu pod spodem (np. tabeli). Domyślnie true.
+   *
+   * - `true` (domyślne) — klik zamyka menu I wykonuje akcję na elemencie pod spodem
+   * - `false` — klik tylko zamyka menu, element pod spodem nie dostaje zdarzenia
+   */
+  public setBackdropClickThrough(enable: boolean): this {
+    this._data.backdropClickThrough = enable;
     return this;
   }
 }

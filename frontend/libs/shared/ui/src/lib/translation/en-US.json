@@ -36,7 +36,8 @@
     },
     "settings": {
       "title": "Table settings",
-      "rowSelectionOnClick": "Select row on click"
+      "rowSelectionOnClick": "Select row on click",
+      "rightClickSelection": "Right click selection"
     }
   },
   "tabs": {

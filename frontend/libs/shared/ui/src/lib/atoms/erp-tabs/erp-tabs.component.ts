@@ -89,11 +89,9 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
               <span class="erp-tabs__tab-label">
                 {{ (tab.label | erpTranslate) || '' }}
                 @if (getActiveChildPath(tab); as path) {
-                  @for (segment of path; track segment; let last = $last) {
-                    @if ($first) { ( }
+                  @for (segment of path; track segment) {
+                    <tui-icon icon="@tui.chevron-right" class="erp-tabs__breadcrumb-icon" />
                     {{ (segment | erpTranslate) || '' }}
-                    @if (!last) { &nbsp;&gt;&nbsp; }
-                    @if (last) { ) }
                   }
                 }
               </span>
@@ -209,11 +207,9 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
             <ng-template #hintTemplate>
               {{ (tab.label | erpTranslate) || '' }}
               @if (getActiveChildPath(tab); as path) {
-                @for (segment of path; track segment; let last = $last) {
-                  @if ($first) { ( }
+                @for (segment of path; track segment) {
+                  <tui-icon icon="@tui.chevron-right" class="erp-tabs__breadcrumb-icon" />
                   {{ (segment | erpTranslate) || '' }}
-                  @if (!last) { &gt; }
-                  @if (last) { ) }
                 }
               }
             </ng-template>
@@ -430,6 +426,15 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
       font-size: 0.75rem;
       width: 0.75rem;
       height: 0.75rem;
+    }
+
+    .erp-tabs__breadcrumb-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+      margin: 0 0.125rem;
+      vertical-align: text-bottom;
+      color: var(--tui-text-tertiary);
     }
 
     .erp-tabs__content {

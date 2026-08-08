@@ -7,6 +7,9 @@ import {
   output,
   signal,
   OnInit,
+  Directive,
+  ElementRef,
+  Input,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +33,19 @@ import {
   ErpToolbarUserPrefs,
   ErpDynamicGroupPrefs,
 } from './erp-action-toolbar.types';
+
+@Directive({
+  selector: 'input[type=checkbox][erpIndeterminate]',
+  standalone: true,
+})
+export class ErpIndeterminateCheckboxDirective {
+  private el = inject(ElementRef<HTMLInputElement>);
+
+  @Input()
+  set erpIndeterminate(value: boolean) {
+    this.el.nativeElement.indeterminate = value;
+  }
+}
 
 /** Element w liście konfiguracji. */
 interface ConfiguratorItem {
@@ -69,6 +85,7 @@ interface ConfiguratorItem {
     ErpButtonComponent,
     ErpInputComponent,
     ErpTranslatePipe,
+    ErpIndeterminateCheckboxDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -124,6 +141,7 @@ interface ConfiguratorItem {
                   <input
                     type="checkbox"
                     [checked]="item.enabled"
+                    [erpIndeterminate]="isGroupIndeterminate(item)"
                     (change)="toggleItemEnabled(item)"
                     class="erp-configurator__checkbox"
                   />
@@ -932,6 +950,19 @@ export class ErpActionToolbarConfiguratorComponent implements OnInit {
     } else {
       this.pinnedIds.update(ids => [...ids, item.id]);
     }
+  }
+
+  protected isGroupIndeterminate(group: ConfiguratorItem): boolean {
+    if (group.type !== 'group' && group.type !== 'dynamic-group') return false;
+    
+    const items = this._configuratorItems();
+    const children = items.filter(i => i.groupId === group.id);
+    if (children.length === 0) return false;
+
+    const someEnabled = children.some(c => c.enabled);
+    const someDisabled = children.some(c => !c.enabled);
+
+    return someEnabled && someDisabled;
   }
 
   protected dropPinned(event: CdkDragDrop<ConfiguratorItem[]>): void {

@@ -4,44 +4,25 @@ import {
   inject,
   input,
   computed,
-  signal,
   OnInit,
   OnDestroy,
-  ViewContainerRef,
-  TemplateRef,
-  EmbeddedViewRef,
+  Injector,
 } from '@angular/core';
-import { unwrapSignal } from '../../base/erp-signal-utils';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
 import {
-  ErpActionDef,
-  ErpActionGroup,
   ErpActionToolbarConfig,
-  ErpDynamicActionItem,
   ErpToolbarUserPrefs,
+  ErpActionGroup,
+  ErpDynamicActionProvider,
 } from './erp-action-toolbar.types';
 import { ErpPreferencesType, ErpUserPreferencesService } from '@erp/shared/data-access';
 import { ErpActionToolbarZoneDirective } from './erp-action-toolbar-zone.directive';
-
-/**
- * Punkt danych wyświetlany w context menu.
- * Służy jako pośredni model do budowania listy w overlay.
- */
-export interface ErpContextMenuItem {
-  type: 'action' | 'group-header' | 'separator' | 'dynamic-header';
-  action?: ErpActionDef;
-  label?: string;
-  icon?: string;
-  disabled?: boolean;
-  dynamicItem?: ErpDynamicActionItem;
-  children?: ErpContextMenuItem[];
-}
+import { ErpActionToolbarContextMenuComponent } from './erp-action-toolbar-context-menu.component';
 
 /**
  * Dyrektywa context menu (PPM) — reaguje na `contextmenu` event
- * na host element i wyświetla kaskadowe menu z akcjami toolbara.
- *
- * W context menu NIE wyświetlamy zębatki konfiguracji.
- * Skróty klawiszowe są widoczne obok akcji.
+ * na host element i wyświetla Mega Menu z akcjami toolbara w CDK Overlay.
  *
  * @example
  * ```html
@@ -61,10 +42,54 @@ export class ErpActionToolbarContextDirective implements OnInit, OnDestroy {
   private readonly el = inject(ElementRef<HTMLElement>);
   private readonly preferencesService = inject(ErpUserPreferencesService);
   private readonly zone = inject(ErpActionToolbarZoneDirective, { optional: true });
+  private readonly overlay = inject(Overlay);
+  private readonly injector = inject(Injector);
 
   private contextMenuHandler: ((e: MouseEvent) => void) | null = null;
-  private overlayElement: HTMLElement | null = null;
-  private backdropElement: HTMLElement | null = null;
+  private overlayRef: OverlayRef | null = null;
+
+  // ─── Preferencje usera ─────────────────────────
+  private readonly _userPrefs = computed<ErpToolbarUserPrefs | undefined>(() => {
+    const config = this.erpActionToolbarContext();
+    return this.preferencesService.getState(ErpPreferencesType.ActionToolbar, config.menuId) as ErpToolbarUserPrefs | undefined;
+  });
+
+  // ─── Filtrowanie ─────────────────────────
+  private readonly _groups = computed<ErpActionGroup[]>(() => {
+    const config = this.erpActionToolbarContext();
+    const prefs = this._userPrefs();
+
+    const selectionCount = config.selectionCount?.() ?? 0;
+    const groups = selectionCount > 0
+      ? (config.selectionGroups ?? [])
+      : config.defaultGroups;
+
+    if (!prefs) return groups;
+
+    return groups
+      .filter(g => !prefs.hiddenGroupIds?.includes(g.id))
+      .map(g => ({
+        ...g,
+        actions: g.actions.filter(a => !prefs.hiddenActionIds?.includes(a.id)),
+      }));
+  });
+
+  private readonly _dynamicProviders = computed<ErpDynamicActionProvider[]>(() => {
+    const config = this.erpActionToolbarContext();
+    const providers = config.dynamicProviders ?? [];
+    const prefs = this._userPrefs();
+
+    if (!prefs) return providers;
+
+    return providers.filter(dp => {
+      const groupPrefs = prefs.dynamicGroupPrefs?.[dp.groupId];
+      return !groupPrefs?.hidden;
+    });
+  });
+
+  private readonly _customShortcuts = computed<Record<string, string>>(() => {
+    return this._userPrefs()?.customShortcuts ?? {};
+  });
 
   ngOnInit(): void {
     this.contextMenuHandler = (e: MouseEvent) => this.onContextMenu(e);
@@ -79,316 +104,129 @@ export class ErpActionToolbarContextDirective implements OnInit, OnDestroy {
   }
 
   private onContextMenu(event: MouseEvent): void {
+    if (event.shiftKey) {
+      // Escape hatch: Shift + PPM przepuszcza kliknięcie do przeglądarki
+      return;
+    }
+    
     event.preventDefault();
     event.stopPropagation();
     this.destroyOverlay();
     this.createOverlay(event.clientX, event.clientY);
   }
 
-  private getMenuItems(): ErpContextMenuItem[] {
-    const config = this.erpActionToolbarContext();
-    const prefs = this.preferencesService.getState(
-      ErpPreferencesType.ActionToolbar,
-      config.menuId
-    ) as ErpToolbarUserPrefs | undefined;
-
-    const selectionCount = config.selectionCount?.() ?? 0;
-    const groups = selectionCount > 0
-      ? (config.selectionGroups ?? [])
-      : config.defaultGroups;
-
-    const items: ErpContextMenuItem[] = [];
-
-    for (let gi = 0; gi < groups.length; gi++) {
-      const group = groups[gi];
-
-      // Sprawdź ukryte grupy
-      if (prefs?.hiddenGroupIds?.includes(group.id)) continue;
-
-      if (gi > 0) {
-        items.push({ type: 'separator' });
-      }
-
-      items.push({
-        type: 'group-header',
-        label: typeof unwrapSignal(group.label) === 'string'
-          ? unwrapSignal(group.label) as string
-          : '',
-        icon: unwrapSignal(group.icon) as string | undefined,
-      });
-
-      for (const action of group.actions) {
-        if (prefs?.hiddenActionIds?.includes(action.id)) continue;
-        if (unwrapSignal(action.hidden)) continue;
-
-        const children = action.children?.filter(c => !unwrapSignal(c.hidden))
-          .map(c => this.actionToMenuItem(c, prefs));
-
-        items.push({
-          type: 'action',
-          action,
-          label: this.resolveLabel(action),
-          icon: unwrapSignal(action.icon) as string | undefined,
-          disabled: unwrapSignal(action.disabled) ?? false,
-          children: children?.length ? children : undefined,
-        });
-      }
-    }
-
-    // Dynamiczne providery
-    const dynamicProviders = config.dynamicProviders ?? [];
-    for (const dp of dynamicProviders) {
-      const groupPrefs = prefs?.dynamicGroupPrefs?.[dp.groupId];
-      if (groupPrefs?.hidden) continue;
-
-      if (items.length > 0) {
-        items.push({ type: 'separator' });
-      }
-
-      items.push({
-        type: 'group-header',
-        label: typeof unwrapSignal(dp.label) === 'string'
-          ? unwrapSignal(dp.label) as string
-          : '',
-        icon: unwrapSignal(dp.icon) as string | undefined,
-      });
-
-      const dynamicItems = dp.items();
-      for (const dynItem of dynamicItems) {
-        const templateChildren = dp.actionTemplate
-          .filter(t => !groupPrefs?.hiddenSubActionIds?.includes(t.id))
-          .map(t => ({
-            type: 'action' as const,
-            action: t,
-            label: this.resolveLabel(t),
-            icon: unwrapSignal(t.icon) as string | undefined,
-            disabled: unwrapSignal(t.disabled) ?? false,
-            dynamicItem: dynItem,
-          }));
-
-        items.push({
-          type: 'dynamic-header',
-          label: dynItem.label,
-          icon: dynItem.icon,
-          children: templateChildren,
-        });
-      }
-    }
-
-    return items;
-  }
-
-  private actionToMenuItem(action: ErpActionDef, prefs?: ErpToolbarUserPrefs): ErpContextMenuItem {
-    return {
-      type: 'action',
-      action,
-      label: this.resolveLabel(action),
-      icon: unwrapSignal(action.icon) as string | undefined,
-      disabled: unwrapSignal(action.disabled) ?? false,
-    };
-  }
-
-  private resolveLabel(action: ErpActionDef): string {
-    const raw = unwrapSignal(action.label);
-    if (typeof raw === 'string') return raw;
-    return raw?.key ?? '';
-  }
-
-  // ─── Overlay rendering (proste DOM-based) ─────────
-
   private createOverlay(x: number, y: number): void {
-    // Backdrop
-    this.backdropElement = document.createElement('div');
-    Object.assign(this.backdropElement.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      width: '100vw',
-      height: '100vh',
-      zIndex: '9998',
-      background: 'transparent',
+    const positionStrategy = this.overlay
+      .position()
+      .flexibleConnectedTo({ x, y })
+      .withPositions([
+        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'top' },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'top' },
+        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'bottom' },
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'bottom' },
+      ])
+      .withPush(true)
+      .withViewportMargin(8);
+
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      scrollStrategy: this.overlay.scrollStrategies.close(),
     });
-    this.backdropElement.addEventListener('click', () => this.destroyOverlay());
-    this.backdropElement.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
+
+    const portal = new ComponentPortal(ErpActionToolbarContextMenuComponent, null, this.injector);
+    const componentRef = this.overlayRef.attach(portal);
+
+    // Przekazanie inputów do wrappera
+    componentRef.setInput('groups', this._groups());
+    componentRef.setInput('dynamicProviders', this._dynamicProviders());
+    componentRef.setInput('customShortcuts', this._customShortcuts());
+
+    // Subskrypcje zamykające overlay
+    this.overlayRef.backdropClick().subscribe((event: MouseEvent) => {
       this.destroyOverlay();
-    });
-    document.body.appendChild(this.backdropElement);
-
-    // Menu
-    const items = this.getMenuItems();
-    this.overlayElement = this.buildMenuElement(items);
-    Object.assign(this.overlayElement.style, {
-      position: 'fixed',
-      zIndex: '9999',
-    });
-    document.body.appendChild(this.overlayElement);
-
-    // Pozycjonowanie (z uwzględnieniem krawędzi ekranu)
-    requestAnimationFrame(() => {
-      if (!this.overlayElement) return;
-      const rect = this.overlayElement.getBoundingClientRect();
-      const adjustedX = x + rect.width > window.innerWidth ? window.innerWidth - rect.width - 8 : x;
-      const adjustedY = y + rect.height > window.innerHeight ? window.innerHeight - rect.height - 8 : y;
-      this.overlayElement.style.left = `${Math.max(4, adjustedX)}px`;
-      this.overlayElement.style.top = `${Math.max(4, adjustedY)}px`;
+      
+      // Click-through: powtórz klik na elemencie pod kursorem
+      const config = this.erpActionToolbarContext();
+      if (config.backdropClickThrough !== false) {
+        this.replayClickAtPoint(event.clientX, event.clientY);
+      }
     });
     
+    // Blokowanie systemowego menu pod prawym przyciskiem myszy na tło
+    if (this.overlayRef.backdropElement) {
+      this.overlayRef.backdropElement.addEventListener('contextmenu', (e: MouseEvent) => {
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        if (!e.shiftKey) {
+          e.preventDefault();
+        }
+        this.destroyOverlay();
+        
+        // Click-through dla PPM na backdropsie
+        const config = this.erpActionToolbarContext();
+        if (config.backdropClickThrough !== false) {
+          this.replayContextMenuAtPoint(clientX, clientY);
+        }
+      });
+    }
+
+    componentRef.instance.closed.subscribe(() => this.destroyOverlay());
+
     this.zone?.setContextMenuOpen(true);
   }
 
-  private buildMenuElement(items: ErpContextMenuItem[]): HTMLElement {
-    const menu = document.createElement('div');
-    menu.className = 'erp-ctx-menu';
-    Object.assign(menu.style, {
-      background: 'var(--tui-background-base)',
-      border: '1px solid var(--tui-border-normal)',
-      borderRadius: '0.5rem',
-      boxShadow: '0 8px 24px rgba(0,0,0,.15)',
-      minWidth: '200px',
-      maxWidth: '320px',
-      padding: '0.25rem 0',
-      overflow: 'hidden',
-      fontFamily: 'var(--tui-font-text)',
-      fontSize: '0.8125rem',
-    });
-
-    for (const item of items) {
-      if (item.type === 'separator') {
-        const sep = document.createElement('hr');
-        Object.assign(sep.style, {
-          margin: '0.25rem 0',
-          border: '0',
-          borderTop: '1px solid var(--tui-border-normal)',
-          opacity: '0.5',
-        });
-        menu.appendChild(sep);
-      } else if (item.type === 'group-header' || item.type === 'dynamic-header') {
-        const header = document.createElement('div');
-        Object.assign(header.style, {
-          padding: '0.375rem 0.75rem 0.125rem',
-          fontSize: '0.625rem',
-          fontWeight: '700',
-          color: 'var(--tui-text-secondary)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-          userSelect: 'none',
-        });
-        header.textContent = item.label ?? '';
-
-        if (item.type === 'dynamic-header' && item.children?.length) {
-          menu.appendChild(header);
-          for (const child of item.children) {
-            menu.appendChild(this.buildActionButton(child));
-          }
-        } else {
-          menu.appendChild(header);
-        }
-      } else if (item.type === 'action') {
-        menu.appendChild(this.buildActionButton(item));
-      }
-    }
-
-    return menu;
-  }
-
-  private buildActionButton(item: ErpContextMenuItem): HTMLElement {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    Object.assign(btn.style, {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      width: '100%',
-      padding: '0.4375rem 0.75rem',
-      border: 'none',
-      background: 'transparent',
-      cursor: item.disabled ? 'not-allowed' : 'pointer',
-      color: this.getItemColor(item),
-      opacity: item.disabled ? '0.4' : '1',
-      textAlign: 'left',
-      fontSize: '0.8125rem',
-      fontFamily: 'inherit',
-      borderRadius: '0',
-      transition: 'background-color 0.12s ease',
-    });
-
-    btn.addEventListener('mouseenter', () => {
-      if (!item.disabled) btn.style.background = 'var(--tui-background-neutral-1-hover)';
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.background = 'transparent';
-    });
-
-    if (item.label) {
-      const labelSpan = document.createElement('span');
-      labelSpan.style.flex = '1';
-      labelSpan.textContent = item.label;
-      btn.appendChild(labelSpan);
-    }
-
-    // Skrót klawiszowy
-    const config = this.erpActionToolbarContext();
-    const prefs = this.preferencesService.getState(
-      ErpPreferencesType.ActionToolbar,
-      config.menuId
-    ) as ErpToolbarUserPrefs | undefined;
-
-    if (item.action) {
-      const shortcut = prefs?.customShortcuts?.[item.action.id] ?? item.action.shortcut;
-      if (shortcut) {
-        const kbd = document.createElement('kbd');
-        Object.assign(kbd.style, {
-          fontSize: '0.625rem',
-          padding: '0.0625rem 0.3rem',
-          background: 'var(--tui-background-neutral-1)',
-          color: 'var(--tui-text-secondary)',
-          borderRadius: '0.1875rem',
-          border: '1px solid var(--tui-border-normal)',
-          fontFamily: 'inherit',
-          whiteSpace: 'nowrap',
-        });
-        kbd.textContent = shortcut;
-        btn.appendChild(kbd);
-      }
-    }
-
-    // Click handler
-    if (!item.disabled && item.action) {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (item.dynamicItem && item.action?.dynamicFn) {
-          item.action.dynamicFn(item.dynamicItem);
-        } else if (item.action?.fn) {
-          item.action.fn();
-        }
-        this.destroyOverlay();
-      });
-    }
-
-    return btn;
-  }
-
-  private getItemColor(item: ErpContextMenuItem): string {
-    if (!item.action) return 'var(--tui-text-primary)';
-    const appearance = unwrapSignal(item.action.appearance);
-    switch (appearance) {
-      case 'warning': return 'var(--tui-text-negative)';
-      case 'info': return 'var(--tui-text-action)';
-      case 'success': return 'var(--tui-status-positive)';
-      default: return 'var(--tui-text-primary)';
-    }
-  }
-
   private destroyOverlay(): void {
-    if (this.overlayElement) {
-      this.overlayElement.remove();
-      this.overlayElement = null;
-    }
-    if (this.backdropElement) {
-      this.backdropElement.remove();
-      this.backdropElement = null;
+    if (this.overlayRef) {
+      this.overlayRef.dispose();
+      this.overlayRef = null;
     }
     this.zone?.setContextMenuOpen(false);
+  }
+
+  /**
+   * Programowo powtarza kliknięcie (mousedown → mouseup → click)
+   * na elemencie znajdującym się pod podanymi współrzędnymi ekranu.
+   * Backdrop CDK został już usunięty, więc elementFromPoint zwróci
+   * rzeczywisty element (np. komórkę tabeli).
+   */
+  private replayClickAtPoint(x: number, y: number): void {
+    // Używamy setTimeout(0), aby backdrop zdążył zostać usunięty z DOM
+    setTimeout(() => {
+      const target = document.elementFromPoint(x, y);
+      if (!target) return;
+
+      const eventInit: MouseEventInit = {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        view: window,
+      };
+
+      target.dispatchEvent(new MouseEvent('mousedown', eventInit));
+      target.dispatchEvent(new MouseEvent('mouseup', eventInit));
+      target.dispatchEvent(new MouseEvent('click', eventInit));
+    }, 0);
+  }
+
+  /**
+   * Programowo emituje zdarzenie contextmenu na elemencie pod kursorem,
+   * aby ponowne PPM na tle otwierało menu na właściwej pozycji.
+   */
+  private replayContextMenuAtPoint(x: number, y: number): void {
+    setTimeout(() => {
+      const target = document.elementFromPoint(x, y);
+      if (!target) return;
+
+      target.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        view: window,
+      }));
+    }, 0);
   }
 }

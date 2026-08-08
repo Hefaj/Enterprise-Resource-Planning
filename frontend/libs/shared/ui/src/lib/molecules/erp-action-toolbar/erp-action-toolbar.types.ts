@@ -210,4 +210,12 @@ export interface ErpActionToolbarConfig {
 
   /** Czy włączyć obsługę context menu (PPM). Domyślnie false. */
   enableContextMenu?: boolean;
+
+  /**
+   * Czy kliknięcie w backdrop (tło) menu kontekstowego powinno być przekazane
+   * do elementu pod kursorem (np. wiersz tabeli).
+   * Domyślnie true — klik zamyka menu i jednocześnie zaznacza wiersz.
+   * false — klik zamyka menu, element pod spodem NIE dostaje zdarzenia (obecne zachowanie).
+   */
+  backdropClickThrough?: boolean;
 }

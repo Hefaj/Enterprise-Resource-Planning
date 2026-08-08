@@ -42,6 +42,7 @@ export const SHARED_KEYS = {
       settings: {
         title: 'shared.table.settings.title',
         rowSelectionOnClick: 'shared.table.settings.rowSelectionOnClick',
+        rightClickSelection: 'shared.table.settings.rightClickSelection',
       },
     },
     tabs: {

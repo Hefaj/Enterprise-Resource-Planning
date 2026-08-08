@@ -36,7 +36,8 @@
     },
     "settings": {
       "title": "Ustawienia tabeli",
-      "rowSelectionOnClick": "Zaznaczanie kliknięciem w wiersz"
+      "rowSelectionOnClick": "Zaznaczanie kliknięciem w wiersz",
+      "rightClickSelection": "Zaznaczanie prawym przyciskiem myszy"
     }
   },
   "tabs": {

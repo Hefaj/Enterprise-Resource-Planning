@@ -21,6 +21,7 @@ export {
 // Components
 export { ErpActionToolbarComponent } from './erp-action-toolbar.component';
 export { ErpActionToolbarMegaMenuComponent } from './erp-action-toolbar-mega-menu.component';
+export { ErpActionToolbarContextMenuComponent } from './erp-action-toolbar-context-menu.component';
 export { ErpActionToolbarConfiguratorComponent } from './erp-action-toolbar-configurator.component';
 
 // Directives

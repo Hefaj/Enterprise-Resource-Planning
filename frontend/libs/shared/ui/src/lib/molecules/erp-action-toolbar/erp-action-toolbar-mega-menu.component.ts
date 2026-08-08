@@ -6,6 +6,8 @@ import {
   output,
   signal,
   inject,
+  AfterViewInit,
+  ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -54,97 +56,42 @@ import {
       </div>
 
       <!-- Kolumny grup -->
-      <div class="erp-mega-menu__columns">
-        @for (group of _filteredGroups(); track group.id) {
-          <div class="erp-mega-menu__column">
-            <!-- Nagłówek grupy -->
-            <div class="erp-mega-menu__group-header">
-              @if (unwrap(group.icon)) {
-                <tui-icon [icon]="unwrap(group.icon)!" class="erp-mega-menu__group-icon" />
-              }
-              <span class="erp-mega-menu__group-label">
-                {{ (unwrap(group.label) | erpTranslate) || '' }}
-              </span>
-              @if (group.isDynamic) {
-                <span class="erp-mega-menu__dynamic-badge">{{ (SHARED_KEYS.actionToolbar.megaMenu.dynamic | erpTranslate) || '' }}</span>
-              }
-            </div>
+      @if (_hasAnyResults()) {
+        <div class="erp-mega-menu__columns">
+          @for (group of _filteredGroups(); track group.id) {
+            <div class="erp-mega-menu__column">
+              <!-- Nagłówek grupy -->
+              <div class="erp-mega-menu__group-header">
+                @if (unwrap(group.icon)) {
+                  <tui-icon [icon]="unwrap(group.icon)!" class="erp-mega-menu__group-icon" />
+                }
+                <span class="erp-mega-menu__group-label">
+                  {{ (unwrap(group.label) | erpTranslate) || '' }}
+                </span>
+                @if (group.isDynamic) {
+                  <span class="erp-mega-menu__dynamic-badge">{{ (SHARED_KEYS.actionToolbar.megaMenu.dynamic | erpTranslate) || '' }}</span>
+                }
+              </div>
 
-            <!-- Akcje statyczne -->
-            <div class="erp-mega-menu__actions">
-              @for (action of group.actions; track action.id) {
-                @if (!unwrap(action.hidden)) {
-                  @if (action.separator) {
-                    <hr class="erp-mega-menu__separator" />
-                  }
-                  @if (action.children && action.children.length > 0) {
-                    <!-- Akcja z zagnieżdżonymi -->
-                    <div class="erp-mega-menu__action-parent">
-                      <button
-                        class="erp-mega-menu__action"
-                        [class.erp-mega-menu__action--disabled]="unwrap(action.disabled)"
-                        [class.erp-mega-menu__action--warning]="unwrap(action.appearance) === 'warning'"
-                        [class.erp-mega-menu__action--info]="unwrap(action.appearance) === 'info'"
-                        [class.erp-mega-menu__action--success]="unwrap(action.appearance) === 'success'"
-                        [disabled]="unwrap(action.disabled) ?? false"
-                        (click)="onActionClick(action)"
-                      >
-                        @if (unwrap(action.icon)) {
-                          <tui-icon [icon]="unwrap(action.icon)!" class="erp-mega-menu__action-icon" />
-                        }
-                        <span class="erp-mega-menu__action-label">
-                          {{ (unwrap(action.label) | erpTranslate) || '' }}
-                        </span>
-                        @if (getEffectiveShortcut(action)) {
-                          <kbd class="erp-mega-menu__shortcut">{{ getEffectiveShortcut(action) }}</kbd>
-                        }
-                      </button>
-                      <!-- Zagnieżdżone dzieci wyświetlane inline -->
-                      <div class="erp-mega-menu__children">
-                        @for (child of action.children; track child.id) {
-                          @if (!unwrap(child.hidden)) {
-                            <button
-                              class="erp-mega-menu__action erp-mega-menu__action--child"
-                              [class.erp-mega-menu__action--disabled]="unwrap(child.disabled)"
-                              [class.erp-mega-menu__action--warning]="unwrap(child.appearance) === 'warning'"
-                              [class.erp-mega-menu__action--info]="unwrap(child.appearance) === 'info'"
-                              [class.erp-mega-menu__action--success]="unwrap(child.appearance) === 'success'"
-                              [disabled]="unwrap(child.disabled) ?? false"
-                              (click)="onActionClick(child)"
-                            >
-                              @if (unwrap(child.icon)) {
-                                <tui-icon [icon]="unwrap(child.icon)!" class="erp-mega-menu__action-icon" />
-                              }
-                              <span class="erp-mega-menu__action-label">
-                                {{ (unwrap(child.label) | erpTranslate) || '' }}
-                              </span>
-                              @if (getEffectiveShortcut(child)) {
-                                <kbd class="erp-mega-menu__shortcut">{{ getEffectiveShortcut(child) }}</kbd>
-                              }
-                            </button>
-                          }
-                        }
-                      </div>
-                    </div>
-                  } @else {
-                    <!-- Akcja prosta -->
-                    <button
-                      class="erp-mega-menu__action"
-                      [class.erp-mega-menu__action--disabled]="unwrap(action.disabled)"
-                      [class.erp-mega-menu__action--warning]="unwrap(action.appearance) === 'warning'"
-                      [class.erp-mega-menu__action--info]="unwrap(action.appearance) === 'info'"
-                      [class.erp-mega-menu__action--success]="unwrap(action.appearance) === 'success'"
-                      [disabled]="unwrap(action.disabled) ?? false"
-                      (click)="onActionClick(action)"
-                    >
-                      <tui-loader
-                        [loading]="isActionLoading(action)"
-                        size="s"
-                        [inheritColor]="true"
-                        [overlay]="true"
-                        class="erp-mega-menu__action-loader"
-                      >
-                        <div class="erp-mega-menu__action-content">
+              <!-- Akcje statyczne -->
+              <div class="erp-mega-menu__actions">
+                @for (action of group.actions; track action.id) {
+                  @if (!unwrap(action.hidden)) {
+                    @if (action.separator) {
+                      <hr class="erp-mega-menu__separator" />
+                    }
+                    @if (action.children && action.children.length > 0) {
+                      <!-- Akcja z zagnieżdżonymi -->
+                      <div class="erp-mega-menu__action-parent">
+                        <button
+                          class="erp-mega-menu__action"
+                          [class.erp-mega-menu__action--disabled]="unwrap(action.disabled)"
+                          [class.erp-mega-menu__action--warning]="unwrap(action.appearance) === 'warning'"
+                          [class.erp-mega-menu__action--info]="unwrap(action.appearance) === 'info'"
+                          [class.erp-mega-menu__action--success]="unwrap(action.appearance) === 'success'"
+                          [disabled]="unwrap(action.disabled) ?? false"
+                          (click)="onActionClick(action)"
+                        >
                           @if (unwrap(action.icon)) {
                             <tui-icon [icon]="unwrap(action.icon)!" class="erp-mega-menu__action-icon" />
                           }
@@ -154,77 +101,141 @@ import {
                           @if (getEffectiveShortcut(action)) {
                             <kbd class="erp-mega-menu__shortcut">{{ getEffectiveShortcut(action) }}</kbd>
                           }
-                          @if (unwrap(action.hint)) {
-                            <tui-icon
-                              icon="@tui.info"
-                              [tuiHint]="(unwrap(action.hint) | erpTranslate) || ''"
-                              class="erp-mega-menu__hint-icon"
-                              (click)="$event.stopPropagation()"
-                            />
+                        </button>
+                        <!-- Zagnieżdżone dzieci wyświetlane inline -->
+                        <div class="erp-mega-menu__children">
+                          @for (child of action.children; track child.id) {
+                            @if (!unwrap(child.hidden)) {
+                              <button
+                                class="erp-mega-menu__action erp-mega-menu__action--child"
+                                [class.erp-mega-menu__action--disabled]="unwrap(child.disabled)"
+                                [class.erp-mega-menu__action--warning]="unwrap(child.appearance) === 'warning'"
+                                [class.erp-mega-menu__action--info]="unwrap(child.appearance) === 'info'"
+                                [class.erp-mega-menu__action--success]="unwrap(child.appearance) === 'success'"
+                                [disabled]="unwrap(child.disabled) ?? false"
+                                (click)="onActionClick(child)"
+                              >
+                                @if (unwrap(child.icon)) {
+                                  <tui-icon [icon]="unwrap(child.icon)!" class="erp-mega-menu__action-icon" />
+                                }
+                                <span class="erp-mega-menu__action-label">
+                                  {{ (unwrap(child.label) | erpTranslate) || '' }}
+                                </span>
+                                @if (getEffectiveShortcut(child)) {
+                                  <kbd class="erp-mega-menu__shortcut">{{ getEffectiveShortcut(child) }}</kbd>
+                                }
+                              </button>
+                            }
                           }
                         </div>
-                      </tui-loader>
-                    </button>
-                  }
-                }
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Kolumny dynamicznych providerów -->
-        @for (dp of _filteredDynamicProviders(); track dp.groupId) {
-          <div class="erp-mega-menu__column">
-            <div class="erp-mega-menu__group-header">
-              @if (unwrap(dp.icon)) {
-                <tui-icon [icon]="unwrap(dp.icon)!" class="erp-mega-menu__group-icon" />
-              }
-              <span class="erp-mega-menu__group-label">
-                {{ (unwrap(dp.label) | erpTranslate) || '' }}
-              </span>
-              <span class="erp-mega-menu__dynamic-badge">{{ (SHARED_KEYS.actionToolbar.megaMenu.dynamic | erpTranslate) || '' }}</span>
-            </div>
-
-            <div class="erp-mega-menu__actions">
-              @for (item of dp.items(); track item.id) {
-                <div class="erp-mega-menu__action-parent">
-                  <div class="erp-mega-menu__dynamic-item-header">
-                    @if (item.icon) {
-                      <tui-icon [icon]="item.icon" class="erp-mega-menu__action-icon" />
-                    }
-                    <span class="erp-mega-menu__action-label erp-mega-menu__action-label--dynamic">
-                      {{ item.label }}
-                    </span>
-                  </div>
-                  <div class="erp-mega-menu__children">
-                    @for (tmpl of dp.actionTemplate; track tmpl.id) {
+                      </div>
+                    } @else {
+                      <!-- Akcja prosta -->
                       <button
-                        class="erp-mega-menu__action erp-mega-menu__action--child"
-                        [class.erp-mega-menu__action--warning]="unwrap(tmpl.appearance) === 'warning'"
-                        [class.erp-mega-menu__action--info]="unwrap(tmpl.appearance) === 'info'"
-                        [class.erp-mega-menu__action--success]="unwrap(tmpl.appearance) === 'success'"
-                        [disabled]="unwrap(tmpl.disabled) ?? false"
-                        (click)="onDynamicActionClick(tmpl, item)"
+                        class="erp-mega-menu__action"
+                        [class.erp-mega-menu__action--disabled]="unwrap(action.disabled)"
+                        [class.erp-mega-menu__action--warning]="unwrap(action.appearance) === 'warning'"
+                        [class.erp-mega-menu__action--info]="unwrap(action.appearance) === 'info'"
+                        [class.erp-mega-menu__action--success]="unwrap(action.appearance) === 'success'"
+                        [disabled]="unwrap(action.disabled) ?? false"
+                        (click)="onActionClick(action)"
                       >
-                        @if (unwrap(tmpl.icon)) {
-                          <tui-icon [icon]="unwrap(tmpl.icon)!" class="erp-mega-menu__action-icon" />
-                        }
-                        <span class="erp-mega-menu__action-label">
-                          {{ (unwrap(tmpl.label) | erpTranslate) || '' }}
-                        </span>
+                        <tui-loader
+                          [loading]="isActionLoading(action)"
+                          size="s"
+                          [inheritColor]="true"
+                          [overlay]="true"
+                          class="erp-mega-menu__action-loader"
+                        >
+                          <div class="erp-mega-menu__action-content">
+                            @if (unwrap(action.icon)) {
+                              <tui-icon [icon]="unwrap(action.icon)!" class="erp-mega-menu__action-icon" />
+                            }
+                            <span class="erp-mega-menu__action-label">
+                              {{ (unwrap(action.label) | erpTranslate) || '' }}
+                            </span>
+                            @if (getEffectiveShortcut(action)) {
+                              <kbd class="erp-mega-menu__shortcut">{{ getEffectiveShortcut(action) }}</kbd>
+                            }
+                            @if (unwrap(action.hint)) {
+                              <tui-icon
+                                icon="@tui.info"
+                                [tuiHint]="(unwrap(action.hint) | erpTranslate) || ''"
+                                class="erp-mega-menu__hint-icon"
+                                (click)="$event.stopPropagation()"
+                              />
+                            }
+                          </div>
+                        </tui-loader>
                       </button>
                     }
-                  </div>
-                </div>
-              }
-
-              @if (dp.items().length === 0) {
-                <div class="erp-mega-menu__empty">{{ (SHARED_KEYS.actionToolbar.megaMenu.empty | erpTranslate) || '' }}</div>
-              }
+                  }
+                }
+              </div>
             </div>
+          }
+
+          <!-- Kolumny dynamicznych providerów -->
+          @for (dp of _filteredDynamicProviders(); track dp.groupId) {
+            <div class="erp-mega-menu__column">
+              <div class="erp-mega-menu__group-header">
+                @if (unwrap(dp.icon)) {
+                  <tui-icon [icon]="unwrap(dp.icon)!" class="erp-mega-menu__group-icon" />
+                }
+                <span class="erp-mega-menu__group-label">
+                  {{ (unwrap(dp.label) | erpTranslate) || '' }}
+                </span>
+                <span class="erp-mega-menu__dynamic-badge">{{ (SHARED_KEYS.actionToolbar.megaMenu.dynamic | erpTranslate) || '' }}</span>
+              </div>
+
+              <div class="erp-mega-menu__actions">
+                @for (item of dp.items(); track item.id) {
+                  <div class="erp-mega-menu__action-parent">
+                    <div class="erp-mega-menu__dynamic-item-header">
+                      @if (item.icon) {
+                        <tui-icon [icon]="item.icon" class="erp-mega-menu__action-icon" />
+                      }
+                      <span class="erp-mega-menu__action-label erp-mega-menu__action-label--dynamic">
+                        {{ item.label }}
+                      </span>
+                    </div>
+                    <div class="erp-mega-menu__children">
+                      @for (tmpl of dp.actionTemplate; track tmpl.id) {
+                        <button
+                          class="erp-mega-menu__action erp-mega-menu__action--child"
+                          [class.erp-mega-menu__action--warning]="unwrap(tmpl.appearance) === 'warning'"
+                          [class.erp-mega-menu__action--info]="unwrap(tmpl.appearance) === 'info'"
+                          [class.erp-mega-menu__action--success]="unwrap(tmpl.appearance) === 'success'"
+                          [disabled]="unwrap(tmpl.disabled) ?? false"
+                          (click)="onDynamicActionClick(tmpl, item)"
+                        >
+                          @if (unwrap(tmpl.icon)) {
+                            <tui-icon [icon]="unwrap(tmpl.icon)!" class="erp-mega-menu__action-icon" />
+                          }
+                          <span class="erp-mega-menu__action-label">
+                            {{ (unwrap(tmpl.label) | erpTranslate) || '' }}
+                          </span>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (dp.items().length === 0) {
+                  <div class="erp-mega-menu__empty">{{ (SHARED_KEYS.actionToolbar.megaMenu.empty | erpTranslate) || '' }}</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="erp-mega-menu__empty-state">
+          <tui-icon icon="@tui.search-x" class="erp-mega-menu__empty-icon" />
+          <div class="erp-mega-menu__empty-text">
+            {{ (SHARED_KEYS.actionToolbar.megaMenu.empty | erpTranslate) || '' }}
           </div>
-        }
-      </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -243,6 +254,26 @@ import {
     .erp-mega-menu__search {
       padding: 0.75rem;
       border-bottom: 1px solid var(--tui-border-normal);
+    }
+
+    .erp-mega-menu__empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      color: var(--tui-text-tertiary);
+    }
+
+    .erp-mega-menu__empty-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.5;
+    }
+
+    .erp-mega-menu__empty-text {
+      font: var(--tui-font-text-s);
+      text-align: center;
     }
 
     .erp-mega-menu__columns {
@@ -428,9 +459,21 @@ import {
     }
   `],
 })
-export class ErpActionToolbarMegaMenuComponent {
+export class ErpActionToolbarMegaMenuComponent implements AfterViewInit {
   protected readonly SHARED_KEYS = SHARED_KEYS;
   
+  private readonly el = inject(ElementRef<HTMLElement>);
+
+  ngAfterViewInit(): void {
+    // Timeout pozwalający na zakończenie animacji wejścia (dropdown/overlay)
+    setTimeout(() => {
+      const input = this.el.nativeElement.querySelector('input');
+      if (input) {
+        input.focus();
+      }
+    }, 50);
+  }
+
   /** Grupy akcji do wyświetlenia. */
   readonly groups = input.required<ErpActionGroup[]>();
 
@@ -497,6 +540,9 @@ export class ErpActionToolbarMegaMenuComponent {
       });
     });
   });
+
+  /** Czy są jakiekolwiek widoczne grupy/akcje do wyrenderowania */
+  protected readonly _hasAnyResults = computed(() => this._filteredGroups().length > 0 || this._filteredDynamicProviders().length > 0);
 
   protected unwrap<T>(val: MaybeSignal<T> | undefined): T | undefined {
     return unwrapSignal(val);

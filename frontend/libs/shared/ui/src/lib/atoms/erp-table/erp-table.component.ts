@@ -329,6 +329,7 @@ export class ErpTableSelectionCell {
                     [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
                     (click)="onRowClickEvent(row.original, $event)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
+                    (contextmenu)="onRowContextMenuEvent(row.original, $event)"
                   >
                     @for (cell of _getOrderedCells(row); track cell.id) {
                       <td 
@@ -369,6 +370,7 @@ export class ErpTableSelectionCell {
                     [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
                     (click)="onRowClickEvent(row.original, $event)"
                     (dblclick)="onRowDoubleClickEvent(row.original)"
+                    (contextmenu)="onRowContextMenuEvent(row.original, $event)"
                   >
                     @for (cell of _getOrderedCells(row); track cell.id) {
                       <td 
@@ -514,6 +516,11 @@ export class ErpTableSelectionCell {
                   [ngModel]="_rowSelectionOnClick()" 
                   (ngModelChange)="onRowSelectionOnClickChange($event)" 
                 />
+                <erp-switch 
+                  [config]="{ size: 's', label: 'shared.table.settings.rightClickSelection' }" 
+                  [ngModel]="_rightClickSelection()" 
+                  (ngModelChange)="onRightClickSelectionChange($event)" 
+                />
               </div>
             </div>
           </ng-template>
@@ -587,6 +594,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
   protected legendOpen = signal(false);
   protected settingsOpen = signal(false);
   protected _rowSelectionOnClick = signal<boolean>(false);
+  protected _rightClickSelection = signal<boolean>(false);
 
   protected _legendItems = computed(() => {
     const items = this.items();
@@ -717,6 +725,9 @@ export class ErpTableComponent<T> implements AfterViewInit {
           if (state.rowSelectionOnClick !== undefined) {
             this._rowSelectionOnClick.set(state.rowSelectionOnClick);
           }
+          if (state.rightClickSelection !== undefined) {
+            this._rightClickSelection.set(state.rightClickSelection);
+          }
         });
       }
       
@@ -816,6 +827,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
       const columnOrder = this._columnOrder();
       const columnSizing = this._columnSizing();
       const rowSelectionOnClick = this._rowSelectionOnClick();
+      const rightClickSelection = this._rightClickSelection();
 
       untracked(() => {
         const filters = unwrapSignal(this.config().filters) ?? {};
@@ -832,6 +844,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
             filters: (this._isServerMode() && this._serverAllSelected()) ? filters : undefined
           },
           rowSelectionOnClick: this._rowSelectionOnClick(),
+          rightClickSelection: this._rightClickSelection(),
         };
         this.config().onStateChange?.(state);
       });
@@ -1304,6 +1317,10 @@ export class ErpTableComponent<T> implements AfterViewInit {
     this._rowSelectionOnClick.set(value);
   }
 
+  protected onRightClickSelectionChange(value: boolean) {
+    this._rightClickSelection.set(value);
+  }
+
   protected onRowClickEvent(rowOriginal: T, event: MouseEvent) {
     this.config().onRowClick?.(rowOriginal);
     if (this._rowSelectionOnClick() && this.config().selectionMode !== 'none') {
@@ -1312,6 +1329,26 @@ export class ErpTableComponent<T> implements AfterViewInit {
       if (tanstackRow && tanstackRow.getCanSelect()) {
         const checked = !tanstackRow.getIsSelected();
         this._handleRowSelection(tanstackRow, checked, event.shiftKey);
+      }
+    }
+  }
+
+  protected onRowContextMenuEvent(rowOriginal: T, event: MouseEvent) {
+    if (this._rightClickSelection() && this.config().selectionMode !== 'none') {
+      if (this._isServerMode() && this._serverAllSelected()) return;
+      
+      if (!this._rowSelectionOnClick()) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('erp-table-selection-cell')) {
+          return;
+        }
+      }
+
+      const tanstackRow = this.table().getRowModel().rows.find(r => r.original === rowOriginal);
+      if (tanstackRow && tanstackRow.getCanSelect()) {
+        if (!tanstackRow.getIsSelected()) {
+          this._handleRowSelection(tanstackRow, true, event.shiftKey);
+        }
       }
     }
   }

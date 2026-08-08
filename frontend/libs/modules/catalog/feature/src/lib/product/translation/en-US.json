@@ -104,6 +104,12 @@
       "steps": {
         "terms": "Step 1: Terms",
         "service": "Step 2: Service"
+      },
+      "panel": {
+        "emptyProduct": "No warranties for this product.",
+        "emptySelection": "Select a product to view its warranties.",
+        "bulkDescription": "Too many products selected to display warranties at once. You can perform bulk actions on all selected products.",
+        "addWarranty": "Add warranty"
       }
     }
   },

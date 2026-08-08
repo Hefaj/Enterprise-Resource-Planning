@@ -110,6 +110,12 @@ export const PRODUCT_KEYS = {
           terms: 'product.base.warranty.steps.terms',
           service: 'product.base.warranty.steps.service',
         },
+        panel: {
+          emptyProduct: 'product.base.warranty.panel.emptyProduct',
+          emptySelection: 'product.base.warranty.panel.emptySelection',
+          bulkDescription: 'product.base.warranty.panel.bulkDescription',
+          addWarranty: 'product.base.warranty.panel.addWarranty',
+        },
       },
     },
     enums: {

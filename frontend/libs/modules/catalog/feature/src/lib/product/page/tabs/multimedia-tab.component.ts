@@ -1,63 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ProductStore } from '../product.store';
 import { MAX_DETAILED_SELECTION } from '@erp/catalog/util';
-import { ErpScrollViewportBuilder, ErpScrollViewportComponent } from '@erp/shared/ui';
+import { ErpActionToolbarBuilder, ErpGroupPanelBuilder, ErpGroupPanelComponent } from '@erp/shared/ui';
 import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { MultimediaGroupComponent } from './multimedia-group.component';
-import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective } from '@erp/shared/ui';
 import { PRODUCT_KEYS } from '../../translation/keys';
-import { ErpTranslatePipe } from '@erp/shared/ui';
-import { TuiButton, TuiIcon } from '@taiga-ui/core';
 
 @Component({
   selector: 'erp-multimedia-tab',
   standalone: true,
-  imports: [
-    CommonModule, 
-    ErpScrollViewportComponent, 
-    MultimediaGroupComponent, 
-    ErpActionToolbarComponent,
-    ErpActionToolbarZoneDirective,
-    ErpActionToolbarContextDirective,
-    ErpTranslatePipe,
-    TuiIcon
-  ],
+  imports: [ErpGroupPanelComponent, MultimediaGroupComponent],
   template: `
     <div class="h-full w-full p-2">
-      <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="toolbarConfig">
-        @if (_selectionCount() === 0) {
-          <div class="flex items-center justify-center h-full text-[var(--tui-text-secondary)] text-lg">
-            <p>{{ (PRODUCT_KEYS.base.multimedia.panel.emptySelection | erpTranslate) || '' }}</p>
-          </div>
-        } 
-        @else {
-          <!-- Pasek akcji grupowych i multimediów -->
-          <erp-action-toolbar [config]="toolbarConfig" />
-
-          <div class="flex-1 overflow-hidden" >
-            @if (_selectionCount() <= MAX_DETAILED_SELECTION) {
-              <!-- Tryb MULTI (TanStack Virtual) -->
-              <div class="h-full w-full">
-                <erp-scroll-viewport [config]="scrollConfig">
-                  <ng-template #erpScrollItem let-product let-index="index" let-measureFn="measureElement">
-                    <erp-multimedia-group [product]="product" [measureElement]="measureFn" [attr.data-index]="index" />
-                  </ng-template>
-                </erp-scroll-viewport>
-              </div>
-            } @else {
-              <!-- Tryb skrócony dla bardzo wielu elementów -->
-              <div class="flex flex-col items-center justify-center h-full text-center p-8">
-                <tui-icon icon="@tui.layers" class="text-[3rem] text-[var(--tui-text-secondary)] mb-4" />
-                <p class="text-[var(--tui-text-secondary)] leading-relaxed">
-                  Szczegóły ukryte ze względu na liczbę zaznaczonych elementów.<br>
-                  Użyj górnego paska, aby zastosować zmiany dla wszystkich <strong>{{ _selectionCount() }}</strong> produktów.
-                </p>
-              </div>
-            }
-          </div>
-        }
-      </div>
+      <erp-group-panel [config]="panelConfig">
+        <ng-template #erpGroupItem let-product let-index="index" let-measureElement="measureElement">
+          <erp-multimedia-group [product]="product" [measureElement]="measureElement" [attr.data-index]="index" />
+        </ng-template>
+      </erp-group-panel>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -66,9 +25,6 @@ export class MultimediaTabComponent {
   private readonly store = inject(ProductStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
 
-  protected readonly MAX_DETAILED_SELECTION = MAX_DETAILED_SELECTION;
-  protected readonly PRODUCT_KEYS = PRODUCT_KEYS;
-  
   protected readonly _selectedProducts = computed(() => {
     const selectedItems = this.store.selection()?.selectedItems || [];
     if (selectedItems.length === 0) return [];
@@ -96,7 +52,6 @@ export class MultimediaTabComponent {
       .setLabel('Masowe zarządzanie')
       .addAction(a => a
         .setId('mass-add')
-        // .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkAdd)
         .setLabel('Dodaj multimedia masowo')
         .setIcon('@tui.plus')
         .setAppearance('success')
@@ -104,7 +59,6 @@ export class MultimediaTabComponent {
       )
       .addAction(a => a
         .setId('mass-delete')
-        // .setLabel(this.PRODUCT_KEYS.base.multimedia.panel.bulkDelete)
         .setLabel('Usuń wszystkie multimedia')
         .setIcon('@tui.trash')
         .setAppearance('warning')
@@ -155,9 +109,10 @@ export class MultimediaTabComponent {
   // Zbiór UUID dla których już wywołaliśmy ładowanie
   private readonly loadedProductUuids = new Set<string>();
 
-  protected readonly scrollConfig = new ErpScrollViewportBuilder<ProductVM>()
+  protected readonly panelConfig = ErpGroupPanelBuilder.create<ErpGroupPanelBuilder<ProductVM>>(b => b
+    .setToolbar(this.toolbarConfig)
     .setItems(this._selectedProducts)
-    .setGetItemKey((_, item: ProductVM) => item.uuid)
+    .setGetItemKey((_, item) => item.uuid)
     .setEstimateSize(250)
     .setOverscan(2)
     .setOnRangeChange((range) => {
@@ -168,11 +123,12 @@ export class MultimediaTabComponent {
         for (const uuid of uuidsToLoad) {
           this.loadedProductUuids.add(uuid);
         }
-        // Request batch load for the new uuids
         this.productOrchestrator.loadAsync(uuidsToLoad, { includeMultimedia: true });
       }
     })
-    .build();
+    .setEmptyState(PRODUCT_KEYS.base.multimedia.panel.emptySelection, '@tui.mouse-pointer-click')
+    .setOverflow(MAX_DETAILED_SELECTION, PRODUCT_KEYS.base.multimedia.panel.bulkDescription, '@tui.layers')
+  );
 
   protected onAddMass(): void {
     console.log('Masowe dodawanie multimediów dla', this._selectionCount(), 'produktów');
@@ -184,12 +140,9 @@ export class MultimediaTabComponent {
 
   protected onDeleteSelectedMedia(): void {
     console.log('Usuwanie zaznaczonych multimediów:', this.store.selectedMultimedia());
-    // this.store.clearMultimediaSelection();
   }
 
   protected onClearMediaSelection(): void {
-    // Zakładam, że w store będzie metoda czyszcząca, tu na razie log
     console.log('Czyszczenie zaznaczenia zdjęć');
-    // this.store.clearMultimediaSelection();
   }
 }

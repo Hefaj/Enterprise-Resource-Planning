@@ -37,6 +37,7 @@ export * from './lib/molecules/erp-action-toolbar';
 // // Organisms
 export * from './lib/atoms/erp-modal';
 export * from './lib/atoms/erp-step-content';
+export * from './lib/organisms/erp-group-panel';
 
 // Translations
 export * from './lib/translation';

@@ -72,7 +72,7 @@ public static class CatalogMockData
         Categories = GenerateCategories(categoryCount);
         Models = GenerateModels(modelCount);
         Multimedias.Clear();
-        Warranties = GenerateWarranties(10);
+        Warranties = GenerateWarranties(150);
         Products = GenerateProducts(productCount, Categories, Models, random);
     }
 
@@ -137,7 +137,9 @@ public static class CatalogMockData
                 ));
             }
 
-            var numWarranties = random.Next(0, 3);
+            var hasManyWarranties = i < 5 || random.NextDouble() > 0.95;
+            var numWarranties = hasManyWarranties ? random.Next(50, 101) : random.Next(0, 3);
+            Console.WriteLine($"i={i}, numWarranties={numWarranties}, Warranties.Count={Warranties.Count}");
             var warrantyUuids = Warranties.OrderBy(x => random.Next()).Take(numWarranties).Select(x => x.Uuid).ToList();
             
             list.Add(new ProductDto(

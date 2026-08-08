@@ -104,6 +104,12 @@
       "steps": {
         "terms": "Krok 1: Warunki",
         "service": "Krok 2: Serwis"
+      },
+      "panel": {
+        "emptyProduct": "Brak gwarancji dla tego produktu.",
+        "emptySelection": "Zaznacz produkt aby zobaczyć jego gwarancje.",
+        "bulkDescription": "Zaznaczono zbyt wiele produktów, aby wyświetlić ich gwarancje jednocześnie. Możesz wykonać akcje masowe na wszystkich zaznaczonych produktach.",
+        "addWarranty": "Dodaj gwarancję"
       }
     }
   },

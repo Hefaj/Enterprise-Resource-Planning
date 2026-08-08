@@ -38,11 +38,12 @@ import { ErpTabItem, ErpTabsConfig } from './erp-tabs.types';
       @if (renderMode() !== 'content') {
         @if (layoutVal === 'horizontal') {
           <tui-tabs
+            class="px-2"
             [(activeItemIndex)]="activeIndex"
-          [size]="sizeVal"
-          [underline]="_underline()"
-        >
-        @for (tab of tabList; track tab.id) {
+            [size]="sizeVal"
+            [underline]="_underline()"
+          >
+            @for (tab of tabList; track tab.id) {
           @if (!tab.children || tab.children.length === 0) {
             <button
               tuiTab

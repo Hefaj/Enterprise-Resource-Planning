@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ProductStore } from '../product.store';
+import { ProductStore } from '../../product.store';
+import { MultimediaTabStore } from './multimedia-tab.store';
 import {
   ErpActionToolbarBuilder,
   ErpActionToolbarComponent,
@@ -12,7 +13,7 @@ import {
   ErpTableComponent,
 } from '@erp/shared/ui';
 import { CatalogMultimediaOrchestrator, CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
-import { PRODUCT_KEYS } from '../../translation/keys';
+import { PRODUCT_KEYS } from '../../../translation/keys';
 import { MultimediaRow } from './multimedia-row.model';
 import { MultimediaThumbnailCellComponent } from './multimedia-thumbnail-cell.component';
 import { MultimediaInfoCellComponent } from './multimedia-info-cell.component';
@@ -34,6 +35,7 @@ const MULTIMEDIA_CHUNK_SIZE = 30;
     ErpActionToolbarContextDirective,
     ErpEmptyStateComponent,
   ],
+  providers: [MultimediaTabStore],
   template: `
     <div class="h-full w-full p-2">
       @if (_selectedProducts().length === 0) {
@@ -55,6 +57,7 @@ const MULTIMEDIA_CHUNK_SIZE = 30;
 })
 export class MultimediaTabComponent {
   private readonly store = inject(ProductStore);
+  private readonly tabStore = inject(MultimediaTabStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
 
@@ -86,7 +89,7 @@ export class MultimediaTabComponent {
     )
   );
 
-  protected readonly _subSelectionCount = computed(() => this.store.selectedMultimedia().size);
+  protected readonly _subSelectionCount = computed(() => this.tabStore.selectedMultimedia().size);
 
   protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
     icon: '@tui.mouse-pointer-click',
@@ -258,7 +261,7 @@ export class MultimediaTabComponent {
   }
 
   protected onSelectionChange(state: ErpSelectionState<MultimediaRow>): void {
-    this.store.selectedMultimedia.set(new Set(state.selectedItems.map(r => r.uuid)));
+    this.tabStore.selectedMultimedia.set(new Set(state.selectedItems.map(r => r.uuid)));
   }
 
   protected onAddMass(): void {
@@ -270,10 +273,10 @@ export class MultimediaTabComponent {
   }
 
   protected onDeleteSelectedMedia(): void {
-    console.log('Usuwanie zaznaczonych multimediów:', this.store.selectedMultimedia());
+    console.log('Usuwanie zaznaczonych multimediów:', this.tabStore.selectedMultimedia());
   }
 
   protected onClearMediaSelection(): void {
-    this.store.selectedMultimedia.set(new Set());
+    this.tabStore.selectedMultimedia.set(new Set());
   }
 }

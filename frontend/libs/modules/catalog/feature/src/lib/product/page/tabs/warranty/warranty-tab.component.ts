@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ProductStore } from '../product.store';
+import { ProductStore } from '../../product.store';
+import { WarrantyTabStore } from './warranty-tab.store';
 import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpEmptyStateComponent, ErpEmptyStateConfig, ErpSelectionState, ErpTableBuilder, ErpTableComponent } from '@erp/shared/ui';
 import { CatalogProductOrchestrator, CatalogWarrantyOrchestrator, ProductVM } from '@erp/catalog/data-access';
-import { PRODUCT_KEYS } from '../../translation/keys';
+import { PRODUCT_KEYS } from '../../../translation/keys';
 import { WarrantyRow } from './warranty-row.model';
 import { WarrantyInfoCellComponent } from './warranty-info-cell.component';
 
@@ -23,6 +24,7 @@ const WARRANTY_CHUNK_SIZE = 30;
     ErpActionToolbarContextDirective,
     ErpEmptyStateComponent,
     ],
+  providers: [WarrantyTabStore],
   template: `
     <div class="h-full w-full p-2">
       @if (_selectedProducts().length === 0) {
@@ -44,6 +46,7 @@ const WARRANTY_CHUNK_SIZE = 30;
 })
 export class WarrantyTabComponent {
   private readonly store = inject(ProductStore);
+  private readonly tabStore = inject(WarrantyTabStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly warrantyOrchestrator = inject(CatalogWarrantyOrchestrator);
 
@@ -80,7 +83,7 @@ export class WarrantyTabComponent {
     )
   );
 
-  protected readonly _subSelectionCount = computed(() => this.store.getAllSelectedWarrantiesCount());
+  protected readonly _subSelectionCount = computed(() => this.tabStore.getAllSelectedWarrantiesCount());
 
   protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
     icon: '@tui.mouse-pointer-click',
@@ -278,14 +281,14 @@ export class WarrantyTabComponent {
     for (const item of state.selectedItems) {
       (dict[item.productUuid] ??= []).push(item.warrantyUuid);
     }
-    this.store.setAllWarrantySelections(dict);
+    this.tabStore.setAllWarrantySelections(dict);
   }
 
   protected onDeleteSelectedWarranty(): void {
-    console.log('Usuwanie zaznaczonych gwarancji:', this.store.selectedWarrantiesByProduct());
+    console.log('Usuwanie zaznaczonych gwarancji:', this.tabStore.selectedWarrantiesByProduct());
   }
 
   protected onClearWarrantySelection(): void {
-    this.store.clearWarrantySelection();
+    this.tabStore.clearWarrantySelection();
   }
 }

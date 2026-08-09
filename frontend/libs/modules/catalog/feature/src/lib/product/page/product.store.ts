@@ -17,7 +17,8 @@ export class ProductStore {
     this.filters.update(f => ({ ...f, ...partial }));
   }
 
-  // 2. Zaznaczenia w tabeli
+  // 2. Zaznaczenia w tabeli produktów — odczytywane też przez zakładki multimedia/gwarancje,
+  // które renderują grupy na podstawie zaznaczonych tu produktów.
   public readonly selection = signal<ErpSelectionState<ProductVM> | null>(null);
 
   public setSelection(state: ErpSelectionState<ProductVM>): void {
@@ -29,24 +30,5 @@ export class ProductStore {
 
   public setLoading(isLoading: boolean): void {
     this.loading.set(isLoading);
-  }
-
-  // 4. Zaznaczenia multimediów (płaska lista — jedna wspólna tabela grupowana per produkt)
-  public readonly selectedMultimedia = signal<Set<string>>(new Set());
-
-  // 5. Zaznaczenia gwarancji (jedna wspólna tabela grupowana per produkt)
-  public readonly selectedWarrantiesByProduct = signal<Record<string, string[]>>({});
-
-  public setAllWarrantySelections(dict: Record<string, string[]>): void {
-    this.selectedWarrantiesByProduct.set(dict);
-  }
-
-  public clearWarrantySelection(): void {
-    this.selectedWarrantiesByProduct.set({});
-  }
-
-  public getAllSelectedWarrantiesCount(): number {
-    const dict = this.selectedWarrantiesByProduct();
-    return Object.values(dict).reduce((acc, curr) => acc + curr.length, 0);
   }
 }

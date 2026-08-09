@@ -21,6 +21,8 @@ public class SearchModelEndpoint : Endpoint<SearchModelRequest, SearchResponse>
 
     public override async Task HandleAsync(SearchModelRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var query = CatalogMockData.Models.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(req.Name))

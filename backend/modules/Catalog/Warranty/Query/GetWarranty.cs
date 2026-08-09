@@ -20,6 +20,8 @@ public class GetWarrantyEndpoint : Endpoint<GetWarrantyRequest, List<WarrantyDto
 
     public override async Task HandleAsync(GetWarrantyRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var result = CatalogMockData.Warranties;
 
         if (req.Uuids != null && req.Uuids.Any())

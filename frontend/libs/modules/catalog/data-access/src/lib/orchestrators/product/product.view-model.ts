@@ -1,4 +1,4 @@
-import { ProductDto } from '../../api-client';
+import { ProductDto, ProductWarrantyDto } from '../../api-client';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
 import { MultimediaVM } from '../multimedia/multimedia.view-model';
@@ -13,6 +13,14 @@ export interface ProductVM extends ProductDto {
 
   /** Rozwiązane multimedia powiązane z produktem. */
   readonly multimedia: MultimediaVM[];
+
+  /**
+   * Surowe przypisania produkt-gwarancja (`warrantyUuid` + `durationMonths` dla tego produktu) —
+   * zawsze dostępne natychmiast (zwykłe pole DTO), niezależnie od tego, czy katalogowe `WarrantyDto`
+   * zostały już doładowane. Do budowania list wierszy ze znaną z góry liczbą/kolejnością
+   * (patrz `warranty-tab.component.ts`), zamiast czekać na pełne rozwiązanie `warranties`.
+   */
+  readonly warrantyAssignments: ProductWarrantyDto[];
 
   /** Rozwiązane gwarancje powiązane z produktem, wraz z okresem trwania przypisanym do produktu. */
   readonly warranties: ProductWarrantyVM[];

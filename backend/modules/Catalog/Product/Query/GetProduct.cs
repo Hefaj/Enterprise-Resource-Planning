@@ -20,6 +20,8 @@ public class GetProductEndpoint : Endpoint<GetProductRequest, List<ProductDto>>
 
     public override async Task HandleAsync(GetProductRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var result = CatalogMockData.Products;
 
         if (req.Uuids != null && req.Uuids.Any())

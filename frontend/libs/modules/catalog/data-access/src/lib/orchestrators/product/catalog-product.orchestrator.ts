@@ -115,6 +115,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       categories: deps.categories ?? [],
       model: deps.model ?? null,
       multimedia: deps.multimedia ?? [],
+      warrantyAssignments: dto.warranties ?? [],
       warranties: deps.warranties ?? [],
     };
   }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Catalog;
 
@@ -69,6 +71,12 @@ public static class CatalogMockData
     {
         GenerateData(1500, 20, 15);
     }
+
+    private static readonly Random DelayRandom = new();
+
+    /// <summary>Symuluje opóźnienie sieci/bazy danych dla endpointów Query mock-backendu.</summary>
+    public static Task SimulateQueryDelayAsync(CancellationToken ct, int minMs = 200, int maxMs = 800)
+        => Task.Delay(DelayRandom.Next(minMs, maxMs), ct);
 
     public static void GenerateData(int productCount, int categoryCount, int modelCount)
     {

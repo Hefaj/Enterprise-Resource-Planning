@@ -69,7 +69,7 @@ import { ErpSwitchComponent } from '../../form/erp-switch/erp-switch.component';
  */
 type FlatDisplayRow<T> =
   | { kind: 'group'; group: any; key: string; expanded: boolean; totalCount: number; selectedCount: number; loading: boolean }
-  | { kind: 'leaf'; row: Row<T> };
+  | { kind: 'leaf'; row: Row<T>; group?: any; groupKey?: string };
 
 @Directive({
   selector: '[erpVirtualMeasure]',
@@ -305,7 +305,7 @@ export class ErpTableSelectionCell {
               @if (_flatDisplayRows().length === 0 && !loading()) {
                 <tr>
                   <td [colSpan]="table.getVisibleFlatColumns().length" class="p-8 text-center text-(--erp-table-text-secondary)">
-                    {{ 'shared.table.empty' | erpTranslate }}
+                    {{ _emptyMessage() | erpTranslate }}
                   </td>
                 </tr>
               }
@@ -808,7 +808,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
       if (isExpanded) {
         for (const row of children) {
-          result.push({ kind: 'leaf', row });
+          result.push({ kind: 'leaf', row, group, groupKey: key });
         }
       }
     }
@@ -1063,18 +1063,41 @@ export class ErpTableComponent<T> implements AfterViewInit {
       });
     });
 
-    // Grouped rows: dociąganie dzieci grupy dopiero gdy jej wiersz stanie się widoczny w wirtualizerze.
+    // Grouped rows: dociąganie dzieci grupy dopiero gdy jej wiersz stanie się widoczny w wirtualizerze,
+    // oraz — niezależnie — doładowywanie kolejnych porcji danych dla już istniejących wierszy w miarę
+    // scrollowania w głąb dużej grupy (onVisibleRowsChange).
     effect(() => {
       const cfg = this._groupedRowsConfig();
-      if (!cfg?.loadChildren) return;
+      if (!cfg) return;
       const visibleItems = this.virtualizer().getVirtualItems();
       const flatRows = this._flatDisplayRows();
 
       untracked(() => {
+        const visibleRowsByGroup = cfg.onVisibleRowsChange
+          ? new Map<string, { group: any; rows: T[] }>()
+          : null;
+
         for (const item of visibleItems) {
           const flatRow = flatRows[item.index];
-          if (flatRow && flatRow.kind === 'group') {
-            this._ensureGroupChildrenLoaded(flatRow);
+          if (!flatRow) continue;
+
+          if (flatRow.kind === 'group') {
+            if (cfg.loadChildren) {
+              this._ensureGroupChildrenLoaded(flatRow);
+            }
+          } else if (visibleRowsByGroup && flatRow.groupKey !== undefined) {
+            let entry = visibleRowsByGroup.get(flatRow.groupKey);
+            if (!entry) {
+              entry = { group: flatRow.group, rows: [] };
+              visibleRowsByGroup.set(flatRow.groupKey, entry);
+            }
+            entry.rows.push(flatRow.row.original);
+          }
+        }
+
+        if (visibleRowsByGroup) {
+          for (const { group, rows } of visibleRowsByGroup.values()) {
+            cfg.onVisibleRowsChange!(group, rows);
           }
         }
       });

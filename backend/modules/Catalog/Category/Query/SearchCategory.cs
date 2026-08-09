@@ -21,6 +21,8 @@ public class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, SearchResp
 
     public override async Task HandleAsync(SearchCategoryRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var query = CatalogMockData.Categories.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(req.Name))

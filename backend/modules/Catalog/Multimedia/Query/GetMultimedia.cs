@@ -20,6 +20,8 @@ public class GetMultimediaEndpoint : Endpoint<GetMultimediaRequest, List<Multime
 
     public override async Task HandleAsync(GetMultimediaRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var result = CatalogMockData.Multimedias;
 
         if (req.Uuids != null && req.Uuids.Any())

@@ -1,22 +1,54 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ProductStore } from '../product.store';
-import { MAX_DETAILED_SELECTION } from '@erp/catalog/util';
-import { ErpActionToolbarBuilder, ErpGroupPanelBuilder, ErpGroupPanelComponent } from '@erp/shared/ui';
-import { CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
-import { MultimediaGroupComponent } from './multimedia-group.component';
+import {
+  ErpActionToolbarBuilder,
+  ErpActionToolbarComponent,
+  ErpActionToolbarContextDirective,
+  ErpActionToolbarZoneDirective,
+  ErpEmptyStateComponent,
+  ErpEmptyStateConfig,
+  ErpSelectionState,
+  ErpTableBuilder,
+  ErpTableComponent,
+} from '@erp/shared/ui';
+import { CatalogMultimediaOrchestrator, CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation/keys';
+import { MultimediaRow } from './multimedia-row.model';
+import { MultimediaThumbnailCellComponent } from './multimedia-thumbnail-cell.component';
+import { MultimediaInfoCellComponent } from './multimedia-info-cell.component';
+
+/**
+ * Rozmiar paczki doładowywanych multimediów — zamiast strzelać do API pojedynczymi UUID-ami
+ * przy każdej drobnej zmianie widocznego zakresu, zaokrąglamy zakres w górę/dół do granic
+ * paczki i pobieramy ją w całości (jednym żądaniem, zbatchowanym dodatkowo przez DataLoader).
+ */
+const MULTIMEDIA_CHUNK_SIZE = 30;
 
 @Component({
   selector: 'erp-multimedia-tab',
   standalone: true,
-  imports: [ErpGroupPanelComponent, MultimediaGroupComponent],
+  imports: [
+    ErpTableComponent,
+    ErpActionToolbarComponent,
+    ErpActionToolbarZoneDirective,
+    ErpActionToolbarContextDirective,
+    ErpEmptyStateComponent,
+  ],
   template: `
     <div class="h-full w-full p-2">
-      <erp-group-panel [config]="panelConfig">
-        <ng-template #erpGroupItem let-product let-index="index" let-measureElement="measureElement">
-          <erp-multimedia-group [product]="product" [measureElement]="measureElement" [attr.data-index]="index" />
-        </ng-template>
-      </erp-group-panel>
+      @if (_selectedProducts().length === 0) {
+        <erp-empty-state [config]="emptySelectionConfig" />
+      } @else {
+        <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="toolbarConfig">
+          <erp-action-toolbar [config]="toolbarConfig" />
+          <div class="flex-1 overflow-hidden">
+            <erp-table
+              class="block h-full w-full"
+              [config]="tableConfig"
+            />
+          </div>
+        </div>
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +56,7 @@ import { PRODUCT_KEYS } from '../../translation/keys';
 export class MultimediaTabComponent {
   private readonly store = inject(ProductStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
+  private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
 
   protected readonly _selectedProducts = computed(() => {
     const selectedItems = this.store.selection()?.selectedItems || [];
@@ -38,9 +71,32 @@ export class MultimediaTabComponent {
       return latestVm || selectedItems.find(x => x.uuid === uuid)!;
     });
   });
-  protected readonly _selectionCount = computed(() => this._selectedProducts().length);
+
+  /**
+   * Wszystkie multimedia wszystkich zaznaczonych produktów — jedna wspólna, płaska lista wierszy.
+   * Budowana z `multimediaUuids` (znane od razu — to zwykłe pole produktu, nie wymaga osobnego
+   * ładowania), NIE z rozwiązanego `product.multimedia` — dzięki temu liczba i kolejność wierszy
+   * (a więc i wysokość wirtualizera) są poprawne natychmiast, a szczegóły każdego wiersza
+   * (miniaturka, nazwa, rozmiar) doładowują się stopniowo w miarę scrollowania w głąb grupy
+   * (patrz `onVisibleRowsChange` niżej) — zamiast pobierać wszystkie multimedia produktu naraz.
+   */
+  protected readonly _rows = computed<MultimediaRow[]>(() =>
+    this._selectedProducts().flatMap(product =>
+      (product.multimediaUuids ?? []).map(uuid => ({ productUuid: product.uuid, uuid }))
+    )
+  );
+
   protected readonly _subSelectionCount = computed(() => this.store.selectedMultimedia().size);
-  protected readonly _hideMassActions = computed(() => this._selectionCount() <= 1);
+
+  protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
+    icon: '@tui.mouse-pointer-click',
+    message: PRODUCT_KEYS.base.multimedia.panel.emptySelection,
+  };
+
+  // Zbiór UUID produktów, dla których już zażądaliśmy bazowego załadowania (dedupikacja).
+  private readonly loadedProductUuids = new Set<string>();
+  // Zbiór UUID multimediów, dla których już zażądaliśmy doładowania szczegółów (dedupikacja).
+  private readonly requestedMultimediaUuids = new Set<string>();
 
   protected readonly toolbarConfig = ErpActionToolbarBuilder.create(b => b
     .setMenuId('multimedia-toolbar')
@@ -106,36 +162,111 @@ export class MultimediaTabComponent {
     )
   );
 
-  // Zbiór UUID dla których już wywołaliśmy ładowanie
-  private readonly loadedProductUuids = new Set<string>();
-
-  protected readonly panelConfig = ErpGroupPanelBuilder.create<ErpGroupPanelBuilder<ProductVM>>(b => b
-    .setToolbar(this.toolbarConfig)
-    .setItems(this._selectedProducts)
-    .setGetItemKey((_, item) => item.uuid)
-    .setEstimateSize(250)
-    .setOverscan(2)
-    .setOnRangeChange((range) => {
-      // Lazy-load: dociągnij produkty z wymuszeniem wczytania multimediów
-      const uuidsToLoad = range.visibleKeys.filter((uuid: string) => !this.loadedProductUuids.has(uuid));
-
-      if (uuidsToLoad.length > 0) {
-        for (const uuid of uuidsToLoad) {
-          this.loadedProductUuids.add(uuid);
-        }
-        this.productOrchestrator.loadAsync(uuidsToLoad, { includeMultimedia: true });
-      }
-    })
-    .setEmptyState(PRODUCT_KEYS.base.multimedia.panel.emptySelection, '@tui.mouse-pointer-click')
-    .setOverflow(MAX_DETAILED_SELECTION, PRODUCT_KEYS.base.multimedia.panel.bulkDescription, '@tui.layers')
+  protected readonly tableConfig = ErpTableBuilder.create<ErpTableBuilder<MultimediaRow>>((table) =>
+    table
+      .setStateKey('product-tab-multimedia')
+      .setMode('client')
+      .setSelectionMode('multi')
+      .setRowIdAccessor(r => `${r.productUuid}:${r.uuid}`)
+      .setItems(this._rows)
+      .setItemCount(computed(() => this._rows().length))
+      .setEnableVirtualScroll(true)
+      .setEstimatedRowHeight(56)
+      .setEmptyMessage(PRODUCT_KEYS.base.multimedia.panel.emptySelection)
+      .setOnSelectionChange(state => this.onSelectionChange(state))
+      .addColumn(c => c
+        .setId('thumbnail')
+        .setHeader('Miniatura')
+        .setCell(MultimediaThumbnailCellComponent)
+        .setEnableSorting(false)
+        .setSize(100)
+      )
+      .addColumn(c => c
+        .setId('fileName')
+        .setHeader('Nazwa pliku')
+        .setCell(MultimediaInfoCellComponent, { field: 'fileName' })
+        .setSize(320)
+      )
+      .addColumn(c => c
+        .setId('mediaType')
+        .setHeader('Typ')
+        .setCell(MultimediaInfoCellComponent, { field: 'mediaType' })
+        .setSize(140)
+      )
+      .addColumn(c => c
+        .setId('fileSize')
+        .setHeader('Rozmiar')
+        .setCell(MultimediaInfoCellComponent, { field: 'fileSize' })
+        .setCellClass('text-right')
+        .setSize(120)
+      )
+      .setGroupedRows<ProductVM>(g => g
+        .setGroups(this._selectedProducts)
+        .setGetGroupKey(p => p.uuid)
+        .setGetRowGroupKey((r: MultimediaRow) => r.productUuid)
+        .setGetGroupTitle(p => p.name)
+        .setGetGroupSubtitle(p => p.sku)
+        .setGetGroupIcon(() => '@tui.image')
+        .setIsGroupLoading(p => (p.multimediaUuids?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
+        .setDefaultExpanded(true)
+        .setLoadChildren(p => this.ensureProductLoaded(p.uuid))
+        .setOnVisibleRowsChange((product, visibleRows) => this.loadVisibleMultimedia(product, visibleRows))
+      )
   );
 
+  /** Ładuje bazowy produkt (raz), aby upewnić się, że `multimediaUuids` jest dostępne. */
+  private ensureProductLoaded(uuid: string): void {
+    if (this.loadedProductUuids.has(uuid)) return;
+    this.loadedProductUuids.add(uuid);
+    this.productOrchestrator.loadAsync([uuid]);
+  }
+
+  /**
+   * Doładowuje szczegóły multimediów dla wierszy widocznych w wirtualizerze — nie pojedynczo,
+   * tylko całą paczką (`MULTIMEDIA_CHUNK_SIZE`), do której należy widoczny zakres. Dzięki temu
+   * przewijanie o kilka wierszy nie generuje osobnego żądania do API za każdym razem — kolejne
+   * żądanie pojawia się dopiero po przekroczeniu granicy już pobranej paczki.
+   */
+  private loadVisibleMultimedia(product: ProductVM, visibleRows: MultimediaRow[]): void {
+    if (visibleRows.length === 0) return;
+
+    const allUuids = product.multimediaUuids ?? [];
+    let minIndex = Infinity;
+    let maxIndex = -Infinity;
+    for (const row of visibleRows) {
+      const idx = allUuids.indexOf(row.uuid);
+      if (idx === -1) continue;
+      if (idx < minIndex) minIndex = idx;
+      if (idx > maxIndex) maxIndex = idx;
+    }
+    if (minIndex === Infinity) return;
+
+    const chunkStart = Math.floor(minIndex / MULTIMEDIA_CHUNK_SIZE) * MULTIMEDIA_CHUNK_SIZE;
+    const chunkEnd = Math.min(allUuids.length, Math.ceil((maxIndex + 1) / MULTIMEDIA_CHUNK_SIZE) * MULTIMEDIA_CHUNK_SIZE);
+
+    const uuidsToLoad: string[] = [];
+    for (let i = chunkStart; i < chunkEnd; i++) {
+      const uuid = allUuids[i];
+      if (!this.requestedMultimediaUuids.has(uuid)) {
+        this.requestedMultimediaUuids.add(uuid);
+        uuidsToLoad.push(uuid);
+      }
+    }
+    if (uuidsToLoad.length === 0) return;
+
+    this.multimediaOrchestrator.loadAsync(uuidsToLoad);
+  }
+
+  protected onSelectionChange(state: ErpSelectionState<MultimediaRow>): void {
+    this.store.selectedMultimedia.set(new Set(state.selectedItems.map(r => r.uuid)));
+  }
+
   protected onAddMass(): void {
-    console.log('Masowe dodawanie multimediów dla', this._selectionCount(), 'produktów');
+    console.log('Masowe dodawanie multimediów dla', this._selectedProducts().length, 'produktów');
   }
 
   protected onDeleteMass(): void {
-    console.log('Masowe usuwanie multimediów dla', this._selectionCount(), 'produktów');
+    console.log('Masowe usuwanie multimediów dla', this._selectedProducts().length, 'produktów');
   }
 
   protected onDeleteSelectedMedia(): void {
@@ -143,6 +274,6 @@ export class MultimediaTabComponent {
   }
 
   protected onClearMediaSelection(): void {
-    console.log('Czyszczenie zaznaczenia zdjęć');
+    this.store.selectedMultimedia.set(new Set());
   }
 }

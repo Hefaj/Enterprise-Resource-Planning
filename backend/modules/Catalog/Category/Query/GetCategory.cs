@@ -20,6 +20,8 @@ public class GetCategoryEndpoint : Endpoint<GetCategoryRequest, List<CategoryDto
 
     public override async Task HandleAsync(GetCategoryRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var result = CatalogMockData.Categories;
 
         if (req.Uuids != null && req.Uuids.Any())

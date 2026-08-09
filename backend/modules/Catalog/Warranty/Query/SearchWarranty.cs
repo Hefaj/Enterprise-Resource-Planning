@@ -22,6 +22,8 @@ public class SearchWarrantyEndpoint : Endpoint<SearchWarrantyRequest, SearchResp
 
     public override async Task HandleAsync(SearchWarrantyRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var query = CatalogMockData.Warranties.AsEnumerable().ApplyFilter(req);
 
         if (req.Sorts != null && req.Sorts.Any())

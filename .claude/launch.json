@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "client-monolith",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "run", "client:serve"],
+      "port": 4200
+    }
+  ]
+}

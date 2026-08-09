@@ -302,6 +302,17 @@ export class ErpGroupedRowsBuilder<TGroup = any, TData = any> extends ErpBaseBui
     this._data.estimateGroupRowHeight = height;
     return this;
   }
+
+  /**
+   * Ustawia funkcję wywoływaną przy zmianie widocznego zakresu wirtualizera —
+   * dla każdej grupy z przynajmniej jednym widocznym wierszem, z pełną listą jej
+   * aktualnie widocznych wierszy. Do stopniowego doładowywania danych w miarę
+   * scrollowania w głąb dużej grupy (niezależnie od `loadChildren`).
+   */
+  public setOnVisibleRowsChange(fn: (group: TGroup, visibleRows: TData[]) => void): this {
+    this._data.onVisibleRowsChange = fn;
+    return this;
+  }
 }
 
 /**

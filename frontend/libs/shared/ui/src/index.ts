@@ -29,6 +29,7 @@ export * from './lib/atoms/erp-text';
 export * from './lib/atoms/erp-table';
 export * from './lib/atoms/erp-scroll-viewport';
 export * from './lib/atoms/erp-group-card';
+export * from './lib/atoms/erp-empty-state';
 
 // // Molecules
 export * from './lib/molecules/erp-filter';

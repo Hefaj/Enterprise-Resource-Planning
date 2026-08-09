@@ -21,6 +21,8 @@ public class SearchMultimediaEndpoint : Endpoint<SearchMultimediaRequest, Search
 
     public override async Task HandleAsync(SearchMultimediaRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var query = CatalogMockData.Multimedias.AsEnumerable();
 
         if (req.Uuids != null && req.Uuids.Any())

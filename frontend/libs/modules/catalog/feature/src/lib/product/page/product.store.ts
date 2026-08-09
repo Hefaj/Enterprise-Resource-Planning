@@ -31,49 +31,8 @@ export class ProductStore {
     this.loading.set(isLoading);
   }
 
-  // 4. Zaznaczenia multimediów
+  // 4. Zaznaczenia multimediów (płaska lista — jedna wspólna tabela grupowana per produkt)
   public readonly selectedMultimedia = signal<Set<string>>(new Set());
-  private readonly lastToggledMultimedia = signal<string | null>(null);
-
-  public toggleMultimediaSelection(uuid: string, selected: boolean, shiftKey: boolean = false, orderedGroupUuids: string[] = []): void {
-    const lastUuid = this.lastToggledMultimedia();
-    this.lastToggledMultimedia.set(uuid);
-
-    if (shiftKey && lastUuid && orderedGroupUuids.length > 0) {
-      const startIndex = orderedGroupUuids.indexOf(lastUuid);
-      const endIndex = orderedGroupUuids.indexOf(uuid);
-
-      // Jeśli oba kliknięte elementy należą do tej samej grupy, zaznaczamy zakres
-      if (startIndex !== -1 && endIndex !== -1) {
-        const min = Math.min(startIndex, endIndex);
-        const max = Math.max(startIndex, endIndex);
-
-        this.selectedMultimedia.update(set => {
-          const newSet = new Set(set);
-          for (let i = min; i <= max; i++) {
-            if (selected) {
-              newSet.add(orderedGroupUuids[i]);
-            } else {
-              newSet.delete(orderedGroupUuids[i]);
-            }
-          }
-          return newSet;
-        });
-        return;
-      }
-    }
-
-    // Standardowe zaznaczanie
-    this.selectedMultimedia.update(set => {
-      const newSet = new Set(set);
-      if (selected) {
-        newSet.add(uuid);
-      } else {
-        newSet.delete(uuid);
-      }
-      return newSet;
-    });
-  }
 
   // 5. Zaznaczenia gwarancji (jedna wspólna tabela grupowana per produkt)
   public readonly selectedWarrantiesByProduct = signal<Record<string, string[]>>({});

@@ -30,6 +30,8 @@ public class SearchProductEndpoint : Endpoint<SearchProductRequest, SearchRespon
 
     public override async Task HandleAsync(SearchProductRequest req, CancellationToken ct)
     {
+        await CatalogMockData.SimulateQueryDelayAsync(ct);
+
         var query = CatalogMockData.Products.AsEnumerable().ApplyFilter(req);
 
         if (req.Sorts != null && req.Sorts.Any())

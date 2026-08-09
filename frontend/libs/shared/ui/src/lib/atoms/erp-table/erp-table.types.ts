@@ -145,6 +145,19 @@ export interface ErpGroupedRowsConfig<TGroup = any, TData = any> {
   loadChildren?: (group: TGroup) => void | Promise<void>;
   /** Szacowana wysokość wiersza grupy w px (dla wirtualizera). Domyślnie 56. */
   estimateGroupRowHeight?: number;
+  /**
+   * Wywoływane przy każdej zmianie widocznego zakresu wirtualizera — dla każdej grupy,
+   * której przynajmniej jeden wiersz-dziecko jest aktualnie widoczny (wraz z overscanem),
+   * przekazuje pełną listę jej aktualnie widocznych wierszy.
+   *
+   * W przeciwieństwie do `loadChildren` (wywoływane raz, tylko gdy grupa nie ma jeszcze
+   * żadnych wierszy w `items`), to wywołanie działa niezależnie od tego, czy wiersze już
+   * istnieją — pozwala doładowywać kolejne porcje *danych* dla już istniejących wierszy
+   * w miarę scrollowania w głąb dużej grupy (np. produkt z setkami zdjęć, gdzie same
+   * wiersze/ID są znane od razu, ale ich szczegóły ładują się stopniowo).
+   * Implementacja powinna sama pilnować deduplikacji (np. Set już zażądanych ID).
+   */
+  onVisibleRowsChange?: (group: TGroup, visibleRows: TData[]) => void;
 }
 
 export interface ErpTableConfig<TData = any> {

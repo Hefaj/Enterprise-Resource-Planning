@@ -4,14 +4,13 @@ import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchResult } from '../../api-client';
-import { ProductVM, CatalogProductLoadOptions } from './product.view-model';
+import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
 import { CatalogCategoryOrchestrator } from '../category/catalog-category.orchestrator';
 import { CatalogModelOrchestrator } from '../model/catalog-model.orchestrator';
 import { MultimediaVM } from '../multimedia/multimedia.view-model';
 import { CatalogMultimediaOrchestrator } from '../multimedia/catalog-multimedia.orchestrator';
-import { ProductWarrantyVM } from '../warranty/warranty.view-model';
 import { CatalogWarrantyOrchestrator } from '../warranty/catalog-warranty.orchestrator';
 
 /**
@@ -115,7 +114,6 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       categories: deps.categories ?? [],
       model: deps.model ?? null,
       multimedia: deps.multimedia ?? [],
-      warrantyAssignments: dto.warranties ?? [],
       warranties: deps.warranties ?? [],
     };
   }
@@ -221,10 +219,11 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       ? this._multimediaSiblingOrchestrator.resolveMultimediaVMs(dto.multimediaUuids)
       : [];
 
-    // Rozwiąż gwarancje z cache orkiestratora gwarancji
-    const warranties: ProductWarrantyVM[] = dto.warranties
-      ? this._warrantySiblingOrchestrator.resolveWarrantyVMs(dto.warranties)
-      : [];
+    // Wzbogać przypisania produkt-gwarancja o katalogową gwarancję (per UUID, z cache orkiestratora gwarancji)
+    const warranties: ProductWarrantyVM[] = (dto.warranties ?? []).map(assignment => ({
+      ...assignment,
+      warranty: this._warrantySiblingOrchestrator.resolveWarrantyVM(assignment.warrantyUuid),
+    }));
 
     return { categories, model, multimedia, warranties };
   }

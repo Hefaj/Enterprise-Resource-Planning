@@ -2,7 +2,18 @@ import { ProductDto, ProductWarrantyDto } from '../../api-client';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
 import { MultimediaVM } from '../multimedia/multimedia.view-model';
-import { ProductWarrantyVM } from '../warranty/warranty.view-model';
+import { WarrantyVM } from '../warranty/warranty.view-model';
+
+/**
+ * Przypisanie produkt-gwarancja, wzbogacone o rozwiązaną gwarancję katalogową.
+ * Rozszerza `ProductWarrantyDto` (kształt elementu `ProductDto.warranties[]`, czyli
+ * kontrakt należący do Produktu, nie do Warranty), więc `warrantyUuid`/`durationMonths`
+ * (okres przypisany do TEGO produktu) są dostępne od razu — `warranty` (dane katalogowe:
+ * nazwa, standardowy okres, opis) jest `null`, dopóki nie zostanie doładowana.
+ */
+export interface ProductWarrantyVM extends ProductWarrantyDto {
+  readonly warranty: WarrantyVM | null;
+}
 
 export interface ProductVM extends ProductDto {
   /** Rozwiązane odniesienia do kategorii (z categoryUuids). */
@@ -15,14 +26,11 @@ export interface ProductVM extends ProductDto {
   readonly multimedia: MultimediaVM[];
 
   /**
-   * Surowe przypisania produkt-gwarancja (`warrantyUuid` + `durationMonths` dla tego produktu) —
-   * zawsze dostępne natychmiast (zwykłe pole DTO), niezależnie od tego, czy katalogowe `WarrantyDto`
-   * zostały już doładowane. Do budowania list wierszy ze znaną z góry liczbą/kolejnością
-   * (patrz `warranty-tab.component.ts`), zamiast czekać na pełne rozwiązanie `warranties`.
+   * Przypisania produkt-gwarancja, wzbogacone o rozwiązaną gwarancję katalogową.
+   * Nadpisuje pole `warranties` z `ProductDto` podtypem (`ProductWarrantyVM extends
+   * ProductWarrantyDto`) — więc `warrantyUuid`/`durationMonths` są dostępne od razu,
+   * niezależnie od tego, czy katalogowe `WarrantyDto` zostały już doładowane.
    */
-  readonly warrantyAssignments: ProductWarrantyDto[];
-
-  /** Rozwiązane gwarancje powiązane z produktem, wraz z okresem trwania przypisanym do produktu. */
   readonly warranties: ProductWarrantyVM[];
 }
 

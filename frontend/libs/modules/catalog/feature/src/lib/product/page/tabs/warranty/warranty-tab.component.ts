@@ -66,16 +66,14 @@ export class WarrantyTabComponent {
 
   /**
    * Wszystkie gwarancje wszystkich zaznaczonych produktów — jedna wspólna, płaska lista wierszy.
-   * Budowana z `warrantyAssignments` (znane od razu — zwykłe pole produktu, nie wymaga osobnego
-   * ładowania), NIE z rozwiązanego `product.warranties` — dzięki temu liczba i kolejność wierszy
-   * (a więc i wysokość wirtualizera) są poprawne natychmiast, a katalogowe szczegóły każdej
-   * gwarancji (nazwa, standardowy okres, opis) doładowują się stopniowo w miarę scrollowania
-   * w głąb grupy (patrz `onVisibleRowsChange` niżej) — zamiast pobierać wszystkie gwarancje
-   * produktu naraz.
+   * `product.warranties` ma jeden wiersz na przypisanie od razu (liczba/kolejność, a więc i
+   * wysokość wirtualizera, są poprawne natychmiast) — katalogowe szczegóły każdej gwarancji
+   * (nazwa, standardowy okres, opis) doładowują się stopniowo w miarę scrollowania w głąb
+   * grupy (patrz `onVisibleRowsChange` niżej) — zamiast pobierać wszystkie gwarancje produktu naraz.
    */
   protected readonly _rows = computed<WarrantyRow[]>(() =>
     this._selectedProducts().flatMap(product =>
-      (product.warrantyAssignments ?? []).map(w => ({
+      product.warranties.map(w => ({
         productUuid: product.uuid,
         warrantyUuid: w.warrantyUuid,
         productDurationMonths: w.durationMonths,
@@ -226,14 +224,14 @@ export class WarrantyTabComponent {
         .setGetGroupTitle(p => p.name)
         .setGetGroupSubtitle(p => p.sku)
         .setGetGroupIcon(() => '@tui.shield-check')
-        .setIsGroupLoading(p => (p.warrantyAssignments?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
+        .setIsGroupLoading(p => (p.warranties?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
         .setDefaultExpanded(true)
         .setLoadChildren(p => this.ensureProductLoaded(p.uuid))
         .setOnVisibleRowsChange((product, visibleRows) => this.loadVisibleWarranties(product, visibleRows))
       )
   );
 
-  /** Ładuje bazowy produkt (raz), aby upewnić się, że `warrantyAssignments` jest dostępne. */
+  /** Ładuje bazowy produkt (raz), aby upewnić się, że `warranties` jest dostępne. */
   private ensureProductLoaded(uuid: string): void {
     if (this.loadedProductUuids.has(uuid)) return;
     this.loadedProductUuids.add(uuid);
@@ -249,7 +247,7 @@ export class WarrantyTabComponent {
   private loadVisibleWarranties(product: ProductVM, visibleRows: WarrantyRow[]): void {
     if (visibleRows.length === 0) return;
 
-    const allUuids = (product.warrantyAssignments ?? []).map(w => w.warrantyUuid);
+    const allUuids = product.warranties.map(w => w.warrantyUuid);
     let minIndex = Infinity;
     let maxIndex = -Infinity;
     for (const row of visibleRows) {

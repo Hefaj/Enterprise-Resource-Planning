@@ -1,70 +1,189 @@
-# Tworzenie Orkiestratora (Data Access)
+# Orkiestrator (`BaseOrchestrator`) — kiedy, po co i jak
 
-Orkiestratory w warstwie `data-access` stanowią serce zarządzania stanem dla agregatów domenowych. Zarządzają inteligentnym pobieraniem danych, pamięcią podręczną (`IdentityMapStore`), subskrypcją na powiadomienia z SignalR oraz transformacją obiektów `DTO` na modele widokowe (`ViewModel`).
+Ten plik ma Cię nauczyć **rozumieć** orkiestrator, nie tylko go skopiować. Zanim napiszesz kod, sprawdź czy w danym module nie ma już podobnego orkiestratora (np. `catalog-category.orchestrator.ts`) — kopiuj strukturę stamtąd, dopasowując do własnego agregatu.
 
-Poniżej znajdują się zasady i konwencje ich tworzenia.
+Pełne, rozwinięte wyjaśnienie z uzasadnieniem (dla człowieka): [`doc/frontend/orchestrators.md`](../../doc/frontend/orchestrators.md).
 
-## 1. Wzorzec Bazowy
-Każdy orkiestrator musi dziedziczyć z abstrakcyjnej klasy `BaseOrchestrator<TDto, TViewModel, TFilters, TLoadOptions>`.
-Orkiestratory to serwisy Angularowe typu Singleton i powinny posiadać adnotację `@Injectable({ providedIn: 'root' })`.
+---
 
-## 2. Wymagane Implementacje
-Klasa dziedzicząca musi definiować następujące elementy:
-- **`signature`**: Unikalny string identyfikujący orkiestrator (np. `'catalog.product'`).
-- **`orchestratorConfig`**: Konfiguracja określająca m.in. sygnaturę dla SignalR oraz maksymalny rozmiar cache (`maxCacheSize`).
-- **`fetchByUuids(uuids)`**: Metoda pobierająca obiekty DTO przez API (np. za pomocą klienta wygenerowanego przez NSwag).
-- **`searchByFilters(filters)`**: Metoda wyszukująca i zwracająca obiekty typu `SearchResponse`.
-- **`mapToViewModel(dto, resolvedDeps)`**: Czysta funkcja transformująca surowe DTO (wraz z rozwiązanymi zależnościami) w bogaty `ViewModel`.
+## 1. Kiedy sięgać po orkiestrator
 
-## 3. Zależności i Eager Loading
-Wiele agregatów (np. `Product`) zawiera powiązania do innych agregatów (np. `Category` czy `Model`). Do asynchronicznego ładowania powiązań należy:
-- Zaimplementować opcjonalną metodę **`resolveEagerDependencies(uuids, options)`**.
-- Zbierać UUID powiązanych obiektów z załadowanych DTO i wywoływać na zaprzyjaźnionych orkiestratorach metodę asynchronicznego ładowania (np. `loadAsync(...)`).
+Twórz orkiestrator, gdy w warstwie `data-access` pojawia się **nowy agregat domenowy z bytem w API**: endpoint pobierający po UUID-ach (`getX({ uuids })`) i endpoint wyszukujący (`searchX(filters)`). Sygnały, że go potrzebujesz:
+
+- Ten sam agregat będzie odczytywany z wielu, niezależnych miejsc UI (lista, tab, modal) — bez orkiestratora każde z nich odpytywałoby API osobno.
+- Potrzebujesz reaktywnego dostępu (`Signal`) zamiast ręcznego zarządzania `Observable`/subskrypcjami w komponencie.
+- Backend wysyła aktualizacje SignalR dla tego agregatu i UI ma się odświeżać samo.
+- DTO trzeba wzbogacić o dane innych agregatów (np. produkt + jego kategorie) zanim trafi do UI.
+
+**Kiedy NIE:** jednorazowa akcja bez stanu do cache'owania (np. „wyślij e-mail", „wygeneruj raport") to zwykła metoda serwisu, nie orkiestrator. Nie twórz też orkiestratora dla danych bez `uuid` jako klucza tożsamości — `BaseOrchestrator<TDto, ...>` wymaga `TDto extends HasUuid`.
+
+---
+
+## 2. Po co — jaki problem to rozwiązuje
+
+| Mechanizm | Co daje |
+|---|---|
+| `IdentityMapStore` | Jedna instancja cache per typ agregatu, per-UUID granularne `Signal` (zmiana jednego rekordu nie przelicza niepowiązanych), eksmisja LRU (`maxCacheSize`) |
+| `DataLoader` | Dedup UUID, pomija to co już w cache, grupuje wywołania w oknie `bufferTimeMs`, dzieli duże paczki na `maxChunkSize`, retry z exponential backoff |
+| Reaktywne API (`getViewModel`/`getSignalViewModel`/`getOne`) | Komponent dostaje `Signal`, nie musi ręcznie zarządzać subskrypcją ani wiedzieć, skąd dane pochodzą (cache czy świeży fetch) |
+| SignalR (`signalrSignature`) | Automatyczne odświeżenie cache, gdy backend zgłosi zmianę agregatu — bez ręcznego invalidowania przez komponenty |
+| `mapToViewModel` + rozwiązywanie zależności | DTO → bogaty `ViewModel` z rozwiązanymi powiązaniami do innych agregatów |
+| `JobService` (w komendach) | Śledzenie długotrwałych operacji (komend) z raportowaniem błędów |
+
+Innymi słowy: orkiestrator to **jedyne źródło prawdy** dla danego agregatu — komponenty nigdy nie trzymają własnej kopii danych ani nie wołają API bezpośrednio.
+
+---
+
+## 3. Jak działa
+
+### 3.1 Szkielet i wymagane elementy
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class CatalogProductOrchestrator extends BaseOrchestrator<
+  ProductDto,               // TDto — surowy typ z API (NSwag)
+  ProductVM,                // TViewModel — model dla UI
+  SearchProductRequest,     // TFilters
+  CatalogProductLoadOptions // TLoadOptions — flagi eager-loadingu (albo zwykły `LoadOptions`)
+> {
+  private readonly _api = inject(CatalogClient);
+
+  protected override readonly signature = 'catalog.product';
+  protected override readonly orchestratorConfig = {
+    signalrSignature: 'catalog.product',
+    maxCacheSize: 1000,   // opcjonalnie: maxChunkSize, bufferTimeMs, maxRetries, retryDelayMs
+  };
+
+  protected override fetchByUuids(uuids: string[]): Observable<ProductDto[]> {
+    return this._api.getProduct({ uuids });
+  }
+
+  protected override searchByFilters(filters: SearchProductRequest): Observable<SearchResponse> {
+    return this._api.searchProduct(filters);
+  }
+
+  protected override mapToViewModel(dto: ProductDto, resolvedDeps: ResolvedDeps): ProductVM {
+    return { ...dto /* + wzbogacone pola, patrz 3.4 */ };
+  }
+}
+```
+
+Orkiestratory to Angularowe singletony (`@Injectable({ providedIn: 'root' })`).
 
 > [!IMPORTANT]
-> **Używaj standardowego `LoadOptions` przy braku relacji:**
-> Jeśli agregat nie posiada żadnych zależności wymagających dociągnięcia, nie twórz dedykowanego interfejsu opcji ładowania (np. `NotificationJobLoadOptions`). Zamiast tego użyj bezpośrednio ogólnego typu `LoadOptions` zaimportowanego z `@erp/shared/data-access` w definicji klasy orkiestratora:
+> **Brak powiązań do dociągnięcia?** Nie twórz pustego `XLoadOptions`. Użyj wprost `LoadOptions` z `@erp/shared/data-access`:
 > ```typescript
 > export class NotificationJobOrchestrator extends BaseOrchestrator<JobDto, JobVM, SearchJobRequest, LoadOptions>
 > ```
 
-## 4. Zapobieganie cyklicznemu wstrzykiwaniu (Circular Dependency Guard)
-Orkiestratory często potrzebują siebie nawzajem (np. orkiestrator Produktu musi dociągnąć Kategorie). Aby uniknąć błędów wstrzykiwania zależności w Angularze:
-- Zależne orkiestratory wstrzykuj leniwie z użyciem `Injector`.
-- Przykład:
-  ```typescript
-  private readonly _injector = inject(Injector);
-  private _categoryOrchestrator: CatalogCategoryOrchestrator | null = null;
+### 3.2 Cykl życia żądania — `loadAsync`
 
-  private get _categorySiblingOrchestrator(): CatalogCategoryOrchestrator {
-    if (!this._categoryOrchestrator) {
-      this._categoryOrchestrator = this._injector.get(CatalogCategoryOrchestrator);
-    }
-    return this._categoryOrchestrator;
-  }
-  ```
+1. Komponent woła `orchestrator.loadAsync(uuids, options?)`.
+2. `DataLoader` dedupikuje UUID-y, odfiltrowuje te już w `IdentityMapStore`, czeka na żądania już-w-locie, buforuje nowe (`bufferTimeMs`), dzieli na chunki (`maxChunkSize`), pobiera przez Twoje `fetchByUuids`, zapisuje wynik w cache.
+3. Jeśli podano `options`, wywoływane jest **raz** `resolveEagerDependencies(uuids, options)`.
+4. UUID-y trafiają do zbioru załadowanych — od tego zależy, co widać w `getViewModel()`/`getSignalViewModel()`.
 
-## 5. View-Models
-Dla każdego agregatu powinny zostać zdefiniowane modele widokowe (w pliku np. `product.view-model.ts`). `ViewModel` to typ rozszerzający interfejs `Dto`, który zamiast samych list/obiektów identyfikatorów (`categoryUuids`) przechowuje całe zagnieżdżone powiązane zasoby (np. `categories: CategoryVM[]`).
+`searchAsync(filters, { autoLoad })` działa podobnie: woła `searchByFilters`, dostaje same UUID-y, i (domyślnie) od razu je ładuje przez `loadAsync`.
 
-> [!TIP]
-> **Dobre praktyki lintera:**
-> - Jeśli `ViewModel` nie posiada żadnych dodatkowych pól w porównaniu do bazowego `Dto`, należy zdefiniować go jako alias typu (np. `export type JobVM = JobDto;`), a nie jako pusty interfejs (np. `export interface JobVM extends JobDto {}`). Uniknie to błędu lintera `@typescript-eslint/no-empty-interface` / `@typescript-eslint/no-empty-object-type`.
-> - W metodzie `mapToViewModel` jeśli nie ma zależności do zmapowania, można całkowicie pominąć parametr `resolvedDeps`, aby zapobiec ostrzeżeniom o nieużywanych zmiennych (`@typescript-eslint/no-unused-vars`).
+### 3.3 Odczyt — trzy reaktywne API
 
-Aby zasilić te pola, nadpisujemy metodę rozwiązywania zależności tak by odczytywała gotowe dane z cache zaprzyjaźnionych orkiestratorów. Należy do tego użyć własnej implementacji mapowania lub w razie wsparcia przez implementację bazową `_resolveCurrentDeps(dto)`.
+| Metoda | Zwraca | Kiedy używać |
+|---|---|---|
+| `getViewModel()` | `Signal<Map<uuid, VM>>` | listy, gdzie i tak zużywasz całą mapę naraz |
+| `getSignalViewModel()` | `Map<uuid, Signal<VM>>` | tabele — zmiana jednego wiersza nie przelicza reszty |
+| `getOne(uuid)` | `Signal<VM \| undefined>` | pojedynczy element (np. komórka rozwiązująca się niezależnie) |
 
-## 6. Realizacja Komend
-Metody do masowych aktualizacji bądź działań na zasobach tworzy się jako publiczne metody async orkiestratora. Każda metoda samodzielnie:
-1. Wywołuje API przez `firstValueFrom`
-2. Rejestruje zadanie w `jobService.addJob()` z kluczem tłumaczenia Transloco
-3. Obsługuje błędy przez `this.addError()`
+Wszystkie trzy wołają pod spodem `mapToViewModel(dto, this._resolveCurrentDeps(dto))`. **`_resolveCurrentDeps` musi być synchroniczne i tanie** (czysty odczyt z już-załadowanego cache sąsiednich orkiestratorów) — jest wywoływane przy każdym przeliczeniu `computed()`, nigdy nie odpytuj w nim API.
+
+### 3.4 Dwie metody do zależności — nie pomyl ich
+
+| | `resolveEagerDependencies(uuids, options)` | `_resolveCurrentDeps(dto)` |
+|---|---|---|
+| Kiedy | raz, wewnątrz `loadAsync`, gdy podano `options` | przy każdym mapowaniu DTO→VM (sync, w `computed()`) |
+| Typ | `async` | sync |
+| Robi | zbiera UUID-y powiązań z DTO, woła `loadAsync(...)` na sąsiednich orkiestratorach, żeby dane trafiły do ICH cache | czyta z cache sąsiednich orkiestratorów (`resolveXVM(uuid)`), buduje `ResolvedDeps` |
+| Nie robi | — | żadnych requestów, żadnego async |
 
 ```typescript
-public async setPriceMultiple(
-  command: BatchCommand,
-  queueID?: string,
-): Promise<string> {
+protected override async resolveEagerDependencies(uuids: string[], options: CatalogProductLoadOptions): Promise<void> {
+  const categoryUuids = new Set<string>();
+  for (const uuid of uuids) {
+    const dto = this.identityMap.peek(uuid);
+    if (options.includeCategories && dto?.categoryUuids) dto.categoryUuids.forEach(u => categoryUuids.add(u));
+  }
+  if (categoryUuids.size > 0) await this._categorySiblingOrchestrator.loadAsync([...categoryUuids]);
+}
+
+protected override _resolveCurrentDeps(dto: ProductDto): ProductResolvedDeps {
+  const categories = dto.categoryUuids ? this._categorySiblingOrchestrator.resolveCategoryVMs(dto.categoryUuids) : [];
+  return { categories };
+}
+```
+
+### 3.5 Cykliczne zależności między orkiestratorami
+
+Product potrzebuje Category, ale Category orchestrator nie powinien znać Product w konstruktorze — DI Angulara nie lubi takich cykli. Wstrzykuj sąsiednie orkiestratory **leniwie**, przez `Injector`, w getterze:
+
+```typescript
+private readonly _injector = inject(Injector);
+private _categoryOrchestrator: CatalogCategoryOrchestrator | null = null;
+
+private get _categorySiblingOrchestrator(): CatalogCategoryOrchestrator {
+  if (!this._categoryOrchestrator) {
+    this._categoryOrchestrator = this._injector.get(CatalogCategoryOrchestrator);
+  }
+  return this._categoryOrchestrator;
+}
+```
+
+### 3.6 Wzbogacanie ViewModelu o powiązania — jak nie tracić danych
+
+`ViewModel` (`XxxVM`) zawsze `extends XxxDto` i dodaje pola, które wymagają połączenia z innym agregatem.
+
+**Prosty przypadek — DTO trzyma sam UUID / listę UUID-ów.** Wzbogacone pole dostaje **inną nazwę**, więc nie ma konfliktu:
+
+```typescript
+// DTO: modelUuid: string | null        →  VM: model: ModelVM | null
+// DTO: categoryUuids: string[]         →  VM: categories: CategoryVM[]
+```
+
+**Trudniejszy przypadek — DTO trzyma listę *obiektów przypisania* pod nazwą, którą chcesz wzbogacić** (np. `warranties: ProductWarrantyDto[]`, gdzie element to `{ warrantyUuid, durationMonths }`). Naturalna nazwa wzbogaconej wersji to też `warranties` — kolizja z polem z DTO.
+
+> [!IMPORTANT]
+> **Nigdy nie dodawaj drugiego, zduplikowanego pola** (np. `warrantyAssignments` jako ręczna kopia `dto.warranties`) tylko po to, by „nie stracić dostępu" do surowych danych po nadpisaniu `warranties` innym typem. Zamiast tego rozszerz **typ elementu**, nie tablicę:
+>
+> ```typescript
+> // product.view-model.ts — ItemVM mieszka przy agregacie, którego DTO jest (kontrakt API), nie przy agregacie wzbogacającym
+> export interface ProductWarrantyVM extends ProductWarrantyDto {
+>   readonly warranty: WarrantyVM | null; // null, dopóki katalogowa gwarancja nie doładowana
+> }
+> export interface ProductVM extends ProductDto {
+>   readonly warranties: ProductWarrantyVM[]; // bezpieczne nadpisanie (kowariancja) — zero utraty danych z DTO
+> }
+> ```
+>
+> Nadpisanie pola tym samym-nazwą, ale kowariantnym podtypem elementu jest bezpieczne w TS i nigdy nie traci danych z DTO — w przeciwieństwie do nadpisania całej tablicy niezwiązanym typem.
+
+> [!IMPORTANT]
+> **Resolver na orkiestratorze agregatu wzbogacającego przyjmuje i zwraca TYLKO swój własny typ.** `CatalogWarrantyOrchestrator.resolveWarrantyVM(uuid: string): WarrantyVM | null` — wzorem `resolveModelVM(uuid): ModelVM | null`. Nigdy nie przyjmuje ani nie zwraca typu należącego do innego agregatu (nie importuje `ProductWarrantyDto`/`ProductWarrantyVM`). Samo łączenie — mapowanie 1:1 po elemencie wejściowym, **bez filtrowania** nierozwiązanych (inaczej liczba/kolejność listy „pływa" w miarę doładowywania) — robi orkiestrator-właściciel `ItemVM`, w swoim `_resolveCurrentDeps`:
+> ```typescript
+> // catalog-product.orchestrator.ts, _resolveCurrentDeps
+> const warranties: ProductWarrantyVM[] = (dto.warranties ?? []).map(assignment => ({
+>   ...assignment,
+>   warranty: this._warrantySiblingOrchestrator.resolveWarrantyVM(assignment.warrantyUuid),
+> }));
+> ```
+> Efekt: żaden orkiestrator nie importuje DTO/VM należącego do innego agregatu — każdy zna wyłącznie własny kontrakt.
+
+> [!TIP]
+> **Dobre praktyki lintera:** jeśli `ViewModel` nie dodaje żadnych pól względem `Dto`, zdefiniuj go jako alias typu (`export type JobVM = JobDto;`), nie pusty interfejs (`@typescript-eslint/no-empty-object-type`). W `mapToViewModel`, jeśli nie ma zależności do zmapowania, pomiń parametr `resolvedDeps`, żeby uniknąć `@typescript-eslint/no-unused-vars`.
+
+### 3.7 Komendy (mutacje)
+
+Masowe operacje/komendy to publiczne metody `async` na orkiestratorze: wywołanie API → rejestracja zadania w `JobService` → obsługa błędu przez `addError()`.
+
+```typescript
+public async setPriceMultiple(command: BatchCommand, queueID?: string): Promise<string> {
   try {
     const result = await firstValueFrom(this._api.productSetPriceCommand(command));
     const jobUuid = result.jobUuid || '';
@@ -74,12 +193,36 @@ public async setPriceMultiple(
     });
     return jobUuid;
   } catch (err) {
-    this.addError({
-      operation: 'command',
-      message: err instanceof Error ? err.message : String(err),
-      timestamp: new Date(),
-    });
+    this.addError({ operation: 'command', message: err instanceof Error ? err.message : String(err), timestamp: new Date() });
     throw err;
   }
 }
 ```
+
+---
+
+## 4. Checklist tworzenia nowego orkiestratora
+
+1. Sprawdź istniejący orkiestrator w tym samym module jako wzór strukturalny.
+2. `@Injectable({ providedIn: 'root' })`, `extends BaseOrchestrator<TDto, TViewModel, TFilters, TLoadOptions>`.
+3. `signature` + `orchestratorConfig.signalrSignature` — unikalne, np. `'catalog.product'`.
+4. `fetchByUuids` / `searchByFilters` — deleguj do klienta NSwag.
+5. Zdefiniuj `XxxVM` w osobnym `xxx.view-model.ts` — `extends XxxDto`, wzbogacenia zgodnie z sekcją 3.6.
+6. `mapToViewModel(dto, resolvedDeps)` — czysta funkcja, zero efektów ubocznych.
+7. Jeśli są powiązania: `resolveEagerDependencies` (async, zbiera UUID-y i woła `loadAsync` sąsiadów) + `_resolveCurrentDeps` (sync, czyta z cache sąsiadów). Jeśli brak powiązań: użyj `LoadOptions`, pomiń obie metody.
+8. Zależności do sąsiednich orkiestratorów wstrzykuj leniwie przez `Injector` (sekcja 3.5).
+9. Komendy jako publiczne `async` metody wg wzorca z 3.7.
+
+## 5. Częste błędy do unikania
+
+- Zduplikowane pole-kopia zamiast wzbogacenia elementu (sekcja 3.6).
+- Resolver przyjmujący/zwracający typ innego agregatu zamiast samego UUID/własnego VM.
+- Ciężka logika albo wywołanie API wewnątrz `_resolveCurrentDeps` (musi być tanie i synchroniczne).
+- Tworzenie dedykowanego, pustego `XLoadOptions`, gdy wystarczy `LoadOptions`.
+- Bezpośrednie wstrzyknięcie sąsiedniego orkiestratora w konstruktorze zamiast leniwie przez `Injector` (ryzyko cyklu DI).
+
+## Zobacz też
+
+- Pełne wyjaśnienie z uzasadnieniem: [`doc/frontend/orchestrators.md`](../../doc/frontend/orchestrators.md)
+- Implementacja bazowa: [`base-orchestrator.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts), [`identity-map.store.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/identity-map.store.ts), [`data-loader.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/data-loader.ts), [`orchestrator.types.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/orchestrator.types.ts)
+- Przykład najbardziej złożonego orkiestratora w repo: [`catalog-product.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/catalog-product.orchestrator.ts)

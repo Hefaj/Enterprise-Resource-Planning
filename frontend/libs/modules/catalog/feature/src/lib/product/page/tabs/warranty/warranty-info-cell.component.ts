@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TuiSkeleton } from '@taiga-ui/kit';
-import { CatalogWarrantyOrchestrator, WarrantyVM } from '@erp/catalog/data-access';
-import { WarrantyRow } from './warranty-row.model';
+import { CatalogWarrantyOrchestrator, ProductWarrantyVM, WarrantyVM } from '@erp/catalog/data-access';
 
 export type WarrantyInfoField = 'name' | 'durationMonths' | 'description';
 
@@ -24,7 +23,7 @@ export type WarrantyInfoField = 'name' | 'durationMonths' | 'description';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WarrantyInfoCellComponent {
-  public readonly row = input.required<WarrantyRow>();
+  public readonly row = input.required<ProductWarrantyVM>();
   public readonly field = input.required<WarrantyInfoField>();
 
   private readonly warrantyOrchestrator = inject(CatalogWarrantyOrchestrator);

@@ -222,6 +222,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     // Wzbogać przypisania produkt-gwarancja o katalogową gwarancję (per UUID, z cache orkiestratora gwarancji)
     const warranties: ProductWarrantyVM[] = (dto.warranties ?? []).map(assignment => ({
       ...assignment,
+      productUuid: dto.uuid,
       warranty: this._warrantySiblingOrchestrator.resolveWarrantyVM(assignment.warrantyUuid),
     }));
 

@@ -155,6 +155,7 @@ private get _categorySiblingOrchestrator(): CatalogCategoryOrchestrator {
 > ```typescript
 > // product.view-model.ts — ItemVM mieszka przy agregacie, którego DTO jest (kontrakt API), nie przy agregacie wzbogacającym
 > export interface ProductWarrantyVM extends ProductWarrantyDto {
+>   readonly productUuid: string;        // back-reference do rodzica — patrz [!TIP] niżej
 >   readonly warranty: WarrantyVM | null; // null, dopóki katalogowa gwarancja nie doładowana
 > }
 > export interface ProductVM extends ProductDto {
@@ -170,10 +171,14 @@ private get _categorySiblingOrchestrator(): CatalogCategoryOrchestrator {
 > // catalog-product.orchestrator.ts, _resolveCurrentDeps
 > const warranties: ProductWarrantyVM[] = (dto.warranties ?? []).map(assignment => ({
 >   ...assignment,
+>   productUuid: dto.uuid,
 >   warranty: this._warrantySiblingOrchestrator.resolveWarrantyVM(assignment.warrantyUuid),
 > }));
 > ```
 > Efekt: żaden orkiestrator nie importuje DTO/VM należącego do innego agregatu — każdy zna wyłącznie własny kontrakt.
+
+> [!TIP]
+> **Back-reference na `ItemVM` zamiast adaptera w `feature`.** Gdy UI musi spłaszczyć `ItemVM[]` z **wielu** rodziców w jedną wspólną listę (np. tabela gwarancji dla kilku zaznaczonych produktów naraz — grupowanie po produkcie, `rowId` musi być unikalny globalnie), potrzebny jest UUID rodzica na każdym elemencie. Nie buduj do tego osobnego modelu-adaptera w `feature` (np. `WarrantyRow` mapowany ręcznie z `ProductWarrantyVM`) — dodaj `productUuid` wprost do `ItemVM` (jak wyżej) i wypełnij go w tym samym miejscu w `_resolveCurrentDeps`, gdzie już wzbogacasz element (`productUuid: dto.uuid`). Konsument w `feature` wtedy po prostu robi `products.flatMap(p => p.warranties)` — bez pośredniego mapowania i bez drugiego typu do utrzymania. Przykład: [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/warranty/warranty-tab.component.ts).
 
 > [!TIP]
 > **Dobre praktyki lintera:** jeśli `ViewModel` nie dodaje żadnych pól względem `Dto`, zdefiniuj go jako alias typu (`export type JobVM = JobDto;`), nie pusty interfejs (`@typescript-eslint/no-empty-object-type`). W `mapToViewModel`, jeśli nie ma zależności do zmapowania, pomiń parametr `resolvedDeps`, żeby uniknąć `@typescript-eslint/no-unused-vars`.
@@ -216,6 +221,7 @@ public async setPriceMultiple(command: BatchCommand, queueID?: string): Promise<
 ## 5. Częste błędy do unikania
 
 - Zduplikowane pole-kopia zamiast wzbogacenia elementu (sekcja 3.6).
+- Osobny model-adapter w `feature` (np. `XxxRow`) tylko po to, by dodać UUID rodzica do spłaszczonej listy — zamiast wzbogacić `ItemVM` o back-reference (sekcja 3.6, [!TIP]).
 - Resolver przyjmujący/zwracający typ innego agregatu zamiast samego UUID/własnego VM.
 - Ciężka logika albo wywołanie API wewnątrz `_resolveCurrentDeps` (musi być tanie i synchroniczne).
 - Tworzenie dedykowanego, pustego `XLoadOptions`, gdy wystarczy `LoadOptions`.

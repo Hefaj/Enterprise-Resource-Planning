@@ -189,6 +189,7 @@ import { WarrantyVM } from '../warranty/warranty.view-model';
 export interface ProductWarrantyVM extends ProductWarrantyDto {
   //                     ^^^^^^^^^^^^^^^^^^ rozszerzamy DTO PRZYPISANIA (kontrakt Produktu),
   //                                        nie katalogowe WarrantyDto (kontrakt Warranty)
+  readonly productUuid: string;         // back-reference do rodzica — patrz niżej
   readonly warranty: WarrantyVM | null; // wzbogacenie — null, dopóki katalogowa gwarancja nie doładowana
 }
 
@@ -215,6 +216,7 @@ Samo łączenie przypisania z katalogową gwarancją (mapowanie 1:1 po `dto.warr
 // catalog-product.orchestrator.ts, w _resolveCurrentDeps(dto)
 const warranties: ProductWarrantyVM[] = (dto.warranties ?? []).map(assignment => ({
   ...assignment,                                                        // warrantyUuid, durationMonths — od razu
+  productUuid: dto.uuid,                                                // back-reference do rodzica, patrz niżej
   warranty: this._warrantySiblingOrchestrator.resolveWarrantyVM(assignment.warrantyUuid), // dociągane stopniowo
 }));
 ```
@@ -222,6 +224,25 @@ const warranties: ProductWarrantyVM[] = (dto.warranties ?? []).map(assignment =>
 Efekt: **żaden orkiestrator nie importuje typów DTO/VM należących do innego agregatu** — każdy zna tylko swój własny kontrakt (uuid wchodzi, własny VM wychodzi) i typy DTO, które faktycznie zwraca jego własny endpoint. Konsument w komponencie od razu ma stabilną liczbę wierszy (`product.warranties.length` nie zmienia się w miarę doładowywania), a szczegóły katalogowe (`.warranty?.name`, `.warranty?.description`) pojawiają się, gdy tylko są dostępne — bez osobnego, ręcznie synchronizowanego pola.
 
 **Efekt uboczny na plus:** DTO przypisania (`ProductWarrantyDto.durationMonths` — okres dla *tego* produktu) i katalogowe DTO (`WarrantyDto.durationMonths` — okres standardowy) mają tę samą nazwę pola, ale różne znaczenie. Zagnieżdżenie (`warranty.durationMonths` vs `durationMonths` na poziomie przypisania) eliminuje kolizję bez potrzeby sztucznego przemianowywania jednego z nich (np. na `productDurationMonths`).
+
+### Back-reference na `ItemVM` zamiast adaptera w `feature`
+
+`ProductWarrantyVM` wyżej ma pole `productUuid`, którego nie ma na `ProductWarrantyDto` — to nie jest dane z API, tylko UUID rodzica, dopisany ręcznie w `_resolveCurrentDeps` (`productUuid: dto.uuid`). Po co, skoro `ProductVM.warranties` już mieszka wewnątrz `ProductVM`, który ma swoje `uuid`?
+
+Bo UI czasem musi **spłaszczyć** `ItemVM[]` z wielu rodziców w jedną wspólną listę — np. tabela gwarancji, gdy użytkownik zaznaczy kilka produktów naraz: wiersze wszystkich produktów lądują w jednej płaskiej liście (grupowanej po produkcie), a każdy wiersz potrzebuje unikalnego identyfikatora (`productUuid:warrantyUuid`) i klucza grupowania (`productUuid`). Poza kontekstem pojedynczego `ProductVM` ta informacja się gubi — element sam w sobie nie wie, do którego produktu należy.
+
+Naturalną (ale złą) reakcją jest zbudowanie w `feature` osobnego, lekkiego modelu-adaptera tylko na potrzeby tej jednej tabeli (np. `WarrantyRow { productUuid; warrantyUuid; productDurationMonths }`), ręcznie mapowanego z `ProductWarrantyVM`. To dokłada drugi typ, który trzeba synchronizować z `ItemVM` (dokładnie ten sam problem, co "zduplikowane pole" wyżej — tylko przeniesiony do warstwy `feature`), plus ręczne mapowanie przy każdym przeliczeniu.
+
+**Zamiast tego dodaj `productUuid` wprost do `ItemVM`**, w tym samym miejscu w `_resolveCurrentDeps`, gdzie już wzbogacasz element o inne pola. To tani, ogólnie użyteczny back-reference — nie tylko dla jednej tabeli w jednym komponencie, tylko dla każdego przyszłego miejsca, które będzie chciało skonsumować element `warranties` poza kontekstem `ProductVM`. Konsument w `feature` wtedy nie mapuje nic — po prostu spłaszcza:
+
+```typescript
+// warranty-tab.component.ts — bez pośredniego typu, bez ręcznego mapowania
+protected readonly _rows = computed<ProductWarrantyVM[]>(() =>
+  this._selectedProducts().flatMap(product => product.warranties)
+);
+```
+
+`rowId` (`${productUuid}:${warrantyUuid}`) i klucz grupowania (`productUuid`) czyta się wtedy wprost z elementu, a `WarrantyInfoCellComponent` (komórka tabeli) przyjmuje `ProductWarrantyVM` zamiast dedykowanego typu wiersza.
 
 ### Checklista przy dodawaniu wzbogaconego pola do `XxxVM`
 
@@ -231,6 +252,7 @@ Efekt: **żaden orkiestrator nie importuje typów DTO/VM należących do innego 
 4. Metoda rozwiązująca na orkiestratorze agregatu wzbogacającego przyjmuje **tylko UUID** (pojedynczy albo listę) i zwraca **tylko swój własny VM** (`resolveWarrantyVM(uuid): WarrantyVM | null`, tak jak `resolveModelVM(uuid): ModelVM | null`) — nigdy nie przyjmuje ani nie zwraca typu należącego do innego agregatu. Samo łączenie (mapowanie `assignment → { ...assignment, related: resolveXVM(assignment.xUuid) }`) robi orkiestrator agregatu, który jest właścicielem `ItemVM` (z punktu 3), w swoim `_resolveCurrentDeps`.
 5. Metoda rozwiązująca zawsze mapuje **1:1** po elemencie wejściowym (nigdy nie filtruje elementów bez rozwiązanej zależności) — inaczej długość/kolejność listy "pływa" w miarę doładowywania danych.
 6. Jeśli zauważysz w kodzie pole, które jest tylko ręczną kopią innego pola pod inną nazwą (żeby "nie stracić dostępu") — to sygnał, że powinno zostać zastąpione wzorcem z punktu 2.
+7. Jeśli `feature` potrzebuje spłaszczyć `ItemVM[]` z wielu rodziców (np. tabela zbiorcza dla kilku zaznaczonych agregatów) — nie twórz osobnego modelu-adaptera w `feature`. Dodaj do `ItemVM` back-reference (`parentUuid`) i wypełnij go w `_resolveCurrentDeps` razem z resztą wzbogacenia.
 
 ---
 

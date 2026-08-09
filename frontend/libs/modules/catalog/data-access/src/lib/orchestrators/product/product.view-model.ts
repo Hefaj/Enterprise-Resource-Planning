@@ -10,8 +10,14 @@ import { WarrantyVM } from '../warranty/warranty.view-model';
  * kontrakt należący do Produktu, nie do Warranty), więc `warrantyUuid`/`durationMonths`
  * (okres przypisany do TEGO produktu) są dostępne od razu — `warranty` (dane katalogowe:
  * nazwa, standardowy okres, opis) jest `null`, dopóki nie zostanie doładowana.
+ *
+ * `productUuid` to celowy back-reference do produktu-właściciela — wypełniany podczas
+ * mapowania w orkiestratorze. Pozwala konsumować pojedynczy element poza kontekstem
+ * `ProductVM.warranties` (np. spłaszczone listy wielu produktów w tabelach) bez budowania
+ * osobnych adapterów.
  */
 export interface ProductWarrantyVM extends ProductWarrantyDto {
+  readonly productUuid: string;
   readonly warranty: WarrantyVM | null;
 }
 

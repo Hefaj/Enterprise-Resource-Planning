@@ -2,9 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { ProductStore } from '../../product.store';
 import { WarrantyTabStore } from './warranty-tab.store';
 import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpEmptyStateComponent, ErpEmptyStateConfig, ErpSelectionState, ErpTableBuilder, ErpTableComponent } from '@erp/shared/ui';
-import { CatalogProductOrchestrator, CatalogWarrantyOrchestrator, ProductVM } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, CatalogWarrantyOrchestrator, ProductVM, ProductWarrantyVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../../translation/keys';
-import { WarrantyRow } from './warranty-row.model';
 import { WarrantyInfoCellComponent } from './warranty-info-cell.component';
 
 /**
@@ -71,14 +70,8 @@ export class WarrantyTabComponent {
    * (nazwa, standardowy okres, opis) doładowują się stopniowo w miarę scrollowania w głąb
    * grupy (patrz `onVisibleRowsChange` niżej) — zamiast pobierać wszystkie gwarancje produktu naraz.
    */
-  protected readonly _rows = computed<WarrantyRow[]>(() =>
-    this._selectedProducts().flatMap(product =>
-      product.warranties.map(w => ({
-        productUuid: product.uuid,
-        warrantyUuid: w.warrantyUuid,
-        productDurationMonths: w.durationMonths,
-      }))
-    )
+  protected readonly _rows = computed<ProductWarrantyVM[]>(() =>
+    this._selectedProducts().flatMap(product => product.warranties)
   );
 
   protected readonly _subSelectionCount = computed(() => this.tabStore.getAllSelectedWarrantiesCount());
@@ -179,7 +172,7 @@ export class WarrantyTabComponent {
       .setEnableContextMenu(true)
   );
 
-  protected readonly tableConfig = ErpTableBuilder.create<ErpTableBuilder<WarrantyRow>>((table) =>
+  protected readonly tableConfig = ErpTableBuilder.create<ErpTableBuilder<ProductWarrantyVM>>((table) =>
     table
       .setStateKey('product-tab-warranty')
       .setMode('client')
@@ -206,7 +199,7 @@ export class WarrantyTabComponent {
       )
       .addColumn(c => c
         .setId('productDurationMonths')
-        .setAccessorFn((r: WarrantyRow) => r.productDurationMonths)
+        .setAccessorFn((r: ProductWarrantyVM) => r.durationMonths)
         .setHeader('Okres dla produktu (mc)')
         .setCellClass('text-right')
         .setSize(150)
@@ -220,7 +213,7 @@ export class WarrantyTabComponent {
       .setGroupedRows<ProductVM>(g => g
         .setGroups(this._selectedProducts)
         .setGetGroupKey(p => p.uuid)
-        .setGetRowGroupKey((r: WarrantyRow) => r.productUuid)
+        .setGetRowGroupKey((r: ProductWarrantyVM) => r.productUuid)
         .setGetGroupTitle(p => p.name)
         .setGetGroupSubtitle(p => p.sku)
         .setGetGroupIcon(() => '@tui.shield-check')
@@ -244,7 +237,7 @@ export class WarrantyTabComponent {
    * Dzięki temu przewijanie o kilka wierszy nie generuje osobnego żądania do API za każdym
    * razem — kolejne żądanie pojawia się dopiero po przekroczeniu granicy już pobranej paczki.
    */
-  private loadVisibleWarranties(product: ProductVM, visibleRows: WarrantyRow[]): void {
+  private loadVisibleWarranties(product: ProductVM, visibleRows: ProductWarrantyVM[]): void {
     if (visibleRows.length === 0) return;
 
     const allUuids = product.warranties.map(w => w.warrantyUuid);
@@ -274,7 +267,7 @@ export class WarrantyTabComponent {
     this.warrantyOrchestrator.loadAsync(uuidsToLoad);
   }
 
-  protected onSelectionChange(state: ErpSelectionState<WarrantyRow>): void {
+  protected onSelectionChange(state: ErpSelectionState<ProductWarrantyVM>): void {
     const dict: Record<string, string[]> = {};
     for (const item of state.selectedItems) {
       (dict[item.productUuid] ??= []).push(item.warrantyUuid);

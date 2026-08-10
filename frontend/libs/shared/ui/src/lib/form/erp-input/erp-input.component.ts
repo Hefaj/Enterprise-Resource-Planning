@@ -66,6 +66,7 @@ import { noop } from 'rxjs';
           [formControl]="activeControl()"
           [invalid]="_invalid()"
           [maskito]="_mask() ?? null"
+          [attr.autocomplete]="_autocomplete() ?? null"
           (blur)="onBlur()"
         />
 
@@ -254,6 +255,7 @@ export class ErpInputComponent implements ControlValueAccessor {
   protected readonly _iconEnd = computed(() => unwrapSignal(this.config().iconEnd));
   protected readonly _size = computed(() => unwrapSignal(this.config().size) ?? 'm');
   protected readonly _mask = computed(() => unwrapSignal(this.config().mask));
+  protected readonly _autocomplete = computed(() => unwrapSignal(this.config().autocomplete));
 
   protected readonly _error = computed(() => {
     this.stateTrigger();

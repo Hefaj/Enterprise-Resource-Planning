@@ -144,6 +144,49 @@
       "clearSelection": "Clear selection",
       "configureMenu": "Configure menu"
     }
+  },
+  "auth": {
+    "brand": {
+      "tagline": "One system for the whole company",
+      "description": "Inventory, sales, catalog and documents in a single, coherent workspace.",
+      "modules": {
+        "inventory": "Inventory",
+        "sales": "Sales",
+        "catalog": "Catalog",
+        "dms": "Documents",
+        "tasks": "Tasks",
+        "notifications": "Notifications"
+      }
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Enter your credentials to open the dashboard.",
+      "email": {
+        "label": "Email address",
+        "placeholder": "name.surname@company.com",
+        "required": "Enter your email address",
+        "email": "Invalid email address format"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password",
+        "required": "Enter your password"
+      },
+      "remember": "Keep me signed in",
+      "submit": "Sign in",
+      "errors": {
+        "credentials": "Invalid email address or password.",
+        "network": "Could not reach the server. Please try again."
+      }
+    },
+    "footer": {
+      "copyright": "© {{year}} ERP"
+    },
+    "a11y": {
+      "toggleTheme": "Toggle theme",
+      "toggleLanguage": "Change language",
+      "decoration": "Decorative graphic"
+    }
   }
 }
 

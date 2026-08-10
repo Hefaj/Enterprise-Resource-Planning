@@ -71,4 +71,13 @@ export class ErpInputBuilder extends ErpInputBaseBuilder<ErpInputConfig> {
     this._data.mask = mask;
     return this;
   }
+
+  /**
+   * Ustawia atrybut `autocomplete` pola (np. 'username', 'current-password', 'off').
+   * @param autocomplete Wartość atrybutu autocomplete.
+   */
+  public setAutocomplete(autocomplete: MaybeSignal<string | undefined>): this {
+    this._data.autocomplete = autocomplete;
+    return this;
+  }
 }

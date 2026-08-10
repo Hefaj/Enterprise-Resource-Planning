@@ -132,8 +132,14 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
     }
 
     /* Taiga UI wymusza przezroczyste tło dla data-mode="readonly" (!important),
-       a input wewnątrz tui-textfield jest readOnly, bo edycja odbywa się w panelu textarea. */
+       a input wewnątrz tui-textfield jest readOnly, bo edycja odbywa się w panelu textarea.
+       Przywracamy tu dokładnie te same tokeny, których Taiga używa domyślnie dla
+       edytowalnego tui-textfield w każdym z motywów (theme/appearance/textfield.less). */
     :host tui-textfield[tuiappearance][data-appearance='textfield'][data-mode~='readonly'] {
+      background: var(--tui-background-base) !important;
+    }
+
+    :host-context([tuiTheme='dark']) tui-textfield[tuiappearance][data-appearance='textfield'][data-mode~='readonly'] {
       background: var(--tui-background-neutral-1) !important;
     }
 

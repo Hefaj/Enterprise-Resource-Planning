@@ -14,4 +14,6 @@ export interface ErpInputConfig extends ErpInputBase {
   value?: MaybeSignal<string>;
   label?: MaybeSignal<Translatable | undefined>;
   mask?: MaybeSignal<any>;
+  /** Wartość atrybutu `autocomplete` (np. `username`, `current-password`) — wsparcie dla menedżerów haseł. */
+  autocomplete?: MaybeSignal<string | undefined>;
 }

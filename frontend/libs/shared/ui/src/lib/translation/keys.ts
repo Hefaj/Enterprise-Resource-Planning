@@ -150,4 +150,47 @@ export const SHARED_KEYS = {
         configureMenu: 'shared.actionToolbar.toolbar.configureMenu',
       },
     },
+    auth: {
+      brand: {
+        tagline: 'shared.auth.brand.tagline',
+        description: 'shared.auth.brand.description',
+        modules: {
+          inventory: 'shared.auth.brand.modules.inventory',
+          sales: 'shared.auth.brand.modules.sales',
+          catalog: 'shared.auth.brand.modules.catalog',
+          dms: 'shared.auth.brand.modules.dms',
+          tasks: 'shared.auth.brand.modules.tasks',
+          notifications: 'shared.auth.brand.modules.notifications',
+        },
+      },
+      login: {
+        title: 'shared.auth.login.title',
+        subtitle: 'shared.auth.login.subtitle',
+        email: {
+          label: 'shared.auth.login.email.label',
+          placeholder: 'shared.auth.login.email.placeholder',
+          required: 'shared.auth.login.email.required',
+          email: 'shared.auth.login.email.email',
+        },
+        password: {
+          label: 'shared.auth.login.password.label',
+          placeholder: 'shared.auth.login.password.placeholder',
+          required: 'shared.auth.login.password.required',
+        },
+        remember: 'shared.auth.login.remember',
+        submit: 'shared.auth.login.submit',
+        errors: {
+          credentials: 'shared.auth.login.errors.credentials',
+          network: 'shared.auth.login.errors.network',
+        },
+      },
+      footer: {
+        copyright: 'shared.auth.footer.copyright',
+      },
+      a11y: {
+        toggleTheme: 'shared.auth.a11y.toggleTheme',
+        toggleLanguage: 'shared.auth.a11y.toggleLanguage',
+        decoration: 'shared.auth.a11y.decoration',
+      },
+    },
   } as const;

@@ -9,6 +9,8 @@ export interface ErpUserProfile {
   avatarUrl?: string;
 }
 
+const TOKEN_STORAGE_KEY = 'access_token';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -27,13 +29,24 @@ export class ErpAuthService {
     return this._$token.asReadonly();
   }
 
-  public setToken(token: string): void {
+  /**
+   * Zapisuje token dostępowy.
+   * @param token Token JWT.
+   * @param persistent Gdy `true` (domyślnie) token przetrwa zamknięcie przeglądarki (localStorage),
+   *                   gdy `false` żyje tylko do końca sesji karty (sessionStorage).
+   */
+  public setToken(token: string, persistent = true): void {
     this._$token.set(token);
-    localStorage.setItem('access_token', token);
+
+    const target = persistent ? localStorage : sessionStorage;
+    const other = persistent ? sessionStorage : localStorage;
+
+    target.setItem(TOKEN_STORAGE_KEY, token);
+    other.removeItem(TOKEN_STORAGE_KEY);
   }
 
   public loadTokenFromStorage(): void {
-    const savedToken = localStorage.getItem('access_token');
+    const savedToken = localStorage.getItem(TOKEN_STORAGE_KEY) ?? sessionStorage.getItem(TOKEN_STORAGE_KEY);
     if (savedToken) {
       this._$token.set(savedToken);
     }
@@ -41,7 +54,8 @@ export class ErpAuthService {
 
   public logout(): void {
     this._$token.set(null);
-    localStorage.removeItem('access_token');
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    sessionStorage.removeItem(TOKEN_STORAGE_KEY);
     this._router.navigate(['/login']);
   }
 }

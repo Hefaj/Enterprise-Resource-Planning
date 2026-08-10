@@ -184,6 +184,7 @@ export class ErpTableSelectionCell {
           [class.erp-table--striped]="_striped()"
           [class.erp-table--bordered]="_bordered()"
           [style.width.px]="table.getTotalSize()"
+          (mousedown)="onTableMouseDown($event)"
         >
           <colgroup>
             @for (col of _getOrderedColumns(); track col.id) {
@@ -1582,6 +1583,12 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
   protected onRightClickSelectionChange(value: boolean) {
     this._rightClickSelection.set(value);
+  }
+
+  protected onTableMouseDown(event: MouseEvent) {
+    if (event.shiftKey) {
+      event.preventDefault(); // Zapobiega zaznaczaniu tekstu przy Shift+Click
+    }
   }
 
   protected onRowClickEvent(rowOriginal: T, event: MouseEvent) {

@@ -144,6 +144,49 @@
       "clearSelection": "Usuń zaznaczenie",
       "configureMenu": "Konfiguruj menu"
     }
+  },
+  "auth": {
+    "brand": {
+      "tagline": "Jeden system dla całej firmy",
+      "description": "Magazyn, sprzedaż, katalog i dokumenty w jednym, spójnym środowisku pracy.",
+      "modules": {
+        "inventory": "Magazyn",
+        "sales": "Sprzedaż",
+        "catalog": "Katalog",
+        "dms": "Dokumenty",
+        "tasks": "Zadania",
+        "notifications": "Powiadomienia"
+      }
+    },
+    "login": {
+      "title": "Zaloguj się",
+      "subtitle": "Wprowadź dane dostępowe, aby przejść do panelu.",
+      "email": {
+        "label": "Adres e-mail",
+        "placeholder": "imie.nazwisko@firma.pl",
+        "required": "Podaj adres e-mail",
+        "email": "Nieprawidłowy format adresu e-mail"
+      },
+      "password": {
+        "label": "Hasło",
+        "placeholder": "Wprowadź hasło",
+        "required": "Podaj hasło"
+      },
+      "remember": "Nie wylogowuj mnie",
+      "submit": "Zaloguj się",
+      "errors": {
+        "credentials": "Nieprawidłowy adres e-mail lub hasło.",
+        "network": "Nie udało się połączyć z serwerem. Spróbuj ponownie."
+      }
+    },
+    "footer": {
+      "copyright": "© {{year}} ERP"
+    },
+    "a11y": {
+      "toggleTheme": "Przełącz motyw",
+      "toggleLanguage": "Zmień język",
+      "decoration": "Grafika dekoracyjna"
+    }
   }
 }
 

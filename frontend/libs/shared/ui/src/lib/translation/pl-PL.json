@@ -94,6 +94,12 @@
     "selectedCount": "Zaznaczone ({{count}})",
     "loadingMore": "Ładowanie kolejnych pozycji..."
   },
+  "bulkInput": {
+    "placeholder": "Wprowadź wiele wartości...",
+    "textareaPlaceholder": "Wklej lub wpisz wartości oddzielone przecinkiem, średnikiem, tabulatorem lub nową linią...",
+    "summaryCount": "Wybrano: {{count}} elementów",
+    "clear": "Wyczyść"
+  },
   "sidebar": {
     "expand": "Rozwiń",
     "collapse": "Zwiń",

@@ -3,8 +3,7 @@ import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
 import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-utils';
-import { ErpFilterConfig, ErpFilterGroup, ErpFilterFieldElement } from './erp-filter.types';
-import { ErpFormFieldType } from '../../atoms/erp-step-content/erp-step-content.types';
+import { ErpFilterConfig, ErpFilterGroup, ErpFilterFieldElement, ErpFilterFormFieldType } from './erp-filter.types';
 
 // Import builders and components
 import { ErpInputComponent } from '../../form/erp-input/erp-input.component';
@@ -16,14 +15,16 @@ import { ErpInputColorBuilder } from '../../form/erp-input-color/erp-input-color
 import { ErpCheckboxComponent, ErpCheckboxBuilder } from '../../form/erp-checkbox';
 import { ErpInputNumberComponent, ErpInputNumberBuilder } from '../../form/erp-input-number';
 import { ErpInputPickerComponent, ErpInputPickerBuilder } from '../../form/erp-input-picker';
+import { ErpBulkInputComponent, ErpBulkInputBuilder } from '../../form/erp-bulk-input';
 
-const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type<any>> = {
+const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFilterFormFieldType, 'custom'>, Type<any>> = {
   text: ErpInputComponent,
   number: ErpInputNumberComponent,
   switch: ErpSwitchComponent,
   color: ErpInputColorComponent,
   checkbox: ErpCheckboxComponent,
   inputPicker: ErpInputPickerComponent,
+  bulkInput: ErpBulkInputComponent,
 } as any;
 
 export interface ErpFilterFormFieldBuilderMap {
@@ -33,6 +34,7 @@ export interface ErpFilterFormFieldBuilderMap {
   color: ErpInputColorBuilder;
   checkbox: ErpCheckboxBuilder;
   inputPicker: ErpInputPickerBuilder;
+  bulkInput: ErpBulkInputBuilder;
 }
 
 export interface ErpFilterFormFieldValueMap {
@@ -42,6 +44,7 @@ export interface ErpFilterFormFieldValueMap {
   color: string;
   checkbox: boolean;
   inputPicker: any;
+  bulkInput: string[];
 }
 
 export interface ErpFilterFormFieldOptions<TValue> {
@@ -60,6 +63,7 @@ const FIELD_BUILDER_CONSTRUCTORS: Record<keyof ErpFilterFormFieldBuilderMap, new
   color: ErpInputColorBuilder,
   checkbox: ErpCheckboxBuilder,
   inputPicker: ErpInputPickerBuilder,
+  bulkInput: ErpBulkInputBuilder,
 } as any;
 
 /**

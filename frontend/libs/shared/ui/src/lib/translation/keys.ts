@@ -99,6 +99,12 @@ export const SHARED_KEYS = {
       selectedCount: 'shared.inputPicker.selectedCount',
       loadingMore: 'shared.inputPicker.loadingMore',
     },
+    bulkInput: {
+      placeholder: 'shared.bulkInput.placeholder',
+      textareaPlaceholder: 'shared.bulkInput.textareaPlaceholder',
+      summaryCount: 'shared.bulkInput.summaryCount',
+      clear: 'shared.bulkInput.clear',
+    },
     sidebar: {
       expand: 'shared.sidebar.expand',
       collapse: 'shared.sidebar.collapse',

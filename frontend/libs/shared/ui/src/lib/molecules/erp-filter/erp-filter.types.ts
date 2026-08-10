@@ -3,10 +3,13 @@ import { FormGroup } from '@angular/forms';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpFormFieldType } from '../../atoms/erp-step-content/erp-step-content.types';
 
+/** Typy pól obsługiwane przez panel filtrów — nadzbiór typów kreatora (`ErpFormFieldType`) o pola specyficzne dla filtrów. */
+export type ErpFilterFormFieldType = ErpFormFieldType | 'bulkInput';
+
 export interface ErpFilterFieldElement {
   type: 'formField';
   key: string;
-  fieldType: ErpFormFieldType | 'custom';
+  fieldType: ErpFilterFormFieldType | 'custom';
   component: Type<any>;
   config: any;
   value?: MaybeSignal<any> | (() => any);

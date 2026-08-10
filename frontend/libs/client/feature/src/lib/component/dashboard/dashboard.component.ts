@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators, ValidatorFn } from '@angular/forms';
 import {
   ErpButtonComponent,
   ErpButtonBuilder,
@@ -19,7 +19,16 @@ import {
   ErpInputNumberBuilder,
   ErpInputPickerComponent,
   ErpInputPickerBuilder,
+  ErpBulkInputComponent,
+  ErpBulkInputBuilder,
 } from '@erp/shared/ui';
+
+function maxItemsValidator(max: number): ValidatorFn {
+  return (control) => {
+    const value = control.value as string[] | null;
+    return value && value.length > max ? { maxItems: { max, actual: value.length } } : null;
+  };
+}
 
 @Component({
   selector: 'erp-dashboard',
@@ -35,6 +44,7 @@ import {
     ErpDatePickerComponent,
     ErpInputNumberComponent,
     ErpInputPickerComponent,
+    ErpBulkInputComponent,
   ],
   templateUrl: './dashboard.component.html',
   styles: `
@@ -326,6 +336,52 @@ export class DashboardComponent {
       .setTooltip('Zaznacz z paginowanego API')
   );
 
+  // Warianty ErpBulkInput
+  public readonly bulkInputBasicControl = new FormControl<string[] | null>([], [Validators.required]);
+  public readonly bulkInputBasicConfig = ErpBulkInputBuilder.create((b) =>
+    b
+      .setLabel('Podstawowe pole (wymagane)')
+      .setPlaceholder('Wklej lub wpisz wartości...')
+      .setHint('Wartości oddzielone przecinkiem, średnikiem, tabulatorem lub nową linią.')
+      .setTooltip('Kliknij, aby otworzyć panel wprowadzania')
+      .setErrorMessages({ required: 'Podaj przynajmniej jedną wartość!' })
+  );
+
+  public readonly bulkInputPrefilledControl = new FormControl<string[] | null>(['SKU-00001', 'SKU-00002', 'SKU-00003']);
+  public readonly bulkInputPrefilledConfig = ErpBulkInputBuilder.create((b) =>
+    b
+      .setLabel('Z wypełnionymi wartościami początkowymi')
+      .setHint('Wartości ustawione programowo, np. przy edycji istniejącego rekordu.')
+      .setTooltip('Wartości początkowe wczytane z modelu')
+  );
+
+  public readonly bulkInputDisabledControl = new FormControl<string[] | null>(['SKU-100', 'SKU-200']);
+  public readonly bulkInputDisabledConfig = ErpBulkInputBuilder.create((b) =>
+    b
+      .setLabel('Pole wyłączone (disabled)')
+      .setHint('Pole tylko do odczytu, edycja zablokowana.')
+      .setDisabled(true)
+  );
+
+  public readonly bulkInputMaxItemsControl = new FormControl<string[] | null>(['SKU-1', 'SKU-2'], [maxItemsValidator(5)]);
+  public readonly bulkInputMaxItemsConfig = ErpBulkInputBuilder.create((b) =>
+    b
+      .setLabel('Limit maks. 5 wartości')
+      .setHint('Walidacja niestandardowa: błąd po przekroczeniu 5 wartości.')
+      .setTooltip('Wpisz więcej niż 5 wartości, aby zobaczyć błąd')
+      .setErrorMessages({ maxItems: 'Można podać maksymalnie 5 wartości!' })
+  );
+
+  public readonly bulkInputLongListControl = new FormControl<string[] | null>(
+    Array.from({ length: 50 }, (_, i) => `SKU-${String(i + 1).padStart(5, '0')}`)
+  );
+  public readonly bulkInputLongListConfig = ErpBulkInputBuilder.create((b) =>
+    b
+      .setLabel('Duża lista wartości (50 pozycji)')
+      .setHint('Test scrolla i podsumowania przy dużej liczbie wartości.')
+      .setTooltip('Panel z 50 wstępnie wypełnionymi wartościami')
+  );
+
   public readonly testForm = new FormGroup({
     input: this.inputControl,
     switch: this.switchControl,
@@ -345,6 +401,11 @@ export class DashboardComponent {
     virtualMultiPicker: this.virtualMultiPickerControl,
     asyncSinglePicker: this.asyncSinglePickerControl,
     asyncMultiPicker: this.asyncMultiPickerControl,
+    bulkInputBasic: this.bulkInputBasicControl,
+    bulkInputPrefilled: this.bulkInputPrefilledControl,
+    bulkInputDisabled: this.bulkInputDisabledControl,
+    bulkInputMaxItems: this.bulkInputMaxItemsControl,
+    bulkInputLongList: this.bulkInputLongListControl,
   });
 
   public readonly submitBtnConfig: ErpButtonConfig = ErpButtonBuilder.create(b => b

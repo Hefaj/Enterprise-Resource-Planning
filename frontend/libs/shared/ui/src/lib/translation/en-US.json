@@ -94,6 +94,12 @@
     "selectedCount": "Selected ({{count}})",
     "loadingMore": "Loading more items..."
   },
+  "bulkInput": {
+    "placeholder": "Enter multiple values...",
+    "textareaPlaceholder": "Paste or type values separated by comma, semicolon, tab, or newline...",
+    "summaryCount": "Selected: {{count}} items",
+    "clear": "Clear"
+  },
   "sidebar": {
     "expand": "Expand",
     "collapse": "Collapse",

@@ -101,6 +101,33 @@
     [control]="asyncMultiPickerControl"
   />
 
+  <h4 class="text-lg font-semibold mt-4">Przykłady erp-bulk-input</h4>
+
+  <erp-bulk-input
+    [config]="bulkInputBasicConfig"
+    [control]="bulkInputBasicControl"
+  />
+
+  <erp-bulk-input
+    [config]="bulkInputPrefilledConfig"
+    [control]="bulkInputPrefilledControl"
+  />
+
+  <erp-bulk-input
+    [config]="bulkInputDisabledConfig"
+    [control]="bulkInputDisabledControl"
+  />
+
+  <erp-bulk-input
+    [config]="bulkInputMaxItemsConfig"
+    [control]="bulkInputMaxItemsControl"
+  />
+
+  <erp-bulk-input
+    [config]="bulkInputLongListConfig"
+    [control]="bulkInputLongListControl"
+  />
+
   <erp-button
     [config]="submitBtnConfig"
   />
@@ -127,5 +154,10 @@
     <div>Virtual Multi Picker (Produkty IDs): {{ virtualMultiPickerControl.value?.join(', ') }} (status: {{ virtualMultiPickerControl.status }})</div>
     <div>Async Single Picker (Produkt UUID): {{ asyncSinglePickerControl.value }} (status: {{ asyncSinglePickerControl.status }})</div>
     <div>Async Multi Picker (Produkty UUIDs): {{ asyncMultiPickerControl.value?.join(', ') }} (status: {{ asyncMultiPickerControl.status }})</div>
+    <div>Bulk Input Basic: {{ bulkInputBasicControl.value?.join(', ') }} (status: {{ bulkInputBasicControl.status }})</div>
+    <div>Bulk Input Prefilled: {{ bulkInputPrefilledControl.value?.join(', ') }} (status: {{ bulkInputPrefilledControl.status }})</div>
+    <div>Bulk Input Disabled: {{ bulkInputDisabledControl.value?.join(', ') }} (status: {{ bulkInputDisabledControl.status }})</div>
+    <div>Bulk Input Max Items: {{ bulkInputMaxItemsControl.value?.join(', ') }} (status: {{ bulkInputMaxItemsControl.status }})</div>
+    <div>Bulk Input Long List: {{ bulkInputLongListControl.value?.length }} elementów (status: {{ bulkInputLongListControl.status }})</div>
   </div>
 </div>

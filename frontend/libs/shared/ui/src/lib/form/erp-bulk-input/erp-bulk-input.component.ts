@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ReactiveFormsModule } from '@angular/forms';
-import { TuiButton, TuiDropdown, TuiErrorComponent, TuiHintDirective, TuiIcon, TuiLabel, TuiTextfield } from '@taiga-ui/core';
+import { TuiButton, TuiButtonX, TuiDropdown, TuiErrorComponent, TuiHintDirective, TuiIcon, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiInputDirective } from '@taiga-ui/core/components/input';
 import { TuiTextareaComponent } from '@taiga-ui/kit';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
@@ -36,6 +36,7 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
     TuiErrorComponent,
     TuiHintDirective,
     TuiButton,
+    TuiButtonX,
     TuiDropdown,
     TuiTextareaComponent,
     ErpTranslatePipe,
@@ -72,6 +73,7 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
           <label tuiLabel>{{ labelText }}</label>
         }
         <input
+          #hostInput
           tuiInput
           type="text"
           [readOnly]="true"
@@ -80,6 +82,16 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
           [placeholder]="placeholderText"
           [invalid]="_invalid()"
         />
+        @if (values.length > 0 && !_disabled()) {
+          <button
+            type="button"
+            tuiButtonX
+            tabindex="-1"
+            (click)="clearAllValues()"
+          >
+            {{ SHARED_KEYS.bulkInput.clear | erpTranslate }}
+          </button>
+        }
         @if (tooltipText) {
           <tui-icon icon="@tui.circle-help" [tuiHint]="tooltipText" />
         }
@@ -92,6 +104,7 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
             [placeholder]="(SHARED_KEYS.bulkInput.textareaPlaceholder | erpTranslate) || ''"
             rows="6"
             (blur)="onTextareaBlur()"
+            (keydown.escape)="onTextareaEscape()"
           ></textarea>
           <div class="erp-bulk-input-panel__footer">
             <span>{{ SHARED_KEYS.bulkInput.summaryCount | erpTranslate: { count: rawValuesCount() } }}</span>
@@ -116,6 +129,18 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
   styles: [`
     :host {
       display: block;
+    }
+
+    /* Taiga UI wymusza przezroczyste tło dla data-mode="readonly" (!important),
+       a input wewnątrz tui-textfield jest readOnly, bo edycja odbywa się w panelu textarea. */
+    :host tui-textfield[tuiappearance][data-appearance='textfield'][data-mode~='readonly'] {
+      background: var(--tui-background-neutral-1) !important;
+    }
+
+    /* Taiga chowa natywny cleaner ([tuiButtonX]) w trybie readonly — tutaj używamy go świadomie
+       jako przycisku czyszczącego wszystkie wartości bez otwierania panelu textarea. */
+    :host tui-textfield[data-mode~='readonly'] [tuiButtonX] {
+      display: inline-flex !important;
     }
 
     @keyframes erp-form-shake {
@@ -143,7 +168,6 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
     .erp-bulk-input-panel {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
       padding: 0.75rem;
       width: 100%;
       box-sizing: border-box;
@@ -158,12 +182,16 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
       max-height: 16rem;
     }
 
+    /* margin zamiast gap na .erp-bulk-input-panel: tuiTextarea wstrzykuje wewnętrzny
+       <tui-textarea-content display:contents> — jego dzieci (scroll-controls, ghost sizer)
+       stają się dodatkowymi (niewidocznymi) elementami flex, więc "gap" liczyłby się podwójnie. */
     .erp-bulk-input-panel__footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
       flex-shrink: 0;
+      margin-top: 0.5rem;
       font: var(--tui-typography-body-xs);
       color: var(--tui-text-secondary);
     }
@@ -196,6 +224,7 @@ export class ErpBulkInputComponent implements ControlValueAccessor {
   /** Stan rozwinięcia panelu — sterowany jawnie (otwarcie: focus/klik pola, zamknięcie: utrata focusu z textarea). */
   protected readonly isOpen = signal(false);
   private readonly rawTextareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('rawTextarea');
+  private readonly hostInputRef = viewChild<ElementRef<HTMLInputElement>>('hostInput');
 
   protected readonly shake = signal<boolean>(false);
   private readonly stateTrigger = signal(0);
@@ -293,10 +322,24 @@ export class ErpBulkInputComponent implements ControlValueAccessor {
     this.stateTrigger.update(v => v + 1);
   }
 
+  /** Escape z klawiatury zamyka panel tak samo jak utrata focusu — zwraca fokus na pole, żeby dało się kontynuować Tabem. */
+  protected onTextareaEscape(): void {
+    this.hostInputRef()?.nativeElement.focus();
+  }
+
   protected clearRawText(): void {
     this.rawTextControl.setValue('', { emitEvent: false });
     this.rawText.set('');
     this.rawTextareaRef()?.nativeElement.focus();
+  }
+
+  /** Czyści wszystkie wartości z poziomu zwiniętego pola, bez otwierania panelu textarea. */
+  protected clearAllValues(): void {
+    this.rawTextControl.setValue('', { emitEvent: false });
+    this.rawText.set('');
+    this.updateActiveValue([]);
+    this.onTouched();
+    this.activeControl().markAsTouched();
   }
 
   private commitRawText(): void {

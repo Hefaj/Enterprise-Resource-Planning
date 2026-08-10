@@ -99,6 +99,16 @@ export const SHARED_KEYS = {
       selectedCount: 'shared.inputPicker.selectedCount',
       loadingMore: 'shared.inputPicker.loadingMore',
     },
+    tree: {
+      search: 'shared.tree.search',
+      empty: 'shared.tree.empty',
+      loadMore: 'shared.tree.loadMore',
+      loading: 'shared.tree.loading',
+      selectedCount: 'shared.tree.selectedCount',
+      withSubcategories: 'shared.tree.withSubcategories',
+      selectDescendantsOnly: 'shared.tree.selectDescendantsOnly',
+      clear: 'shared.tree.clear',
+    },
     bulkInput: {
       placeholder: 'shared.bulkInput.placeholder',
       textareaPlaceholder: 'shared.bulkInput.textareaPlaceholder',

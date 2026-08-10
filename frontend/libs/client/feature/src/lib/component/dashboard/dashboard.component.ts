@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators, ValidatorFn } from '@angular/forms';
 import {
@@ -21,6 +21,17 @@ import {
   ErpInputPickerBuilder,
   ErpBulkInputComponent,
   ErpBulkInputBuilder,
+  ErpTreeComponent,
+  ErpTreeBuilder,
+  ErpTreePickerComponent,
+  ErpTreePickerBuilder,
+  ErpTreeNodeAdapters,
+  ErpTreeSelectionState,
+  ErpTreeSelectionValue,
+  ErpTreeChildrenQuery,
+  ErpTreeChildrenResult,
+  ErpTreeSearchQuery,
+  ErpTreeSearchResult,
 } from '@erp/shared/ui';
 
 function maxItemsValidator(max: number): ValidatorFn {
@@ -29,6 +40,93 @@ function maxItemsValidator(max: number): ValidatorFn {
     return value && value.length > max ? { maxItems: { max, actual: value.length } } : null;
   };
 }
+
+/** Płaska lista węzłów przykładowego drzewa kategorii, do demo erp-tree / erp-tree-picker. */
+interface DemoTreeNode {
+  uuid: string;
+  name: string;
+  parentUuid: string | null;
+}
+
+const DEMO_TREE_NODES: DemoTreeNode[] = [
+  { uuid: 'root-1', name: 'Elektronika', parentUuid: null },
+  { uuid: 'root-1-1', name: 'AGD', parentUuid: 'root-1' },
+  { uuid: 'root-1-1-1', name: 'Pralki', parentUuid: 'root-1-1' },
+  { uuid: 'root-1-1-2', name: 'Zmywarki', parentUuid: 'root-1-1' },
+  { uuid: 'root-1-1-3', name: 'Lodówki', parentUuid: 'root-1-1' },
+  { uuid: 'root-1-2', name: 'RTV', parentUuid: 'root-1' },
+  { uuid: 'root-1-2-1', name: 'Telewizory', parentUuid: 'root-1-2' },
+  { uuid: 'root-1-2-2', name: 'Głośniki', parentUuid: 'root-1-2' },
+  { uuid: 'root-2', name: 'Odzież', parentUuid: null },
+  { uuid: 'root-2-1', name: 'Męska', parentUuid: 'root-2' },
+  { uuid: 'root-2-1-1', name: 'Koszule', parentUuid: 'root-2-1' },
+  { uuid: 'root-2-1-2', name: 'Spodnie', parentUuid: 'root-2-1' },
+  { uuid: 'root-2-2', name: 'Damska', parentUuid: 'root-2' },
+  { uuid: 'root-2-2-1', name: 'Sukienki', parentUuid: 'root-2-2' },
+  { uuid: 'root-3', name: 'Dom i Ogród', parentUuid: null },
+  { uuid: 'root-3-1', name: 'Meble', parentUuid: 'root-3' },
+  { uuid: 'root-3-2', name: 'Oświetlenie', parentUuid: 'root-3' },
+  { uuid: 'root-4', name: 'Narzędzia', parentUuid: null },
+];
+
+function countDescendants(uuid: string): number {
+  const direct = DEMO_TREE_NODES.filter((n) => n.parentUuid === uuid);
+  return direct.length + direct.reduce((sum, n) => sum + countDescendants(n.uuid), 0);
+}
+
+const DEMO_TREE_ADAPTERS: ErpTreeNodeAdapters<DemoTreeNode> = {
+  getId: (n) => n.uuid,
+  getParentId: (n) => n.parentUuid,
+  getLabel: (n) => n.name,
+  hasChildren: (n) => DEMO_TREE_NODES.some((c) => c.parentUuid === n.uuid),
+  childCount: (n) => DEMO_TREE_NODES.filter((c) => c.parentUuid === n.uuid).length,
+  descendantCount: (n) => countDescendants(n.uuid),
+};
+
+/** Symuluje opóźnienie sieciowe — do demo trybu 'server' bez prawdziwego backendu. */
+function networkDelay<T>(value: T, ms = 300): Promise<T> {
+  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+}
+
+async function demoLoadChildren(query: ErpTreeChildrenQuery): Promise<ErpTreeChildrenResult<DemoTreeNode>> {
+  const all = DEMO_TREE_NODES.filter((n) => (n.parentUuid ?? null) === query.parentId);
+  const start = query.pageIndex * query.pageSize;
+  return networkDelay({ nodes: all.slice(start, start + query.pageSize), totalCount: all.length });
+}
+
+async function demoSearchTree(query: ErpTreeSearchQuery): Promise<ErpTreeSearchResult<DemoTreeNode>> {
+  const term = query.search.trim().toLowerCase();
+  if (!term) return networkDelay({ matches: [], ancestors: [], totalCount: 0 });
+
+  const matches = DEMO_TREE_NODES.filter((n) => n.name.toLowerCase().includes(term));
+  const ancestorIds = new Set<string>();
+  const ancestors: DemoTreeNode[] = [];
+  for (const match of matches) {
+    let parentId = match.parentUuid;
+    while (parentId && !ancestorIds.has(parentId)) {
+      ancestorIds.add(parentId);
+      const node = DEMO_TREE_NODES.find((n) => n.uuid === parentId);
+      if (node) ancestors.push(node);
+      parentId = node?.parentUuid ?? null;
+    }
+  }
+  return networkDelay({ matches, ancestors, totalCount: matches.length });
+}
+
+const DASHBOARD_SECTIONS = [
+  { id: 'basic', label: 'Podstawowe pola' },
+  { id: 'dates', label: 'Daty' },
+  { id: 'numbers', label: 'Liczby' },
+  { id: 'pickers', label: 'Input Picker' },
+  { id: 'pickers-virtual', label: 'Input Picker (wirtualizacja)' },
+  { id: 'pickers-async', label: 'Input Picker (async)' },
+  { id: 'bulk', label: 'Bulk Input' },
+  { id: 'tree', label: 'Drzewo (erp-tree)' },
+  { id: 'tree-picker', label: 'Drzewo — pole formularza' },
+  { id: 'state', label: 'Stan formularza' },
+] as const;
+
+type DashboardSectionId = (typeof DASHBOARD_SECTIONS)[number]['id'];
 
 @Component({
   selector: 'erp-dashboard',
@@ -45,20 +143,23 @@ function maxItemsValidator(max: number): ValidatorFn {
     ErpInputNumberComponent,
     ErpInputPickerComponent,
     ErpBulkInputComponent,
+    ErpTreeComponent,
+    ErpTreePickerComponent,
   ],
   templateUrl: './dashboard.component.html',
   styles: `
     :host {
+      display: block;
       width: 100%;
       height: 100%;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      overflow: hidden;
     }
   `
 })
 export class DashboardComponent {
+  public readonly sections = DASHBOARD_SECTIONS;
+  public readonly activeSection = signal<DashboardSectionId>('basic');
+
   public readonly inputControl = new FormControl('', [Validators.required]);
   public readonly inputConfig = ErpInputBuilder.create(b => b
     .setLabel('Test Input')
@@ -382,6 +483,64 @@ export class DashboardComponent {
       .setTooltip('Panel z 50 wstępnie wypełnionymi wartościami')
   );
 
+  // ── erp-tree: tryb client (cascade='subtree') i tryb server (cascade='none') ──
+  public readonly treeClientSelection = signal<ErpTreeSelectionState<DemoTreeNode> | null>(null);
+  public readonly treeClientConfig = new ErpTreeBuilder<DemoTreeNode>()
+    .setMode('client')
+    .setAdapters(DEMO_TREE_ADAPTERS)
+    .setItems(DEMO_TREE_NODES)
+    .setSelectionMode('multi')
+    .setCascade('subtree')
+    .setAllowDescendantsOnly(true)
+    .setEnableVirtualScroll(true)
+    .setEstimatedRowHeight(36)
+    .setShowSearch(true)
+    .setSearchPlaceholder('Szukaj kategorii...')
+    .setOnSelectionChange((s) => this.treeClientSelection.set(s))
+    .build();
+
+  public readonly treeServerSelection = signal<ErpTreeSelectionState<DemoTreeNode> | null>(null);
+  public readonly treeServerConfig = new ErpTreeBuilder<DemoTreeNode>()
+    .setMode('server')
+    .setAdapters(DEMO_TREE_ADAPTERS)
+    .setLoadChildrenFn((q) => demoLoadChildren(q))
+    .setSearchFn((q) => demoSearchTree(q))
+    .setSelectionMode('multi')
+    .setCascade('none')
+    .setEnableVirtualScroll(true)
+    .setEstimatedRowHeight(36)
+    .setShowSearch(true)
+    .setSearchPlaceholder('Szukaj kategorii...')
+    .setOnSelectionChange((s) => this.treeServerSelection.set(s))
+    .build();
+
+  // ── erp-tree-picker: pole formularza, multi (cascade) i single ──
+  public readonly treePickerControl = new FormControl<ErpTreeSelectionValue | null>(null, [Validators.required]);
+  public readonly treePickerConfig = new ErpTreePickerBuilder<DemoTreeNode>()
+    .setLabel('Kategoria (wielokrotny wybór, drzewo)')
+    .setPlaceholder('Wybierz kategorie...')
+    .setMode('client')
+    .setAdapters(DEMO_TREE_ADAPTERS)
+    .setItems(DEMO_TREE_NODES)
+    .setStrategy('multi')
+    .setCascade('subtree')
+    .setAllowDescendantsOnly(true)
+    .setSearchPlaceholder('Szukaj kategorii...')
+    .setHint('Zaznaczenie rodzica zaznacza całe poddrzewo; ikona listy pozwala zaznaczyć same dzieci bez rodzica.')
+    .setErrorMessages({ required: 'Wybór kategorii jest wymagany!' })
+    .build();
+
+  public readonly treePickerSingleControl = new FormControl<ErpTreeSelectionValue | null>(null);
+  public readonly treePickerSingleConfig = new ErpTreePickerBuilder<DemoTreeNode>()
+    .setLabel('Kategoria (pojedynczy wybór)')
+    .setPlaceholder('Wybierz kategorię...')
+    .setMode('client')
+    .setAdapters(DEMO_TREE_ADAPTERS)
+    .setItems(DEMO_TREE_NODES)
+    .setStrategy('single')
+    .setHint('Tryb single — wybór węzła automatycznie zamyka panel.')
+    .build();
+
   public readonly testForm = new FormGroup({
     input: this.inputControl,
     switch: this.switchControl,
@@ -406,6 +565,8 @@ export class DashboardComponent {
     bulkInputDisabled: this.bulkInputDisabledControl,
     bulkInputMaxItems: this.bulkInputMaxItemsControl,
     bulkInputLongList: this.bulkInputLongListControl,
+    treePicker: this.treePickerControl,
+    treePickerSingle: this.treePickerSingleControl,
   });
 
   public readonly submitBtnConfig: ErpButtonConfig = ErpButtonBuilder.create(b => b

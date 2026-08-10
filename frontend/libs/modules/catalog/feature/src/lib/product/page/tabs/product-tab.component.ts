@@ -10,7 +10,7 @@ import {
 } from '@erp/shared/ui';
 import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, SearchProductRequest, ProductVM } from '@erp/catalog/data-access';
-import { CategoryProductTableComponent } from '../../components/category-product-table/category-product-table.component';
+import { CatalogProductTableComponent } from '../../components/catalog-product-table/catalog-product-table.component';
 import { ProductStore } from '../product.store';
 
 @Component({
@@ -21,14 +21,14 @@ import { ProductStore } from '../product.store';
     ErpActionToolbarComponent, 
     ErpActionToolbarZoneDirective,
     ErpActionToolbarContextDirective,
-    CategoryProductTableComponent
+    CatalogProductTableComponent
   ],
   template: `
     <div class="h-full w-full p-2">
       <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
         <erp-action-toolbar [config]="actionToolbar" />
         <div class="flex-1 overflow-hidden" >
-          <erp-category-product-table 
+          <erp-catalog-product-table
             stateKey="product-tab-main"
             [filters]="currentFilters()"
             (selectionChange)="onSelectionChange($event)"
@@ -45,7 +45,7 @@ export class ProductTabComponent {
   private readonly modalService = inject(ErpModalService);
   protected readonly store = inject(ProductStore);
 
-  private readonly productTable = viewChild(CategoryProductTableComponent);
+  private readonly productTable = viewChild(CatalogProductTableComponent);
 
   protected readonly selectionCount = computed(() => this.store.selection()?.selectedItems?.length ?? 0);
 

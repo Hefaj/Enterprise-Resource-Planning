@@ -30,7 +30,7 @@ import {
 import { PRODUCT_KEYS } from '../../translation';
 
 @Component({
-  selector: 'erp-category-product-table',
+  selector: 'erp-catalog-product-table',
   standalone: true,
   imports: [CommonModule, ErpTableComponent],
   template: `
@@ -41,7 +41,7 @@ import { PRODUCT_KEYS } from '../../translation';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CategoryProductTableComponent {
+export class CatalogProductTableComponent {
   private readonly catalogProductOrchestrator = inject(CatalogProductOrchestrator);
 
   /** Filtry przekazywane z zewnątrz (np. wyszukiwanie) */
@@ -216,7 +216,7 @@ export class CategoryProductTableComponent {
       this.currentUuids.set(response.uuids ?? []);
       this.totalCount.set(response.totalCount ?? 0);
     } catch (error) {
-      console.error('[CategoryProductTableComponent] Error fetching data:', error);
+      console.error('[CatalogProductTableComponent] Error fetching data:', error);
       this.currentUuids.set([]);
       this.totalCount.set(0);
     } finally {

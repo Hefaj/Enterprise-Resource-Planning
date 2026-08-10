@@ -1,0 +1,11 @@
+{
+  "page": {
+    "title": "Kategorie",
+    "breadcrumb": "Kategorie"
+  },
+  "tree": {
+    "searchPlaceholder": "Szukaj kategorii...",
+    "empty": "Brak kategorii",
+    "selectionSummary": "Zaznaczono: {{count}}"
+  }
+}

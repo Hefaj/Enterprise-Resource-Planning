@@ -94,6 +94,16 @@
     "selectedCount": "Selected ({{count}})",
     "loadingMore": "Loading more items..."
   },
+  "tree": {
+    "search": "Search...",
+    "empty": "No data to display",
+    "loadMore": "Load more",
+    "loading": "Loading...",
+    "selectedCount": "Selected ({{count}})",
+    "withSubcategories": "with subcategories",
+    "selectDescendantsOnly": "Select only subcategories (not this item)",
+    "clear": "Clear selection"
+  },
   "bulkInput": {
     "placeholder": "Enter multiple values...",
     "textareaPlaceholder": "Paste or type values separated by comma, semicolon, tab, or newline...",

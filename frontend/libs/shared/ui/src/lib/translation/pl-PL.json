@@ -94,6 +94,16 @@
     "selectedCount": "Zaznaczone ({{count}})",
     "loadingMore": "Ładowanie kolejnych pozycji..."
   },
+  "tree": {
+    "search": "Szukaj...",
+    "empty": "Brak danych do wyświetlenia",
+    "loadMore": "Załaduj więcej",
+    "loading": "Ładowanie...",
+    "selectedCount": "Zaznaczone ({{count}})",
+    "withSubcategories": "z podkategoriami",
+    "selectDescendantsOnly": "Zaznacz tylko podkategorie (bez tego elementu)",
+    "clear": "Wyczyść zaznaczenie"
+  },
   "bulkInput": {
     "placeholder": "Wprowadź wiele wartości...",
     "textareaPlaceholder": "Wklej lub wpisz wartości oddzielone przecinkiem, średnikiem, tabulatorem lub nową linią...",

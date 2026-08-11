@@ -11,7 +11,13 @@
  */
 
 export type ErpTreeCascadeMode = 'none' | 'subtree';
-export type ErpTreeNodeCheckState = 'checked' | 'unchecked' | 'indeterminate';
+/**
+ * `'indeterminate'` — węzeł SAM nie jest zaznaczony, ale coś poniżej niego jest (klasyczny
+ * częściowy stan). `'checked-partial'` — węzeł SAM JEST zaznaczony, ale nie wszystkie jego
+ * bezpośrednie dzieci są (odróżnia to od zwykłego 'checked', bez mylenia z 'indeterminate',
+ * gdzie to węzeł sam nie jest zaznaczony) — patrz `getNodeState`.
+ */
+export type ErpTreeNodeCheckState = 'checked' | 'unchecked' | 'indeterminate' | 'checked-partial';
 
 export interface ErpTreeSelectionValue {
   /** Niezależne znaczniki węzłów — używane wyłącznie w trybie cascade='none'. */
@@ -131,13 +137,20 @@ export function buildMarksBelowIndex(
   return index;
 }
 
-/** Stan checkboxa węzła do wyrenderowania. Wymaga `marksBelowIndex` z `buildMarksBelowIndex`. */
+/** Stan checkboxa węzła do wyrenderowania. Wymaga `marksBelowIndex` z `buildMarksBelowIndex`.
+ *
+ * `getChildrenIds` (opcjonalny) rozstrzyga, czy zaznaczony węzeł ma WSZYSTKIE bezpośrednie
+ * dzieci odznaczone (pełny carve-out — realnie nic w jego poddrzewie nie jest już zaznaczone,
+ * więc to zwykłe 'checked' bez potomków), czy tylko CZĘŚĆ (`'checked-partial'`, patrz niżej).
+ * Sprawdzamy tylko bezpośrednie dzieci (rekurencyjnie przez to samo `getNodeState`) — indeks/
+ * resolver ograniczają koszt do okolic znaczników, nie całego poddrzewa. */
 export function getNodeState(
   id: string,
   value: ErpTreeSelectionValue,
   cascade: ErpTreeCascadeMode,
   getParentId: ErpTreeParentResolver,
   marksBelowIndex: ReadonlyMap<string, number>,
+  getChildrenIds?: ErpTreeChildrenResolver,
 ): ErpTreeNodeCheckState {
   if (cascade === 'none') {
     return value.ids.includes(id) ? 'checked' : 'unchecked';
@@ -151,8 +164,36 @@ export function getNodeState(
   // mimo że realnie ma zaznaczone wszystkie dzieci.
   if (value.subtreeRoots.includes(id) && value.excluded.includes(id)) return 'indeterminate';
 
-  if ((marksBelowIndex.get(id) ?? 0) > 0) return 'indeterminate';
-  return isNodeIncluded(id, value, cascade, getParentId) ? 'checked' : 'unchecked';
+  const marksBelow = marksBelowIndex.get(id) ?? 0;
+  if (marksBelow === 0) {
+    return isNodeIncluded(id, value, cascade, getParentId) ? 'checked' : 'unchecked';
+  }
+
+  if (!isNodeIncluded(id, value, cascade, getParentId)) {
+    // Węzeł SAM nie jest zaznaczony, ale poniżej niego jest wyjątek (coś jest zaznaczone
+    // mimo braku pokrycia od tego węzła) — klasyczny stan pośredni.
+    return 'indeterminate';
+  }
+
+  // Węzeł SAM jest zaznaczony — sprawdzamy, czy pełny carve-out (wszystkie bezpośrednie
+  // dzieci 'unchecked') sprowadza go z powrotem do zwykłego 'checked' bez potomków.
+  if (getChildrenIds) {
+    const children = getChildrenIds(id);
+    if (
+      children &&
+      children.length > 0 &&
+      children.every(
+        (childId) => getNodeState(childId, value, cascade, getParentId, marksBelowIndex, getChildrenIds) === 'unchecked',
+      )
+    ) {
+      return 'checked';
+    }
+  }
+  // Węzeł zaznaczony, ale nie wszystkie dzieci są (albo nie da się tego jednoznacznie
+  // ustalić bez `getChildrenIds`, np. niedoładowana strona w trybie server) — w
+  // odróżnieniu od 'indeterminate' (węzeł SAM nie zaznaczony) UI musi to pokazać jako
+  // zaznaczony węzeł z dodatkowym ostrzeżeniem, nie jako myślnik zastępujący checkbox.
+  return 'checked-partial';
 }
 
 /** Zaznacza/odznacza pojedynczy węzeł, z kaskadą zgodną z `cascade`. */

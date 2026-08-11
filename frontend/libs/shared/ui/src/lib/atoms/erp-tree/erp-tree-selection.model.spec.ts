@@ -82,12 +82,60 @@ describe('erp-tree-selection.model — cascade: subtree', () => {
     expect(isNodeIncluded('zmywarki', value, 'subtree', getParentId)).toBe(true);
 
     const marksBelow = buildMarksBelowIndex(value, 'subtree', getParentId);
-    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow)).toBe('indeterminate');
+    // 'agd' jest SAM zaznaczony (root), ale nie wszystkie jego dzieci są ('pralki' wykluczone,
+    // 'zmywarki' wciąż pokryte) — to 'checked-partial', nie 'indeterminate' (który oznaczałby,
+    // że 'agd' samo NIE jest zaznaczone).
+    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow)).toBe('checked-partial');
     expect(getNodeState('pralki', value, 'subtree', getParentId, marksBelow)).toBe('unchecked');
     expect(getNodeState('zmywarki', value, 'subtree', getParentId, marksBelow)).toBe('checked');
+
+    // Bez `getChildrenIds` zachowanie identyczne jak wyżej — wynik nie zależy od obecności resolvera,
+    // gdy dzieci NIE są wszystkie odznaczone (genuinie mieszany stan, nie da się "zwinąć" do 'checked').
+    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow, getChildrenIds)).toBe('checked-partial');
   });
 
-  it('stan indeterminate rodzica jest wyliczany bez znajomości pełnego poddrzewa (server mode)', () => {
+  it('rodzic pozostaje "checked" (nie "indeterminate"), gdy WSZYSTKIE jego bezpośrednie dzieci zostały ręcznie odznaczone', () => {
+    // Zgłoszony bug: zaznaczam 'agd', potem ręcznie odznaczam OBOJE jego dzieci (pralki, zmywarki)
+    // pojedynczo (nie przez setDescendantsOnly/collapseCarvedOutAncestor — 'agd' NIE jest samo w excluded).
+    let value = emptySelection();
+    value = setNodeChecked('agd', true, value, 'subtree', getParentId);
+    value = setNodeChecked('pralki', false, value, 'subtree', getParentId);
+    value = setNodeChecked('zmywarki', false, value, 'subtree', getParentId);
+
+    expect(value.subtreeRoots).toEqual(['agd']);
+    expect(new Set(value.excluded)).toEqual(new Set(['pralki', 'zmywarki']));
+    expect(isNodeIncluded('agd', value, 'subtree', getParentId)).toBe(true);
+    expect(isNodeIncluded('pralki', value, 'subtree', getParentId)).toBe(false);
+    expect(isNodeIncluded('zmywarki', value, 'subtree', getParentId)).toBe(false);
+
+    const marksBelow = buildMarksBelowIndex(value, 'subtree', getParentId);
+
+    // Bez resolvera dzieci nie da się potwierdzić pełnego carve-outu, ale 'agd' SAMO jest
+    // zaznaczone (isNodeIncluded nie potrzebuje resolvera) — więc pokazujemy 'checked-partial',
+    // nie ślepe 'indeterminate' (które sugerowałoby, że 'agd' samo nie jest zaznaczone).
+    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow)).toBe('checked-partial');
+
+    // Z resolverem dzieci — 'agd' wraca do pełnego 'checked', bo w jego poddrzewie nic nie jest już zaznaczone.
+    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow, getChildrenIds)).toBe('checked');
+    expect(getNodeState('pralki', value, 'subtree', getParentId, marksBelow, getChildrenIds)).toBe('unchecked');
+    expect(getNodeState('zmywarki', value, 'subtree', getParentId, marksBelow, getChildrenIds)).toBe('unchecked');
+  });
+
+  it('rodzic zaznaczony z resolverem dzieci: częściowe odznaczenie -> "checked-partial", pełne odznaczenie -> "checked"', () => {
+    // Dokładnie scenariusz zgłoszony przez użytkownika: 2 dzieci, odznaczam jedno na raz.
+    let value = emptySelection();
+    value = setNodeChecked('agd', true, value, 'subtree', getParentId);
+    value = setNodeChecked('pralki', false, value, 'subtree', getParentId);
+
+    let marksBelow = buildMarksBelowIndex(value, 'subtree', getParentId);
+    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow, getChildrenIds)).toBe('checked-partial');
+
+    value = setNodeChecked('zmywarki', false, value, 'subtree', getParentId);
+    marksBelow = buildMarksBelowIndex(value, 'subtree', getParentId);
+    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow, getChildrenIds)).toBe('checked');
+  });
+
+  it('stan rodzica jest wyliczany bez znajomości pełnego poddrzewa (server mode)', () => {
     // Resolver widzi TYLKO to, co "załadowane" — pralki i zmywarki nieznane (nierozwinięte).
     const partialParents = new Map<string, string | null>([
       ['elektronika', null],
@@ -100,7 +148,10 @@ describe('erp-tree-selection.model — cascade: subtree', () => {
     value = setNodeChecked('agd', false, value, 'subtree', partialResolver);
 
     const marksBelow = buildMarksBelowIndex(value, 'subtree', partialResolver);
-    expect(getNodeState('elektronika', value, 'subtree', partialResolver, marksBelow)).toBe('indeterminate');
+    // 'elektronika' SAMO jest zaznaczone (isNodeIncluded nie potrzebuje resolvera dzieci) —
+    // bez `getChildrenIds` (niedoładowana strona w trybie server) nie da się potwierdzić
+    // pełnego carve-outu, więc 'checked-partial', nie ślepe 'indeterminate'.
+    expect(getNodeState('elektronika', value, 'subtree', partialResolver, marksBelow)).toBe('checked-partial');
     expect(getNodeState('agd', value, 'subtree', partialResolver, marksBelow)).toBe('unchecked');
   });
 

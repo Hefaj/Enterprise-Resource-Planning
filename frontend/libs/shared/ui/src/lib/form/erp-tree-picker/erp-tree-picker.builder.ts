@@ -17,7 +17,7 @@ import { ErpTreePickerConfig, ErpTreePickerStrategy } from './erp-tree-picker.ty
  */
 export class ErpTreePickerBuilder<T = any> extends ErpInputBaseBuilder<ErpTreePickerConfig<T>> {
   /**
-   * Ustawia tryb działania picker'a drzewa (np. read-only, selection).
+   * Ustawia tryb działania drzewa (client lub server).
    */
   public setMode(mode: MaybeSignal<ErpTreeMode>): this {
     this._data.mode = mode;

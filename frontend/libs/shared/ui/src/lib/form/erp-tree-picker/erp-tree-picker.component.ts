@@ -127,7 +127,6 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
     .erp-tree-picker-panel {
       display: flex;
       width: 100%;
-      max-width: 22rem;
       height: 20rem;
       box-sizing: border-box;
       padding: 0;

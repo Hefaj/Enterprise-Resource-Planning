@@ -218,6 +218,59 @@ describe('erp-tree-selection.model — cascade: subtree', () => {
     expect(value.subtreeRoots).toEqual(['agd']);
   });
 
+  it('ponowne zaznaczenie wnuka (2 poziomy niżej) wewnątrz wykluczonego dziecka przywraca go do zaznaczenia', () => {
+    // Powtórzenie zgłoszonego buga: elektronika (root) -> agd (excluded) -> pralki (re-included).
+    // normalize() nie może uznać własnego wpisu 'pralki' w subtreeRoots za redundantny tylko
+    // dlatego, że jakiś DALSZY przodek (elektronika) jest korzeniem — bliższe wykluczenie 'agd'
+    // blokuje to pokrycie po drodze.
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    value = setNodeChecked('agd', false, value, 'subtree', getParentId);
+    value = setNodeChecked('pralki', true, value, 'subtree', getParentId);
+
+    expect(isNodeIncluded('pralki', value, 'subtree', getParentId)).toBe(true);
+    expect(isNodeIncluded('zmywarki', value, 'subtree', getParentId)).toBe(false);
+    expect(isNodeIncluded('agd', value, 'subtree', getParentId)).toBe(false);
+    expect(isNodeIncluded('rtv', value, 'subtree', getParentId)).toBe(true);
+    expect(new Set(value.subtreeRoots)).toEqual(new Set(['elektronika', 'pralki']));
+    expect(value.excluded).toEqual(['agd']);
+
+    const marksBelow = buildMarksBelowIndex(value, 'subtree', getParentId);
+    expect(getNodeState('pralki', value, 'subtree', getParentId, marksBelow)).toBe('checked');
+    expect(getNodeState('zmywarki', value, 'subtree', getParentId, marksBelow)).toBe('unchecked');
+    expect(getNodeState('agd', value, 'subtree', getParentId, marksBelow)).toBe('indeterminate');
+  });
+
+  it('po re-inkluzji wnuka, ponowne odznaczenie go z powrotem wraca do samego wykluczenia rodzica (bez osieroconych wpisów)', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    value = setNodeChecked('agd', false, value, 'subtree', getParentId);
+    value = setNodeChecked('pralki', true, value, 'subtree', getParentId);
+    value = setNodeChecked('pralki', false, value, 'subtree', getParentId);
+
+    expect(value.subtreeRoots).toEqual(['elektronika']);
+    expect(value.excluded).toEqual(['agd']);
+    expect(isNodeIncluded('pralki', value, 'subtree', getParentId)).toBe(false);
+    expect(isNodeIncluded('zmywarki', value, 'subtree', getParentId)).toBe(false);
+  });
+
+  it('normalize nie kasuje wykluczenia realnie pokrytego przez bliższy korzeń, mimo dalszego niepowiązanego wykluczenia w łańcuchu przodków', () => {
+    // Skonstruowany ręcznie deskryptor (analogicznie do testu „zagnieżdżony subtreeRoot" niżej):
+    // 'elektronika' w excluded to martwy szum (nic go nie pokrywa — usuwany), a 'pralki' jest
+    // realnie pokryty przez bliższy korzeń 'agd' — musi PRZETRWAĆ, mimo że dalszy 'elektronika'
+    // też formalnie jest w excluded.
+    const value = normalize(
+      { ids: [], subtreeRoots: ['agd'], excluded: ['elektronika', 'pralki'] },
+      'subtree',
+      getParentId,
+    );
+
+    expect(value.subtreeRoots).toEqual(['agd']);
+    expect(value.excluded).toEqual(['pralki']);
+    expect(isNodeIncluded('pralki', value, 'subtree', getParentId)).toBe(false);
+    expect(isNodeIncluded('zmywarki', value, 'subtree', getParentId)).toBe(true);
+  });
+
   it('zagnieżdżony subtreeRoot wewnątrz innego zaznaczonego poddrzewa jest normalizowany (usuwany jako nadmiarowy)', () => {
     const value = normalize(
       { ids: [], subtreeRoots: ['elektronika', 'agd'], excluded: [] },

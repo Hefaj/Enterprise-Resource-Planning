@@ -306,29 +306,32 @@ export function normalize(
   }
 
   const roots = new Set(value.subtreeRoots);
+  const excludedInput = new Set(value.excluded);
   for (const r of [...roots]) {
     // Węzeł jednocześnie będący korzeniem i wykluczeniem to wzorzec „tylko dzieci"
     // (`setDescendantsOnly`) — mimo że przodek już go pokrywa, NIE jest redundantny: to jego
     // własny wpis w `roots` utrzymuje pokrycie JEGO dzieci. Pokrycie od przodka zatrzymuje się
     // na wykluczeniu samego r (patrz `resolveAncestorCoverage`), więc usunięcie r z `roots`
     // odcięłoby całe jego poddrzewo od pokrycia, zamiast tylko odznaczyć r.
-    if (value.excluded.includes(r)) continue;
-    if (getAncestorChain(r, getParentId).some((a) => roots.has(a))) {
+    if (excludedInput.has(r)) continue;
+    // `resolveAncestorCoverage`, nie `.some((a) => roots.has(a))` — musi zatrzymać się na
+    // najbliższym BLOKUJĄCYM wykluczeniu po drodze do r. Sam fakt, że JAKIŚ dalszy przodek
+    // jest korzeniem, nie czyni r redundantnym, jeśli bliższe wykluczenie odcina to pokrycie
+    // (np. r=pralki pod wykluczonym agd, mimo że elektronika wyżej jest korzeniem).
+    if (resolveAncestorCoverage(r, roots, excludedInput, getParentId)) {
       roots.delete(r);
     }
   }
 
   const excluded = new Set(value.excluded);
   for (const e of [...excluded]) {
+    // Ta sama zasada co przy `roots` wyżej: wykluczenie e ma sens tylko, jeśli pokrycie od
+    // przodka faktycznie do niego dociera bez przerwania przez bliższe wykluczenie po drodze
+    // (albo e samo jest korzeniem — wzorzec „tylko dzieci"). Bez `resolveAncestorCoverage`
+    // dalszy, niepowiązany przodek-wykluczenie mógłby błędnie „unieważnić" bliższe pokrycie.
     const coveredBySelf = roots.has(e);
-    const coveredByAncestor = getAncestorChain(e, getParentId).some((a) => roots.has(a));
+    const coveredByAncestor = resolveAncestorCoverage(e, roots, excluded, getParentId);
     if (!coveredBySelf && !coveredByAncestor) {
-      excluded.delete(e);
-    }
-  }
-  for (const e of [...excluded]) {
-    const hasExcludedAncestor = getAncestorChain(e, getParentId).some((a) => a !== e && excluded.has(a) && !roots.has(a));
-    if (hasExcludedAncestor) {
       excluded.delete(e);
     }
   }

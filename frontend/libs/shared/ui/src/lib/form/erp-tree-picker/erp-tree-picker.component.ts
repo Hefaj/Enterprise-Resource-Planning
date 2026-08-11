@@ -265,9 +265,13 @@ export class ErpTreePickerComponent<T = any> implements ControlValueAccessor {
       return item ? this.resolveLabelText(this._adapters().getLabel(item)) : '';
     }
 
-    if (state.marksCount > this._maxCollapseCount()) {
-      const template = this.transloco?.translate(SHARED_KEYS.tree.selectedCount, { count: state.marksCount });
-      return template || `${state.marksCount}`;
+    // Nazwy da się pokazać tylko, gdy każdy `markedItem` reprezentuje dokładnie jeden realnie
+    // zaznaczony element (czyli `selectedCount` = liczba nazw, żadna kaskada nie pokrywa więcej
+    // niż siebie samego) — inaczej (kaskadujący rodzic, wzorzec "tylko dzieci", niedoładowany
+    // węzeł w trybie server) pokazujemy zbiorczą liczbę, tak jak przy przekroczeniu `maxCollapseCount`.
+    if (state.selectedCount !== state.markedItems.length || state.selectedCount > this._maxCollapseCount()) {
+      const template = this.transloco?.translate(SHARED_KEYS.tree.selectedCount, { count: state.selectedCount });
+      return template || `${state.selectedCount}`;
     }
 
     return state.markedItems.map((item) => this.resolveLabelText(this._adapters().getLabel(item))).join(', ');

@@ -50,7 +50,7 @@ export function parentResolverFromIndex(index: ReadonlyMap<string, string | null
 }
 
 /** Łańcuch przodków węzła, od najbliższego rodzica do korzenia (bez samego `id`). */
-function getAncestorChain(id: string, getParentId: ErpTreeParentResolver, maxDepth = 128): string[] {
+export function getAncestorChain(id: string, getParentId: ErpTreeParentResolver, maxDepth = 128): string[] {
   const chain: string[] = [];
   const seen = new Set<string>([id]);
   let current = getParentId(id);
@@ -353,4 +353,81 @@ export function resolveCheckedIds(
 /** Liczba "znaczników" w deskryptorze — do pokazania w UI (np. "Zaznaczono: 3 gałęzie"). */
 export function countMarks(value: ErpTreeSelectionValue): number {
   return value.ids.length + value.subtreeRoots.length;
+}
+
+/** Zwraca `descendantCount` węzła (łączna, rekurencyjna liczba potomków), albo `undefined`
+ * gdy nieznana — patrz `ErpTreeDescendantCountResolver`. */
+export type ErpTreeDescendantCountResolver = (id: string) => number | undefined;
+
+/**
+ * Realna liczba pojedynczych zaznaczonych elementów pokrywanych przez deskryptor — w
+ * odróżnieniu od `countMarks`, które liczy tylko znaczniki (korzenie poddrzew/wykluczenia),
+ * a nie faktyczną liczbę elementów, które te korzenie kaskadowo pokrywają (np. zaznaczenie
+ * jednego rodzica z 4 potomkami to 1 znacznik, ale 5 realnie zaznaczonych elementów).
+ *
+ * Przetwarza znaczniki (`subtreeRoots ∪ excluded`) jako las uporządkowany relacją
+ * przodek/potomek (przez `getAncestorChain`) i rekurencyjnie odejmuje/dodaje wkład zagnieżdżonych
+ * wyjątków/re-inkluzji względem domyślnego pokrycia najbliższego przodka-znacznika. Wymaga
+ * `descendantCount` każdego węzła-znacznika — te węzły są zawsze znane wywołującemu, bo
+ * użytkownik musiał je zobaczyć/kliknąć, by je zaznaczyć/wykluczyć.
+ *
+ * Zwraca `null`, gdy któregoś `descendantCount` nie da się ustalić — wywołujący powinien
+ * wtedy spaść do przybliżenia (np. `countMarks`), zamiast pokazać błędną liczbę.
+ */
+export function resolveSelectedItemCount(
+  value: ErpTreeSelectionValue,
+  cascade: ErpTreeCascadeMode,
+  getParentId: ErpTreeParentResolver,
+  getDescendantCount: ErpTreeDescendantCountResolver,
+): number | null {
+  if (cascade === 'none') return value.ids.length;
+
+  const roots = new Set(value.subtreeRoots);
+  const excluded = new Set(value.excluded);
+  const marks = new Set<string>([...roots, ...excluded]);
+  if (marks.size === 0) return 0;
+
+  const childrenOfMark = new Map<string, string[]>();
+  const topLevel: string[] = [];
+  for (const m of marks) {
+    const ancestorMark = getAncestorChain(m, getParentId).find((a) => marks.has(a));
+    if (ancestorMark) {
+      const siblings = childrenOfMark.get(ancestorMark) ?? [];
+      siblings.push(m);
+      childrenOfMark.set(ancestorMark, siblings);
+    } else {
+      topLevel.push(m);
+    }
+  }
+
+  const compute = (m: string): number | null => {
+    const subtreeDefaultIncluded = roots.has(m);
+    const isExcluded = excluded.has(m);
+
+    let subtreeTotal = 0;
+    if (subtreeDefaultIncluded) {
+      const dc = getDescendantCount(m);
+      if (dc === undefined) return null;
+      subtreeTotal = dc;
+    }
+
+    for (const child of childrenOfMark.get(m) ?? []) {
+      const childDc = getDescendantCount(child);
+      if (childDc === undefined) return null;
+      const childDefaultCount = subtreeDefaultIncluded ? 1 + childDc : 0;
+      const childActual = compute(child);
+      if (childActual === null) return null;
+      subtreeTotal += childActual - childDefaultCount;
+    }
+
+    return (isExcluded ? 0 : 1) + subtreeTotal;
+  };
+
+  let total = value.ids.length;
+  for (const m of topLevel) {
+    const c = compute(m);
+    if (c === null) return null;
+    total += c;
+  }
+  return total;
 }

@@ -7,8 +7,8 @@ export interface CategoryVM extends CategoryDto {
 
 /**
  * CategoryVM wzbogacony o metadane hierarchii wymagane przez `erp-tree` w trybie server
- * (chevron/stan indeterminate bez pobierania dzieci). Dziś liczone z mocka — po podłączeniu
- * realnych endpointów (patrz `category-tree.mock-data.ts`) te pola przyjdą wprost z API.
+ * (chevron/stan indeterminate bez pobierania dzieci) — wprost z odpowiedzi backendu
+ * (`Catalog.Category.Query.GetCategoryChildren`/`SearchCategoryTree`).
  */
 export interface CategoryTreeNodeVM extends CategoryVM {
   readonly hasChildren: boolean;

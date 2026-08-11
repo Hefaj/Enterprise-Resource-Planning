@@ -1,15 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps, LoadOptions } from '@erp/shared/data-access';
-import { CatalogClient, CategoryDto, SearchCategoryRequest, SearchResponse } from '../../api-client';
+import { CatalogClient, CategoryDto, CategoryTreeNodeDto, SearchCategoryRequest, SearchResponse } from '../../api-client';
 import { CategoryVM, CategoryTreeNodeVM } from './category.view-model';
-import {
-  mockGetCategoryChildren,
-  mockResolveCategoryDescendants,
-  mockSearchCategoryTree,
-  MockCategoryNode,
-} from './category-tree.mock-data';
 
 /**
  * Maksymalna głębokość dla rozwiązywania łańcuchów kategorii nadrzędnych.
@@ -142,49 +136,51 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Drzewo kategorii (erp-tree / erp-tree-picker) — MOCK
+  // Drzewo kategorii (erp-tree / erp-tree-picker)
   //
-  // Backend nie udostępnia dziś zapytań hierarchicznych — poniższe metody wołają
-  // `category-tree.mock-data.ts` (tam pełny opis docelowych endpointów: trasa,
-  // kształt request/response, przykładowe zapytanie SQL na closure table).
-  // Wymiana na realne API sprowadza się do podmiany ciała tych trzech metod —
-  // sygnatury (i to, co zwracają) są już zgodne z docelowym kontraktem.
+  // Leniwe doładowywanie dzieci + wyszukiwanie z kontekstem hierarchii + rozwijanie zaznaczenia
+  // poddrzewa do płaskiej listy uuid — endpointy `Catalog.Category.Query.GetCategoryChildren` /
+  // `SearchCategoryTree` / `ResolveCategoryDescendants` w backendzie.
   // ────────────────────────────────────────────────────────────────
 
-  private _toTreeNodeVM(node: MockCategoryNode): CategoryTreeNodeVM {
-    this.identityMap.set(node.dto);
+  private _toTreeNodeVM(node: CategoryTreeNodeDto): CategoryTreeNodeVM {
+    const dto: CategoryDto = { uuid: node.uuid, name: node.name, parentUuid: node.parentUuid };
+    this.identityMap.set(dto);
     return {
-      ...this.mapToViewModel(node.dto, {}),
+      ...this.mapToViewModel(dto, {}),
       hasChildren: node.hasChildren,
       childCount: node.childCount,
       descendantCount: node.descendantCount,
     };
   }
 
-  /** MOCK — docelowo `GET /api/catalog/categories/children`, patrz category-tree.mock-data.ts */
   public async getCategoryTreeChildrenAsync(
     parentUuid: string | null,
     pageIndex: number,
     pageSize: number,
   ): Promise<{ nodes: CategoryTreeNodeVM[]; totalCount: number }> {
-    const { nodes, totalCount } = await mockGetCategoryChildren(parentUuid, pageIndex, pageSize);
-    return { nodes: nodes.map((n) => this._toTreeNodeVM(n)), totalCount };
+    const { nodes, totalCount } = await firstValueFrom(
+      this._api.getCategoryChildren({ parentUuid: parentUuid ?? undefined, pageIndex, pageSize }),
+    );
+    return { nodes: (nodes ?? []).map((n) => this._toTreeNodeVM(n)), totalCount: totalCount ?? 0 };
   }
 
-  /** MOCK — docelowo `GET /api/catalog/categories/search-tree`, patrz category-tree.mock-data.ts */
   public async searchCategoryTreeAsync(
     search: string,
   ): Promise<{ matches: CategoryTreeNodeVM[]; ancestors: CategoryTreeNodeVM[]; totalCount: number }> {
-    const result = await mockSearchCategoryTree(search);
+    const { matches, ancestors, totalCount } = await firstValueFrom(this._api.searchCategoryTree({ search }));
     return {
-      matches: result.matches.map((n) => this._toTreeNodeVM(n)),
-      ancestors: result.ancestors.map((n) => this._toTreeNodeVM(n)),
-      totalCount: result.totalCount,
+      matches: (matches ?? []).map((n) => this._toTreeNodeVM(n)),
+      ancestors: (ancestors ?? []).map((n) => this._toTreeNodeVM(n)),
+      totalCount: totalCount ?? 0,
     };
   }
 
-  /** MOCK — docelowo `POST /api/catalog/categories/resolve-descendants`, patrz category-tree.mock-data.ts */
   public async resolveCategoryDescendantsAsync(uuids: string[]): Promise<string[]> {
-    return mockResolveCategoryDescendants(uuids);
+    const { uuids: resolvedUuids, truncated } = await firstValueFrom(this._api.resolveCategoryDescendants({ uuids }));
+    if (truncated) {
+      console.warn('[CatalogCategoryOrchestrator] resolveCategoryDescendants: wynik ucięty na limicie backendu.');
+    }
+    return resolvedUuids ?? [];
   }
 }

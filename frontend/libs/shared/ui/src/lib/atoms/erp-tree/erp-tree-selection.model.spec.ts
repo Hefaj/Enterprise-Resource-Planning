@@ -10,6 +10,7 @@ import {
   normalize,
   parentResolverFromIndex,
   resolveCheckedIds,
+  resolveSelectedItemCount,
   selectFullSubtree,
   setDescendantsOnly,
   setNodeChecked,
@@ -273,5 +274,78 @@ describe('erp-tree-selection.model — cascade: subtree', () => {
     expect(isNodeIncluded('meska', value, 'subtree', getParentId)).toBe(false);
     const marksBelow = buildMarksBelowIndex(value, 'subtree', getParentId);
     expect(getNodeState('elektronika', value, 'subtree', getParentId, marksBelow)).toBe('checked');
+  });
+});
+
+describe('erp-tree-selection.model — resolveSelectedItemCount', () => {
+  // Rekurencyjna, łączna liczba potomków (nie tylko dzieci bezpośrednich) — jak DescendantCount z backendu.
+  const DESCENDANT_COUNTS: Record<string, number> = {
+    elektronika: 4, // agd, pralki, zmywarki, rtv
+    agd: 2, // pralki, zmywarki
+    pralki: 0,
+    zmywarki: 0,
+    rtv: 0,
+    odziez: 1, // meska
+    meska: 0,
+  };
+  const getDescendantCount = (id: string) => DESCENDANT_COUNTS[id];
+
+  it('cascade none liczy po prostu liczbę id, niezależnie od descendantCount', () => {
+    const value = { ids: ['pralki', 'rtv'], subtreeRoots: [], excluded: [] };
+    expect(resolveSelectedItemCount(value, 'none', getParentId, getDescendantCount)).toBe(2);
+  });
+
+  it('pojedynczy liść bez potomków liczy się jako 1', () => {
+    let value = emptySelection();
+    value = setNodeChecked('pralki', true, value, 'subtree', getParentId);
+    expect(resolveSelectedItemCount(value, 'subtree', getParentId, getDescendantCount)).toBe(1);
+  });
+
+  it('zaznaczenie rodzica kaskadowo liczy siebie + WSZYSTKICH potomków, nie tylko 1 znacznik', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    // elektronika + agd + pralki + zmywarki + rtv = 5, mimo że to tylko 1 wpis w subtreeRoots.
+    expect(resolveSelectedItemCount(value, 'subtree', getParentId, getDescendantCount)).toBe(5);
+  });
+
+  it('wzorzec "tylko dzieci" liczy dzieci, BEZ samego rodzica (nie 1, jak sugerowałby countMarks)', () => {
+    let value = emptySelection();
+    value = setDescendantsOnly('agd', value, 'subtree', getParentId);
+    // pralki + zmywarki = 2, 'agd' samo nie jest zaznaczone.
+    expect(resolveSelectedItemCount(value, 'subtree', getParentId, getDescendantCount)).toBe(2);
+  });
+
+  it('wyjątek (excluded) w zaznaczonym poddrzewie odejmuje całe swoje poddrzewo od pokrycia rodzica', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    value = setNodeChecked('agd', false, value, 'subtree', getParentId);
+    // pełne elektronika = 5, minus całe agd (agd+pralki+zmywarki = 3) = elektronika + rtv = 2.
+    expect(resolveSelectedItemCount(value, 'subtree', getParentId, getDescendantCount)).toBe(2);
+  });
+
+  it('re-inkluzja bezpośredniego dziecka wykluczonego rodzica dolicza z powrotem jego poddrzewo', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    value = setNodeChecked('rtv', false, value, 'subtree', getParentId);
+    value = setNodeChecked('rtv', true, value, 'subtree', getParentId);
+    // Powrót do pełnego elektronika: elektronika + agd + pralki + zmywarki + rtv = 5.
+    expect(resolveSelectedItemCount(value, 'subtree', getParentId, getDescendantCount)).toBe(5);
+  });
+
+  it('kilka niezależnych zaznaczeń sumuje się poprawnie', () => {
+    let value = emptySelection();
+    value = setNodeChecked('rtv', true, value, 'subtree', getParentId);
+    value = setNodeChecked('meska', true, value, 'subtree', getParentId);
+    expect(resolveSelectedItemCount(value, 'subtree', getParentId, getDescendantCount)).toBe(2);
+  });
+
+  it('zwraca null, gdy descendantCount zaznaczonego węzła jest nieznany', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    expect(resolveSelectedItemCount(value, 'subtree', getParentId, () => undefined)).toBeNull();
+  });
+
+  it('pusta selekcja liczy się jako 0', () => {
+    expect(resolveSelectedItemCount(emptySelection(), 'subtree', getParentId, getDescendantCount)).toBe(0);
   });
 });

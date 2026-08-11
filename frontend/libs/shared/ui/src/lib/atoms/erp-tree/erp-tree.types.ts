@@ -57,7 +57,10 @@ export interface ErpTreeSelectionState<T = any> {
   resolvedIds?: string[];
   /** Węzły-znaczniki, które są aktualnie znane komponentowi (do chipsów/etykiet). */
   markedItems: T[];
+  /** Liczba znaczników (korzenie poddrzew/id) — NIE liczba realnie zaznaczonych elementów, patrz `selectedCount`. */
   marksCount: number;
+  /** Realna liczba zaznaczonych elementów (po rozwinięciu kaskady) — patrz `resolveSelectedItemCount`. */
+  selectedCount: number;
 }
 
 export interface ErpTreeConfig<T = any> extends ErpInputBase {

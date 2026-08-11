@@ -8,6 +8,7 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
@@ -90,7 +91,7 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
         }
 
         <div *tuiDropdown class="erp-tree-picker-panel">
-          <erp-tree [config]="treeConfig()" class="erp-tree-picker-tree" />
+          <erp-tree #treeRef [config]="treeConfig()" class="erp-tree-picker-tree" />
         </div>
       </tui-textfield>
 
@@ -106,6 +107,24 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
   styles: [`
     :host {
       display: block;
+    }
+
+    /* Taiga UI wymusza przezroczyste tło dla data-mode="readonly" (!important),
+       a input wewnątrz tui-textfield jest readOnly, bo edycja odbywa się przez drzewo w panelu.
+       Przywracamy tu dokładnie te same tokeny, których Taiga używa domyślnie dla
+       edytowalnego tui-textfield w każdym z motywów (theme/appearance/textfield.less). */
+    :host tui-textfield[tuiappearance][data-appearance='textfield'][data-mode~='readonly'] {
+      background: var(--tui-background-base) !important;
+    }
+
+    :host-context([tuiTheme='dark']) tui-textfield[tuiappearance][data-appearance='textfield'][data-mode~='readonly'] {
+      background: var(--tui-background-neutral-1) !important;
+    }
+
+    /* Taiga chowa natywny cleaner ([tuiButtonX]) w trybie readonly — tutaj używamy go świadomie
+       jako przycisku czyszczącego zaznaczenie bez otwierania drzewa. */
+    :host tui-textfield[data-mode~='readonly'] [tuiButtonX] {
+      display: inline-flex !important;
     }
 
     @keyframes erp-form-shake {
@@ -161,6 +180,7 @@ export class ErpTreePickerComponent<T = any> implements ControlValueAccessor {
   protected readonly isOpen = signal(false);
   protected readonly treeValue = signal<ErpTreeSelectionValue>(emptySelection());
   protected readonly lastTreeState = signal<ErpTreeSelectionState<T> | null>(null);
+  private readonly treeRef = viewChild<ErpTreeComponent<T>>('treeRef');
 
   protected readonly shake = signal<boolean>(false);
   private readonly stateTrigger = signal(0);
@@ -315,7 +335,10 @@ export class ErpTreePickerComponent<T = any> implements ControlValueAccessor {
 
   protected onDropdownOpenChange(open: boolean): void {
     this.isOpen.set(open);
-    if (!open) {
+    if (open) {
+      // Drzewo renderuje się dopiero po tym ticku (*tuiDropdown) — queueMicrotask czeka na jego obecność w DOM.
+      queueMicrotask(() => this.treeRef()?.focusSearch());
+    } else {
       this.onTouched();
       this.activeControl().markAsTouched();
       this.stateTrigger.update((v) => v + 1);

@@ -17,6 +17,7 @@ export type {
   ErpTreeCascadeMode,
   ErpTreeNodeCheckState,
   ErpTreeParentResolver,
+  ErpTreeChildrenResolver,
 } from './erp-tree-selection.model';
 export {
   emptySelection as erpTreeEmptySelection,
@@ -29,6 +30,7 @@ export {
   setNodeChecked as erpTreeSetNodeChecked,
   selectFullSubtree as erpTreeSelectFullSubtree,
   setDescendantsOnly as erpTreeSetDescendantsOnly,
+  collapseCarvedOutAncestor as erpTreeCollapseCarvedOutAncestor,
   normalize as erpTreeNormalizeSelection,
   resolveCheckedIds as erpTreeResolveCheckedIds,
   countMarks as erpTreeCountMarks,

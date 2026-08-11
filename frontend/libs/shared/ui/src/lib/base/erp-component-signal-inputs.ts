@@ -8,3 +8,16 @@ export type ErpComponentSignalInputs<C> = {
       ? M
       : never;
 };
+
+/**
+ * Wyciąga typ wartości wejścia `config` komponentu pola formularza (kontrakt `config` + `control`,
+ * wspólny dla wbudowanych i niestandardowych pól `erp-filter`/`erp-step-content`). W odróżnieniu od
+ * `ErpComponentSignalInputs<C>` (która mapuje WSZYSTKIE inputy komponentu, w tym samo `config`,
+ * dając zagnieżdżony `{ config?: X }`) zwraca bezpośrednio `X` — dokładnie to, co trafia do inputu
+ * `config` przez `NgComponentOutlet` w szablonie panelu filtrów/kreatora.
+ */
+export type ErpFieldConfigInput<C> = C extends { config: InputSignal<infer T> }
+  ? T
+  : C extends { config: ModelSignal<infer T> }
+    ? T
+    : never;

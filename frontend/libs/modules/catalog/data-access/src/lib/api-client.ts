@@ -819,6 +819,7 @@ export interface ProductDto {
     name: string;
     categoryUuids: string[];
     multimediaUuids: string[];
+    warranties: ProductWarrantyDto[];
     modelUuid: string | undefined;
     sku: string;
     price: number;
@@ -829,7 +830,6 @@ export interface ProductDto {
     image: string | undefined;
     attr_Weight?: string;
     attr_Color?: string;
-    warranties: ProductWarrantyDto[];
 
     [key: string]: any;
 }
@@ -888,7 +888,7 @@ export interface SearchProductRequest {
     productType?: string | undefined;
     manufacturer?: string | undefined;
     model?: string | undefined;
-    category?: string | undefined;
+    category?: TreeSelectionRequest | undefined;
     attribute?: string | undefined;
     productCode?: string | undefined;
     territoryCode?: string | undefined;
@@ -920,6 +920,14 @@ export interface SearchWarrantyRequest {
 export interface SortOption {
     field?: string;
     order?: number;
+
+    [key: string]: any;
+}
+
+export interface TreeSelectionRequest {
+    ids?: string[];
+    subtreeRoots?: string[];
+    excluded?: string[];
 
     [key: string]: any;
 }

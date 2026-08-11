@@ -57,7 +57,7 @@ export class ErpTreePickerBuilder<T = any> extends ErpInputBaseBuilder<ErpTreePi
   }
 
   /**
-   * Ustawia strategię picker'a (np. 'tags'), określającą sposób wyświetlania wybranych elementów.
+   * Ustawia strategię picker'a single' lub 'multi, określającą sposób wyświetlania wybranych elementów.
    */
   public setStrategy(strategy: MaybeSignal<ErpTreePickerStrategy>): this {
     this._data.strategy = strategy;
@@ -65,7 +65,7 @@ export class ErpTreePickerBuilder<T = any> extends ErpInputBaseBuilder<ErpTreePi
   }
 
   /**
-   * Ustawia tryb kaskadowy podczas zaznaczania elementów (np. strict, down).
+   * Ustawia tryb kaskadowy podczas zaznaczania elementów (np. none lub subtree).
    */
   public setCascade(cascade: MaybeSignal<ErpTreeCascadeMode>): this {
     this._data.cascade = cascade;

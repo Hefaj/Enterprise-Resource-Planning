@@ -8,6 +8,7 @@ import {
 import { noop } from 'rxjs';
 import { ProductStore } from './product.store';
 import { provideProductTranslations, PRODUCT_KEYS } from '../translation';
+import { provideCategoryTranslations } from '../../category/translation';
 
 import { ProductTabComponent } from './tabs/product-tab.component';
 import { MultimediaTabComponent } from './tabs/multimedia/multimedia-tab.component';
@@ -19,7 +20,7 @@ import { ProductFilterComponent } from './filters/product-filter.component';
 @Component({
   standalone: true,
   imports: [ErpGridLayoutComponent],
-  providers: [ProductStore, provideProductTranslations()],
+  providers: [ProductStore, provideProductTranslations(), provideCategoryTranslations()],
   template: `<erp-grid-layout [config]="pageConfig" />`,
   styles: [`
     :host {

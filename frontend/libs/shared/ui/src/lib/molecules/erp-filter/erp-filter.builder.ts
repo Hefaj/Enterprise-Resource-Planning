@@ -1,7 +1,7 @@
 import { FormGroup, FormControl, ValidatorFn } from '@angular/forms';
 import { Type } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
+import { ErpFieldConfigInput } from '../../base/erp-component-signal-inputs';
 import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpFilterConfig, ErpFilterGroup, ErpFilterFieldElement, ErpFilterFormFieldType } from './erp-filter.types';
 
@@ -171,7 +171,7 @@ export class ErpFilterGroupBuilder extends ErpBaseBuilder<Omit<ErpFilterGroup, '
   public addCustomFormField<TComp>(
     key: string,
     component: MaybeSignal<Type<TComp>>,
-    config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
+    config: ErpFieldConfigInput<TComp> | { build: () => ErpFieldConfigInput<TComp> },
     options: ErpFilterFormFieldOptions<any> = {}
   ): this {
     const extractedConfig = this._extract(config);
@@ -319,7 +319,7 @@ export class ErpFilterBuilder extends ErpBaseBuilder<ErpFilterConfig> {
   public addCustomFormField<TComp>(
     key: string,
     component: MaybeSignal<Type<TComp>>,
-    config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
+    config: ErpFieldConfigInput<TComp> | { build: () => ErpFieldConfigInput<TComp> },
     options: ErpFilterFormFieldOptions<any> = {}
   ): this {
     const extractedConfig = this._extract(config);

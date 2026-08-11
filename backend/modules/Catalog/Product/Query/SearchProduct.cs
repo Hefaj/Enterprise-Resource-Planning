@@ -13,7 +13,7 @@ public class SearchProductRequest : PagedRequest
     public string? ProductType { get; set; }
     public string? Manufacturer { get; set; }
     public string? Model { get; set; }
-    public string? Category { get; set; }
+    public TreeSelectionRequest? Category { get; set; }
     public string? Attribute { get; set; }
     public string? ProductCode { get; set; }
     public string? TerritoryCode { get; set; }
@@ -90,6 +90,13 @@ public static class SearchProductRequestExtensions
 
         if (!string.IsNullOrWhiteSpace(req.ProductCode))
             query = query.Where(p => p.Sku.Contains(req.ProductCode, StringComparison.OrdinalIgnoreCase) || p.Ean.Contains(req.ProductCode, StringComparison.OrdinalIgnoreCase));
+
+        if (req.Category != null && !req.Category.IsEmpty)
+        {
+            var parentByUuid = CatalogMockData.Categories.ToDictionary(c => c.Uuid, c => c.ParentUuid);
+            var includedCategoryUuids = TreeSelectionResolver.ResolveIncludedIds(parentByUuid.Keys, req.Category, parentByUuid);
+            query = query.Where(p => p.CategoryUuids.Any(includedCategoryUuids.Contains));
+        }
 
         return query;
     }

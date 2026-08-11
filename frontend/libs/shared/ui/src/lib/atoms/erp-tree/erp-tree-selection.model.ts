@@ -143,6 +143,14 @@ export function getNodeState(
     return value.ids.includes(id) ? 'checked' : 'unchecked';
   }
 
+  // Węzeł jednocześnie będący korzeniem poddrzewa i wykluczeniem — wzorzec „poddrzewo X bez
+  // samego X” (zaznacz dzieci X, zostawiając X odznaczonym). `buildMarksBelowIndex` nie widzi
+  // tego przypadku: liczy tylko znaczniki w ŚCISŁYM poddrzewie węzła (idąc od znacznika w górę
+  // do przodków), a własny znacznik węzła nigdy nie jest swoim własnym przodkiem. Bez tej reguły
+  // X wypadał jako 'unchecked' (bo `isNodeIncluded` rozstrzyga „wykluczony” dla samego siebie),
+  // mimo że realnie ma zaznaczone wszystkie dzieci.
+  if (value.subtreeRoots.includes(id) && value.excluded.includes(id)) return 'indeterminate';
+
   if ((marksBelowIndex.get(id) ?? 0) > 0) return 'indeterminate';
   return isNodeIncluded(id, value, cascade, getParentId) ? 'checked' : 'unchecked';
 }
@@ -212,8 +220,12 @@ export function selectFullSubtree(
 }
 
 /**
- * Zaznacza "dzieci węzła bez samego węzła" — wzorzec `subtreeRoots: [id], excluded: [id]`.
- * Dostępne wyłącznie w trybie multi + cascade='subtree'.
+ * Zaznacza dzieci węzła, NIE zmieniając własnego stanu zaznaczenia węzła — jeśli węzeł nie był
+ * zaznaczony, zostaje niezaznaczony (wzorzec `subtreeRoots: [id], excluded: [id]` — "tylko
+ * dzieci"); jeśli już był zaznaczony (wprost albo przez pokrycie od przodka), zostaje zaznaczony
+ * nadal — akcja wtedy sprowadza się do dociągnięcia pełnego pokrycia jego poddrzewa
+ * (`selectFullSubtree`), bez wymuszania na nim wykluczenia. Dostępne wyłącznie w trybie
+ * multi + cascade='subtree'.
  */
 export function setDescendantsOnly(
   id: string,
@@ -222,11 +234,61 @@ export function setDescendantsOnly(
   getParentId: ErpTreeParentResolver,
 ): ErpTreeSelectionValue {
   if (cascade !== 'subtree') return value;
+
+  if (isNodeIncluded(id, value, cascade, getParentId)) {
+    return selectFullSubtree(id, value, cascade, getParentId);
+  }
+
   const roots = new Set(value.subtreeRoots);
   const excluded = new Set(value.excluded);
   roots.add(id);
   excluded.add(id);
   return normalize({ ids: [], subtreeRoots: [...roots], excluded: [...excluded] }, cascade, getParentId);
+}
+
+/** Zwraca DIRECT dzieci węzła, albo `null` gdy nie wszystkie są jeszcze znane (np. stronicowanie
+ * server, doładowana tylko część strony) — w tym wypadku wołający nie powinien zgadywać. */
+export type ErpTreeChildrenResolver = (parentId: string) => readonly string[] | null;
+
+/**
+ * Po ręcznym odznaczeniu węzła sprawdza, czy jego rodzic — jeśli jest samoreferencyjnym
+ * wzorcem „poddrzewo X bez samego X” (`subtreeRoots: [X], excluded: [X]`, patrz `setDescendantsOnly`)
+ * — stracił przez to CAŁE pokrycie: każde jego bezpośrednie dziecko wylądowało w `excluded`.
+ * W takim wypadku deskryptor formalnie nadal ma X w `subtreeRoots`, więc `getNodeState` pokazywałby
+ * dla X 'indeterminate', mimo że realnie nic w jego poddrzewie nie jest już zaznaczone (skoro
+ * KAŻDE bezpośrednie dziecko blokuje pokrycie dla siebie i swoich potomków, całe poddrzewo X
+ * jest puste — nie trzeba schodzić głębiej niż jeden poziom, żeby to stwierdzić).
+ *
+ * Usuwa wtedy X z `subtreeRoots`; `normalize` sam posprząta osierocone wpisy `excluded` (X
+ * i jego dzieci przestają być czymkolwiek pokryte, więc przestają być potrzebne).
+ *
+ * Wymaga `getChildrenIds` zwracającego PEŁNĄ, znaną listę dzieci rodzica — przy niepełnym
+ * stronicowaniu (server mode, nie wszystkie strony doładowane) zwróć `null` i funkcja nie
+ * ingeruje (nie da się bezpiecznie stwierdzić „wszystkie dzieci wykluczone” bez znajomości
+ * wszystkich dzieci).
+ */
+export function collapseCarvedOutAncestor(
+  uncheckedId: string,
+  value: ErpTreeSelectionValue,
+  cascade: ErpTreeCascadeMode,
+  getParentId: ErpTreeParentResolver,
+  getChildrenIds: ErpTreeChildrenResolver,
+): ErpTreeSelectionValue {
+  if (cascade !== 'subtree') return value;
+
+  const parentId = getParentId(uncheckedId);
+  if (!parentId) return value;
+
+  const roots = new Set(value.subtreeRoots);
+  const excluded = new Set(value.excluded);
+  if (!roots.has(parentId) || !excluded.has(parentId)) return value;
+
+  const children = getChildrenIds(parentId);
+  if (!children || children.length === 0) return value;
+  if (!children.every((childId) => excluded.has(childId))) return value;
+
+  roots.delete(parentId);
+  return normalize({ ids: [...value.ids], subtreeRoots: [...roots], excluded: [...excluded] }, cascade, getParentId);
 }
 
 /**
@@ -245,6 +307,12 @@ export function normalize(
 
   const roots = new Set(value.subtreeRoots);
   for (const r of [...roots]) {
+    // Węzeł jednocześnie będący korzeniem i wykluczeniem to wzorzec „tylko dzieci"
+    // (`setDescendantsOnly`) — mimo że przodek już go pokrywa, NIE jest redundantny: to jego
+    // własny wpis w `roots` utrzymuje pokrycie JEGO dzieci. Pokrycie od przodka zatrzymuje się
+    // na wykluczeniu samego r (patrz `resolveAncestorCoverage`), więc usunięcie r z `roots`
+    // odcięłoby całe jego poddrzewo od pokrycia, zamiast tylko odznaczyć r.
+    if (value.excluded.includes(r)) continue;
     if (getAncestorChain(r, getParentId).some((a) => roots.has(a))) {
       roots.delete(r);
     }

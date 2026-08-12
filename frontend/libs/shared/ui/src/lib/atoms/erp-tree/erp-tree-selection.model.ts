@@ -418,6 +418,67 @@ export type ErpTreeDescendantCountResolver = (id: string) => number | undefined;
  * Zwraca `null`, gdy któregoś `descendantCount` nie da się ustalić — wywołujący powinien
  * wtedy spaść do przybliżenia (np. `countMarks`), zamiast pokazać błędną liczbę.
  */
+/**
+ * Grupuje płaski zbiór znaczników w las uporządkowany relacją przodek/potomek (przez
+ * `getAncestorChain`) — dzieli je na `topLevel` (znaczniki bez żadnego innego znacznika
+ * po drodze do korzenia) i `childrenOfMark` (bezpośrednie "dzieci-znaczniki" każdego
+ * znacznika w tym lesie). Współdzielone przez `resolveSelectedItemCount` (las liczony
+ * globalnie) i `resolveSelectedDescendantCount` (las ograniczony do poddrzewa węzła).
+ */
+function buildMarkTree(
+  marks: ReadonlySet<string>,
+  getParentId: ErpTreeParentResolver,
+): { childrenOfMark: Map<string, string[]>; topLevel: string[] } {
+  const childrenOfMark = new Map<string, string[]>();
+  const topLevel: string[] = [];
+  for (const m of marks) {
+    const ancestorMark = getAncestorChain(m, getParentId).find((a) => marks.has(a));
+    if (ancestorMark) {
+      const siblings = childrenOfMark.get(ancestorMark) ?? [];
+      siblings.push(m);
+      childrenOfMark.set(ancestorMark, siblings);
+    } else {
+      topLevel.push(m);
+    }
+  }
+  return { childrenOfMark, topLevel };
+}
+
+/**
+ * Rekurencyjnie liczy realną liczbę zaznaczonych elementów pokrywanych przez znacznik `m`
+ * (siebie + poddrzewo), odejmując/dodając wkład zagnieżdżonych wyjątków/re-inkluzji
+ * względem domyślnego pokrycia `m`. Współdzielona przez `resolveSelectedItemCount` i
+ * `resolveSelectedDescendantCount` — patrz `buildMarkTree`.
+ */
+function computeMarkCount(
+  m: string,
+  roots: ReadonlySet<string>,
+  excluded: ReadonlySet<string>,
+  childrenOfMark: ReadonlyMap<string, string[]>,
+  getDescendantCount: ErpTreeDescendantCountResolver,
+): number | null {
+  const subtreeDefaultIncluded = roots.has(m);
+  const isExcluded = excluded.has(m);
+
+  let subtreeTotal = 0;
+  if (subtreeDefaultIncluded) {
+    const dc = getDescendantCount(m);
+    if (dc === undefined) return null;
+    subtreeTotal = dc;
+  }
+
+  for (const child of childrenOfMark.get(m) ?? []) {
+    const childDc = getDescendantCount(child);
+    if (childDc === undefined) return null;
+    const childDefaultCount = subtreeDefaultIncluded ? 1 + childDc : 0;
+    const childActual = computeMarkCount(child, roots, excluded, childrenOfMark, getDescendantCount);
+    if (childActual === null) return null;
+    subtreeTotal += childActual - childDefaultCount;
+  }
+
+  return (isExcluded ? 0 : 1) + subtreeTotal;
+}
+
 export function resolveSelectedItemCount(
   value: ErpTreeSelectionValue,
   cascade: ErpTreeCascadeMode,
@@ -431,47 +492,76 @@ export function resolveSelectedItemCount(
   const marks = new Set<string>([...roots, ...excluded]);
   if (marks.size === 0) return 0;
 
-  const childrenOfMark = new Map<string, string[]>();
-  const topLevel: string[] = [];
-  for (const m of marks) {
-    const ancestorMark = getAncestorChain(m, getParentId).find((a) => marks.has(a));
-    if (ancestorMark) {
-      const siblings = childrenOfMark.get(ancestorMark) ?? [];
-      siblings.push(m);
-      childrenOfMark.set(ancestorMark, siblings);
-    } else {
-      topLevel.push(m);
-    }
-  }
-
-  const compute = (m: string): number | null => {
-    const subtreeDefaultIncluded = roots.has(m);
-    const isExcluded = excluded.has(m);
-
-    let subtreeTotal = 0;
-    if (subtreeDefaultIncluded) {
-      const dc = getDescendantCount(m);
-      if (dc === undefined) return null;
-      subtreeTotal = dc;
-    }
-
-    for (const child of childrenOfMark.get(m) ?? []) {
-      const childDc = getDescendantCount(child);
-      if (childDc === undefined) return null;
-      const childDefaultCount = subtreeDefaultIncluded ? 1 + childDc : 0;
-      const childActual = compute(child);
-      if (childActual === null) return null;
-      subtreeTotal += childActual - childDefaultCount;
-    }
-
-    return (isExcluded ? 0 : 1) + subtreeTotal;
-  };
+  const { childrenOfMark, topLevel } = buildMarkTree(marks, getParentId);
 
   let total = value.ids.length;
   for (const m of topLevel) {
-    const c = compute(m);
+    const c = computeMarkCount(m, roots, excluded, childrenOfMark, getDescendantCount);
     if (c === null) return null;
     total += c;
+  }
+  return total;
+}
+
+/**
+ * Jak `resolveSelectedItemCount`, ale ograniczone do poddrzewa JEDNEGO węzła `id` (BEZ
+ * samego `id` — zgodnie z konwencją `descendantCount`, które też nie liczy siebie).
+ * Traktuje `id` jako niejawny "wirtualny znacznik": jego własny stan pokrycia
+ * (`isNodeIncluded`) kaskaduje w dół jako DOMYŚLNY stan wszystkiego poniżej, dokładnie
+ * tak jak zrobiłby to realny `subtreeRoot` — `baselineDc` to liczba, jaka wyszłaby, gdyby
+ * pod `id` nie było ŻADNYCH znaczników, a pętla po `topLevel` dokłada tę samą korektę
+ * delta (`actual - default`), której `computeMarkCount` używa już wewnętrznie dla
+ * zagnieżdżonych znaczników-dzieci.
+ *
+ * Zwraca `null`, gdy któregoś wymaganego `descendantCount` nie da się ustalić.
+ */
+export function resolveSelectedDescendantCount(
+  id: string,
+  value: ErpTreeSelectionValue,
+  cascade: ErpTreeCascadeMode,
+  getParentId: ErpTreeParentResolver,
+  getDescendantCount: ErpTreeDescendantCountResolver,
+): number | null {
+  if (cascade === 'none') {
+    let count = 0;
+    for (const markedId of value.ids) {
+      if (markedId !== id && getAncestorChain(markedId, getParentId).includes(id)) count++;
+    }
+    return count;
+  }
+
+  const roots = new Set(value.subtreeRoots);
+  const excluded = new Set(value.excluded);
+  const allMarks = new Set<string>([...roots, ...excluded]);
+
+  // Domyślny stan pokrycia, jaki DZIEDZICZĄ dzieci `id` — to NIE to samo, co
+  // `isNodeIncluded(id, ...)` (własne zaznaczenie samego `id`). Rozjeżdżają się dla
+  // wzorca „tylko dzieci" (`setDescendantsOnly`, `id` jednocześnie w `roots` i
+  // `excluded`): `id` samo jest wykluczone (isNodeIncluded=false), ale jego dzieci SĄ
+  // domyślnie pokryte, bo `id` nadal pełni funkcję subtreeRoot dla nich. Kolejność
+  // sprawdzania musi być identyczna jak w `resolveAncestorCoverage` (pokrycie od roots
+  // rozstrzyga PRZED wykluczeniem) — inaczej wzorzec „tylko dzieci" fałszywie zwraca 0
+  // zaznaczonych potomków, mimo że w UI widać je jako w pełni zaznaczone.
+  const childDefaultIncluded = roots.has(id) ? true : excluded.has(id) ? false : isNodeIncluded(id, value, cascade, getParentId);
+
+  const baselineDc = childDefaultIncluded ? getDescendantCount(id) : 0;
+  if (baselineDc === undefined) return null;
+
+  const marksBelowId = new Set(
+    [...allMarks].filter((m) => m !== id && getAncestorChain(m, getParentId).includes(id)),
+  );
+  if (marksBelowId.size === 0) return baselineDc;
+
+  const { childrenOfMark, topLevel } = buildMarkTree(marksBelowId, getParentId);
+
+  let total = baselineDc;
+  for (const m of topLevel) {
+    const mDc = getDescendantCount(m);
+    if (mDc === undefined) return null;
+    const defaultForM = childDefaultIncluded ? 1 + mDc : 0;
+    const actualForM = computeMarkCount(m, roots, excluded, childrenOfMark, getDescendantCount);
+    if (actualForM === null) return null;
+    total += actualForM - defaultForM;
   }
   return total;
 }

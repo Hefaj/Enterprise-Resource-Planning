@@ -10,6 +10,7 @@ import {
   normalize,
   parentResolverFromIndex,
   resolveCheckedIds,
+  resolveSelectedDescendantCount,
   resolveSelectedItemCount,
   selectFullSubtree,
   setDescendantsOnly,
@@ -451,5 +452,90 @@ describe('erp-tree-selection.model — resolveSelectedItemCount', () => {
 
   it('pusta selekcja liczy się jako 0', () => {
     expect(resolveSelectedItemCount(emptySelection(), 'subtree', getParentId, getDescendantCount)).toBe(0);
+  });
+});
+
+describe('erp-tree-selection.model — resolveSelectedDescendantCount', () => {
+  const DESCENDANT_COUNTS: Record<string, number> = {
+    elektronika: 4, // agd, pralki, zmywarki, rtv
+    agd: 2, // pralki, zmywarki
+    pralki: 0,
+    zmywarki: 0,
+    rtv: 0,
+    odziez: 1, // meska
+    meska: 0,
+  };
+  const getDescendantCount = (id: string) => DESCENDANT_COUNTS[id];
+
+  it('rodzic w pełni zaznaczony — liczy WSZYSTKICH potomków, BEZ samego węzła', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+
+    expect(resolveSelectedDescendantCount('elektronika', value, 'subtree', getParentId, getDescendantCount)).toBe(4);
+    expect(resolveSelectedDescendantCount('agd', value, 'subtree', getParentId, getDescendantCount)).toBe(2);
+    expect(resolveSelectedDescendantCount('pralki', value, 'subtree', getParentId, getDescendantCount)).toBe(0);
+  });
+
+  it('rodzic zaznaczony, jedno dziecko wykluczone — odejmuje całe jego poddrzewo', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    value = setNodeChecked('agd', false, value, 'subtree', getParentId);
+
+    // Z 4 potomków elektroniki (agd, pralki, zmywarki, rtv) zostaje tylko rtv.
+    expect(resolveSelectedDescendantCount('elektronika', value, 'subtree', getParentId, getDescendantCount)).toBe(1);
+    // 'agd' samo jest wykluczone — nic w jego poddrzewie nie jest zaznaczone.
+    expect(resolveSelectedDescendantCount('agd', value, 'subtree', getParentId, getDescendantCount)).toBe(0);
+  });
+
+  it('rodzic zaznaczony, dziecko wykluczone, wnuk re-included — dolicza z powrotem tylko jego poddrzewo', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    value = setNodeChecked('agd', false, value, 'subtree', getParentId);
+    value = setNodeChecked('pralki', true, value, 'subtree', getParentId);
+
+    // rtv + pralki = 2 (agd i zmywarki nadal wykluczone).
+    expect(resolveSelectedDescendantCount('elektronika', value, 'subtree', getParentId, getDescendantCount)).toBe(2);
+    // Tylko pralki z powrotem zaznaczone w poddrzewie agd.
+    expect(resolveSelectedDescendantCount('agd', value, 'subtree', getParentId, getDescendantCount)).toBe(1);
+  });
+
+  it('nic niezaznaczone — 0 dla dowolnego węzła', () => {
+    const value = emptySelection();
+    expect(resolveSelectedDescendantCount('elektronika', value, 'subtree', getParentId, getDescendantCount)).toBe(0);
+    expect(resolveSelectedDescendantCount('agd', value, 'subtree', getParentId, getDescendantCount)).toBe(0);
+  });
+
+  it('cascade none liczy zaznaczone id, których łańcuch przodków zawiera dany węzeł', () => {
+    const value = { ids: ['pralki', 'rtv', 'meska'], subtreeRoots: [], excluded: [] };
+    expect(resolveSelectedDescendantCount('elektronika', value, 'none', getParentId, getDescendantCount)).toBe(2);
+    expect(resolveSelectedDescendantCount('agd', value, 'none', getParentId, getDescendantCount)).toBe(1);
+    expect(resolveSelectedDescendantCount('odziez', value, 'none', getParentId, getDescendantCount)).toBe(1);
+  });
+
+  it('zwraca null, gdy descendantCount potrzebnego węzła jest nieznany', () => {
+    let value = emptySelection();
+    value = setNodeChecked('elektronika', true, value, 'subtree', getParentId);
+    expect(resolveSelectedDescendantCount('elektronika', value, 'subtree', getParentId, () => undefined)).toBeNull();
+  });
+
+  it('wzorzec "tylko dzieci" (setDescendantsOnly) — dzieci są w pełni zaznaczone, mimo że sam węzeł nie jest', () => {
+    // Zgłoszony bug: po "zaznacz tylko podkategorie" na 'agd' licznik dla 'agd' pokazywał 0,
+    // bo `isNodeIncluded('agd')` (własne zaznaczenie 'agd', zablokowane przez jego samowykluczenie)
+    // był mylnie używany jako domyślny stan pokrycia DZIECI — a te są realnie w pełni zaznaczone,
+    // bo 'agd' nadal pełni funkcję subtreeRoot dla nich (kolejność jak w `resolveAncestorCoverage`).
+    let value = emptySelection();
+    value = setDescendantsOnly('agd', value, 'subtree', getParentId);
+
+    expect(isNodeIncluded('agd', value, 'subtree', getParentId)).toBe(false);
+    expect(resolveSelectedDescendantCount('agd', value, 'subtree', getParentId, getDescendantCount)).toBe(2);
+  });
+
+  it('wzorzec "tylko dzieci" na przodku — pokrycie dociera do wnuków tak samo jak w resolveSelectedItemCount', () => {
+    let value = emptySelection();
+    value = setDescendantsOnly('elektronika', value, 'subtree', getParentId);
+
+    // elektronika samo nie jest zaznaczone, ale WSZYSCY jego potomkowie są (agd, pralki, zmywarki, rtv) = 4.
+    expect(resolveSelectedDescendantCount('elektronika', value, 'subtree', getParentId, getDescendantCount)).toBe(4);
+    expect(resolveSelectedDescendantCount('agd', value, 'subtree', getParentId, getDescendantCount)).toBe(2);
   });
 });

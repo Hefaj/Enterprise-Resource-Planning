@@ -1,0 +1,151 @@
+# Architektura frontendu
+
+Frontend to **Angular NX Monorepo** złożony z mikrofrontendów spinanych przez **Native Federation** (federacja modułów oparta o natywne ESM przeglądarki i Esbuild — nie mylić z Webpack Module Federation, mimo podobnego API). Ten dokument opisuje, jak to jest poukładane i dlaczego, z myślą o kimś, kto dołącza do projektu albo wraca do niego po przerwie.
+
+Skondensowana wersja dla agenta AI: [`.agents/rules/architektura-frontend.md`](../../.agents/rules/architektura-frontend.md).
+
+---
+
+## 1. Host i moduły — jak to się spina w przeglądarce
+
+Aplikacja składa się z jednego **hosta** i kilku **remote'ów**, każdy jako osobna aplikacja Angular, osobno budowana i serwowana:
+
+| Aplikacja | Rola | Port |
+|---|---|---|
+| `client` | Host — powłoka, routing najwyższego poziomu, layout | 4200 |
+| `catalog` | Remote — moduł katalogu produktów | 4201 |
+| `inventory` | Remote — moduł magazynu | 4202 |
+| `sales` | Remote — moduł sprzedaży | 4203 |
+| `dms` | Remote — zarządzanie dokumentami | 4204 |
+| `task-management` | Remote — zarządzanie zadaniami | 4205 |
+| `notification` | Remote — powiadomienia | 4206 |
+
+Kolejny nowy moduł dostaje pierwszy wolny port od 4207 wzwyż.
+
+Host **nie zna** remote'ów w czasie kompilacji — dowiaduje się o nich w runtime, z manifestu. Dzięki temu każdy moduł da się wdrożyć, przebudować i wersjonować niezależnie od reszty; host tylko je ładuje.
+
+### Sekwencja startu
+
+1. Przeglądarka ładuje `client` (host) na porcie 4200.
+2. `main.ts` hosta wywołuje `initFederation('/module-federation.manifest.json')` — pobiera manifest z adresami remotów i ich plikami `remoteEntry.json` (opis tego, co dany remote eksponuje).
+3. Po zainicjalizowaniu federacji następuje dynamiczny import `bootstrap.ts` i `bootstrapApplication(App, appConfig)`.
+4. `STARTUP.ts` (`APP_INITIALIZER`) odpytuje **każdy aktywny remote** o jego moduł `./contract` (przez `loadRemoteModule()`) i rejestruje z niego pozycje menu oraz identyfikatory modali — zanim użytkownik zobaczy pierwszy ekran, host już wie, jakie menu pokazać.
+5. Routing hosta (`@erp/client/contract`, plik `app.routes.ts`) leniwie ładuje trasy poszczególnych modułów przez `loadRemoteModule()` — kod modułu ściąga się dopiero, gdy użytkownik faktycznie wejdzie na jego trasę.
+
+Efekt: host startuje bez znajomości logiki biznesowej żadnego modułu — zna tylko manifest i kontrakt (`contract`), który każdy moduł musi wyeksponować.
+
+---
+
+## 2. Struktura katalogów
+
+```
+frontend/
+├── apps/
+│   ├── client/                              # HOST (port 4200)
+│   │   ├── public/module-federation.manifest.json  # rejestr remotów
+│   │   ├── src/main.ts                      # initFederation → bootstrap
+│   │   ├── src/bootstrap.ts                 # bootstrapApplication(App, appConfig)
+│   │   ├── src/app/app.config.ts            # providery, router
+│   │   ├── src/app/STARTUP.ts               # APP_INITIALIZER — ładuje menu z remotów
+│   │   ├── federation.config.mjs            # co host współdzieli/pomija
+│   │   └── vite.config.mts
+│   │
+│   └── modules/
+│       ├── catalog/  inventory/  sales/  dms/  task-management/  notification/
+│       │   └── (każdy: src/main.ts, main.mfe.ts, federation.config.mjs)
+│
+└── libs/
+    ├── client/                # biblioteki specyficzne dla hosta
+    │   ├── contract/          # routing hosta, REMOTE_MODULES_CONFIG
+    │   ├── feature/           # ShellLayout, Dashboard, Settings
+    │   ├── ui/  util/
+    │
+    ├── shared/                 # scope:shared — dostępne z każdego modułu
+    │   ├── ui/                 # komponenty TaigaUI / atomy wspólne
+    │   ├── auth/                # guardy, serwisy auth
+    │   └── data-access/         # BaseOrchestrator, IdentityMapStore, DataLoader, SignalR sync
+    │
+    └── modules/
+        └── MODULE_NAME/
+            ├── contract/       # routing + menu modułu, eksponowane przez Native Federation
+            ├── feature/        # smart components, RemoteEntry, strony
+            ├── ui/              # dumb komponenty prezentacyjne
+            ├── data-access/     # API clients (NSwag), orkiestratory, Signal Stores
+            └── util/            # helpery, modele, stałe
+```
+
+---
+
+## 3. Pięć warstw modułu
+
+Każdy moduł biznesowy (`libs/modules/MODULE_NAME/`) dzieli się na 5 bibliotek. Podział nie jest umowny — jest **wymuszony przez ESLint** (`@nx/enforce-module-boundaries`), więc próba importu w złą stronę wywala build, nie tylko code review.
+
+| Warstwa | Tag NX | Rola | Może importować |
+|---|---|---|---|
+| `contract` | `type:contract` | Routing (`remoteRoutes`), menu (`remoteMenu`), definicje modali. Jedyna warstwa eksponowana bezpośrednio przez Native Federation. | `feature`, `ui`, `auth`, `data-access`, `util`, `env` |
+| `feature` | `type:feature` | Smart components — logika, wstrzykiwanie serwisów, `RemoteEntry`. | `ui`, `data-access`, `util` |
+| `ui` | `type:ui` | Prezentacyjne (dumb) komponenty TaigaUI — tylko `@Input`/`@Output`, zero serwisów. | `ui`, `util` |
+| `data-access` | `type:data-access` | Klienci HTTP (NSwag), orkiestratory, Signal Stores. | `data-access`, `util` |
+| `util` | `type:util` | Helpery, modele, stałe — zero zależności od Angulara poza typami. | `util` |
+
+Kierunek zależności jest jednokierunkowy i zbiega się w `util`:
+
+```
+contract → feature → ui → util
+              ↓        ↑
+         data-access ──┘
+```
+
+`ui` **nigdy** nie zna `data-access` — komponent prezentacyjny dostaje dane przez `@Input`, nie wstrzykuje orkiestratora. To jest granica smart/dumb: jeśli komponent w `ui` chce wstrzyknąć serwis danych, to znak, że powinien być w `feature`.
+
+### Tagi NX
+
+Każdy projekt ma dwa tagi:
+
+- **`scope:MODULE_NAME`** — domena (`scope:catalog`, `scope:shared`, `scope:host`...). `scope:X` może importować tylko z `scope:shared` i `scope:X` — moduły nie widzą się nawzajem.
+- **`type:WARSTWA`** — warstwa techniczna z tabeli wyżej.
+
+`scope:shared` importuje tylko z `scope:shared`. Dzięki temu biblioteka współdzielona nigdy nie może przypadkiem zaciągnąć czegoś specyficznego dla jednego modułu.
+
+### Aliasy TS
+
+`@erp/MODULE_NAME/WARSTWA`, np. `@erp/catalog/feature`, `@erp/shared/data-access`. Każda biblioteka eksponuje tylko to, co jest w jej `index.ts` (public API) — reszta jest prywatna dla biblioteki.
+
+---
+
+## 4. Native Federation — współdzielenie zależności i HMR
+
+`federation.config.mjs` (osobny w hoście i w każdym remote'cie) decyduje, co jest `shared` (jedna kopia w runtime, dzielona między hostem a remote'ami) a co jest bundlowane inline z każdą aplikacją osobno.
+
+Domyślnie `shareAll()` rejestruje **wszystkie** biblioteki workspace'u jako `shared` — łącznie z wewnętrznymi bibliotekami modułu (`@erp/catalog/feature`, `@erp/catalog/data-access`, itd.). To ma kosztowny efekt uboczny: Native Federation pre-bundluje je do osobnych plików (np. `_erp_catalog_feature.js`), które **nie są objęte Vite HMR** — zmiana w takiej bibliotece nie odświeży się w przeglądarce, trzeba ręcznie restartować dev server.
+
+**Dlatego** każdy moduł musi jawnie dodać swoje **własne** wewnętrzne biblioteki do tablicy `skip` w `federation.config.mjs` — wtedy trafiają do bundla inline i HMR działa normalnie.
+
+| Biblioteka | Shared? | HMR? | Uzasadnienie |
+|---|---|---|---|
+| `@erp/MODULE_NAME/{feature,data-access,ui,util}` | ❌ `skip` | ✅ tak | Używane tylko przez ten jeden moduł — nie ma sensu ich współdzielić między aplikacjami |
+| `@erp/client/{feature,contract,ui,util}` | ❌ `skip` | ✅ tak | Używane tylko przez hosta |
+| `@erp/shared/*` | ✅ shared | ❌ nie | Współdzielone między hostem i wszystkimi remote'ami — restart wymagany po zmianie |
+| `@angular/*`, `rxjs`, `@taiga-ui/*` | ✅ shared | ❌ nie | Zależności zewnętrzne — jedna kopia w runtime dla wszystkich aplikacji |
+
+Konsekwencja praktyczna: jeśli edytujesz coś w `libs/shared/**` i zmiana się nie pojawia, to nie bug — zrestartuj dev server. Jeśli edytujesz coś w `libs/modules/MODULE_NAME/**` i HMR nie działa, sprawdź najpierw, czy ta biblioteka faktycznie jest w `skip` w `federation.config.mjs` tego modułu.
+
+---
+
+## 5. Konwencje
+
+- **Standalone Components** domyślnie — bez `NgModule`.
+- **Signal-based state** — preferowane nad `Observable` + ręczna subskrypcja w nowym kodzie; przy refaktorze starego kodu migruj Observable → Signals.
+- **Control Flow**: `@if`, `@for`, `@switch` — nie stare `*ngIf`/`*ngFor`.
+- **TaigaUI v5+** to główna biblioteka komponentów UI. Nie zakładaj PrimeNG, chyba że kod legacy już go używa albo user explicite o to poprosi.
+- **Styling**: Tailwind CSS v4 do layoutu/spacingu/ogólnego stylowania + zmienne `--tui-*` / design tokens TaigaUI tam, gdzie Tailwind nie sięga (stylowanie wnętrza komponentów TaigaUI).
+- **Selektory**: `erp-*` w bibliotekach (`libs/`), `app-*` w aplikacjach (`apps/`).
+- **Package manager**: pnpm. Nie modyfikuj `package-lock.json` ani `node_modules` ręcznie.
+- Przed utworzeniem nowej biblioteki sprawdź, czy istniejąca może hostować komponent — nie mnóż bibliotek bez potrzeby.
+
+---
+
+## 6. Powiązane dokumenty
+
+- [Orkiestratory (`data-access`)](./orchestrators.md) — jak moduły w warstwie `data-access` pobierają, cache'ują i wzbogacają dane agregatów.
+- Przepisy zadaniowe (nowy moduł, nowy modal, nowy atom UI, TaigaUI) — zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md), pełna treść w `.agents/rules/*.md` i `.agents/skills/*`.

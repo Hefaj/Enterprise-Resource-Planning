@@ -2,7 +2,7 @@
 
 Ten plik ma Cię nauczyć **rozumieć** orkiestrator, nie tylko go skopiować. Zanim napiszesz kod, sprawdź czy w danym module nie ma już podobnego orkiestratora (np. `catalog-category.orchestrator.ts`) — kopiuj strukturę stamtąd, dopasowując do własnego agregatu.
 
-Pełne, rozwinięte wyjaśnienie z uzasadnieniem (dla człowieka): [`doc/frontend/orchestrators.md`](../../doc/frontend/orchestrators.md).
+Pełne, rozwinięte wyjaśnienie z uzasadnieniem (dla człowieka): [`docs/frontend/orchestrators.md`](../../docs/frontend/orchestrators.md).
 
 ---
 
@@ -183,7 +183,17 @@ private get _categorySiblingOrchestrator(): CatalogCategoryOrchestrator {
 > [!TIP]
 > **Dobre praktyki lintera:** jeśli `ViewModel` nie dodaje żadnych pól względem `Dto`, zdefiniuj go jako alias typu (`export type JobVM = JobDto;`), nie pusty interfejs (`@typescript-eslint/no-empty-object-type`). W `mapToViewModel`, jeśli nie ma zależności do zmapowania, pomiń parametr `resolvedDeps`, żeby uniknąć `@typescript-eslint/no-unused-vars`.
 
-### 3.7 Komendy (mutacje)
+### 3.7 Dane hierarchiczne (drzewa) — wyspecjalizowane metody odczytu poza search/get
+
+Gdy agregat ma naturę drzewa (kategorie, struktura organizacyjna, BOM) i UI potrzebuje paginacji per-węzeł albo wyszukiwania z torem przodków, płaski `search(filters) → uuid[]` tego nie wyrazi. To **nie jest wyjątek od orkiestratora** — dodaj zwykłe publiczne `async` metody na tym samym orkiestratorze, wołające dedykowane endpointy (np. `GetXChildren`, `SearchXTree`), zamiast tworzyć osobny serwis obok. Wzorzec (patrz `catalog-category.orchestrator.ts`, metody `getCategoryTreeChildrenAsync`/`searchCategoryTreeAsync`):
+
+- każdy zwrócony węzeł idzie przez `this.identityMap.set(dto)` — inaczej dane z drzewa i dane z normalnego `loadAsync` dla tego samego UUID mogą się rozjechać;
+- mapowanie DTO→VM idzie przez istniejące `mapToViewModel`, nie przez ręczne złożenie obiektu;
+- rozszerzony VM (np. `CategoryTreeNodeVM`) dokłada tylko pola specyficzne dla węzła (`hasChildren`, `childCount`...) i **rozszerza** zwykły VM (kowariancja z 3.6), nie zastępuje go.
+
+Rozwinięcie z pełnym przykładem: [`docs/frontend/orchestrators.md`](../../docs/frontend/orchestrators.md), sekcja 5.
+
+### 3.8 Komendy (mutacje)
 
 Masowe operacje/komendy to publiczne metody `async` na orkiestratorze: wywołanie API → rejestracja zadania w `JobService` → obsługa błędu przez `addError()`.
 
@@ -216,7 +226,7 @@ public async setPriceMultiple(command: BatchCommand, queueID?: string): Promise<
 6. `mapToViewModel(dto, resolvedDeps)` — czysta funkcja, zero efektów ubocznych.
 7. Jeśli są powiązania: `resolveEagerDependencies` (async, zbiera UUID-y i woła `loadAsync` sąsiadów) + `_resolveCurrentDeps` (sync, czyta z cache sąsiadów). Jeśli brak powiązań: użyj `LoadOptions`, pomiń obie metody.
 8. Zależności do sąsiednich orkiestratorów wstrzykuj leniwie przez `Injector` (sekcja 3.5).
-9. Komendy jako publiczne `async` metody wg wzorca z 3.7.
+9. Komendy jako publiczne `async` metody wg wzorca z 3.8.
 
 ## 5. Częste błędy do unikania
 
@@ -229,6 +239,6 @@ public async setPriceMultiple(command: BatchCommand, queueID?: string): Promise<
 
 ## Zobacz też
 
-- Pełne wyjaśnienie z uzasadnieniem: [`doc/frontend/orchestrators.md`](../../doc/frontend/orchestrators.md)
+- Pełne wyjaśnienie z uzasadnieniem: [`docs/frontend/orchestrators.md`](../../docs/frontend/orchestrators.md)
 - Implementacja bazowa: [`base-orchestrator.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts), [`identity-map.store.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/identity-map.store.ts), [`data-loader.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/data-loader.ts), [`orchestrator.types.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/orchestrator.types.ts)
 - Przykład najbardziej złożonego orkiestratora w repo: [`catalog-product.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/catalog-product.orchestrator.ts)

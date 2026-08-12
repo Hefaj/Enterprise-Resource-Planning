@@ -10,7 +10,9 @@ Orkiestrator to serwis Angularowy (singleton, `providedIn: 'root'`), który jest
 
 Bazowa implementacja: [`base-orchestrator.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts). Każdy orkiestrator dziedziczy z `BaseOrchestrator<TDto, TViewModel, TFilters, TLoadOptions>`.
 
-Przykład referencyjny w tym dokumencie: `CatalogProductOrchestrator` ([`catalog-product.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/catalog-product.orchestrator.ts)), który wzbogaca produkt o kategorie, model, multimedia i gwarancje.
+Przykłady referencyjne w tym dokumencie: `CatalogProductOrchestrator` ([`catalog-product.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/catalog-product.orchestrator.ts)), który wzbogaca produkt o kategorie, model, multimedia i gwarancje, oraz `CatalogCategoryOrchestrator` ([`catalog-category.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/category/catalog-category.orchestrator.ts)) — sekcja 5, wzorzec dla danych hierarchicznych.
+
+Orkiestrator żyje w warstwie `data-access` — zobacz [architektura frontendu](./architecture.md) dla szerszego kontekstu (5 warstw modułu, Native Federation, granice ESLint).
 
 ---
 
@@ -256,7 +258,61 @@ protected readonly _rows = computed<ProductWarrantyVM[]>(() =>
 
 ---
 
-## 5. Komendy (mutacje)
+## 5. Wyspecjalizowane metody odczytu — gdy `search`/`get` nie wystarcza
+
+`search(filters) → uuidy` + `get(uuids) → agregaty` to **baseline** kontrakt dla odczytu po UUID — wystarcza, dopóki UI konsumuje agregat jako płaską listę/tabelę. Nie wystarcza, gdy kształt zapytania jest z natury inny niż "filtry → lista": dane hierarchiczne (drzewo kategorii, struktura organizacyjna, BOM), paginacja per-węzeł ("kolejna strona dzieci tego węzła"), wyszukiwanie z torem przodków (dopasowanie + ścieżka do korzenia, żeby UI mógł rozwinąć drzewo do właściwego miejsca).
+
+To **nie jest wyjątek od zasady orkiestratora** — to rozszerzenie tego samego wzorca o metody, których `TFilters`/`SharedSearchResponse` (płaski `filters → uuid[]`) nie potrafią wyrazić. Orkiestrator zostaje jedynym źródłem prawdy dla agregatu; zmienia się tylko *kształt* zapytania do API, nie właściciel danych.
+
+Referencyjna implementacja: [`catalog-category.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/category/catalog-category.orchestrator.ts), sekcja "Drzewo kategorii". Backend wystawia dla tego dwa dodatkowe endpointy obok zwykłego `search`/`get`: `GetCategoryChildren` (dzieci węzła, paginowane) i `SearchCategoryTree` (dopasowania + ich przodkowie).
+
+```typescript
+// catalog-category.orchestrator.ts
+private _toTreeNodeVM(node: CategoryTreeNodeDto): CategoryTreeNodeVM {
+  const dto: CategoryDto = { uuid: node.uuid, name: node.name, parentUuid: node.parentUuid };
+  this.identityMap.set(dto);              // ① nadal zapisuje przez identity map — jedno źródło prawdy
+  return {
+    ...this.mapToViewModel(dto, {}),       // ② nadal reużywa mapToViewModel — spójne wzbogacenie
+    hasChildren: node.hasChildren,
+    childCount: node.childCount,
+    descendantCount: node.descendantCount, // ③ VM rozszerzony o metadane specyficzne dla węzła drzewa
+  };
+}
+
+public async getCategoryTreeChildrenAsync(
+  parentUuid: string | null,
+  pageIndex: number,
+  pageSize: number,
+): Promise<{ nodes: CategoryTreeNodeVM[]; totalCount: number }> {
+  const { nodes, totalCount } = await firstValueFrom(
+    this._api.getCategoryChildren({ parentUuid: parentUuid ?? undefined, pageIndex, pageSize }),
+  );
+  return { nodes: (nodes ?? []).map(n => this._toTreeNodeVM(n)), totalCount: totalCount ?? 0 };
+}
+
+public async searchCategoryTreeAsync(
+  search: string,
+): Promise<{ matches: CategoryTreeNodeVM[]; ancestors: CategoryTreeNodeVM[]; totalCount: number }> {
+  const { matches, ancestors, totalCount } = await firstValueFrom(this._api.searchCategoryTree({ search }));
+  return {
+    matches: (matches ?? []).map(n => this._toTreeNodeVM(n)),
+    ancestors: (ancestors ?? []).map(n => this._toTreeNodeVM(n)),
+    totalCount: totalCount ?? 0,
+  };
+}
+```
+
+Trzy niezmienniki, których te metody muszą pilnować, żeby orkiestrator dalej był jedynym źródłem prawdy:
+
+1. **Każdy węzeł przechodzi przez `identityMap.set(dto)`.** Nie zwracaj DTO/VM zbudowanego z odpowiedzi API z pominięciem cache — inaczej dane z drzewa i dane z normalnego `loadAsync`/`get` dla tego samego UUID mogą się rozjechać (dwa niezależne obiekty dla jednego agregatu w tej samej sesji).
+2. **Mapowanie DTO→VM idzie przez `mapToViewModel`, nie przez ręczne złożenie obiektu.** `CategoryTreeNodeVM` dokłada tylko pola, których nie ma w `CategoryVM` (`hasChildren`, `childCount`, `descendantCount`) — resztę (np. rozwiązany `parent`) dostaje za darmo z tej samej ścieżki co zwykły odczyt.
+3. **`CategoryTreeNodeVM` rozszerza `CategoryVM`, nie zastępuje go innym, niezwiązanym typem.** Konsument, który dostał węzeł z drzewa, może go użyć wszędzie tam, gdzie oczekiwany jest zwykły `CategoryVM` — zgodnie z zasadą kowariancji z sekcji 4.
+
+Kiedy sięgać po ten wzorzec: gdy widok (np. `erp-tree` / `erp-tree-picker`) potrzebuje paginacji per-węzeł albo wyszukiwania z kontekstem hierarchii, a nie da się tego wyrazić jako pojedynczy płaski `SearchXRequest`. Metody dodajesz jako zwykłe publiczne `async` metody na tym samym orkiestratorze — bez tworzenia osobnego serwisu "TreeService" obok orkiestratora, bo wtedy powstają dwa niezależne źródła prawdy dla jednego agregatu.
+
+---
+
+## 6. Komendy (mutacje)
 
 Masowe operacje/komendy implementuje się jako publiczne metody `async` na orkiestratorze. Wzorzec: wywołanie API → rejestracja zadania w `JobService` → obsługa błędu przez `addError()`:
 

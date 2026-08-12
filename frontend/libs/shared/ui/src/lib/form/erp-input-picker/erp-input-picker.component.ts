@@ -38,6 +38,7 @@ import {
 } from '@taiga-ui/cdk';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { ErpDropdownMinWidthDirective } from '../../base/erp-dropdown-min-width.directive';
 import { SHARED_KEYS } from '../../translation/keys';
 import { ErpInputPickerConfig } from './erp-input-picker.types';
 import { noop, Subject, isObservable, firstValueFrom } from 'rxjs';
@@ -63,6 +64,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
     TuiChevron,
     TuiItem,
     ErpTranslatePipe,
+    ErpDropdownMinWidthDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -88,6 +90,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
         <tui-textfield
           multi
           tuiChevron
+          erpDropdownMinWidth
           [tuiTextfieldSize]="_size()"
           [tuiTextfieldCleaner]="hasMultiValue()"
           [class.erp-collapsed-multi]="isMultiCollapsed()"
@@ -117,6 +120,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
           @if (_virtualScroll(); as itemSize) {
             <tui-data-list
               *tuiDropdown
+              class="erp-input-picker-list"
               tuiMultiSelectGroup
               [size]="_size()"
               [emptyContent]="emptyTuiContent"
@@ -155,6 +159,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
           } @else {
             <tui-data-list
               *tuiDropdown
+              class="erp-input-picker-list"
               tuiMultiSelectGroup
               [size]="_size()"
               [emptyContent]="emptyTuiContent"
@@ -189,6 +194,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       } @else {
         <tui-textfield
           tuiChevron
+          erpDropdownMinWidth
           [tuiTextfieldSize]="_size()"
           [tuiTextfieldCleaner]="hasSingleValue()"
           (openChange)="onDropdownOpenChange($event)"
@@ -210,6 +216,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
           @if (_virtualScroll(); as itemSize) {
             <tui-data-list
               *tuiDropdown
+              class="erp-input-picker-list"
               [size]="_size()"
               [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
@@ -247,6 +254,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
           } @else {
             <tui-data-list
               *tuiDropdown
+              class="erp-input-picker-list"
               [size]="_size()"
               [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
@@ -319,6 +327,15 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+    }
+
+    /* Panel dropdownu: nigdy węższy niż input (wymusza to \`erpDropdownMinWidth\` na
+       tui-textfield), a \`min-width\` niżej to wygodny domyślny rozmiar dla wąskich inputów
+       (np. w panelu filtrów) — bez tego długie etykiety pozycji ucinały się bardziej niż
+       trzeba. Górny limit pilnuje sama Taiga (\`maxWidth\` liczone z viewportu przy
+       \`limitWidth: 'min'\`); powyżej dostępnej szerokości etykiety tnie \`.erp-input-picker-item\`. */
+    .erp-input-picker-list {
+      min-width: 32rem;
     }
 
     .erp-collapsed-multi ::ng-deep tui-textfield-item:not(:first-of-type) {

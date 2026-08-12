@@ -2,6 +2,7 @@ export * from './lib/base/erp-signal-utils';
 export * from './lib/base/erp-base-builder';
 export * from './lib/base/erp-translate.pipe';
 export * from './lib/base/erp-icon.types';
+export * from './lib/base/erp-dropdown-min-width.directive';
 
 // Form
 export * from './lib/form/erp-input';

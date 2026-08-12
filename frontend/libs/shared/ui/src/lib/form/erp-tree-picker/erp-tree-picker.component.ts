@@ -19,6 +19,7 @@ import { noop } from 'rxjs';
 
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { unwrapSignal, Translatable, MaybeSignal } from '../../base/erp-signal-utils';
+import { ErpDropdownMinWidthDirective } from '../../base/erp-dropdown-min-width.directive';
 import { SHARED_KEYS } from '../../translation/keys';
 import {
   ErpTreeBuilder,
@@ -46,6 +47,7 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
     TuiButtonX,
     ErpTranslatePipe,
     ErpTreeComponent,
+    ErpDropdownMinWidthDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -64,6 +66,7 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
 
     <div class="erp-tree-picker-wrapper">
       <tui-textfield
+        erpDropdownMinWidth
         [tuiTextfieldSize]="_size()"
         [tuiTextfieldCleaner]="false"
         [open]="isOpen()"
@@ -143,9 +146,21 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
       gap: 0.25rem;
     }
 
+    /* Panel dropdownu: nigdy węższy niż input (wymusza to \`erpDropdownMinWidth\`
+       na tui-textfield, patrz dyrektywa w komponencie) — \`width: 100%\` wypełnia realną
+       szerokość dropdownu, którą Taiga już wylicza jako max(min-width inputu, szerokość
+       potrzebna na treść). \`min-width\` niżej to tylko wygodny domyślny rozmiar dla wąskich
+       inputów — drzewo jest zwirtualizowane (wiersze \`position: absolute\`), więc CSS i tak
+       nie "widzi" długości etykiet, żeby realnie dopasować szerokość do treści. Górny limit
+       (żeby panel nie rozciągał się do granic viewportu przy bardzo szerokim inpucie) pilnuje
+       już sama Taiga (\`maxWidth\` liczone z viewportu przy \`limitWidth: 'min'\`) — dodatkowy,
+       węższy max-width tutaj tworzyłby pustą przestrzeń z prawej strony przy inputach
+       szerszych niż ten limit, więc go nie ustawiamy. Powyżej dostępnej szerokości etykiety
+       są ucinane z (...) przez \`.erp-tree-label\`. */
     .erp-tree-picker-panel {
       display: flex;
       width: 100%;
+      min-width: 32rem;
       height: 20rem;
       box-sizing: border-box;
       padding: 0;

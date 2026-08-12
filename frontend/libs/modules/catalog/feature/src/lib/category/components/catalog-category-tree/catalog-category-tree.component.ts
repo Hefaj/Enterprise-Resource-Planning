@@ -25,7 +25,6 @@ const ADAPTERS: ErpTreeNodeAdapters<CategoryTreeNodeVM> = {
 /**
  * Drzewo kategorii katalogu — smart component spinający atom `erp-tree` (tryb server,
  * leniwe doładowywanie dzieci + wyszukiwanie) z `CatalogCategoryOrchestrator`.
- * Dane dziś pochodzą z mocka w orkiestratorze — patrz komentarz przy jego metodach.
  */
 @Component({
   selector: 'erp-catalog-category-tree',

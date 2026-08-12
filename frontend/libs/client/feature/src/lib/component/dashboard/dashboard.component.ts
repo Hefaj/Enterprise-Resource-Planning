@@ -160,6 +160,19 @@ export class DashboardComponent {
   public readonly sections = DASHBOARD_SECTIONS;
   public readonly activeSection = signal<DashboardSectionId>('basic');
 
+  public readonly previewWidthPresets = [
+    { label: '320px', value: 320 },
+    { label: '375px', value: 375 },
+    { label: '768px', value: 768 },
+    { label: '1024px', value: 1024 },
+    { label: '100%', value: null },
+  ] as const;
+  public readonly previewWidth = signal<number | null>(null);
+
+  public setPreviewWidth(value: number | null): void {
+    this.previewWidth.set(value);
+  }
+
   public readonly inputControl = new FormControl('', [Validators.required]);
   public readonly inputConfig = ErpInputBuilder.create(b => b
     .setLabel('Test Input')

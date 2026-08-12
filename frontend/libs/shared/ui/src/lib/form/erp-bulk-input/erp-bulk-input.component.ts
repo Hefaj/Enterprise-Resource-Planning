@@ -16,6 +16,7 @@ import { TuiInputDirective } from '@taiga-ui/core/components/input';
 import { TuiTextareaComponent } from '@taiga-ui/kit';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { ErpDropdownMinWidthDirective } from '../../base/erp-dropdown-min-width.directive';
 import { SHARED_KEYS } from '../../translation/keys';
 import { ErpBulkInputConfig } from './erp-bulk-input.types';
 import { noop } from 'rxjs';
@@ -40,6 +41,7 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
     TuiDropdown,
     TuiTextareaComponent,
     ErpTranslatePipe,
+    ErpDropdownMinWidthDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -64,6 +66,7 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
 
     <div class="erp-bulk-input-wrapper">
       <tui-textfield
+        erpDropdownMinWidth
         [tuiTextfieldSize]="'m'"
         [tuiTextfieldCleaner]="false"
         [open]="isOpen()"
@@ -171,11 +174,16 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
       gap: 0.25rem;
     }
 
+    /* Panel dropdownu: nigdy węższy niż input (wymusza to \`erpDropdownMinWidth\` na
+       tui-textfield), a \`min-width\` niżej to wygodny domyślny rozmiar dla wąskich inputów
+       (np. w panelu filtrów) — bez tego textarea potrafiła być nieporęcznie wąska. Górny
+       limit pilnuje sama Taiga (\`maxWidth\` liczone z viewportu przy \`limitWidth: 'min'\`). */
     .erp-bulk-input-panel {
       display: flex;
       flex-direction: column;
       padding: 0.75rem;
       width: 100%;
+      min-width: 32rem;
       box-sizing: border-box;
       overflow-x: hidden;
     }

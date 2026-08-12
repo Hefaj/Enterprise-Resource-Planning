@@ -261,9 +261,9 @@ public static class CatalogMockData
     /// </summary>
     private static CategorySeed GenerateLargeSyntheticSubtree()
     {
-        const int level1Count = 5;
-        const int level2Count = 60;
-        const int level3Count = 30;
+        const int level1Count = 50;
+        const int level2Count = 600;
+        const int level3Count = 300;
 
         CategorySeed[] BuildLeaves(string pathPrefix)
         {
@@ -343,7 +343,6 @@ public static class CatalogMockData
 
             var hasManyWarranties = i < 5 || random.NextDouble() > 0.95;
             var numWarranties = hasManyWarranties ? random.Next(50, 101) : random.Next(0, 3);
-            Console.WriteLine($"i={i}, numWarranties={numWarranties}, Warranties.Count={Warranties.Count}");
             var productWarranties = Warranties.OrderBy(x => random.Next()).Take(numWarranties)
                 .Select(w => new ProductWarrantyDto(
                     w.Uuid,

@@ -342,8 +342,31 @@ public async setPriceMultiple(
 
 ---
 
+## 7. Checklist tworzenia nowego orkiestratora
+
+1. Sprawdź istniejący orkiestrator w tym samym module jako wzór strukturalny (np. `catalog-category.orchestrator.ts`).
+2. `@Injectable({ providedIn: 'root' })`, `extends BaseOrchestrator<TDto, TViewModel, TFilters, TLoadOptions>`.
+3. `signature` + `orchestratorConfig.signalrSignature` — unikalne, np. `'catalog.product'`.
+4. `fetchByUuids` / `searchByFilters` — deleguj do klienta NSwag.
+5. Zdefiniuj `XxxVM` w osobnym `xxx.view-model.ts` — `extends XxxDto`, wzbogacenia zgodnie z sekcją 4.
+6. `mapToViewModel(dto, resolvedDeps)` — czysta funkcja, zero efektów ubocznych.
+7. Jeśli są powiązania: `resolveEagerDependencies` (async, zbiera UUID-y i woła `loadAsync` sąsiadów) + `_resolveCurrentDeps` (sync, czyta z cache sąsiadów). Jeśli brak powiązań: użyj `LoadOptions`, pomiń obie metody.
+8. Zależności do sąsiednich orkiestratorów wstrzykuj leniwie przez `Injector` (sekcja 2, "Cykliczne zależności").
+9. Komendy jako publiczne `async` metody wg wzorca z sekcji 6.
+
+## 8. Częste błędy do unikania
+
+- Zduplikowane pole-kopia zamiast wzbogacenia elementu (sekcja 4).
+- Osobny model-adapter w `feature` (np. `XxxRow`) tylko po to, by dodać UUID rodzica do spłaszczonej listy — zamiast wzbogacić `ItemVM` o back-reference.
+- Resolver przyjmujący/zwracający typ innego agregatu zamiast samego UUID/własnego VM.
+- Ciężka logika albo wywołanie API wewnątrz `_resolveCurrentDeps` (musi być tanie i synchroniczne).
+- Tworzenie dedykowanego, pustego `XLoadOptions`, gdy wystarczy `LoadOptions`.
+- Bezpośrednie wstrzyknięcie sąsiedniego orkiestratora w konstruktorze zamiast leniwie przez `Injector` (ryzyko cyklu DI).
+- Tworzenie osobnego serwisu obok orkiestratora dla wyspecjalizowanych odczytów (np. drzew) zamiast dodania metod na tym samym orkiestratorze (sekcja 5).
+
+---
+
 ## Zobacz też
 
-- Skondensowana wersja tych zasad dla agenta AI: [`.agents/rules/tworzenie-orkiestratora.md`](../../.agents/rules/tworzenie-orkiestratora.md)
 - Implementacja bazowa: [`base-orchestrator.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts), [`orchestrator.types.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/orchestrator.types.ts)
 - Pełny przykład wzorca z sekcji 4: [`product.view-model.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/product.view-model.ts) (definicja `ProductWarrantyVM`), [`catalog-warranty.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/warranty/catalog-warranty.orchestrator.ts) (metoda rozwiązująca `resolveWarrantyVMs`)

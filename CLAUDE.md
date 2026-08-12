@@ -1,6 +1,6 @@
 # Enterprise Resource Planning — kontekst dla Claude
 
-Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe reguły leżą w `.agents/rules/*.md` i `.agents/skills/*` — poniżej reguły `always_on` są wciągnięte wprost, a reguły `manual` (przepisy na konkretne zadania) są tylko zaindeksowane. Gdy zadanie pasuje do wiersza w tabeli niżej, **przeczytaj wskazany plik przed rozpoczęciem pracy**.
+Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy zadaniowe leżą w `docs/frontend/*.md` i `.agents/skills/*` — poniżej jest ich skrót wciągnięty wprost, obowiązujący zawsze. Gdy zadanie pasuje do wiersza w tabeli niżej, **przeczytaj wskazany plik przed rozpoczęciem pracy** — zawiera dokładne komendy, szablony kodu i checklisty.
 
 ## Architektura (zawsze obowiązuje)
 
@@ -12,7 +12,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe reguły 
 - **Selektory**: `erp-*` w bibliotekach, `app-*` w aplikacjach.
 - **Native Federation HMR**: wewnętrzne biblioteki modułu (`@erp/MODULE_NAME/{feature,data-access,ui,util}`) muszą być w tablicy `skip` w `federation.config.mjs`, inaczej `shareAll()` je pre-bundluje i tracą Vite HMR. `@erp/shared/*` i zależności zewnętrzne są `shared` (bez HMR, wymagają restartu).
 - **Package manager**: pnpm.
-- Szczegóły (module-loaders, manifest, STARTUP.ts, REMOTE_MODULES_CONFIG) → `.agents/rules/architektura-frontend.md`.
+- Szczegóły (module-loaders, manifest, STARTUP.ts, REMOTE_MODULES_CONFIG) → [`docs/frontend/architecture.md`](docs/frontend/architecture.md).
 
 ## Standardy Angular (zawsze obowiązuje)
 
@@ -38,11 +38,11 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe reguły 
 
 | Zadanie | Plik |
 |---|---|
-| Nowy modal (lazy-loaded, przez `ErpModalService`) | `.agents/rules/nowy-modal.md` |
-| Nowy moduł — cz. 1: generacja NX, `project.json` hybrydowy (monolit/MFE), `federation.config.mjs`, `main.ts`/`main.mfe.ts` | `.agents/rules/nowy-modul-1-generacja.md` |
-| Nowy moduł — cz. 2: biblioteki, tłumaczenia, rejestracja w Client (manifest, routing, `REMOTE_MODULES_CONFIG`), ESLint, tsconfig, weryfikacja | `.agents/rules/nowy-modul-2-integracja.md` |
-| Orkiestrator w `data-access` (`BaseOrchestrator`, cache `IdentityMapStore`, SignalR, mapowanie DTO→ViewModel) | `.agents/rules/tworzenie-orkiestratora.md` |
-| Nowy atom UI wg wzorca "Single Config Builder" (`*.types.ts`/`*.builder.ts`/`*.component.ts`) | `.agents/rules/atomy.md` |
+| Nowy modal (lazy-loaded, przez `ErpModalService`) | [`docs/frontend/modals.md`](docs/frontend/modals.md) |
+| Nowy moduł — generacja NX, `project.json` hybrydowy (monolit/MFE), `federation.config.mjs`, rejestracja w Client, tłumaczenia, weryfikacja | [`docs/frontend/new-module.md`](docs/frontend/new-module.md) |
+| Orkiestrator w `data-access` (`BaseOrchestrator`, cache `IdentityMapStore`, SignalR, mapowanie DTO→ViewModel, wzorce dla drzew) | [`docs/frontend/orchestrators.md`](docs/frontend/orchestrators.md) |
+| Nowy atom UI wg wzorca "Single Config Builder" (`*.types.ts`/`*.builder.ts`/`*.component.ts`) | [`docs/frontend/atoms.md`](docs/frontend/atoms.md) |
+| Tłumaczenia — dodawanie kluczy, bootstrapping scope'u, DI shadowing | [`docs/frontend/translations.md`](docs/frontend/translations.md) |
 | Praca z komponentami TaigaUI (API, migracja z PrimeNG, dialogi, selecty, textfields) | `.agents/skills/taiga-ui/SKILL.md` |
 
 **Mapa portów**: client 4200, catalog 4201, inventory 4202, sales 4203, dms 4204, task-management 4205, notification 4206, nowy moduł → następny wolny.

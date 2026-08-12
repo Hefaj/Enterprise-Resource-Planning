@@ -1,8 +1,6 @@
 # Architektura frontendu
 
-Frontend to **Angular NX Monorepo** złożony z mikrofrontendów spinanych przez **Native Federation** (federacja modułów oparta o natywne ESM przeglądarki i Esbuild — nie mylić z Webpack Module Federation, mimo podobnego API). Ten dokument opisuje, jak to jest poukładane i dlaczego, z myślą o kimś, kto dołącza do projektu albo wraca do niego po przerwie.
-
-Skondensowana wersja dla agenta AI: [`.agents/rules/architektura-frontend.md`](../../.agents/rules/architektura-frontend.md).
+Frontend to **Angular NX Monorepo** złożony z mikrofrontendów spinanych przez **Native Federation** (federacja modułów oparta o natywne ESM przeglądarki i Esbuild — nie mylić z Webpack Module Federation, mimo podobnego API). Ten dokument opisuje, jak to jest poukładane i dlaczego — skrócona wersja jest wciągnięta wprost do [`CLAUDE.md`](../../CLAUDE.md) (sekcja "Architektura").
 
 ---
 
@@ -148,4 +146,5 @@ Konsekwencja praktyczna: jeśli edytujesz coś w `libs/shared/**` i zmiana się 
 ## 6. Powiązane dokumenty
 
 - [Orkiestratory (`data-access`)](./orchestrators.md) — jak moduły w warstwie `data-access` pobierają, cache'ują i wzbogacają dane agregatów.
-- Przepisy zadaniowe (nowy moduł, nowy modal, nowy atom UI, TaigaUI) — zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md), pełna treść w `.agents/rules/*.md` i `.agents/skills/*`.
+- [Nowy moduł](./new-module.md), [Modale](./modals.md), [Tłumaczenia](./translations.md), [Atomy UI](./atoms.md) — przepisy zadaniowe, zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md).
+- Praca z komponentami TaigaUI: [`.agents/skills/taiga-ui/SKILL.md`](../../.agents/skills/taiga-ui/SKILL.md).

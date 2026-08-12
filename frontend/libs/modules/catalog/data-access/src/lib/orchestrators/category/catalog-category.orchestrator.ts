@@ -175,12 +175,4 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
       totalCount: totalCount ?? 0,
     };
   }
-
-  public async resolveCategoryDescendantsAsync(uuids: string[]): Promise<string[]> {
-    const { uuids: resolvedUuids, truncated } = await firstValueFrom(this._api.resolveCategoryDescendants({ uuids }));
-    if (truncated) {
-      console.warn('[CatalogCategoryOrchestrator] resolveCategoryDescendants: wynik ucięty na limicie backendu.');
-    }
-    return resolvedUuids ?? [];
-  }
 }

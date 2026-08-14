@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Erp.BuildingBlocks.Api;
@@ -20,13 +21,29 @@ public static class ErpApiExtensions
     /// Rejestruje FastEndpoints, Swagger i CORS dla frontendowych mikrofrontendów.
     /// </summary>
     /// <param name="services">Kolekcja usług.</param>
+    /// <param name="serviceTitle">
+    /// Stabilna, jednowyrazowa nazwa serwisu (np. <c>"Catalog"</c>) — tytuł dokumentu Swagger,
+    /// z którego FastEndpoints wyprowadza wspólny tag dla endpointów bez jawnej grupy tagów.
+    /// NSwag generuje z tego tagu nazwę klienta (<c>{tag}Client</c>), więc jest to część
+    /// zamrożonego kontraktu z frontendem — świadomie parametr WYMAGANY, bez wartości domyślnej.
+    ///
+    /// Bez tego FastEndpoints pada z powrotem na nazwę zestawu Api (<c>Catalog.Api</c>),
+    /// co dokładnie tu się wydarzyło: restrukturyzacja Catalogu na warstwy w fazie 2 przemianowała
+    /// zestaw z <c>Catalog</c> na <c>Catalog.Api</c>, cicho zmieniając tag na „Catalog.Api” —
+    /// dopiero regeneracja klienta w fazie 5 przemianowała <c>CatalogClient</c> na
+    /// <c>Catalog_ApiClient</c> i wywaliła kompilację 4 orkiestratorów. Jawny, stabilny tytuł
+    /// odrywa nazwę w kontrakcie od nazwy zestawu .NET, więc kolejna restrukturyzacja projektu
+    /// tego już nie powtórzy.
+    /// </param>
     /// <param name="allowedOrigins">Dozwolone originy. Domyślnie porty dev hosta i remotów
     /// (4200–4210) — patrz mapa portów w <c>CLAUDE.md</c>.</param>
     public static IServiceCollection AddErpApi(
         this IServiceCollection services,
+        string serviceTitle,
         IEnumerable<string>? allowedOrigins = null)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(serviceTitle);
 
         var origins = allowedOrigins?.ToArray() ?? DefaultDevOrigins();
 
@@ -47,7 +64,10 @@ public static class ErpApiExtensions
         services.AddScoped<IExecutionContext, MutableExecutionContext>();
 
         services.AddFastEndpoints();
-        services.SwaggerDocument();
+        services.SwaggerDocument(o =>
+        {
+            o.DocumentSettings = settings => settings.Title = serviceTitle;
+        });
 
         services.AddCors(options =>
         {
@@ -63,9 +83,17 @@ public static class ErpApiExtensions
     }
 
     /// <summary>Podpina pipeline HTTP w kolejności wymaganej przez CORS i FastEndpoints.</summary>
-    public static WebApplication UseErpApi(this WebApplication app)
+    /// <param name="app">Aplikacja.</param>
+    /// <param name="serviceTitle">Ta sama wartość, co przekazana do <see cref="AddErpApi"/> —
+    /// wymuszona jawnie na endpoincie jako OpenAPI tag (<c>WithTags</c>), bo FastEndpoints
+    /// domyślnie wyprowadza tag dla dokumentu <c>Microsoft.AspNetCore.OpenApi</c>
+    /// (<c>/openapi/v1.json</c> — to on jest źródłem dla NSwag, nie dokument spod
+    /// <c>SwaggerDocument()</c>) z nazwy ZESTAWU Api, więc bez jawnego tagu ta sama pułapka
+    /// wraca przy każdej kolejnej restrukturyzacji projektu.</param>
+    public static WebApplication UseErpApi(this WebApplication app, string serviceTitle)
     {
         ArgumentNullException.ThrowIfNull(app);
+        ArgumentException.ThrowIfNullOrWhiteSpace(serviceTitle);
 
         app.UseCors(CorsPolicyName);
 
@@ -82,7 +110,7 @@ public static class ErpApiExtensions
                     name = name[..^"Endpoint".Length];
                 }
 
-                endpoint.Description(d => d.WithName(name));
+                endpoint.Description(d => d.WithName(name).WithTags(serviceTitle));
             };
         });
 

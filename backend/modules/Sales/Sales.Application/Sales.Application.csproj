@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Sales.Domain/Sales.Domain.csproj" />
+    <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Application/Erp.BuildingBlocks.Application.csproj" />
+    <!-- Wyłącznie dla PagedRequest/SearchResponse/IAggregateCommand — część zamrożonego kontraktu API. -->
+    <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Api/Erp.BuildingBlocks.Api.csproj" />
+  </ItemGroup>
+
+</Project>

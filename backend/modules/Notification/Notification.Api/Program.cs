@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Wspólny bootstrap HTTP: FastEndpoints, Swagger, CORS dla mikrofrontendów (z AllowCredentials
 // wymaganym przez negocjację SignalR).
-builder.Services.AddErpApi();
+builder.Services.AddErpApi("Notification");
 
 // Baza repliki zadań + zapytania + mapa sygnatur SignalR.
 builder.Services.AddNotificationInfrastructure(builder.Configuration);
@@ -38,7 +38,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseErpApi();
+app.UseErpApi("Notification");
 
 app.MapHub<SyncHub>(SyncHub.Path);
 

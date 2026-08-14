@@ -21,6 +21,10 @@ public static class AggregateSignatures
 
     public const string NotificationJob = "notification.job";
 
+    /// <summary>Jedyny agregat modułu Sales, dodany jako sprawdzian szablonu (faza 5) —
+    /// bez odpowiednika po stronie frontendu, dopóki Sales nie dostanie realnej funkcji.</summary>
+    public const string SalesCustomer = "sales.customer";
+
     /// <summary>
     /// Kanał statusów zadań, osobny od <see cref="NotificationJob"/> i celowo NIE nazwany
     /// wg konwencji <c>{moduł}.{agregat}</c>.
@@ -43,6 +47,7 @@ public static class AggregateSignatures
         CatalogMultimedia,
         CatalogWarranty,
         NotificationJob,
+        SalesCustomer,
         Jobs,
     };
 }

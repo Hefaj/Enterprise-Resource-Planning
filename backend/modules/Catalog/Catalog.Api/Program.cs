@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Wspólny bootstrap HTTP: FastEndpoints, Swagger, CORS dla mikrofrontendów,
 // IClock i kontekst wykonania. Jedno miejsce dla wszystkich mikroserwisów.
-builder.Services.AddErpApi();
+builder.Services.AddErpApi("Catalog");
 
 // Baza, zapytania, dane startowe, mapa sygnatur SignalR.
 builder.Services.AddCatalogInfrastructure(builder.Configuration);
@@ -49,6 +49,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseErpApi();
+app.UseErpApi("Catalog");
 
 await app.RunAsync();

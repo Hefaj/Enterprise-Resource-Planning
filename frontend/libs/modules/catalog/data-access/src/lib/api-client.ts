@@ -60,6 +60,14 @@ export interface ICatalogClient {
     /**
      * @return OK
      */
+    jobCancel(body: JobControlRequest): Observable<JobCancelResult>;
+    /**
+     * @return OK
+     */
+    jobRetryFailed(body: JobControlRequest): Observable<JobRetryFailedResult>;
+    /**
+     * @return OK
+     */
     getCategory(body: GetCategoryRequest): Observable<CategoryDto[]>;
     /**
      * @return OK
@@ -633,6 +641,114 @@ export class CatalogClient implements ICatalogClient {
     /**
      * @return OK
      */
+    jobCancel(body: JobControlRequest): Observable<JobCancelResult> {
+        let url_ = this.baseUrl + "/job/cancel";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processJobCancel(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processJobCancel(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JobCancelResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JobCancelResult>;
+        }));
+    }
+
+    protected processJobCancel(response: HttpResponseBase): Observable<JobCancelResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JobCancelResult;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    jobRetryFailed(body: JobControlRequest): Observable<JobRetryFailedResult> {
+        let url_ = this.baseUrl + "/job/retry-failed";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processJobRetryFailed(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processJobRetryFailed(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JobRetryFailedResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JobRetryFailedResult>;
+        }));
+    }
+
+    protected processJobRetryFailed(response: HttpResponseBase): Observable<JobRetryFailedResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JobRetryFailedResult;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
     getCategory(body: GetCategoryRequest): Observable<CategoryDto[]> {
         let url_ = this.baseUrl + "/category/getCategory";
         url_ = url_.replace(/[?&]$/, "");
@@ -935,6 +1051,28 @@ export interface GetWarrantyRequest {
     [key: string]: any;
 }
 
+/** Wynik anulowania — status zwrócony od razu, bez czekania na runner. */
+export interface JobCancelResult {
+    jobUuid?: string;
+    status?: string;
+
+    [key: string]: any;
+}
+
+/** Żądanie sterujące zadaniem masowym po jego identyfikatorze. */
+export interface JobControlRequest {
+    jobUuid?: string;
+
+    [key: string]: any;
+}
+
+/** Wynik ponowienia — identyfikator nowo utworzonego zadania. */
+export interface JobRetryFailedResult {
+    newJobUuid?: string;
+
+    [key: string]: any;
+}
+
 export interface ModelDto {
     uuid: string;
     name: string;
@@ -970,8 +1108,8 @@ export interface ProductDto {
     available: boolean;
     ean: string;
     image: string | undefined;
-    attr_Weight?: string;
-    attr_Color?: string;
+    attr_Weight: string;
+    attr_Color: string;
 
     [key: string]: any;
 }
@@ -1080,9 +1218,14 @@ export interface SortOption {
     [key: string]: any;
 }
 
+/** Deskryptor dowolnego zaznaczenia w drzewie — odpowiednik `ErpTreeSelectionValue` z frontendu (`erp-tree-selection.model.ts`). Zamiast płaskiej listy uuid (nieskalowalnej — zaznaczenie korzenia z tysiącami potomków nie może wymagać wypisania ich wszystkich w request body), request niesie deskryptor: pojedyncze znaczniki (List&lt;Guid&gt; TreeSelectionRequest.Ids) obok poddrzew z wyjątkami (List&lt;Guid&gt; TreeSelectionRequest.SubtreeRoots/List&lt;Guid&gt; TreeSelectionRequest.Excluded). Rozstrzygnięcie przynależności konkretnego węzła do zaznaczenia wymaga znajomości hierarchii (mapy dziecko→rodzic) — patrz TreeSelectionResolver. Wzorcowy request-side model do wielokrotnego użycia przy innych filtrach drzewiastych (kategorie, struktura magazynów, drzewo zadań itp.) — nie tworzyć ad-hoc odpowiedników per moduł. */
 export interface TreeSelectionRequest {
+    /** Niezależnie zaznaczone węzły — zawsze włączone, bez względu na SubtreeRoots/Excluded. */
     ids?: string[];
+    /** Korzenie zaznaczonych poddrzew (kaskadowo obejmują potomków). */
     subtreeRoots?: string[];
+    /** Wykluczenia (carve-outs) wewnątrz zaznaczonych poddrzew — w tym wzorzec
+            „poddrzewo X bez samego X”: `SubtreeRoots: [X], Excluded: [X]`. */
     excluded?: string[];
 
     [key: string]: any;

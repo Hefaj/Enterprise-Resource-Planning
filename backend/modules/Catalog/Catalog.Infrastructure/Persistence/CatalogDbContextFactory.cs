@@ -12,7 +12,7 @@ namespace Catalog.Infrastructure.Persistence;
 /// migracje da się wygenerować offline, bez podniesionej infrastruktury.
 ///
 /// Łańcuch połączenia bierze ze zmiennej <c>CATALOG_CONNECTION_STRING</c>, a w jej braku
-/// używa domyślnych ustawień z <c>backend/docker-compose.yml</c>.
+/// używa domyślnych ustawień z <c>backend/podman-compose.yml</c>.
 /// </summary>
 public sealed class CatalogDbContextFactory : IDesignTimeDbContextFactory<CatalogDbContext>
 {

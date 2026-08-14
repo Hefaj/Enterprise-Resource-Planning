@@ -1,0 +1,44 @@
+name: erp
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: erp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: erp
+      POSTGRES_PASSWORD: erp
+      # Jedna baza, schemat per moduł (catalog, notification, sales) — schematy zakłada
+      # migracja każdego modułu, nie ten plik.
+      POSTGRES_DB: erp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp -d erp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: erp-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: erp
+      RABBITMQ_DEFAULT_PASS: erp
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # management UI — http://localhost:15672 (erp/erp)
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  rabbitmq-data:

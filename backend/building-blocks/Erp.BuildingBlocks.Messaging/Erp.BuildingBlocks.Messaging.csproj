@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../Erp.BuildingBlocks.Contracts/Erp.BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="../Erp.BuildingBlocks.Application/Erp.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="../Erp.BuildingBlocks.Persistence/Erp.BuildingBlocks.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WolverineFx" />
+    <PackageReference Include="WolverineFx.RabbitMQ" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+    <PackageReference Include="WolverineFx.Postgresql" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="../Catalog.Application/Catalog.Application.csproj" />
+    <!--
+      Api referencuje Infrastructure WYŁĄCZNIE po to, żeby złożyć kontener DI w Program.cs
+      (kompozycja). Kod endpointów sięga do abstrakcji z Application, nigdy do EF bezpośrednio.
+    -->
+    <ProjectReference Include="../Catalog.Infrastructure/Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Api/Erp.BuildingBlocks.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FastEndpoints" />
+    <PackageReference Include="FastEndpoints.Swagger" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+
+</Project>

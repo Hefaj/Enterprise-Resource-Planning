@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Domena zna WYŁĄCZNIE fundament domenowy. Brak tu EF Core, FastEndpoints i Wolverine'a
+      jest wymuszony testem w Erp.ArchitectureTests, nie tylko konwencją.
+    -->
+    <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Domain/Erp.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

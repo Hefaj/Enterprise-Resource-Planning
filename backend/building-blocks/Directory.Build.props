@@ -1,0 +1,22 @@
+<Project>
+
+  <!-- Dziedziczenie z backend/Directory.Build.props (net10.0, nullable, CPM, warnings-as-errors). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      Pełny zestaw analizatorów CA włączony CELOWO tylko tutaj (i w nowych warstwach modułów),
+      nie globalnie — kod mockowy w modules/ idzie do wymiany w fazach 2–4 i generowałby
+      dziesiątki błędów bez wartości. BuildingBlocks to fundament używany przez wszystkie
+      mikroserwisy, więc tu rygor się opłaca.
+    -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Biblioteki fundamentu mają publiczne API konsumowane przez moduły — dokumentacja XML się przydaje. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591: brak komentarza XML dla publicznego typu — nie wymuszamy na każdym elemencie. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+</Project>

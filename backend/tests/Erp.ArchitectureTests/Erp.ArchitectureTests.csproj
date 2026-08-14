@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Kod testowy nie musi spełniać rygoru analizatorów fundamentu. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!--
+      xunit v3 uruchamia się na Microsoft.Testing.Platform, a nie na VSTest: każdy projekt
+      testowy jest samodzielnym programem, stąd OutputType=Exe. Bez tych dwóch właściwości
+      `dotnet test` buduje projekt, ale nie znajduje w nim ani jednego testu.
+    -->
+    <OutputType>Exe</OutputType>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Domain/Erp.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Contracts/Erp.BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Application/Erp.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Persistence/Erp.BuildingBlocks.Persistence.csproj" />
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Messaging/Erp.BuildingBlocks.Messaging.csproj" />
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Jobs/Erp.BuildingBlocks.Jobs.csproj" />
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Api/Erp.BuildingBlocks.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+</Project>

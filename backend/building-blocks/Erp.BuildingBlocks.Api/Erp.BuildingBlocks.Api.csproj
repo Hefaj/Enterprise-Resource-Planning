@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Web SDK jest tu potrzebny (a nie zwykły Microsoft.NET.Sdk), bo projekt korzysta
+    z typów ASP.NET Core: FastEndpoints, CORS, ProblemDetails.
+  -->
+  <PropertyGroup>
+    <UseArtifactsOutput>false</UseArtifactsOutput>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Erp.BuildingBlocks.Domain/Erp.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="../Erp.BuildingBlocks.Contracts/Erp.BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="../Erp.BuildingBlocks.Application/Erp.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="../Erp.BuildingBlocks.Persistence/Erp.BuildingBlocks.Persistence.csproj" />
+    <ProjectReference Include="../Erp.BuildingBlocks.Jobs/Erp.BuildingBlocks.Jobs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FastEndpoints" />
+    <PackageReference Include="FastEndpoints.Swagger" />
+  </ItemGroup>
+
+</Project>

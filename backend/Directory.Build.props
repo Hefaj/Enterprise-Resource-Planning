@@ -1,0 +1,37 @@
+<Project>
+
+  <!--
+    Wspólne ustawienia dla WSZYSTKICH projektów .NET w backendzie.
+    MSBuild wciąga ten plik automatycznie dla każdego .csproj poniżej `backend/`,
+    więc pojedynczy projekt nie powtarza TargetFramework ani analizatorów.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!--
+      Ostrzeżenie kompilatora to zwykle realny błąd — nie pozwalamy im gnić.
+      Pełny zestaw analizatorów CA (`latest-recommended`) jest CELOWO włączony tylko dla nowych
+      projektów, przez `building-blocks/Directory.Build.props` i props warstw modułowych —
+      na kodzie mockowym, który idzie do wymiany w fazach 2–4, dawał 27 błędów bez wartości.
+      Po usunięciu mocków podnieść tutaj.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    Central Package Management: wersje pakietów żyją wyłącznie w Directory.Packages.props,
+    a <PackageReference> w projektach podaje tylko Include. Bez tego przy kilkunastu
+    projektach wersje rozjeżdżają się po cichu.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+</Project>

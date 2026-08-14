@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../Erp.BuildingBlocks.Domain/Erp.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="../Erp.BuildingBlocks.Contracts/Erp.BuildingBlocks.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      CELOWO brak tu EF Core, Wolverine, FastEndpoints i czegokolwiek z ASP.NET.
+      Warstwa Application zna wyłącznie abstrakcje; ich implementacje żyją w Persistence,
+      Messaging i Api. Reguła jest egzekwowana testem w Erp.ArchitectureTests.
+    -->
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

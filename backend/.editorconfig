@@ -1,0 +1,9 @@
+root = false
+
+# Migracje EF Core są kodem GENEROWANYM przez `dotnet ef migrations add` i regenerowanym
+# przy każdej zmianie modelu. Poddawanie ich regułom pisanym dla kodu ręcznego kończy się
+# albo ręcznym poprawianiem pliku po każdej regeneracji, albo rozluźnieniem reguł w całym
+# projekcie — obie opcje są gorsze niż oznaczenie ich jako generowane.
+[**/Persistence/Migrations/**.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none

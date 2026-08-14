@@ -47,6 +47,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Nowy mikroserwis backendowy — 4 projekty Clean Architecture, `.sln`, `DbContext`, `Program.cs`, sygnatura SignalR | [`docs/backend/new-microservice.md`](docs/backend/new-microservice.md) |
 | Komenda/zapytanie CQRS w module backendowym (handler, `IUnitOfWork`, projekcje, sortowanie po whiteliście) | [`docs/backend/cqrs.md`](docs/backend/cqrs.md) |
 | Operacja masowa (bulk) — `BatchEndpointBase`, `job`/`job_item`, `BulkCommandRunner`, cancel/retry-failed | [`docs/backend/bulk-commands.md`](docs/backend/bulk-commands.md) |
+| Walidacja wsadowa — `IBatchRule`, `ValidationChain`, pre-check przed utworzeniem zadania masowego | [`docs/backend/batch-validation.md`](docs/backend/batch-validation.md) |
 | Zdarzenie domenowe / integracyjne, outbox, nowy konsument RabbitMQ | [`docs/backend/events-outbox.md`](docs/backend/events-outbox.md) |
 | Realtime SignalR — nowa sygnatura, grupy, koalescencja, resync | [`docs/backend/realtime-signalr.md`](docs/backend/realtime-signalr.md) |
 | Migracja EF, mapowanie agregatu, seed, drzewo/closure table | [`docs/backend/persistence-ef.md`](docs/backend/persistence-ef.md) |

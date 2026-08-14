@@ -21,6 +21,15 @@ public interface IProductQueries
     /// <summary>Identyfikatory produktów pasujących do filtra, bez stronicowania —
     /// używane przez operacje masowe do wyznaczenia zbioru celów.</summary>
     Task<List<Guid>> GetMatchingUuidsAsync(SearchProductRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Spośród podanych identyfikatorów zwraca te, które faktycznie istnieją jako produkty.
+    ///
+    /// Jedno zbiorcze zapytanie zamiast N osobnych <c>FindAsync</c> — używane przez
+    /// walidację wsadową (<c>ProductMustExistRule</c>), która musi odsiać nieistniejące cele
+    /// operacji masowej PRZED utworzeniem zadania, nie po jednym elemencie naraz.
+    /// </summary>
+    Task<List<Guid>> GetExistingUuidsAsync(IReadOnlyCollection<Guid> uuids, CancellationToken cancellationToken);
 }
 
 /// <summary>Odczyty kategorii, łącznie z widokami drzewiastymi.</summary>

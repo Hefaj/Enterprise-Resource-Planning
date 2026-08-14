@@ -169,6 +169,8 @@ z tego samego zapisu przez `AggregateChangeScanner`.
 
 ## 7. Zobacz też
 
+- [Walidacja wsadowa](./batch-validation.md) — pre-check PRZED utworzeniem zadania, dla reguł
+  zbiorczych (istnienie, duplikat), które kosztowałyby N zapytań przy walidacji per element
 - [CQRS — komendy i zapytania](./cqrs.md)
 - [Zdarzenia domenowe i outbox](./events-outbox.md)
 - [Synchronizacja w czasie rzeczywistym](./realtime-signalr.md)

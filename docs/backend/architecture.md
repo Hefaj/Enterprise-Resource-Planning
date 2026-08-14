@@ -28,6 +28,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Strona zapisu (komendy, `IUnitOfWork`) | ✅ | `AddErpMessaging<TContext>()` wołane w `Program.cs` Catalogu, Sales i Notification — rejestruje `IUnitOfWork` |
 | Domain events → outbox → RabbitMQ | ✅ | [`events-outbox.md`](./events-outbox.md) |
 | Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — `job/cancel`, `job/retry-failed` dodane w fazie 5 |
+| Walidacja wsadowa (pre-check reguł zbiorczych) | ✅ | [`batch-validation.md`](./batch-validation.md) — mechanizm wspólny, podpięty w Catalog (`ProductMustExistRule`) |
 | SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; backplane pod >1 instancję nieużywany lokalnie |
 | Middleware komend (walidacja, idempotencja, logowanie) | 📐 | Handler dziś sam woła `IUnitOfWork`; walidacja żyje wyłącznie w agregacie — patrz [`cqrs.md`](./cqrs.md#6-czego-jeszcze-nie-ma) |
 | Sales, Notification jako pełne moduły biznesowe | 🟡 | Struktura i szablon zweryfikowane (Sales/`Customer`); brak realnej logiki biznesowej poza sprawdzianem |

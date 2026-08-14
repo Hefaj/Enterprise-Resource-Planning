@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Erp.BuildingBlocks.Jobs;
+using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
 
 namespace Erp.BuildingBlocks.Api.Contracts;
@@ -32,6 +33,22 @@ public abstract class BatchEndpointBase<TCommand, TFilter> : Endpoint<BatchComma
     /// <summary>Nazwa typu komendy zapisywana w zadaniu; po niej runner odnajduje egzekutora.</summary>
     protected virtual string CommandType => typeof(TCommand).Name;
 
+    /// <summary>
+    /// Pre-check biznesowy uruchamiany PRZED utworzeniem zadania, na całym zbiorze celów naraz —
+    /// miejsce na reguły wsadowe (<see cref="IBatchRule{T}"/> / <see cref="ValidationChain{T}"/>)
+    /// w rodzaju „czy agregat istnieje”, „czy nie jest duplikatem” itp.
+    ///
+    /// Domyślnie no-op (pusty tracker), więc endpointy, które go nie potrzebują, nie zauważają
+    /// żadnej zmiany. Elementy oznaczone błędem trafiają do zadania od razu jako
+    /// <c>Failed</c> (patrz <see cref="Job.Create"/>) — nigdy nie są podejmowane przez
+    /// <c>BulkCommandRunner</c>, więc reguła płaci koszt JEDNEGO zbiorczego zapytania zamiast
+    /// N osobnych prób wykonania komendy, z których każda i tak by się nie powiodła.
+    /// </summary>
+    protected virtual Task<ValidationTracker> ValidateTargetsAsync(
+        IReadOnlyList<Guid> aggregateUuids,
+        CancellationToken ct)
+        => Task.FromResult(new ValidationTracker());
+
     public override async Task HandleAsync(BatchCommand<TCommand, TFilter> req, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(req);
@@ -44,10 +61,19 @@ public abstract class BatchEndpointBase<TCommand, TFilter> : Endpoint<BatchComma
             return;
         }
 
+        var tracker = await ValidateTargetsAsync(
+            [.. targets.Select(t => t.AggregateUuid).Distinct()], ct).ConfigureAwait(false);
+
+        var preValidatedFailures = tracker.Errors.Count == 0
+            ? null
+            : tracker.Errors.ToDictionary(
+                kv => kv.Key,
+                kv => (kv.Value[0].ErrorCode, kv.Value[0].ErrorMessage));
+
         var jobStore = Resolve<IJobStore>();
 
         var jobUuid = await jobStore
-            .CreateAsync(CommandType, templateJson, targets, queueId: null, uiMetadata: null, ct)
+            .CreateAsync(CommandType, templateJson, targets, queueId: null, uiMetadata: null, preValidatedFailures, ct)
             .ConfigureAwait(false);
 
         // Odpowiedź wraca natychmiast, bez czekania na wykonanie — frontend rejestruje

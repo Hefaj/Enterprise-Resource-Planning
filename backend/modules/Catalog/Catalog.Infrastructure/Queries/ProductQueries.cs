@@ -56,6 +56,28 @@ public sealed class ProductQueries : IProductQueries
     }
 
     /// <inheritdoc />
+    public async Task<List<Guid>> GetExistingUuidsAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+
+        if (uuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = uuids as List<Guid> ?? uuids.ToList();
+
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => uuidList.Contains(p.Uuid))
+            .Select(p => p.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<List<ProductDto>> GetAsync(
         IReadOnlyCollection<Guid>? uuids,
         CancellationToken cancellationToken)

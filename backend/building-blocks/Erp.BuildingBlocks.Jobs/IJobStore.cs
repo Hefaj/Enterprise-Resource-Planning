@@ -16,6 +16,14 @@ public interface IJobStore
     /// Tworzy zadanie wraz z elementami i publikuje <see cref="JobAccepted"/> — wszystko
     /// w jednej transakcji, więc nie może powstać zadanie, o którym reszta systemu nie wie.
     /// </summary>
+    /// <param name="commandType">Nazwa typu komendy wykonywanej dla każdego elementu.</param>
+    /// <param name="commandJson">Serializowana komenda-szablon, jeśli tryb jej używa.</param>
+    /// <param name="targets">Elementy zadania.</param>
+    /// <param name="queueId">Identyfikator wywołującego, po którym frontend grupuje zadania.</param>
+    /// <param name="uiMetadata">Nieprzezroczysty dla backendu blob z frontendu.</param>
+    /// <param name="preValidatedFailures">Elementy odrzucone przed utworzeniem zadania —
+    /// patrz <see cref="Job.Create"/>. <c>null</c>, jeśli nie przeprowadzono pre-checku.</param>
+    /// <param name="cancellationToken">Token anulowania.</param>
     /// <returns>Identyfikator zadania, zwracany klientowi jako <c>trackingID</c>.</returns>
     Task<Guid> CreateAsync(
         string commandType,
@@ -23,6 +31,7 @@ public interface IJobStore
         IReadOnlyList<JobTarget> targets,
         string? queueId,
         string? uiMetadata,
+        IReadOnlyDictionary<Guid, (string ErrorCode, string ErrorMessage)>? preValidatedFailures,
         CancellationToken cancellationToken);
 }
 
@@ -55,6 +64,7 @@ public sealed class JobStore<TContext> : IJobStore
         IReadOnlyList<JobTarget> targets,
         string? queueId,
         string? uiMetadata,
+        IReadOnlyDictionary<Guid, (string ErrorCode, string ErrorMessage)>? preValidatedFailures,
         CancellationToken cancellationToken)
     {
         var now = _clock.UtcNow;
@@ -68,7 +78,9 @@ public sealed class JobStore<TContext> : IJobStore
             _executionContext.ClientId,
             _executionContext.CorrelationId,
             uiMetadata,
-            now);
+            now,
+            expireOn: null,
+            preValidatedFailures: preValidatedFailures);
 
         _dbContext.Jobs.Add(job);
 

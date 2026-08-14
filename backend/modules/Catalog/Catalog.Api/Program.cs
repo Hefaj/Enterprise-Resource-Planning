@@ -20,6 +20,9 @@ builder.Services.AddCatalogInfrastructure(builder.Configuration);
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
+// Reguła wsadowa używana jako pre-check w endpointach operacji masowych (BatchEndpointBase.ValidateTargetsAsync).
+builder.Services.AddScoped<ProductMustExistRule>();
+
 // Wolverine: transport RabbitMQ + outbox spięty z transakcją EF. Rejestruje też
 // IIntegrationEventPublisher i IUnitOfWork, na których stoi automatyczna publikacja
 // AggregateChanged ze skanu ChangeTrackera.

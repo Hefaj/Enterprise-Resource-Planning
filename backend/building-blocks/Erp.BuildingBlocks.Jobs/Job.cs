@@ -100,6 +100,25 @@ public class Job : AggregateRoot
     /// Każdy cel może nieść własny payload komendy (tryb <c>Commands</c> z listą różnych komend)
     /// albo <c>null</c> — wtedy element użyje szablonu <paramref name="commandJson"/>.
     /// </summary>
+    /// <param name="commandType">Nazwa typu komendy wykonywanej dla każdego elementu.</param>
+    /// <param name="commandJson">Serializowana komenda-szablon, jeśli tryb jej używa.</param>
+    /// <param name="targets">Elementy zadania.</param>
+    /// <param name="queueId">Identyfikator wywołującego, po którym frontend grupuje zadania.</param>
+    /// <param name="userId">Zleceniodawca — decyduje o adresacie powiadomień SignalR.</param>
+    /// <param name="clientId">Klient/połączenie, jeśli znane.</param>
+    /// <param name="correlationId">Korelacja z pierwotnym żądaniem HTTP.</param>
+    /// <param name="uiMetadata">Nieprzezroczysty dla backendu blob z frontendu.</param>
+    /// <param name="createdAt">Znacznik czasu utworzenia.</param>
+    /// <param name="expireOn">Opcjonalny czas wygaśnięcia zadania.</param>
+    /// <param name="preValidatedFailures">
+    /// Elementy odrzucone jeszcze PRZED utworzeniem zadania (np. przez walidację wsadową
+    /// z <c>Erp.BuildingBlocks.Validation</c>) — trafiają od razu do stanu
+    /// <see cref="JobItemStatus.Failed"/>, więc nigdy nie zostają podjęte przez
+    /// <c>BulkCommandRunner</c>. Runner nie wymaga żadnej zmiany: element bez statusu
+    /// <c>Pending</c> po prostu nie pojawi się w jego zapytaniu o kolejny chunk, a zadanie,
+    /// w którym WSZYSTKIE elementy trafiły tutaj, zostanie zamknięte przy najbliższym przebiegu
+    /// pętli (<c>RemainingCount == 0</c> od razu po utworzeniu).
+    /// </param>
     public static Job Create(
         string commandType,
         string? commandJson,
@@ -110,7 +129,8 @@ public class Job : AggregateRoot
         Guid correlationId,
         string? uiMetadata,
         DateTimeOffset createdAt,
-        DateTimeOffset? expireOn = null)
+        DateTimeOffset? expireOn = null,
+        IReadOnlyDictionary<Guid, (string ErrorCode, string ErrorMessage)>? preValidatedFailures = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandType);
         ArgumentNullException.ThrowIfNull(targets);
@@ -127,10 +147,20 @@ public class Job : AggregateRoot
         var ordinal = 0;
         foreach (var target in targets)
         {
-            job._items.Add(JobItem.Create(job.Uuid, target.AggregateUuid, ordinal++, target.CommandJson));
+            var item = JobItem.Create(job.Uuid, target.AggregateUuid, ordinal++, target.CommandJson);
+            job._items.Add(item);
+
+            if (preValidatedFailures is not null
+                && preValidatedFailures.TryGetValue(target.AggregateUuid, out var failure))
+            {
+                // maxAttempts: 1 — to nie jest błąd przejściowy do ponowienia, tylko ostateczne
+                // odrzucenie sprzed startu zadania; element ma od razu trafić w stan końcowy.
+                item.MarkFailed(failure.ErrorCode, failure.ErrorMessage, maxAttempts: 1, createdAt);
+            }
         }
 
         job.TotalCount = job._items.Count;
+        job.FailedCount = job._items.Count(i => i.Status == JobItemStatus.Failed);
         return job;
     }
 

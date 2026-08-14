@@ -1,6 +1,7 @@
 using Catalog.Application.Contracts;
 using Catalog.Application.Products;
 using Erp.BuildingBlocks.Api.Contracts;
+using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
 
 namespace Catalog.Product.Command;
@@ -10,8 +11,13 @@ public sealed class ProductSetPriceMultipleCommandEndpoint
     : BatchEndpointBase<ProductSetPriceCommand, SearchProductRequest>
 {
     private readonly IProductQueries _queries;
+    private readonly ProductMustExistRule _productMustExistRule;
 
-    public ProductSetPriceMultipleCommandEndpoint(IProductQueries queries) => _queries = queries;
+    public ProductSetPriceMultipleCommandEndpoint(IProductQueries queries, ProductMustExistRule productMustExistRule)
+    {
+        _queries = queries;
+        _productMustExistRule = productMustExistRule;
+    }
 
     public override void Configure()
     {
@@ -29,4 +35,14 @@ public sealed class ProductSetPriceMultipleCommandEndpoint
         SearchProductRequest filter,
         CancellationToken ct)
         => await _queries.GetMatchingUuidsAsync(filter, ct);
+
+    /// <inheritdoc />
+    protected override async Task<ValidationTracker> ValidateTargetsAsync(
+        IReadOnlyList<Guid> aggregateUuids,
+        CancellationToken ct)
+    {
+        var tracker = new ValidationTracker();
+        await _productMustExistRule.ExecuteAsync(aggregateUuids, uuid => uuid, tracker, ct).ConfigureAwait(false);
+        return tracker;
+    }
 }

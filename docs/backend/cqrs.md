@@ -216,5 +216,8 @@ a walidacja żyje wyłącznie w agregacie.
 ## 7. Zobacz też
 
 - [Operacje masowe](./bulk-commands.md) — jak ta sama komenda jest wykonywana zbiorczo
+- [Walidacja wsadowa](./batch-validation.md) — reguły zbiorcze uruchamiane PRZED utworzeniem
+  zadania, dopełnienie walidacji w agregacie dla przypadków, których nie da się sprawdzić
+  per pojedynczy element bez N zapytań
 - [Zdarzenia domenowe i outbox](./events-outbox.md) — co się dzieje przy `SaveChangesAsync`
 - [Persystencja](./persistence-ef.md)

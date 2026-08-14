@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="../Catalog.Domain/Catalog.Domain.csproj" />
     <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Application/Erp.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Validation/Erp.BuildingBlocks.Validation.csproj" />
     <!--
       Referencja do BuildingBlocks.Api jest tu WYŁĄCZNIE dla typów kontraktu żądań
       (PagedRequest, SearchResponse, TreeSelectionRequest) — są częścią kontraktu API,

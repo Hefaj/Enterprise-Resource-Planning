@@ -101,7 +101,7 @@ public abstract class JobRetryFailedEndpointBase<TContext> : Endpoint<JobControl
             .ToList();
 
         var newJobUuid = await jobStore
-            .CreateAsync(job.CommandType, job.CommandJson, targets, job.QueueId, job.UiMetadata, ct)
+            .CreateAsync(job.CommandType, job.CommandJson, targets, job.QueueId, job.UiMetadata, null, ct)
             .ConfigureAwait(false);
 
         await Send.OkAsync(new JobRetryFailedResult { NewJobUuid = newJobUuid }, ct).ConfigureAwait(false);

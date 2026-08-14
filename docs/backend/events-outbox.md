@@ -1,8 +1,10 @@
 # Zdarzenia domenowe, outbox i integracja
 
-**Stan: 🟡 kod istnieje, niepodpięty.** `AddErpMessaging` nie jest wołane w żadnym `Program.cs`,
-więc nic jeszcze nie leci na RabbitMQ. Ponieważ ta sama metoda rejestruje `IUnitOfWork`,
-podpięcie messagingu jest warunkiem uruchomienia całej strony zapisu.
+**Stan: ✅ działa.** `AddErpMessaging<TContext>()` jest wołane w `Program.cs` Catalogu, Sales
+i Notification. Notification dodatkowo **konsumuje** — `AggregateChangedRelayHandler` przekazuje
+`AggregateChanged` do `RealtimeBroadcaster` ([`realtime-signalr.md`](./realtime-signalr.md)),
+a `JobAcceptedHandler`/`JobProgressedHandler`/`JobCompletedHandler` utrzymują replikę
+`notification.job` — patrz [`bulk-commands.md`](./bulk-commands.md#4-replika-w-notification).
 
 ---
 
@@ -191,13 +193,17 @@ zakłada kontrolowany deployment, żeby aplikacja nie potrzebowała uprawnień d
 
 ---
 
-## 7. Co trzeba zrobić, żeby to ożyło
+## 7. Jak zweryfikować atomowość ręcznie
 
-1. W `Catalog.Api/Program.cs` dodać `builder.AddErpMessaging<CatalogDbContext>(...)`.
-2. Zarejestrować `AggregateSignatureMap` (już jest w `AddCatalogInfrastructure`).
-3. Sprawdzić, że migracja Wolverine'a założyła tabele w schemacie `wolverine`.
-4. Zweryfikować atomowość: zabić RabbitMQ, wykonać komendę — zapis ma przejść, a zdarzenie
-   dojść po powrocie brokera.
+```bash
+podman compose -f backend/docker-compose.yml stop rabbitmq
+# albo: docker compose -f backend/docker-compose.yml stop rabbitmq
+```
+
+Wykonaj komendę przez API modułu — zapis w Postgresie przechodzi normalnie, zdarzenie zostaje
+w tabeli outboksu Wolverine'a (schemat `wolverine`). Po `podman compose ... start rabbitmq`
+zalega dostarcza się bez interwencji. Jeśli zamiast tego zapis też się nie uda, atomowość jest
+złamana — sygnał, że ktoś ominął `IUnitOfWork` i woła `DbContext.SaveChanges()` wprost.
 
 ---
 

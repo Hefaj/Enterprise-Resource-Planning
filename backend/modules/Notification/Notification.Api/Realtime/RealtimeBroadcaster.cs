@@ -41,17 +41,20 @@ public sealed partial class RealtimeBroadcaster : IDisposable
     private readonly IHubContext<SyncHub> _hub;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly RealtimeBroadcastOptions _options;
+    private readonly SignatureSequenceTracker _sequenceTracker;
     private readonly ILogger<RealtimeBroadcaster> _logger;
 
     public RealtimeBroadcaster(
         IHubContext<SyncHub> hub,
         IServiceScopeFactory scopeFactory,
         IOptions<RealtimeBroadcastOptions> options,
+        SignatureSequenceTracker sequenceTracker,
         ILogger<RealtimeBroadcaster> logger)
     {
         _hub = hub;
         _scopeFactory = scopeFactory;
         _options = options.Value;
+        _sequenceTracker = sequenceTracker;
         _logger = logger;
     }
 
@@ -114,6 +117,15 @@ public sealed partial class RealtimeBroadcaster : IDisposable
 
             await BroadcastAggregateAsync(signature, upserted, ChangeType.Upserted).ConfigureAwait(false);
             await BroadcastAggregateAsync(signature, deleted, ChangeType.Deleted).ConfigureAwait(false);
+
+            // Upsert i delete tej samej koalescencji dzielą jeden numer sekwencji — to jeden
+            // "moment" z punktu widzenia klienta, niezależnie od tego, ile odrębnych wiadomości
+            // faktycznie wysłano. Osobna metoda (nie parametr ReceiveUpdates/ReceiveDeletes),
+            // żeby nie zmieniać istniejących sygnatur wołanych już przez SignalrSyncService.
+            var sequence = _sequenceTracker.Next(signature);
+            await _hub.Clients.Group(GroupNames.ForAggregate(signature))
+                .SendAsync("ReceiveSequence", signature, sequence)
+                .ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

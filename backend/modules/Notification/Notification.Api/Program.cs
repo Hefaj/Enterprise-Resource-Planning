@@ -28,6 +28,7 @@ builder.Services.AddSignalR();
 builder.Services.Configure<RealtimeBroadcastOptions>(
     builder.Configuration.GetSection(RealtimeBroadcastOptions.SectionName));
 builder.Services.AddSingleton<RealtimeBroadcaster>();
+builder.Services.AddSingleton<SignatureSequenceTracker>();
 
 builder.Services.AddOpenApi();
 

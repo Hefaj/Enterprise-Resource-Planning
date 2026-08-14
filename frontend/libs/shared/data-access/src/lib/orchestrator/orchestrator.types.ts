@@ -79,7 +79,7 @@ export interface SharedSearchResponse {
 // Śledzenie Błędów
 // ────────────────────────────────────────────────────────────────
 
-export type OrchestratorOperation = 'load' | 'search' | 'command' | 'signalr-refresh';
+export type OrchestratorOperation = 'load' | 'search' | 'command' | 'signalr-refresh' | 'signalr-resync';
 
 export interface OrchestratorError {
   readonly uuid?: string;

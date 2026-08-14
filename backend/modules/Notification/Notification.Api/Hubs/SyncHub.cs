@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.SignalR;
+using Notification.Api.Realtime;
 
 namespace Notification.Api.Hubs;
 
@@ -36,6 +37,13 @@ public sealed class SyncHub : Hub
     /// <summary>Ścieżka, pod którą hub jest mapowany — patrz <c>Program.cs</c>.</summary>
     public const string Path = "/hubs/sync";
 
+    private readonly SignatureSequenceTracker _sequenceTracker;
+
+    public SyncHub(SignatureSequenceTracker sequenceTracker)
+    {
+        _sequenceTracker = sequenceTracker;
+    }
+
     public override async Task OnConnectedAsync()
     {
         var httpContext = Context.GetHttpContext();
@@ -59,11 +67,21 @@ public sealed class SyncHub : Hub
 
     /// <summary>
     /// Klient deklaruje zainteresowanie aktualizacjami danej sygnatury — wywoływane po
-    /// załadowaniu pierwszego agregatu tego typu do <c>IdentityMapStore</c>.
+    /// załadowaniu pierwszego agregatu tego typu do <c>IdentityMapStore</c>, a także przy
+    /// każdym ponownym połączeniu (<c>onreconnected</c> po stronie klienta).
+    ///
+    /// <para><b>Resync po luce.</b> <paramref name="lastSeenSequence"/> to ostatni numer
+    /// sekwencji tej sygnatury, jaki klient widział (patrz <see cref="SignatureSequenceTracker"/>
+    /// i <c>RealtimeBroadcaster.FlushAsync</c>). Jeśli różni się od aktualnego — klient
+    /// przegapił zdarzenia w trakcie rozłączenia. Nie ma tu bufora historii do odtworzenia
+    /// luki, więc jedyna uczciwa odpowiedź to <c>ReceiveResync</c>: każda wykryta luka
+    /// kończy się pełnym przeładowaniem, nie próbą częściowego dogonienia.</para>
     /// </summary>
     /// <param name="signature">Jedna z wartości <see cref="AggregateSignatures"/>. Sygnatury spoza
     /// znanego zbioru są po cichu ignorowane — klient nie może dołączyć do dowolnej grupy.</param>
-    public async Task Subscribe(string signature)
+    /// <param name="lastSeenSequence">Opcjonalny — brak (pierwsza subskrypcja w tej sesji)
+    /// oznacza brak punktu odniesienia, więc luka nigdy nie jest sprawdzana.</param>
+    public async Task Subscribe(string signature, long? lastSeenSequence = null)
     {
         if (!AggregateSignatures.All.Contains(signature))
         {
@@ -72,6 +90,17 @@ public sealed class SyncHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForAggregate(signature), Context.ConnectionAborted)
             .ConfigureAwait(false);
+
+        var current = _sequenceTracker.Current(signature);
+
+        if (lastSeenSequence.HasValue && lastSeenSequence.Value != current)
+        {
+            await Clients.Caller.SendAsync("ReceiveResync", signature).ConfigureAwait(false);
+        }
+
+        // Zawsze na końcu, żeby klient miał świeży punkt odniesienia — niezależnie od tego,
+        // czy resync był potrzebny, czy to pierwsza subskrypcja bez wcześniejszego stanu.
+        await Clients.Caller.SendAsync("ReceiveSequence", signature, current).ConfigureAwait(false);
     }
 
     /// <summary>Odwrotność <see cref="Subscribe"/> — wywoływane, gdy orkiestrator jest niszczony

@@ -38,11 +38,24 @@ function getOrCreateClientId(): string {
 export class SignalrSyncService {
   private readonly _hubUrl: string = inject(SIGNALR_HUB_URL);
   private readonly _update$: Subject<AggregateUpdateMessage> = new Subject<AggregateUpdateMessage>();
+  private readonly _delete$: Subject<AggregateUpdateMessage> = new Subject<AggregateUpdateMessage>();
+  /** Emituje samą sygnaturę, gdy trzeba porzucić cache i przeładować widoczne dane —
+   * zarówno na wprost wysłany `ReceiveResync`, jak i na `ReceiveInvalidation(signature, 'all')`.
+   * Dla konsumenta (`BaseOrchestrator`) skutek jest identyczny, więc jeden strumień. */
+  private readonly _fullRefresh$: Subject<string> = new Subject<string>();
   private _connection: signalR.HubConnection | null = null;
 
-  /** Sygnatury już zasubskrybowane po stronie huba — żeby nie wołać `Subscribe` powtórnie
-   * dla każdego kolejnego `onUpdate(signature)` tej samej sygnatury. */
-  private readonly _subscribedSignatures = new Set<string>();
+  /** Liczba aktywnych subskrybentów (orkiestratorów) per sygnatura — hub `Subscribe`/
+   * `Unsubscribe` woła się dopiero na przejściu 0→1 / 1→0. Ref-counted, bo `BaseOrchestrator`
+   * jest `@Injectable()` bez `providedIn: 'root'`: kolejne nawigacje mogą tworzyć i niszczyć
+   * kolejne instancje tego samego typu, a subskrypcja grupy na hubie musi przeżyć, dopóki
+   * choć jedna z nich żyje. */
+  private readonly _refCounts = new Map<string, number>();
+
+  /** Ostatni znany numer sekwencji per sygnatura (patrz `ReceiveSequence` / `SyncHub.Subscribe`
+   * po stronie backendu). Celowo NIE czyszczony przy `unsubscribe` — stary numer zostaje, żeby
+   * ponowna subskrypcja po dłuższej nieobecności poprawnie wykryła lukę i wymusiła resync. */
+  private readonly _lastSeenSequence = new Map<string, number>();
 
   public constructor() {
     this._initConnection();
@@ -60,10 +73,30 @@ export class SignalrSyncService {
       this._update$.next({ signature, uuids });
     });
 
+    this._connection.on('ReceiveDeletes', (signature: string, uuids: string[]) => {
+      this._delete$.next({ signature, uuids });
+    });
+
+    this._connection.on('ReceiveInvalidation', (signature: string, scope: string) => {
+      if (scope === 'all') {
+        this._fullRefresh$.next(signature);
+      }
+    });
+
+    this._connection.on('ReceiveResync', (signature: string) => {
+      this._fullRefresh$.next(signature);
+    });
+
+    this._connection.on('ReceiveSequence', (signature: string, sequence: number) => {
+      this._lastSeenSequence.set(signature, sequence);
+    });
+
     // Ponowne dołączenie do wszystkich subskrybowanych grup po reconnect — SignalR nie
     // pamięta grup po stronie serwera między połączeniami (nowe ConnectionId za każdym razem).
+    // Każdy z nich niesie swój `lastSeenSequence` — to jest właśnie moment, w którym backend
+    // wykrywa lukę powstałą w trakcie rozłączenia i odsyła `ReceiveResync`.
     this._connection.onreconnected(() => {
-      for (const signature of this._subscribedSignatures) {
+      for (const signature of this._refCounts.keys()) {
         this._invokeSubscribe(signature);
       }
     });
@@ -72,7 +105,7 @@ export class SignalrSyncService {
       .start()
       .then(() => {
         console.log(`[SignalrSyncService] Connected to Real-time Sync Hub: ${this._hubUrl}`);
-        for (const signature of this._subscribedSignatures) {
+        for (const signature of this._refCounts.keys()) {
           this._invokeSubscribe(signature);
         }
       })
@@ -80,21 +113,58 @@ export class SignalrSyncService {
   }
 
   /**
-   * Listen to real-time update events for a specific aggregate signature.
-   *
-   * Pierwsze wywołanie dla danej sygnatury dołącza połączenie do grupy `agg:{signature}`
-   * po stronie huba — bez tego serwer nigdy by nic nie wysłał (broadcast jest adresowany
-   * do grupy, nie do wszystkich połączeń). Odpowiednik wywołania `Subscribe` na hubie.
+   * Zarejestruj zainteresowanie sygnaturą — pierwsze wywołanie dla danej sygnatury (0→1)
+   * dołącza połączenie do grupy `agg:{signature}` po stronie huba. Musi mieć odpowiadające
+   * `unsubscribe(signature)`, inaczej grupa na hubie nigdy się nie zwalnia.
    */
-  public onUpdate(signature: string): Observable<string[]> {
-    if (!this._subscribedSignatures.has(signature)) {
-      this._subscribedSignatures.add(signature);
+  public subscribe(signature: string): void {
+    const count = this._refCounts.get(signature) ?? 0;
+    this._refCounts.set(signature, count + 1);
+
+    if (count === 0) {
       this._invokeSubscribe(signature);
     }
+  }
 
+  /**
+   * Odwrotność `subscribe` — na przejściu 1→0 opuszcza grupę `agg:{signature}` na hubie.
+   * `_lastSeenSequence` dla tej sygnatury celowo nie jest czyszczony (patrz pole).
+   */
+  public unsubscribe(signature: string): void {
+    const count = this._refCounts.get(signature) ?? 0;
+    if (count <= 1) {
+      this._refCounts.delete(signature);
+      this._invokeUnsubscribe(signature);
+    } else {
+      this._refCounts.set(signature, count - 1);
+    }
+  }
+
+  /**
+   * Listen to real-time update events for a specific aggregate signature.
+   * Nie subskrybuje sam z siebie grupy na hubie — wymaga jawnego `subscribe(signature)`.
+   */
+  public onUpdate(signature: string): Observable<string[]> {
     return this._update$.pipe(
       filter(msg => msg.signature === signature),
       map(msg => msg.uuids)
+    );
+  }
+
+  /** Jak `onUpdate`, ale dla usunięć (`ReceiveDeletes`). */
+  public onDelete(signature: string): Observable<string[]> {
+    return this._delete$.pipe(
+      filter(msg => msg.signature === signature),
+      map(msg => msg.uuids)
+    );
+  }
+
+  /** Emituje, gdy trzeba porzucić cache tej sygnatury i przeładować to, co aktualnie
+   * załadowane — `ReceiveResync` albo próg inwalidacji (`ReceiveInvalidation(.., 'all')`). */
+  public onResync(signature: string): Observable<void> {
+    return this._fullRefresh$.pipe(
+      filter(sig => sig === signature),
+      map(() => undefined)
     );
   }
 
@@ -104,10 +174,22 @@ export class SignalrSyncService {
       return;
     }
 
-    console.log(`[SignalrSyncService] Subscribe(${signature})`);
-    this._connection.invoke('Subscribe', signature)
+    const lastSeenSequence = this._lastSeenSequence.get(signature) ?? null;
+
+    console.log(`[SignalrSyncService] Subscribe(${signature}, lastSeenSequence=${lastSeenSequence})`);
+    this._connection.invoke('Subscribe', signature, lastSeenSequence)
       .then(() => console.log(`[SignalrSyncService] Subscribe(${signature}) acked`))
       .catch(err => console.error(`[SignalrSyncService] Subscribe(${signature}) failed: `, err));
+  }
+
+  private _invokeUnsubscribe(signature: string): void {
+    if (this._connection?.state !== signalR.HubConnectionState.Connected) {
+      return;
+    }
+
+    console.log(`[SignalrSyncService] Unsubscribe(${signature})`);
+    this._connection.invoke('Unsubscribe', signature)
+      .catch(err => console.error(`[SignalrSyncService] Unsubscribe(${signature}) failed: `, err));
   }
 
   /**

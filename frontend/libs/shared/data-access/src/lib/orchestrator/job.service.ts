@@ -16,6 +16,12 @@ export class JobService {
   private readonly _jobs = signal(new Map<string, JobRecord>());
 
   public constructor() {
+    // JobService jest root-singletonem żyjącym całą sesję — subskrypcja grupy 'jobs' na hubie
+    // nigdy nie jest zwalniana (brak odpowiadającego `unsubscribe`), co jest tu poprawne.
+    // `onUpdate` sam w sobie nie ma już efektu ubocznego (patrz SignalrSyncService) — trzeba
+    // jawnie zarejestrować zainteresowanie.
+    this._signalrSync.subscribe('jobs');
+
     // Nasłuchuj zdarzeń aktualizacji statusu zadań w czasie rzeczywistym za pomocą trackingID
     this._signalrSync.onUpdate('jobs').subscribe(trackingIDs => {
       this._jobs.update(jobs => {

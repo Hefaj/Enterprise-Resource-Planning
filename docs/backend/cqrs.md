@@ -1,7 +1,7 @@
 # CQRS — komendy i zapytania
 
-**Stan: strona odczytu ✅, strona zapisu 🟡** (kod istnieje, `IUnitOfWork` niepodpięty — patrz
-[`architecture.md`](./architecture.md#1-stan-wdrożenia)).
+**Stan: ✅ obie strony działają.** Middleware komend (walidacja, idempotencja, logowanie) —
+patrz sekcja 6 — jest jedynym elementem z planu, który wciąż nie istnieje.
 
 Odczyt i zapis mają w tym systemie **osobne ścieżki, osobne modele i osobne zasady**. To nie jest
 podział dla samego podziału — obie strony mają sprzeczne wymagania i próba obsłużenia ich jednym

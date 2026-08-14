@@ -74,6 +74,7 @@ export abstract class BaseOrchestrator<
 
   // ── Subskrypcja SignalR ──
   private _signalrSub: Subscription | null = null;
+  private _signalrSignature: string | null = null;
   private readonly _signalrRefreshInFlight = new Set<string>();
 
   private readonly _signalVmCache = new Map<string, Signal<TViewModel>>();
@@ -307,11 +308,28 @@ export abstract class BaseOrchestrator<
   // ────────────────────────────────────────────────────────────────
 
   private _initSignalR(signature: string): void {
+    this._signalrSignature = signature;
+    this._signalrSync.subscribe(signature);
+
     this._signalrSub = this._signalrSync
       .onUpdate(signature)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(uuids => {
         this._handleSignalRUpdate(uuids);
+      });
+
+    this._signalrSync
+      .onDelete(signature)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(uuids => {
+        this._handleSignalRDelete(uuids);
+      });
+
+    this._signalrSync
+      .onResync(signature)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this._handleFullResync();
       });
   }
 
@@ -344,6 +362,51 @@ export abstract class BaseOrchestrator<
     }
   }
 
+  /** Usuwa zdalnie skasowane agregaty z cache — z `identityMap`, ze zbioru załadowanych
+   * UUID i z cache sygnałów per-wiersz, żeby nie trzymać martwych referencji. */
+  private _handleSignalRDelete(uuids: string[]): void {
+    const relevant = uuids.filter(uuid => this._loadedUuids().has(uuid) || this.identityMap.has(uuid));
+    if (relevant.length === 0) return;
+
+    for (const uuid of relevant) {
+      this.identityMap.delete(uuid);
+      this._signalVmCache.delete(uuid);
+    }
+
+    this._loadedUuids.update(set => {
+      const updated = new Set(set);
+      for (const uuid of relevant) {
+        updated.delete(uuid);
+      }
+      return updated;
+    });
+  }
+
+  /**
+   * Porzuca cały cache tej sygnatury i przeładowuje to, co orkiestrator ma aktualnie
+   * załadowane — wywoływane na `ReceiveResync` (luka po rozłączeniu) i na
+   * `ReceiveInvalidation(signature, 'all')` (masowa zmiana powyżej progu koalescencji).
+   * Brak buforowanej historii zdarzeń, więc jedyna uczciwa reakcja to pełny reload,
+   * nie próba częściowego dogonienia.
+   */
+  private async _handleFullResync(): Promise<void> {
+    const currentlyLoaded = [...this._loadedUuids()];
+    if (currentlyLoaded.length === 0) return;
+
+    this.identityMap.clear();
+    this._signalVmCache.clear();
+
+    try {
+      await this.dataLoader.reloadAsync(currentlyLoaded);
+    } catch (err) {
+      this.addError({
+        operation: 'signalr-resync',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+    }
+  }
+
   // ────────────────────────────────────────────────────────────────
   // Wewnętrzne: Zarządzanie Błędami
   // ────────────────────────────────────────────────────────────────
@@ -364,6 +427,9 @@ export abstract class BaseOrchestrator<
 
   public ngOnDestroy(): void {
     this._signalrSub?.unsubscribe();
+    if (this._signalrSignature) {
+      this._signalrSync.unsubscribe(this._signalrSignature);
+    }
     this.dataLoader.destroy();
     this.identityMap.clear();
     this._signalVmCache.clear();

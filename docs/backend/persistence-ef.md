@@ -231,7 +231,7 @@ dotnet ef database update --project backend/modules/Catalog/Catalog.Infrastructu
 [`CatalogDbContextFactory`](../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/CatalogDbContextFactory.cs)
 (`IDesignTimeDbContextFactory`). Bez niej `dotnet ef` musiałby wystartować cały host — a ten wymaga
 działającego RabbitMQ. Fabryka pozwala generować migracje offline. Łańcuch połączenia bierze ze
-zmiennej `CATALOG_CONNECTION_STRING`, w jej braku z domyślnych ustawień `podman-compose.yml`.
+zmiennej `CATALOG_CONNECTION_STRING`, w jej braku z domyślnych ustawień `docker-compose.yml`.
 
 Migracje są **kodem generowanym** i tak są oznaczone w `backend/.editorconfig`
 (`generated_code = true`) — inaczej analizatory wymuszałyby ręczne poprawianie pliku po każdej

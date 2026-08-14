@@ -25,16 +25,12 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Struktura projektów, granice warstw | ✅ | Wymuszone testem `Erp.ArchitectureTests` (5/5) |
 | Persystencja EF + Postgres, migracje, seed | ✅ | [`persistence-ef.md`](./persistence-ef.md) |
 | Strona odczytu (CQRS queries) | ✅ | Catalog: produkty, kategorie, drzewo, modele, gwarancje, multimedia |
-| Strona zapisu (komendy, `IUnitOfWork`) | 🟡 | `IUnitOfWork` rejestruje dopiero `AddErpMessaging` — patrz niżej |
-| Domain events → outbox → RabbitMQ | 🟡 | [`events-outbox.md`](./events-outbox.md) |
-| Operacje masowe (`job`/`job_item`, runner) | 🟡 | Endpointy `batch-*` nadal na starej, **niedziałającej** kolejce — [`bulk-commands.md`](./bulk-commands.md) |
-| SignalR (hub, grupy, reconnect) | 📐 | [`realtime-signalr.md`](./realtime-signalr.md) |
-
-> **Uwaga praktyczna.** `IUnitOfWork` jest rejestrowany **wyłącznie** w
-> `ErpMessagingExtensions.AddErpMessaging<TContext>()`. Żaden moduł jeszcze go nie woła, więc
-> handlery komend (`ProductSetNameCommandHandler` i spółka) **nie dadzą się rozwiązać z kontenera**.
-> Podpięcie messagingu jest warunkiem uruchomienia całej strony zapisu — nie da się zrobić jednego
-> bez drugiego i jest to celowe: zapis bez outboxu oznaczałby zmiany w bazie, o których nikt się nie dowie.
+| Strona zapisu (komendy, `IUnitOfWork`) | ✅ | `AddErpMessaging<TContext>()` wołane w `Program.cs` Catalogu, Sales i Notification — rejestruje `IUnitOfWork` |
+| Domain events → outbox → RabbitMQ | ✅ | [`events-outbox.md`](./events-outbox.md) |
+| Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — `job/cancel`, `job/retry-failed` dodane w fazie 5 |
+| SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; backplane pod >1 instancję nieużywany lokalnie |
+| Middleware komend (walidacja, idempotencja, logowanie) | 📐 | Handler dziś sam woła `IUnitOfWork`; walidacja żyje wyłącznie w agregacie — patrz [`cqrs.md`](./cqrs.md#6-czego-jeszcze-nie-ma) |
+| Sales, Notification jako pełne moduły biznesowe | 🟡 | Struktura i szablon zweryfikowane (Sales/`Customer`); brak realnej logiki biznesowej poza sprawdzianem |
 
 ---
 
@@ -45,7 +41,7 @@ backend/
 ├── Directory.Build.props           # net10.0, nullable, warnings-as-errors, CPM
 ├── Directory.Packages.props        # wersje WSZYSTKICH pakietów — jedyne miejsce
 ├── .editorconfig                   # migracje EF oznaczone jako kod generowany
-├── podman-compose.yml              # postgres:17, rabbitmq:4-management
+├── docker-compose.yml              # postgres:17, rabbitmq:4-management
 │
 ├── building-blocks/                # część wspólna dla wszystkich mikroserwisów
 │   ├── Erp.BuildingBlocks.Domain/         # Entity, AggregateRoot, ValueObject, DomainException
@@ -121,7 +117,7 @@ dotnet test backend/tests/Erp.ArchitectureTests/Erp.ArchitectureTests.csproj
 ## 5. Uruchomienie lokalne
 
 ```bash
-podman compose -f backend/podman-compose.yml up -d
+podman compose -f backend/docker-compose.yml up -d
 ```
 
 Postgres na `5432` (`erp`/`erp`/`erp`), RabbitMQ na `5672`, management UI na
@@ -139,7 +135,7 @@ Przy starcie w `Development` moduł stosuje migracje i zasila bazę danymi przyk
 |---|---|---|
 | Catalog | 5149 | `catalog` |
 | Notification | 5250 | `notification` |
-| Sales | — | `sales` |
+| Sales | 5269 | `sales` |
 
 Adresy bazowe dla frontendu konfiguruje
 [`remote-api.providers.ts`](../../frontend/apps/client/src/app/remote-api.providers.ts).

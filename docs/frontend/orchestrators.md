@@ -344,6 +344,7 @@ public async setPriceMultiple(
 
 ## 7. Checklist tworzenia nowego orkiestratora
 
+0. **Sprawdź granicę agregatu (sekcja 9)** — przejdź przez pytania testowe 1–5. Jeśli wynik jest niejednoznaczny, zatrzymaj się i zapytaj użytkownika zamiast zakładać, że nowy byt zasługuje na osobny orkiestrator.
 1. Sprawdź istniejący orkiestrator w tym samym module jako wzór strukturalny (np. `catalog-category.orchestrator.ts`).
 2. `@Injectable({ providedIn: 'root' })`, `extends BaseOrchestrator<TDto, TViewModel, TFilters, TLoadOptions>`.
 3. `signature` + `orchestratorConfig.signalrSignature` — unikalne, np. `'catalog.product'`.
@@ -363,6 +364,32 @@ public async setPriceMultiple(
 - Tworzenie dedykowanego, pustego `XLoadOptions`, gdy wystarczy `LoadOptions`.
 - Bezpośrednie wstrzyknięcie sąsiedniego orkiestratora w konstruktorze zamiast leniwie przez `Injector` (ryzyko cyklu DI).
 - Tworzenie osobnego serwisu obok orkiestratora dla wyspecjalizowanych odczytów (np. drzew) zamiast dodania metod na tym samym orkiestratorze (sekcja 5).
+- Tworzenie orkiestratora dla bytu, który nigdy nie jest ładowany/wyszukiwany niezależnie od rodzica i nie ma własnego endpointu — sztuczny podział wzdłuż schematu bazy zamiast granicy kontraktu API (patrz sekcja 9).
+
+---
+
+## 9. Granica agregatu — kiedy NIE tworzyć orkiestratora
+
+Zanim zaczniesz implementować nowy orkiestrator (przed sekcją 1), sprawdź, czy dany byt w ogóle jest osobnym agregatem, czy tylko polem/value objectem rodzica. To, że coś ma własne ID w bazie danych albo jest nazwaną strukturą w DTO (np. `ProductCode { id, codeType, code }`), **nic nie mówi** o tym, czy potrzebuje orkiestratora — kształt tabeli SQL nie jest granicą warstwy `data-access`. Granicą jest kontrakt API i sposób, w jaki UI faktycznie konsumuje dane.
+
+### Pytania testowe
+
+1. **Czy istnieje osobny endpoint** (`fetchByUuids`/`searchByFilters`) dla tego bytu, niezależny od endpointu rodzica? Jeśli dane zawsze przyjeżdżają wyłącznie zagnieżdżone w DTO rodzica (`getProduct` zwraca `productCode` bez możliwości pobrania go osobno) — nie ma czego orkiestrować.
+2. **Czy UI kiedykolwiek chce załadować/wyszukać ten byt bez rodzica** — niezależny lazy-load (flaga typu `includeX` w `LoadOptions`, osobny widok/lista tego bytu)? Jeśli byt zawsze i wyłącznie towarzyszy rodzicowi, to niezależny cache/LRU nic nie daje.
+3. **Czy więcej niż jeden inny agregat go referencuje/reużywa?** Współdzielony byt (np. Multimedia używane przez Produkt, Kategorię, Zamówienie) to silny sygnał za orkiestratorem — unikasz duplikacji fetch/cache logiki w kilku miejscach.
+4. **Czy niezależny SignalR-owy `signalrSignature` ma realną wartość?** Jeśli byt zmienia się wyłącznie razem z rodzicem (ten sam commit/transakcja), osobny kanał aktualizacji nic nie synchronizuje ponad to, co już robi orkiestrator rodzica.
+5. **Czy byt ma własny cykl życia biznesowy** — tworzony/edytowany/usuwany niezależnie od rodzica w UI (własny formularz, własna lista, własne uprawnienia)?
+
+Jeśli odpowiedź na **wszystkie** powyższe to "nie" — to nie jest agregat. Zostaw to jako pole w `XxxDto`/`XxxVM` rodzica (ew. wzbogacone wg wzorca z sekcji 4, jeśli wymaga rozwiązania odniesienia do innego agregatu — np. `codeType` rozwiązujący się do słownika).
+
+### Przykłady
+
+- **Multimedia** → orkiestrator: osobny (zwykle cięższy) endpoint, sensowny niezależny lazy-load (`includeMultimedia`), realnie współdzielone między agregatami.
+- **`ProductCode { id, codeType, code }`** → **nie** orkiestrator, mimo własnego ID w bazie: brak osobnego endpointu, zawsze przychodzi zagnieżdżony w `ProductDto`, nikt nie ładuje go bez produktu. Zostaje polem `ProductVM` (ew. wzbogaconym wg sekcji 4, jeśli `codeType` ma się rozwiązywać do osobnego słownika).
+
+### Instrukcja dla agenta
+
+Przy tworzeniu nowego orkiestratora **jawnie przejdź przez pytania testowe 1–5** dla danego bytu. Jeśli odpowiedzi są niejednoznaczne albo w większości "nie" — **nie twórz orkiestratora automatycznie**. Zamiast tego zatrzymaj się i poinformuj użytkownika, które kryteria nie są spełnione, i zapytaj, czy mimo to chce osobny orkiestrator (może mieć kontekst biznesowy, którego nie widać z samego kodu — np. planowany osobny endpoint). Sztuczny podział na orkiestratory "bo baza tak wygląda" jest błędem tej samej wagi co brak podziału tam, gdzie jest potrzebny (patrz sekcja 8).
 
 ---
 

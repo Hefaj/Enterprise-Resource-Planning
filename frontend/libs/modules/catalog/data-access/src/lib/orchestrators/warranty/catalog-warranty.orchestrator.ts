@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BaseOrchestrator, LoadOptions } from '@erp/shared/data-access';
+import { BaseOrchestrator, LoadOptions, OrchestratorConfig } from '@erp/shared/data-access';
 import { WarrantyVM } from './warranty.view-model';
 import { Observable } from 'rxjs';
 
@@ -9,8 +9,14 @@ import { CatalogClient, SearchResponse, WarrantyDto, SearchWarrantyRequest } fro
   providedIn: 'root'
 })
 export class CatalogWarrantyOrchestrator extends BaseOrchestrator<WarrantyDto, WarrantyVM, SearchWarrantyRequest, LoadOptions> {
-  protected readonly signature = 'catalog.warranty';
-  protected readonly orchestratorConfig = { signalrSignature: 'catalog.warranty', maxCacheSize: 5000 };
+  // Gettery, nie pola — patrz uzasadnienie przy CatalogMultimediaOrchestrator.
+  protected override get signature(): string {
+    return 'catalog.warranty';
+  }
+
+  protected override get orchestratorConfig(): Partial<OrchestratorConfig> & { signalrSignature: string } {
+    return { signalrSignature: 'catalog.warranty', maxCacheSize: 5000 };
+  }
 
   private readonly apiClient = inject(CatalogClient);
 

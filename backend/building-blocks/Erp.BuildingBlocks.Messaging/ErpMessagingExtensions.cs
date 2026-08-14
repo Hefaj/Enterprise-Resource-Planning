@@ -23,15 +23,23 @@ public static class ErpMessagingExtensions
     /// </summary>
     /// <typeparam name="TContext">Kontekst modułu, z którego transakcją ma być spięty outbox.</typeparam>
     /// <param name="builder">Builder hosta.</param>
-    /// <param name="consumerAssembly">Zestaw skanowany w poszukiwaniu handlerów komunikatów
-    /// (zwykle projekt <c>Infrastructure</c> modułu).</param>
+    /// <param name="consumerAssemblies">Zestawy skanowane w poszukiwaniu handlerów komunikatów.
+    /// Zwykle jeden — projekt <c>Infrastructure</c> modułu; więcej niż jeden, gdy część
+    /// konsumentów wymaga zależności dostępnych dopiero w warstwie <c>Api</c>
+    /// (np. Notification: przekaźnik do SignalR potrzebuje <c>IHubContext</c>, którego
+    /// Infrastructure nie może referencować bez złamania kierunku zależności).</param>
     public static IHostApplicationBuilder AddErpMessaging<TContext>(
         this IHostApplicationBuilder builder,
-        Assembly consumerAssembly)
+        params Assembly[] consumerAssemblies)
         where TContext : ErpDbContext
     {
         ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(consumerAssembly);
+        ArgumentNullException.ThrowIfNull(consumerAssemblies);
+
+        if (consumerAssemblies.Length == 0)
+        {
+            throw new ArgumentException("Wymagany co najmniej jeden zestaw do skanowania.", nameof(consumerAssemblies));
+        }
 
         var options = builder.Configuration
             .GetSection(ErpMessagingOptions.SectionName)
@@ -45,7 +53,10 @@ public static class ErpMessagingExtensions
         {
             wolverine.ServiceName = options.ServiceName;
 
-            wolverine.Discovery.IncludeAssembly(consumerAssembly);
+            foreach (var assembly in consumerAssemblies)
+            {
+                wolverine.Discovery.IncludeAssembly(assembly);
+            }
 
             // Outbox/inbox w Postgresie, w schemacie osobnym od schematów modułów.
             wolverine.PersistMessagesWithPostgresql(
@@ -73,6 +84,18 @@ public static class ErpMessagingExtensions
                 x.MessagesFromAssemblyContaining<Contracts.AggregateChanged>();
                 x.ToRabbitExchange("erp.events");
             });
+
+            // Konsument: własna trwała kolejka związana z fanoutową wymianą `erp.events`.
+            // BindExchange deklaruje topologię (kolejka + powiązanie), ListenToRabbitQueue
+            // każe Wolverine'owi faktycznie z niej czytać — bez tego drugiego wywołania
+            // kolejka by istniała, ale nikt by jej nie konsumował.
+            if (!string.IsNullOrWhiteSpace(options.ListenQueueName))
+            {
+                rabbit.BindExchange("erp.events", Wolverine.RabbitMQ.ExchangeType.Fanout)
+                    .ToQueue(options.ListenQueueName);
+
+                wolverine.ListenToRabbitQueue(options.ListenQueueName);
+            }
         });
 
         // Outbox jest per DbContext — publisher musi trzymać ten sam kontekst co jednostka pracy.

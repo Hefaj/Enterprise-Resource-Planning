@@ -27,12 +27,17 @@ export class CatalogCategoryOrchestrator extends BaseOrchestrator<
 > {
   private readonly _api = inject(CatalogClient);
 
-  protected override readonly signature = 'catalog.category';
+  // Gettery, nie pola — patrz uzasadnienie przy CatalogMultimediaOrchestrator.
+  protected override get signature(): string {
+    return 'catalog.category';
+  }
 
-  protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
-    signalrSignature: 'catalog.category',
-    maxCacheSize: 500, // Kategorie są zazwyczaj mniej liczne niż produkty
-  };
+  protected override get orchestratorConfig(): Partial<OrchestratorConfig> & { signalrSignature: string } {
+    return {
+      signalrSignature: 'catalog.category',
+      maxCacheSize: 500, // Kategorie są zazwyczaj mniej liczne niż produkty
+    };
+  }
 
   // ────────────────────────────────────────────────────────────────
   // Abstrakcyjne implementacje

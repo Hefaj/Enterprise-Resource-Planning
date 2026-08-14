@@ -47,15 +47,21 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   private _multimediaOrchestrator: CatalogMultimediaOrchestrator | null = null;
   private _warrantyOrchestrator: CatalogWarrantyOrchestrator | null = null;
 
-  protected override readonly signature = 'catalog.product';
+  // Gettery, nie pola — patrz uzasadnienie przy CatalogMultimediaOrchestrator
+  // (frontend/libs/modules/catalog/data-access/.../catalog-multimedia.orchestrator.ts).
+  protected override get signature(): string {
+    return 'catalog.product';
+  }
 
-  protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
-    signalrSignature: 'catalog.product',
-    // Produkty są najcięższym agregatem — maksymalny cache
-    maxCacheSize: 1000,
-    maxChunkSize: 100,
-    bufferTimeMs: 50,
-  };
+  protected override get orchestratorConfig(): Partial<OrchestratorConfig> & { signalrSignature: string } {
+    return {
+      signalrSignature: 'catalog.product',
+      // Produkty są najcięższym agregatem — maksymalny cache
+      maxCacheSize: 1000,
+      maxChunkSize: 100,
+      bufferTimeMs: 50,
+    };
+  }
 
   // ────────────────────────────────────────────────────────────────
   // Leniwe wstrzykiwanie (Zapobieganie kołowej zależności)

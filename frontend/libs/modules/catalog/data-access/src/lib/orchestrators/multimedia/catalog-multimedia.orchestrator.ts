@@ -1,5 +1,5 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
-import { BaseOrchestrator } from '@erp/shared/data-access';
+import { BaseOrchestrator, OrchestratorConfig } from '@erp/shared/data-access';
 import { MultimediaVM } from './multimedia.view-model';
 import { delay, Observable, of } from 'rxjs';
 
@@ -9,8 +9,17 @@ import { CatalogClient, SearchResponse, MultimediaDto, SearchMultimediaRequest }
   providedIn: 'root'
 })
 export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDto, MultimediaVM, SearchMultimediaRequest> {
-  protected readonly signature = 'catalog.multimedia';
-  protected readonly orchestratorConfig = { signalrSignature: 'catalog.multimedia', maxCacheSize: 5000 };
+  // Gettery, nie pola: BaseOrchestrator czyta `orchestratorConfig`/`signature` w SWOIM
+  // konstruktorze, a inicjalizatory pól klasy pochodnej uruchamiają się dopiero PO powrocie
+  // z super() — pole miałoby wtedy wartość `undefined` w chwili odczytu. Getter jest metodą
+  // na prototypie, dostępną natychmiast. Patrz to samo zastrzeżenie przy pozostałych orkiestratorach.
+  protected override get signature(): string {
+    return 'catalog.multimedia';
+  }
+
+  protected override get orchestratorConfig(): Partial<OrchestratorConfig> & { signalrSignature: string } {
+    return { signalrSignature: 'catalog.multimedia', maxCacheSize: 5000 };
+  }
 
   private readonly apiClient = inject(CatalogClient);
 

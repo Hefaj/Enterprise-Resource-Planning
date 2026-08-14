@@ -20,12 +20,17 @@ export class CatalogModelOrchestrator extends BaseOrchestrator<
 > {
   private readonly _api = inject(CatalogClient);
 
-  protected override readonly signature = 'catalog.model';
+  // Gettery, nie pola — patrz uzasadnienie przy CatalogMultimediaOrchestrator.
+  protected override get signature(): string {
+    return 'catalog.model';
+  }
 
-  protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
-    signalrSignature: 'catalog.model',
-    maxCacheSize: 500, // Modele są zazwyczaj mniej liczne niż produkty
-  };
+  protected override get orchestratorConfig(): Partial<OrchestratorConfig> & { signalrSignature: string } {
+    return {
+      signalrSignature: 'catalog.model',
+      maxCacheSize: 500, // Modele są zazwyczaj mniej liczne niż produkty
+    };
+  }
 
   // ────────────────────────────────────────────────────────────────
   // Abstrakcyjne implementacje

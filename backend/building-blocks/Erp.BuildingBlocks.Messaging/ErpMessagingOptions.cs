@@ -28,4 +28,16 @@ public sealed class ErpMessagingOptions
     /// na produkcji zwykle wyłączone na rzecz kontrolowanego provisioningu.
     /// </summary>
     public bool AutoProvision { get; set; }
+
+    /// <summary>
+    /// Nazwa własnej, trwałej kolejki serwisu związanej z fanoutową wymianą <c>erp.events</c>
+    /// — jeśli podana, serwis staje się konsumentem zdarzeń integracyjnych, a nie tylko
+    /// producentem. Każdy konsument ma WŁASNĄ kolejkę (fanout kopiuje wiadomość do każdej
+    /// związanej kolejki), więc kilku konsumentów nigdy nie rywalizuje o tę samą wiadomość.
+    ///
+    /// <c>null</c> (domyślnie) — serwis wyłącznie publikuje, tak jak dziś Catalog.
+    /// Ustawione — jak w Notification, które musi odebrać <c>AggregateChanged</c>/<c>Job*</c>,
+    /// żeby zasilić replikę i rozgłosić je dalej przez SignalR.
+    /// </summary>
+    public string? ListenQueueName { get; set; }
 }

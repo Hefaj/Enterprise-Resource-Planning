@@ -14,12 +14,18 @@ export class NotificationJobOrchestrator extends BaseOrchestrator<
 > {
   private readonly _api = inject(NotificationClient);
 
-  protected override readonly signature = 'notification.job';
+  // Gettery, nie pola — patrz uzasadnienie przy CatalogMultimediaOrchestrator
+  // (frontend/libs/modules/catalog/data-access/.../catalog-multimedia.orchestrator.ts).
+  protected override get signature(): string {
+    return 'notification.job';
+  }
 
-  protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
-    signalrSignature: 'notification.job',
-    maxCacheSize: 500,
-  };
+  protected override get orchestratorConfig(): Partial<OrchestratorConfig> & { signalrSignature: string } {
+    return {
+      signalrSignature: 'notification.job',
+      maxCacheSize: 500,
+    };
+  }
 
   protected override fetchByUuids(uuids: string[]): Observable<JobDto[]> {
     return this._api.getJob({ uuids });

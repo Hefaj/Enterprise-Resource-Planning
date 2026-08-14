@@ -34,8 +34,17 @@ public static class ErpApiExtensions
 
         // Kontekst wykonania jest scoped i mutowalny: wypełnia go middleware HTTP,
         // a przy zadaniach w tle podstawia go BulkCommandRunner.
-        services.AddScoped<MutableExecutionContext>();
-        services.AddScoped<IExecutionContext>(sp => sp.GetRequiredService<MutableExecutionContext>());
+        //
+        // Jedna, BEZPOŚREDNIA rejestracja typ→interfejs — celowo bez pośredniej fabryki
+        // `services.AddScoped<IExecutionContext>(sp => sp.GetRequiredService<MutableExecutionContext>())`.
+        // Wolverine od wersji 6 statycznie analizuje graf zależności każdego handlera przy
+        // generowaniu kodu i odrzuca „nieprzezroczyste” rejestracje lambda jako
+        // ServiceLocationPolicy.NotAllowed — każdy handler pośrednio zależny od IUnitOfWork
+        // (a więc i od IExecutionContext) failował już przy starcie hosta. Konsumenci, którzy
+        // potrzebują metody `Set(...)` (na razie tylko BulkCommandRunner), wciąż mogą do niej
+        // dotrzeć przez rzutowanie `is MutableExecutionContext` po wstrzyknięciu interfejsu —
+        // to jedna instancja per scope niezależnie od sposobu rejestracji.
+        services.AddScoped<IExecutionContext, MutableExecutionContext>();
 
         services.AddFastEndpoints();
         services.SwaggerDocument();

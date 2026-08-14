@@ -52,6 +52,16 @@
     <PackageVersion Include="WolverineFx.RabbitMQ" Version="6.28.0" />
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.28.0" />
     <PackageVersion Include="WolverineFx.Postgresql" Version="6.28.0" />
+    <!--
+      Od v6 rdzeń Wolverine'a nie zawiera już kompilatora runtime, a domyślny tryb
+      TypeLoadMode.Dynamic generuje kod handlerów przy starcie — bez tego pakietu host
+      w ogóle się nie podnosi.
+
+      Docelowo na produkcji lepiej wygenerować kod z wyprzedzeniem (komenda `codegen write`
+      Wolverine'a + TypeLoadMode.Static): szybszy start i brak Roslyna w obrazie.
+      Zostawiamy tryb dynamiczny, dopóki kształt handlerów się ustala.
+    -->
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.28.0" />
   </ItemGroup>
 
   <ItemGroup Label="Realtime">

@@ -56,6 +56,7 @@ public sealed class JobItemConfiguration : IEntityTypeConfiguration<JobItem>
         builder.Property(i => i.Status).HasConversion<int>();
         builder.Property(i => i.ErrorCode).HasMaxLength(128);
         builder.Property(i => i.ErrorMessage).HasMaxLength(2048);
+        builder.Property(i => i.CommandJson).HasColumnType("jsonb");
 
         // Zapytanie runnera: „następne N oczekujących elementów tego zadania, wg kolejności”.
         // Przy zadaniu na 50 tys. elementów bez tego indeksu każdy z ~100 chunków

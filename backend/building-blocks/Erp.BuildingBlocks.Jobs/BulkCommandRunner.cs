@@ -190,7 +190,13 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
 
             try
             {
-                await executor.ExecuteAsync(item.AggregateUuid, job.CommandJson, cancellationToken)
+                // Payload elementu ma pierwszeństwo przed szablonem zadania. Tryb `Commands`
+                // (lista różnych komend) nie ma szablonu w ogóle, więc sięgnięcie po samo
+                // `job.CommandJson` dawałoby pustą komendę z wartościami domyślnymi —
+                // czyli operację, która „się udaje”, nie robiąc tego, o co prosił użytkownik.
+                var payload = item.CommandJson ?? job.CommandJson;
+
+                await executor.ExecuteAsync(item.AggregateUuid, payload, cancellationToken)
                     .ConfigureAwait(false);
                 item.MarkSucceeded(now);
                 succeededCount++;

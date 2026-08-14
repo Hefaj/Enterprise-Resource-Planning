@@ -11,6 +11,11 @@ namespace Catalog.Application.Products;
 // ale są tu użyte WYŁĄCZNIE jako mediator in-process — nie ma w nich nic z HTTP.
 // Ta sama komenda jest wykonywana zarówno z endpointu, jak i z BulkCommandRunnera,
 // który o HTTP nie wie nic.
+//
+// ZAPIS: handlery celowo NIE wołają SaveChanges. Granicę transakcji wyznacza wywołujący —
+// BulkCommandRunner zatwierdza cały chunk jednym commitem, co jest jedynym sposobem, by
+// operacja na 50 tys. produktów nie oznaczała 50 tys. transakcji. Endpoint obsługujący
+// pojedynczą komendę musi po dyspozycji sam wywołać IUnitOfWork.SaveChangesAsync().
 
 /// <summary>Zmiana nazwy produktu.</summary>
 public sealed class ProductSetNameCommand : ICommand<Guid>, IAggregateCommand
@@ -38,16 +43,11 @@ public sealed class ProductSetPriceCommand : ICommand<Guid>, IAggregateCommand
 public sealed class ProductSetNameCommandHandler : CommandHandler<ProductSetNameCommand, Guid>
 {
     private readonly IProductRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
 
-    public ProductSetNameCommandHandler(
-        IProductRepository repository,
-        IUnitOfWork unitOfWork,
-        IClock clock)
+    public ProductSetNameCommandHandler(IProductRepository repository, IClock clock)
     {
         _repository = repository;
-        _unitOfWork = unitOfWork;
         _clock = clock;
     }
 
@@ -60,8 +60,6 @@ public sealed class ProductSetNameCommandHandler : CommandHandler<ProductSetName
 
         product.SetName(command.Name, _clock.UtcNow);
 
-        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
-
         return product.Uuid;
     }
 }
@@ -70,16 +68,11 @@ public sealed class ProductSetNameCommandHandler : CommandHandler<ProductSetName
 public sealed class ProductSetPriceCommandHandler : CommandHandler<ProductSetPriceCommand, Guid>
 {
     private readonly IProductRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
 
-    public ProductSetPriceCommandHandler(
-        IProductRepository repository,
-        IUnitOfWork unitOfWork,
-        IClock clock)
+    public ProductSetPriceCommandHandler(IProductRepository repository, IClock clock)
     {
         _repository = repository;
-        _unitOfWork = unitOfWork;
         _clock = clock;
     }
 
@@ -91,8 +84,6 @@ public sealed class ProductSetPriceCommandHandler : CommandHandler<ProductSetPri
             ?? throw new AggregateNotFoundException(nameof(Product), command.Uuid);
 
         product.SetPrice(command.Price, _clock.UtcNow);
-
-        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
         return product.Uuid;
     }

@@ -1,81 +1,109 @@
-using FastEndpoints;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Text.Json;
-using Erp.BuildingBlocks.Api.BackgroundJobs;
-
+using Erp.BuildingBlocks.Jobs;
+using FastEndpoints;
 
 namespace Erp.BuildingBlocks.Api.Contracts;
 
+/// <summary>
+/// Baza endpointów operacji masowych. Przyjmuje żądanie, utrwala zadanie i natychmiast oddaje
+/// jego identyfikator — samo wykonanie należy do <see cref="BulkCommandRunner{TContext}"/>.
+///
+/// <para><b>Co się zmieniło względem poprzedniej wersji.</b> Wcześniej endpoint wrzucał domknięcie
+/// do <c>Channel</c> w pamięci procesu i zwracał wygenerowany w locie <c>jobUuid</c>, za którym
+/// nie stało nic: restart gubił kolejkę, wyjątki lądowały w <c>Console.WriteLine</c>, a komendy
+/// wykonywały się poza scope'em DI (co kończyło się błędem „Cannot resolve scoped service
+/// from root provider” — cicho, bo nikt tego wyjątku nie czytał). Frontend rejestrował zadanie,
+/// którego backend nie znał, i czekał na zakończenie, które nigdy nie nadchodziło.</para>
+///
+/// <para>Teraz zadanie jest wierszem w bazie razem ze swoimi elementami, a jego identyfikator
+/// to realny klucz, po którym da się odpytać o postęp i wynik.</para>
+///
+/// <para><b>Kontrakt HTTP pozostaje bez zmian</b> — te same trzy tryby wskazywania celów
+/// i ta sama odpowiedź <see cref="BatchResult"/>.</para>
+/// </summary>
+/// <typeparam name="TCommand">Komenda wykonywana dla pojedynczego agregatu.</typeparam>
+/// <typeparam name="TFilter">Filtr wyznaczający zbiór celów.</typeparam>
 public abstract class BatchEndpointBase<TCommand, TFilter> : Endpoint<BatchCommand<TCommand, TFilter>, BatchResult>
     where TCommand : IAggregateCommand, ICommand<Guid>
 {
+    /// <summary>Rozwija filtr na zbiór identyfikatorów agregatów.</summary>
     protected abstract Task<IEnumerable<Guid>> GetUuidsFromFilterAsync(TFilter filter, CancellationToken ct);
+
+    /// <summary>Nazwa typu komendy zapisywana w zadaniu; po niej runner odnajduje egzekutora.</summary>
+    protected virtual string CommandType => typeof(TCommand).Name;
 
     public override async Task HandleAsync(BatchCommand<TCommand, TFilter> req, CancellationToken ct)
     {
-        var jobUuid = Guid.NewGuid();
-        var commandsToExecute = new List<TCommand>();
+        ArgumentNullException.ThrowIfNull(req);
 
-        if (req.Commands != null && req.Commands.Count > 0)
-        {
-            commandsToExecute.AddRange(req.Commands);
-        }
+        var (targets, templateJson) = await ResolveTargetsAsync(req, ct).ConfigureAwait(false);
 
-        if (req.TemplateCommand != null)
-        {
-            var targetUuids = new List<Guid>();
-            if (req.TargetUuids != null && req.TargetUuids.Count > 0)
-            {
-                targetUuids.AddRange(req.TargetUuids);
-            }
-            else if (req.TargetFilter != null)
-            {
-                var filteredUuids = await GetUuidsFromFilterAsync(req.TargetFilter, ct);
-                targetUuids.AddRange(filteredUuids);
-            }
-
-            var jsonTemplate = JsonSerializer.Serialize(req.TemplateCommand);
-            foreach (var uuid in targetUuids)
-            {
-                var clonedCommand = JsonSerializer.Deserialize<TCommand>(jsonTemplate);
-                if (clonedCommand != null)
-                {
-                    clonedCommand.Uuid = uuid;
-                    commandsToExecute.Add(clonedCommand);
-                }
-            }
-        }
-
-        if (commandsToExecute.Count == 0)
+        if (targets.Count == 0)
         {
             ThrowError("Brak komend do wykonania.");
             return;
         }
 
-        // Oddelegowanie wykonania całej paczki komend do wątku w tle za pomocą kolejki Channels
-        var taskQueue = Resolve<IBackgroundTaskQueue>();
-        await taskQueue.QueueBackgroundWorkItemAsync(async token =>
+        var jobStore = Resolve<IJobStore>();
+
+        var jobUuid = await jobStore
+            .CreateAsync(CommandType, templateJson, targets, queueId: null, uiMetadata: null, ct)
+            .ConfigureAwait(false);
+
+        // Odpowiedź wraca natychmiast, bez czekania na wykonanie — frontend rejestruje
+        // zadanie w JobService i śledzi je zdarzeniami, zamiast trzymać otwarte połączenie.
+        await Send.OkAsync(new BatchResult { JobUuid = jobUuid }, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sprowadza trzy tryby kontraktu do jednej listy celów.
+    ///
+    /// Kolejność rozstrzygania: jawna lista komend, potem szablon z listą identyfikatorów,
+    /// a na końcu szablon z filtrem. Tryby się nie wykluczają — lista komend i szablon mogą
+    /// wystąpić razem, więc oba są doklejane do tej samej puli.
+    /// </summary>
+    private async Task<(List<JobTarget> Targets, string? TemplateJson)> ResolveTargetsAsync(
+        BatchCommand<TCommand, TFilter> req,
+        CancellationToken ct)
+    {
+        var targets = new List<JobTarget>();
+
+        // Tryb 1: lista różnych komend — każda niesie własny payload, więc serializujemy
+        // je osobno. To dlatego JobItem ma własne pole CommandJson.
+        if (req.Commands is { Count: > 0 })
         {
-            foreach (var command in commandsToExecute)
+            foreach (var command in req.Commands)
             {
-                // Przerwij pętlę, jeśli aplikacja jest wyłączana
-                if (token.IsCancellationRequested) break;
-
-                try
-                {
-                    await command.ExecuteAsync(token);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Błąd przetwarzania komendy w tle dla zadania zbiorczego {jobUuid}: {ex.Message}");
-                }
+                targets.Add(new JobTarget(command.Uuid, JsonSerializer.Serialize(command)));
             }
-        });
+        }
 
-        // Natychmiast zwracamy jobUuid na front, bez oczekiwania na zakończenie zadań
-        await Send.OkAsync(new BatchResult { JobUuid = jobUuid }, ct);
+        if (req.TemplateCommand is null)
+        {
+            return (targets, null);
+        }
+
+        var templateJson = JsonSerializer.Serialize(req.TemplateCommand);
+
+        // Tryb 2: szablon + jawne identyfikatory.
+        if (req.TargetUuids is { Count: > 0 })
+        {
+            foreach (var uuid in req.TargetUuids)
+            {
+                targets.Add(new JobTarget(uuid));
+            }
+        }
+        // Tryb 3: szablon + filtr. Zbiór celów wyznacza zapytanie po stronie bazy —
+        // klient nie musi (i przy dziesiątkach tysięcy pozycji nie mógłby) wypisać ich w żądaniu.
+        else if (req.TargetFilter is not null)
+        {
+            var filtered = await GetUuidsFromFilterAsync(req.TargetFilter, ct).ConfigureAwait(false);
+            foreach (var uuid in filtered)
+            {
+                targets.Add(new JobTarget(uuid));
+            }
+        }
+
+        return (targets, templateJson);
     }
 }

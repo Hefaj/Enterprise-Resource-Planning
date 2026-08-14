@@ -94,11 +94,16 @@ public class Job : AggregateRoot
     /// <summary>Liczba elementów jeszcze nieprzetworzonych.</summary>
     public int RemainingCount => TotalCount - SucceededCount - FailedCount;
 
-    /// <summary>Tworzy zadanie wraz z elementami dla podanych agregatów.</summary>
+    /// <summary>
+    /// Tworzy zadanie wraz z elementami.
+    ///
+    /// Każdy cel może nieść własny payload komendy (tryb <c>Commands</c> z listą różnych komend)
+    /// albo <c>null</c> — wtedy element użyje szablonu <paramref name="commandJson"/>.
+    /// </summary>
     public static Job Create(
         string commandType,
         string? commandJson,
-        IReadOnlyList<Guid> targetUuids,
+        IReadOnlyList<JobTarget> targets,
         string? queueId,
         string? userId,
         string? clientId,
@@ -108,9 +113,9 @@ public class Job : AggregateRoot
         DateTimeOffset? expireOn = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandType);
-        ArgumentNullException.ThrowIfNull(targetUuids);
+        ArgumentNullException.ThrowIfNull(targets);
 
-        if (targetUuids.Count == 0)
+        if (targets.Count == 0)
         {
             throw new DomainException("job_empty", "Zadanie masowe musi obejmować co najmniej jeden element.");
         }
@@ -120,9 +125,9 @@ public class Job : AggregateRoot
             correlationId, uiMetadata, createdAt, expireOn);
 
         var ordinal = 0;
-        foreach (var targetUuid in targetUuids)
+        foreach (var target in targets)
         {
-            job._items.Add(JobItem.Create(job.Uuid, targetUuid, ordinal++));
+            job._items.Add(JobItem.Create(job.Uuid, target.AggregateUuid, ordinal++, target.CommandJson));
         }
 
         job.TotalCount = job._items.Count;

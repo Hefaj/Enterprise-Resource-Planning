@@ -33,11 +33,12 @@ public class JobItem : Entity
     {
     }
 
-    private JobItem(Guid uuid, Guid jobUuid, Guid aggregateUuid, int ordinal) : base(uuid)
+    private JobItem(Guid uuid, Guid jobUuid, Guid aggregateUuid, int ordinal, string? commandJson) : base(uuid)
     {
         JobUuid = jobUuid;
         AggregateUuid = aggregateUuid;
         Ordinal = ordinal;
+        CommandJson = commandJson;
         Status = JobItemStatus.Pending;
     }
 
@@ -46,6 +47,17 @@ public class JobItem : Entity
 
     /// <summary>Agregat, na którym ma zostać wykonana komenda.</summary>
     public Guid AggregateUuid { get; private set; }
+
+    /// <summary>
+    /// Payload komendy specyficzny dla tego elementu; <c>null</c> oznacza użycie szablonu
+    /// z <see cref="Job.CommandJson"/>.
+    ///
+    /// Istnieje, bo kontrakt <c>BatchCommand</c> dopuszcza tryb, w którym klient przysyła
+    /// <b>listę różnych komend</b> (`Commands`), a nie jeden szablon powielony na wiele celów.
+    /// Bez tego pola taka lista zostałaby spłaszczona do jednej wartości i operacja
+    /// „ustaw każdemu produktowi INNĄ cenę” po cichu nadałaby wszystkim tę samą.
+    /// </summary>
+    public string? CommandJson { get; private set; }
 
     /// <summary>Pozycja w zadaniu — zapewnia deterministyczną, powtarzalną kolejność
     /// przetwarzania także po restarcie procesu.</summary>
@@ -66,8 +78,8 @@ public class JobItem : Entity
 
     public DateTimeOffset? ProcessedAt { get; private set; }
 
-    internal static JobItem Create(Guid jobUuid, Guid aggregateUuid, int ordinal)
-        => new(NewUuid(), jobUuid, aggregateUuid, ordinal);
+    internal static JobItem Create(Guid jobUuid, Guid aggregateUuid, int ordinal, string? commandJson = null)
+        => new(NewUuid(), jobUuid, aggregateUuid, ordinal, commandJson);
 
     /// <summary>Odnotowuje udane wykonanie.</summary>
     public void MarkSucceeded(DateTimeOffset processedAt)

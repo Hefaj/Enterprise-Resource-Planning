@@ -27,23 +27,37 @@ w zamian. To jest cel rozdziału CQRS, a nie skrót.
 
 ## 2. Gdzie co mieszka
 
-```
+Cały kod grupowany jest wewnątrz warstw według agregatów (np. `Product`, `Category`), aby uniknąć płaskiej i nieczytelnej struktury przy rozroście systemu.
+
+```text
+Catalog.Domain/
+└── Aggregates/
+    └── Product/
+        ├── Product.cs                 # definicja agregatu i reguły biznesowe
+        └── Events/                    # zdarzenia domenowe (np. ProductPriceChanged.cs)
+
 Catalog.Application/
-├── Contracts/
-│   ├── CatalogDtos.cs         # DTO — kontrakt HTTP, ZAMROŻONY (NSwag)
-│   ├── CatalogRequests.cs     # typy żądań — też kontrakt
-│   └── ICatalogQueries.cs     # interfejsy odczytu
 ├── Abstractions/
-│   └── IProductRepository.cs  # dostęp zapisu
-└── Products/
-    └── ProductCommands.cs     # komendy + handlery
+│   └── IProductRepository.cs          # abstrakcja dostępu zapisu
+└── Contracts/
+    └── Product/                       # wszystkie operacje na agregacie zebrane w jednym miejscu
+        ├── Commands/                  # komendy (np. ProductSetPriceCommand.cs)
+        ├── Handlers/                  # handlery komend
+        ├── Dtos/                      # DTO — kontrakt HTTP, ZAMROŻONY (NSwag)
+        ├── Queries/                   # interfejsy odczytu
+        ├── Requests/                  # typy żądań — też kontrakt
+        ├── Responses/                 # typy odpowiedzi
+        └── Rules/                     # reguły walidacji (np. wsadowej)
 
 Catalog.Infrastructure/
-├── Queries/                   # implementacje IXxxQueries (EF)
-└── Repositories/              # implementacje repozytoriów (EF)
+├── Queries/                           # implementacje IXxxQueries (EF)
+└── Repositories/                      # implementacje repozytoriów (EF)
 
 Catalog.Api/
-└── Product/{Query,Command}/   # endpointy — tłumaczą HTTP na komendę/zapytanie
+└── Aggregates/
+    └── Product/
+        ├── Command/                   # endpointy — tłumaczą HTTP na komendę
+        └── Query/                     # endpointy — tłumaczą HTTP na zapytanie
 ```
 
 ---

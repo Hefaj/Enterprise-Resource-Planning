@@ -1,0 +1,84 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Catalog.Application.Contracts;
+using Catalog.Infrastructure.Persistence;
+using Erp.BuildingBlocks.Api.Contracts;
+using Microsoft.EntityFrameworkCore;
+
+namespace Catalog.Infrastructure.Queries;
+
+// Trzy słownikowe agregaty katalogu. Zebrane w jednym pliku, bo każdy sprowadza się do tej
+// samej pary „szukaj + pobierz po uuid" i rozbijanie ich na osobne pliki dałoby trzy niemal
+// identyczne szkielety zamiast czytelnego porównania.
+
+/// <summary>Odczyty zasobów multimedialnych.</summary>
+public sealed class MultimediaQueries : IMultimediaQueries
+{
+    private readonly CatalogDbContext _dbContext;
+
+    public MultimediaQueries(CatalogDbContext dbContext) => _dbContext = dbContext;
+
+    /// <inheritdoc />
+    public async Task<SearchResponse> SearchAsync(
+        SearchMultimediaRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var query = _dbContext.MultimediaAssets.AsNoTracking();
+
+        if (request.Uuids is { Count: > 0 })
+        {
+            var uuidList = request.Uuids;
+            query = query.Where(m => uuidList.Contains(m.Uuid));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+
+        var descending = request.Sorts?.FirstOrDefault()?.Order == -1;
+        var ordered = descending
+            ? query.OrderByDescending(m => m.SortOrder)
+            : query.OrderBy(m => m.SortOrder);
+
+        var uuids = await ordered
+            .ThenBy(m => m.Uuid)
+            .Skip((Math.Max(request.Page, 1) - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(m => m.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return new SearchResponse { Uuids = uuids, TotalCount = totalCount };
+    }
+
+    /// <inheritdoc />
+    public async Task<List<MultimediaDto>> GetAsync(
+        IReadOnlyCollection<Guid>? uuids,
+        CancellationToken cancellationToken)
+    {
+        var query = _dbContext.MultimediaAssets.AsNoTracking();
+
+        if (uuids is { Count: > 0 })
+        {
+            var uuidList = uuids.ToList();
+            query = query.Where(m => uuidList.Contains(m.Uuid));
+        }
+
+        return await query
+            .Select(m => new MultimediaDto(
+                m.Uuid,
+                m.FileName,
+                m.MediaType,
+                m.ThumbnailUrl,
+                m.OriginalUrl,
+                m.FileSize,
+                m.MimeType,
+                m.SortOrder,
+                m.CreatedAt.UtcDateTime))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+}

@@ -8,10 +8,9 @@ namespace Notification.Infrastructure.Queries;
 /// <summary>
 /// Odczyty repliki zadań, bezpośrednio na EF Core.
 ///
-/// Mapowanie na <see cref="JobDto"/> jest celowo asymetryczne względem starego mocka: pola,
-/// dla których backend nie ma realnej wartości (bo nasz model zdarzeń jej nie niesie), dostają
-/// uczciwe <c>null</c>/wartość domyślną zamiast fabrykowanych danych. Zobacz komentarze przy
-/// każdym takim polu.
+/// Projekcja jest 1:1 z encją — <see cref="JobDto"/> został zwężony do pól, które replika
+/// faktycznie posiada (patrz komentarz przy samym DTO), więc nie ma tu już nic do syntetyzowania
+/// ani do wypełniania stałymi.
 /// </summary>
 public sealed class JobQueries : IJobQueries
 {
@@ -52,6 +51,12 @@ public sealed class JobQueries : IJobQueries
             query = query.Where(j => j.UserId != null && EF.Functions.ILike(j.UserId, $"%{term}%"));
         }
 
+        if (!string.IsNullOrWhiteSpace(request.ClientId))
+        {
+            var clientId = request.ClientId;
+            query = query.Where(j => j.ClientId == clientId);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var uuids = await ApplySorting(query, request)
@@ -80,34 +85,19 @@ public sealed class JobQueries : IJobQueries
                 j.Uuid,
                 j.QueueId,
                 j.TrackingId,
+                j.CommandType,
                 j.CommandJson,
-                // ResultJson/ResultType: backend nie przechowuje wyniku pojedynczego zadania
-                // jako osobnego payloadu — wynik to liczniki (SucceededCount/FailedCount)
-                // i ErrorsSummary. Zostają null, zamiast fabrykować treść, której nikt nie zapisał.
-                null,
-                null,
-                j.ErrorsSummary,
-                // Successes: syntetyzowane z liczników, żeby pole niosło realną informację
-                // („3/5 zakończonych powodzeniem”), a nie sztywny napis z poprzedniego mocka.
-                j.SucceededCount > 0 ? j.SucceededCount + "/" + j.TotalCount + " zakończonych powodzeniem" : null,
-                // Exceptions: w naszym modelu wyjątek infrastrukturalny i naruszenie reguły
-                // trafiają do tego samego ErrorsSummary — nie rozróżniamy ich na poziomie repliki.
-                null,
+                j.UiMetadata,
+                j.Status,
+                j.TotalCount,
+                j.SucceededCount,
+                j.FailedCount,
                 j.IsComplete,
-                // UnRead: koncept czysto kliencki (JobService oznacza zadanie jako nieprzeczytane
-                // lokalnie przy rejestracji) — backend nie ma endpointu „oznacz jako przeczytane”,
-                // więc replika zawsze zwraca `true` i klient zarządza tym stanem sam.
-                true,
-                // ExecutionTimes/ServiceId: pola bez odpowiednika w obecnym modelu zadań
-                // (nie licznik prób pojedynczego elementu, tylko coś z zewnętrznego schedulera
-                // z poprzedniej generacji mocka) — zerowa/pusta wartość, nie fabrykacja.
-                0,
-                null,
+                j.ErrorsSummary,
                 j.UserId,
                 j.ClientId,
-                j.UiMetadata,
-                j.CreatedAt.UtcDateTime,
-                j.ExpireOn == null ? null : j.ExpireOn.Value.UtcDateTime))
+                j.CreatedAt,
+                j.ExpireOn))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -134,8 +124,11 @@ public sealed class JobQueries : IJobQueries
                 "QUEUEID" => Chain(ordered, query, j => j.QueueId, descending),
                 "TRACKINGID" => Chain(ordered, query, j => j.TrackingId, descending),
                 "ISCOMPLETE" => Chain(ordered, query, j => j.IsComplete, descending),
+                "STATUS" => Chain(ordered, query, j => j.Status, descending),
+                "COMMANDTYPE" => Chain(ordered, query, j => j.CommandType, descending),
                 "USERID" => Chain(ordered, query, j => j.UserId, descending),
-                "EXECUTEAFTER" => Chain(ordered, query, j => j.CreatedAt, descending),
+                "CLIENTID" => Chain(ordered, query, j => j.ClientId, descending),
+                "CREATEDAT" => Chain(ordered, query, j => j.CreatedAt, descending),
                 "EXPIREON" => Chain(ordered, query, j => j.ExpireOn, descending),
                 _ => ordered,
             };

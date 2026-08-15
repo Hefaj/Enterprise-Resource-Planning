@@ -1,12 +1,22 @@
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { REMOTE_MODULES_CONFIG, RemoteModuleConfig, loadModuleContract } from '@erp/client/contract';
-import { ErpNavRegistryService, ErpNavigationItem } from '@erp/shared/data-access';
+import {
+  ErpNavRegistryService,
+  ErpNavigationItem,
+  ErpWidgetRegistryService,
+  ErpWidgetDefinition,
+  JOB_LIST_WIDGET_ID,
+} from '@erp/shared/data-access';
 import { ErpModalService } from '@erp/shared/ui';
 import { AppSettingsService } from '@erp/client/util';
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
   const modalService = inject(ErpModalService);
+  const widgetRegistry = inject(ErpWidgetRegistryService);
+  // Pobrany synchronicznie: kontekst wstrzykiwania nie przeżywa `await` niżej,
+  // a bootstrap feedu zadań potrzebuje injectora już po doładowaniu remota.
+  const injector = inject(Injector);
   inject(AppSettingsService); // Triggers theme and language initialization and effects
 
   menuRegistry.register({
@@ -21,6 +31,16 @@ export async function STARTUP(): Promise<void> {
     modalService.registerContractLoader(config.routePrefix, () => loadModuleContract(config.routePrefix));
   }
 
+  // Lista zadań masowych w nagłówku żyje w remocie `notification`, ale osadza się w layoucie
+  // hosta — nie jest ani trasą, ani modalem, więc idzie trzecią ścieżką: rejestrem widżetów.
+  // Sam loader jest leniwy; wykona się dopiero przy pierwszym otwarciu dzwonka.
+  widgetRegistry.register(JOB_LIST_WIDGET_ID, async () => {
+    const contract = await loadModuleContract('notification') as {
+      loadJobListComponent: () => Promise<ErpWidgetDefinition>;
+    };
+    return contract.loadJobListComponent();
+  });
+
   const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadContractDirect(config.routePrefix, config, modalService));
   const remoteMenus = await Promise.all(loadPromises);
 
@@ -28,6 +48,27 @@ export async function STARTUP(): Promise<void> {
     if (menu) {
       menuRegistry.register(menu);
     }
+  }
+
+  // Feed zadań startuje niezależnie od widżetu: badge przy dzwonku ma pokazywać prawdę
+  // od pierwszej sekundy, a nie dopiero po tym, jak użytkownik kliknie.
+  await bootstrapJobFeed(injector);
+}
+
+/**
+ * Uruchamia hydrację feedu zadań z repliki serwera. Awaria (remote niedostępny, backend
+ * jeszcze nie wstał) nie może zablokować startu aplikacji — powiadomienia są dodatkiem
+ * do shellu, nie warunkiem jego działania.
+ */
+async function bootstrapJobFeed(injector: Injector): Promise<void> {
+  try {
+    const contract = await loadModuleContract('notification') as {
+      bootstrapJobFeed?: (injector: Injector) => Promise<void>;
+    };
+
+    await contract?.bootstrapJobFeed?.(injector);
+  } catch (error) {
+    console.warn('[STARTUP] Nie udało się uruchomić feedu zadań masowych.', error);
   }
 }
 

@@ -197,6 +197,11 @@
       "toggleLanguage": "Zmień język",
       "decoration": "Grafika dekoracyjna"
     }
+  },
+  "jobs": {
+    "commands": {
+      "catalogProductSetPrice": "Zmiana ceny produktów",
+      "catalogProductSetName": "Zmiana nazwy produktów"
+    }
   }
 }
-

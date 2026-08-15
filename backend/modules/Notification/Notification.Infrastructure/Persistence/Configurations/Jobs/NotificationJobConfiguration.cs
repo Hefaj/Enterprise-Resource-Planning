@@ -23,12 +23,17 @@ public sealed class NotificationJobConfiguration : IEntityTypeConfiguration<Noti
         builder.Property(j => j.ClientId).HasMaxLength(128);
         builder.Property(j => j.UiMetadata).HasColumnType("jsonb");
 
-        // Predykaty filtrów searchJob: QueueId/TrackingId po ILIKE, UserId po ILIKE,
+        // Status jako int, nie string: wartości są kontraktem numerycznym (patrz komentarz przy
+        // NotificationJobStatus), a kolumna jest tylko odczytywana, nigdy nie filtrowana tekstem.
+        builder.Property(j => j.Status).HasConversion<int>();
+
+        // Predykaty filtrów searchJob: QueueId/TrackingId po ILIKE, UserId/ClientId po ILIKE,
         // IsComplete po równości — każdy dostaje własny indeks, bo wszystkie występują
         // w kontrakcie jako niezależne, opcjonalne filtry.
         builder.HasIndex(j => j.QueueId);
         builder.HasIndex(j => j.TrackingId);
         builder.HasIndex(j => j.UserId);
+        builder.HasIndex(j => j.ClientId);
         builder.HasIndex(j => j.IsComplete);
         builder.HasIndex(j => j.CreatedAt);
     }

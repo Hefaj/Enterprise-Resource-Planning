@@ -72,6 +72,18 @@ public class NotificationJob : AggregateRoot
 
     public int FailedCount { get; private set; }
 
+    /// <summary>
+    /// Status zadania — niesie informację, której <see cref="IsComplete"/> nie jest w stanie
+    /// oddać: różnicę między „zakończone z błędami”, „nie ruszyło w ogóle” a „anulowane”.
+    /// Frontend rysuje po nim ikonę i kolor wiersza w powiadomieniach.
+    /// </summary>
+    public NotificationJobStatus Status { get; private set; } = NotificationJobStatus.Pending;
+
+    /// <summary>
+    /// Zredukowany <see cref="Status"/> do jednego bitu. Zostaje mimo dodania statusu, bo jest
+    /// filtrem w kontrakcie <c>searchJob</c> (indeksowanym) i najczęstszym pytaniem UI
+    /// („pokaż tylko trwające”) — tańszym niż <c>Status IN (...)</c>.
+    /// </summary>
     public bool IsComplete { get; private set; }
 
     /// <summary>
@@ -110,14 +122,22 @@ public class NotificationJob : AggregateRoot
     {
         SucceededCount = succeeded;
         FailedCount = failed;
+
+        // Zdarzenia mogą dotrzeć poza kolejnością (at-least-once, osobne kolejki): postęp,
+        // który przyszedł po zakończeniu, nie może cofnąć zadania do stanu „w toku”.
+        if (Status == NotificationJobStatus.Pending)
+        {
+            Status = NotificationJobStatus.Running;
+        }
     }
 
     /// <summary>Zamyka replikę na podstawie <c>JobCompleted</c>.</summary>
-    public void ApplyCompletion(int succeeded, int failed, string? errorsSummary)
+    public void ApplyCompletion(NotificationJobStatus status, int succeeded, int failed, string? errorsSummary)
     {
         SucceededCount = succeeded;
         FailedCount = failed;
         ErrorsSummary = errorsSummary;
+        Status = status;
         IsComplete = true;
     }
 }

@@ -197,6 +197,11 @@
       "toggleLanguage": "Change language",
       "decoration": "Decorative graphic"
     }
+  },
+  "jobs": {
+    "commands": {
+      "catalogProductSetPrice": "Product price change",
+      "catalogProductSetName": "Product name change"
+    }
   }
 }
-

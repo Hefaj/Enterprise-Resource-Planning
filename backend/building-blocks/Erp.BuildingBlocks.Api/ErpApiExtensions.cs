@@ -97,6 +97,11 @@ public static class ErpApiExtensions
 
         app.UseCors(CorsPolicyName);
 
+        // Przed endpointami, bo to one (a dokładniej BatchEndpointBase → IJobStore) czytają
+        // kontekst przy tworzeniu zadania. Po CORS, żeby preflight nie przechodził przez
+        // logikę tożsamości.
+        app.UseMiddleware<ExecutionContextMiddleware>();
+
         app.UseFastEndpoints(config =>
         {
             // NSwag generuje nazwy metod klienta z nazw endpointów. Bez tego zabiegu

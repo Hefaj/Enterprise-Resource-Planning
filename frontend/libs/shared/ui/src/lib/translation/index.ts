@@ -1,8 +1,9 @@
 import { Provider, Injectable, isDevMode, EnvironmentProviders, inject, provideAppInitializer } from '@angular/core';
 import { provideTranslocoScope, Translation, TranslocoLoader, provideTransloco } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideTaiga } from '@taiga-ui/core';
+import { erpClientIdInterceptor } from '@erp/shared/data-access';
 import { ErpModalService } from '../atoms/erp-modal/erp-modal.service';
 
 export { SHARED_KEYS } from './keys';
@@ -35,7 +36,10 @@ export interface RemoteDevSupportOptions {
 
 export function provideRemoteDevSupport(options?: RemoteDevSupportOptions): (Provider | EnvironmentProviders)[] {
   const providers: (Provider | EnvironmentProviders)[] = [
-    provideHttpClient(),
+    // Ten sam zestaw interceptorów co w hoście — remote uruchomiony samodzielnie w dev
+    // musi identyfikować się backendowi tak samo, inaczej zadania zlecone z jego modali
+    // nie doczekają się powiadomienia o zakończeniu.
+    provideHttpClient(withInterceptors([erpClientIdInterceptor])),
     provideTaiga(),
     provideTransloco({
       config: {

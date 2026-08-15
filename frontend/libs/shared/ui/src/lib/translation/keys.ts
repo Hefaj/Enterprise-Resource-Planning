@@ -203,4 +203,10 @@ export const SHARED_KEYS = {
         decoration: 'shared.auth.a11y.decoration',
       },
     },
+    jobs: {
+      commands: {
+        catalogProductSetPrice: 'shared.jobs.commands.catalogProductSetPrice',
+        catalogProductSetName: 'shared.jobs.commands.catalogProductSetName',
+      },
+    },
   } as const;

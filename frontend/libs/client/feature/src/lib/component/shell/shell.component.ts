@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed, effect, untracked } from '@angular/core';
+import { Component, signal, inject, computed, effect, untracked, Injector, Type } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
@@ -6,7 +6,15 @@ import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp
 import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui';
 import { ErpDrawerComponent, ErpDrawerBuilder } from '@erp/shared/ui/erp-drawer';
 import { SHARED_KEYS } from '@erp/shared/ui';
-import { ErpBreadcrumbService, ErpNavRegistryService, AppLanguage, ErpUserPreferencesService } from '@erp/shared/data-access';
+import {
+  ErpBreadcrumbService,
+  ErpNavRegistryService,
+  AppLanguage,
+  ErpUserPreferencesService,
+  ErpWidgetRegistryService,
+  JobService,
+  JOB_LIST_WIDGET_ID,
+} from '@erp/shared/data-access';
 import { AppSettingsService } from '@erp/client/util';
 import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
 import { ErpToggleGroupComponent, ErpToggleGroupBuilder } from '@erp/shared/ui';
@@ -63,6 +71,26 @@ export class ShellLayoutComponent {
   private readonly _breadcrumbService = inject(ErpBreadcrumbService);
   private readonly _navRegistry = inject(ErpNavRegistryService);
   private readonly _userPreferences = inject(ErpUserPreferencesService);
+  private readonly _widgetRegistry = inject(ErpWidgetRegistryService);
+  private readonly _jobService = inject(JobService);
+
+  // ── Powiadomienia o zadaniach masowych ──
+
+  /** Zadania, które zmieniły stan od ostatniego otwarcia panelu. */
+  public readonly unreadJobs = this._jobService.unreadCount;
+
+  /** Czy cokolwiek jeszcze się wykonuje — dzwonek zamienia wtedy ikonę na wskaźnik pracy. */
+  public readonly hasActiveJobs = computed(() => this._jobService.activeCount() > 0);
+
+  /**
+   * Zawartość panelu powiadomień. `null` do pierwszego otwarcia dzwonka — komponent listy
+   * mieszka w remocie `notification` i nie ma powodu ładować go przy starcie aplikacji.
+   * Licznik przy dzwonku jest niezależny: karmi go `JobService`, zasilany przy STARTUP
+   * przez `bootstrapJobFeed()`.
+   */
+  public readonly jobsWidget = signal<{ component: Type<unknown>; injector: Injector } | null>(null);
+
+  public readonly notificationsOpen = signal(false);
 
   public readonly isDarkMode = this._appSettings.isDarkMode;
   public readonly navMenu = this._navRegistry.$navMenu;
@@ -240,8 +268,24 @@ export class ShellLayoutComponent {
     this.updateAvailable.set(false);
   }
 
-  public openNotifications(): void {
-    console.log('Notifications clicked');
+  /**
+   * Otwarcie panelu powiadomień: dociąga komponent listy z remota (raz na sesję — rejestr
+   * cache'uje wynik) i zeruje licznik nieprzeczytanych.
+   *
+   * Licznik zerujemy od razu, nie po załadowaniu widżetu: użytkownik już zobaczył, że coś
+   * się wydarzyło, więc badge nie ma po co świecić, nawet gdyby remote był niedostępny.
+   */
+  public async openNotifications(): Promise<void> {
+    this._jobService.markAllSeen();
+
+    if (this.jobsWidget()) {
+      return;
+    }
+
+    const widget = await this._widgetRegistry.load(JOB_LIST_WIDGET_ID);
+    if (widget) {
+      this.jobsWidget.set(widget);
+    }
   }
 
   public openTasks(): void {

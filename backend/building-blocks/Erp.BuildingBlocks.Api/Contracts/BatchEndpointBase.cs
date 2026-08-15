@@ -87,8 +87,11 @@ public abstract class BatchEndpointBase<TCommand, TFilter> : Endpoint<BatchComma
 
         var jobStore = Resolve<IJobStore>();
 
+        // queueId/uiMetadata idą wprost z żądania i nie są w żaden sposób interpretowane —
+        // backend przenosi je do zadania, żeby powiadomienie w nagłówku klienta mogło pokazać,
+        // CO się wykonuje, a nie tylko techniczną nazwę typu komendy.
         var jobUuid = await jobStore
-            .CreateAsync(CommandType, templateJson, targets, queueId: null, uiMetadata: null, preValidatedFailures, ct)
+            .CreateAsync(CommandType, templateJson, targets, req.QueueId, req.UiMetadata, preValidatedFailures, ct)
             .ConfigureAwait(false);
 
         // Odpowiedź wraca natychmiast, bez czekania na wykonanie — frontend rejestruje

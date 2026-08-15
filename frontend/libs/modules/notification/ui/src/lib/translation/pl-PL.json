@@ -1,0 +1,29 @@
+{
+  "title": "Zadania",
+  "empty": "Brak zadań w tej sesji",
+  "showAll": "Zobacz wszystkie",
+  "clearFinished": "Wyczyść zakończone",
+  "unknownCommand": "Operacja masowa",
+  "progress": "{{done}} z {{total}}",
+  "errorsSummary": "Błędy: {{summary}}",
+  "status": {
+    "pending": "Oczekuje",
+    "running": "W toku",
+    "completed": "Zakończone",
+    "completedWithErrors": "Zakończone z błędami",
+    "failed": "Nieudane",
+    "cancelled": "Anulowane",
+    "finishing": "Kończenie…"
+  },
+  "history": {
+    "title": "Historia zadań",
+    "empty": "Brak zadań do pokazania",
+    "refresh": "Odśwież",
+    "filter": {
+      "all": "Wszystkie",
+      "active": "W toku",
+      "finished": "Zakończone"
+    },
+    "summary": "Zadania tej karty przeglądarki: {{count}}"
+  }
+}

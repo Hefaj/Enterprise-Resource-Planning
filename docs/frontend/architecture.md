@@ -32,6 +32,22 @@ Host **nie zna** remote'ów w czasie kompilacji — dowiaduje się o nich w runt
 
 Efekt: host startuje bez znajomości logiki biznesowej żadnego modułu — zna tylko manifest i kontrakt (`contract`), który każdy moduł musi wyeksponować.
 
+### Trzy drogi po zawartość remota
+
+Host sięga po kod remota na trzy sposoby — każdy dla innego rodzaju zawartości:
+
+| Droga | Co przynosi | Mechanizm | Kiedy się ładuje |
+|---|---|---|---|
+| `remoteRoutes` | Całe ekrany pod własnym adresem | `app.routes.ts` + `loadRemoteModule()` | Przy wejściu na trasę modułu |
+| `registerModals` / `remoteModalIds` | Modale otwierane z dowolnego miejsca | `ErpModalService.open(queueID, …)` | Przy pierwszym otwarciu danego modalu |
+| **Rejestr widżetów** | Komponenty osadzane w layoucie HOSTA | `ErpWidgetRegistryService` | Przy pierwszym użyciu widżetu |
+
+Trzecia droga powstała dla listy zadań masowych pod dzwonkiem powiadomień: to komponent modułu `notification`, ale renderuje się w nagłówku hosta — nie jest więc ani trasą, ani modalem.
+
+Działa tak samo jak modale: `STARTUP.ts` (jedyna warstwa, która może zależeć od `contract`) rejestruje **funkcję ładującą**, a shell prosi o widżet po identyfikatorze, nic nie wiedząc o module, z którego on pochodzi. Kontrakt remota eksponuje funkcję zwracającą klasę komponentu i **providery swojego modułu** (`entry.widgets.ts`); rejestr buduje z nich child injector, żeby scope tłumaczeń remota nie przesłonił scope'ów pozostałych modułów.
+
+Wszystko idzie przez `import()` wewnątrz funkcji — statyczny re-eksport komponentu z `contract` wciągnąłby warstwę `feature` do bundla ładowanego przy STARTUP, dla ekranu, którego użytkownik może nigdy nie otworzyć.
+
 ---
 
 ## 2. Struktura katalogów

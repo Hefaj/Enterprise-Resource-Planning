@@ -159,9 +159,16 @@ public sealed partial class RealtimeBroadcaster : IDisposable
     }
 
     /// <summary>
-    /// Rozgłasza kanał <c>jobs</c> — trackingID trafiają wyłącznie do właściciela zadania.
+    /// Rozgłasza kanał <c>jobs</c> — trackingID trafiają wyłącznie do zleceniodawcy zadania.
     /// Wymaga jednego zapytania do repliki, żeby ustalić, kto jest adresatem każdego zadania;
     /// koalescencja czyni to zapytanie zbiorczym zamiast jednego na zdarzenie.
+    ///
+    /// <para>Adresowanie idzie DWOMA kanałami: grupą <c>user:{userId}</c> i grupą
+    /// <c>client:{clientId}</c>. Nie jest to nadmiarowość — dopóki backend nie ma
+    /// uwierzytelniania, <c>UserId</c> bywa pusty (żądanie bez nagłówka <c>X-User-Id</c>,
+    /// patrz <c>ExecutionContextMiddleware</c>) i wtedy jedynym znanym adresatem jest karta
+    /// przeglądarki, która zadanie zleciła. Gdy oba są znane, zadanie trafi do obu grup;
+    /// SignalR sam odsiewa duplikat, bo to jedno i to samo połączenie.</para>
     /// </summary>
     private async Task BroadcastJobsAsync(HashSet<Guid> jobUuids)
     {
@@ -175,15 +182,23 @@ public sealed partial class RealtimeBroadcaster : IDisposable
 
         var owners = await db.NotificationJobs
             .AsNoTracking()
-            .Where(j => jobUuids.Contains(j.Uuid) && j.UserId != null)
-            .Select(j => new { j.Uuid, j.UserId })
+            .Where(j => jobUuids.Contains(j.Uuid) && (j.UserId != null || j.ClientId != null))
+            .Select(j => new { j.Uuid, j.UserId, j.ClientId })
             .ToListAsync()
             .ConfigureAwait(false);
 
-        foreach (var group in owners.GroupBy(o => o.UserId))
+        foreach (var group in owners.Where(o => o.UserId != null).GroupBy(o => o.UserId))
         {
             var trackingIds = group.Select(o => o.Uuid.ToString()).ToArray();
             await _hub.Clients.Group(GroupNames.ForUser(group.Key!))
+                .SendAsync("ReceiveUpdates", AggregateSignatures.Jobs, trackingIds)
+                .ConfigureAwait(false);
+        }
+
+        foreach (var group in owners.Where(o => o.ClientId != null).GroupBy(o => o.ClientId))
+        {
+            var trackingIds = group.Select(o => o.Uuid.ToString()).ToArray();
+            await _hub.Clients.Group(GroupNames.ForClient(group.Key!))
                 .SendAsync("ReceiveUpdates", AggregateSignatures.Jobs, trackingIds)
                 .ConfigureAwait(false);
         }

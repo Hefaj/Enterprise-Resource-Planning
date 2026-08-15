@@ -1277,29 +1277,74 @@ export interface AttributeOptionDto {
     [key: string]: any;
 }
 
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProductSetClassificationCommandAndSearchProductRequest {
     commands?: ProductSetClassificationCommand[] | undefined;
     templateCommand?: ProductSetClassificationCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchProductRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
 
     [key: string]: any;
 }
 
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProductSetNameCommandAndSearchProductRequest {
     commands?: ProductSetNameCommand[] | undefined;
     templateCommand?: ProductSetNameCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchProductRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
 
     [key: string]: any;
 }
 
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProductSetPriceCommandAndSearchProductRequest {
     commands?: ProductSetPriceCommand[] | undefined;
     templateCommand?: ProductSetPriceCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchProductRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
 
     [key: string]: any;
 }

@@ -2,6 +2,7 @@ import { Injectable, inject, InjectionToken } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { Subject, Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import { getOrCreateClientId } from './client-id';
 
 export const SIGNALR_HUB_URL = new InjectionToken<string>('SIGNALR_HUB_URL', {
   providedIn: 'root',
@@ -11,25 +12,6 @@ export const SIGNALR_HUB_URL = new InjectionToken<string>('SIGNALR_HUB_URL', {
 export interface AggregateUpdateMessage {
   signature: string;
   uuids: string[];
-}
-
-/**
- * Identyfikator tej karty/instancji przeglądarki — stały w obrębie sesji (sessionStorage,
- * nie localStorage: każda karta ma dostawać własne powiadomienia o zadaniach, a nie dzielić
- * jeden identyfikator ze wszystkimi kartami tej samej przeglądarki).
- *
- * Wysyłany do huba jako `clientId` w query stringu połączenia — patrz `SyncHub.OnConnectedAsync`
- * po stronie backendu i jego udokumentowane ograniczenie: to NIE jest uwierzytelnianie,
- * tylko luźny identyfikator do grupowania, dopóki nie powstanie prawdziwe uwierzytelnianie.
- */
-function getOrCreateClientId(): string {
-  const key = 'erp_signalr_client_id';
-  let clientId = sessionStorage.getItem(key);
-  if (!clientId) {
-    clientId = crypto.randomUUID();
-    sessionStorage.setItem(key, clientId);
-  }
-  return clientId;
 }
 
 @Injectable({

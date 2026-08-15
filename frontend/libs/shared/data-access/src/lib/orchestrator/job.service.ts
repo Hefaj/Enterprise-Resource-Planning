@@ -1,19 +1,38 @@
 import { Injectable, signal, computed, Signal, inject } from '@angular/core';
-import { JobRecord, JobMeta, JobStatus } from './orchestrator.types';
+import { JobRecord, JobMeta } from './orchestrator.types';
 import { SignalrSyncService } from '../sync/signalr-sync.service';
 
+/** Klucz w localStorage z momentem ostatniego otwarcia listy powiadomień. */
+const LAST_SEEN_STORAGE_KEY = 'erp_jobs_last_seen_at';
+
 /**
- * Zdecentralizowany serwis do śledzenia zadań w tle (jobs) uruchamianych przez wykonywanie poleceń (commands).
+ * Store feedu zadań masowych — jedno miejsce, z którego czytają zarówno dzwonek w nagłówku
+ * hosta, jak i lista powiadomień ładowana z remota `notification`.
  *
- * Kiedy orkiestrator wykonuje polecenie, API zwraca `jobUuid` (trackingID).
- * Orkiestrator rejestruje to zadanie tutaj, powiązane z pierwotnym identyfikatorem modalu (queueID).
+ * <b>Dlaczego mieszka w `shared`, a nie w module notification.</b> Dzwonek stoi w shellu
+ * (`scope:host`) i musi znać licznik, zanim ktokolwiek kliknie i pociągnie zdalny komponent.
+ * Gdyby store żył w `@erp/notification/data-access`, host musiałby go zaimportować statycznie,
+ * co przy Native Federation oznacza wciągnięcie remota do bundla hosta.
  *
- * Zdarzenia SignalR (z sygnaturą 'jobs') powiadamiają ten serwis o zmianach statusu za pomocą trackingID.
+ * <b>Dwa źródła zasilania, celowo.</b>
+ * 1. Orkiestratory rejestrują zadanie {@link addJob} w chwili, gdy API zwróci `jobUuid` —
+ *    wpis pojawia się natychmiast, zanim zdarzenie przejdzie przez outbox i RabbitMQ.
+ * 2. `JobFeedService` z modułu notification wpycha tu stan z repliki serwera
+ *    ({@link upsertFromServer}) — dzięki temu feed przeżywa odświeżenie strony i pokazuje
+ *    zadania zlecone wcześniej.
+ *
+ * Scalanie po `trackingID` jest tu kluczowe: to ten sam identyfikator w obu ścieżkach
+ * (`BatchResult.JobUuid` = `JobDto.uuid`), więc wpis optymistyczny nie duplikuje się
+ * z rekordem z serwera, tylko zostaje przez niego nadpisany.
+ *
+ * Zdarzenia SignalR z kanału `jobs` niosą trackingID zakończonych zadań i służą wyłącznie
+ * jako szybka ścieżka („już po”), zanim orkiestrator pobierze dokładny stan.
  */
 @Injectable({ providedIn: 'root' })
 export class JobService {
   private readonly _signalrSync = inject(SignalrSyncService);
   private readonly _jobs = signal(new Map<string, JobRecord>());
+  private readonly _lastSeenAt = signal<number>(readLastSeenAt());
 
   public constructor() {
     // JobService jest root-singletonem żyjącym całą sesję — subskrypcja grupy 'jobs' na hubie
@@ -22,18 +41,24 @@ export class JobService {
     // jawnie zarejestrować zainteresowanie.
     this._signalrSync.subscribe('jobs');
 
-    // Nasłuchuj zdarzeń aktualizacji statusu zadań w czasie rzeczywistym za pomocą trackingID
     this._signalrSync.onUpdate('jobs').subscribe(trackingIDs => {
       this._jobs.update(jobs => {
         const updated = new Map(jobs);
         for (const trackingID of trackingIDs) {
           const existing = updated.get(trackingID);
-          if (existing) {
-            updated.set(trackingID, {
-              ...existing,
-              isComplete: true,
-            });
+          if (!existing || existing.isComplete) {
+            continue;
           }
+
+          // Świadomie NIE zgadujemy tu statusu końcowego. Kanał `jobs` niesie sam fakt
+          // zakończenia, bez informacji, czy wszystko się powiodło — ustawienie
+          // `status: 'completed'` byłoby zmyśleniem sukcesu dla zadania, które poległo.
+          // Dokładny stan dojdzie chwilę później przez `upsertFromServer`.
+          updated.set(trackingID, {
+            ...existing,
+            isComplete: true,
+            changedAt: Date.now(),
+          });
         }
         return updated;
       });
@@ -44,123 +69,120 @@ export class JobService {
   // API Odczytu
   // ────────────────────────────────────────────────────────────────
 
-  /**
-   * Pobierz reaktywny sygnał dla wszystkich śledzonych zadań.
-   */
-  public readonly allJobs: Signal<Map<string, JobRecord>> = this._jobs.asReadonly();
+  /** Wszystkie znane zadania, najnowsze pierwsze. */
+  public readonly jobs: Signal<JobRecord[]> = computed(() =>
+    [...this._jobs().values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+  );
+
+  /** Zadania jeszcze nieukończone — to one napędzają wskaźnik aktywności przy dzwonku. */
+  public readonly activeJobs: Signal<JobRecord[]> = computed(() =>
+    this.jobs().filter(job => !job.isComplete),
+  );
+
+  public readonly activeCount: Signal<number> = computed(() => this.activeJobs().length);
 
   /**
-   * Pobierz reaktywny sygnał dla konkretnego zadania po trackingID.
+   * Liczba zadań, które zmieniły stan po ostatnim otwarciu listy powiadomień.
+   *
+   * Stan „przeczytane” jest w całości kliencki: backend nie ma endpointu oznaczania
+   * powiadomień jako przeczytanych (i celowo nie zwraca już pola `unRead`, które zawsze
+   * kłamało `true`). Znacznik czasu w localStorage jest tu wystarczający — jest wspólny
+   * dla kart tej samej przeglądarki, co odpowiada temu, jak użytkownik myśli o „widziałem to”.
    */
+  public readonly unreadCount: Signal<number> = computed(() => {
+    const lastSeenAt = this._lastSeenAt();
+    return this.jobs().filter(job => job.changedAt > lastSeenAt).length;
+  });
+
+  /** Czy wśród znanych zadań jest jakiekolwiek zakończone niepowodzeniem. */
+  public readonly hasFailures: Signal<boolean> = computed(() =>
+    this.jobs().some(job => job.failedCount > 0 || job.status === 'failed'),
+  );
+
+  /** Reaktywny sygnał dla konkretnego zadania po trackingID. */
   public getJob(trackingID: string): Signal<JobRecord | undefined> {
     return computed(() => this._jobs().get(trackingID));
   }
 
-  /**
-   * Pobierz wszystkie zadania przefiltrowane według statusu.
-   */
-  public getJobsByStatus(status: JobStatus): Signal<JobRecord[]> {
-    return computed(() => {
-      const all = [...this._jobs().values()];
-      if (status === 'pending') {
-        return all.filter(j => !j.isComplete);
-      } else if (status === 'completed') {
-        return all.filter(j => j.isComplete && !j.errors && !j.exceptions);
-      } else {
-        return all.filter(j => j.isComplete && (j.errors || j.exceptions));
-      }
-    });
-  }
-
-  /**
-   * Pobierz wszystkie zadania wywołane przez konkretny modal (queueID).
-   */
+  /** Wszystkie zadania wywołane przez konkretny modal (queueID). */
   public getJobsByQueueID(queueID: string): Signal<JobRecord[]> {
-    return computed(() => {
-      return [...this._jobs().values()].filter(j => j.queueID === queueID);
-    });
+    return computed(() => this.jobs().filter(job => job.queueID === queueID));
   }
-
-  /**
-   * Pobierz wszystkie oczekujące zadania.
-   */
-  public readonly pendingJobs: Signal<JobRecord[]> = computed(() =>
-    [...this._jobs().values()].filter(j => !j.isComplete),
-  );
 
   // ────────────────────────────────────────────────────────────────
   // API Zapisu
   // ────────────────────────────────────────────────────────────────
 
   /**
-   * Zarejestruj nowe zadanie.
-   * Wywoływane przez orkiestratorów po tym, jak polecenie zwróci jobUuid (trackingID).
-   *
-   * @param trackingID Zwrócony przez endpoint jobUuid
-   * @param queueID Identyfikator wywołującego modalu
-   * @param meta Opcjonalne metadane śledzenia
+   * Rejestruje zadanie zaraz po tym, jak endpoint operacji masowej zwrócił `jobUuid`.
+   * Wpis jest optymistyczny — liczniki są jeszcze nieznane i zostaną uzupełnione,
+   * gdy replika serwera dojdzie przez {@link upsertFromServer}.
    */
   public addJob(trackingID: string, queueID?: string, meta?: JobMeta): void {
+    if (!trackingID) {
+      return;
+    }
+
     this._jobs.update(jobs => {
       const updated = new Map(jobs);
       updated.set(trackingID, {
         trackingID,
-        queueID,
+        queueID: queueID ?? null,
+        meta: meta ?? null,
+        status: 'pending',
+        totalCount: 0,
+        succeededCount: 0,
+        failedCount: 0,
         isComplete: false,
-        unRead: true,
-        uiMetadata: meta ? JSON.stringify(meta) : null,
+        createdAt: meta?.timestamp ?? new Date(),
+        changedAt: Date.now(),
+        optimistic: true,
       });
       return updated;
     });
   }
 
   /**
-   * Zarejestruj pełny lub częściowy rekord JobRecord bezpośrednio.
+   * Wpycha stan z repliki serwera. Rekord z serwera jest źródłem prawdy dla wszystkiego
+   * poza `meta`: wpis optymistyczny mógł nieść metadane, których backend nie zna
+   * (starsze zadanie zlecone, zanim front zaczął wysyłać `uiMetadata`), więc lokalna
+   * wartość zostaje, gdy serwer nie ma własnej.
    */
-  public registerJob(job: JobRecord): void {
-    if (!job.trackingID) return;
+  public upsertFromServer(records: readonly JobRecord[]): void {
+    if (records.length === 0) {
+      return;
+    }
+
     this._jobs.update(jobs => {
       const updated = new Map(jobs);
-      updated.set(job.trackingID!, {
-        unRead: true,
-        isComplete: false,
-        ...job,
-      });
+      for (const record of records) {
+        const existing = updated.get(record.trackingID);
+        const changed = !existing || hasMeaningfulChange(existing, record);
+
+        updated.set(record.trackingID, {
+          ...record,
+          meta: record.meta ?? existing?.meta ?? null,
+          optimistic: false,
+          changedAt: changed ? Date.now() : (existing?.changedAt ?? Date.now()),
+        });
+      }
       return updated;
     });
   }
 
-  /**
-   * Zaktualizuj określone pola istniejącego zadania za pomocą jego trackingID.
-   */
-  public updateJob(trackingID: string, patch: Partial<JobRecord>): void {
-    this._jobs.update(jobs => {
-      const existing = jobs.get(trackingID);
-      if (!existing) return jobs;
-
-      const updated = new Map(jobs);
-      updated.set(trackingID, {
-        ...existing,
-        ...patch,
-      });
-      return updated;
-    });
+  /** Oznacza cały feed jako przejrzany — wołane, gdy użytkownik otworzy listę powiadomień. */
+  public markAllSeen(): void {
+    const now = Date.now();
+    this._lastSeenAt.set(now);
+    try {
+      localStorage.setItem(LAST_SEEN_STORAGE_KEY, String(now));
+    } catch {
+      // Prywatny tryb przeglądarki albo zapełniony storage — licznik zresetuje się
+      // przy następnym starcie sesji, ale nic poza tym się nie psuje.
+    }
   }
 
-  /**
-   * Zaktualizuj status istniejącego zadania za pomocą jego trackingID.
-   * Utrzymuje kompatybilność wsteczną z JobStatus.
-   */
-  public updateJobStatus(trackingID: string, status: JobStatus): void {
-    this.updateJob(trackingID, {
-      isComplete: status !== 'pending',
-      errors: status === 'failed' ? 'Zadanie nie powiodło się' : null,
-    });
-  }
-
-  /**
-   * Usuń zadanie ze śledzenia za pomocą jego trackingID.
-   */
+  /** Usuwa zadanie ze śledzenia. */
   public removeJob(trackingID: string): void {
     this._jobs.update(jobs => {
       const updated = new Map(jobs);
@@ -169,18 +191,40 @@ export class JobService {
     });
   }
 
-  /**
-   * Wyczyść wszystkie zakończone lub nieudane zadania.
-   */
+  /** Czyści zakończone zadania z lokalnego feedu (nie usuwa ich z historii na serwerze). */
   public clearFinished(): void {
     this._jobs.update(jobs => {
       const updated = new Map<string, JobRecord>();
-      for (const [uuid, job] of jobs) {
+      for (const [trackingID, job] of jobs) {
         if (!job.isComplete) {
-          updated.set(uuid, job);
+          updated.set(trackingID, job);
         }
       }
       return updated;
     });
+  }
+}
+
+/**
+ * Czy rekord z serwera niesie zmianę, którą użytkownik powinien zauważyć.
+ *
+ * Bez tego sprawdzenia każde przeładowanie feedu (np. resync po reconnect) odświeżałoby
+ * `changedAt` wszystkich zadań i zapalało licznik nieprzeczytanych dla rzeczy, które
+ * użytkownik już widział.
+ */
+function hasMeaningfulChange(previous: JobRecord, next: JobRecord): boolean {
+  return previous.status !== next.status
+    || previous.isComplete !== next.isComplete
+    || previous.succeededCount !== next.succeededCount
+    || previous.failedCount !== next.failedCount;
+}
+
+function readLastSeenAt(): number {
+  try {
+    const raw = localStorage.getItem(LAST_SEEN_STORAGE_KEY);
+    const parsed = raw ? Number(raw) : Number.NaN;
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
   }
 }

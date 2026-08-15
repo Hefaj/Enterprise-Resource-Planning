@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { erpAuthGuard } from '@erp/shared/auth';
+import { JOBS_ROUTE } from '@erp/notification/util';
 
 export const remoteRoutes: Route[] = [
   {
@@ -10,7 +11,33 @@ export const remoteRoutes: Route[] = [
       {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'dashboard',
+        redirectTo: JOBS_ROUTE,
+      },
+      {
+        path: JOBS_ROUTE,
+        // `loadChildren`, a nie `loadComponent`, właśnie po to, żeby providery scope'u
+        // tłumaczeń dało się dołożyć PO doładowaniu modułu: `providers` na trasie muszą być
+        // znane synchronicznie, a `provideJobTranslations` przyjeżdża dopiero z importu.
+        // Statyczny import kontraktu wciągałby całą warstwę `ui` do bundla ładowanego
+        // przy STARTUP — tego chcemy uniknąć.
+        //
+        // Scope rejestrowany na trasie, nie w dekoratorze komponentu (child injector
+        // przesłoniłby scope nadrzędny — patrz docs/frontend/translations.md).
+        loadChildren: async (): Promise<Route[]> => {
+          const [{ JobHistoryComponent }, { provideJobTranslations }] = await Promise.all([
+            import('@erp/notification/feature'),
+            import('@erp/notification/ui'),
+          ]);
+
+          return [
+            {
+              path: '',
+              component: JobHistoryComponent,
+              providers: provideJobTranslations(),
+              data: { breadcrumb: 'Historia zadań' },
+            },
+          ];
+        },
       },
     ],
   },

@@ -95,7 +95,21 @@ export interface OrchestratorError {
 
 export type Translatable = string | { key: string; params?: Record<string, any> };
 
-export type JobStatus = 'pending' | 'completed' | 'failed';
+/**
+ * Status zadania masowego — lustro `NotificationJobStatus` z backendu
+ * (`backend/modules/Notification/Notification.Domain/Aggregates/Jobs/NotificationJobStatus.cs`).
+ *
+ * Wartości tekstowe, nie liczbowe: po stronie frontendu status trafia wprost do klucza
+ * tłumaczenia i do klasy CSS, a numer z bazy nic tu nie wnosi poza koniecznością mapowania
+ * w drugą stronę przy każdym odczycie.
+ */
+export type JobStatus =
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'completedWithErrors'
+  | 'failed'
+  | 'cancelled';
 
 export interface JobMeta {
   /** Klucz tłumaczenia Transloco identyfikujący komendę (np. 'product.commands.setPrice'). */
@@ -104,31 +118,51 @@ export interface JobMeta {
   readonly timestamp: Date;
 }
 
-export interface JobEntry extends JobMeta {
-  readonly jobUuid: string;
-  status: JobStatus;
-}
-
+/**
+ * Zadanie masowe widziane przez UI.
+ *
+ * Kształt jest świadomie węższy niż stary `JobRecord` odziedziczony po mocku: pola bez pokrycia
+ * w backendzie (`resultJson`, `resultType`, `exceptions`, `executionTimes`, `serviceId`,
+ * `successes`) zniknęły razem ze swoimi odpowiednikami w `JobDto` — patrz komentarz przy tym
+ * rekordzie po stronie backendu.
+ */
 export interface JobRecord {
-  queueID?: string;
-  trackingID?: string;
-  command?: any | null;
-  result?: any | null;
-  executeAfter?: string;
-  expireOn?: string;
-  isComplete?: boolean;
-  serviceId?: number;
-  userId?: string;
-  commandJson?: string;
-  executionTimes?: number;
-  resultJson?: string | null;
-  resultType?: string | null;
-  errors?: string | null;
-  successes?: string | null;
-  exceptions?: string | null;
-  unRead?: boolean;
-  clientId?: string | null;
-  uiMetadata?: string | null;
+  /** `jobUuid` zwrócony przez endpoint operacji masowej. Klucz rekordu w feedzie. */
+  readonly trackingID: string;
+
+  /** Identyfikator modalu, z którego poszła operacja. */
+  readonly queueID?: string | null;
+
+  /** Techniczna nazwa typu komendy z backendu — fallback opisu, gdy brak `meta`. */
+  readonly commandType?: string | null;
+
+  /** Metadane nadane przez frontend przy zlecaniu; przeżywają odświeżenie strony,
+   * bo backend przechowuje je jako `uiMetadata` i oddaje w `JobDto`. */
+  readonly meta?: JobMeta | null;
+
+  readonly status: JobStatus;
+  readonly totalCount: number;
+  readonly succeededCount: number;
+  readonly failedCount: number;
+
+  /**
+   * Ustawiane natychmiast po sygnale z kanału `jobs`, jeszcze zanim orkiestrator zdąży pobrać
+   * świeży stan z API. Dlatego może być `true` przy `status` wciąż równym `running` — UI ma
+   * wtedy pokazać „kończenie”, a nie zgadywać, czy poszło dobrze, czy źle.
+   */
+  readonly isComplete: boolean;
+
+  /** Błędy zgrupowane po kodzie (np. `"price_negative: 1200"`). */
+  readonly errorsSummary?: string | null;
+
+  readonly createdAt: Date;
+  readonly expireOn?: Date | null;
+
+  /** Moment ostatniej zmiany rekordu — po nim liczy się licznik nieprzeczytanych. */
+  readonly changedAt: number;
+
+  /** Wpis powstał lokalnie i nie został jeszcze potwierdzony przez replikę serwera. */
+  readonly optimistic: boolean;
 }
 
 // ────────────────────────────────────────────────────────────────

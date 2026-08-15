@@ -84,7 +84,7 @@ public sealed class JobCompletedHandler
             return;
         }
 
-        job.ApplyCompletion(message.Succeeded, message.Failed, message.ErrorsSummary);
+        job.ApplyCompletion(MapStatus(message.Status), message.Succeeded, message.Failed, message.ErrorsSummary);
 
         // Kanał `jobs` niesie trackingID zakończonych zadań — to na niego nasłuchuje
         // frontendowy JobService (onUpdate('jobs')), żeby oznaczyć zadanie jako zakończone
@@ -102,5 +102,26 @@ public sealed class JobCompletedHandler
 
         await unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Tłumaczy status z kontraktu integracyjnego na typ domenowy repliki. To jedyne miejsce,
+    /// gdzie te dwa enumy się spotykają — Domain nie może zależeć od <c>Contracts</c>
+    /// (patrz <see cref="NotificationJobStatus"/>), więc konwersja musi żyć w Infrastructure.
+    ///
+    /// Wartość spoza znanego zbioru (nowsza wersja kontraktu wystawiona przez serwis, którego
+    /// jeszcze nie znamy) mapuje się na <see cref="NotificationJobStatus.Completed"/> — zdarzenie
+    /// <c>JobCompleted</c> z definicji oznacza koniec, więc lepszym przybliżeniem jest „zakończone”
+    /// niż wywalenie handlera i zablokowanie kolejki.
+    /// </summary>
+    private static NotificationJobStatus MapStatus(JobStatus status) => status switch
+    {
+        JobStatus.Pending => NotificationJobStatus.Pending,
+        JobStatus.Running => NotificationJobStatus.Running,
+        JobStatus.Completed => NotificationJobStatus.Completed,
+        JobStatus.CompletedWithErrors => NotificationJobStatus.CompletedWithErrors,
+        JobStatus.Failed => NotificationJobStatus.Failed,
+        JobStatus.Cancelled => NotificationJobStatus.Cancelled,
+        _ => NotificationJobStatus.Completed,
+    };
 }
 #pragma warning restore CA1822

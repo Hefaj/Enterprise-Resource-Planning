@@ -1,0 +1,29 @@
+{
+  "title": "Jobs",
+  "empty": "No jobs in this session",
+  "showAll": "See all",
+  "clearFinished": "Clear finished",
+  "unknownCommand": "Bulk operation",
+  "progress": "{{done}} of {{total}}",
+  "errorsSummary": "Errors: {{summary}}",
+  "status": {
+    "pending": "Pending",
+    "running": "Running",
+    "completed": "Completed",
+    "completedWithErrors": "Completed with errors",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "finishing": "Finishing…"
+  },
+  "history": {
+    "title": "Job history",
+    "empty": "Nothing to show",
+    "refresh": "Refresh",
+    "filter": {
+      "all": "All",
+      "active": "Running",
+      "finished": "Finished"
+    },
+    "summary": "Jobs from this browser tab: {{count}}"
+  }
+}

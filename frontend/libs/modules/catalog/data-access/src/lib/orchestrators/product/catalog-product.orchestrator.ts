@@ -2,7 +2,8 @@ import { Injectable, inject, Injector } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
+import { BaseOrchestrator, JobMeta, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
+import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
 import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchResult } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM, ProductCodeVM, ProductAttributeVM } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
@@ -310,16 +311,25 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     command: BatchCommandOfProductSetPriceCommandAndSearchProductRequest,
     queueID?: string,
   ): Promise<string> {
+    const meta: JobMeta = {
+      commandName: CATALOG_JOB_COMMAND_KEYS.setPrice,
+      timestamp: new Date(),
+    };
+
     try {
       const result = await firstValueFrom(
-        this._api.productSetPriceMultipleCommand(command)
+        // Metadane jadą RAZEM z komendą, nie tylko do lokalnego JobService: backend
+        // przechowuje je przy zadaniu i oddaje w `JobDto.uiMetadata`, dzięki czemu opis
+        // („Zmiana ceny”) przeżywa odświeżenie strony i jest widoczny na innej karcie.
+        this._api.productSetPriceMultipleCommand({
+          ...command,
+          queueId: queueID,
+          uiMetadata: JSON.stringify(meta),
+        })
       );
       const jobUuid = result.jobUuid || '';
 
-      this.jobService.addJob(jobUuid, queueID, {
-        commandName: 'catalog.product.commands.setPrice',
-        timestamp: new Date(),
-      });
+      this.jobService.addJob(jobUuid, queueID, meta);
 
       return jobUuid;
     } catch (err) {
@@ -339,16 +349,22 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     command: BatchCommandOfProductSetNameCommandAndSearchProductRequest,
     queueID?: string,
   ): Promise<string> {
+    const meta: JobMeta = {
+      commandName: CATALOG_JOB_COMMAND_KEYS.setName,
+      timestamp: new Date(),
+    };
+
     try {
       const result = await firstValueFrom(
-        this._api.productSetNameMultipleCommand(command)
+        this._api.productSetNameMultipleCommand({
+          ...command,
+          queueId: queueID,
+          uiMetadata: JSON.stringify(meta),
+        })
       );
       const jobUuid = result.jobUuid || '';
 
-      this.jobService.addJob(jobUuid, queueID, {
-        commandName: 'catalog.product.commands.setName',
-        timestamp: new Date(),
-      });
+      this.jobService.addJob(jobUuid, queueID, meta);
 
       return jobUuid;
     } catch (err) {

@@ -7,7 +7,6 @@ export type {
   OrchestratorError,
   OrchestratorOperation,
   JobMeta,
-  JobEntry,
   JobStatus,
   JobRecord,
   HasUuid,

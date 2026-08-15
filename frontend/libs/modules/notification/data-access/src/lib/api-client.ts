@@ -156,21 +156,19 @@ export interface GetJobRequest {
 export interface JobDto {
     uuid: string;
     queueId: string | undefined;
-    trackingId: string | undefined;
+    trackingId: string;
+    commandType: string;
     commandJson: string | undefined;
-    resultJson: string | undefined;
-    resultType: string | undefined;
-    errors: string | undefined;
-    successes: string | undefined;
-    exceptions: string | undefined;
+    uiMetadata: string | undefined;
+    status: number;
+    totalCount: number;
+    succeededCount: number;
+    failedCount: number;
     isComplete: boolean;
-    unRead: boolean;
-    executionTimes: number;
-    serviceId: number | undefined;
+    errorsSummary: string | undefined;
     userId: string | undefined;
     clientId: string | undefined;
-    uiMetadata: string | undefined;
-    executeAfter: Date | undefined;
+    createdAt: Date;
     expireOn: Date | undefined;
 
     [key: string]: any;
@@ -181,6 +179,7 @@ export interface SearchJobRequest {
     trackingId?: string | undefined;
     isComplete?: boolean | undefined;
     userId?: string | undefined;
+    clientId?: string | undefined;
     page?: number;
     pageSize?: number;
     sorts?: SortOption[] | undefined;

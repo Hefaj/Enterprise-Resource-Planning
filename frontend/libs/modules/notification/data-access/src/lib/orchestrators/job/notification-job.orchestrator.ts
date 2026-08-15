@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BaseOrchestrator, OrchestratorConfig, LoadOptions } from '@erp/shared/data-access';
+import { NOTIFICATION_JOB_SIGNATURE } from '@erp/notification/util';
 import { NotificationClient, JobDto, SearchJobRequest, SearchResponse } from '../../api-client';
-import { JobVM } from './job.view-model';
+import { JobVM, mapJobDtoToRecord } from './job.view-model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationJobOrchestrator extends BaseOrchestrator<
@@ -17,12 +18,12 @@ export class NotificationJobOrchestrator extends BaseOrchestrator<
   // Gettery, nie pola — patrz uzasadnienie przy CatalogMultimediaOrchestrator
   // (frontend/libs/modules/catalog/data-access/.../catalog-multimedia.orchestrator.ts).
   protected override get signature(): string {
-    return 'notification.job';
+    return NOTIFICATION_JOB_SIGNATURE;
   }
 
   protected override get orchestratorConfig(): Partial<OrchestratorConfig> & { signalrSignature: string } {
     return {
-      signalrSignature: 'notification.job',
+      signalrSignature: NOTIFICATION_JOB_SIGNATURE,
       maxCacheSize: 500,
     };
   }
@@ -40,8 +41,6 @@ export class NotificationJobOrchestrator extends BaseOrchestrator<
   protected override mapToViewModel(
     dto: JobDto,
   ): JobVM {
-    return {
-      ...dto,
-    };
+    return mapJobDtoToRecord(dto);
   }
 }

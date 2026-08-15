@@ -67,7 +67,26 @@ public sealed class MultimediaQueries : IMultimediaQueries
             query = query.Where(m => uuidList.Contains(m.Uuid));
         }
 
-        return await query
+        // `CreatedAt` schodzi z bazy jako DateTimeOffset i dopiero w pamięci ląduje w DateTime
+        // z kontraktu DTO: wywołanie `.UtcDateTime` wprost w projekcji EF wywraca shaper
+        // („No coercion operator ... between DateTimeOffset and Nullable<DateTime>").
+        var rows = await query
+            .Select(m => new
+            {
+                m.Uuid,
+                m.FileName,
+                m.MediaType,
+                m.ThumbnailUrl,
+                m.OriginalUrl,
+                m.FileSize,
+                m.MimeType,
+                m.SortOrder,
+                m.CreatedAt,
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows
             .Select(m => new MultimediaDto(
                 m.Uuid,
                 m.FileName,
@@ -78,7 +97,6 @@ public sealed class MultimediaQueries : IMultimediaQueries
                 m.MimeType,
                 m.SortOrder,
                 m.CreatedAt.UtcDateTime))
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
+            .ToList();
     }
 }

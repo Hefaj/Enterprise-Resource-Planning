@@ -66,8 +66,10 @@ nie nadaje się do danych powtarzalnych. Seeder generuje identyfikatory z `Rando
 
 ## 4. Mapowanie agregatów
 
-Konfiguracje jako `IEntityTypeConfiguration<T>` w `<Moduł>.Infrastructure/Persistence/Configurations/`,
-wciągane przez `ApplyConfigurationsFromAssembly`.
+Konfiguracje jako `IEntityTypeConfiguration<T>` leżą w `<Moduł>.Infrastructure/Persistence/Configurations/`
+i są stamtąd automatycznie wciągane przez `ApplyConfigurationsFromAssembly`.
+
+Aby uniknąć tworzenia gigantycznych plików (jak dawniej `CatalogConfigurations.cs`), każda konfiguracja trafia do osobnego pliku, a te grupujemy w podfolderach odpowiadających poszczególnym agregatom (np. `Configurations/Product/ProductConfiguration.cs`, `Configurations/Category/CategoryConfiguration.cs` itp.).
 
 ### Kolekcje wewnątrz agregatu
 

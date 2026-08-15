@@ -5,6 +5,7 @@
  */
 export const PRODUCT_KEYS = {
     base: {
+      loading: 'product.base.loading',
       tabs: {
         products: 'product.base.tabs.products',
         multimedia: 'product.base.tabs.multimedia',
@@ -147,6 +148,8 @@ export const PRODUCT_KEYS = {
         editMessage: 'product.commands.setName.editMessage',
         productSuffixSingle: 'product.commands.setName.productSuffixSingle',
         productSuffixPlural: 'product.commands.setName.productSuffixPlural',
+        nameHint: 'product.commands.setName.nameHint',
+        emptySelection: 'product.commands.setName.emptySelection',
       },
     },
     validations: {

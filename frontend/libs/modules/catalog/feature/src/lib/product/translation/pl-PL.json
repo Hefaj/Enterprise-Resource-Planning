@@ -1,5 +1,6 @@
 {
   "base": {
+    "loading": "Ładowanie…",
     "tabs": {
       "products": "Produkty",
       "multimedia": "Multimedia",
@@ -141,7 +142,9 @@
       "cancelButton": "Anuluj",
       "editMessage": "Edytujesz nazwę dla",
       "productSuffixSingle": "produktu",
-      "productSuffixPlural": "produktów"
+      "productSuffixPlural": "produktów",
+      "nameHint": "Nowa nazwa zostanie ustawiona dla wszystkich zaznaczonych produktów",
+      "emptySelection": "Nie wybrano żadnych produktów — zamknij okno i zaznacz produkty na liście."
     }
   },
   "validations": {

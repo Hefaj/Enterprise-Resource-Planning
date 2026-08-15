@@ -32,6 +32,9 @@ export class JobFeedService {
   private readonly _signalrSync = inject(SignalrSyncService);
   private readonly _destroyRef = inject(DestroyRef);
 
+  /** Cache orkiestratora — jedna instancja computed, bo `getViewModel()` tworzy nową na każde wywołanie. */
+  private readonly _viewModels = this._orchestrator.getViewModel();
+
   private readonly _bootstrapped = signal(false);
   private readonly _isLoading = signal(false);
   private readonly _totalCount = signal(0);
@@ -46,7 +49,7 @@ export class JobFeedService {
     // Cache orkiestratora → store feedu. Bez `untracked` wokół zapisu efekt czytałby
     // sygnały zapisywane wewnątrz `JobService` i sam się retriggerował.
     effect(() => {
-      const viewModels = [...this._orchestrator.getViewModel()().values()];
+      const viewModels = [...this._viewModels().values()];
       if (viewModels.length === 0) {
         return;
       }
@@ -71,6 +74,13 @@ export class JobFeedService {
    * pobieranie ich po uuid zaśmiecałoby cache danymi, których i tak nie wolno pokazać.
    * Zapytanie z filtrem zwraca wyłącznie nasze.
    *
+   * <b>„Nieznane" mierzy się cache'em ORKIESTRATORA, nie store'em feedu.</b> Zadanie zlecone
+   * z tej karty trafia do `JobService` optymistycznie (`addJob`) w chwili odpowiedzi API —
+   * gdyby pytać store'a, własne zadanie byłoby od razu „znane", więc nigdy nie zostałoby
+   * dociągnięte do orkiestratora. A bez wpisu w orkiestratorze `BaseOrchestrator` ignoruje
+   * kolejne zdarzenia dla tego uuid (odświeża tylko to, co ma w cache) i status stoi na
+   * `pending` aż do przeładowania strony.
+   *
    * Debounce zbija serię zdarzeń (postęp kolejnych chunków, ruch innych klientów) do jednego
    * zapytania — bez niego ruchliwy system generowałby zapytanie na każde zdarzenie.
    */
@@ -78,7 +88,7 @@ export class JobFeedService {
     this._signalrSync
       .onUpdate(NOTIFICATION_JOB_SIGNATURE)
       .pipe(
-        filter(uuids => uuids.some(uuid => !this._jobService.getJob(uuid)())),
+        filter(uuids => uuids.some(uuid => !this._viewModels().has(uuid))),
         debounceTime(JOB_ARRIVAL_DEBOUNCE_MS),
         takeUntilDestroyed(this._destroyRef),
       )

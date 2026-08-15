@@ -252,31 +252,15 @@ export class ProductTabComponent {
   }
 
   private openSetPriceModal(): void {
-    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(SET_PRICE_MODAL_ID, { products: [] })
-      .then(ref => {
-        console.log('[ProductTabComponent] Modal opened successfully!', ref);
-
-        ref.closed.then(result => {
-          console.log('[ProductTabComponent] Modal closed with result:', result);
-        });
-      })
-      .catch(err => {
-        console.error('[ProductTabComponent] Error opening modal:', err);
-      });
+    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(SET_PRICE_MODAL_ID, { products: [] });
   }
 
   private openSetNameModal(): void {
-    this.modalService.open<BatchCommandOfProductSetNameCommandAndSearchProductRequest>(SET_NAME_MODAL_ID, { products: [] })
-      .then(ref => {
-        console.log('[ProductTabComponent] Modal opened successfully!', ref);
+    // Zaznaczenie z tabeli jedzie wprost jako `targetUuids` — komenda modalu jest
+    // dokładnie tym, co poleci na API (tryb „szablon + jawne identyfikatory").
+    const targetUuids = this.store.selection()?.selectedItems?.map(p => p.uuid) ?? [];
 
-        ref.closed.then(result => {
-          console.log('[ProductTabComponent] Modal closed with result:', result);
-        });
-      })
-      .catch(err => {
-        console.error('[ProductTabComponent] Failed to open modal:', err);
-      });
+    this.modalService.open<BatchCommandOfProductSetNameCommandAndSearchProductRequest>(SET_NAME_MODAL_ID, { targetUuids });
   }
 }
 

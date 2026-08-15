@@ -24,7 +24,7 @@ export const remoteRoutes: Route[] = [
         // Scope rejestrowany na trasie, nie w dekoratorze komponentu (child injector
         // przesłoniłby scope nadrzędny — patrz docs/frontend/translations.md).
         loadChildren: async (): Promise<Route[]> => {
-          const [{ JobHistoryComponent }, { provideJobTranslations }] = await Promise.all([
+          const [{ JobComponent }, { provideJobTranslations }] = await Promise.all([
             import('@erp/notification/feature'),
             import('@erp/notification/ui'),
           ]);
@@ -32,7 +32,7 @@ export const remoteRoutes: Route[] = [
           return [
             {
               path: '',
-              component: JobHistoryComponent,
+              component: JobComponent,
               providers: provideJobTranslations(),
               data: { breadcrumb: 'Historia zadań' },
             },

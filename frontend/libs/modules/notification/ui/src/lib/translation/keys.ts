@@ -31,4 +31,33 @@ export const JOB_KEYS = {
       },
       summary: 'job.history.summary',
     },
+    page: {
+      filters: {
+        title: 'job.page.filters.title',
+        trackingId: 'job.page.filters.trackingId',
+        queueId: 'job.page.filters.queueId',
+        clientId: 'job.page.filters.clientId',
+      },
+      toolbar: {
+        group: 'job.page.toolbar.group',
+        refresh: 'job.page.toolbar.refresh',
+        clearFinished: 'job.page.toolbar.clearFinished',
+      },
+      table: {
+        groups: {
+          job: 'job.page.table.groups.job',
+          progress: 'job.page.table.groups.progress',
+        },
+        columns: {
+          command: 'job.page.table.columns.command',
+          status: 'job.page.table.columns.status',
+          progress: 'job.page.table.columns.progress',
+          succeeded: 'job.page.table.columns.succeeded',
+          failed: 'job.page.table.columns.failed',
+          createdAt: 'job.page.table.columns.createdAt',
+          errors: 'job.page.table.columns.errors',
+        },
+        emptyCell: 'job.page.table.emptyCell',
+      },
+    },
   } as const;

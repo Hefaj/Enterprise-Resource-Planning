@@ -25,5 +25,34 @@
       "finished": "Zakończone"
     },
     "summary": "Zadania tej karty przeglądarki: {{count}}"
+  },
+  "page": {
+    "filters": {
+      "title": "Filtry zadań",
+      "trackingId": "Identyfikator zadania",
+      "queueId": "Identyfikator zlecającego",
+      "clientId": "Identyfikator karty przeglądarki"
+    },
+    "toolbar": {
+      "group": "Akcje",
+      "refresh": "Odśwież listę",
+      "clearFinished": "Wyczyść zakończone z feedu"
+    },
+    "table": {
+      "groups": {
+        "job": "Zadanie",
+        "progress": "Przebieg"
+      },
+      "columns": {
+        "command": "Operacja",
+        "status": "Status",
+        "progress": "Postęp",
+        "succeeded": "Udane",
+        "failed": "Nieudane",
+        "createdAt": "Zlecono",
+        "errors": "Błędy"
+      },
+      "emptyCell": "—"
+    }
   }
 }

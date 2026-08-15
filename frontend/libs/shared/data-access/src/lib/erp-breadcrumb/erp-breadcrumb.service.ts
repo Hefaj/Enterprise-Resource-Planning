@@ -62,7 +62,13 @@ export class ErpBreadcrumbService {
         url += `/${routeURL}`;
       }
 
-      const label = child.data['breadcrumb'];
+      // `routeConfig.data`, a NIE `child.data`: to drugie jest już scalone z danymi przodków
+      // (Angular dziedziczy `data` w dół, dopóki po drodze nie trafi na trasę z komponentem
+      // i niepustą ścieżką). Trasa pośrednia bez własnego `breadcrumb` — np. `notification/jobs`,
+      // która tylko doładowuje dzieci — powtarzałaby wtedy etykietę rodzica
+      // („Notyfikacje > Notyfikacje > Historia zadań”). Do chlebków liczy się wyłącznie to,
+      // co dana trasa zadeklarowała sama.
+      const label = child.routeConfig?.data?.['breadcrumb'];
       if (label) {
         breadcrumbs.push({ label, routerLink: url });
       }

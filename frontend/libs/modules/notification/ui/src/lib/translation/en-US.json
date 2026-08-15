@@ -25,5 +25,34 @@
       "finished": "Finished"
     },
     "summary": "Jobs from this browser tab: {{count}}"
+  },
+  "page": {
+    "filters": {
+      "title": "Job filters",
+      "trackingId": "Job identifier",
+      "queueId": "Requester identifier",
+      "clientId": "Browser tab identifier"
+    },
+    "toolbar": {
+      "group": "Actions",
+      "refresh": "Refresh list",
+      "clearFinished": "Clear finished from feed"
+    },
+    "table": {
+      "groups": {
+        "job": "Job",
+        "progress": "Execution"
+      },
+      "columns": {
+        "command": "Operation",
+        "status": "Status",
+        "progress": "Progress",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "createdAt": "Requested",
+        "errors": "Errors"
+      },
+      "emptyCell": "—"
+    }
   }
 }

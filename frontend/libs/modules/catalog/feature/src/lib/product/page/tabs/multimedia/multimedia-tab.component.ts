@@ -208,7 +208,7 @@ export class MultimediaTabComponent {
         .setGetGroupKey(p => p.uuid)
         .setGetRowGroupKey((r: MultimediaRow) => r.productUuid)
         .setGetGroupTitle(p => p.name)
-        .setGetGroupSubtitle(p => p.sku)
+        .setGetGroupSubtitle(p => p.codeValue('SKU') ?? '')
         .setGetGroupIcon(() => '@tui.image')
         .setIsGroupLoading(p => (p.multimediaUuids?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
         .setDefaultExpanded(true)

@@ -1,3 +1,5 @@
+using Catalog.Domain.Attributes;
+using Catalog.Domain.Codes;
 using Catalog.Domain.Models;
 using Catalog.Domain.Multimedia;
 using Catalog.Domain.Products;
@@ -61,11 +63,16 @@ public sealed partial class CatalogSeeder
 
         var models = BuildModels(random);
         var warranties = BuildWarranties(random);
+        var codeTypes = BuildCodeTypes(random);
+        var attributes = BuildAttributes(random);
         _dbContext.ProductModels.AddRange(models);
         _dbContext.Warranties.AddRange(warranties);
+        _dbContext.CodeTypes.AddRange(codeTypes);
+        _dbContext.AttributeDefinitions.AddRange(attributes);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        var (products, multimedia) = BuildProducts(random, assignableCategoryUuids, models, warranties);
+        var (products, multimedia) = BuildProducts(
+            random, assignableCategoryUuids, models, warranties, codeTypes, attributes);
         _dbContext.MultimediaAssets.AddRange(multimedia);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -250,11 +257,45 @@ public sealed partial class CatalogSeeder
                 ((i % 3) + 1) * 12,
                 $"Opis gwarancji {i + 1}"))];
 
+    /// <summary>
+    /// Słownik typów kodów. SKU i EAN są unikalne w katalogu, kod producenta świadomie NIE —
+    /// to on jest w danych startowych dowodem, że reguła unikalności idzie z wiersza słownika,
+    /// a nie z tabeli kodów.
+    /// </summary>
+    private static List<CodeType> BuildCodeTypes(Random random)
+        => [
+            CodeType.CreateWithUuid(NextUuid(random), "SKU", "Kod magazynowy", null, isUnique: true, 1),
+            CodeType.CreateWithUuid(NextUuid(random), "EAN", "Kod kreskowy EAN-13", @"^\d{13}$", isUnique: true, 2),
+            CodeType.CreateWithUuid(NextUuid(random), "MPN", "Kod producenta", null, isUnique: false, 3),
+        ];
+
+    /// <summary>
+    /// Słownik atrybutów — po jednym z każdego rodzaju, żeby dane startowe pokrywały wszystkie
+    /// gałęzie walidacji i wszystkie kolumny wartości.
+    /// </summary>
+    private static List<AttributeDefinition> BuildAttributes(Random random)
+    {
+        var color = AttributeDefinition.CreateWithUuid(
+            NextUuid(random), "COLOR", "Kolor", AttributeKind.Dictionary, AttributeDataType.None, false, 1);
+        color.SetOptions([("BLACK", "Czarny", 1), ("WHITE", "Biały", 2), ("SILVER", "Srebrny", 3)]);
+
+        var weight = AttributeDefinition.CreateWithUuid(
+            NextUuid(random), "WEIGHT", "Waga (kg)", AttributeKind.Value, AttributeDataType.Number, false, 2);
+
+        var datasheet = AttributeDefinition.CreateWithUuid(
+            NextUuid(random), "DATASHEET", "Karta katalogowa", AttributeKind.Multimedia, AttributeDataType.None,
+            isMultiValue: true, 3);
+
+        return [color, weight, datasheet];
+    }
+
     private (List<Product> Products, List<MultimediaAsset> Multimedia) BuildProducts(
         Random random,
         List<Guid> assignableCategoryUuids,
         List<ProductModel> models,
-        List<Warranty> warranties)
+        List<Warranty> warranties,
+        List<CodeType> codeTypes,
+        List<AttributeDefinition> attributes)
     {
         var products = new List<Product>(_options.ProductCount);
         var multimedia = new List<MultimediaAsset>();
@@ -273,15 +314,18 @@ public sealed partial class CatalogSeeder
             var product = Product.CreateWithUuid(
                 NextUuid(random),
                 $"Produkt {i + 1}",
-                $"SKU-{i + 1:D5}",
-                $"590{random.Next(100000000, 999999999)}",
                 Math.Round((decimal)((random.NextDouble() * 10000) + 10), 2));
 
             product.SetStatus(isActive ? ProductStatus.Active : ProductStatus.Draft, now);
             product.SetAvailableFrom(now.AddDays(-random.Next(1, 365)));
-            product.SetAttributes(
-                $"{random.NextDouble() * 10:F1}kg",
-                random.NextDouble() > 0.5 ? "Czarny" : "Biały");
+
+            // EAN musi mieć dokładnie 13 cyfr — tyle wymaga maska typu kodu w słowniku.
+            // Gdyby seed generował coś innego, wywaliłby się na własnej regule, i o to chodzi.
+            product.SetCodes([
+                ProductCodeAssignment.For(codeTypes[0], $"SKU-{i + 1:D5}"),
+                ProductCodeAssignment.For(codeTypes[1], $"590{random.NextInt64(1000000000L, 9999999999L)}"),
+                ProductCodeAssignment.For(codeTypes[2], $"MPN-{(i % 300) + 1:D4}"),
+            ]);
 
             var modelUuid = random.NextDouble() > 0.3 && models.Count > 0
                 ? models[random.Next(models.Count)].Uuid
@@ -316,6 +360,24 @@ public sealed partial class CatalogSeeder
             }
 
             product.SetMultimedia(assetUuids);
+
+            // Atrybuty po multimediach, bo karta katalogowa wskazuje na zasób utworzony wyżej.
+            var attributeValues = new List<ProductAttributeAssignment>
+            {
+                ProductAttributeAssignment.Option(
+                    attributes[0], PickRandom([.. attributes[0].Options], 1, random)[0].Uuid),
+                ProductAttributeAssignment.Number(
+                    attributes[1], Math.Round((decimal)(random.NextDouble() * 10), 2)),
+            };
+
+            // Atrybut wielowartościowy: kilka kart katalogowych przy jednym produkcie —
+            // to on weryfikuje indeks częściowy, który dla jednowartościowych zabrania powtórzeń.
+            attributeValues.AddRange(assetUuids
+                .Take(random.Next(0, 3))
+                .Select((assetUuid, order) =>
+                    ProductAttributeAssignment.Multimedia(attributes[2], assetUuid, order)));
+
+            product.SetAttributeValues(attributeValues);
 
             // Kilka produktów z dziesiątkami gwarancji jest celowe — to one weryfikują
             // zachowanie listy gwarancji w UI przy dużej liczbie pozycji.

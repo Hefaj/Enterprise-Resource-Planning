@@ -16,12 +16,12 @@ export interface ProductViewModel {
   modelUuid?: string;
   categories: CategoryViewModel[];
   model?: ModelViewModel;
-  sku: string;
+  /** Kody produktu (SKU, EAN…) — typ wskazany identyfikatorem ze słownika `code_type`. */
+  codes: { uuid: string; codeTypeUuid: string; value: string }[];
   price: number;
   availableFrom?: Date;
   status: string;
   available: boolean;
-  ean: string;
   image?: string | null;
   category: string;
   modelName: string;

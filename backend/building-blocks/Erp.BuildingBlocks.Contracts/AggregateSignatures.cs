@@ -19,6 +19,12 @@ public static class AggregateSignatures
     public const string CatalogMultimedia = "catalog.multimedia";
     public const string CatalogWarranty = "catalog.warranty";
 
+    /// <summary>Słownik typów kodów produktu.</summary>
+    public const string CatalogCodeType = "catalog.codetype";
+
+    /// <summary>Słownik definicji atrybutów produktu.</summary>
+    public const string CatalogAttribute = "catalog.attribute";
+
     public const string NotificationJob = "notification.job";
 
     /// <summary>Jedyny agregat modułu Sales, dodany jako sprawdzian szablonu (faza 5) —
@@ -46,6 +52,8 @@ public static class AggregateSignatures
         CatalogModel,
         CatalogMultimedia,
         CatalogWarranty,
+        CatalogCodeType,
+        CatalogAttribute,
         NotificationJob,
         SalesCustomer,
         Jobs,

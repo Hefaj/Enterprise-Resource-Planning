@@ -15,6 +15,25 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 name: "catalog");
 
             migrationBuilder.CreateTable(
+                name: "attribute_definition",
+                schema: "catalog",
+                columns: table => new
+                {
+                    uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    code = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    kind = table.Column<int>(type: "integer", nullable: false),
+                    data_type = table.Column<int>(type: "integer", nullable: false),
+                    is_multi_value = table.Column<bool>(type: "boolean", nullable: false),
+                    sort_order = table.Column<int>(type: "integer", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_attribute_definition", x => x.uuid);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "category",
                 schema: "catalog",
                 columns: table => new
@@ -41,6 +60,24 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_category_closure", x => new { x.ancestor_uuid, x.descendant_uuid });
+                });
+
+            migrationBuilder.CreateTable(
+                name: "code_type",
+                schema: "catalog",
+                columns: table => new
+                {
+                    uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    symbol = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    pattern = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    is_unique = table.Column<bool>(type: "boolean", nullable: false),
+                    sort_order = table.Column<int>(type: "integer", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_code_type", x => x.uuid);
                 });
 
             migrationBuilder.CreateTable(
@@ -113,16 +150,12 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 {
                     uuid = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
-                    sku = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    ean = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     price = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     available_from = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     status = table.Column<int>(type: "integer", nullable: false),
                     model_uuid = table.Column<Guid>(type: "uuid", nullable: true),
                     duplicate_key = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     image = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
-                    attr_weight = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    attr_color = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -144,6 +177,29 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_warranty", x => x.uuid);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "attribute_option",
+                schema: "catalog",
+                columns: table => new
+                {
+                    uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    attribute_uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    code = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    sort_order = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_attribute_option", x => x.uuid);
+                    table.ForeignKey(
+                        name: "fk_attribute_option_attribute_definition_attribute_uuid",
+                        column: x => x.attribute_uuid,
+                        principalSchema: "catalog",
+                        principalTable: "attribute_definition",
+                        principalColumn: "uuid",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -175,6 +231,37 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "product_attribute_value",
+                schema: "catalog",
+                columns: table => new
+                {
+                    uuid = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    product_uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    attribute_uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    kind = table.Column<int>(type: "integer", nullable: false),
+                    is_multi_value = table.Column<bool>(type: "boolean", nullable: false),
+                    option_uuid = table.Column<Guid>(type: "uuid", nullable: true),
+                    multimedia_uuid = table.Column<Guid>(type: "uuid", nullable: true),
+                    value_text = table.Column<string>(type: "character varying(4096)", maxLength: 4096, nullable: true),
+                    value_number = table.Column<decimal>(type: "numeric(28,10)", nullable: true),
+                    value_boolean = table.Column<bool>(type: "boolean", nullable: true),
+                    value_date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    sort_order = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_product_attribute_value", x => x.uuid);
+                    table.CheckConstraint("ck_product_attribute_value_payload", "(CASE WHEN option_uuid IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN multimedia_uuid IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_text IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_number IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_boolean IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_date IS NOT NULL THEN 1 ELSE 0 END) = 1");
+                    table.ForeignKey(
+                        name: "fk_product_attribute_value_product_product_uuid",
+                        column: x => x.product_uuid,
+                        principalSchema: "catalog",
+                        principalTable: "product",
+                        principalColumn: "uuid",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "product_category",
                 schema: "catalog",
                 columns: table => new
@@ -188,6 +275,29 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     table.PrimaryKey("pk_product_category", x => x.uuid);
                     table.ForeignKey(
                         name: "fk_product_category_product_product_uuid",
+                        column: x => x.product_uuid,
+                        principalSchema: "catalog",
+                        principalTable: "product",
+                        principalColumn: "uuid",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "product_code",
+                schema: "catalog",
+                columns: table => new
+                {
+                    uuid = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    product_uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    code_type_uuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    value = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    unique_key = table.Column<string>(type: "character varying(192)", maxLength: 192, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_product_code", x => x.uuid);
+                    table.ForeignKey(
+                        name: "fk_product_code_product_product_uuid",
                         column: x => x.product_uuid,
                         principalSchema: "catalog",
                         principalTable: "product",
@@ -239,6 +349,32 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "ix_attribute_definition_code",
+                schema: "catalog",
+                table: "attribute_definition",
+                column: "code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_attribute_definition_sort_order",
+                schema: "catalog",
+                table: "attribute_definition",
+                column: "sort_order");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_attribute_option_attribute_uuid_code",
+                schema: "catalog",
+                table: "attribute_option",
+                columns: new[] { "attribute_uuid", "code" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_attribute_option_attribute_uuid_sort_order",
+                schema: "catalog",
+                table: "attribute_option",
+                columns: new[] { "attribute_uuid", "sort_order" });
+
+            migrationBuilder.CreateIndex(
                 name: "ix_category_name",
                 schema: "catalog",
                 table: "category",
@@ -261,6 +397,19 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 schema: "catalog",
                 table: "category_closure",
                 columns: new[] { "descendant_uuid", "depth" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_code_type_sort_order",
+                schema: "catalog",
+                table: "code_type",
+                column: "sort_order");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_code_type_symbol",
+                schema: "catalog",
+                table: "code_type",
+                column: "symbol",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_job_queue_id",
@@ -325,12 +474,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 filter: "duplicate_key IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "ix_product_ean",
-                schema: "catalog",
-                table: "product",
-                column: "ean");
-
-            migrationBuilder.CreateIndex(
                 name: "ix_product_model_uuid",
                 schema: "catalog",
                 table: "product",
@@ -349,17 +492,48 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 column: "price");
 
             migrationBuilder.CreateIndex(
-                name: "ix_product_sku",
-                schema: "catalog",
-                table: "product",
-                column: "sku",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "ix_product_status",
                 schema: "catalog",
                 table: "product",
                 column: "status");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_attribute_value_attribute_uuid_value_date",
+                schema: "catalog",
+                table: "product_attribute_value",
+                columns: new[] { "attribute_uuid", "value_date" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_attribute_value_attribute_uuid_value_number",
+                schema: "catalog",
+                table: "product_attribute_value",
+                columns: new[] { "attribute_uuid", "value_number" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_attribute_value_multimedia_uuid",
+                schema: "catalog",
+                table: "product_attribute_value",
+                column: "multimedia_uuid");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_attribute_value_option_uuid",
+                schema: "catalog",
+                table: "product_attribute_value",
+                column: "option_uuid");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_attribute_value_product_uuid_sort_order",
+                schema: "catalog",
+                table: "product_attribute_value",
+                columns: new[] { "product_uuid", "sort_order" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_attribute_value_single",
+                schema: "catalog",
+                table: "product_attribute_value",
+                columns: new[] { "product_uuid", "attribute_uuid" },
+                unique: true,
+                filter: "is_multi_value = false");
 
             migrationBuilder.CreateIndex(
                 name: "ix_product_category_category_uuid",
@@ -373,6 +547,33 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 table: "product_category",
                 columns: new[] { "product_uuid", "category_uuid" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_code_code_type_uuid",
+                schema: "catalog",
+                table: "product_code",
+                column: "code_type_uuid");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_code_product_uuid_code_type_uuid_value",
+                schema: "catalog",
+                table: "product_code",
+                columns: new[] { "product_uuid", "code_type_uuid", "value" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_code_unique_key",
+                schema: "catalog",
+                table: "product_code",
+                column: "unique_key",
+                unique: true,
+                filter: "unique_key IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_code_value",
+                schema: "catalog",
+                table: "product_code",
+                column: "value");
 
             migrationBuilder.CreateIndex(
                 name: "ix_product_multimedia_multimedia_uuid",
@@ -411,11 +612,19 @@ namespace Catalog.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "attribute_option",
+                schema: "catalog");
+
+            migrationBuilder.DropTable(
                 name: "category",
                 schema: "catalog");
 
             migrationBuilder.DropTable(
                 name: "category_closure",
+                schema: "catalog");
+
+            migrationBuilder.DropTable(
+                name: "code_type",
                 schema: "catalog");
 
             migrationBuilder.DropTable(
@@ -431,7 +640,15 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                 schema: "catalog");
 
             migrationBuilder.DropTable(
+                name: "product_attribute_value",
+                schema: "catalog");
+
+            migrationBuilder.DropTable(
                 name: "product_category",
+                schema: "catalog");
+
+            migrationBuilder.DropTable(
+                name: "product_code",
                 schema: "catalog");
 
             migrationBuilder.DropTable(
@@ -444,6 +661,10 @@ namespace Catalog.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "warranty",
+                schema: "catalog");
+
+            migrationBuilder.DropTable(
+                name: "attribute_definition",
                 schema: "catalog");
 
             migrationBuilder.DropTable(

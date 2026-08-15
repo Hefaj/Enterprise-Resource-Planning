@@ -1,4 +1,6 @@
+using Catalog.Domain.Attributes;
 using Catalog.Domain.Categories;
+using Catalog.Domain.Codes;
 using Catalog.Domain.Models;
 using Catalog.Domain.Multimedia;
 using Catalog.Domain.Products;
@@ -39,6 +41,12 @@ public sealed class CatalogDbContext : ErpDbContext, IJobDbContext
     public DbSet<MultimediaAsset> MultimediaAssets => Set<MultimediaAsset>();
 
     public DbSet<Warranty> Warranties => Set<Warranty>();
+
+    /// <summary>Słownik typów kodów produktu (EAN, SKU, MPN…).</summary>
+    public DbSet<CodeType> CodeTypes => Set<CodeType>();
+
+    /// <summary>Słownik definicji atrybutów produktu.</summary>
+    public DbSet<AttributeDefinition> AttributeDefinitions => Set<AttributeDefinition>();
 
     /// <inheritdoc />
     public DbSet<Job> Jobs => Set<Job>();

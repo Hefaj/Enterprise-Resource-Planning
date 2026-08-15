@@ -1,4 +1,5 @@
 using Catalog.Application.Contracts;
+using Catalog.Domain.Attributes;
 using Catalog.Domain.Products;
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api.Contracts;
@@ -120,6 +121,11 @@ public sealed class ProductQueries : IProductQueries
 
         // Projekcja wprost do DTO: EF generuje JOIN-y do tabel powiązań i składa listy
         // po stronie bazy, bez materializowania agregatów Product w pamięci.
+        //
+        // Rodzaj atrybutu jest tu tłumaczony na wartość kontraktu wprost w wyrażeniu, a nie
+        // dwoma krokami jak w `AttributeQueries`: tam chodzi o kilkanaście wierszy słownika,
+        // tutaj o kilkadziesiąt tysięcy wartości i przenoszenie ich przez pamięć procesu
+        // tylko po to, by zamienić enum na string, byłoby zauważalne.
         return await query
             .Select(p => new ProductDto(
                 p.Uuid,
@@ -130,16 +136,31 @@ public sealed class ProductQueries : IProductQueries
                     .Select(l => l.MultimediaUuid).ToList(),
                 EF.Property<List<ProductWarranty>>(p, "_warranties")
                     .Select(w => new ProductWarrantyDto(w.WarrantyUuid, w.DurationMonths)).ToList(),
+                EF.Property<List<ProductCode>>(p, "_codes")
+                    .Select(c => new ProductCodeDto(c.Uuid, c.CodeTypeUuid, c.Value)).ToList(),
+                EF.Property<List<ProductAttributeValue>>(p, "_attributeValues")
+                    .OrderBy(v => v.SortOrder)
+                    .Select(v => new ProductAttributeValueDto(
+                        v.Uuid,
+                        v.AttributeUuid,
+                        v.Kind == AttributeKind.Dictionary
+                            ? AttributeNames.KindDictionary
+                            : v.Kind == AttributeKind.Multimedia
+                                ? AttributeNames.KindMultimedia
+                                : AttributeNames.KindValue,
+                        v.OptionUuid,
+                        v.MultimediaUuid,
+                        v.ValueText,
+                        v.ValueNumber,
+                        v.ValueBoolean,
+                        v.ValueDate == null ? null : v.ValueDate.Value.UtcDateTime,
+                        v.SortOrder)).ToList(),
                 p.ModelUuid,
-                p.Sku,
                 p.Price,
                 p.AvailableFrom == null ? null : p.AvailableFrom.Value.UtcDateTime,
                 p.Status == ProductStatus.Active ? ProductStatusNames.Active : ProductStatusNames.Draft,
                 p.Status == ProductStatus.Active,
-                p.Ean,
-                p.Image,
-                p.AttrWeight,
-                p.AttrColor))
+                p.Image))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -170,9 +191,31 @@ public sealed class ProductQueries : IProductQueries
         if (!string.IsNullOrWhiteSpace(request.ProductCode))
         {
             var code = request.ProductCode;
+
+            var codeTypeId = request.CodeTypeId;
+
+            // Po WSZYSTKICH kodach produktu, nie po dwóch wybranych kolumnach jak dawniej —
+            // filtr obejmuje każdy typ ze słownika, także dodany po wdrożeniu. `codeTypeId`
+            // zawęża go do jednego typu („EAN zawierający 590”), gdy o to poproszono.
             // ILIKE — dopasowanie bez uwzględniania wielkości liter po stronie Postgresa.
-            query = query.Where(p => EF.Functions.ILike(p.Sku, $"%{code}%")
-                                  || EF.Functions.ILike(p.Ean, $"%{code}%"));
+            query = query.Where(p => EF.Property<List<ProductCode>>(p, "_codes")
+                .Any(c => (codeTypeId == null || c.CodeTypeUuid == codeTypeId)
+                       && EF.Functions.ILike(c.Value, $"%{code}%")));
+        }
+
+        if (request.AttributeOptionId.HasValue)
+        {
+            // Po opcji, nie po jej nazwie: etykieta „Czarny” bywa zmieniana, identyfikator nie.
+            var optionId = request.AttributeOptionId.Value;
+            query = query.Where(p => EF.Property<List<ProductAttributeValue>>(p, "_attributeValues")
+                .Any(v => v.OptionUuid == optionId));
+        }
+        else if (request.AttributeId.HasValue)
+        {
+            // Sam atrybut bez wartości znaczy „produkty, które w ogóle mają tę cechę opisaną”.
+            var attributeId = request.AttributeId.Value;
+            query = query.Where(p => EF.Property<List<ProductAttributeValue>>(p, "_attributeValues")
+                .Any(v => v.AttributeUuid == attributeId));
         }
 
         if (request.Category is not null && !request.Category.IsEmpty)
@@ -295,9 +338,11 @@ public sealed class ProductQueries : IProductQueries
         {
             var descending = sort.Order == -1;
 
+            // SKU wypadło z listy razem z kolumną: sortowanie po kodzie oznacza teraz wybór,
+            // PO KTÓRYM typie kodu sortować, a to jest parametr, nie nazwa pola. Dopóki
+            // frontend o to nie poprosi, nie ma czego zgadywać.
             ordered = sort.Field.ToUpperInvariant() switch
             {
-                "SKU" => Chain(ordered, query, p => p.Sku, descending),
                 "NAME" => Chain(ordered, query, p => p.Name, descending),
                 "PRICE" => Chain(ordered, query, p => p.Price, descending),
                 "AVAILABLEFROM" => Chain(ordered, query, p => p.AvailableFrom, descending),

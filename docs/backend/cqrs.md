@@ -159,7 +159,7 @@ zbiór pasujący do filtra, nie jedną stronę.
    ```csharp
    ordered = sort.Field.ToUpperInvariant() switch
    {
-       "SKU" => Chain(ordered, query, p => p.Sku, descending),
+       "NAME" => Chain(ordered, query, p => p.Name, descending),
        "PRICE" => Chain(ordered, query, p => p.Price, descending),
        _ => ordered,
    };

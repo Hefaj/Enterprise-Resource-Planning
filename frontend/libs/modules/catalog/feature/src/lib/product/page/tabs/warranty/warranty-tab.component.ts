@@ -215,7 +215,7 @@ export class WarrantyTabComponent {
         .setGetGroupKey(p => p.uuid)
         .setGetRowGroupKey((r: ProductWarrantyVM) => r.productUuid)
         .setGetGroupTitle(p => p.name)
-        .setGetGroupSubtitle(p => p.sku)
+        .setGetGroupSubtitle(p => p.codeValue('SKU') ?? '')
         .setGetGroupIcon(() => '@tui.shield-check')
         .setIsGroupLoading(p => (p.warranties?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
         .setDefaultExpanded(true)

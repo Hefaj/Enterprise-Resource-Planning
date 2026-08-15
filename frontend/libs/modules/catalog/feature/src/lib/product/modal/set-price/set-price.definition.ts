@@ -15,7 +15,7 @@ export class SetPriceModalDefinition implements ErpModalDefinition<BatchCommandO
   public build(command: BatchCommandOfProductSetPriceCommandAndSearchProductRequest, metadata?: SetPriceMetadata): ErpModalConfig<BatchCommandOfProductSetPriceCommandAndSearchProductRequest, SetPriceMetadata> {
     const uuids = command['products']?.map((p: any) => p.uuid) ?? [];
     if (uuids.length > 0) {
-      this._orchestrator.loadAsync(uuids).catch(err => console.error(err));
+      this._orchestrator.loadAsync(uuids, { includeCodeTypes: true }).catch(err => console.error(err));
     }
 
     return ErpModalBuilder.modal<BatchCommandOfProductSetPriceCommandAndSearchProductRequest, SetPriceMetadata>((b): void => {

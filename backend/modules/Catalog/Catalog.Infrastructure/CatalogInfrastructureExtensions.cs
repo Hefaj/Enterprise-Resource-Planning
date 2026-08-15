@@ -1,4 +1,6 @@
+using Catalog.Domain.Attributes;
 using Catalog.Domain.Categories;
+using Catalog.Domain.Codes;
 using Catalog.Domain.Models;
 using Catalog.Domain.Multimedia;
 using Catalog.Domain.Products;
@@ -47,6 +49,8 @@ public static class CatalogInfrastructureExtensions
         services.AddScoped<IModelQueries, ModelQueries>();
         services.AddScoped<IMultimediaQueries, MultimediaQueries>();
         services.AddScoped<IWarrantyQueries, WarrantyQueries>();
+        services.AddScoped<ICodeTypeQueries, CodeTypeQueries>();
+        services.AddScoped<IAttributeQueries, AttributeQueries>();
 
         var seedOptions = configuration.GetSection(CatalogSeedOptions.SectionName).Get<CatalogSeedOptions>()
             ?? new CatalogSeedOptions();
@@ -75,7 +79,8 @@ public static class CatalogInfrastructureExtensions
         => new(StringComparer.Ordinal)
         {
             ["ix_product_duplicate_key"] = "product_duplicate",
-            ["ix_product_sku"] = "product_sku_duplicate",
+            ["ix_product_code_unique_key"] = "product_code_duplicate",
+            ["ix_product_attribute_value_single"] = "product_attribute_duplicate",
         };
 
     /// <summary>
@@ -91,5 +96,7 @@ public static class CatalogInfrastructureExtensions
             .Register<Category>(AggregateSignatures.CatalogCategory)
             .Register<ProductModel>(AggregateSignatures.CatalogModel)
             .Register<MultimediaAsset>(AggregateSignatures.CatalogMultimedia)
-            .Register<Warranty>(AggregateSignatures.CatalogWarranty);
+            .Register<Warranty>(AggregateSignatures.CatalogWarranty)
+            .Register<CodeType>(AggregateSignatures.CatalogCodeType)
+            .Register<AttributeDefinition>(AggregateSignatures.CatalogAttribute);
 }

@@ -25,6 +25,7 @@ import {
   ProductVM,
   SearchProductRequest,
   CategoryVM,
+  ProductCodeVM,
 } from '@erp/catalog/data-access';
 
 import { PRODUCT_KEYS } from '../../translation';
@@ -122,11 +123,20 @@ export class CatalogProductTableComponent {
       .addColumnGroup((g) => g
         .setId('identification')
         .setHeader(PRODUCT_KEYS.base.table.groups.identification)
+        // SKU nie jest już polem produktu, tylko jednym z jego kodów — kolumna wyciąga go
+        // po symbolu typu ze słownika. Sortowanie wyłączone, bo backend sortuje po kolumnach
+        // produktu, a kod mieszka w tabeli podrzędnej; posortowanie po nim wymaga wskazania,
+        // PO KTÓRYM typie kodu, czyli parametru, którego kontrakt sortowania nie ma.
         .addColumn((c) => c
           .setId('sku')
-          .setAccessorKey('sku')
+          .setAccessorKey('codes')
           .setHeader(PRODUCT_KEYS.base.table.columns.sku)
+          .setEnableSorting(false)
           .setSize(180)
+          .setCellRichContent((codes: ProductCodeVM[]) => {
+            const sku = codes?.find(code => code.codeType?.symbol === 'SKU')?.value;
+            return { lines: [{ text: sku ?? PRODUCT_KEYS.base.table.emptyCell }] };
+          })
         )
         .addColumn((c) => c
           .setId('name')
@@ -194,7 +204,10 @@ export class CatalogProductTableComponent {
     try {
       const request: SearchProductRequest = {
         ...filters,
-        page: tableState?.pagination?.pageIndex ?? 0,
+        // `pageIndex` z ErpTable liczy się od zera, `page` w kontrakcie HTTP (`PagedRequest`)
+        // od jedynki — bez tego przesunięcia backend klampuje 0 do 1 i pierwsze dwie strony
+        // tabeli zwracają ten sam zbiór, a ostatnia jest nieosiągalna.
+        page: (tableState?.pagination?.pageIndex ?? 0) + 1,
         pageSize: tableState?.pagination?.pageSize ?? 20,
       };
 
@@ -210,6 +223,8 @@ export class CatalogProductTableComponent {
         loadOptions: {
           includeCategories: true,
           includeModel: true,
+          // Bez słownika typów kodów kolumna SKU nie ma jak rozpoznać, który kod jest którym.
+          includeCodeTypes: true,
         },
       });
 

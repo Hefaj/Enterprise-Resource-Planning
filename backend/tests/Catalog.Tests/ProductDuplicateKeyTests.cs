@@ -63,7 +63,7 @@ public class ProductDuplicateKeyTests
     [Fact]
     public void Agregat_utrzymuje_sygnature_przy_zmianie_klasyfikacji()
     {
-        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", "SKU-1", "590", 10m);
+        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", 10m);
 
         product.DuplicateKey.ShouldBeNull();
 
@@ -75,7 +75,7 @@ public class ProductDuplicateKeyTests
     [Fact]
     public void Odebranie_modelu_kasuje_sygnature()
     {
-        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", "SKU-1", "590", 10m);
+        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", 10m);
         product.SetClassification(Model, [CategoryA], DateTimeOffset.UtcNow);
 
         product.SetClassification(null, [CategoryA], DateTimeOffset.UtcNow);
@@ -90,7 +90,7 @@ public class ProductDuplicateKeyTests
     [Fact]
     public void Ta_sama_klasyfikacja_nie_generuje_zdarzenia()
     {
-        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", "SKU-1", "590", 10m);
+        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", 10m);
         product.SetClassification(Model, [CategoryA, CategoryB], DateTimeOffset.UtcNow);
         product.ClearDomainEvents();
 
@@ -103,7 +103,7 @@ public class ProductDuplicateKeyTests
     [Fact]
     public void Zmiana_klasyfikacji_generuje_zdarzenie_ze_starym_i_nowym_stanem()
     {
-        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", "SKU-1", "590", 10m);
+        var product = Product.CreateWithUuid(Guid.NewGuid(), "Produkt", 10m);
         product.SetClassification(Model, [CategoryA], DateTimeOffset.UtcNow);
         product.ClearDomainEvents();
 

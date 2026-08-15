@@ -15,7 +15,7 @@ export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOf
   public build(command: BatchCommandOfProductSetNameCommandAndSearchProductRequest, metadata?: SetNameMetadata): ErpModalConfig<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
     const uuids = command['products']?.map((p: any) => p.uuid) ?? [];
     if (uuids.length > 0) {
-      this._orchestrator.loadAsync(uuids).catch(err => console.error(err));
+      this._orchestrator.loadAsync(uuids, { includeCodeTypes: true }).catch(err => console.error(err));
     }
 
     return ErpModalBuilder.modal<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata>(b => b

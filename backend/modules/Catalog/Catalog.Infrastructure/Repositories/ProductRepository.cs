@@ -20,9 +20,10 @@ public sealed class ProductRepository : IProductRepository
     /// a nie typy owned — a zwykłych nawigacji EF sam nie dołącza.
     ///
     /// <para>Pominięcie któregokolwiek wpisu jest groźniejsze, niż wygląda: metody domenowe
-    /// w rodzaju <c>SetClassification</c> podmieniają KOMPLET powiązań, więc na niewczytanej
-    /// kolekcji „podmiana” zobaczyłaby pustkę i po cichu dopisała nowe obok starych, zamiast
-    /// je zastąpić. Dlatego wszystkie trzy są tutaj, a nie dobierane per metoda.</para>
+    /// w rodzaju <c>SetClassification</c> czy <c>SetCodes</c> podmieniają KOMPLET powiązań,
+    /// więc na niewczytanej kolekcji „podmiana” zobaczyłaby pustkę i po cichu dopisała nowe
+    /// obok starych, zamiast je zastąpić — przy kodach typów unikalnych kończąc się kolizją
+    /// na indeksie. Dlatego wszystkie są tutaj, a nie dobierane per metoda.</para>
     ///
     /// <para>Iloczynu kartezjańskiego nie ma — globalne <c>SplitQuery</c>
     /// (patrz <c>UseErpPostgres</c>) wykonuje osobny SELECT na każdą kolekcję.</para>
@@ -31,7 +32,9 @@ public sealed class ProductRepository : IProductRepository
         => _dbContext.Products
             .Include("_categories")
             .Include("_multimedia")
-            .Include("_warranties");
+            .Include("_warranties")
+            .Include("_codes")
+            .Include("_attributeValues");
 
     /// <inheritdoc />
     public Task<Product?> FindAsync(Guid uuid, CancellationToken cancellationToken)

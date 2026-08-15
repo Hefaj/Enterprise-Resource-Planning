@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchResult } from '../../api-client';
-import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM } from './product.view-model';
+import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM, ProductCodeVM, ProductAttributeVM } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
 import { CatalogCategoryOrchestrator } from '../category/catalog-category.orchestrator';
@@ -12,6 +12,8 @@ import { CatalogModelOrchestrator } from '../model/catalog-model.orchestrator';
 import { MultimediaVM } from '../multimedia/multimedia.view-model';
 import { CatalogMultimediaOrchestrator } from '../multimedia/catalog-multimedia.orchestrator';
 import { CatalogWarrantyOrchestrator } from '../warranty/catalog-warranty.orchestrator';
+import { CatalogCodeTypeOrchestrator } from '../code-type/catalog-code-type.orchestrator';
+import { CatalogAttributeOrchestrator } from '../attribute/catalog-attribute.orchestrator';
 
 /**
  * Struktura rozwiązanych zależności do mapowania ViewModel produktu.
@@ -21,6 +23,8 @@ interface ProductResolvedDeps extends ResolvedDeps {
   model: ModelVM | null;
   multimedia: MultimediaVM[];
   warranties: ProductWarrantyVM[];
+  codes: ProductCodeVM[];
+  attributes: ProductAttributeVM[];
 }
 
 /**
@@ -46,6 +50,8 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
   private _modelOrchestrator: CatalogModelOrchestrator | null = null;
   private _multimediaOrchestrator: CatalogMultimediaOrchestrator | null = null;
   private _warrantyOrchestrator: CatalogWarrantyOrchestrator | null = null;
+  private _codeTypeOrchestrator: CatalogCodeTypeOrchestrator | null = null;
+  private _attributeOrchestrator: CatalogAttributeOrchestrator | null = null;
 
   // Gettery, nie pola — patrz uzasadnienie przy CatalogMultimediaOrchestrator
   // (frontend/libs/modules/catalog/data-access/.../catalog-multimedia.orchestrator.ts).
@@ -95,6 +101,20 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     return this._warrantyOrchestrator;
   }
 
+  private get _codeTypeSiblingOrchestrator(): CatalogCodeTypeOrchestrator {
+    if (!this._codeTypeOrchestrator) {
+      this._codeTypeOrchestrator = this._injector.get(CatalogCodeTypeOrchestrator);
+    }
+    return this._codeTypeOrchestrator;
+  }
+
+  private get _attributeSiblingOrchestrator(): CatalogAttributeOrchestrator {
+    if (!this._attributeOrchestrator) {
+      this._attributeOrchestrator = this._injector.get(CatalogAttributeOrchestrator);
+    }
+    return this._attributeOrchestrator;
+  }
+
   // ────────────────────────────────────────────────────────────────
   // Abstrakcyjne implementacje
   // ────────────────────────────────────────────────────────────────
@@ -121,6 +141,10 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       model: deps.model ?? null,
       multimedia: deps.multimedia ?? [],
       warranties: deps.warranties ?? [],
+      codes: deps.codes ?? [],
+      attributes: deps.attributes ?? [],
+      codeValue: (symbol: string) =>
+        (deps.codes ?? []).find(code => code.codeType?.symbol === symbol)?.value ?? null,
     };
   }
 
@@ -146,6 +170,8 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     const modelUuids = new Set<string>();
     const multimediaUuids = new Set<string>();
     const warrantyUuids = new Set<string>();
+    const codeTypeUuids = new Set<string>();
+    const attributeUuids = new Set<string>();
 
     for (const uuid of uuids) {
       const dto = this.identityMap.peek(uuid);
@@ -173,6 +199,18 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
           warrantyUuids.add(w.warrantyUuid);
         }
       }
+
+      if (options.includeCodeTypes && dto.codes) {
+        for (const code of dto.codes) {
+          codeTypeUuids.add(code.codeTypeUuid);
+        }
+      }
+
+      if (options.includeAttributes && dto.attributes) {
+        for (const value of dto.attributes) {
+          attributeUuids.add(value.attributeUuid);
+        }
+      }
     }
 
     // Przekaż żądanie do sąsiednich orkiestratorów
@@ -197,6 +235,18 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     if (warrantyUuids.size > 0) {
       promises.push(
         this._warrantySiblingOrchestrator.loadAsync([...warrantyUuids]),
+      );
+    }
+
+    if (codeTypeUuids.size > 0) {
+      promises.push(
+        this._codeTypeSiblingOrchestrator.loadAsync([...codeTypeUuids]),
+      );
+    }
+
+    if (attributeUuids.size > 0) {
+      promises.push(
+        this._attributeSiblingOrchestrator.loadAsync([...attributeUuids]),
       );
     }
 
@@ -232,7 +282,25 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
       warranty: this._warrantySiblingOrchestrator.resolveWarrantyVM(assignment.warrantyUuid),
     }));
 
-    return { categories, model, multimedia, warranties };
+    // Kody i wartości atrybutów niosą same identyfikatory — nazwa typu kodu i etykieta
+    // wybranej pozycji słownika mieszkają w osobnych agregatach, więc wzbogacamy je z cache
+    // sąsiadów, tak samo jak gwarancje.
+    const codes: ProductCodeVM[] = (dto.codes ?? []).map(code => ({
+      ...code,
+      productUuid: dto.uuid,
+      codeType: this._codeTypeSiblingOrchestrator.resolveCodeTypeVM(code.codeTypeUuid),
+    }));
+
+    const attributes: ProductAttributeVM[] = (dto.attributes ?? []).map(value => ({
+      ...value,
+      productUuid: dto.uuid,
+      attribute: this._attributeSiblingOrchestrator.resolveAttributeVM(value.attributeUuid),
+      option: value.optionUuid
+        ? this._attributeSiblingOrchestrator.resolveOptionVM(value.attributeUuid, value.optionUuid)
+        : null,
+    }));
+
+    return { categories, model, multimedia, warranties, codes, attributes };
   }
 
   /**

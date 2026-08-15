@@ -26,8 +26,18 @@ public sealed class SearchProductRequest : PagedRequest
 
     public string? Attribute { get; set; }
 
-    /// <summary>Fragment SKU lub EAN.</summary>
+    /// <summary>Atrybut, po którego wartości filtrujemy; wymagany dla <see cref="AttributeOptionId"/>.</summary>
+    public Guid? AttributeId { get; set; }
+
+    /// <summary>Wybrana pozycja słownika atrybutu — filtr „produkty w kolorze czarnym”.</summary>
+    public Guid? AttributeOptionId { get; set; }
+
+    /// <summary>Fragment wartości kodu produktu — dowolnego typu, o ile nie zawężono
+    /// go przez <see cref="CodeTypeId"/>.</summary>
     public string? ProductCode { get; set; }
+
+    /// <summary>Zawęża <see cref="ProductCode"/> do jednego typu ze słownika.</summary>
+    public Guid? CodeTypeId { get; set; }
 
     public string? TerritoryCode { get; set; }
 

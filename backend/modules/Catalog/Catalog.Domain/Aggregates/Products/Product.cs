@@ -9,10 +9,11 @@ namespace Catalog.Domain.Products;
 /// Produkt — główny agregat katalogu.
 ///
 /// <para><b>Granica agregatu.</b> Wewnątrz są tylko byty, które nie mają sensu bez produktu:
-/// przypisania kategorii, powiązania z multimediami i okresy gwarancji. Same kategorie,
-/// multimedia, modele i definicje gwarancji to osobne agregaty — produkt trzyma do nich
-/// wyłącznie identyfikatory, nigdy referencje obiektowe. Dzięki temu wczytanie produktu
-/// nie wciąga za sobą pół katalogu, a zmiana nazwy kategorii nie wymaga dotykania produktów.</para>
+/// przypisania kategorii, powiązania z multimediami, okresy gwarancji, nadane kody i wartości
+/// atrybutów. Same kategorie, multimedia, modele, definicje gwarancji, typy kodów i definicje
+/// atrybutów to osobne agregaty — produkt trzyma do nich wyłącznie identyfikatory, nigdy
+/// referencje obiektowe. Dzięki temu wczytanie produktu nie wciąga za sobą pół katalogu,
+/// a zmiana nazwy kategorii nie wymaga dotykania produktów.</para>
 ///
 /// <para><b>Reguła nadrzędna:</b> stan zmieniają wyłącznie metody poniżej, a każda z nich
 /// najpierw sprawdza regułę, a dopiero potem modyfikuje pola. Ta kolejność nie jest kwestią
@@ -25,28 +26,22 @@ public class Product : AggregateRoot
     private readonly List<ProductCategoryLink> _categories = [];
     private readonly List<ProductMultimediaLink> _multimedia = [];
     private readonly List<ProductWarranty> _warranties = [];
+    private readonly List<ProductCode> _codes = [];
+    private readonly List<ProductAttributeValue> _attributeValues = [];
 
     /// <summary>Konstruktor dla EF Core.</summary>
     protected Product()
     {
     }
 
-    private Product(Guid uuid, string name, string sku, string ean, decimal price) : base(uuid)
+    private Product(Guid uuid, string name, decimal price) : base(uuid)
     {
         Name = name;
-        Sku = sku;
-        Ean = ean;
         Price = price;
         Status = ProductStatus.Draft;
     }
 
     public string Name { get; private set; } = string.Empty;
-
-    /// <summary>Kod magazynowy — identyfikator handlowy, unikalny w katalogu.</summary>
-    public string Sku { get; private set; } = string.Empty;
-
-    /// <summary>Kod kreskowy EAN.</summary>
-    public string Ean { get; private set; } = string.Empty;
 
     public decimal Price { get; private set; }
 
@@ -84,12 +79,11 @@ public class Product : AggregateRoot
     /// <summary>Zdjęcie główne (URL); galeria żyje w <see cref="MultimediaUuids"/>.</summary>
     public string? Image { get; private set; }
 
-    /// <summary>Atrybut opisowy — waga. Docelowo część słownika atrybutów; na razie
-    /// odwzorowuje pole obecne w kontrakcie API (<c>Attr_Weight</c>).</summary>
-    public string AttrWeight { get; private set; } = string.Empty;
+    /// <summary>Kody nadane produktowi — SKU, EAN i wszystko, co przyniesie słownik typów.</summary>
+    public IReadOnlyCollection<ProductCode> Codes => _codes.AsReadOnly();
 
-    /// <summary>Atrybut opisowy — kolor (<c>Attr_Color</c> w kontrakcie API).</summary>
-    public string AttrColor { get; private set; } = string.Empty;
+    /// <summary>Wartości atrybutów produktu.</summary>
+    public IReadOnlyCollection<ProductAttributeValue> AttributeValues => _attributeValues.AsReadOnly();
 
     /// <summary>Identyfikatory kategorii, do których należy produkt.</summary>
     public IReadOnlyCollection<Guid> CategoryUuids
@@ -102,12 +96,12 @@ public class Product : AggregateRoot
     /// <summary>Gwarancje przypisane do produktu wraz z faktycznym okresem.</summary>
     public IReadOnlyCollection<ProductWarranty> Warranties => _warranties.AsReadOnly();
 
-    public static Product Create(string name, string sku, string ean, decimal price)
-        => new(NewUuid(), ValidateName(name), ValidateSku(sku), ean ?? string.Empty, ValidatePrice(price));
+    public static Product Create(string name, decimal price)
+        => new(NewUuid(), ValidateName(name), ValidatePrice(price));
 
     /// <inheritdoc cref="Categories.Category.CreateWithUuid"/>
-    public static Product CreateWithUuid(Guid uuid, string name, string sku, string ean, decimal price)
-        => new(uuid, ValidateName(name), ValidateSku(sku), ean ?? string.Empty, ValidatePrice(price));
+    public static Product CreateWithUuid(Guid uuid, string name, decimal price)
+        => new(uuid, ValidateName(name), ValidatePrice(price));
 
     /// <summary>Zmienia nazwę produktu. Bez zmiany, gdy nazwa jest ta sama — wtedy nie powstaje
     /// zdarzenie ani wpis w ChangeTrackerze, więc nie generuje się też pusty ruch po SignalR.</summary>
@@ -161,11 +155,67 @@ public class Product : AggregateRoot
 
     public void SetImage(string? image) => Image = image;
 
-    /// <summary>Ustawia atrybuty opisowe.</summary>
-    public void SetAttributes(string weight, string color)
+    /// <summary>
+    /// Podmienia komplet kodów produktu.
+    ///
+    /// <para>Podmiana idzie po RÓŻNICY, a nie przez wyczyszczenie kolekcji — z tego samego
+    /// powodu co przy kategoriach (patrz <see cref="ReplaceCategories"/>), plus jednego
+    /// dodatkowego: kody typów unikalnych wchodzą do częściowego indeksu unikalnego, więc
+    /// skasowanie i ponowne wstawienie tej samej wartości w jednym <c>SaveChanges</c>
+    /// stawiałoby zapis w zależności od kolejności poleceń wygenerowanej przez EF.</para>
+    ///
+    /// <para>Duplikaty (ten sam typ i ta sama wartość) są pomijane; dwa różne kody tego samego
+    /// typu są dozwolone — produkt bywa sprzedawany pod kilkoma EAN-ami.</para>
+    /// </summary>
+    public void SetCodes(IEnumerable<ProductCodeAssignment> codes)
     {
-        AttrWeight = weight ?? string.Empty;
-        AttrColor = color ?? string.Empty;
+        ArgumentNullException.ThrowIfNull(codes);
+
+        var target = new Dictionary<string, ProductCodeAssignment>(StringComparer.OrdinalIgnoreCase);
+        foreach (var code in codes)
+        {
+            target[CodeSignature(code.CodeTypeUuid, code.Value)] = code;
+        }
+
+        _codes.RemoveAll(existing => !target.ContainsKey(CodeSignature(existing.CodeTypeUuid, existing.Value)));
+
+        var current = _codes
+            .Select(existing => CodeSignature(existing.CodeTypeUuid, existing.Value))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in target.Where(entry => !current.Contains(entry.Key)))
+        {
+            _codes.Add(new ProductCode(Uuid, entry.Value.CodeTypeUuid, entry.Value.Value, entry.Value.Unique));
+        }
+    }
+
+    /// <summary>
+    /// Podmienia komplet wartości atrybutów. Tak samo po różnicy jak <see cref="SetCodes"/>,
+    /// i tak samo z powodu indeksu — atrybuty jednowartościowe mają unikalny indeks częściowy
+    /// po (produkt, atrybut).
+    ///
+    /// <para>Spójność wartości z definicją atrybutu jest sprawdzona wcześniej: jedyną drogą
+    /// do <see cref="ProductAttributeAssignment"/> są jego fabryki, a każda wymaga
+    /// <c>AttributeDefinition</c>.</para>
+    /// </summary>
+    public void SetAttributeValues(IEnumerable<ProductAttributeAssignment> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+
+        var target = new Dictionary<string, ProductAttributeAssignment>(StringComparer.Ordinal);
+        foreach (var value in values)
+        {
+            target[AttributeSignature(value)] = value;
+        }
+
+        _attributeValues.RemoveAll(existing => !target.ContainsKey(AttributeSignature(existing)));
+
+        var current = _attributeValues.Select(AttributeSignature).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var entry in target.Where(entry => !current.Contains(entry.Key)))
+        {
+            _attributeValues.Add(new ProductAttributeValue(Uuid, entry.Value));
+        }
     }
 
     /// <summary>Podmienia komplet kategorii produktu. Duplikaty są pomijane.</summary>
@@ -320,15 +370,41 @@ public class Product : AggregateRoot
         return name.Trim();
     }
 
-    private static string ValidateSku(string sku)
-    {
-        if (string.IsNullOrWhiteSpace(sku))
-        {
-            throw new DomainException("product_sku_empty", "SKU produktu nie może być puste.");
-        }
+    /// <summary>Tożsamość kodu na potrzeby podmiany po różnicy — para (typ, wartość),
+    /// bez uwzględniania wielkości liter, tak samo jak liczy ją
+    /// <see cref="ProductCode.ComputeUniqueKey"/>.</summary>
+    private static string CodeSignature(Guid codeTypeUuid, string value)
+        => string.Create(CultureInfo.InvariantCulture, $"{codeTypeUuid:D}|{value.Trim()}");
 
-        return sku.Trim();
-    }
+    /// <summary>
+    /// Tożsamość wartości atrybutu na potrzeby podmiany po różnicy: atrybut, pozycja i cała
+    /// zawartość. Wartość jest w całości opisem, a nie bytem z własnym cyklem życia — „zmiana
+    /// koloru z czarnego na biały” to usunięcie jednego wiersza i wstawienie drugiego,
+    /// nie edycja. Dzięki temu porównanie nie musi zgadywać, która ze starych wartości
+    /// odpowiada której nowej.
+    /// </summary>
+    private static string AttributeSignature(ProductAttributeAssignment value)
+        => AttributeSignature(
+            value.AttributeUuid, value.OptionUuid, value.MultimediaUuid,
+            value.ValueText, value.ValueNumber, value.ValueBoolean, value.ValueDate, value.SortOrder);
+
+    private static string AttributeSignature(ProductAttributeValue value)
+        => AttributeSignature(
+            value.AttributeUuid, value.OptionUuid, value.MultimediaUuid,
+            value.ValueText, value.ValueNumber, value.ValueBoolean, value.ValueDate, value.SortOrder);
+
+    private static string AttributeSignature(
+        Guid attributeUuid,
+        Guid? optionUuid,
+        Guid? multimediaUuid,
+        string? text,
+        decimal? number,
+        bool? boolean,
+        DateTimeOffset? date,
+        int sortOrder)
+        => string.Create(
+            CultureInfo.InvariantCulture,
+            $"{attributeUuid:D}|{optionUuid:D}|{multimediaUuid:D}|{text}|{number}|{boolean}|{date:O}|{sortOrder}");
 
     private static decimal ValidatePrice(decimal price)
     {

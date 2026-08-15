@@ -32,6 +32,11 @@ export interface ICatalogClient {
      */
     searchProduct(body: SearchProductRequest): Observable<SearchResponse>;
     /**
+     * Seryjna zmiana modelu i kategorii produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productSetClassificationMultipleCommand(body: BatchCommandOfProductSetClassificationCommandAndSearchProductRequest): Observable<BatchResult>;
+    /**
      * Seryjna aktualizacja nazw produktów z obsługą błędów cząstkowych
      * @return OK
      */
@@ -68,6 +73,14 @@ export interface ICatalogClient {
     /**
      * @return OK
      */
+    getCodeType(body: GetCodeTypeRequest): Observable<CodeTypeDto[]>;
+    /**
+     * @return OK
+     */
+    searchCodeType(body: SearchCodeTypeRequest): Observable<SearchResponse>;
+    /**
+     * @return OK
+     */
     getCategory(body: GetCategoryRequest): Observable<CategoryDto[]>;
     /**
      * @return OK
@@ -81,6 +94,14 @@ export interface ICatalogClient {
      * @return OK
      */
     searchCategoryTree(body: SearchCategoryTreeRequest): Observable<SearchCategoryTreeResponse>;
+    /**
+     * @return OK
+     */
+    getAttribute(body: GetAttributeRequest): Observable<AttributeDefinitionDto[]>;
+    /**
+     * @return OK
+     */
+    searchAttribute(body: SearchAttributeRequest): Observable<SearchResponse>;
 }
 
 @Injectable({
@@ -93,7 +114,7 @@ export class CatalogClient implements ICatalogClient {
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
-        this.baseUrl = baseUrl ?? "http://localhost:5149/";
+        this.baseUrl = baseUrl ?? "http://localhost:5150/";
     }
 
     /**
@@ -302,6 +323,61 @@ export class CatalogClient implements ICatalogClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Seryjna zmiana modelu i kategorii produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productSetClassificationMultipleCommand(body: BatchCommandOfProductSetClassificationCommandAndSearchProductRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/product/product/batch-set-classification";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProductSetClassificationMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProductSetClassificationMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processProductSetClassificationMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -749,6 +825,114 @@ export class CatalogClient implements ICatalogClient {
     /**
      * @return OK
      */
+    getCodeType(body: GetCodeTypeRequest): Observable<CodeTypeDto[]> {
+        let url_ = this.baseUrl + "/codeType/getCodeType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCodeType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCodeType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CodeTypeDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CodeTypeDto[]>;
+        }));
+    }
+
+    protected processGetCodeType(response: HttpResponseBase): Observable<CodeTypeDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CodeTypeDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    searchCodeType(body: SearchCodeTypeRequest): Observable<SearchResponse> {
+        let url_ = this.baseUrl + "/codeType/searchCodeType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchCodeType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchCodeType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }));
+    }
+
+    protected processSearchCodeType(response: HttpResponseBase): Observable<SearchResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
     getCategory(body: GetCategoryRequest): Observable<CategoryDto[]> {
         let url_ = this.baseUrl + "/category/getCategory";
         url_ = url_.replace(/[?&]$/, "");
@@ -961,6 +1145,145 @@ export class CatalogClient implements ICatalogClient {
         }
         return _observableOf(null as any);
     }
+
+    /**
+     * @return OK
+     */
+    getAttribute(body: GetAttributeRequest): Observable<AttributeDefinitionDto[]> {
+        let url_ = this.baseUrl + "/attribute/getAttribute";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAttribute(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAttribute(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AttributeDefinitionDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AttributeDefinitionDto[]>;
+        }));
+    }
+
+    protected processGetAttribute(response: HttpResponseBase): Observable<AttributeDefinitionDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AttributeDefinitionDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    searchAttribute(body: SearchAttributeRequest): Observable<SearchResponse> {
+        let url_ = this.baseUrl + "/attribute/searchAttribute";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchAttribute(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchAttribute(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }));
+    }
+
+    protected processSearchAttribute(response: HttpResponseBase): Observable<SearchResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface AttributeDefinitionDto {
+    uuid: string;
+    code: string;
+    name: string;
+    kind: string;
+    dataType: string;
+    isMultiValue: boolean;
+    sortOrder: number;
+    options: AttributeOptionDto[];
+
+    [key: string]: any;
+}
+
+export interface AttributeOptionDto {
+    uuid: string;
+    code: string;
+    name: string;
+    sortOrder: number;
+
+    [key: string]: any;
+}
+
+export interface BatchCommandOfProductSetClassificationCommandAndSearchProductRequest {
+    commands?: ProductSetClassificationCommand[] | undefined;
+    templateCommand?: ProductSetClassificationCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProductRequest | undefined;
+
+    [key: string]: any;
 }
 
 export interface BatchCommandOfProductSetNameCommandAndSearchProductRequest {
@@ -1006,6 +1329,23 @@ export interface CategoryTreeNodeDto {
     [key: string]: any;
 }
 
+export interface CodeTypeDto {
+    uuid: string;
+    symbol: string;
+    name: string;
+    pattern: string | undefined;
+    isUnique: boolean;
+    sortOrder: number;
+
+    [key: string]: any;
+}
+
+export interface GetAttributeRequest {
+    uuids?: string[] | undefined;
+
+    [key: string]: any;
+}
+
 export interface GetCategoryChildrenRequest {
     parentUuid?: string | undefined;
     pageIndex?: number;
@@ -1022,6 +1362,12 @@ export interface GetCategoryChildrenResponse {
 }
 
 export interface GetCategoryRequest {
+    uuids?: string[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface GetCodeTypeRequest {
     uuids?: string[] | undefined;
 
     [key: string]: any;
@@ -1094,22 +1440,51 @@ export interface MultimediaDto {
     [key: string]: any;
 }
 
+export interface ProductAttributeValueDto {
+    uuid: string;
+    attributeUuid: string;
+    kind: string;
+    optionUuid: string | undefined;
+    multimediaUuid: string | undefined;
+    valueText: string | undefined;
+    valueNumber: number | undefined;
+    valueBoolean: boolean | undefined;
+    valueDate: Date | undefined;
+    sortOrder: number;
+
+    [key: string]: any;
+}
+
+export interface ProductCodeDto {
+    uuid: string;
+    codeTypeUuid: string;
+    value: string;
+
+    [key: string]: any;
+}
+
 export interface ProductDto {
     uuid: string;
     name: string;
     categoryUuids: string[];
     multimediaUuids: string[];
     warranties: ProductWarrantyDto[];
+    codes: ProductCodeDto[];
+    attributes: ProductAttributeValueDto[];
     modelUuid: string | undefined;
-    sku: string;
     price: number;
     availableFrom: Date | undefined;
     status: string;
     available: boolean;
-    ean: string;
     image: string | undefined;
-    attr_Weight: string;
-    attr_Color: string;
+
+    [key: string]: any;
+}
+
+export interface ProductSetClassificationCommand {
+    uuid?: string;
+    modelUuid?: string | undefined;
+    categoryUuids?: string[];
 
     [key: string]: any;
 }
@@ -1135,6 +1510,17 @@ export interface ProductWarrantyDto {
     [key: string]: any;
 }
 
+export interface SearchAttributeRequest {
+    attributeId?: string | undefined;
+    name?: string | undefined;
+    kind?: string | undefined;
+    page?: number;
+    pageSize?: number;
+    sorts?: SortOption[] | undefined;
+
+    [key: string]: any;
+}
+
 export interface SearchCategoryRequest {
     name?: string | undefined;
     page?: number;
@@ -1154,6 +1540,16 @@ export interface SearchCategoryTreeResponse {
     matches?: CategoryTreeNodeDto[];
     ancestors?: CategoryTreeNodeDto[];
     totalCount?: number;
+
+    [key: string]: any;
+}
+
+export interface SearchCodeTypeRequest {
+    codeTypeId?: string | undefined;
+    name?: string | undefined;
+    page?: number;
+    pageSize?: number;
+    sorts?: SortOption[] | undefined;
 
     [key: string]: any;
 }
@@ -1184,7 +1580,10 @@ export interface SearchProductRequest {
     model?: string | undefined;
     category?: TreeSelectionRequest | undefined;
     attribute?: string | undefined;
+    attributeId?: string | undefined;
+    attributeOptionId?: string | undefined;
     productCode?: string | undefined;
+    codeTypeId?: string | undefined;
     territoryCode?: string | undefined;
     summaryReport?: boolean | undefined;
     page?: number;

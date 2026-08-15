@@ -23,6 +23,99 @@ namespace Catalog.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Catalog.Domain.Attributes.AttributeDefinition", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code");
+
+                    b.Property<int>("DataType")
+                        .HasColumnType("integer")
+                        .HasColumnName("data_type");
+
+                    b.Property<bool>("IsMultiValue")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_multi_value");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_attribute_definition");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_attribute_definition_code");
+
+                    b.HasIndex("SortOrder")
+                        .HasDatabaseName("ix_attribute_definition_sort_order");
+
+                    b.ToTable("attribute_definition", "catalog");
+                });
+
+            modelBuilder.Entity("Catalog.Domain.Attributes.AttributeOption", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<Guid>("AttributeUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("attribute_uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_attribute_option");
+
+                    b.HasIndex("AttributeUuid", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_attribute_option_attribute_uuid_code");
+
+                    b.HasIndex("AttributeUuid", "SortOrder")
+                        .HasDatabaseName("ix_attribute_option_attribute_uuid_sort_order");
+
+                    b.ToTable("attribute_option", "catalog");
+                });
+
             modelBuilder.Entity("Catalog.Domain.Categories.Category", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -82,6 +175,57 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_category_closure_descendant_uuid_depth");
 
                     b.ToTable("category_closure", "catalog");
+                });
+
+            modelBuilder.Entity("Catalog.Domain.Codes.CodeType", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<bool>("IsUnique")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_unique");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Pattern")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("pattern");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("symbol");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_code_type");
+
+                    b.HasIndex("SortOrder")
+                        .HasDatabaseName("ix_code_type_sort_order");
+
+                    b.HasIndex("Symbol")
+                        .IsUnique()
+                        .HasDatabaseName("ix_code_type_symbol");
+
+                    b.ToTable("code_type", "catalog");
                 });
 
             modelBuilder.Entity("Catalog.Domain.Models.ProductModel", b =>
@@ -185,18 +329,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("uuid");
 
-                    b.Property<string>("AttrColor")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("attr_color");
-
-                    b.Property<string>("AttrWeight")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("attr_weight");
-
                     b.Property<DateTimeOffset?>("AvailableFrom")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("available_from");
@@ -205,12 +337,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("duplicate_key");
-
-                    b.Property<string>("Ean")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("ean");
 
                     b.Property<string>("Image")
                         .HasMaxLength(2048)
@@ -230,12 +356,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("price");
-
-                    b.Property<string>("Sku")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("sku");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -258,9 +378,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_product_duplicate_key")
                         .HasFilter("duplicate_key IS NOT NULL");
 
-                    b.HasIndex("Ean")
-                        .HasDatabaseName("ix_product_ean");
-
                     b.HasIndex("ModelUuid")
                         .HasDatabaseName("ix_product_model_uuid");
 
@@ -270,14 +387,92 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.HasIndex("Price")
                         .HasDatabaseName("ix_product_price");
 
-                    b.HasIndex("Sku")
-                        .IsUnique()
-                        .HasDatabaseName("ix_product_sku");
-
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_product_status");
 
                     b.ToTable("product", "catalog");
+                });
+
+            modelBuilder.Entity("Catalog.Domain.Products.ProductAttributeValue", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("AttributeUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("attribute_uuid");
+
+                    b.Property<bool>("IsMultiValue")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_multi_value");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid?>("MultimediaUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("multimedia_uuid");
+
+                    b.Property<Guid?>("OptionUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("option_uuid");
+
+                    b.Property<Guid>("ProductUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<bool?>("ValueBoolean")
+                        .HasColumnType("boolean")
+                        .HasColumnName("value_boolean");
+
+                    b.Property<DateTimeOffset?>("ValueDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("value_date");
+
+                    b.Property<decimal?>("ValueNumber")
+                        .HasColumnType("numeric(28,10)")
+                        .HasColumnName("value_number");
+
+                    b.Property<string>("ValueText")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)")
+                        .HasColumnName("value_text");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_product_attribute_value");
+
+                    b.HasIndex("MultimediaUuid")
+                        .HasDatabaseName("ix_product_attribute_value_multimedia_uuid");
+
+                    b.HasIndex("OptionUuid")
+                        .HasDatabaseName("ix_product_attribute_value_option_uuid");
+
+                    b.HasIndex("AttributeUuid", "ValueDate")
+                        .HasDatabaseName("ix_product_attribute_value_attribute_uuid_value_date");
+
+                    b.HasIndex("AttributeUuid", "ValueNumber")
+                        .HasDatabaseName("ix_product_attribute_value_attribute_uuid_value_number");
+
+                    b.HasIndex("ProductUuid", "AttributeUuid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_product_attribute_value_single")
+                        .HasFilter("is_multi_value = false");
+
+                    b.HasIndex("ProductUuid", "SortOrder")
+                        .HasDatabaseName("ix_product_attribute_value_product_uuid_sort_order");
+
+                    b.ToTable("product_attribute_value", "catalog", t =>
+                        {
+                            t.HasCheckConstraint("ck_product_attribute_value_payload", "(CASE WHEN option_uuid IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN multimedia_uuid IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_text IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_number IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_boolean IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_date IS NOT NULL THEN 1 ELSE 0 END) = 1");
+                        });
                 });
 
             modelBuilder.Entity("Catalog.Domain.Products.ProductCategoryLink", b =>
@@ -307,6 +502,54 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_product_category_product_uuid_category_uuid");
 
                     b.ToTable("product_category", "catalog");
+                });
+
+            modelBuilder.Entity("Catalog.Domain.Products.ProductCode", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("CodeTypeUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("code_type_uuid");
+
+                    b.Property<Guid>("ProductUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_uuid");
+
+                    b.Property<string>("UniqueKey")
+                        .HasMaxLength(192)
+                        .HasColumnType("character varying(192)")
+                        .HasColumnName("unique_key");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_product_code");
+
+                    b.HasIndex("CodeTypeUuid")
+                        .HasDatabaseName("ix_product_code_code_type_uuid");
+
+                    b.HasIndex("UniqueKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_product_code_unique_key")
+                        .HasFilter("unique_key IS NOT NULL");
+
+                    b.HasIndex("Value")
+                        .HasDatabaseName("ix_product_code_value");
+
+                    b.HasIndex("ProductUuid", "CodeTypeUuid", "Value")
+                        .IsUnique()
+                        .HasDatabaseName("ix_product_code_product_uuid_code_type_uuid_value");
+
+                    b.ToTable("product_code", "catalog");
                 });
 
             modelBuilder.Entity("Catalog.Domain.Products.ProductMultimediaLink", b =>
@@ -559,6 +802,26 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.ToTable("job_item", "catalog");
                 });
 
+            modelBuilder.Entity("Catalog.Domain.Attributes.AttributeOption", b =>
+                {
+                    b.HasOne("Catalog.Domain.Attributes.AttributeDefinition", null)
+                        .WithMany("_options")
+                        .HasForeignKey("AttributeUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_attribute_option_attribute_definition_attribute_uuid");
+                });
+
+            modelBuilder.Entity("Catalog.Domain.Products.ProductAttributeValue", b =>
+                {
+                    b.HasOne("Catalog.Domain.Products.Product", null)
+                        .WithMany("_attributeValues")
+                        .HasForeignKey("ProductUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_product_attribute_value_product_product_uuid");
+                });
+
             modelBuilder.Entity("Catalog.Domain.Products.ProductCategoryLink", b =>
                 {
                     b.HasOne("Catalog.Domain.Products.Product", null)
@@ -567,6 +830,16 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_product_category_product_product_uuid");
+                });
+
+            modelBuilder.Entity("Catalog.Domain.Products.ProductCode", b =>
+                {
+                    b.HasOne("Catalog.Domain.Products.Product", null)
+                        .WithMany("_codes")
+                        .HasForeignKey("ProductUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_product_code_product_product_uuid");
                 });
 
             modelBuilder.Entity("Catalog.Domain.Products.ProductMultimediaLink", b =>
@@ -599,9 +872,18 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_job_item_job_job_uuid");
                 });
 
+            modelBuilder.Entity("Catalog.Domain.Attributes.AttributeDefinition", b =>
+                {
+                    b.Navigation("_options");
+                });
+
             modelBuilder.Entity("Catalog.Domain.Products.Product", b =>
                 {
+                    b.Navigation("_attributeValues");
+
                     b.Navigation("_categories");
+
+                    b.Navigation("_codes");
 
                     b.Navigation("_multimedia");
 

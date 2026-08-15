@@ -83,7 +83,7 @@ export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProduc
       const details = vmMap.get(p.uuid);
       return {
         uuid: p.uuid,
-        sku: p.sku,
+        sku: details?.codeValue('SKU') ?? '—',
         name: details?.name ?? 'Ładowanie...',
       };
     });

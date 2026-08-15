@@ -15,11 +15,7 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasKey(p => p.Uuid);
 
         builder.Property(p => p.Name).HasMaxLength(512).IsRequired();
-        builder.Property(p => p.Sku).HasMaxLength(64).IsRequired();
-        builder.Property(p => p.Ean).HasMaxLength(32);
         builder.Property(p => p.Image).HasMaxLength(2048);
-        builder.Property(p => p.AttrWeight).HasMaxLength(64);
-        builder.Property(p => p.AttrColor).HasMaxLength(64);
 
         // Cena pieniężna: numeric(18,2). Typ zmiennoprzecinkowy dla kwot to klasyczne źródło
         // groszowych rozjazdów przy sumowaniu pozycji.
@@ -30,10 +26,9 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         // Available jest właściwością wyliczaną z Status — nie ma jej w tabeli.
         builder.Ignore(p => p.Available);
 
-        // SKU jest identyfikatorem handlowym; unikalność wymuszona w bazie, a nie tylko
-        // w walidacji aplikacyjnej, bo dwie równoległe komendy przeszłyby walidację obie.
-        builder.HasIndex(p => p.Sku).IsUnique();
-        builder.HasIndex(p => p.Ean);
+        // Identyfikatory handlowe (SKU, EAN) nie są już kolumnami produktu — mieszkają
+        // w `product_code`, a ich unikalność pilnuje indeks częściowy po `unique_key`
+        // (patrz ProductCodeConfiguration).
         builder.HasIndex(p => p.ModelUuid);
 
         // Sygnatura duplikatu: ten sam model + ten sam komplet kategorii. Reguła dotyczy zbioru
@@ -62,12 +57,16 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         ConfigureCategories(builder);
         ConfigureMultimedia(builder);
         ConfigureWarranties(builder);
+        ConfigureCodes(builder);
+        ConfigureAttributeValues(builder);
 
         // Kolekcje są prywatnymi polami — EF musi je czytać przez pole, nie przez właściwość
         // (właściwości publiczne zwracają projekcje tylko do odczytu).
         builder.Metadata.FindNavigation("_categories")?.SetPropertyAccessMode(PropertyAccessMode.Field);
         builder.Metadata.FindNavigation("_multimedia")?.SetPropertyAccessMode(PropertyAccessMode.Field);
         builder.Metadata.FindNavigation("_warranties")?.SetPropertyAccessMode(PropertyAccessMode.Field);
+        builder.Metadata.FindNavigation("_codes")?.SetPropertyAccessMode(PropertyAccessMode.Field);
+        builder.Metadata.FindNavigation("_attributeValues")?.SetPropertyAccessMode(PropertyAccessMode.Field);
 
         // Publiczne właściwości kolekcji są WYŁĄCZNIE odczytową fasadą nad prywatnymi polami
         // (`CategoryUuids` rzutuje na Guid, `Warranties` opakowuje listę w AsReadOnly).
@@ -76,6 +75,8 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Ignore(p => p.CategoryUuids);
         builder.Ignore(p => p.MultimediaUuids);
         builder.Ignore(p => p.Warranties);
+        builder.Ignore(p => p.Codes);
+        builder.Ignore(p => p.AttributeValues);
     }
 
     // ── Dlaczego HasMany, a nie OwnsMany ─────────────────────────────────────────────────
@@ -128,6 +129,22 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasMany<ProductWarranty>("_warranties")
             .WithOne()
             .HasForeignKey(w => w.ProductUuid)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void ConfigureCodes(EntityTypeBuilder<Product> builder)
+    {
+        builder.HasMany<ProductCode>("_codes")
+            .WithOne()
+            .HasForeignKey(c => c.ProductUuid)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void ConfigureAttributeValues(EntityTypeBuilder<Product> builder)
+    {
+        builder.HasMany<ProductAttributeValue>("_attributeValues")
+            .WithOne()
+            .HasForeignKey(v => v.ProductUuid)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

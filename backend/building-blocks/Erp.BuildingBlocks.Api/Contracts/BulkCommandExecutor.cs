@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Erp.BuildingBlocks.Jobs;
 using FastEndpoints;
 
@@ -38,13 +37,10 @@ public sealed class BulkCommandExecutor<TCommand> : IBulkCommandExecutor
     /// <inheritdoc />
     public async Task ExecuteAsync(Guid aggregateUuid, string? commandJson, CancellationToken cancellationToken)
     {
-        var command = string.IsNullOrWhiteSpace(commandJson)
-            ? new TCommand()
-            : JsonSerializer.Deserialize<TCommand>(commandJson) ?? new TCommand();
-
-        // Uuid z elementu zadania nadpisuje ten z payloadu: w trybie szablonowym payload
-        // niesie Guid.Empty, a prawdziwym celem jest to, co wyznaczył filtr lub lista identyfikatorów.
-        command.Uuid = aggregateUuid;
+        // Ten sam helper, którym pre-check w BatchEndpointBase odtwarza komendę do walidacji —
+        // inaczej walidacja i wykonanie mogłyby zobaczyć różne komendy.
+        var command = BatchCommandPayload.Materialize<TCommand>(
+            commandJson, templateJson: null, aggregateUuid);
 
         await _handler.ExecuteAsync(command, cancellationToken).ConfigureAwait(false);
     }

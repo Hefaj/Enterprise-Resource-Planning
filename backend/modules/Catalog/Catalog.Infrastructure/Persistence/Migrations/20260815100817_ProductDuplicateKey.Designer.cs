@@ -3,6 +3,7 @@ using System;
 using Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Catalog.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    partial class CatalogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260815100817_ProductDuplicateKey")]
+    partial class ProductDuplicateKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -280,97 +283,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.ToTable("product", "catalog");
                 });
 
-            modelBuilder.Entity("Catalog.Domain.Products.ProductCategoryLink", b =>
-                {
-                    b.Property<Guid>("Uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<Guid>("CategoryUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("category_uuid");
-
-                    b.Property<Guid>("ProductUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_uuid");
-
-                    b.HasKey("Uuid")
-                        .HasName("pk_product_category");
-
-                    b.HasIndex("CategoryUuid")
-                        .HasDatabaseName("ix_product_category_category_uuid");
-
-                    b.HasIndex("ProductUuid", "CategoryUuid")
-                        .IsUnique()
-                        .HasDatabaseName("ix_product_category_product_uuid_category_uuid");
-
-                    b.ToTable("product_category", "catalog");
-                });
-
-            modelBuilder.Entity("Catalog.Domain.Products.ProductMultimediaLink", b =>
-                {
-                    b.Property<Guid>("Uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<Guid>("MultimediaUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("multimedia_uuid");
-
-                    b.Property<Guid>("ProductUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_uuid");
-
-                    b.HasKey("Uuid")
-                        .HasName("pk_product_multimedia");
-
-                    b.HasIndex("MultimediaUuid")
-                        .HasDatabaseName("ix_product_multimedia_multimedia_uuid");
-
-                    b.HasIndex("ProductUuid", "MultimediaUuid")
-                        .IsUnique()
-                        .HasDatabaseName("ix_product_multimedia_product_uuid_multimedia_uuid");
-
-                    b.ToTable("product_multimedia", "catalog");
-                });
-
-            modelBuilder.Entity("Catalog.Domain.Products.ProductWarranty", b =>
-                {
-                    b.Property<Guid>("Uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<int>("DurationMonths")
-                        .HasColumnType("integer")
-                        .HasColumnName("duration_months");
-
-                    b.Property<Guid>("ProductUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_uuid");
-
-                    b.Property<Guid>("WarrantyUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("warranty_uuid");
-
-                    b.HasKey("Uuid")
-                        .HasName("pk_product_warranty");
-
-                    b.HasIndex("WarrantyUuid")
-                        .HasDatabaseName("ix_product_warranty_warranty_uuid");
-
-                    b.HasIndex("ProductUuid", "WarrantyUuid")
-                        .IsUnique()
-                        .HasDatabaseName("ix_product_warranty_product_uuid_warranty_uuid");
-
-                    b.ToTable("product_warranty", "catalog");
-                });
-
             modelBuilder.Entity("Catalog.Domain.Warranties.Warranty", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -559,34 +471,89 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.ToTable("job_item", "catalog");
                 });
 
-            modelBuilder.Entity("Catalog.Domain.Products.ProductCategoryLink", b =>
+            modelBuilder.Entity("Catalog.Domain.Products.Product", b =>
                 {
-                    b.HasOne("Catalog.Domain.Products.Product", null)
-                        .WithMany("_categories")
-                        .HasForeignKey("ProductUuid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_product_category_product_product_uuid");
-                });
+                    b.OwnsMany("Catalog.Domain.Products.ProductCategoryLink", "_categories", b1 =>
+                        {
+                            b1.Property<Guid>("ProductUuid")
+                                .HasColumnType("uuid")
+                                .HasColumnName("product_uuid");
 
-            modelBuilder.Entity("Catalog.Domain.Products.ProductMultimediaLink", b =>
-                {
-                    b.HasOne("Catalog.Domain.Products.Product", null)
-                        .WithMany("_multimedia")
-                        .HasForeignKey("ProductUuid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_product_multimedia_product_product_uuid");
-                });
+                            b1.Property<Guid>("CategoryUuid")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid")
+                                .HasColumnName("category_uuid");
 
-            modelBuilder.Entity("Catalog.Domain.Products.ProductWarranty", b =>
-                {
-                    b.HasOne("Catalog.Domain.Products.Product", null)
-                        .WithMany("_warranties")
-                        .HasForeignKey("ProductUuid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_product_warranty_product_product_uuid");
+                            b1.HasKey("ProductUuid", "CategoryUuid")
+                                .HasName("pk_product_category");
+
+                            b1.HasIndex("CategoryUuid")
+                                .HasDatabaseName("ix_product_category_category_uuid");
+
+                            b1.ToTable("product_category", "catalog");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductUuid")
+                                .HasConstraintName("fk_product_category_product_product_uuid");
+                        });
+
+                    b.OwnsMany("Catalog.Domain.Products.ProductMultimediaLink", "_multimedia", b1 =>
+                        {
+                            b1.Property<Guid>("ProductUuid")
+                                .HasColumnType("uuid")
+                                .HasColumnName("product_uuid");
+
+                            b1.Property<Guid>("MultimediaUuid")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid")
+                                .HasColumnName("multimedia_uuid");
+
+                            b1.HasKey("ProductUuid", "MultimediaUuid")
+                                .HasName("pk_product_multimedia");
+
+                            b1.HasIndex("MultimediaUuid")
+                                .HasDatabaseName("ix_product_multimedia_multimedia_uuid");
+
+                            b1.ToTable("product_multimedia", "catalog");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductUuid")
+                                .HasConstraintName("fk_product_multimedia_product_product_uuid");
+                        });
+
+                    b.OwnsMany("Catalog.Domain.Products.ProductWarranty", "_warranties", b1 =>
+                        {
+                            b1.Property<Guid>("ProductUuid")
+                                .HasColumnType("uuid")
+                                .HasColumnName("product_uuid");
+
+                            b1.Property<Guid>("WarrantyUuid")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid")
+                                .HasColumnName("warranty_uuid");
+
+                            b1.Property<int>("DurationMonths")
+                                .HasColumnType("integer")
+                                .HasColumnName("duration_months");
+
+                            b1.HasKey("ProductUuid", "WarrantyUuid")
+                                .HasName("pk_product_warranty");
+
+                            b1.HasIndex("WarrantyUuid")
+                                .HasDatabaseName("ix_product_warranty_warranty_uuid");
+
+                            b1.ToTable("product_warranty", "catalog");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductUuid")
+                                .HasConstraintName("fk_product_warranty_product_product_uuid");
+                        });
+
+                    b.Navigation("_categories");
+
+                    b.Navigation("_multimedia");
+
+                    b.Navigation("_warranties");
                 });
 
             modelBuilder.Entity("Erp.BuildingBlocks.Jobs.JobItem", b =>
@@ -597,15 +564,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_job_item_job_job_uuid");
-                });
-
-            modelBuilder.Entity("Catalog.Domain.Products.Product", b =>
-                {
-                    b.Navigation("_categories");
-
-                    b.Navigation("_multimedia");
-
-                    b.Navigation("_warranties");
                 });
 
             modelBuilder.Entity("Erp.BuildingBlocks.Jobs.Job", b =>

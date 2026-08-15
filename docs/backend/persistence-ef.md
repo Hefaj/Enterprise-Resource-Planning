@@ -109,6 +109,47 @@ Trzy pułapki, na które trzeba uważać:
 3. **Zagnieżdżone typy owned (owned w owned) nie są obsługiwane** przez
    `AggregateChangeScanner` — patrz [`events-outbox.md`](./events-outbox.md#3-skaner-changetrackera).
 
+### Klucz dziecka agregatu nadaje BAZA, nie konstruktor
+
+Kolekcje wewnętrzne `Product` (`product_category`, `product_multimedia`, `product_warranty`)
+mają klucz techniczny `uuid` z `ValueGeneratedOnAdd()` i `DEFAULT gen_random_uuid()`. Konstruktor
+**nie** ustawia tej wartości — i to jest cała istota tego zapisu.
+
+Kiedy EF napotka podczas wykrywania zmian nieśledzoną encję w kolekcji śledzonego rodzica,
+rozstrzyga „nowa czy istniejąca” po tym, czy jej klucz ma wartość różną od domyślnej.
+**Klucz ustawiony ⇒ EF zakłada wiersz, który już jest w bazie, i planuje UPDATE zamiast
+INSERT-a.** Przy podmianie kompletu kategorii produktu kończyło się to poleceniem:
+
+```sql
+UPDATE product_category SET category_uuid = @p14 WHERE uuid = @p16;  -- 0 wierszy
+```
+
+gdzie `@p16` to świeżo wygenerowany identyfikator, którego w tabeli nie ma. Objaw zależał od
+kształtu klucza: przy kluczu złożonym z danych (`product_uuid` + `category_uuid`) EF nie potrafił
+zaktualizować kolumn klucza głównego i **po cichu nie robił nic** — usunięcia się zapisywały,
+dodania znikały, a `SaveChanges` zgłaszał sukces. Przy kluczu technicznym ten sam mechanizm
+daje przynajmniej głośny `concurrency_conflict`.
+
+Trzy wnioski warte zapamiętania przy dodawaniu kolejnej kolekcji do agregatu:
+
+1. **Nie nadawaj klucza dziecka w konstruktorze.** Zostaw domyślny i pozwól go wygenerować bazie.
+   Cena: te identyfikatory to UUID v4, bez lokalności czasowej w indeksie — dla wąskich tabel
+   powiązań akceptowalna.
+2. **Mapuj przez `HasMany`/`WithOne`, nie `OwnsMany`** — i pamiętaj, że wtedy EF **nie dołącza
+   kolekcji automatycznie**. Repozytorium musi zrobić `Include`. Pominięcie go jest groźniejsze,
+   niż wygląda: metody domenowe podmieniające KOMPLET powiązań zobaczyłyby pustą kolekcję
+   i dopisały nowe obok starych, zamiast je zastąpić.
+3. **Regułę „jedno powiązanie na parę” wyraź unikalnym indeksem**, nie kluczem głównym.
+
+Granica agregatu nie zmienia się przez to ani trochę: dzieci nadal nie mają własnego `DbSet`,
+nadal wchodzi się do nich wyłącznie przez `Product`, a `OnDelete(Cascade)` utrzymuje regułę
+„dziecko nie istnieje bez produktu”.
+
+Uwaga na `AggregateChangeScanner`: przypisuje zmienione dziecko do agregatu przez
+`FindOwnership()`, które dla encji nie-owned zwraca `null`. Ma z tego powodu drugą ścieżkę —
+po jednoznacznym kluczu obcym wskazującym korzeń agregatu. Bez niej zmiana samych kategorii
+przestałaby rozgłaszać `AggregateChanged` po SignalR.
+
 ### Właściwości wyliczane
 
 `Product.Available` jest wyliczane ze `Status`, nie zapisywane (`builder.Ignore(p => p.Available)`).
@@ -118,6 +159,50 @@ znaczeniu — czyli zaproszeniem do rozjechania się w czasie. Kontrakt HTTP nad
 ### Kwoty
 
 `numeric(18,2)`, nigdy typ zmiennoprzecinkowy — `float` przy sumowaniu pozycji daje groszowe rozjazdy.
+
+### Unikalność po ZBIORZE wartości — kolumna-sygnatura
+
+Reguła „produkt nie może mieć tego samego modelu i tego samego kompletu kategorii, co inny"
+jest unikalnością, ale nie da się jej wyrazić indeksem złożonym: kategorie są **zbiorem** wierszy
+w `product_category`, a nie kolumną w `product`. Indeks po `(model_uuid, category_uuid)`
+odpowiadałby na inne pytanie („czy dzielą choć jedną kategorię"), a walidacja wyłącznie
+aplikacyjna nie jest gwarancją — dwie równoległe komendy przeszłyby ją obie.
+
+Rozwiązanie: **trwała kolumna-sygnatura** liczona przez agregat i unikalny indeks po niej.
+
+```csharp
+builder.Property(p => p.DuplicateKey).HasMaxLength(64);
+builder.HasIndex(p => p.DuplicateKey)
+    .IsUnique()
+    .HasFilter("duplicate_key IS NOT NULL");
+```
+
+Cztery decyzje, które się na to składają:
+
+1. **Skrót, nie surowy string.** `Product.ComputeDuplicateKey` liczy SHA-256 z modelu
+   i posortowanych, odduplikowanych identyfikatorów kategorii. Produkt w kilkudziesięciu
+   kategoriach dałby ponad kilobajt, a wpis w indeksie btree Postgresa nie mieści się powyżej
+   ~2,7 kB. SHA-256, a nie `string.GetHashCode` — ten drugi losuje ziarno per proces, więc klucz
+   zapisany dziś nie zgadzałby się z policzonym po restarcie.
+2. **Sortowanie i deduplikacja są częścią definicji** — „ten sam zbiór kategorii" ma znaczyć
+   to samo niezależnie od kolejności w komendzie.
+3. **Jedna funkcja, trzech konsumentów.** Klucz liczy agregat przy zapisie, reguła wsadowa przy
+   pre-checku i backfill przy migracji — wszyscy wołają tę samą metodę. Druga implementacja tej
+   samej definicji (np. w SQL-u migracji) oznaczałaby pre-check pytający bazę o wartości,
+   których zapis nigdy nie wygeneruje.
+4. **`NULL` = „nie uczestniczy w regule"** (produkt bez modelu). Postgres i tak traktuje NULL-e
+   jako różne, więc nie trzeba wartości-wartownika; filtr `IS NOT NULL` dodatkowo trzyma te
+   wiersze poza indeksem.
+
+**Migracja dodaje kolumnę pustą**, a nie wyliczoną — dzięki temu utworzenie unikalnego indeksu
+nie może paść na danych zastanych i wdrożenie nigdy nie blokuje się na istniejących duplikatach.
+Ceną jest osobny krok backfillu (`CatalogDatabaseInitializer`), który liczy klucze w C#, kolizje
+**loguje zamiast rzucać** i zostawia kolidujące wiersze z `NULL` — istniejący duplikat to
+informacja do rozstrzygnięcia biznesowego, a nie powód, by serwis się nie podniósł.
+
+Naruszenie takiego indeksu w czasie działania trzeba przetłumaczyć na kod domenowy, inaczej
+raport z operacji masowej pokaże `persistence_error` — patrz
+[`bulk-commands.md`](./bulk-commands.md#naruszenie-unikalności-to-reguła-biznesowa-nie-awaria).
 
 ---
 

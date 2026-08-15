@@ -30,6 +30,18 @@ public interface IProductQueries
     /// operacji masowej PRZED utworzeniem zadania, nie po jednym elemencie naraz.
     /// </summary>
     Task<List<Guid>> GetExistingUuidsAsync(IReadOnlyCollection<Guid> uuids, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Mapa: sygnatura duplikatu → produkt, który ją już zajmuje.
+    ///
+    /// Jedno zapytanie na cały wsad, tak samo jak <see cref="GetExistingUuidsAsync"/>.
+    /// Sygnaturę liczy <c>Product.ComputeDuplicateKey</c>, więc wołający pyta o dokładnie te
+    /// wartości, które trafią do kolumny przy zapisie — porównanie jest po skrócie, nie po
+    /// modelu i kategoriach osobno, i dzięki temu nie wymaga joina z <c>product_category</c>.
+    /// </summary>
+    Task<Dictionary<string, Guid>> GetOwnersByDuplicateKeysAsync(
+        IReadOnlyCollection<string> duplicateKeys,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Odczyty kategorii, łącznie z widokami drzewiastymi.</summary>

@@ -15,12 +15,12 @@ public sealed class ProductSetNameMultipleCommandEndpoint
     : BatchEndpointBase<ProductSetNameCommand, SearchProductRequest>
 {
     private readonly IProductQueries _queries;
-    private readonly ProductMustExistRule _productMustExistRule;
+    private readonly ProductBatchValidator _validator;
 
-    public ProductSetNameMultipleCommandEndpoint(IProductQueries queries, ProductMustExistRule productMustExistRule)
+    public ProductSetNameMultipleCommandEndpoint(IProductQueries queries, ProductBatchValidator validator)
     {
         _queries = queries;
-        _productMustExistRule = productMustExistRule;
+        _validator = validator;
     }
 
     public override void Configure()
@@ -41,12 +41,8 @@ public sealed class ProductSetNameMultipleCommandEndpoint
         => await _queries.GetMatchingUuidsAsync(filter, ct);
 
     /// <inheritdoc />
-    protected override async Task<ValidationTracker> ValidateTargetsAsync(
-        IReadOnlyList<Guid> aggregateUuids,
+    protected override Task<ValidationTracker> ValidateTargetsAsync(
+        IReadOnlyList<BatchTarget<ProductSetNameCommand>> targets,
         CancellationToken ct)
-    {
-        var tracker = new ValidationTracker();
-        await _productMustExistRule.ExecuteAsync(aggregateUuids, uuid => uuid, tracker, ct).ConfigureAwait(false);
-        return tracker;
-    }
+        => _validator.ValidateSetNameAsync([.. targets.Select(t => t.AggregateUuid)], ct);
 }

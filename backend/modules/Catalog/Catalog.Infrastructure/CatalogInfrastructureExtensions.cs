@@ -54,10 +54,29 @@ public static class CatalogInfrastructureExtensions
 
         services.AddSingleton<IAggregateSignatureMap>(BuildSignatureMap());
 
+        services.AddSingleton<IPersistenceExceptionTranslator>(
+            new PostgresExceptionTranslator(BuildUniqueConstraintErrorCodes()));
+
         services.AddHostedService<CatalogDatabaseInitializer>();
 
         return services;
     }
+
+    /// <summary>
+    /// Mapa indeks unikalny → kod błędu domenowego. Nazwy pochodzą z konwencji EF i są
+    /// widoczne w wygenerowanych migracjach; przemianowanie indeksu bez aktualizacji tej mapy
+    /// nie wywali builda, tylko po cichu wróci do raportowania <c>persistence_error</c>.
+    ///
+    /// Kody muszą się zgadzać z tymi, którymi posługuje się walidacja wsadowa
+    /// (<c>ProductDuplicateRule</c>) — inaczej ten sam problem miałby dwie różne nazwy
+    /// w zależności od tego, czy złapał go pre-check, czy baza.
+    /// </summary>
+    private static Dictionary<string, string> BuildUniqueConstraintErrorCodes()
+        => new(StringComparer.Ordinal)
+        {
+            ["ix_product_duplicate_key"] = "product_duplicate",
+            ["ix_product_sku"] = "product_sku_duplicate",
+        };
 
     /// <summary>
     /// Mapa agregat → kanał synchronizacji. To ona sprawia, że zapis dowolnego z tych agregatów

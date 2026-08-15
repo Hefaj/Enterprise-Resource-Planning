@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Erp.BuildingBlocks.Domain;
 
 namespace Catalog.Domain.Products;
@@ -61,6 +64,22 @@ public class Product : AggregateRoot
 
     /// <summary>Model, którego wariantem jest produkt; <c>null</c>, jeśli samodzielny.</summary>
     public Guid? ModelUuid { get; private set; }
+
+    /// <summary>
+    /// Sygnatura duplikatu — skrót z modelu i kompletu kategorii, na którym stoi unikalny
+    /// indeks w bazie. Kolumna trwała, a nie właściwość wyliczana, bo o to właśnie chodzi:
+    /// reguła „ten sam model i te same kategorie” dotyczy zbioru wierszy z tabeli podrzędnej,
+    /// więc nie da się jej wyrazić zwykłym indeksem unikalnym po kolumnach produktu.
+    ///
+    /// <para><c>null</c> oznacza „nie uczestniczy w regule” (produkt bez modelu). Indeks jest
+    /// częściowy, a Postgres i tak traktuje NULL-e jako różne, więc takie produkty nigdy
+    /// ze sobą nie kolidują — nie potrzeba wartości-wartownika.</para>
+    ///
+    /// <para>Pole jest utrzymywane wyłącznie przez <see cref="RefreshDuplicateKey"/>, wołane
+    /// z każdej metody zmieniającej model albo kategorie. Ręczne ustawianie go z zewnątrz
+    /// oznaczałoby możliwość zapisania sygnatury niezgodnej ze stanem agregatu.</para>
+    /// </summary>
+    public string? DuplicateKey { get; private set; }
 
     /// <summary>Zdjęcie główne (URL); galeria żyje w <see cref="MultimediaUuids"/>.</summary>
     public string? Image { get; private set; }
@@ -134,7 +153,11 @@ public class Product : AggregateRoot
 
     public void SetAvailableFrom(DateTimeOffset? availableFrom) => AvailableFrom = availableFrom;
 
-    public void AssignToModel(Guid? modelUuid) => ModelUuid = modelUuid;
+    public void AssignToModel(Guid? modelUuid)
+    {
+        ModelUuid = modelUuid;
+        RefreshDuplicateKey();
+    }
 
     public void SetImage(string? image) => Image = image;
 
@@ -150,11 +173,76 @@ public class Product : AggregateRoot
     {
         ArgumentNullException.ThrowIfNull(categoryUuids);
 
-        _categories.Clear();
-        foreach (var categoryUuid in categoryUuids.Distinct())
+        ReplaceCategories(categoryUuids.Distinct());
+
+        RefreshDuplicateKey();
+    }
+
+    /// <summary>
+    /// Doprowadza kolekcję kategorii do zadanego zbioru, usuwając i dodając WYŁĄCZNIE różnicę.
+    ///
+    /// <para>Nie „wyczyść i dodaj wszystko od nowa”, mimo że to krótsze. Powód jest praktyczny:
+    /// dla encji owned wyczyszczenie kolekcji i ponowne wstawienie tego samego klucza
+    /// (<c>ProductUuid</c> + <c>CategoryUuid</c>) daje w ChangeTrackerze wpis skasowany i wpis
+    /// dodany o tym samym kluczu — EF rozstrzyga to kasowaniem, a wstawienia nie wykonuje.
+    /// Efektem jest zapis, który „się udaje”, po cichu gubiąc przypisania kategorii.</para>
+    ///
+    /// <para>Przy okazji: kategorie, które się nie zmieniły, nie generują żadnego ruchu w bazie,
+    /// więc podmiana jednej kategorii z trzydziestu kosztuje jeden DELETE i jeden INSERT,
+    /// a nie trzydzieści.</para>
+    /// </summary>
+    private void ReplaceCategories(IEnumerable<Guid> categoryUuids)
+    {
+        var target = categoryUuids.ToHashSet();
+
+        _categories.RemoveAll(link => !target.Contains(link.CategoryUuid));
+
+        var current = _categories.Select(link => link.CategoryUuid).ToHashSet();
+
+        foreach (var categoryUuid in target.Where(uuid => !current.Contains(uuid)))
         {
             _categories.Add(new ProductCategoryLink(Uuid, categoryUuid));
         }
+    }
+
+    /// <summary>
+    /// Ustawia klasyfikację produktu — model i komplet kategorii — jedną operacją.
+    ///
+    /// <para>Razem, a nie dwiema metodami, bo obie wartości składają się na
+    /// <see cref="DuplicateKey"/>: przy rozdzieleniu istniałby moment z nowym modelem
+    /// i starymi kategoriami, czyli sygnaturą, o którą nikt nie prosił, a która i tak
+    /// musiałaby przejść przez unikalny indeks.</para>
+    ///
+    /// <para>Bez zmiany, gdy klasyfikacja jest identyczna — wtedy nie powstaje zdarzenie
+    /// ani wpis w ChangeTrackerze, więc nie generuje się pusty ruch po SignalR
+    /// (tak samo jak <see cref="SetName"/> i <see cref="SetPrice"/>).</para>
+    /// </summary>
+    public void SetClassification(Guid? modelUuid, IEnumerable<Guid> categoryUuids, DateTimeOffset occurredAt)
+    {
+        ArgumentNullException.ThrowIfNull(categoryUuids);
+
+        // Materializacja przed jakąkolwiek zmianą stanu: wywołujący może podać leniwe
+        // zapytanie, a wyliczenie go w połowie mutacji dałoby stan zależny od kolejności.
+        var newCategories = categoryUuids.Distinct().ToList();
+
+        var currentCategories = _categories.Select(c => c.CategoryUuid).ToHashSet();
+
+        if (ModelUuid == modelUuid && currentCategories.SetEquals(newCategories))
+        {
+            return;
+        }
+
+        var oldModelUuid = ModelUuid;
+        var oldCategories = CategoryUuids;
+
+        ModelUuid = modelUuid;
+
+        ReplaceCategories(newCategories);
+
+        RefreshDuplicateKey();
+
+        Raise(new ProductClassificationChanged(
+            Uuid, oldModelUuid, modelUuid, oldCategories, CategoryUuids, occurredAt));
     }
 
     /// <summary>Podmienia komplet powiązanych multimediów.</summary>
@@ -180,6 +268,47 @@ public class Product : AggregateRoot
             _warranties.Add(new ProductWarranty(Uuid, warrantyUuid, durationMonths));
         }
     }
+
+    /// <summary>
+    /// Liczy sygnaturę duplikatu dla podanej klasyfikacji. Publiczna i statyczna, bo jest
+    /// JEDYNYM źródłem prawdy o kształcie klucza: woła ją agregat przy zapisie, reguła wsadowa
+    /// przy pre-checku i backfill przy migracji. Gdyby którekolwiek z tych miejsc liczyło klucz
+    /// po swojemu, pre-check odpytywałby bazę o sygnatury, których zapis nigdy nie wygeneruje.
+    ///
+    /// <para>Skrót, a nie surowy string: produkt w kilkudziesięciu kategoriach dałby ponad
+    /// kilobajt, a wpis w indeksie btree Postgresa nie mieści się powyżej ~2,7 kB.
+    /// SHA-256 jest stabilny między procesami i wersjami runtime'u — <c>string.GetHashCode</c>
+    /// nie jest (losowanie ziarna per proces), więc klucz zapisany dziś nie zgadzałby się
+    /// z policzonym po restarcie.</para>
+    /// </summary>
+    /// <param name="modelUuid">Model produktu; <c>null</c> wyłącza produkt z reguły.</param>
+    /// <param name="categoryUuids">Kategorie produktu — kolejność i powtórzenia bez znaczenia.</param>
+    /// <returns>64-znakowy skrót heksadecymalny albo <c>null</c> dla produktu bez modelu.</returns>
+    public static string? ComputeDuplicateKey(Guid? modelUuid, IEnumerable<Guid> categoryUuids)
+    {
+        ArgumentNullException.ThrowIfNull(categoryUuids);
+
+        if (modelUuid is null)
+        {
+            return null;
+        }
+
+        // Sortowanie i odsianie powtórzeń są częścią definicji: „ten sam zbiór kategorii”
+        // ma znaczyć to samo niezależnie od tego, w jakiej kolejności przyszły w komendzie.
+        var normalizedCategories = string.Join(
+            ',',
+            categoryUuids.Distinct().Select(c => c.ToString("D", CultureInfo.InvariantCulture)).Order(StringComparer.Ordinal));
+
+        var payload = string.Create(
+            CultureInfo.InvariantCulture,
+            $"{modelUuid.Value:D}|{normalizedCategories}");
+
+        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+    }
+
+    /// <summary>Przelicza <see cref="DuplicateKey"/> z aktualnego stanu agregatu.</summary>
+    private void RefreshDuplicateKey()
+        => DuplicateKey = ComputeDuplicateKey(ModelUuid, _categories.Select(c => c.CategoryUuid));
 
     private static string ValidateName(string name)
     {

@@ -20,8 +20,11 @@ builder.Services.AddCatalogInfrastructure(builder.Configuration);
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-// Reguła wsadowa używana jako pre-check w endpointach operacji masowych (BatchEndpointBase.ValidateTargetsAsync).
+// Reguły wsadowe i ich kompozycja. Endpointy operacji masowych wołają wyłącznie walidator —
+// to on wie, jakie reguły obowiązują dla której operacji (BatchEndpointBase.ValidateTargetsAsync).
 builder.Services.AddScoped<ProductMustExistRule>();
+builder.Services.AddScoped<ProductDuplicateRule>();
+builder.Services.AddScoped<ProductBatchValidator>();
 
 // Wolverine: transport RabbitMQ + outbox spięty z transakcją EF. Rejestruje też
 // IIntegrationEventPublisher i IUnitOfWork, na których stoi automatyczna publikacja
@@ -37,11 +40,14 @@ builder.Services.AddErpBulkJobs<CatalogDbContext>(builder.Configuration);
 // (DbContext, repozytoria). Rejestracja tutaj sprawia, że handler powstaje w scope'ie runnera.
 builder.Services.AddScoped<ICommandHandler<ProductSetNameCommand, Guid>, ProductSetNameCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ProductSetPriceCommand, Guid>, ProductSetPriceCommandHandler>();
+builder.Services
+    .AddScoped<ICommandHandler<ProductSetClassificationCommand, Guid>, ProductSetClassificationCommandHandler>();
 
 // Egzekutory per typ komendy — runner odnajduje je po nazwie typu zapisanej w zadaniu.
 // Każda nowa komenda masowa wymaga dopisania dwóch linijek: handlera wyżej i egzekutora tutaj.
 builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<ProductSetNameCommand>>();
 builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<ProductSetPriceCommand>>();
+builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<ProductSetClassificationCommand>>();
 
 builder.Services.AddOpenApi();
 

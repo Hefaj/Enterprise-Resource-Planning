@@ -97,6 +97,41 @@ public static class AggregateChangeScanner
         => typeof(AggregateRoot).IsAssignableFrom(entry.Metadata.ClrType);
 
     /// <summary>
+    /// Szuka klucza obcego prowadzącego wprost do korzenia agregatu — odpowiednik
+    /// <c>FindOwnership()</c> dla dzieci mapowanych jako zwykłe encje.
+    ///
+    /// <para>Wymagana JEDNOZNACZNOŚĆ: przy kilku kluczach obcych do korzeni agregatów nie da się
+    /// rozstrzygnąć, którego agregatu dana encja jest częścią, a zgadywanie oznaczałoby
+    /// rozgłaszanie zmiany nie tego agregatu. W takim przypadku świadomie zwracamy <c>null</c>
+    /// — moduł musi wtedy wypublikować zdarzenie jawnie. Ta sama zasada, którą kierują się
+    /// zagnieżdżone typy owned niżej: jawne pominięcie jest lepsze od cichej pomyłki.</para>
+    ///
+    /// <para>Encje niebędące częścią żadnego agregatu (tabele pomocnicze w rodzaju domknięcia
+    /// drzewa) nie mają takiego klucza i po prostu nie generują zdarzeń.</para>
+    /// </summary>
+    private static IForeignKey? FindAggregateForeignKey(EntityEntry entry)
+    {
+        IForeignKey? found = null;
+
+        foreach (var foreignKey in entry.Metadata.GetForeignKeys())
+        {
+            if (!typeof(AggregateRoot).IsAssignableFrom(foreignKey.PrincipalEntityType.ClrType))
+            {
+                continue;
+            }
+
+            if (found is not null)
+            {
+                return null;
+            }
+
+            found = foreignKey;
+        }
+
+        return found;
+    }
+
+    /// <summary>
     /// Ustala, do którego agregatu należy zmieniony wpis i jaki ma on identyfikator.
     /// Dla korzenia to on sam; dla encji owned wspinamy się po łańcuchu własności, czytając
     /// wartość klucza obcego wskazującego właściciela. Czytanie FK zamiast szukania wpisu
@@ -129,9 +164,17 @@ public static class AggregateChangeScanner
             return true;
         }
 
-        // Encja owned — właścicielem jest korzeń agregatu, a klucz obcy po stronie dziecka
+        // Dziecko agregatu — właścicielem jest korzeń, a klucz obcy po stronie dziecka
         // niesie jego identyfikator.
-        var ownership = entry.Metadata.FindOwnership();
+        //
+        // Dwie ścieżki, bo dziecko nie musi być typem owned. Kolekcje wewnętrzne `Product`
+        // (kategorie, multimedia, gwarancje) są mapowane jako ZWYKŁE encje w relacji
+        // jeden-do-wielu — EF nie śledzi tożsamości dzieci kolekcji owned między przebiegami
+        // wykrywania zmian i gubi wstawienia (szczegóły przy `ProductConfiguration`).
+        // Gdyby ten skaner rozpoznawał wyłącznie `FindOwnership()`, zmiana samych kategorii
+        // przestałaby rozgłaszać `AggregateChanged` i produkt nie odświeżyłby się u klientów —
+        // dokładnie ta klasa cichego błędu, przed którą ta klasa ma chronić.
+        var ownership = entry.Metadata.FindOwnership() ?? FindAggregateForeignKey(entry);
         if (ownership is null)
         {
             return false;

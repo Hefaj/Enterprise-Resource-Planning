@@ -260,6 +260,12 @@ public sealed partial class CatalogSeeder
         var multimedia = new List<MultimediaAsset>();
         var now = DateTimeOffset.UtcNow;
 
+        // Dane startowe muszą spełniać inwariant, który system egzekwuje: para
+        // (model, komplet kategorii) jest unikalna, pilnowana unikalnym indeksem po
+        // `duplicate_key`. Bez tego zbioru losowanie prędzej czy później wygeneruje dwa
+        // identycznie sklasyfikowane produkty i cały seed padłby na SaveChanges.
+        var claimedDuplicateKeys = new HashSet<string>(StringComparer.Ordinal);
+
         for (var i = 0; i < _options.ProductCount; i++)
         {
             var isActive = random.NextDouble() > 0.2;
@@ -277,13 +283,18 @@ public sealed partial class CatalogSeeder
                 $"{random.NextDouble() * 10:F1}kg",
                 random.NextDouble() > 0.5 ? "Czarny" : "Biały");
 
-            if (random.NextDouble() > 0.3 && models.Count > 0)
-            {
-                product.AssignToModel(models[random.Next(models.Count)].Uuid);
-            }
+            var modelUuid = random.NextDouble() > 0.3 && models.Count > 0
+                ? models[random.Next(models.Count)].Uuid
+                : (Guid?)null;
 
             var categoryCount = random.Next(1, Math.Min(4, assignableCategoryUuids.Count + 1));
-            product.SetCategories(PickRandom(assignableCategoryUuids, categoryCount, random));
+            var categoryUuids = PickRandom(assignableCategoryUuids, categoryCount, random).ToList();
+
+            (modelUuid, categoryUuids) = AvoidDuplicateClassification(
+                modelUuid, categoryUuids, assignableCategoryUuids, categoryCount, claimedDuplicateKeys, random);
+
+            product.AssignToModel(modelUuid);
+            product.SetCategories(categoryUuids);
 
             var assetCount = random.Next(0, 5);
             var assetUuids = new List<Guid>(assetCount);
@@ -319,6 +330,38 @@ public sealed partial class CatalogSeeder
         }
 
         return (products, multimedia);
+    }
+
+    /// <summary>
+    /// Dobiera klasyfikację, która nie koliduje z już wygenerowanymi. Przelosowuje sam zbiór
+    /// kategorii (model zostaje — to on daje danym sensowną strukturę wariantów), a po
+    /// wyczerpaniu prób odbiera produktowi model: bez modelu produkt nie uczestniczy w regule
+    /// duplikatu, więc zawsze istnieje wyjście, które nie zapętla seeda.
+    /// </summary>
+    private static (Guid? ModelUuid, List<Guid> CategoryUuids) AvoidDuplicateClassification(
+        Guid? modelUuid,
+        List<Guid> categoryUuids,
+        List<Guid> assignableCategoryUuids,
+        int categoryCount,
+        HashSet<string> claimedDuplicateKeys,
+        Random random)
+    {
+        const int maxAttempts = 10;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            var key = Product.ComputeDuplicateKey(modelUuid, categoryUuids);
+
+            // null = produkt bez modelu, poza regułą — nie ma czego rezerwować.
+            if (key is null || claimedDuplicateKeys.Add(key))
+            {
+                return (modelUuid, categoryUuids);
+            }
+
+            categoryUuids = [.. PickRandom(assignableCategoryUuids, categoryCount, random)];
+        }
+
+        return (null, categoryUuids);
     }
 
     // ── Pomocnicze ─────────────────────────────────────────────────────────────

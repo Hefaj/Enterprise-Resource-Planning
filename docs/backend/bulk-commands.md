@@ -119,6 +119,28 @@ o błędzie (`concurrency_conflict` / `persistence_error`), reszta przechodzi. K
 wchodzi wyłącznie po faktycznej awarii zapisu — bez tego jeden konfliktujący wiersz zablokowałby
 całe zadanie w nieskończonej pętli ponowień.
 
+### Naruszenie unikalności to reguła biznesowa, nie awaria
+
+Reguły oparte na unikalności (SKU, sygnatura duplikatu produktu) **muszą** być wymuszone
+unikalnym indeksem, bo dwie równoległe komendy przeszłyby walidację aplikacyjną obie — patrz
+[`batch-validation.md`](./batch-validation.md#11-czym-to-nie-jest-pre-check--gwarancja). Ich
+naruszenie przychodzi jednak jako `DbUpdateException`, czyli tą samą ścieżką co awaria zapisu.
+
+Bez tłumaczenia dawałoby to dwa problemy naraz: raport pokazywałby `1200 × persistence_error`
+zamiast `1200 × product_duplicate` (komunikat, z którym użytkownik nic nie zrobi), a element
+wracałby do puli ponowień — `JobItem.MarkFailed` odsyła go do `Pending`, dopóki nie wyczerpie
+`MaxAttempts` — mimo że duplikat jest trwały i każda kolejna próba skończy się identycznie.
+
+`RecordIsolatedFailureAsync` woła więc `IPersistenceExceptionTranslator` (opcjonalny —
+`GetService`, nie `GetRequiredService`, więc moduł bez rejestracji zachowuje stare zachowanie).
+Implementacja Postgresowa rozpoznaje `SQLSTATE 23505` i mapuje **nazwę indeksu** na kod
+domenowy; mapę podaje moduł w swoim `Add<Moduł>Infrastructure`, bo nazwy indeksów są jego
+szczegółem, a kody błędów jego językiem. Przetłumaczony błąd dostaje `maxAttempts: 1` —
+to stan końcowy, nie błąd przejściowy.
+
+Kody muszą się zgadzać z tymi, którymi posługuje się walidacja wsadowa. Inaczej ten sam problem
+miałby dwie różne nazwy w zależności od tego, czy złapał go pre-check, czy baza.
+
 ### Kody błędów w raporcie
 
 Po zamknięciu zadania `BuildErrorsSummaryAsync` grupuje `job_item.error_code` — `job.errors_summary`

@@ -25,7 +25,7 @@ namespace Erp.BuildingBlocks.Api.Contracts;
 /// <typeparam name="TCommand">Komenda wykonywana dla pojedynczego agregatu.</typeparam>
 /// <typeparam name="TFilter">Filtr wyznaczający zbiór celów.</typeparam>
 public abstract class BatchEndpointBase<TCommand, TFilter> : Endpoint<BatchCommand<TCommand, TFilter>, BatchResult>
-    where TCommand : IAggregateCommand, ICommand<Guid>
+    where TCommand : class, IAggregateCommand, ICommand<Guid>, new()
 {
     /// <summary>Rozwija filtr na zbiór identyfikatorów agregatów.</summary>
     protected abstract Task<IEnumerable<Guid>> GetUuidsFromFilterAsync(TFilter filter, CancellationToken ct);
@@ -38,14 +38,24 @@ public abstract class BatchEndpointBase<TCommand, TFilter> : Endpoint<BatchComma
     /// miejsce na reguły wsadowe (<see cref="IBatchRule{T}"/> / <see cref="ValidationChain{T}"/>)
     /// w rodzaju „czy agregat istnieje”, „czy nie jest duplikatem” itp.
     ///
-    /// Domyślnie no-op (pusty tracker), więc endpointy, które go nie potrzebują, nie zauważają
-    /// żadnej zmiany. Elementy oznaczone błędem trafiają do zadania od razu jako
+    /// <para>Domyślnie no-op (pusty tracker), więc endpointy, które go nie potrzebują, nie
+    /// zauważają żadnej zmiany. Elementy oznaczone błędem trafiają do zadania od razu jako
     /// <c>Failed</c> (patrz <see cref="Job.Create"/>) — nigdy nie są podejmowane przez
     /// <c>BulkCommandRunner</c>, więc reguła płaci koszt JEDNEGO zbiorczego zapytania zamiast
-    /// N osobnych prób wykonania komendy, z których każda i tak by się nie powiodła.
+    /// N osobnych prób wykonania komendy, z których każda i tak by się nie powiodła.</para>
+    ///
+    /// <para><b>To jest pre-check, nie gwarancja.</b> Między nim a wykonaniem chunka mija
+    /// dowolnie dużo czasu, więc reguła oparta na unikalności musi mieć swoje odbicie
+    /// w unikalnym indeksie w bazie. Tutejsze odrzucenie jest szybką i tanią informacją
+    /// dla użytkownika, a nie ostatnią linią obrony.</para>
+    ///
+    /// <para>Cele przychodzą razem z komendami (<see cref="BatchTarget{TCommand}"/>), bo część
+    /// reguł potrzebuje wartości docelowych, a nie samych identyfikatorów. Lista NIE jest
+    /// odduplikowana po agregacie — tryb jawnej listy komend dopuszcza kilka różnych komend
+    /// dla tego samego agregatu i reguła musi je zobaczyć wszystkie.</para>
     /// </summary>
     protected virtual Task<ValidationTracker> ValidateTargetsAsync(
-        IReadOnlyList<Guid> aggregateUuids,
+        IReadOnlyList<BatchTarget<TCommand>> targets,
         CancellationToken ct)
         => Task.FromResult(new ValidationTracker());
 
@@ -61,8 +71,13 @@ public abstract class BatchEndpointBase<TCommand, TFilter> : Endpoint<BatchComma
             return;
         }
 
-        var tracker = await ValidateTargetsAsync(
-            [.. targets.Select(t => t.AggregateUuid).Distinct()], ct).ConfigureAwait(false);
+        var batchTargets = targets
+            .Select(t => new BatchTarget<TCommand>(
+                t.AggregateUuid,
+                BatchCommandPayload.Materialize<TCommand>(t.CommandJson, templateJson, t.AggregateUuid)))
+            .ToList();
+
+        var tracker = await ValidateTargetsAsync(batchTargets, ct).ConfigureAwait(false);
 
         var preValidatedFailures = tracker.Errors.Count == 0
             ? null

@@ -78,6 +78,34 @@ public sealed class ProductQueries : IProductQueries
     }
 
     /// <inheritdoc />
+    public async Task<Dictionary<string, Guid>> GetOwnersByDuplicateKeysAsync(
+        IReadOnlyCollection<string> duplicateKeys,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(duplicateKeys);
+
+        if (duplicateKeys.Count == 0)
+        {
+            return [];
+        }
+
+        // List<string> zamiast IReadOnlyCollection: tłumaczenie `Contains` na SQL przez
+        // EF Core działa wydajniej na konkretnym typie kolekcji (tak samo jak w BulkCommandRunner).
+        var keyList = duplicateKeys as List<string> ?? duplicateKeys.ToList();
+
+        var owners = await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => p.DuplicateKey != null && keyList.Contains(p.DuplicateKey))
+            .Select(p => new { Key = p.DuplicateKey!, p.Uuid })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        // Unikalny indeks po `duplicate_key` gwarantuje, że klucz ma najwyżej jednego
+        // właściciela, więc ToDictionary nie może tu paść na powtórzeniu.
+        return owners.ToDictionary(o => o.Key, o => o.Uuid, StringComparer.Ordinal);
+    }
+
+    /// <inheritdoc />
     public async Task<List<ProductDto>> GetAsync(
         IReadOnlyCollection<Guid>? uuids,
         CancellationToken cancellationToken)

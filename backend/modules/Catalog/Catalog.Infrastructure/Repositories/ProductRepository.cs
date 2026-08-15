@@ -15,9 +15,27 @@ public sealed class ProductRepository : IProductRepository
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Kolekcje wewnętrzne agregatu. Dociągane jawnie, bo są mapowane jako zwykłe encje,
+    /// a nie typy owned — a zwykłych nawigacji EF sam nie dołącza.
+    ///
+    /// <para>Pominięcie któregokolwiek wpisu jest groźniejsze, niż wygląda: metody domenowe
+    /// w rodzaju <c>SetClassification</c> podmieniają KOMPLET powiązań, więc na niewczytanej
+    /// kolekcji „podmiana” zobaczyłaby pustkę i po cichu dopisała nowe obok starych, zamiast
+    /// je zastąpić. Dlatego wszystkie trzy są tutaj, a nie dobierane per metoda.</para>
+    ///
+    /// <para>Iloczynu kartezjańskiego nie ma — globalne <c>SplitQuery</c>
+    /// (patrz <c>UseErpPostgres</c>) wykonuje osobny SELECT na każdą kolekcję.</para>
+    /// </summary>
+    private IQueryable<Product> ProductsWithCollections
+        => _dbContext.Products
+            .Include("_categories")
+            .Include("_multimedia")
+            .Include("_warranties");
+
     /// <inheritdoc />
     public Task<Product?> FindAsync(Guid uuid, CancellationToken cancellationToken)
-        => _dbContext.Products.FirstOrDefaultAsync(p => p.Uuid == uuid, cancellationToken);
+        => ProductsWithCollections.FirstOrDefaultAsync(p => p.Uuid == uuid, cancellationToken);
 
     /// <inheritdoc />
     public async Task<List<Product>> FindManyAsync(
@@ -32,7 +50,7 @@ public sealed class ProductRepository : IProductRepository
         }
 
         var uuidList = uuids.ToList();
-        return await _dbContext.Products
+        return await ProductsWithCollections
             .Where(p => uuidList.Contains(p.Uuid))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);

@@ -268,8 +268,21 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
             return;
         }
 
-        var errorCode = exception is DbUpdateConcurrencyException ? "concurrency_conflict" : "persistence_error";
-        item.MarkFailed(errorCode, exception.Message, _options.MaxAttempts, clock.UtcNow);
+        // Naruszenie unikalności to reguła biznesowa przebrana za awarię zapisu. Bez tłumaczenia
+        // element dostałby `persistence_error` i wracał do puli ponowień (MarkFailed odsyła go
+        // do Pending, dopóki nie wyczerpie MaxAttempts) — mimo że duplikat jest trwały i każda
+        // kolejna próba skończy się identycznie. Stąd maxAttempts: 1 dla przetłumaczonych.
+        var translator = scope.ServiceProvider.GetService<IPersistenceExceptionTranslator>();
+
+        if (translator is not null && translator.TryTranslate(exception, out var domainException))
+        {
+            item.MarkFailed(domainException.ErrorCode, domainException.Message, maxAttempts: 1, clock.UtcNow);
+        }
+        else
+        {
+            var errorCode = exception is DbUpdateConcurrencyException ? "concurrency_conflict" : "persistence_error";
+            item.MarkFailed(errorCode, exception.Message, _options.MaxAttempts, clock.UtcNow);
+        }
 
         if (item.Status == JobItemStatus.Failed)
         {

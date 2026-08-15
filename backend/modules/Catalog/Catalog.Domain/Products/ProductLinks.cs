@@ -2,6 +2,30 @@ using Erp.BuildingBlocks.Domain;
 
 namespace Catalog.Domain.Products;
 
+// ── Dlaczego te byty mają Uuid i dlaczego NIE nadajemy go w konstruktorze ─────────────────
+//
+// Nie mają tożsamości BIZNESOWEJ — nikt nie ładuje ani nie edytuje „przypisania” samodzielnie.
+// Mają jednak klucz techniczny, bo od niego zależy, czy EF Core w ogóle zapisze nowe wiersze.
+//
+// Mechanizm, który to wymusza: gdy EF napotka podczas wykrywania zmian nieśledzoną encję
+// w kolekcji śledzonego rodzica, rozstrzyga „nowa czy istniejąca” po tym, czy jej klucz ma
+// wartość różną od domyślnej. Klucz ustawiony ⇒ EF zakłada wiersz, który już jest w bazie,
+// i planuje UPDATE zamiast INSERT-a. Przy zmianie kompletu powiązań produktu kończyło się to
+// poleceniem `UPDATE ... WHERE uuid = <świeżo wygenerowany uuid>`, które nie trafia w żaden
+// wiersz — czyli albo cichą utratą przypisań, albo `concurrency_conflict`.
+//
+// Dlatego `Uuid` zostaje domyślny, a wartość nadaje baza (`DEFAULT gen_random_uuid()`,
+// w modelu `ValueGeneratedOnAdd`). EF widzi klucz nieustawiony, oznacza encję jako `Added`
+// i wykonuje INSERT, a wygenerowany identyfikator odczytuje z powrotem.
+//
+// Konsekwencja, którą warto znać: te identyfikatory to UUID v4, a nie v7 jak reszta systemu,
+// więc nie mają lokalności czasowej w indeksie. Dla wąskich tabel powiązań to koszt
+// akceptowalny — w zamian zapis w ogóle działa.
+//
+// Faktyczna reguła unikalności („produkt należy do kategorii najwyżej raz”) żyje w unikalnym
+// indeksie, a nie w kluczu głównym — tam, gdzie i tak powinna, bo tylko baza wytrzymuje
+// współbieżność.
+
 /// <summary>
 /// Przypisanie produktu do kategorii. Byt wewnętrzny agregatu (owned), bez własnej tożsamości
 /// biznesowej — nikt nie ładuje ani nie edytuje „przypisania” samodzielnie.
@@ -18,6 +42,9 @@ public sealed class ProductCategoryLink
         ProductUuid = productUuid;
         CategoryUuid = categoryUuid;
     }
+
+    /// <summary>Klucz techniczny nadawany przez bazę — patrz komentarz nad tą klasą.</summary>
+    public Guid Uuid { get; private set; }
 
     public Guid ProductUuid { get; private set; }
 
@@ -37,6 +64,9 @@ public sealed class ProductMultimediaLink
         ProductUuid = productUuid;
         MultimediaUuid = multimediaUuid;
     }
+
+    /// <summary>Klucz techniczny nadawany przez bazę — patrz komentarz nad <see cref="ProductCategoryLink"/>.</summary>
+    public Guid Uuid { get; private set; }
 
     public Guid ProductUuid { get; private set; }
 
@@ -71,6 +101,9 @@ public sealed class ProductWarranty
         WarrantyUuid = warrantyUuid;
         DurationMonths = durationMonths;
     }
+
+    /// <summary>Klucz techniczny nadawany przez bazę — patrz komentarz nad <see cref="ProductCategoryLink"/>.</summary>
+    public Guid Uuid { get; private set; }
 
     public Guid ProductUuid { get; private set; }
 

@@ -1,4 +1,4 @@
-using Catalog.Application.Contracts;
+using Catalog.Application.Products;
 using Catalog.Domain.Attributes;
 using Catalog.Domain.Products;
 using Catalog.Infrastructure.Persistence;

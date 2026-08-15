@@ -1,4 +1,4 @@
-using Catalog.Application.Contracts;
+using Catalog.Application.Products;
 using Erp.BuildingBlocks.Api.Contracts;
 
 namespace Catalog.Tests;

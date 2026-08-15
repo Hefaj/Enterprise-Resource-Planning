@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Catalog.Application.Contracts;
+using Catalog.Application.Multimedia;
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api.Contracts;
 using Microsoft.EntityFrameworkCore;

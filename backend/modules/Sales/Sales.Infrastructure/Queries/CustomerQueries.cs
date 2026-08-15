@@ -1,6 +1,6 @@
 using Erp.BuildingBlocks.Api.Contracts;
 using Microsoft.EntityFrameworkCore;
-using Sales.Application.Contracts;
+using Sales.Application.Customers;
 using Sales.Infrastructure.Persistence;
 
 namespace Sales.Infrastructure.Queries;

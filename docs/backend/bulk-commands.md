@@ -167,7 +167,8 @@ przed każdym chunkiem — inaczej zdarzenia i powiadomienia SignalR nie miałyb
   `JobItem.CommandJson`, jeśli go miał (tryb listy różnych komend), inaczej dziedziczy szablon
   oryginału — ponowienie odtwarza dokładnie to, co się nie udało, nie jego przybliżenie.
 
-Oba są zaimplementowane w Catalogu (`Catalog.Api/Job/JobControlEndpoints.cs`); Sales ma
+Oba są zaimplementowane w Catalogu
+([`Catalog.Api/Jobs/JobControlEndpoints.cs`](../../backend/modules/Catalog/Catalog.Api/Jobs/JobControlEndpoints.cs)); Sales ma
 infrastrukturę zadań gotową (`IJobStore`, `BulkCommandRunner<SalesDbContext>` zarejestrowane),
 ale nie wystawia jeszcze tych dwóch endpointów.
 

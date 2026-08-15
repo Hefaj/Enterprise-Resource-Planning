@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Sales.Application.Abstractions;
-using Sales.Application.Contracts;
+using Sales.Application.Customers;
 using Sales.Domain.Customers;
 using Sales.Infrastructure.Persistence;
 using Sales.Infrastructure.Queries;

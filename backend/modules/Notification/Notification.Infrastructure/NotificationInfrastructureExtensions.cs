@@ -4,7 +4,7 @@ using Erp.BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Notification.Application.Contracts;
+using Notification.Application.Jobs;
 using Notification.Domain.Jobs;
 using Notification.Infrastructure.Persistence;
 using Notification.Infrastructure.Queries;

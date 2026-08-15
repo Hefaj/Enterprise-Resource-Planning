@@ -8,7 +8,7 @@ namespace Sales.Application.Customers;
 
 /// <summary>Zmiana nazwy klienta — jedyna komenda modułu, wystarczająca do sprawdzenia
 /// całej ścieżki: pojedyncze wywołanie i operacja masowa przez tę samą infrastrukturę
-/// co w Catalogu (patrz <c>Catalog.Application.Products.ProductCommands</c>).</summary>
+/// co w Catalogu (patrz <c>Catalog.Application.Products.ProductSetNameCommand</c>).</summary>
 public sealed class SetCustomerNameCommand : ICommand<Guid>, IAggregateCommand
 {
     /// <inheritdoc />

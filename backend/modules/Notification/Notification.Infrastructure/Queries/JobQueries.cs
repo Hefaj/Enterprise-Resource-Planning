@@ -1,6 +1,6 @@
 using Erp.BuildingBlocks.Api.Contracts;
 using Microsoft.EntityFrameworkCore;
-using Notification.Application.Contracts;
+using Notification.Application.Jobs;
 using Notification.Infrastructure.Persistence;
 
 namespace Notification.Infrastructure.Queries;

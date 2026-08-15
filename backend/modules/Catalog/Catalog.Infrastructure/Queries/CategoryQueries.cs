@@ -1,4 +1,4 @@
-using Catalog.Application.Contracts;
+using Catalog.Application.Categories;
 using Catalog.Domain.Categories;
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api.Contracts;

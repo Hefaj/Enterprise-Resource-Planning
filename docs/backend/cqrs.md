@@ -27,38 +27,54 @@ w zamian. To jest cel rozdziału CQRS, a nie skrót.
 
 ## 2. Gdzie co mieszka
 
-Cały kod grupowany jest wewnątrz warstw według agregatów (np. `Product`, `Category`), aby uniknąć płaskiej i nieczytelnej struktury przy rozroście systemu.
+Cały kod grupowany jest wewnątrz warstw według agregatów (np. `Products`, `Categories`), aby uniknąć płaskiej i nieczytelnej struktury przy rozroście systemu.
 
 ```text
 Catalog.Domain/
 └── Aggregates/
-    └── Product/
+    └── Products/
         ├── Product.cs                 # definicja agregatu i reguły biznesowe
         └── Events/                    # zdarzenia domenowe (np. ProductPriceChanged.cs)
 
 Catalog.Application/
 ├── Abstractions/
 │   └── IProductRepository.cs          # abstrakcja dostępu zapisu
-└── Contracts/
-    └── Product/                       # wszystkie operacje na agregacie zebrane w jednym miejscu
-        ├── Commands/                  # komendy (np. ProductSetPriceCommand.cs)
-        ├── Handlers/                  # handlery komend
-        ├── Dtos/                      # DTO — kontrakt HTTP, ZAMROŻONY (NSwag)
-        ├── Queries/                   # interfejsy odczytu
-        ├── Requests/                  # typy żądań — też kontrakt
-        ├── Responses/                 # typy odpowiedzi
-        └── Rules/                     # reguły walidacji (np. wsadowej)
+└── Products/                          # wszystkie operacje na agregacie zebrane w jednym miejscu
+    ├── Commands/                      # komendy (np. ProductSetPriceCommand.cs)
+    ├── Handlers/                      # handlery komend
+    ├── Dtos/                          # DTO — kontrakt HTTP, ZAMROŻONY (NSwag)
+    ├── Queries/                       # interfejsy odczytu
+    ├── Requests/                      # typy żądań — też kontrakt
+    ├── Responses/                     # typy odpowiedzi
+    └── Rules/                         # reguły walidacji (np. wsadowej)
 
 Catalog.Infrastructure/
+├── Persistence/
+│   └── Configurations/
+│       └── Products/                  # mapowania EF agregatu
 ├── Queries/                           # implementacje IXxxQueries (EF)
 └── Repositories/                      # implementacje repozytoriów (EF)
 
 Catalog.Api/
-└── Aggregates/
-    └── Product/
-        ├── Command/                   # endpointy — tłumaczą HTTP na komendę
-        └── Query/                     # endpointy — tłumaczą HTTP na zapytanie
+└── Products/
+    ├── ProductGroup.cs                # prefiks trasy i wspólna konfiguracja grupy
+    ├── Command/                       # endpointy — tłumaczą HTTP na komendę
+    └── Query/                         # endpointy — tłumaczą HTTP na zapytanie
 ```
+
+**Nazwa folderu agregatu jest ta sama we wszystkich czterech warstwach** i zawsze w liczbie
+mnogiej (`Products`, `Categories`, `Codes`, `Models`, `Multimedia`, `Warranties`, `Attributes`) —
+dzięki temu „gdzie jest reszta tego agregatu" sprowadza się do zamiany nazwy projektu w ścieżce.
+Namespace idzie za folderem: `Catalog.Products` w Api, `Catalog.Application.Products`,
+`Catalog.Domain.Products`.
+
+Ten sam kształt mają **wszystkie moduły** — `Sales` (`Customers`) i `Notification` (`Jobs`) różnią
+się tylko listą agregatów, więc wzorować się można na dowolnym z nich.
+
+Poziom `Aggregates/` występuje **wyłącznie w Domain**, gdzie odróżnia agregaty od reszty warstwy.
+W Api i Application folder agregatu leży bezpośrednio w korzeniu projektu — opakowanie, które
+zawiera 100% zawartości, nic by nie rozróżniało. Z tego samego powodu `Catalog.Api/Jobs/`
+(sterowanie zadaniami masowymi) stoi obok agregatów, chociaż agregatem Catalogu nie jest.
 
 ---
 

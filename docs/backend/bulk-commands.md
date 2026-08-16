@@ -103,6 +103,21 @@ normalną szynę komend — ten sam `IBulkCommandExecutor`, który resolwuje han
 dla `job.CommandType`, więc reguły domenowe są identyczne dla pojedynczej komendy i dla operacji
 masowej.
 
+### Widoczność postępu a rozmiar chunka
+
+`ChunkSize` jest **górną**, nie sztywną granicą. Zadanie mniejsze niż chunk dzieli się na
+`BulkJobs:ProgressUpdateTarget` porcji (domyślnie 10, dolna granica `BulkJobs:MinChunkSize`),
+czyli `chunk = clamp(ceil(total / target), MinChunkSize, ChunkSize)`.
+
+Powód jest w outboxie: koperta `JobProgressed` zapisuje się w tej samej transakcji co praca,
+więc postęp pokazuje się dopiero po **zatwierdzeniu** chunka. Przy jednym chunku na całe zadanie
+wsad na pięć produktów pokazywałby „0/5" aż do końca — technicznie poprawnie i praktycznie
+nieodróżnialnie od zawieszenia.
+
+Duże zadania nie odczuwają zmiany: dla 50 tys. elementów `ceil(50000/10)` to 5 tys., czyli
+powyżej `ChunkSize`, więc obowiązuje dotychczasowe 500. Płacą wyłącznie małe wsady — kilkoma
+dodatkowymi commitami. `ProgressUpdateTarget ≤ 1` wyłącza mechanizm i przywraca stałe porcje.
+
 ### Częściowe niepowodzenie
 
 `DomainException` jednego elementu **nie przerywa chunka** — element dostaje `Failed` + kod błędu,

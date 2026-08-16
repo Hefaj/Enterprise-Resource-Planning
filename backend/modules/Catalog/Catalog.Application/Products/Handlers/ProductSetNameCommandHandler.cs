@@ -30,6 +30,8 @@ public sealed class ProductSetNameCommandHandler : CommandHandler<ProductSetName
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        // await Task.Delay(Random.Shared.Next(1000, 3000), ct);
+
         var product = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Product), command.Uuid);
 

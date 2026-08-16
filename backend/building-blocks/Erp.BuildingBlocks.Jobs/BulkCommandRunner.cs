@@ -109,7 +109,7 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         var itemUuids = await db.JobItems
             .Where(i => i.JobUuid == job.Uuid && i.Status == JobItemStatus.Pending)
             .OrderBy(i => i.Ordinal)
-            .Take(_options.ChunkSize)
+            .Take(EffectiveChunkSize(job.TotalCount))
             .Select(i => i.Uuid)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -134,6 +134,36 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Rozmiar porcji dla zadania o danej wielkości.
+    ///
+    /// <para>Postęp widać dopiero po zatwierdzeniu chunka — koperta <c>JobProgressed</c> leży
+    /// w outboxie tej samej transakcji, więc dopóki zadanie mieści się w jednym chunku,
+    /// licznik stoi na zerze aż do końca. Dla wsadu na pięć produktów „0/5 → 5/5" jest
+    /// technicznie poprawne i praktycznie nieodróżnialne od zawieszenia, dlatego małe zadania
+    /// dzielimy na <see cref="BulkJobOptions.ProgressUpdateTarget"/> porcji.</para>
+    ///
+    /// <para>Wynik nigdy nie przekracza <see cref="BulkJobOptions.ChunkSize"/>, więc
+    /// przepustowość dużych zadań zostaje bez zmian — rachunek płacą wyłącznie wsady mniejsze
+    /// niż chunk, kilkoma dodatkowymi commitami.</para>
+    /// </summary>
+    private int EffectiveChunkSize(int totalCount)
+    {
+        if (_options.ProgressUpdateTarget <= 1 || totalCount <= 0)
+        {
+            return _options.ChunkSize;
+        }
+
+        var target = (int)Math.Ceiling(totalCount / (double)_options.ProgressUpdateTarget);
+        var floor = Math.Max(1, _options.MinChunkSize);
+
+        // `Math.Clamp` wywala się, gdy dolna granica przekracza górną — a przy sprzecznej
+        // konfiguracji (MinChunkSize > ChunkSize) runner ma pracować dalej, nie paść.
+        var ceiling = Math.Max(floor, _options.ChunkSize);
+
+        return Math.Clamp(target, floor, ceiling);
     }
 
     /// <summary>

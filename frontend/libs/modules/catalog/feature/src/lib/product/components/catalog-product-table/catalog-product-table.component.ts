@@ -106,6 +106,9 @@ export class CatalogProductTableComponent {
     const builder = new ErpTableBuilder<ProductVM>()
       .setMode('server')
       .setRowIdAccessor(x => x.uuid)
+      // Filtry muszą trafić do konfiguracji tabeli, bo przy „Zaznacz wszystko" to one
+      // (a nie lista uuidów) opisują zaznaczenie i wracają w `ErpSelectionState.filters`.
+      .setFilters(this.filters)
       .setStateKey(this.stateKey())
       .setEnableVirtualScroll(true)
       .setEstimatedRowHeight(50)

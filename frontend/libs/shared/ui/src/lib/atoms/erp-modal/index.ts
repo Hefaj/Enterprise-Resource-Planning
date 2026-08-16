@@ -3,3 +3,4 @@ export * from './erp-modal.builder';
 export * from './erp-modal.types';
 export * from './erp-modal.service';
 export * from './erp-modal-step.base';
+export * from './erp-batch-step.base';

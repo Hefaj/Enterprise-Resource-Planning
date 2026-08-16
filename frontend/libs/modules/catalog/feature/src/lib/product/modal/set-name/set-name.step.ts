@@ -16,7 +16,7 @@ import {
   ErpStepContentComponent,
   ErpStepContentBuilder,
   ErpStepContentConfig,
-  ErpModalStepBase,
+  ErpBatchStepBase,
 } from '@erp/shared/ui';
 
 /**
@@ -44,7 +44,19 @@ function nameNotBlankValidator(control: AbstractControl): ValidationErrors | nul
     @let _products = products();
 
     <div class="set-name-step">
-      @if (_products.length === 0) {
+      @if (isFilterMode()) {
+        <p class="set-name-step__message">
+          <erp-text [config]="{ value: keys.commands.setName.editMessage }" />
+          <strong> {{ targetCount() }} </strong>
+          <erp-text [config]="{ value: targetCount() === 1 ? keys.commands.setName.productSuffixSingle : keys.commands.setName.productSuffixPlural }" />
+          <erp-text [config]="{ value: keys.commands.setName.filterModeSuffix }" />
+        </p>
+
+        <p class="set-name-step__hint">
+          <tui-icon icon="@tui.filter" class="set-name-step__badge-icon" />
+          <erp-text [config]="{ value: keys.commands.setName.filterModeHint }" />
+        </p>
+      } @else if (_products.length === 0) {
         <p class="set-name-step__empty">
           <erp-text [config]="{ value: keys.commands.setName.emptySelection }" />
         </p>
@@ -75,6 +87,10 @@ function nameNotBlankValidator(control: AbstractControl): ValidationErrors | nul
   styles: [`
     .set-name-step { padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
     .set-name-step__message { margin: 0; color: var(--tui-text-secondary); }
+    .set-name-step__hint {
+      margin: 0; display: flex; align-items: center; gap: 0.4rem;
+      color: var(--tui-text-tertiary); font-size: 0.8rem;
+    }
     .set-name-step__empty { margin: 0; color: var(--tui-status-warning); }
     .set-name-step__badges { display: flex; flex-wrap: wrap; gap: 0.5rem; max-height: 12rem; overflow-y: auto; }
     .set-name-step__badge {
@@ -87,7 +103,7 @@ function nameNotBlankValidator(control: AbstractControl): ValidationErrors | nul
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
+export class SetNameStepComponent extends ErpBatchStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
   protected readonly keys = PRODUCT_KEYS;
 
   /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
@@ -95,12 +111,6 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
 
   private readonly _orchestrator = inject(CatalogProductOrchestrator);
   private readonly _viewModels = this._orchestrator.getViewModel();
-
-  /** Cele operacji masowej — to samo pole, które poleci na API. */
-  protected readonly targetUuids = computed(() => this.command()().targetUuids ?? []);
-
-  /** Ile celów widzi walidator grupy. Zwykłe pole, bo walidator nie może czytać sygnałów. */
-  private _targetCount = 0;
 
   /** Jednorazowe wypełnienie pola nazwą produktu (tylko przy jednym zaznaczeniu). */
   private _namePrefilled = false;
@@ -145,18 +155,7 @@ export class SetNameStepComponent extends ErpModalStepBase<BatchCommandOfProduct
     super(config);
     this.formContent = config;
 
-    // Bez celów nie ma czego wysłać — walidator grupy blokuje przycisk zapisu
-    // (backend odrzuciłby takie zadanie komunikatem „Brak komend do wykonania").
-    config.formGroup.addValidators(() => (this._targetCount > 0 ? null : { noTargets: true }));
-    config.formGroup.updateValueAndValidity();
-
-    effect(() => {
-      const count = this.targetUuids().length;
-      if (count !== this._targetCount) {
-        this._targetCount = count;
-        config.formGroup.updateValueAndValidity();
-      }
-    });
+    // Tryb celów (uuidy vs filtr) i blokadę zapisu bez celów obsługuje `ErpBatchStepBase`.
 
     // Przy jednym zaznaczonym produkcie wygodniej edytować jego bieżącą nazwę niż pisać od zera.
     // Wartość ustawiamy na kontrolce (z emisją zdarzeń), żeby przeszła normalną ścieżką

@@ -134,7 +134,7 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
       width: calc(100% + 2 * var(--tui-padding, 1.75rem));
       margin: calc(-1 * var(--tui-padding, 1.75rem));
       box-sizing: border-box;
-      min-height: 200px;
+      min-height: 400px;
       background: var(--tui-background-base);
     }
 

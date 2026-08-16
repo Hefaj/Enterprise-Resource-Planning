@@ -1,11 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
+import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig, ErpBatchMetadata } from '@erp/shared/ui';
 import { SetNameStepComponent } from './set-name.step';
 import { CatalogProductOrchestrator, BatchCommandOfProductSetNameCommandAndSearchProductRequest } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation';
 import { SET_NAME_MODAL_ID } from '@erp/catalog/util';
 
-export type SetNameMetadata = Record<string, never>;
+/**
+ * Modal nie potrzebuje niczego ponad standardowe metadane operacji masowej
+ * (`targetCount` — ile pozycji obejmie operacja w trybie filtra).
+ */
+export type SetNameMetadata = ErpBatchMetadata;
 
 /**
  * Modal seryjnej zmiany nazwy produktów.
@@ -29,13 +33,16 @@ export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOf
 
     // Nazwy/SKU zaznaczonych produktów pokazuje krok modalu — dociągamy je do cache
     // orkiestratora (typy kodów są potrzebne, żeby `codeValue('SKU')` cokolwiek zwrócił).
+    // W trybie filtra nie ma czego dociągać — celów nie zna nawet frontend.
     if (targetUuids.length > 0) {
       this._orchestrator.loadAsync(targetUuids, { includeCodeTypes: true }).catch(err => console.error(err));
     }
 
     return ErpModalBuilder.modal<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata>(b => b
       .setTitle([PRODUCT_KEYS.base.tabs.products, PRODUCT_KEYS.commands.setName.modalTitle])
-      .setCommand({ ...command, targetUuids })
+      // Pusta lista identyfikatorów nie jest wysyłana — w trybie filtra to `targetFilter`
+      // wyznacza cele, a `targetUuids: []` byłoby tylko szumem w żądaniu.
+      .setCommand({ ...command, targetUuids: targetUuids.length > 0 ? targetUuids : undefined })
       .setMetadata(metadata)
       .addStep(PRODUCT_KEYS.commands.setName.label, SetNameStepComponent)
       .setSaveLabel(PRODUCT_KEYS.commands.setName.submitButton)

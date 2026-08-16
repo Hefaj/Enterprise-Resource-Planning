@@ -22,6 +22,13 @@ export interface ErpSelectionState<TData = any> {
   selectedItems: TData[];
   selectedIds: string[];
   filters?: Record<string, any>;
+  /**
+   * Liczba wszystkich pozycji pasujących do filtrów (nie tylko widocznej strony).
+   * Przy „Zaznacz wszystko" w trybie serwerowym to ONA jest licznością zaznaczenia —
+   * `selectedItems` jest wtedy puste, bo zaznaczenie opisuje filtr, a nie lista uuidów.
+   * Liczyć zaznaczenie należy przez `erpSelectionCount()`.
+   */
+  totalCount?: number;
 }
 
 export interface ErpCellChip {

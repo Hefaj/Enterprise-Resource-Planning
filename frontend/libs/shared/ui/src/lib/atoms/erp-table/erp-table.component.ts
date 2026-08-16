@@ -1192,7 +1192,8 @@ export class ErpTableComponent<T> implements AfterViewInit {
         isAllSelected: true,
         selectedItems: [],
         selectedIds: [],
-        filters: unwrapSignal(this.config().filters) ?? {}
+        filters: unwrapSignal(this.config().filters) ?? {},
+        totalCount: this.itemCount(),
       });
       return;
     }
@@ -1213,6 +1214,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
       isAllSelected: isServer ? false : this.table.getIsAllRowsSelected(),
       selectedItems,
       selectedIds,
+      totalCount: this.itemCount(),
     });
   }
 

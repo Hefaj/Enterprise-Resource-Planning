@@ -150,6 +150,8 @@ export const PRODUCT_KEYS = {
         productSuffixPlural: 'product.commands.setName.productSuffixPlural',
         nameHint: 'product.commands.setName.nameHint',
         emptySelection: 'product.commands.setName.emptySelection',
+        filterModeSuffix: 'product.commands.setName.filterModeSuffix',
+        filterModeHint: 'product.commands.setName.filterModeHint',
       },
     },
     validations: {

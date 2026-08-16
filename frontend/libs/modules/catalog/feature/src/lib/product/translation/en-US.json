@@ -144,7 +144,9 @@
       "productSuffixSingle": "product",
       "productSuffixPlural": "products",
       "nameHint": "The new name will be applied to every selected product",
-      "emptySelection": "No products selected — close this window and select products in the list."
+      "emptySelection": "No products selected — close this window and select products in the list.",
+      "filterModeSuffix": "matching the current filters.",
+      "filterModeHint": "All results are selected — the operation will cover every product matching the filters, including those on other pages."
     }
   },
   "validations": {

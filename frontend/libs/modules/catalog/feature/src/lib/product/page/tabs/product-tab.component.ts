@@ -8,11 +8,10 @@ import {
   ErpModalService,
   ErpSelectionState,
   ErpBatchMetadata,
-  erpBatchTargets,
   erpSelectionCount
 } from '@erp/shared/ui';
 import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
-import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, SearchProductRequest, ProductVM } from '@erp/catalog/data-access';
+import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductVM } from '@erp/catalog/data-access';
 import { CatalogProductTableComponent } from '../../components/catalog-product-table/catalog-product-table.component';
 import { ProductStore } from '../product.store';
 
@@ -254,27 +253,28 @@ export class ProductTabComponent {
     this.store.setSelection(state);
   }
 
-  /**
-   * Cele operacji masowej dla dowolnej komendy z tej strony — jeden kształt dla wszystkich:
-   * zaznaczone wiersze → `targetUuids`, „Zaznacz wszystko" → `targetFilter`.
-   */
-  private batchTargets() {
-    return erpBatchTargets<ProductVM, SearchProductRequest>(this.store.selection(), {
-      fallbackFilter: this.store.filters(),
-    });
-  }
-
   private openSetPriceModal(): void {
     this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(SET_PRICE_MODAL_ID, { products: [] });
   }
 
   private openSetNameModal(): void {
-    // Komenda modalu jest dokładnie tym, co poleci na API.
+    const selection = this.store.selection();
+    // Komenda modalu jest dokładnie tym, co poleci na API — obok celów można tu dołożyć
+    // wartości inicjujące (`templateCommand`).
+    //
+    // Oba pola celów lecą wprost ze stanu zaznaczenia i same się wykluczają: przy
+    // zaznaczeniu pojedynczych wierszy tabela nie podaje filtrów, a przy „Zaznacz wszystko"
+    // nie podaje identyfikatorów. Tryb rozstrzyga backend (`ResolveTargetsAsync`):
+    // niepuste `targetUuids` wygrywa, w przeciwnym razie cele wyznacza `targetFilter`.
+    //
     // `targetCount` idzie metadanymi (nie komendą) — kontrakt HTTP jest zamrożony,
     // a modal potrzebuje tylko liczby do pokazania „ile pozycji obejmie operacja".
     this.modalService.open<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ErpBatchMetadata>(
       SET_NAME_MODAL_ID,
-      this.batchTargets(),
+      {
+        targetUuids: selection?.selectedIds,
+        targetFilter: selection?.filters,
+      },
       { targetCount: this.selectionCount() },
     );
   }

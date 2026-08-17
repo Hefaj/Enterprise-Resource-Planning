@@ -19,4 +19,4 @@ export { ErpTableBuilder, ErpColumnBuilder, ErpColumnGroupBuilder, ErpGroupedRow
 export { ErpTableComponent } from './erp-table.component';
 export { ErpChipCellComponent } from './erp-chip-cell.component';
 export type { ErpBatchTargets, ErpBatchMetadata } from './erp-selection.utils';
-export { erpSelectionCount, erpBatchTargets, erpIsBatchFilterMode } from './erp-selection.utils';
+export { erpSelectionCount } from './erp-selection.utils';

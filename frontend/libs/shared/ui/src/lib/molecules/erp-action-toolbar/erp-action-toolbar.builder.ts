@@ -2,6 +2,7 @@ import { Signal } from '@angular/core';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpIcon } from '../../base/erp-icon.types';
+import { ErpSelectionScopeKind } from '../../atoms/erp-table/erp-selection.utils';
 import {
   ErpActionDef,
   ErpActionAppearance,
@@ -88,6 +89,24 @@ export class ErpActionDefBuilder extends ErpBaseBuilder<ErpActionDef> {
   /** Ustawia callback dla akcji dynamicznych (otrzymuje w parametrze dane powiązanej instancji). */
   public setDynamicFn(fn: (item: ErpDynamicActionItem) => void | Promise<void>): this {
     this._data.dynamicFn = fn;
+    return this;
+  }
+
+  /**
+   * Ogranicza akcję do wskazanych zasięgów zaznaczenia. W pozostałych toolbar wyświetli ją
+   * jako zablokowaną, z podpowiedzią z `setUnavailableHint()` (albo domyślną).
+   *
+   * Używaj dla akcji, które wymagają WSKAZANYCH pozycji i nie dają się wyrazić nad zbiorem
+   * opisanym filtrem (np. zmiana kolejności, ustawienie pozycji głównej).
+   */
+  public setScopes(scopes: ErpSelectionScopeKind[]): this {
+    this._data.scopes = scopes;
+    return this;
+  }
+
+  /** Ustawia podpowiedź wyświetlaną, gdy akcja jest zablokowana przez `setScopes()`. */
+  public setUnavailableHint(hint: MaybeSignal<Translatable>): this {
+    this._data.unavailableHint = hint;
     return this;
   }
 
@@ -332,6 +351,15 @@ export class ErpActionToolbarBuilder extends ErpBaseBuilder<ErpActionToolbarConf
   /** Podpina Signal przechowujący liczbę zaznaczonych elementów. Powyżej 0 aktywuje się tryb zaznaczenia. */
   public setSelectionCount(count: Signal<number>): this {
     this._data.selectionCount = count;
+    return this;
+  }
+
+  /**
+   * Podpina Signal z rodzajem zasięgu zaznaczenia (`none`/`explicit`/`query`). Na jego podstawie
+   * toolbar blokuje akcje ograniczone przez `ErpActionDefBuilder.setScopes()`.
+   */
+  public setSelectionScope(scope: Signal<ErpSelectionScopeKind>): this {
+    this._data.selectionScope = scope;
     return this;
   }
 

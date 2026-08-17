@@ -158,6 +158,7 @@ export const SHARED_KEYS = {
         more: 'shared.actionToolbar.toolbar.more',
         clearSelection: 'shared.actionToolbar.toolbar.clearSelection',
         configureMenu: 'shared.actionToolbar.toolbar.configureMenu',
+        unavailableInScope: 'shared.actionToolbar.toolbar.unavailableInScope',
       },
     },
     auth: {

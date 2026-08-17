@@ -65,7 +65,12 @@
         "bulkTitle": "Wybrano {{ count }} produktów",
         "bulkDescription": "Zaznaczono zbyt wiele produktów, aby wyświetlić ich szczegóły jednocześnie. Możesz wykonać akcje masowe na wszystkich zaznaczonych produktach.",
         "bulkAdd": "Dodaj multimedia masowo",
-        "bulkDelete": "Usuń wszystkie multimedia"
+        "bulkDelete": "Usuń wszystkie multimedia",
+        "resolving": "Rozwiązywanie zaznaczenia…",
+        "scopeAllTitle": "Zaznaczono wszystkie {{ count }} produktów pasujących do filtrów",
+        "scopePreviewTitle": "Podgląd {{ shown }} z {{ count }} produktów pasujących do filtrów",
+        "scopePreviewDescription": "Akcje masowe obejmą wszystkie pasujące produkty, nie tylko widoczne poniżej. Wybór pojedynczych plików jest przy tym zaznaczeniu niedostępny — zawęź filtry, aby pracować na konkretnych pozycjach.",
+        "scopeFileSelectionUnavailable": "Wybór pojedynczych plików wymaga zaznaczenia konkretnych produktów"
       }
     },
     "delivery": {

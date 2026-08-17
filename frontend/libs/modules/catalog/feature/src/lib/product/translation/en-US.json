@@ -65,7 +65,12 @@
         "bulkTitle": "Selected {{ count }} products",
         "bulkDescription": "Too many products selected to display details at once. You can perform bulk actions on all selected products.",
         "bulkAdd": "Add multimedia in bulk",
-        "bulkDelete": "Remove all multimedia"
+        "bulkDelete": "Remove all multimedia",
+        "resolving": "Resolving selection…",
+        "scopeAllTitle": "All {{ count }} products matching the filters are selected",
+        "scopePreviewTitle": "Preview of {{ shown }} out of {{ count }} products matching the filters",
+        "scopePreviewDescription": "Bulk actions will cover every matching product, not just the ones listed below. Picking individual files is unavailable for this selection — narrow the filters to work on specific items.",
+        "scopeFileSelectionUnavailable": "Picking individual files requires selecting specific products"
       }
     },
     "delivery": {

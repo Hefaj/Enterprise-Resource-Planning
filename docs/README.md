@@ -17,5 +17,6 @@ Przepisy zadaniowe i architektura frontendu, pisane głównie z myślą o agenci
 | Tłumaczenia (Transloco) — zero-hardcoded-strings, DI shadowing, generator `keys.ts` | [frontend/translations.md](./frontend/translations.md) |
 | Nowy moduł — pełny przepis: generacja NX, architektura hybrydowa Monolit/MFE, rejestracja w Client, checklist | [frontend/new-module.md](./frontend/new-module.md) |
 | Atomy UI — wzorzec "Single Config Builder" | [frontend/atoms.md](./frontend/atoms.md) |
+| Zasięg zaznaczenia — „Zaznacz wszystko" jako filtr, próg materializacji, cele operacji masowych, panele boczne | [frontend/selection-scope.md](./frontend/selection-scope.md) |
 
 > Backend jest w trakcie budowy — dokumentacja pojawi się, gdy architektura mikroserwisów się ustabilizuje.

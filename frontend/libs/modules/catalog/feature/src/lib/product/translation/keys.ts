@@ -71,6 +71,11 @@ export const PRODUCT_KEYS = {
           bulkDescription: 'product.base.multimedia.panel.bulkDescription',
           bulkAdd: 'product.base.multimedia.panel.bulkAdd',
           bulkDelete: 'product.base.multimedia.panel.bulkDelete',
+          resolving: 'product.base.multimedia.panel.resolving',
+          scopeAllTitle: 'product.base.multimedia.panel.scopeAllTitle',
+          scopePreviewTitle: 'product.base.multimedia.panel.scopePreviewTitle',
+          scopePreviewDescription: 'product.base.multimedia.panel.scopePreviewDescription',
+          scopeFileSelectionUnavailable: 'product.base.multimedia.panel.scopeFileSelectionUnavailable',
         },
       },
       delivery: {

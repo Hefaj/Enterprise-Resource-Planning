@@ -209,6 +209,8 @@ z tego samego zapisu przez `AggregateChangeScanner`.
 
 - [Walidacja wsadowa](./batch-validation.md) — pre-check PRZED utworzeniem zadania, dla reguł
   zbiorczych (istnienie, duplikat), które kosztowałyby N zapytań przy walidacji per element
+- [Zasięg zaznaczenia (frontend)](../frontend/selection-scope.md) — druga strona tego kontraktu:
+  skąd UI bierze `targetUuids`/`targetFilter` i jak zachowuje się przy „Zaznacz wszystko"
 - [CQRS — komendy i zapytania](./cqrs.md)
 - [Zdarzenia domenowe i outbox](./events-outbox.md)
 - [Synchronizacja w czasie rzeczywistym](./realtime-signalr.md)

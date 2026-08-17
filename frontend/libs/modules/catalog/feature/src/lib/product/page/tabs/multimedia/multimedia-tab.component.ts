@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ProductStore } from '../../product.store';
 import { MultimediaTabStore } from './multimedia-tab.store';
 import {
   ErpActionToolbarBuilder,
@@ -11,6 +10,9 @@ import {
   ErpSelectionState,
   ErpTableBuilder,
   ErpTableComponent,
+  ErpTableConfig,
+  ErpTranslatePipe,
+  erpBuildBatchTargets,
 } from '@erp/shared/ui';
 import { CatalogMultimediaOrchestrator, CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../../translation/keys';
@@ -25,6 +27,15 @@ import { MultimediaInfoCellComponent } from './multimedia-info-cell.component';
  */
 const MULTIMEDIA_CHUNK_SIZE = 30;
 
+/**
+ * Panel multimediów zaznaczonych produktów — referencyjny konsument zasięgu zaznaczenia
+ * (`ErpSelectionScope`, patrz `product.store.ts`).
+ *
+ * Zasada, którą realizuje: panel jest DOWODEM (co obejmie operacja), a nie źródłem prawdy
+ * o jej celu. Celem jest zasięg — lista uuidów albo filtr. Dlatego przy zaznaczeniu opisanym
+ * filtrem panel nie próbuje wczytać multimediów tysięcy produktów: pokazuje próbkę kilku
+ * pierwszych i wyłącza wybór pojedynczych plików, a akcje masowe i tak lecą na cały zbiór.
+ */
 @Component({
   selector: 'erp-multimedia-tab',
   standalone: true,
@@ -34,49 +45,123 @@ const MULTIMEDIA_CHUNK_SIZE = 30;
     ErpActionToolbarZoneDirective,
     ErpActionToolbarContextDirective,
     ErpEmptyStateComponent,
+    ErpTranslatePipe,
   ],
   providers: [MultimediaTabStore],
   template: `
     <div class="h-full w-full p-2">
-      @if (_selectedProducts().length === 0) {
+      @if (_scopeKind() === 'none') {
         <erp-empty-state [config]="emptySelectionConfig" />
+      } @else if (_resolving()) {
+        <erp-empty-state [config]="resolvingConfig" />
       } @else {
         <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="toolbarConfig">
           <erp-action-toolbar [config]="toolbarConfig" />
+
+          @if (_scopeKind() === 'query') {
+            <!-- Zdanie o zasięgu: promień rażenia akcji masowych musi być widoczny bez klikania,
+                 a próbka poniżej musi być jawnie oznaczona jako próbka, nie jako pełna lista. -->
+            <div class="erp-multimedia-tab__scope-banner">
+              <div class="flex items-center gap-2">
+                <span class="font-medium">
+                  {{
+                    PRODUCT_KEYS.base.multimedia.panel.scopePreviewTitle
+                      | erpTranslate: { shown: _products().length, count: _scopeCount() }
+                  }}
+                </span>
+              </div>
+              <p class="erp-multimedia-tab__scope-description">
+                {{ PRODUCT_KEYS.base.multimedia.panel.scopePreviewDescription | erpTranslate }}
+              </p>
+            </div>
+          } @else if (_isMaterialized()) {
+            <div class="erp-multimedia-tab__scope-banner erp-multimedia-tab__scope-banner--calm">
+              {{
+                PRODUCT_KEYS.base.multimedia.panel.scopeAllTitle | erpTranslate: { count: _scopeCount() }
+              }}
+            </div>
+          }
+
           <div class="flex-1 overflow-hidden">
             <erp-table
               class="block h-full w-full"
-              [config]="tableConfig"
+              [config]="tableConfig()"
             />
           </div>
         </div>
       }
     </div>
   `,
+  styles: [`
+    .erp-multimedia-tab__scope-banner {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid color-mix(in srgb, var(--tui-status-warning) 35%, transparent);
+      background: color-mix(in srgb, var(--tui-status-warning) 8%, var(--tui-background-base));
+      color: var(--tui-text-primary);
+      font: var(--tui-font-text-s);
+    }
+
+    .erp-multimedia-tab__scope-banner--calm {
+      border-color: color-mix(in srgb, var(--tui-text-action) 30%, transparent);
+      background: color-mix(in srgb, var(--tui-text-action) 6%, var(--tui-background-base));
+    }
+
+    .erp-multimedia-tab__scope-description {
+      margin-top: 0.25rem;
+      color: var(--tui-text-secondary);
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultimediaTabComponent {
-  private readonly store = inject(ProductStore);
+  protected readonly PRODUCT_KEYS = PRODUCT_KEYS;
+
   private readonly tabStore = inject(MultimediaTabStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
 
-  protected readonly _selectedProducts = computed(() => {
-    const selectedItems = this.store.selection()?.selectedItems || [];
-    if (selectedItems.length === 0) return [];
+  protected readonly _scopeKind = this.tabStore.scopeKind;
+  protected readonly _resolving = this.tabStore.resolving;
 
-    const uuids = selectedItems.map(item => item.uuid);
-    const signalMap = this.productOrchestrator.getSignalViewModel();
+  protected readonly _scopeCount = computed(() => {
+    const scope = this.tabStore.scope();
+    return scope.kind === 'none' ? 0 : scope.count;
+  });
 
-    return uuids.map(uuid => {
-      const vmSignal = signalMap.get(uuid);
-      const latestVm = vmSignal ? vmSignal() : null;
-      return latestVm || selectedItems.find(x => x.uuid === uuid)!;
-    });
+  /** Czy zaznaczenie powstało z „Zaznacz wszystko" rozwiązanego do listy identyfikatorów. */
+  protected readonly _isMaterialized = computed(() => {
+    const scope = this.tabStore.scope();
+    return scope.kind === 'explicit' && scope.materialized;
   });
 
   /**
-   * Wszystkie multimedia wszystkich zaznaczonych produktów — jedna wspólna, płaska lista wierszy.
+   * Produkty, których multimedia panel renderuje: komplet zaznaczonych (tryb `explicit`)
+   * albo próbka kilku pierwszych pasujących do filtra (tryb `query`).
+   *
+   * Modele widoku bierzemy z orkiestratora po UUID — dzięki temu wiersze aktualizują się
+   * z SignalR, a zaznaczenie zmaterializowane (które nie niesie ze sobą pozycji) działa
+   * dokładnie tak samo jak ręczne.
+   */
+  protected readonly _products = computed<ProductVM[]>(() => {
+    const uuids = this.tabStore.visibleProductUuids();
+    if (uuids.length === 0) return [];
+
+    const scope = this.tabStore.scope();
+    const known = scope.kind === 'explicit' ? scope.items : [];
+    const signalMap = this.productOrchestrator.getSignalViewModel();
+
+    return uuids
+      .map(uuid => {
+        const vmSignal = signalMap.get(uuid);
+        const latestVm = vmSignal ? vmSignal() : null;
+        return latestVm ?? known.find(x => x.uuid === uuid);
+      })
+      .filter((vm): vm is ProductVM => vm !== undefined);
+  });
+
+  /**
+   * Wszystkie multimedia widocznych produktów — jedna wspólna, płaska lista wierszy.
    * Budowana z `multimediaUuids` (znane od razu — to zwykłe pole produktu, nie wymaga osobnego
    * ładowania), NIE z rozwiązanego `product.multimedia` — dzięki temu liczba i kolejność wierszy
    * (a więc i wysokość wirtualizera) są poprawne natychmiast, a szczegóły każdego wiersza
@@ -84,7 +169,7 @@ export class MultimediaTabComponent {
    * (patrz `onVisibleRowsChange` niżej) — zamiast pobierać wszystkie multimedia produktu naraz.
    */
   protected readonly _rows = computed<MultimediaRow[]>(() =>
-    this._selectedProducts().flatMap(product =>
+    this._products().flatMap(product =>
       (product.multimediaUuids ?? []).map(uuid => ({ productUuid: product.uuid, uuid }))
     )
   );
@@ -96,6 +181,11 @@ export class MultimediaTabComponent {
     message: PRODUCT_KEYS.base.multimedia.panel.emptySelection,
   };
 
+  protected readonly resolvingConfig: ErpEmptyStateConfig = {
+    icon: '@tui.loader',
+    message: PRODUCT_KEYS.base.multimedia.panel.resolving,
+  };
+
   // Zbiór UUID produktów, dla których już zażądaliśmy bazowego załadowania (dedupikacja).
   private readonly loadedProductUuids = new Set<string>();
   // Zbiór UUID multimediów, dla których już zażądaliśmy doładowania szczegółów (dedupikacja).
@@ -105,6 +195,9 @@ export class MultimediaTabComponent {
     .setMenuId('multimedia-toolbar')
     .setSelectionCount(this._subSelectionCount)
     .setSelectionLabel('shared.selectionToolbar.selectedFiles')
+    // Zasięg produktów (nie plików!) — na jego podstawie toolbar blokuje akcje wymagające
+    // wskazanych pozycji, gdy zaznaczenie jest filtrem.
+    .setSelectionScope(this.tabStore.scopeKind)
     .setOnClearSelection(() => this.onClearMediaSelection())
     .addDefaultGroup(g => g
       .setId('mass-actions')
@@ -140,6 +233,9 @@ export class MultimediaTabComponent {
         .setFn(() => console.log('Miniatury'))
       )
     )
+    // Operacje na WSKAZANYCH plikach — wymagają zaznaczenia rozwiązanego do listy pozycji.
+    // Deklaracja jest tu po to, żeby niezmiennik był zapisany w konfiguracji akcji, a nie
+    // wynikał ubocznie z tego, że w trybie filtra i tak nie da się nic zaznaczyć.
     .addSelectionGroup(g => g
       .setId('selection-actions')
       .setLabel('Wybrane operacje')
@@ -148,73 +244,85 @@ export class MultimediaTabComponent {
         .setLabel('Usuń zaznaczone')
         .setIcon('@tui.trash')
         .setAppearance('warning')
+        .setScopes(['explicit'])
+        .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
         .setFn(() => this.onDeleteSelectedMedia())
       )
       .addAction(a => a
         .setId('download')
         .setLabel('Pobierz oryginały')
         .setIcon('@tui.download')
+        .setScopes(['explicit'])
+        .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
         .setFn(() => console.log('Pobierz'))
       )
       .addAction(a => a
         .setId('optimize')
         .setLabel('Optymalizuj wybrane')
         .setIcon('@tui.wand')
+        .setScopes(['explicit'])
+        .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
         .setFn(() => console.log('Optymalizuj'))
       )
     )
   );
 
-  protected readonly tableConfig = ErpTableBuilder.create<ErpTableBuilder<MultimediaRow>>((table) =>
-    table
-      .setStateKey('product-tab-multimedia')
-      .setMode('client')
-      .setSelectionMode('multi')
-      .setRowIdAccessor(r => `${r.productUuid}:${r.uuid}`)
-      .setItems(this._rows)
-      .setItemCount(computed(() => this._rows().length))
-      .setEnableVirtualScroll(true)
-      .setEstimatedRowHeight(56)
-      .setEmptyMessage(PRODUCT_KEYS.base.multimedia.panel.emptySelection)
-      .setOnSelectionChange(state => this.onSelectionChange(state))
-      .addColumn(c => c
-        .setId('thumbnail')
-        .setHeader('Miniatura')
-        .setCell(MultimediaThumbnailCellComponent)
-        .setEnableSorting(false)
-        .setSize(100)
-      )
-      .addColumn(c => c
-        .setId('fileName')
-        .setHeader('Nazwa pliku')
-        .setCell(MultimediaInfoCellComponent, { field: 'fileName' })
-        .setSize(320)
-      )
-      .addColumn(c => c
-        .setId('mediaType')
-        .setHeader('Typ')
-        .setCell(MultimediaInfoCellComponent, { field: 'mediaType' })
-        .setSize(140)
-      )
-      .addColumn(c => c
-        .setId('fileSize')
-        .setHeader('Rozmiar')
-        .setCell(MultimediaInfoCellComponent, { field: 'fileSize' })
-        .setCellClass('text-right')
-        .setSize(120)
-      )
-      .setGroupedRows<ProductVM>(g => g
-        .setGroups(this._selectedProducts)
-        .setGetGroupKey(p => p.uuid)
-        .setGetRowGroupKey((r: MultimediaRow) => r.productUuid)
-        .setGetGroupTitle(p => p.name)
-        .setGetGroupSubtitle(p => p.codeValue('SKU') ?? '')
-        .setGetGroupIcon(() => '@tui.image')
-        .setIsGroupLoading(p => (p.multimediaUuids?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
-        .setDefaultExpanded(true)
-        .setLoadChildren(p => this.ensureProductLoaded(p.uuid))
-        .setOnVisibleRowsChange((product, visibleRows) => this.loadVisibleMultimedia(product, visibleRows))
-      )
+  /**
+   * Konfiguracja tabeli jest `computed`, bo tryb zaznaczenia zależy od zasięgu: przy zaznaczeniu
+   * opisanym filtrem znikają checkboxy plików ORAZ grup (`selectionMode: 'none'`).
+   */
+  protected readonly tableConfig = computed<ErpTableConfig<MultimediaRow>>(() =>
+    ErpTableBuilder.create<ErpTableBuilder<MultimediaRow>>((table) =>
+      table
+        .setStateKey('product-tab-multimedia')
+        .setMode('client')
+        .setSelectionMode(this.tabStore.canSelectMedia() ? 'multi' : 'none')
+        .setRowIdAccessor(r => `${r.productUuid}:${r.uuid}`)
+        .setItems(this._rows)
+        .setItemCount(computed(() => this._rows().length))
+        .setEnableVirtualScroll(true)
+        .setEstimatedRowHeight(56)
+        .setEmptyMessage(PRODUCT_KEYS.base.multimedia.panel.emptySelection)
+        .setOnSelectionChange(state => this.onSelectionChange(state))
+        .addColumn(c => c
+          .setId('thumbnail')
+          .setHeader('Miniatura')
+          .setCell(MultimediaThumbnailCellComponent)
+          .setEnableSorting(false)
+          .setSize(100)
+        )
+        .addColumn(c => c
+          .setId('fileName')
+          .setHeader('Nazwa pliku')
+          .setCell(MultimediaInfoCellComponent, { field: 'fileName' })
+          .setSize(320)
+        )
+        .addColumn(c => c
+          .setId('mediaType')
+          .setHeader('Typ')
+          .setCell(MultimediaInfoCellComponent, { field: 'mediaType' })
+          .setSize(140)
+        )
+        .addColumn(c => c
+          .setId('fileSize')
+          .setHeader('Rozmiar')
+          .setCell(MultimediaInfoCellComponent, { field: 'fileSize' })
+          .setCellClass('text-right')
+          .setSize(120)
+        )
+        .setGroupedRows<ProductVM>(g => g
+          .setGroups(this._products)
+          .setGetGroupKey(p => p.uuid)
+          .setGetRowGroupKey((r: MultimediaRow) => r.productUuid)
+          .setGetGroupTitle(p => p.name)
+          .setGetGroupSubtitle(p => p.codeValue('SKU') ?? '')
+          .setGetGroupIcon(() => '@tui.image')
+          .setIsGroupLoading(p => (p.multimediaUuids?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
+          .setDefaultExpanded(true)
+          .setLoadChildren(p => this.ensureProductLoaded(p.uuid))
+          .setOnVisibleRowsChange((product, visibleRows) => this.loadVisibleMultimedia(product, visibleRows))
+        )
+    )
   );
 
   /** Ładuje bazowy produkt (raz), aby upewnić się, że `multimediaUuids` jest dostępne. */
@@ -264,12 +372,20 @@ export class MultimediaTabComponent {
     this.tabStore.selectedMultimedia.set(new Set(state.selectedItems.map(r => r.uuid)));
   }
 
+  /**
+   * Akcje masowe adresują ZASIĘG, nie to, co widać w panelu — w trybie filtra cele rozwiąże
+   * backend (`targetFilter`), w trybie listy lecą wprost identyfikatory (`targetUuids`).
+   * Składanie celów idzie przez `erpBuildBatchTargets`, żeby żaden komponent nie decydował
+   * o tym po swojemu.
+   */
   protected onAddMass(): void {
-    console.log('Masowe dodawanie multimediów dla', this._selectedProducts().length, 'produktów');
+    const targets = erpBuildBatchTargets(this.tabStore.scope());
+    console.log('Masowe dodawanie multimediów', { targets, count: this._scopeCount() });
   }
 
   protected onDeleteMass(): void {
-    console.log('Masowe usuwanie multimediów dla', this._selectedProducts().length, 'produktów');
+    const targets = erpBuildBatchTargets(this.tabStore.scope());
+    console.log('Masowe usuwanie multimediów', { targets, count: this._scopeCount() });
   }
 
   protected onDeleteSelectedMedia(): void {

@@ -1,17 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject, computed, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  ErpActionToolbarComponent, 
-  ErpActionToolbarBuilder, 
-  ErpActionToolbarZoneDirective, 
-  ErpActionToolbarContextDirective, 
+import {
+  ErpActionToolbarComponent,
+  ErpActionToolbarBuilder,
+  ErpActionToolbarZoneDirective,
+  ErpActionToolbarContextDirective,
   ErpModalService,
   ErpSelectionState,
   ErpBatchMetadata,
-  erpSelectionCount
+  erpBuildBatchTargets,
+  erpSelectionScopeCount
 } from '@erp/shared/ui';
 import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
-import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductVM } from '@erp/catalog/data-access';
+import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductVM, SearchProductRequest } from '@erp/catalog/data-access';
 import { CatalogProductTableComponent } from '../../components/catalog-product-table/catalog-product-table.component';
 import { ProductStore } from '../product.store';
 
@@ -49,7 +50,7 @@ export class ProductTabComponent {
 
   private readonly productTable = viewChild(CatalogProductTableComponent);
 
-  protected readonly selectionCount = computed(() => erpSelectionCount(this.store.selection()));
+  protected readonly selectionCount = computed(() => erpSelectionScopeCount(this.store.scope()));
 
   protected readonly dynamicAttributes = signal([
     { id: 'attr-1', label: 'Kolor', data: 'color' },
@@ -234,13 +235,9 @@ export class ProductTabComponent {
       // --- USTAWIENIA DODATKOWE ---
       .setSelectionCount(this.selectionCount)
       .setSelectionLabel('Wybrano produktów')
+      .setSelectionScope(this.store.scopeKind)
       .setOnClearSelection(() => {
-         this.store.setSelection({
-           mode: 'server',
-           isAllSelected: false,
-           selectedItems: [],
-           selectedIds: []
-         } as ErpSelectionState<ProductVM>);
+         this.store.clearSelection();
          this.productTable()?.clearSelection();
       })
       .setPinnedActionIds(['add', 'set-name', 'set-price', 'activate'])
@@ -254,27 +251,27 @@ export class ProductTabComponent {
   }
 
   private openSetPriceModal(): void {
-    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(SET_PRICE_MODAL_ID, { products: [] });
+    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ErpBatchMetadata>(
+      SET_PRICE_MODAL_ID,
+      erpBuildBatchTargets<SearchProductRequest>(this.store.scope()),
+      { targetCount: this.selectionCount() },
+    );
   }
 
   private openSetNameModal(): void {
-    const selection = this.store.selection();
     // Komenda modalu jest dokładnie tym, co poleci na API — obok celów można tu dołożyć
     // wartości inicjujące (`templateCommand`).
     //
-    // Oba pola celów lecą wprost ze stanu zaznaczenia i same się wykluczają: przy
-    // zaznaczeniu pojedynczych wierszy tabela nie podaje filtrów, a przy „Zaznacz wszystko"
-    // nie podaje identyfikatorów. Tryb rozstrzyga backend (`ResolveTargetsAsync`):
-    // niepuste `targetUuids` wygrywa, w przeciwnym razie cele wyznacza `targetFilter`.
+    // Cele składa `erpBuildBatchTargets` z zasięgu zaznaczenia: zaznaczenie rozwiązane do listy
+    // (również to z „Zaznacz wszystko" poniżej progu materializacji) daje `targetUuids`,
+    // zaznaczenie filtrem — `targetFilter`. Oba pola się wykluczają i backend nie potrzebuje
+    // podpowiedzi: `ResolveTargetsAsync` bierze niepuste `targetUuids`, a w przeciwnym razie filtr.
     //
     // `targetCount` idzie metadanymi (nie komendą) — kontrakt HTTP jest zamrożony,
     // a modal potrzebuje tylko liczby do pokazania „ile pozycji obejmie operacja".
     this.modalService.open<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ErpBatchMetadata>(
       SET_NAME_MODAL_ID,
-      {
-        targetUuids: selection?.selectedIds,
-        targetFilter: selection?.filters,
-      },
+      erpBuildBatchTargets<SearchProductRequest>(this.store.scope()),
       { targetCount: this.selectionCount() },
     );
   }

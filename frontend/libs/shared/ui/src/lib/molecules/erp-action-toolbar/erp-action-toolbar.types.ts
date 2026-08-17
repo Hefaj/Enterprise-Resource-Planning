@@ -1,6 +1,7 @@
 import { Signal } from '@angular/core';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpIcon } from '../../base/erp-icon.types';
+import { ErpSelectionScopeKind } from '../../atoms/erp-table/erp-selection.utils';
 
 // ─────────────────────────────────────────────────
 // Akcja
@@ -53,6 +54,21 @@ export interface ErpActionDef {
 
   /** Separator nad tym elementem. */
   separator?: boolean;
+
+  /**
+   * Zasięgi zaznaczenia, w których akcja jest wykonalna (patrz `ErpSelectionScopeKind`).
+   * Pominięcie = akcja działa w każdym zasięgu.
+   *
+   * Służy do odróżnienia akcji wyrażalnych nad ZBIOREM opisanym filtrem (usuń, ustaw wartość,
+   * eksportuj — backend rozwiąże `targetFilter`) od akcji wymagających WSKAZANYCH pozycji
+   * (zmień kolejność, ustaw jako główne, pobierz oryginały). Te drugie przy zaznaczeniu
+   * `query` nie mają czego dotyczyć, więc toolbar blokuje je z podpowiedzią zamiast ukrywać —
+   * układ przypiętych przycisków zostaje stabilny, a użytkownik dowiaduje się dlaczego.
+   */
+  scopes?: ErpSelectionScopeKind[];
+
+  /** Podpowiedź pokazywana, gdy akcja jest zablokowana przez `scopes`. */
+  unavailableHint?: MaybeSignal<Translatable>;
 }
 
 // ─────────────────────────────────────────────────
@@ -199,6 +215,17 @@ export interface ErpActionToolbarConfig {
 
   /** Signal z liczbą zaznaczonych elementów. 0 = tryb domyślny. */
   selectionCount?: Signal<number>;
+
+  /**
+   * Rodzaj zasięgu zaznaczenia, którego dotyczą akcje tego toolbara. Toolbar blokuje na jego
+   * podstawie akcje z niepasującym `ErpActionDef.scopes`. Domyślnie `'explicit'` — toolbar bez
+   * zadeklarowanego zasięgu zachowuje się jak dotychczas.
+   *
+   * Uwaga: to NIE jest to samo co `selectionCount`. W panelu bocznym licznik dotyczy podzaznaczenia
+   * (np. plików), a zasięg — zaznaczenia nadrzędnego (np. produktów), które to podzaznaczenie
+   * w ogóle umożliwia albo nie.
+   */
+  selectionScope?: Signal<ErpSelectionScopeKind>;
 
   /** Etykieta zaznaczenia (domyślna: 'shared.selectionToolbar.selected'). */
   selectionLabel?: MaybeSignal<Translatable>;

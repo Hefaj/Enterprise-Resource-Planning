@@ -25,6 +25,7 @@ import { ErpActionToolbarConfiguratorComponent } from './erp-action-toolbar-conf
 import { ErpActionToolbarMegaMenuComponent } from './erp-action-toolbar-mega-menu.component';
 import { ErpActionToolbarZoneDirective } from './erp-action-toolbar-zone.directive';
 import { SHARED_KEYS } from '../../translation/keys';
+import { ErpSelectionScopeKind } from '../../atoms/erp-table/erp-selection.utils';
 import {
   ErpActionDef,
   ErpActionGroup,
@@ -98,22 +99,30 @@ import {
           <div class="erp-action-toolbar__pinned" #scrollContainer (scroll)="onScroll(scrollContainer)">
           @for (action of _pinnedSelectionActions(); track action.id) {
             @if (!unwrap(action.hidden)) {
-              <button 
-                tuiButton
-                type="button"
-                [appearance]="'flat'"
-                [size]="'m'"
-                [disabled]="unwrap(action.disabled) || isActionLoading(action)"
-                [loading]="isActionLoading(action)"
-                [iconStart]="unwrap(action.icon) ?? ''"
-                (click)="onActionClick(action)"
-                [class.erp-action-toolbar__btn--default]="!unwrap(action.appearance)"
-                [class.erp-action-toolbar__btn--warning]="unwrap(action.appearance) === 'warning'"
-                [class.erp-action-toolbar__btn--info]="unwrap(action.appearance) === 'info'"
-                [class.erp-action-toolbar__btn--success]="unwrap(action.appearance) === 'success'"
+              <!-- Tooltip siedzi na opakowaniu, nie na przycisku: zablokowany button nie dostaje
+                   zdarzeń myszy, więc title postawiony wprost na nim nigdy by się nie pokazał —
+                   a podpowiedź jest potrzebna właśnie wtedy, gdy akcja jest zablokowana. -->
+              <span
+                class="erp-action-toolbar__pinned-item"
+                [title]="(unwrap(action.hint) | erpTranslate) || ''"
               >
-                <span>{{ (unwrap(action.label) | erpTranslate) || '' }}</span>
-              </button>
+                <button
+                  tuiButton
+                  type="button"
+                  [appearance]="'flat'"
+                  [size]="'m'"
+                  [disabled]="unwrap(action.disabled) || isActionLoading(action)"
+                  [loading]="isActionLoading(action)"
+                  [iconStart]="unwrap(action.icon) ?? ''"
+                  (click)="onActionClick(action)"
+                  [class.erp-action-toolbar__btn--default]="!unwrap(action.appearance)"
+                  [class.erp-action-toolbar__btn--warning]="unwrap(action.appearance) === 'warning'"
+                  [class.erp-action-toolbar__btn--info]="unwrap(action.appearance) === 'info'"
+                  [class.erp-action-toolbar__btn--success]="unwrap(action.appearance) === 'success'"
+                >
+                  <span>{{ (unwrap(action.label) | erpTranslate) || '' }}</span>
+                </button>
+              </span>
             }
           }
           </div>
@@ -156,22 +165,30 @@ import {
           <div class="erp-action-toolbar__pinned" #scrollContainer (scroll)="onScroll(scrollContainer)">
           @for (action of _pinnedDefaultActions(); track action.id) {
             @if (!unwrap(action.hidden)) {
-              <button 
-                tuiButton
-                type="button"
-                [appearance]="'flat'"
-                [size]="'m'"
-                [disabled]="unwrap(action.disabled) || isActionLoading(action)"
-                [loading]="isActionLoading(action)"
-                [iconStart]="unwrap(action.icon) ?? ''"
-                (click)="onActionClick(action)"
-                [class.erp-action-toolbar__btn--default]="!unwrap(action.appearance)"
-                [class.erp-action-toolbar__btn--warning]="unwrap(action.appearance) === 'warning'"
-                [class.erp-action-toolbar__btn--info]="unwrap(action.appearance) === 'info'"
-                [class.erp-action-toolbar__btn--success]="unwrap(action.appearance) === 'success'"
+              <!-- Tooltip siedzi na opakowaniu, nie na przycisku: zablokowany button nie dostaje
+                   zdarzeń myszy, więc title postawiony wprost na nim nigdy by się nie pokazał —
+                   a podpowiedź jest potrzebna właśnie wtedy, gdy akcja jest zablokowana. -->
+              <span
+                class="erp-action-toolbar__pinned-item"
+                [title]="(unwrap(action.hint) | erpTranslate) || ''"
               >
-                <span>{{ (unwrap(action.label) | erpTranslate) || '' }}</span>
-              </button>
+                <button
+                  tuiButton
+                  type="button"
+                  [appearance]="'flat'"
+                  [size]="'m'"
+                  [disabled]="unwrap(action.disabled) || isActionLoading(action)"
+                  [loading]="isActionLoading(action)"
+                  [iconStart]="unwrap(action.icon) ?? ''"
+                  (click)="onActionClick(action)"
+                  [class.erp-action-toolbar__btn--default]="!unwrap(action.appearance)"
+                  [class.erp-action-toolbar__btn--warning]="unwrap(action.appearance) === 'warning'"
+                  [class.erp-action-toolbar__btn--info]="unwrap(action.appearance) === 'info'"
+                  [class.erp-action-toolbar__btn--success]="unwrap(action.appearance) === 'success'"
+                >
+                  <span>{{ (unwrap(action.label) | erpTranslate) || '' }}</span>
+                </button>
+              </span>
             }
           }
           </div>
@@ -343,6 +360,11 @@ import {
       flex-shrink: 0;
     }
 
+    .erp-action-toolbar__pinned-item {
+      display: inline-flex;
+      flex-shrink: 0;
+    }
+
     .erp-action-toolbar__spacer {
       flex: 1;
     }
@@ -448,22 +470,64 @@ export class ErpActionToolbarComponent implements OnInit, OnDestroy {
     this.config().selectionLabel ?? SHARED_KEYS.actionToolbar.toolbar.selected
   );
 
-  // ─── Grupy akcji — DEFAULT ──────────────────────
+  // ─── Zasięg zaznaczenia ─────────────────────────
 
-  /** Grupy domyślne po odfiltrowaniu ukrytych. */
-  protected readonly _defaultGroups = computed<ErpActionGroup[]>(() => {
-    const groups = this.config().defaultGroups;
+  /**
+   * Rodzaj zasięgu, w którym pracuje toolbar. Brak konfiguracji = `explicit`, czyli
+   * zachowanie sprzed wprowadzenia zasięgów (żadna akcja nie jest blokowana).
+   */
+  protected readonly _scopeKind = computed<ErpSelectionScopeKind>(
+    () => this.config().selectionScope?.() ?? 'explicit'
+  );
+
+  /**
+   * Blokuje akcje, których `scopes` nie obejmuje bieżącego zasięgu — świadomie przez `disabled`
+   * + `hint`, nie przez ukrycie: znikające przyciski rozjeżdżają układ, który user sam sobie
+   * przypiął, i nie tłumaczą, dlaczego akcja przepadła.
+   *
+   * Dekoracja robiona jest na poziomie grup, więc dotyczy jednocześnie przypiętych przycisków,
+   * Mega Menu i skrótów klawiszowych (te sprawdzają `action.disabled`).
+   */
+  private _applyScopeGate(actions: ErpActionDef[]): ErpActionDef[] {
+    const kind = this._scopeKind();
+
+    return actions.map(action => {
+      const children = action.children ? this._applyScopeGate(action.children) : undefined;
+      const blocked = action.scopes !== undefined && !action.scopes.includes(kind);
+
+      if (!blocked) {
+        return children ? { ...action, children } : action;
+      }
+
+      return {
+        ...action,
+        children,
+        disabled: true,
+        hint: action.unavailableHint ?? SHARED_KEYS.actionToolbar.toolbar.unavailableInScope,
+      };
+    });
+  }
+
+  /** Wspólna ścieżka: preferencje usera (ukrywanie) + bramka zasięgu. */
+  private _prepareGroups(groups: ErpActionGroup[]): ErpActionGroup[] {
     const prefs = this._userPrefs();
 
-    if (!prefs) return groups;
-
     return groups
-      .filter(g => !prefs.hiddenGroupIds?.includes(g.id))
+      .filter(g => !prefs?.hiddenGroupIds?.includes(g.id))
       .map(g => ({
         ...g,
-        actions: g.actions.filter(a => !prefs.hiddenActionIds?.includes(a.id)),
+        actions: this._applyScopeGate(
+          prefs ? g.actions.filter(a => !prefs.hiddenActionIds?.includes(a.id)) : g.actions
+        ),
       }));
-  });
+  }
+
+  // ─── Grupy akcji — DEFAULT ──────────────────────
+
+  /** Grupy domyślne po odfiltrowaniu ukrytych i zablokowaniu niedostępnych w bieżącym zasięgu. */
+  protected readonly _defaultGroups = computed<ErpActionGroup[]>(() =>
+    this._prepareGroups(this.config().defaultGroups)
+  );
 
   /** Wszystkie akcje z domyślnych grup (flat). */
   private readonly _allDefaultActions = computed<ErpActionDef[]>(() => {
@@ -490,19 +554,9 @@ export class ErpActionToolbarComponent implements OnInit, OnDestroy {
 
   // ─── Grupy akcji — SELECTION ─────────────────────
 
-  protected readonly _selectionGroups = computed<ErpActionGroup[]>(() => {
-    const groups = this.config().selectionGroups ?? [];
-    const prefs = this._userPrefs();
-
-    if (!prefs) return groups;
-
-    return groups
-      .filter(g => !prefs.hiddenGroupIds?.includes(g.id))
-      .map(g => ({
-        ...g,
-        actions: g.actions.filter(a => !prefs.hiddenActionIds?.includes(a.id)),
-      }));
-  });
+  protected readonly _selectionGroups = computed<ErpActionGroup[]>(() =>
+    this._prepareGroups(this.config().selectionGroups ?? [])
+  );
 
   private readonly _allSelectionActions = computed<ErpActionDef[]>(() => {
     return this._selectionGroups().flatMap(g => g.actions);

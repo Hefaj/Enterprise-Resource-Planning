@@ -152,7 +152,8 @@
       "selected": "Selected",
       "more": "More",
       "clearSelection": "Clear selection",
-      "configureMenu": "Configure menu"
+      "configureMenu": "Configure menu",
+      "unavailableInScope": "Action unavailable for this selection — narrow the filters or pick individual items"
     }
   },
   "auth": {

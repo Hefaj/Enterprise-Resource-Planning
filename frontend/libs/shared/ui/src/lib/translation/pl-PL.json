@@ -152,7 +152,8 @@
       "selected": "Zaznaczono",
       "more": "Więcej",
       "clearSelection": "Usuń zaznaczenie",
-      "configureMenu": "Konfiguruj menu"
+      "configureMenu": "Konfiguruj menu",
+      "unavailableInScope": "Akcja niedostępna przy tym zaznaczeniu — zawęź filtry lub wybierz pojedyncze pozycje"
     }
   },
   "auth": {

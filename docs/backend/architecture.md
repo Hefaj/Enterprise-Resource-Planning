@@ -32,6 +32,9 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; skalowanie poziome wymaga zmian z [§7](#7-założenia-jednoinstancyjne) |
 | Middleware komend (walidacja, idempotencja, logowanie) | 📐 | Handler dziś sam woła `IUnitOfWork`; walidacja żyje wyłącznie w agregacie — patrz [`cqrs.md`](./cqrs.md#6-czego-jeszcze-nie-ma) |
 | Sales, Notification jako pełne moduły biznesowe | 🟡 | Struktura i szablon zweryfikowane (Sales/`Customer`); brak realnej logiki biznesowej poza sprawdzianem |
+| Uwierzytelnianie (Keycloak, JWT) | ✅ | [`identity-authz.md`](./identity-authz.md) §5-7 Faza 1 — zweryfikowane end-to-end w przeglądarce |
+| Autoryzacja — domena Identity (role, uprawnienia, katalog, JIT provisioning) | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 2 — zweryfikowane end-to-end przez API (hierarchia ról, wykrywanie cykli, efektywne uprawnienia, ścieżka dziedziczenia) |
+| Egzekwowanie uprawnień w Catalog/Sales/Notification | 📐 | [`identity-authz.md`](./identity-authz.md) §7 Faza 3 — katalog uprawnień istnieje i jest stabilny, ale żaden endpoint poza Identity go jeszcze nie sprawdza |
 
 ---
 
@@ -137,6 +140,8 @@ Przy starcie w `Development` moduł stosuje migracje i zasila bazę danymi przyk
 | Catalog | 5149 | `catalog` |
 | Notification | 5250 | `notification` |
 | Sales | 5269 | `sales` |
+| Identity | 5280 | `identity` |
+| Keycloak (IdP, nie mikroserwis) | 8080 | `keycloak` |
 
 Adresy bazowe dla frontendu konfiguruje
 [`remote-api.providers.ts`](../../frontend/apps/client/src/app/remote-api.providers.ts).

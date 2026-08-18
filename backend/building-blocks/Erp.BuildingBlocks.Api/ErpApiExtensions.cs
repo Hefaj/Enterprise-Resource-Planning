@@ -100,7 +100,14 @@ public static class ErpApiExtensions
     /// (<c>/openapi/v1.json</c> — to on jest źródłem dla NSwag, nie dokument spod
     /// <c>SwaggerDocument()</c>) z nazwy ZESTAWU Api, więc bez jawnego tagu ta sama pułapka
     /// wraca przy każdej kolejnej restrukturyzacji projektu.</param>
-    public static WebApplication UseErpApi(this WebApplication app, string serviceTitle)
+    /// <param name="configureBeforeEndpoints">Opcjonalny hak na middleware, które musi zobaczyć
+    /// zweryfikowanego <c>context.User</c> i wypełniony <see cref="Erp.BuildingBlocks.Application.Abstractions.IExecutionContext"/>,
+    /// ale musi zdążyć PRZED dopasowaniem endpointu — np. <c>Identity.Api</c> zakłada tu wiersz
+    /// <c>user_account</c> przy pierwszym uwierzytelnionym żądaniu (JIT provisioning), zanim
+    /// jakikolwiek endpoint zdąży odpytać o uprawnienia nieistniejącego jeszcze użytkownika.
+    /// Domyślnie brak — pozostałe mikroserwisy nie płacą za hak, którego nie używają.</param>
+    public static WebApplication UseErpApi(
+        this WebApplication app, string serviceTitle, Action<WebApplication>? configureBeforeEndpoints = null)
     {
         ArgumentNullException.ThrowIfNull(app);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceTitle);
@@ -123,6 +130,8 @@ public static class ErpApiExtensions
         // kontekst przy tworzeniu zadania. Po CORS i auth, żeby preflight nie przechodził przez
         // logikę tożsamości, a middleware widział już zweryfikowanego użytkownika.
         app.UseMiddleware<ExecutionContextMiddleware>();
+
+        configureBeforeEndpoints?.Invoke(app);
 
         app.UseFastEndpoints(config =>
         {

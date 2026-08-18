@@ -1,9 +1,10 @@
 # Tożsamość i uprawnienia — Keycloak (AuthN) + moduł Identity (AuthZ)
 
-Stan: **Faza 1 (AuthN) ✅ wdrożona i zweryfikowana end-to-end** (realny Keycloak, realne
-logowanie w przeglądarce, 401 bez tokenu, SignalR autoryzowany). **Fazy 2-6 📐 projekt, brak
+Stan: **Fazy 1-2 ✅ wdrożone i zweryfikowane end-to-end** (realny Keycloak, realne logowanie
+w przeglądarce, mikroserwis Identity z domeną ról/uprawnień, hierarchia z wykrywaniem cykli,
+efektywne uprawnienia i ścieżka dziedziczenia, JIT provisioning). **Fazy 3-6 📐 projekt, brak
 kodu.** Legenda znaczników jak w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
-Szczegóły zaimplementowanej Fazy 1 → §7 niżej i sekcje 5-6 (opisują już wdrożony stan, nie
+Szczegóły zaimplementowanych faz → §7 niżej i sekcje 2-6 (opisują już wdrożony stan, nie
 tylko projekt).
 
 Dokument opisuje docelowy kształt uwierzytelniania i autoryzacji oraz **plan wdrożenia w 6 fazach**.
@@ -267,20 +268,23 @@ Bez tego kroku żaden z powyższych elementów by nie zadziałał, mimo poprawne
 
 **Weryfikacja:** logowanie w przeglądarce; wywołanie API bez tokenu → 401; SignalR odbiera zdarzenia zalogowanego użytkownika; `job` powstaje z prawdziwym `UserId`.
 
-### Faza 2 — mikroserwis `Identity`, domena i katalog
+### Faza 2 — mikroserwis `Identity`, domena i katalog ✅
 
 | Element | Pliki |
 |---|---|
 | 4 projekty Clean Architecture | `backend/modules/Identity/**` wg [`new-microservice.md`](./new-microservice.md), port **5280** |
-| Katalog uprawnień | `Erp.BuildingBlocks.Contracts/Permissions.cs` + `PermissionDefinition` |
-| Agregaty | `Role` (uprawnienia, składowe, walidacja cyklu), `UserAccount` (role, nadania bezpośrednie) |
-| Persystencja | `IdentityDbContext` (schemat `identity`), migracja `Initial`, uzgadnianie katalogu przy starcie |
-| Zapytania | `IIdentityQueries` — efektywne uprawnienia (CTE), ścieżka dziedziczenia, listy |
-| Endpointy | CRUD ról, nadawanie/odbieranie, `GET /me/permissions`, `GET /internal/users/{id}/permissions` |
-| Seed | rola systemowa `administrator` z pełnym katalogiem; pierwszy użytkownik z realmu dostaje ją przy JIT |
+| Katalog uprawnień | `Erp.BuildingBlocks.Contracts/Permissions.cs` + `PermissionDefinition` — 15 kodów startowych w Catalog/Sales/Notification/Identity |
+| Agregaty | `Role` (`RolePermissionEntry`/`RoleMemberEntry` jako owned encje — EF nie mapuje `List<string>`/`List<Guid>` wprost jako encji własnej), `UserAccount` (`UserRoleGrant`/`UserPermissionGrant`) |
+| Persystencja | `IdentityDbContext` (schemat `identity`), migracja `InitialIdentitySchema`, `PermissionCatalogReconciler` uzgadnia katalog przy KAŻDYM starcie (nie tylko na pustej bazie) |
+| Zapytania | `IRoleQueries`/`IUserAccountQueries`/`IPermissionCatalogQueries` (rozbite z jednego `IIdentityQueries` z planu — czytelniejszy podział per agregat) — efektywne uprawnienia i ścieżka dziedziczenia surowym rekursywnym CTE przez dedykowane połączenie ADO.NET (`IdentityConnectionStringProvider` — Npgsql nie utrzymuje hasła w `DbConnection.ConnectionString` po otwarciu, więc odczyt connection stringa z już używanego przez EF połączenia zawodzi w runtime) |
+| Endpointy | CRUD ról (`role/create`, `add-permission`, `add-member`...), nadawanie/odbieranie (`user/assign-role`, `grant-permission`...), `GET /me/permissions`, `GET /me/permissions/sources` (ścieżka dziedziczenia), `GET /internal/users/{id}/permissions`, `GET /permission/catalog` |
+| Seed | rola systemowa `administrator` (kod `RoleSeeder.AdministratorRoleCode`) z pełnym katalogiem, zsynchronizowana bezwarunkowo przy starcie (nie za flagą `Seed:Enabled` jak dane przykładowe — to strukturalny warunek wstępny, nie demo) |
+| JIT provisioning | `Identity.Api/Provisioning/UserProvisioningMiddleware` — zakłada `user_account` przy pierwszym uwierzytelnionym żądaniu, pierwszy użytkownik w systemie dostaje `administrator` automatycznie. Wymagało nowego haka `configureBeforeEndpoints` w `ErpApiExtensions.UseErpApi` (opcjonalny, domyślnie no-op — inne serwisy nic nie płacą), bo middleware musi zobaczyć zweryfikowanego `context.User` i zdążyć przed dopasowaniem endpointu |
 | Sygnatury | `AggregateSignatures`: `identity.user`, `identity.role` |
 
-**Weryfikacja:** testy jednostkowe cyklu i efektywnego zbioru (m.in. rola w dwóch kontenerach nie duplikuje uprawnień); `Erp.ArchitectureTests` przechodzi; Swagger wystawia komplet.
+**Zweryfikowane end-to-end przez realne HTTP z tokenem Keycloaka** (nie tylko testy jednostkowe): utworzenie dwóch ról, dodanie uprawnienia, złożenie hierarchii (`warehouse-manager` zawiera `warehouse-reader`), próba zamknięcia cyklu odrzucona z `role_cycle_detected`, `GET /me/permissions` zwraca poprawny efektywny zbiór po przypisaniu zagnieżdżonej roli, `GET /me/permissions/sources` poprawnie atrybutuje `catalog.product.read` do `warehouse-reader` z `viaContainerRoleUuid` wskazującym `warehouse-manager`. `dotnet build`/`dotnet test` na całym rozwiązaniu (45/45) i `Erp.ArchitectureTests` (5/5) bez regresji.
+
+**Znany dług, świadomie odłożony:** wyjątki domenowe (`DomainException`, np. `role_cycle_detected`) kończą się dziś generycznym 500, nie 422 — to nie jest regresja Fazy 2, tylko brak middleware komend opisany w [`cqrs.md` §6](./cqrs.md#6-czego-jeszcze-nie-ma) jako nieistniejący w całym repo. `GET /internal/users/{id}/permissions` dziś wymaga tylko ważnego tokenu (dowolny zalogowany użytkownik może odpytać o cudze uprawnienia) — docelowa polityka service-to-service to zadanie Fazy 3.
 
 ### Faza 3 — egzekwowanie w pozostałych serwisach
 

@@ -43,6 +43,13 @@ public static class AggregateSignatures
     /// </summary>
     public const string Jobs = "jobs";
 
+    /// <summary>Projekcja użytkownika (role, uprawnienia bezpośrednie) — zmiana napędza
+    /// odświeżenie <c>PermissionStore</c> na froncie (Faza 5) i unieważnienie cache'u
+    /// uprawnień w innych mikroserwisach (Faza 3, <c>UserPermissionsChanged</c>).</summary>
+    public const string IdentityUser = "identity.user";
+
+    public const string IdentityRole = "identity.role";
+
     /// <summary>Wszystkie sygnatury agregatów — do walidacji przy starcie i w testach,
     /// żeby nikt nie rozgłosił zmiany na kanał, którego nikt nie słucha.</summary>
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -57,5 +64,7 @@ public static class AggregateSignatures
         NotificationJob,
         SalesCustomer,
         Jobs,
+        IdentityUser,
+        IdentityRole,
     };
 }

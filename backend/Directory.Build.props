@@ -34,4 +34,28 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
+  <!--
+    Izolacja katalogów bin/obj per „slot” buildu.
+
+    Dwa równoległe `dotnet watch` (np. Catalog.Api + Notification.Api przez `nx run-many`)
+    budują te same projekty z `building-blocks/`. Bez izolacji oba procesy MSBuild piszą do
+    tego samego `obj\Debug\net10.0` i blokują sobie pliki (`refint\*.dll`, apphost) — build
+    jednego z watcherów przewraca się na „because it is being used by another process”.
+
+    Gdy `ErpBuildSlot` jest ustawiony (robi to target `watch` w `project.json` każdego Api),
+    cały graf projektów danego watchera dostaje własne `obj\<slot>\` i `bin\<slot>\`.
+    Bez tej zmiennej nic się nie zmienia — zwykły `dotnet build`, nx `build`, `dotnet ef`
+    i CI używają domyślnych ścieżek.
+  -->
+  <PropertyGroup Condition="'$(ErpBuildSlot)' != ''">
+    <BaseIntermediateOutputPath>$(MSBuildProjectDirectory)\obj\$(ErpBuildSlot)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildProjectDirectory)\bin\$(ErpBuildSlot)\</BaseOutputPath>
+    <!--
+      SDK wyklucza z globów `**/*.cs` tylko AKTUALNY BaseIntermediateOutputPath. Po przeniesieniu
+      go do `obj\<slot>\` wygenerowane pliki z domyślnego `obj\Debug\` (AssemblyInfo.cs itp.)
+      wpadłyby do kompilacji jako zwykłe źródła — stąd jawne wykluczenie całych bin/obj.
+    -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**;$(MSBuildProjectDirectory)\bin\**</DefaultItemExcludes>
+  </PropertyGroup>
+
 </Project>

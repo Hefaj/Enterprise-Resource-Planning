@@ -208,6 +208,39 @@ await app.RunAsync();
 
 `Properties/launchSettings.json` — `applicationUrl` na `PORT`.
 
+### `project.json` w `.Api` — slot buildu dla `nx watch`
+
+Targety NX dla projektów .NET są inferowane przez plugin `@nx/dotnet`, więc `project.json` nie
+jest potrzebny do zwykłego `build`/`run`. Jest potrzebny do jednej rzeczy: nadpisania targetu
+`watch` własną zmienną `ErpBuildSlot`. Bez niej dwa równoległe `dotnet watch` (`nx run-many -t
+watch -p Catalog.Api Notification.Api`) budują te same projekty z `building-blocks/` do tego
+samego `obj\Debug\net10.0` i blokują sobie pliki. `backend/Directory.Build.props` przekłada
+`ErpBuildSlot` na osobne `obj\<slot>\` i `bin\<slot>\` dla całego grafu danego watchera.
+
+```json
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "MODULE_NAME.Api",
+  "targets": {
+    "watch": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "options": {
+        "cwd": "backend/modules/MODULE_NAME/MODULE_NAME.Api",
+        "command": "dotnet watch",
+        "env": { "ErpBuildSlot": "SLOT" }
+      }
+    }
+  }
+}
+```
+
+`SLOT` — krótka, unikalna nazwa modułu (`catalog`, `notification`, `sales`). Nazwa projektu
+w `project.json` musi być identyczna z inferowaną przez plugin (`MODULE_NAME.Api`), inaczej NX
+zobaczy dwa projekty w jednym katalogu. Pozostałe targety (`build`, `run`, `restore`) zostają
+inferowane i używają domyślnych `bin`/`obj` — slot dotyczy wyłącznie watcha.
+
 ---
 
 ## Krok 5: Pierwszy agregat, komenda, endpointy

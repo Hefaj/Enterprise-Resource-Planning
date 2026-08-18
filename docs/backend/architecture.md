@@ -29,7 +29,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Domain events → outbox → RabbitMQ | ✅ | [`events-outbox.md`](./events-outbox.md) |
 | Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — `job/cancel`, `job/retry-failed` dodane w fazie 5 |
 | Walidacja wsadowa (pre-check reguł zbiorczych) | ✅ | [`batch-validation.md`](./batch-validation.md) — mechanizm wspólny, podpięty w Catalog (`ProductMustExistRule`) |
-| SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; backplane pod >1 instancję nieużywany lokalnie |
+| SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; skalowanie poziome wymaga zmian z [§7](#7-założenia-jednoinstancyjne) |
 | Middleware komend (walidacja, idempotencja, logowanie) | 📐 | Handler dziś sam woła `IUnitOfWork`; walidacja żyje wyłącznie w agregacie — patrz [`cqrs.md`](./cqrs.md#6-czego-jeszcze-nie-ma) |
 | Sales, Notification jako pełne moduły biznesowe | 🟡 | Struktura i szablon zweryfikowane (Sales/`Customer`); brak realnej logiki biznesowej poza sprawdzianem |
 
@@ -169,7 +169,78 @@ to porównanie (29 typów, 14 ścieżek) wychwyciło rozjazd, którego testy jed
 
 ---
 
-## 7. Zobacz też
+## 7. Założenia jednoinstancyjne
+
+Backend zakłada dziś **jedną instancję każdego serwisu**. Nie jest to przeoczenie: trwałość jest
+w tych miejscach, gdzie utrata danych bolałaby (outbox, `job`/`job_item`), a stan czysto
+efemeryczny świadomie został w pamięci procesu, bo w jednej instancji nic nie kupuje za to
+dodatkowa infrastruktura.
+
+Lista jest w jednym miejscu, a nie rozsiana po dokumentach, z jednego powodu: przy skalowaniu
+poziomym te mechanizmy trzeba ruszyć **razem**. Włączenie samego backplane'u SignalR wygląda
+jak gotowość, a zostawia trzy pozostałe punkty ciche i zepsute.
+
+| Mechanizm | Gdzie | Co się psuje przy >1 instancji |
+|---|---|---|
+| Rozgłaszanie SignalR | [`SyncHub`](../../backend/modules/Notification/Notification.Api/Hubs/SyncHub.cs), grupy `agg:`/`user:` | Klient podłączony do instancji A nie dostaje wiadomości rozgłoszonej przez B. Cichy, nieaktualny UI — bez błędu i bez logu. |
+| Licznik sekwencji | [`SignatureSequenceTracker`](../../backend/modules/Notification/Notification.Api/Realtime/SignatureSequenceTracker.cs) — `ConcurrentDictionary` w pamięci | Każda instancja liczy własną sekwencję. Reconnect na inną instancję daje rozjazd `lastSeenSequence` bez luki (resync fałszywie dodatni) albo zgodność mimo luki (resync pominięty — gorszy przypadek). |
+| Koalescencja i próg inwalidacji | [`RealtimeBroadcaster`](../../backend/modules/Notification/Notification.Api/Realtime/RealtimeBroadcaster.cs) — bufor per sygnatura w pamięci singletona | Patrz niżej — psuje się inaczej, niż podpowiada intuicja. |
+| Wybór zadania masowego | [`BulkCommandRunner.ProcessNextChunkAsync`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/BulkCommandRunner.cs) | Zapytanie o najstarsze `Pending`/`Running` nie zakłada żadnego lease'u ani locka: dwa runnery biorą **to samo** zadanie i **te same** `job_item`-y. |
+
+### Dlaczego próg inwalidacji psuje się odwrotnie, niż się wydaje
+
+Wymiana `erp.events` jest typu **fanout**, ale wiąże **jedną nazwaną kolejkę per serwis**
+(`Messaging:ListenQueueName`, np. `notification.events` — patrz
+[`events-outbox.md`](./events-outbox.md)). Dwie instancje Notification z tą samą konfiguracją
+są więc **competing consumers na jednej kolejce**, a nie dwoma niezależnymi odbiorcami: każda
+widzi ułamek strumienia `AggregateChanged`.
+
+Skutki są dwa i tylko pierwszy jest oczywisty:
+
+1. Klient dostaje do N wiadomości na okno koalescencji zamiast jednej. Nieprzyjemne, ale
+   nieszkodliwe — front traktuje aktualizacje idempotentnie.
+2. **`InvalidationThreshold` przestaje trafiać.** Próg liczy identyfikatory zebrane w oknie przez
+   *jedną* instancję. Bulk na 50 tys. produktów rozłożony na cztery instancje to cztery bufory
+   po ~12,5 tys. — każdy poniżej progu, więc zamiast jednego `ReceiveInvalidation(.., "all")`
+   przez WebSocket idzie komplet uuid-ów. Zabezpieczenie znika dokładnie w tym scenariuszu,
+   dla którego powstało.
+
+To jest powód, dla którego backplane sam z siebie nie wystarcza: rozwiąże punkt 1, a punkt 2
+zostawi nietknięty. Próg i koalescencja muszą stać się wspólne dla wszystkich instancji, tak samo
+jak licznik sekwencji.
+
+### Kierunki naprawy
+
+| Obszar | Kierunek | Uwaga |
+|---|---|---|
+| Rozgłaszanie + licznik sekwencji | Backplane Redis + atomowy licznik (`INCR` per sygnatura) | **Jedyne miejsce w systemie, gdzie Redis jest właściwą odpowiedzią, a nie wygodą** — SignalR nie ma backplane'u na Postgresie. Jedno wdrożenie zamyka oba punkty. |
+| Koalescencja i próg | Do rozstrzygnięcia razem z backplane'em | Albo wspólny bufor, albo pojedynczy dedykowany konsument `AggregateChanged`, który rozgłasza przez backplane. Druga opcja zachowuje dzisiejszą semantykę progu bez współdzielenia stanu. |
+| Wybór zadania | `SELECT … FOR UPDATE SKIP LOCKED` przy pobieraniu `job_item`-ów | **Nie lock w Redisie** — dane zadania są już transakcyjne w Postgresie, a zewnętrzny lock byłby drugim źródłem prawdy obok `job.status`, zdolnym się z nim rozjechać. |
+
+Dzisiejszy objaw kolizji runnerów warto znać, bo nie wygląda jak problem ze współbieżnością:
+`xmin` wyłapuje konflikt dopiero na `SaveChanges`, co unieważnia transakcję całego chunka
+i spycha go w ścieżkę izolacji „element po elemencie"
+([`bulk-commands.md`](./bulk-commands.md#4-wykonanie--bulkcommandrunner)). W logach wygląda to
+jak seria `concurrency_conflict` i drastyczny spadek przepustowości — czyli jak awaria bazy,
+a nie jak dwa runnery robiące tę samą pracę.
+
+### Czego ruszać nie trzeba
+
+Zapisy i komunikacja między serwisami są na wiele instancji gotowe i to nie jest przypadek —
+w każdym z tych miejsc świadomie wybrano trwałość zamiast pamięci procesu:
+
+- **Outbox i RabbitMQ** — koperta zapisuje się w transakcji danych, kolejka rozdziela pracę
+  między konsumentów ([`events-outbox.md`](./events-outbox.md)).
+- **`job`/`job_item` w bazie** — zadanie przeżywa restart i wznawia się od pierwszego
+  nieprzetworzonego elementu; brakuje wyłącznie lease'u przy **wyborze**, nie trwałości.
+- **Strona odczytu** — bezstanowa, `AsNoTracking`, projekcja wprost do DTO.
+- **Cache frontendowy** — `IdentityMapStore` żyje w przeglądarce i jest inwalidowany zdarzeniami,
+  więc nie zależy od tego, ile instancji stoi po drugiej stronie
+  ([`orchestrators.md`](../frontend/orchestrators.md)).
+
+---
+
+## 8. Zobacz też
 
 - [Persystencja — EF Core i Postgres](./persistence-ef.md)
 - [CQRS — komendy i zapytania](./cqrs.md)

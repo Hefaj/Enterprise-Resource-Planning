@@ -172,6 +172,11 @@ klient podłączony do instancji A nie dostanie wiadomości rozgłoszonej przez 
 Konfiguracja pod backplane nie jest dziś napisana — nieużywana lokalnie, jedna instancja
 Notification wystarcza na obecnym etapie.
 
+**Sam backplane nie wystarczy.** Bufor koalescencji i `InvalidationThreshold` (sekcja 3) też żyją
+w pamięci instancji, a instancje Notification są competing consumers na jednej kolejce, więc każda
+widzi ułamek strumienia i próg przestaje trafiać. Pełna lista tego, co trzeba ruszyć razem —
+[`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne).
+
 ---
 
 ## 7. Frontend — gdzie żyje konsument

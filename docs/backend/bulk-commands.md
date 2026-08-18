@@ -98,6 +98,11 @@ Pętla: znajdź najstarsze `Pending`/`Running` zadanie → weź do `ChunkSize` (
 `BulkJobs:ChunkSize`) jego elementów ze statusem `Pending` → przetwórz w jednej transakcji.
 Brak pracy → `Task.Delay(IdlePollingInterval)` (domyślnie 2 s) i pętla od nowa.
 
+> **Wybór zadania zakłada jedną instancję serwisu.** Zapytanie nie bierze lease'u ani locka, więc
+> dwa runnery wzięłyby to samo zadanie i te same elementy — kolizję wyłapałby dopiero `xmin` na
+> zapisie, spychając chunk w opisaną niżej ścieżkę izolacji. Patrz
+> [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne).
+
 **Jeden chunk = jedna transakcja + jeden scope DI.** Każdy element wewnątrz chunka idzie przez
 normalną szynę komend — ten sam `IBulkCommandExecutor`, który resolwuje handler zarejestrowany
 dla `job.CommandType`, więc reguły domenowe są identyczne dla pojedynczej komendy i dla operacji

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -34,7 +35,8 @@ public sealed class KeycloakOptions
 /// </summary>
 public static class ErpAuthExtensions
 {
-    public static IServiceCollection AddErpAuth(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddErpAuth(
+        this IServiceCollection services, IConfiguration configuration, bool enablePermissionClaims = true)
     {
         var options = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>()
             ?? throw new InvalidOperationException(
@@ -103,6 +105,41 @@ public static class ErpAuthExtensions
                 .Build();
         });
 
+        if (enablePermissionClaims)
+        {
+            AddErpPermissions(services, configuration);
+        }
+
         return services;
+    }
+
+    /// <summary>
+    /// Faza 3 — dokłada claimy <c>permissions</c> zaraz po uwierzytelnieniu, żeby
+    /// <c>Permissions(...)</c> na endpointach FastEndpoints miało czym sprawdzać (patrz
+    /// <see cref="PermissionClaimsTransformation"/>). Wywoływane z <see cref="AddErpAuth"/>,
+    /// nie osobno — nie ma scenariusza, w którym mikroserwis chciałby AuthN bez tego haka.
+    /// </summary>
+    private static void AddErpPermissions(IServiceCollection services, IConfiguration configuration)
+    {
+        var identityOptions = configuration.GetSection(IdentityServiceOptions.SectionName).Get<IdentityServiceOptions>()
+            ?? throw new InvalidOperationException(
+                $"Brak sekcji konfiguracji '{IdentityServiceOptions.SectionName}' — bez adresu mikroserwisu " +
+                "Identity serwis nie ma skąd pobrać uprawnień. Dodaj 'Identity:BaseUrl' do appsettings.");
+
+        if (string.IsNullOrWhiteSpace(identityOptions.BaseUrl))
+        {
+            throw new InvalidOperationException($"'{IdentityServiceOptions.SectionName}:BaseUrl' jest puste.");
+        }
+
+        services.AddMemoryCache();
+        services.AddHttpContextAccessor();
+        services.AddHttpClient(HttpPermissionProvider.IdentityHttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(identityOptions.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+
+        services.AddSingleton<IPermissionProvider, HttpPermissionProvider>();
+        services.AddTransient<IClaimsTransformation, PermissionClaimsTransformation>();
     }
 }

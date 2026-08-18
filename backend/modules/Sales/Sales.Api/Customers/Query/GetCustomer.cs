@@ -1,5 +1,6 @@
 using FastEndpoints;
 using Sales.Application.Customers;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Sales.Customers.Query;
 
@@ -14,6 +15,7 @@ public sealed class GetCustomerEndpoint : Endpoint<GetCustomerRequest, List<Cust
     {
         Post("getCustomer");
         Group<CustomerGroup>();
+        Permissions(P.Sales.CustomerRead);
     }
 
     public override async Task HandleAsync(GetCustomerRequest req, CancellationToken ct)

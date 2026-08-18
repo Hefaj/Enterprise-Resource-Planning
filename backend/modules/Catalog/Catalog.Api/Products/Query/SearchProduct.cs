@@ -1,6 +1,7 @@
 using Catalog.Application.Products;
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Products.Query;
 
@@ -22,6 +23,7 @@ public sealed class SearchProductEndpoint : Endpoint<SearchProductRequest, Searc
     {
         Post("searchProduct");
         Group<ProductGroup>();
+        Permissions(P.Catalog.ProductRead);
     }
 
     public override async Task HandleAsync(SearchProductRequest req, CancellationToken ct)

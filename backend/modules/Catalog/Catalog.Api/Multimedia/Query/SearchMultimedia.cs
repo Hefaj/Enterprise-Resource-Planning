@@ -1,6 +1,7 @@
 using Catalog.Application.Multimedia;
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Multimedia.Query;
 
@@ -15,6 +16,7 @@ public sealed class SearchMultimediaEndpoint : Endpoint<SearchMultimediaRequest,
     {
         Post("searchMultimedia");
         Group<MultimediaGroup>();
+        Permissions(P.Catalog.DictionaryRead);
     }
 
     public override async Task HandleAsync(SearchMultimediaRequest req, CancellationToken ct)

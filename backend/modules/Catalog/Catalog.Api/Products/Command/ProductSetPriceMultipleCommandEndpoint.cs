@@ -2,6 +2,7 @@ using Catalog.Application.Products;
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Products.Command;
 
@@ -22,6 +23,7 @@ public sealed class ProductSetPriceMultipleCommandEndpoint
     {
         Post("product/batch-set-price");
         Group<ProductGroup>();
+        Permissions(P.Catalog.ProductUpdate);
         Description(d => d
             .WithSummary("Seryjna aktualizacja cen produktów z obsługą błędów cząstkowych")
             .WithDescription(

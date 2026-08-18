@@ -1,6 +1,7 @@
 using Catalog.Application.Categories;
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Categories.Query;
 
@@ -15,6 +16,7 @@ public sealed class SearchCategoryEndpoint : Endpoint<SearchCategoryRequest, Sea
     {
         Post("searchCategory");
         Group<CategoryGroup>();
+        Permissions(P.Catalog.CategoryRead);
     }
 
     public override async Task HandleAsync(SearchCategoryRequest req, CancellationToken ct)

@@ -2,6 +2,7 @@ using Catalog.Application.Products;
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Products.Command;
 
@@ -26,6 +27,7 @@ public sealed class ProductSetNameMultipleCommandEndpoint
     {
         Post("product/batch-set-name");
         Group<ProductGroup>();
+        Permissions(P.Catalog.ProductUpdate);
         Description(d => d
             .WithSummary("Seryjna aktualizacja nazw produktów z obsługą błędów cząstkowych")
             .WithDescription(

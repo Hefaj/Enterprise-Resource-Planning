@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
 using Sales.Application.Customers;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Sales.Customers.Query;
 
@@ -16,6 +17,7 @@ public sealed class SearchCustomerEndpoint : Endpoint<SearchCustomerRequest, Sea
     {
         Post("searchCustomer");
         Group<CustomerGroup>();
+        Permissions(P.Sales.CustomerRead);
     }
 
     public override async Task HandleAsync(SearchCustomerRequest req, CancellationToken ct)

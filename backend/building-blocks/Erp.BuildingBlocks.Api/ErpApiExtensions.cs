@@ -43,11 +43,23 @@ public static class ErpApiExtensions
     /// <c>Keycloak</c> dla <see cref="ErpAuthExtensions.AddErpAuth"/>. Wymagana, nie opcjonalna:
     /// uwierzytelnianie jest częścią wspólnego bootstrapu, tak samo jak CORS i FastEndpoints —
     /// żaden mikroserwis nie powinien mieć możliwości cichego jej pominięcia.</param>
+    /// <param name="enablePermissionClaims">
+    /// Faza 3 — czy dokładać claimy <c>permissions</c> pobrane z Identity (patrz
+    /// <see cref="ErpAuthExtensions.AddErpAuth"/>). Domyślnie <c>true</c> dla wszystkich
+    /// mikroserwisów-konsumentów. <b>Identity.Api ustawia na <c>false</c></b> — inaczej jego
+    /// własny endpoint <c>/internal/users/{id}/permissions</c> wywołuje sam siebie przez HTTP
+    /// przy każdym żądaniu (transformacja klaimów jednego żądania próbuje pobrać uprawnienia,
+    /// co odpytuje ten sam endpoint, co uruchamia transformację klaimów NOWEGO żądania...) —
+    /// nieskończona rekurencja sieciowa wyczerpująca pulę połączeń Kestrela aż do zawieszenia.
+    /// Identity i tak nie ma dziś (Faza 3) własnych endpointów bramkowanych przez
+    /// <c>Permissions(...)</c> (patrz <c>docs/backend/identity-authz.md</c> §7 Faza 3), więc
+    /// nie traci niczego, wyłączając to u siebie.</param>
     public static IServiceCollection AddErpApi(
         this IServiceCollection services,
         string serviceTitle,
         IConfiguration configuration,
-        IEnumerable<string>? allowedOrigins = null)
+        IEnumerable<string>? allowedOrigins = null,
+        bool enablePermissionClaims = true)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceTitle);
@@ -57,7 +69,7 @@ public static class ErpApiExtensions
 
         services.AddSingleton<IClock, SystemClock>();
 
-        services.AddErpAuth(configuration);
+        services.AddErpAuth(configuration, enablePermissionClaims);
 
         // Kontekst wykonania jest scoped i mutowalny: wypełnia go middleware HTTP,
         // a przy zadaniach w tle podstawia go BulkCommandRunner.

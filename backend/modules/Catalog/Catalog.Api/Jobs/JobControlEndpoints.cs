@@ -1,6 +1,7 @@
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Jobs;
 
@@ -14,6 +15,7 @@ public sealed class JobCancelEndpoint : JobCancelEndpointBase<CatalogDbContext>
         // klient frontendowy. Tu kontrakt jest nowy, więc od razu w czystej formie: `/job/cancel`.
         Post("cancel");
         Group<JobGroup>();
+        Permissions(P.Catalog.JobControl);
     }
 }
 
@@ -24,5 +26,6 @@ public sealed class JobRetryFailedEndpoint : JobRetryFailedEndpointBase<CatalogD
     {
         Post("retry-failed");
         Group<JobGroup>();
+        Permissions(P.Catalog.JobControl);
     }
 }

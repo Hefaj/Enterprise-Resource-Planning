@@ -1,5 +1,6 @@
 using Catalog.Application.Products;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Products.Query;
 
@@ -14,6 +15,7 @@ public sealed class GetProductEndpoint : Endpoint<GetProductRequest, List<Produc
     {
         Post("getProduct");
         Group<ProductGroup>();
+        Permissions(P.Catalog.ProductRead);
     }
 
     public override async Task HandleAsync(GetProductRequest req, CancellationToken ct)

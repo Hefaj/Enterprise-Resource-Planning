@@ -1,6 +1,7 @@
 using Catalog.Application.Codes;
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Codes.Query;
 
@@ -15,6 +16,7 @@ public sealed class SearchCodeTypeEndpoint : Endpoint<SearchCodeTypeRequest, Sea
     {
         Post("searchCodeType");
         Group<CodeTypeGroup>();
+        Permissions(P.Catalog.DictionaryRead);
     }
 
     public override async Task HandleAsync(SearchCodeTypeRequest req, CancellationToken ct)

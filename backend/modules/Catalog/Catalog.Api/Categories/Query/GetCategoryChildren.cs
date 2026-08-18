@@ -1,5 +1,6 @@
 using Catalog.Application.Categories;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Categories.Query;
 
@@ -21,6 +22,7 @@ public sealed class GetCategoryChildrenEndpoint
     {
         Post("getCategoryChildren");
         Group<CategoryGroup>();
+        Permissions(P.Catalog.CategoryRead);
     }
 
     public override async Task HandleAsync(GetCategoryChildrenRequest req, CancellationToken ct)

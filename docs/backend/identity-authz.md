@@ -1,9 +1,10 @@
 # Tożsamość i uprawnienia — Keycloak (AuthN) + moduł Identity (AuthZ)
 
-Stan: **Fazy 1-2 ✅ wdrożone i zweryfikowane end-to-end** (realny Keycloak, realne logowanie
+Stan: **Fazy 1-3 ✅ wdrożone i zweryfikowane end-to-end** (realny Keycloak, realne logowanie
 w przeglądarce, mikroserwis Identity z domeną ról/uprawnień, hierarchia z wykrywaniem cykli,
-efektywne uprawnienia i ścieżka dziedziczenia, JIT provisioning). **Fazy 3-6 📐 projekt, brak
-kodu.** Legenda znaczników jak w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
+efektywne uprawnienia i ścieżka dziedziczenia, JIT provisioning, egzekwowanie uprawnień
+w Catalog i Sales z potwierdzonym SLA odwołania ≤60s). **Fazy 4-6 📐 projekt, brak kodu.**
+Legenda znaczników jak w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
 Szczegóły zaimplementowanych faz → §7 niżej i sekcje 2-6 (opisują już wdrożony stan, nie
 tylko projekt).
 
@@ -286,18 +287,26 @@ Bez tego kroku żaden z powyższych elementów by nie zadziałał, mimo poprawne
 
 **Znany dług, świadomie odłożony:** wyjątki domenowe (`DomainException`, np. `role_cycle_detected`) kończą się dziś generycznym 500, nie 422 — to nie jest regresja Fazy 2, tylko brak middleware komend opisany w [`cqrs.md` §6](./cqrs.md#6-czego-jeszcze-nie-ma) jako nieistniejący w całym repo. `GET /internal/users/{id}/permissions` dziś wymaga tylko ważnego tokenu (dowolny zalogowany użytkownik może odpytać o cudze uprawnienia) — docelowa polityka service-to-service to zadanie Fazy 3.
 
-### Faza 3 — egzekwowanie w pozostałych serwisach
+### Faza 3 — egzekwowanie w pozostałych serwisach ✅
 
 | Element | Pliki |
 |---|---|
-| Kontrakt zdarzenia | `Erp.BuildingBlocks.Contracts/UserPermissionsChanged.cs` |
-| Dostawca uprawnień + cache | `Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs`, `PermissionClaimsTransformation.cs` |
-| Konsument unieważniający | `Erp.BuildingBlocks.Messaging` — rejestrowany w `AddErpMessaging` |
-| Adnotacje endpointów | wszystkie `Catalog.Api/**` (produkty, kategorie, modele, multimedia, gwarancje, słowniki), `Sales.Api/**`, `Notification.Api/**` |
-| Zadania masowe | zapis sprawdzonego uprawnienia w `job`; brak re-checku per chunk |
-| Dopisek o jednej instancji | `docs/backend/architecture.md` §7 |
+| Dostawca uprawnień + cache | `Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs` (`IPermissionProvider`/`HttpPermissionProvider`, cache TTL=60s w `IMemoryCache`), `PermissionClaimsTransformation.cs` (dokłada claimy `permissions`, które czyta `Permissions(...)` FastEndpoints) |
+| Rejestracja | `ErpAuthExtensions.AddErpPermissions` — wołane z `AddErpAuth`, więc każdy mikroserwis dostaje to automatycznie przez `AddErpApi`. Nowy parametr `enablePermissionClaims` (domyślnie `true`) — patrz "odstępstwo" niżej |
+| Adnotacje endpointów | wszystkie 20 endpointów `Catalog.Api/**` (produkty, kategorie, joby — modele/multimedia/gwarancje/typy kodów/atrybuty pod wspólnym `catalog.dictionary.read`), 3 `Sales.Api/**`, **celowo pominięte** 2 `Notification.Api/**` (patrz niżej) |
+| Nowe kody uprawnień | `Permissions.Catalog.DictionaryRead`, `Permissions.Catalog.JobControl` dopisane do katalogu (uzgodnią się w `permission_catalog` przy najbliższym starcie Identity) |
 
-**Weryfikacja:** integracyjny test — odebranie roli → 403 na endpoincie w ciągu SLA; test, że każdy endpoint zapisu ma zadeklarowane uprawnienie (test refleksyjny w `Erp.ArchitectureTests`, żeby nowy endpoint nie wjechał bez ochrony).
+**Odstępstwo od pierwotnego planu — brak `UserPermissionsChanged` i konsumenta unieważniającego.** Zamiast nowego, bespoke kontraktu integracyjnego, cache jest wyłącznie TTL=60s. To świadoma uproszczenie, nie zaległość: dokumentowane SLA (§4: „≤30-60 s") jest spełnione samym TTL bez potrzeby nasłuchu na `AggregateChanged` z sygnaturami `identity.user`/`identity.role`. Aktywne unieważnianie zostaje możliwą optymalizacją czasu reakcji na później, nie warunkiem poprawności — dopisane jako pozycja w §9.
+
+**Notification celowo BEZ `Permissions(...)`.** `job/searchJob`/`getJob` karmią dzwonek powiadomień własnymi zadaniami użytkownika — to nie jest zasób uprzywilejowany, tylko osobisty feed. Zagrodzenie go `notification.job.read` odcięłoby każdego nowego użytkownika bez wyraźnie nadanego uprawnienia od widoku WŁASNYCH powiadomień. Kod uprawnienia zostaje w katalogu jako zarezerwowany (analogicznie do nieużywanego jeszcze `catalog.product.bulk`), na wypadek przyszłego uprzywilejowanego widoku "zobacz zadania wszystkich".
+
+**Napotkany i naprawiony w trakcie problem — rekurencja sieciowa w Identity.** Włączenie `PermissionClaimsTransformation` na WSZYSTKICH serwisach jednakowo (w tym na samym Identity) powodowało, że `GET /internal/users/{id}/permissions` wywoływało samo siebie przez HTTP w nieskończoność — żądanie do tego endpointu też przechodzi przez tę samą transformację klaimów, która znowu woła ten sam endpoint. Kestrel wyczerpywał pulę połączeń i się zawieszał (500/timeout zamiast odpowiedzi). Naprawione parametrem `enablePermissionClaims: false` przekazywanym z `Identity.Api/Program.cs` do `AddErpApi` — Identity i tak nie ma dziś własnych endpointów bramkowanych przez `Permissions(...)` (patrz "znany dług" niżej), więc nic nie traci.
+
+**Napotkany i naprawiony w trakcie problem — brak tokenu w wywołaniu serwis-do-serwisu.** Pierwsza wersja `HttpPermissionProvider` wołała Identity bez żadnego nagłówka `Authorization` — Identity (samo za tym samym fallback policy z Fazy 1) odrzucała to 401-ką, więc KAŻDY użytkownik, łącznie z administratorem, dostawał pusty zbiór uprawnień i 403 wszędzie. Naprawione przekazywaniem dalej tokenu żądania, które wywołało transformację (`IHttpContextAccessor` w `PermissionClaimsTransformation`) — działa, bo dziś każdy ważny token wystarczy na `/internal/...` (ten sam odłożony dług co w Fazie 2).
+
+**Zweryfikowane end-to-end przez realne HTTP z tokenem Keycloaka:** `searchProduct` z administratorem → 200; odebranie ról administratora (systemowej i testowej) → **403 dopiero po odczekaniu pełnego TTL cache'u (~60s)**, dokładnie zgodnie z udokumentowanym SLA, nie natychmiast — co samo w sobie potwierdza, że mechanizm cache'u faktycznie działa, a nie tylko "zawsze przepuszcza". Ponowne nadanie roli przywróciło dostęp. `dotnet test` na całym rozwiązaniu — 45/45, bez regresji.
+
+**Znany dług, świadomie odłożony:** Identity NIE bramkuje własnych endpointów (`role/create`, `user/assign-role`...) przez `Permissions(...)` — dziś każdy zalogowany użytkownik może zarządzać rolami. Powód: `UserProvisioningMiddleware` (JIT) biegnie PO `PermissionClaimsTransformation` w potoku ASP.NET Core (uwierzytelnianie przed `ExecutionContextMiddleware`/customowymi hakami), więc pierwsze żądanie zupełnie nowego użytkownika miałoby permission cache zapisany jako PUSTY (bo `user_account` jeszcze nie istnieje) na 60 sekund — zanim JIT zdąży nadać `administrator`. Włączenie bramkowania na Identity bez naprawy tej kolejności zablokowałoby świeżo utworzonych administratorów na minutę. Naprawa (np. invalidacja cache'u zaraz po JIT, albo przesunięcie provisioningu przed autentykacją) to zadanie na Fazę 5 razem z bramkowaniem UI, nie coś do zrobienia w pośpiechu tutaj.
 
 ### Faza 4 — moduł frontendowy `identity`
 
@@ -338,3 +347,6 @@ Faza 1 jest twardym warunkiem wstępnym: budowanie zarządzania uprawnieniami na
 | Tabela domknięcia ról | Gdy CTE zacznie być wąskim gardłem | Wzorzec gotowy w `CategoryClosureMaintainer`, ale uwaga: DAG wymaga `MIN(depth)` na parze (przodek, potomek) |
 | Wielofirmowość / tenant | Poza zakresem | Dotknie tokenu, schematów i każdego zapytania — osobny projekt |
 | Backplane Redis dla cache uprawnień | Razem z drugą instancją Notification | Patrz `architecture.md` §7 |
+| Aktywne unieważnianie cache'u uprawnień (`AggregateChanged` na `identity.user`/`identity.role`) | Gdy TTL=60s przestanie wystarczać | Dziś tylko TTL, zweryfikowane end-to-end w Fazie 3 — patrz jej sekcja. Konsument istniałby w `Erp.BuildingBlocks.Messaging`, nie wymaga nowego kontraktu (reużycie `AggregateChanged`) |
+| Bramkowanie własnych endpointów Identity przez `Permissions(...)` | Faza 5, razem z bramkowaniem UI | Wymaga najpierw naprawy kolejności JIT provisioning vs. claims transformation — patrz Faza 3 "znany dług" |
+| Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś dowolny ważny token wystarcza; docelowo client credentials Keycloaka albo izolacja sieciowa |

@@ -1,6 +1,7 @@
 using Catalog.Application.Warranties;
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Warranties.Query;
 
@@ -15,6 +16,7 @@ public sealed class SearchWarrantyEndpoint : Endpoint<SearchWarrantyRequest, Sea
     {
         Post("searchWarranty");
         Group<WarrantyGroup>();
+        Permissions(P.Catalog.DictionaryRead);
     }
 
     public override async Task HandleAsync(SearchWarrantyRequest req, CancellationToken ct)

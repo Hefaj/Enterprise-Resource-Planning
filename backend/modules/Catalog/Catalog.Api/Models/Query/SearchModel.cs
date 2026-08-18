@@ -1,6 +1,7 @@
 using Catalog.Application.Models;
 using Erp.BuildingBlocks.Api.Contracts;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Models.Query;
 
@@ -15,6 +16,7 @@ public sealed class SearchModelEndpoint : Endpoint<SearchModelRequest, SearchRes
     {
         Post("searchModel");
         Group<ModelGroup>();
+        Permissions(P.Catalog.DictionaryRead);
     }
 
     public override async Task HandleAsync(SearchModelRequest req, CancellationToken ct)

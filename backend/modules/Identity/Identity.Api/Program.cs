@@ -9,8 +9,12 @@ using Identity.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Wspólny bootstrap HTTP — identyczny z Catalog.Api/Notification.Api/Sales.Api.
-builder.Services.AddErpApi("Identity", builder.Configuration);
+// Wspólny bootstrap HTTP — identyczny z Catalog.Api/Notification.Api/Sales.Api, poza jednym
+// wyjątkiem: enablePermissionClaims: false. Identity nie ma dziś (Faza 3) własnych endpointów
+// bramkowanych przez Permissions(...), a włączenie tej transformacji u siebie powodowałoby,
+// że /internal/users/{id}/permissions wywołuje samo siebie przez HTTP w nieskończoność —
+// patrz pełne uzasadnienie w ErpApiExtensions.AddErpApi.
+builder.Services.AddErpApi("Identity", builder.Configuration, enablePermissionClaims: false);
 
 // Baza, zapytania, uzgodnienie katalogu uprawnień, rola administrator, mapa sygnatur SignalR.
 builder.Services.AddIdentityInfrastructure(builder.Configuration);

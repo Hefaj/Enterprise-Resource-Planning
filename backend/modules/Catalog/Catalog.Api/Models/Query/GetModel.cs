@@ -1,5 +1,6 @@
 using Catalog.Application.Models;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Models.Query;
 
@@ -14,6 +15,7 @@ public sealed class GetModelEndpoint : Endpoint<GetModelRequest, List<ModelDto>>
     {
         Post("getModel");
         Group<ModelGroup>();
+        Permissions(P.Catalog.DictionaryRead);
     }
 
     public override async Task HandleAsync(GetModelRequest req, CancellationToken ct)

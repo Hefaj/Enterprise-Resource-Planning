@@ -3,7 +3,8 @@ using Notification.Application.Jobs;
 
 namespace Notification.Jobs.Query;
 
-/// <summary>Pobranie zadań z repliki po identyfikatorach.</summary>
+/// <summary>Pobranie zadań z repliki po identyfikatorach. Celowo bez <c>Permissions(...)</c> —
+/// patrz uzasadnienie w <c>SearchJobEndpoint</c> (własny feed powiadomień, nie zasób uprzywilejowany).
 public sealed class GetJobEndpoint : Endpoint<GetJobRequest, List<JobDto>>
 {
     private readonly IJobQueries _queries;

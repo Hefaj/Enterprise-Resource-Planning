@@ -36,6 +36,13 @@ public static class Permissions
         public const string ProductBulk = "catalog.product.bulk";
         public const string CategoryRead = "catalog.category.read";
         public const string CategoryUpdate = "catalog.category.update";
+
+        /// <summary>Odczyt słowników pomocniczych (modele, multimedia, gwarancje, typy kodów,
+        /// atrybuty) — wszystkie dziś tylko-do-odczytu, więc jedno uprawnienie zamiast pięciu
+        /// prawie identycznych kodów. Rozbić na osobne, gdy któryś dostanie własną mutację.</summary>
+        public const string DictionaryRead = "catalog.dictionary.read";
+
+        public const string JobControl = "catalog.job.control";
     }
 
     public static class Sales
@@ -70,6 +77,8 @@ public static class Permissions
         new(Catalog.ProductBulk, "catalog", "product", "bulk", "identity.permissions.catalog.product.bulk"),
         new(Catalog.CategoryRead, "catalog", "category", "read", "identity.permissions.catalog.category.read"),
         new(Catalog.CategoryUpdate, "catalog", "category", "update", "identity.permissions.catalog.category.update"),
+        new(Catalog.DictionaryRead, "catalog", "dictionary", "read", "identity.permissions.catalog.dictionary.read"),
+        new(Catalog.JobControl, "catalog", "job", "control", "identity.permissions.catalog.job.control"),
 
         new(Sales.CustomerRead, "sales", "customer", "read", "identity.permissions.sales.customer.read"),
         new(Sales.CustomerUpdate, "sales", "customer", "update", "identity.permissions.sales.customer.update"),

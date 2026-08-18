@@ -1,5 +1,6 @@
 using Catalog.Application.Codes;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Codes.Query;
 
@@ -14,6 +15,7 @@ public sealed class GetCodeTypeEndpoint : Endpoint<GetCodeTypeRequest, List<Code
     {
         Post("getCodeType");
         Group<CodeTypeGroup>();
+        Permissions(P.Catalog.DictionaryRead);
     }
 
     public override async Task HandleAsync(GetCodeTypeRequest req, CancellationToken ct)

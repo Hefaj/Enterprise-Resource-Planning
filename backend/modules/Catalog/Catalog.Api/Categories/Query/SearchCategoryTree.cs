@@ -1,5 +1,6 @@
 using Catalog.Application.Categories;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Categories.Query;
 
@@ -20,6 +21,7 @@ public sealed class SearchCategoryTreeEndpoint
     {
         Post("searchCategoryTree");
         Group<CategoryGroup>();
+        Permissions(P.Catalog.CategoryRead);
     }
 
     public override async Task HandleAsync(SearchCategoryTreeRequest req, CancellationToken ct)

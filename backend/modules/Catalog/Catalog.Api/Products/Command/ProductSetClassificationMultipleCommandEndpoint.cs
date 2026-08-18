@@ -2,6 +2,7 @@ using Catalog.Application.Products;
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Products.Command;
 
@@ -30,6 +31,7 @@ public sealed class ProductSetClassificationMultipleCommandEndpoint
     {
         Post("product/batch-set-classification");
         Group<ProductGroup>();
+        Permissions(P.Catalog.ProductUpdate);
         Description(d => d
             .WithSummary("Seryjna zmiana modelu i kategorii produktów z obsługą błędów cząstkowych")
             .WithDescription(

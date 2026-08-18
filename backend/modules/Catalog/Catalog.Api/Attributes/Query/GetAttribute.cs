@@ -1,5 +1,6 @@
 using Catalog.Application.Attributes;
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Attributes.Query;
 
@@ -14,6 +15,7 @@ public sealed class GetAttributeEndpoint : Endpoint<GetAttributeRequest, List<At
     {
         Post("getAttribute");
         Group<AttributeGroup>();
+        Permissions(P.Catalog.DictionaryRead);
     }
 
     public override async Task HandleAsync(GetAttributeRequest req, CancellationToken ct)

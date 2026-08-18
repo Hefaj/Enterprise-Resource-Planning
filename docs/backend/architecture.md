@@ -34,7 +34,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Sales, Notification jako pełne moduły biznesowe | 🟡 | Struktura i szablon zweryfikowane (Sales/`Customer`); brak realnej logiki biznesowej poza sprawdzianem |
 | Uwierzytelnianie (Keycloak, JWT) | ✅ | [`identity-authz.md`](./identity-authz.md) §5-7 Faza 1 — zweryfikowane end-to-end w przeglądarce |
 | Autoryzacja — domena Identity (role, uprawnienia, katalog, JIT provisioning) | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 2 — zweryfikowane end-to-end przez API (hierarchia ról, wykrywanie cykli, efektywne uprawnienia, ścieżka dziedziczenia) |
-| Egzekwowanie uprawnień w Catalog/Sales/Notification | 📐 | [`identity-authz.md`](./identity-authz.md) §7 Faza 3 — katalog uprawnień istnieje i jest stabilny, ale żaden endpoint poza Identity go jeszcze nie sprawdza |
+| Egzekwowanie uprawnień w Catalog/Sales/Notification | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 3 — zweryfikowane end-to-end (odebranie roli → 403 w ciągu SLA cache'u ≤60s). Notification świadomie bez bramkowania (własny feed, nie zasób uprzywilejowany); Identity świadomie bez bramkowania własnych endpointów (patrz "znany dług" w dokumencie) |
 
 ---
 
@@ -191,6 +191,7 @@ jak gotowość, a zostawia trzy pozostałe punkty ciche i zepsute.
 | Licznik sekwencji | [`SignatureSequenceTracker`](../../backend/modules/Notification/Notification.Api/Realtime/SignatureSequenceTracker.cs) — `ConcurrentDictionary` w pamięci | Każda instancja liczy własną sekwencję. Reconnect na inną instancję daje rozjazd `lastSeenSequence` bez luki (resync fałszywie dodatni) albo zgodność mimo luki (resync pominięty — gorszy przypadek). |
 | Koalescencja i próg inwalidacji | [`RealtimeBroadcaster`](../../backend/modules/Notification/Notification.Api/Realtime/RealtimeBroadcaster.cs) — bufor per sygnatura w pamięci singletona | Patrz niżej — psuje się inaczej, niż podpowiada intuicja. |
 | Wybór zadania masowego | [`BulkCommandRunner.ProcessNextChunkAsync`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/BulkCommandRunner.cs) | Zapytanie o najstarsze `Pending`/`Running` nie zakłada żadnego lease'u ani locka: dwa runnery biorą **to samo** zadanie i **te same** `job_item`-y. |
+| Cache uprawnień (Faza 3) | [`HttpPermissionProvider`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs) — `IMemoryCache` per proces, TTL 60s, w KAŻDYM mikroserwisie-konsumencie (Catalog, Sales) | Każda instancja ma własny cache z własnym zegarem TTL — odebranie uprawnienia dogania się do 60s NIEZALEŻNIE na każdej instancji, nie synchronicznie. Przy N instancjach okno „stara instancja jeszcze przepuszcza" może się wydłużyć, jeśli TTL-y akurat się rozjadą (nigdy nie skróci się poniżej 60s, może się wydłużyć do niemal 2×60s w pesymistycznym przypadku). Backplane (Redis) ujednoliciłby to — patrz [`identity-authz.md`](./identity-authz.md) §9. |
 
 ### Dlaczego próg inwalidacji psuje się odwrotnie, niż się wydaje
 

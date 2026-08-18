@@ -26,7 +26,7 @@ import { JOBS_ROUTE, JOB_POPOVER_LIMIT } from '@erp/notification/util';
   template: `
     <div class="flex flex-col w-full" style="min-width: 22rem; max-width: 26rem;">
       <header
-        class="flex items-center justify-between px-3 py-2"
+        class="flex items-center justify-between px-3 py-2 flex-shrink-0"
         style="border-bottom: 1px solid var(--tui-border-normal);"
       >
         <span class="text-sm font-semibold" style="color: var(--tui-text-primary);">
@@ -47,18 +47,18 @@ import { JOBS_ROUTE, JOB_POPOVER_LIMIT } from '@erp/notification/util';
       </header>
 
       @if (visibleJobs().length === 0) {
-        <p class="px-3 py-6 text-sm text-center" style="color: var(--tui-text-tertiary);">
+        <p class="px-3 py-6 text-sm text-center flex-shrink-0" style="color: var(--tui-text-tertiary);">
           {{ keys.empty | erpTranslate }}
         </p>
       } @else {
-        <div class="flex flex-col overflow-y-auto" style="max-height: 24rem;">
+        <div class="flex flex-col overflow-y-auto flex-shrink-0" style="max-height: 17rem;">
           @for (job of visibleJobs(); track job.trackingID) {
             <erp-job-item [job]="job" />
           }
         </div>
       }
 
-      <footer class="px-3 py-2" style="border-top: 1px solid var(--tui-border-normal);">
+      <footer class="px-3 py-2 flex-shrink-0" style="border-top: 1px solid var(--tui-border-normal);">
         <a
           tuiButton
           appearance="flat"

@@ -32,6 +32,12 @@ export interface ErpBatchMetadata {
  * Przy „Zaznacz wszystko" tabela w trybie serwerowym nie zwraca żadnych `selectedItems`
  * (zaznaczenie opisuje filtr), więc liczbę bierzemy z licznika wszystkich pasujących
  * pozycji. Bez tego akcje masowe nigdy by się nie pokazały.
+ *
+ * W pozostałych przypadkach liczy się `selectedIds`, a NIE `selectedItems`: zaznaczenie
+ * przeżywa zmianę strony, ale `selectedItems` zawiera tylko pozycje z aktualnie wczytanej
+ * strony (tabela serwerowa nie trzyma poprzednich). Liczenie po pozycjach pokazywałoby
+ * „wybrano 3", gdy zaznaczonych jest 3 na tej stronie i 12 na poprzednich — i rozjeżdżałoby
+ * się z celami operacji masowej, które biorą pełne `selectedIds`.
  */
 export function erpSelectionCount<TData>(
   selection: ErpSelectionState<TData> | null | undefined,
@@ -42,7 +48,7 @@ export function erpSelectionCount<TData>(
 
   return selection.isAllSelected
     ? selection.totalCount ?? 0
-    : selection.selectedItems?.length ?? 0;
+    : selection.selectedIds?.length ?? selection.selectedItems?.length ?? 0;
 }
 
 // ─────────────────────────────────────────────────

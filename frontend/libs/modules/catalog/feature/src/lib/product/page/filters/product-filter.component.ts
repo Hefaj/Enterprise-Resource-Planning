@@ -49,7 +49,7 @@ export class ProductFilterComponent implements OnInit {
     .setOnSavePreset(val => this.onSavePreset(val))
     .setOnLoadPreset(val => this.onLoadPreset(val))
     .setOnDeletePreset(val => this.onDeletePreset(val))
-    .addFormField('productId', 'inputPicker', f => f.setLabel('ID produktu'))
+    .addFormField('productId', 'text', f => f.setLabel('ID produktu'))
     .addFormField('productIds', 'bulkInput', f => f.setLabel('ID produktów (masowo)'))
     .addFormField('modelId', 'text', f => f.setLabel('ID modelu'))
     .addFormField('productType', 'text', f => f.setLabel('Rodzaj produktu'))

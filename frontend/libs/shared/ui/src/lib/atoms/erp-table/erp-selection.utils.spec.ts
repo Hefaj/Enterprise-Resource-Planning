@@ -22,6 +22,17 @@ const explicitSelection = (ids: string[]): ErpSelectionState<TestItem> => ({
   selectedItems: ids.map(uuid => ({ uuid })),
 });
 
+/**
+ * Zaznaczenie rozłożone na kilka stron tabeli serwerowej: identyfikatory pamiętane są dla
+ * wszystkich stron, ale `selectedItems` zawiera wyłącznie pozycje z aktualnie wczytanej.
+ */
+const selectionAcrossPages = (ids: string[], idsOnCurrentPage: string[]): ErpSelectionState<TestItem> => ({
+  mode: 'server',
+  isAllSelected: false,
+  selectedIds: ids,
+  selectedItems: idsOnCurrentPage.map(uuid => ({ uuid })),
+});
+
 /** „Zaznacz wszystko" w trybie serwerowym: zaznaczenie opisuje filtr, pozycji nie ma. */
 const allSelected = (totalCount: number, filters: TestFilter = { manufacturer: 'ACME' }): ErpSelectionState<TestItem> => ({
   mode: 'server',
@@ -46,6 +57,15 @@ describe('erpResolveSelectionScope', () => {
     const scope = erpResolveSelectionScope<TestItem, TestFilter>(explicitSelection(['a', 'b']), options);
 
     expect(scope).toMatchObject({ kind: 'explicit', ids: ['a', 'b'], count: 2, materialized: false, loading: false });
+  });
+
+  it('zaznaczenie z kilku stron liczy wszystkie identyfikatory, nie tylko bieżącą stronę', () => {
+    const selection = selectionAcrossPages(['a', 'b', 'c', 'd'], ['c', 'd']);
+    const scope = erpResolveSelectionScope<TestItem, TestFilter>(selection, options);
+
+    expect(scope).toMatchObject({ kind: 'explicit', ids: ['a', 'b', 'c', 'd'], count: 4 });
+    // Licznik nad tabelą i cele operacji masowej muszą mówić o tym samym zbiorze.
+    expect(erpBuildBatchTargets(scope)).toEqual({ targetUuids: ['a', 'b', 'c', 'd'] });
   });
 
   it('„Zaznacz wszystko" powyżej progu zostaje filtrem', () => {
@@ -111,6 +131,10 @@ describe('liczności', () => {
     expect(erpSelectionCount(allSelected(1500))).toBe(1500);
     expect(erpSelectionCount(explicitSelection(['a']))).toBe(1);
     expect(erpSelectionCount(null)).toBe(0);
+  });
+
+  it('erpSelectionCount liczy identyfikatory, a nie pozycje wczytanej strony', () => {
+    expect(erpSelectionCount(selectionAcrossPages(['a', 'b', 'c', 'd'], ['c', 'd']))).toBe(4);
   });
 
   it('erpSelectionScopeCount działa dla każdego rodzaju zasięgu', () => {

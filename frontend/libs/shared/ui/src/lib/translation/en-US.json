@@ -121,6 +121,12 @@
     "selectedFiles": "{{count}} files selected",
     "selectedItems": "{{count}} items selected"
   },
+  "selectionScope": {
+    "previewTitle": "Previewing {{shown}} of {{count}} items matching the filters",
+    "previewDescription": "Bulk actions will affect every matching item, not only the ones listed below.",
+    "allTitle": "All {{count}} items matching the filters are selected",
+    "resolving": "Resolving selection…"
+  },
   "actionToolbar": {
     "configurator": {
       "title": "Action toolbar configuration",

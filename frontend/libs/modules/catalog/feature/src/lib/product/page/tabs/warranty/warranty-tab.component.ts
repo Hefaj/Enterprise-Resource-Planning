@@ -1,7 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ProductStore } from '../../product.store';
 import { WarrantyTabStore } from './warranty-tab.store';
-import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpEmptyStateComponent, ErpEmptyStateConfig, ErpSelectionState, ErpTableBuilder, ErpTableComponent } from '@erp/shared/ui';
+import {
+  ErpActionToolbarBuilder,
+  ErpActionToolbarComponent,
+  ErpActionToolbarContextDirective,
+  ErpActionToolbarZoneDirective,
+  ErpEmptyStateComponent,
+  ErpEmptyStateConfig,
+  ErpSelectionScopeBannerBuilder,
+  ErpSelectionScopeBannerComponent,
+  ErpSelectionState,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
+} from '@erp/shared/ui';
 import { CatalogProductOrchestrator, CatalogWarrantyOrchestrator, ProductVM, ProductWarrantyVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../../translation/keys';
 import { WarrantyInfoCellComponent } from './warranty-info-cell.component';
@@ -13,6 +25,14 @@ import { WarrantyInfoCellComponent } from './warranty-info-cell.component';
  */
 const WARRANTY_CHUNK_SIZE = 30;
 
+/**
+ * Panel gwarancji zaznaczonych produktów — konsument zasięgu zaznaczenia (`ErpSelectionScope`),
+ * na tych samych zasadach co panel multimediów (patrz `docs/frontend/selection-scope.md`).
+ *
+ * Panel jest DOWODEM (co obejmie operacja), a nie źródłem prawdy o jej celu: przy zaznaczeniu
+ * opisanym filtrem pokazuje próbkę kilku pierwszych produktów i wyłącza wybór pojedynczych
+ * gwarancji, a akcje masowe i tak adresują cały zbiór.
+ */
 @Component({
   selector: 'erp-warranty-tab',
   standalone: true,
@@ -22,19 +42,27 @@ const WARRANTY_CHUNK_SIZE = 30;
     ErpActionToolbarZoneDirective,
     ErpActionToolbarContextDirective,
     ErpEmptyStateComponent,
-    ],
+    ErpSelectionScopeBannerComponent,
+  ],
   providers: [WarrantyTabStore],
   template: `
     <div class="h-full w-full p-2">
-      @if (_selectedProducts().length === 0) {
+      @if (_scopeKind() === 'none') {
         <erp-empty-state [config]="emptySelectionConfig" />
+      } @else if (_resolving()) {
+        <erp-empty-state [config]="resolvingConfig" />
       } @else {
         <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="toolbarConfig">
           <erp-action-toolbar [config]="toolbarConfig" />
+
+          <!-- Zdanie o zasięgu: promień rażenia akcji masowych musi być widoczny bez klikania,
+               a próbka w tabeli musi być jawnie oznaczona jako próbka, nie jako pełna lista. -->
+          <erp-selection-scope-banner [config]="scopeBannerConfig" />
+
           <div class="flex-1 overflow-hidden" >
             <erp-table
               class="block h-full w-full"
-              [config]="tableConfig"
+              [config]="tableConfig()"
             />
           </div>
         </div>
@@ -44,42 +72,44 @@ const WARRANTY_CHUNK_SIZE = 30;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WarrantyTabComponent {
-  private readonly store = inject(ProductStore);
   private readonly tabStore = inject(WarrantyTabStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly warrantyOrchestrator = inject(CatalogWarrantyOrchestrator);
 
-  protected readonly _selectedProducts = computed(() => {
-    const selectedItems = this.store.selection()?.selectedItems || [];
-    if (selectedItems.length === 0) return [];
+  protected readonly _scopeKind = this.tabStore.scopeKind;
+  protected readonly _resolving = this.tabStore.resolving;
 
-    const uuids = selectedItems.map(item => item.uuid);
-    const signalMap = this.productOrchestrator.getSignalViewModel();
-
-    return uuids.map(uuid => {
-      const vmSignal = signalMap.get(uuid);
-      const latestVm = vmSignal ? vmSignal() : null;
-      return latestVm || selectedItems.find(x => x.uuid === uuid)!;
-    });
-  });
+  /** Produkty renderowane przez panel — komplet zaznaczonych albo próbka z filtra. */
+  protected readonly _products = this.tabStore.products;
 
   /**
-   * Wszystkie gwarancje wszystkich zaznaczonych produktów — jedna wspólna, płaska lista wierszy.
+   * Wszystkie gwarancje widocznych produktów — jedna wspólna, płaska lista wierszy.
    * `product.warranties` ma jeden wiersz na przypisanie od razu (liczba/kolejność, a więc i
    * wysokość wirtualizera, są poprawne natychmiast) — katalogowe szczegóły każdej gwarancji
    * (nazwa, standardowy okres, opis) doładowują się stopniowo w miarę scrollowania w głąb
    * grupy (patrz `onVisibleRowsChange` niżej) — zamiast pobierać wszystkie gwarancje produktu naraz.
    */
   protected readonly _rows = computed<ProductWarrantyVM[]>(() =>
-    this._selectedProducts().flatMap(product => product.warranties)
+    this._products().flatMap(product => product.warranties)
   );
-
-  protected readonly _subSelectionCount = computed(() => this.tabStore.getAllSelectedWarrantiesCount());
 
   protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
     icon: '@tui.mouse-pointer-click',
     message: PRODUCT_KEYS.base.warranty.panel.emptySelection,
   };
+
+  protected readonly resolvingConfig: ErpEmptyStateConfig = {
+    icon: '@tui.loader',
+    message: PRODUCT_KEYS.base.selectionScope.resolving,
+  };
+
+  protected readonly scopeBannerConfig = ErpSelectionScopeBannerBuilder.create(b => b
+    .setScope(this.tabStore.scope)
+    .setShownCount(this.tabStore.shownProductCount)
+    .setPreviewTitle(PRODUCT_KEYS.base.selectionScope.previewTitle)
+    .setPreviewDescription(PRODUCT_KEYS.base.selectionScope.previewDescription)
+    .setAllTitle(PRODUCT_KEYS.base.selectionScope.allTitle)
+  );
 
   // Zbiór UUID produktów, dla których już zażądaliśmy bazowego załadowania (dedupikacja).
   private readonly loadedProductUuids = new Set<string>();
@@ -89,8 +119,11 @@ export class WarrantyTabComponent {
   protected readonly toolbarConfig = ErpActionToolbarBuilder.create((b) =>
     b
       .setMenuId('warranty-tab-toolbar')
-      .setSelectionCount(this._subSelectionCount)
+      .setSelectionCount(this.tabStore.selectedChildrenCount)
       .setSelectionLabel('shared.selectionToolbar.selectedItems')
+      // Zasięg produktów (nie gwarancji!) — na jego podstawie toolbar blokuje akcje wymagające
+      // wskazanych pozycji, gdy zaznaczenie jest filtrem.
+      .setSelectionScope(this.tabStore.scopeKind)
       .setOnClearSelection(() => this.onClearWarrantySelection())
       .addDefaultGroup((g) =>
         g
@@ -104,7 +137,7 @@ export class WarrantyTabComponent {
               .setIcon('@tui.plus')
               .setShortcut('Ctrl+N')
               .setAppearance('success')
-              .setFn(() => console.log('Dodaj nową gwarancję'))
+              .setFn(() => this.onAddMass())
           )
       )
       .addDefaultGroup((g) =>
@@ -157,6 +190,7 @@ export class WarrantyTabComponent {
               .setFn(() => console.log('Pokaż archiwalne'))
           )
       )
+      // Operacje na WSKAZANYCH gwarancjach — wymagają zaznaczenia rozwiązanego do listy pozycji.
       .addSelectionGroup(g => g
         .setId('selection-actions')
         .setLabel('Wybrane operacje')
@@ -165,6 +199,8 @@ export class WarrantyTabComponent {
           .setLabel('Usuń zaznaczone')
           .setIcon('@tui.trash')
           .setAppearance('warning')
+          .setScopes(['explicit'])
+          .setUnavailableHint(PRODUCT_KEYS.base.warranty.panel.scopeWarrantySelectionUnavailable)
           .setFn(() => this.onDeleteSelectedWarranty())
         )
       )
@@ -172,56 +208,62 @@ export class WarrantyTabComponent {
       .setEnableContextMenu(true)
   );
 
-  protected readonly tableConfig = ErpTableBuilder.create<ErpTableBuilder<ProductWarrantyVM>>((table) =>
-    table
-      .setStateKey('product-tab-warranty')
-      .setMode('client')
-      .setSelectionMode('multi')
-      .setRowIdAccessor(r => `${r.productUuid}:${r.warrantyUuid}`)
-      .setItems(this._rows)
-      .setItemCount(computed(() => this._rows().length))
-      .setEnableVirtualScroll(true)
-      .setEstimatedRowHeight(48)
-      .setEmptyMessage(PRODUCT_KEYS.base.warranty.panel.emptySelection)
-      .setOnSelectionChange(state => this.onSelectionChange(state))
-      .addColumn(c => c
-        .setId('name')
-        .setHeader('Nazwa gwarancji')
-        .setCell(WarrantyInfoCellComponent, { field: 'name' })
-        .setSize(220)
-      )
-      .addColumn(c => c
-        .setId('durationMonths')
-        .setHeader('Standardowy okres (mc)')
-        .setCell(WarrantyInfoCellComponent, { field: 'durationMonths' })
-        .setCellClass('text-right')
-        .setSize(150)
-      )
-      .addColumn(c => c
-        .setId('productDurationMonths')
-        .setAccessorFn((r: ProductWarrantyVM) => r.durationMonths)
-        .setHeader('Okres dla produktu (mc)')
-        .setCellClass('text-right')
-        .setSize(150)
-      )
-      .addColumn(c => c
-        .setId('description')
-        .setHeader('Opis')
-        .setCell(WarrantyInfoCellComponent, { field: 'description' })
-        .setSize(400)
-      )
-      .setGroupedRows<ProductVM>(g => g
-        .setGroups(this._selectedProducts)
-        .setGetGroupKey(p => p.uuid)
-        .setGetRowGroupKey((r: ProductWarrantyVM) => r.productUuid)
-        .setGetGroupTitle(p => p.name)
-        .setGetGroupSubtitle(p => p.codeValue('SKU') ?? '')
-        .setGetGroupIcon(() => '@tui.shield-check')
-        .setIsGroupLoading(p => (p.warranties?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
-        .setDefaultExpanded(true)
-        .setLoadChildren(p => this.ensureProductLoaded(p.uuid))
-        .setOnVisibleRowsChange((product, visibleRows) => this.loadVisibleWarranties(product, visibleRows))
-      )
+  /**
+   * Konfiguracja tabeli jest `computed`, bo tryb zaznaczenia zależy od zasięgu: przy zaznaczeniu
+   * opisanym filtrem znikają checkboxy gwarancji ORAZ grup (`selectionMode: 'none'`).
+   */
+  protected readonly tableConfig = computed<ErpTableConfig<ProductWarrantyVM>>(() =>
+    ErpTableBuilder.create<ErpTableBuilder<ProductWarrantyVM>>((table) =>
+      table
+        .setStateKey('product-tab-warranty')
+        .setMode('client')
+        .setSelectionMode(this.tabStore.canSelectChildren() ? 'multi' : 'none')
+        .setRowIdAccessor(r => `${r.productUuid}:${r.warrantyUuid}`)
+        .setItems(this._rows)
+        .setItemCount(computed(() => this._rows().length))
+        .setEnableVirtualScroll(true)
+        .setEstimatedRowHeight(48)
+        .setEmptyMessage(PRODUCT_KEYS.base.warranty.panel.emptySelection)
+        .setOnSelectionChange(state => this.onSelectionChange(state))
+        .addColumn(c => c
+          .setId('name')
+          .setHeader('Nazwa gwarancji')
+          .setCell(WarrantyInfoCellComponent, { field: 'name' })
+          .setSize(220)
+        )
+        .addColumn(c => c
+          .setId('durationMonths')
+          .setHeader('Standardowy okres (mc)')
+          .setCell(WarrantyInfoCellComponent, { field: 'durationMonths' })
+          .setCellClass('text-right')
+          .setSize(150)
+        )
+        .addColumn(c => c
+          .setId('productDurationMonths')
+          .setAccessorFn((r: ProductWarrantyVM) => r.durationMonths)
+          .setHeader('Okres dla produktu (mc)')
+          .setCellClass('text-right')
+          .setSize(150)
+        )
+        .addColumn(c => c
+          .setId('description')
+          .setHeader('Opis')
+          .setCell(WarrantyInfoCellComponent, { field: 'description' })
+          .setSize(400)
+        )
+        .setGroupedRows<ProductVM>(g => g
+          .setGroups(this._products)
+          .setGetGroupKey(p => p.uuid)
+          .setGetRowGroupKey((r: ProductWarrantyVM) => r.productUuid)
+          .setGetGroupTitle(p => p.name)
+          .setGetGroupSubtitle(p => p.codeValue('SKU') ?? '')
+          .setGetGroupIcon(() => '@tui.shield-check')
+          .setIsGroupLoading(p => (p.warranties?.length ?? 0) === 0 && this.productOrchestrator.isLoading())
+          .setDefaultExpanded(true)
+          .setLoadChildren(p => this.ensureProductLoaded(p.uuid))
+          .setOnVisibleRowsChange((product, visibleRows) => this.loadVisibleWarranties(product, visibleRows))
+        )
+    )
   );
 
   /** Ładuje bazowy produkt (raz), aby upewnić się, że `warranties` jest dostępne. */
@@ -268,11 +310,18 @@ export class WarrantyTabComponent {
   }
 
   protected onSelectionChange(state: ErpSelectionState<ProductWarrantyVM>): void {
-    const dict: Record<string, string[]> = {};
-    for (const item of state.selectedItems) {
-      (dict[item.productUuid] ??= []).push(item.warrantyUuid);
-    }
-    this.tabStore.setAllWarrantySelections(dict);
+    this.tabStore.setSelectedChildren(state.selectedItems);
+  }
+
+  /**
+   * Akcja masowa adresuje ZASIĘG, nie to, co widać w panelu — w trybie filtra cele rozwiąże
+   * backend (`targetFilter`), w trybie listy lecą wprost identyfikatory (`targetUuids`).
+   */
+  protected onAddMass(): void {
+    console.log('Masowe dodawanie gwarancji', {
+      targets: this.tabStore.batchTargets(),
+      count: this.tabStore.scopeCount(),
+    });
   }
 
   protected onDeleteSelectedWarranty(): void {
@@ -280,6 +329,6 @@ export class WarrantyTabComponent {
   }
 
   protected onClearWarrantySelection(): void {
-    this.tabStore.clearWarrantySelection();
+    this.tabStore.clearChildSelection();
   }
 }

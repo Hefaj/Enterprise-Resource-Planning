@@ -49,6 +49,12 @@ export const PRODUCT_KEYS = {
         emptyMessage: 'product.base.table.emptyMessage',
         emptyCell: 'product.base.table.emptyCell',
       },
+      selectionScope: {
+        resolving: 'product.base.selectionScope.resolving',
+        allTitle: 'product.base.selectionScope.allTitle',
+        previewTitle: 'product.base.selectionScope.previewTitle',
+        previewDescription: 'product.base.selectionScope.previewDescription',
+      },
       multimedia: {
         gallery: {
           title: 'product.base.multimedia.gallery.title',
@@ -71,10 +77,6 @@ export const PRODUCT_KEYS = {
           bulkDescription: 'product.base.multimedia.panel.bulkDescription',
           bulkAdd: 'product.base.multimedia.panel.bulkAdd',
           bulkDelete: 'product.base.multimedia.panel.bulkDelete',
-          resolving: 'product.base.multimedia.panel.resolving',
-          scopeAllTitle: 'product.base.multimedia.panel.scopeAllTitle',
-          scopePreviewTitle: 'product.base.multimedia.panel.scopePreviewTitle',
-          scopePreviewDescription: 'product.base.multimedia.panel.scopePreviewDescription',
           scopeFileSelectionUnavailable: 'product.base.multimedia.panel.scopeFileSelectionUnavailable',
         },
       },
@@ -121,6 +123,7 @@ export const PRODUCT_KEYS = {
           emptySelection: 'product.base.warranty.panel.emptySelection',
           bulkDescription: 'product.base.warranty.panel.bulkDescription',
           addWarranty: 'product.base.warranty.panel.addWarranty',
+          scopeWarrantySelectionUnavailable: 'product.base.warranty.panel.scopeWarrantySelectionUnavailable',
         },
       },
     },

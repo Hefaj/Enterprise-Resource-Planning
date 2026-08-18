@@ -126,6 +126,12 @@ export const SHARED_KEYS = {
       selectedFiles: 'shared.selectionToolbar.selectedFiles',
       selectedItems: 'shared.selectionToolbar.selectedItems',
     },
+    selectionScope: {
+      previewTitle: 'shared.selectionScope.previewTitle',
+      previewDescription: 'shared.selectionScope.previewDescription',
+      allTitle: 'shared.selectionScope.allTitle',
+      resolving: 'shared.selectionScope.resolving',
+    },
     actionToolbar: {
       configurator: {
         title: 'shared.actionToolbar.configurator.title',

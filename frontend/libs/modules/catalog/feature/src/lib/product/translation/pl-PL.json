@@ -44,6 +44,12 @@
       "emptyMessage": "Brak produktów do wyświetlenia",
       "emptyCell": "—"
     },
+    "selectionScope": {
+      "resolving": "Rozwiązywanie zaznaczenia…",
+      "allTitle": "Zaznaczono wszystkie {{ count }} produktów pasujących do filtrów",
+      "previewTitle": "Podgląd {{ shown }} z {{ count }} produktów pasujących do filtrów",
+      "previewDescription": "Akcje masowe obejmą wszystkie pasujące produkty, nie tylko widoczne poniżej. Wybór pojedynczych pozycji jest przy tym zaznaczeniu niedostępny — zawęź filtry, aby pracować na konkretnych produktach."
+    },
     "multimedia": {
       "gallery": {
         "title": "Galeria zdjęć",
@@ -66,10 +72,6 @@
         "bulkDescription": "Zaznaczono zbyt wiele produktów, aby wyświetlić ich szczegóły jednocześnie. Możesz wykonać akcje masowe na wszystkich zaznaczonych produktach.",
         "bulkAdd": "Dodaj multimedia masowo",
         "bulkDelete": "Usuń wszystkie multimedia",
-        "resolving": "Rozwiązywanie zaznaczenia…",
-        "scopeAllTitle": "Zaznaczono wszystkie {{ count }} produktów pasujących do filtrów",
-        "scopePreviewTitle": "Podgląd {{ shown }} z {{ count }} produktów pasujących do filtrów",
-        "scopePreviewDescription": "Akcje masowe obejmą wszystkie pasujące produkty, nie tylko widoczne poniżej. Wybór pojedynczych plików jest przy tym zaznaczeniu niedostępny — zawęź filtry, aby pracować na konkretnych pozycjach.",
         "scopeFileSelectionUnavailable": "Wybór pojedynczych plików wymaga zaznaczenia konkretnych produktów"
       }
     },
@@ -115,7 +117,8 @@
         "emptyProduct": "Brak gwarancji dla tego produktu.",
         "emptySelection": "Zaznacz produkt aby zobaczyć jego gwarancje.",
         "bulkDescription": "Zaznaczono zbyt wiele produktów, aby wyświetlić ich gwarancje jednocześnie. Możesz wykonać akcje masowe na wszystkich zaznaczonych produktach.",
-        "addWarranty": "Dodaj gwarancję"
+        "addWarranty": "Dodaj gwarancję",
+        "scopeWarrantySelectionUnavailable": "Wybór pojedynczych gwarancji wymaga zaznaczenia konkretnych produktów"
       }
     }
   },

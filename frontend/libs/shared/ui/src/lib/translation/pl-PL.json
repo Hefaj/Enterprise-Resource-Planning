@@ -121,6 +121,12 @@
     "selectedFiles": "Wybrano {{count}} plików",
     "selectedItems": "Wybrano {{count}} elementów"
   },
+  "selectionScope": {
+    "previewTitle": "Podgląd {{shown}} z {{count}} pozycji pasujących do filtrów",
+    "previewDescription": "Akcje masowe obejmą wszystkie pasujące pozycje, nie tylko widoczne poniżej.",
+    "allTitle": "Zaznaczono wszystkie {{count}} pozycji pasujących do filtrów",
+    "resolving": "Rozwiązywanie zaznaczenia…"
+  },
   "actionToolbar": {
     "configurator": {
       "title": "Konfiguracja paska akcji",

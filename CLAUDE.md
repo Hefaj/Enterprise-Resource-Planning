@@ -42,7 +42,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Nowy moduł — generacja NX, `project.json` hybrydowy (monolit/MFE), `federation.config.mjs`, rejestracja w Client, tłumaczenia, weryfikacja | [`docs/frontend/new-module.md`](docs/frontend/new-module.md) |
 | Orkiestrator w `data-access` (`BaseOrchestrator`, cache `IdentityMapStore`, SignalR, mapowanie DTO→ViewModel, wzorce dla drzew) | [`docs/frontend/orchestrators.md`](docs/frontend/orchestrators.md) |
 | Nowy atom UI wg wzorca "Single Config Builder" (`*.types.ts`/`*.builder.ts`/`*.component.ts`) | [`docs/frontend/atoms.md`](docs/frontend/atoms.md) |
-| Zaznaczenie i akcje masowe w UI — „Zaznacz wszystko" jako filtr, `ErpSelectionScope`, próg materializacji, panel boczny zależny od zaznaczenia, bramkowanie akcji toolbara | [`docs/frontend/selection-scope.md`](docs/frontend/selection-scope.md) |
+| Zaznaczenie i akcje masowe w UI — „Zaznacz wszystko" jako filtr, `ErpSelectionScope`, próg materializacji, panel/zakładka zależna od zaznaczenia (`ProductScopeTabStore`, `erp-selection-scope-banner`), bramkowanie akcji toolbara | [`docs/frontend/selection-scope.md`](docs/frontend/selection-scope.md) |
 | Tłumaczenia — dodawanie kluczy, bootstrapping scope'u, DI shadowing | [`docs/frontend/translations.md`](docs/frontend/translations.md) |
 | Praca z komponentami TaigaUI (API, migracja z PrimeNG, dialogi, selecty, textfields) | `.agents/skills/taiga-ui/SKILL.md` |
 | Nowy mikroserwis backendowy — 4 projekty Clean Architecture, `.sln`, `DbContext`, `Program.cs`, sygnatura SignalR | [`docs/backend/new-microservice.md`](docs/backend/new-microservice.md) |

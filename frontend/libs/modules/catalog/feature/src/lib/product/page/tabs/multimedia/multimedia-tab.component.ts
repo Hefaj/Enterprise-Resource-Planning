@@ -7,12 +7,12 @@ import {
   ErpActionToolbarZoneDirective,
   ErpEmptyStateComponent,
   ErpEmptyStateConfig,
+  ErpSelectionScopeBannerBuilder,
+  ErpSelectionScopeBannerComponent,
   ErpSelectionState,
   ErpTableBuilder,
   ErpTableComponent,
   ErpTableConfig,
-  ErpTranslatePipe,
-  erpBuildBatchTargets,
 } from '@erp/shared/ui';
 import { CatalogMultimediaOrchestrator, CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../../translation/keys';
@@ -29,12 +29,15 @@ const MULTIMEDIA_CHUNK_SIZE = 30;
 
 /**
  * Panel multimediów zaznaczonych produktów — referencyjny konsument zasięgu zaznaczenia
- * (`ErpSelectionScope`, patrz `product.store.ts`).
+ * (`ErpSelectionScope`, patrz `product.store.ts` i `product-scope-tab.store.ts`).
  *
  * Zasada, którą realizuje: panel jest DOWODEM (co obejmie operacja), a nie źródłem prawdy
  * o jej celu. Celem jest zasięg — lista uuidów albo filtr. Dlatego przy zaznaczeniu opisanym
  * filtrem panel nie próbuje wczytać multimediów tysięcy produktów: pokazuje próbkę kilku
  * pierwszych i wyłącza wybór pojedynczych plików, a akcje masowe i tak lecą na cały zbiór.
+ *
+ * Całą mechanikę zasięgu (próbka, blokada wyboru, cele akcji) dziedziczy po
+ * `ProductScopeTabStore` — ten sam zestaw dostają pozostałe zakładki strony produktów.
  */
 @Component({
   selector: 'erp-multimedia-tab',
@@ -45,7 +48,7 @@ const MULTIMEDIA_CHUNK_SIZE = 30;
     ErpActionToolbarZoneDirective,
     ErpActionToolbarContextDirective,
     ErpEmptyStateComponent,
-    ErpTranslatePipe,
+    ErpSelectionScopeBannerComponent,
   ],
   providers: [MultimediaTabStore],
   template: `
@@ -58,29 +61,9 @@ const MULTIMEDIA_CHUNK_SIZE = 30;
         <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="toolbarConfig">
           <erp-action-toolbar [config]="toolbarConfig" />
 
-          @if (_scopeKind() === 'query') {
-            <!-- Zdanie o zasięgu: promień rażenia akcji masowych musi być widoczny bez klikania,
-                 a próbka poniżej musi być jawnie oznaczona jako próbka, nie jako pełna lista. -->
-            <div class="erp-multimedia-tab__scope-banner">
-              <div class="flex items-center gap-2">
-                <span class="font-medium">
-                  {{
-                    PRODUCT_KEYS.base.multimedia.panel.scopePreviewTitle
-                      | erpTranslate: { shown: _products().length, count: _scopeCount() }
-                  }}
-                </span>
-              </div>
-              <p class="erp-multimedia-tab__scope-description">
-                {{ PRODUCT_KEYS.base.multimedia.panel.scopePreviewDescription | erpTranslate }}
-              </p>
-            </div>
-          } @else if (_isMaterialized()) {
-            <div class="erp-multimedia-tab__scope-banner erp-multimedia-tab__scope-banner--calm">
-              {{
-                PRODUCT_KEYS.base.multimedia.panel.scopeAllTitle | erpTranslate: { count: _scopeCount() }
-              }}
-            </div>
-          }
+          <!-- Zdanie o zasięgu: promień rażenia akcji masowych musi być widoczny bez klikania,
+               a próbka w tabeli musi być jawnie oznaczona jako próbka, nie jako pełna lista. -->
+          <erp-selection-scope-banner [config]="scopeBannerConfig" />
 
           <div class="flex-1 overflow-hidden">
             <erp-table
@@ -92,31 +75,9 @@ const MULTIMEDIA_CHUNK_SIZE = 30;
       }
     </div>
   `,
-  styles: [`
-    .erp-multimedia-tab__scope-banner {
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.5rem;
-      border: 1px solid color-mix(in srgb, var(--tui-status-warning) 35%, transparent);
-      background: color-mix(in srgb, var(--tui-status-warning) 8%, var(--tui-background-base));
-      color: var(--tui-text-primary);
-      font: var(--tui-font-text-s);
-    }
-
-    .erp-multimedia-tab__scope-banner--calm {
-      border-color: color-mix(in srgb, var(--tui-text-action) 30%, transparent);
-      background: color-mix(in srgb, var(--tui-text-action) 6%, var(--tui-background-base));
-    }
-
-    .erp-multimedia-tab__scope-description {
-      margin-top: 0.25rem;
-      color: var(--tui-text-secondary);
-    }
-  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultimediaTabComponent {
-  protected readonly PRODUCT_KEYS = PRODUCT_KEYS;
-
   private readonly tabStore = inject(MultimediaTabStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
@@ -124,41 +85,8 @@ export class MultimediaTabComponent {
   protected readonly _scopeKind = this.tabStore.scopeKind;
   protected readonly _resolving = this.tabStore.resolving;
 
-  protected readonly _scopeCount = computed(() => {
-    const scope = this.tabStore.scope();
-    return scope.kind === 'none' ? 0 : scope.count;
-  });
-
-  /** Czy zaznaczenie powstało z „Zaznacz wszystko" rozwiązanego do listy identyfikatorów. */
-  protected readonly _isMaterialized = computed(() => {
-    const scope = this.tabStore.scope();
-    return scope.kind === 'explicit' && scope.materialized;
-  });
-
-  /**
-   * Produkty, których multimedia panel renderuje: komplet zaznaczonych (tryb `explicit`)
-   * albo próbka kilku pierwszych pasujących do filtra (tryb `query`).
-   *
-   * Modele widoku bierzemy z orkiestratora po UUID — dzięki temu wiersze aktualizują się
-   * z SignalR, a zaznaczenie zmaterializowane (które nie niesie ze sobą pozycji) działa
-   * dokładnie tak samo jak ręczne.
-   */
-  protected readonly _products = computed<ProductVM[]>(() => {
-    const uuids = this.tabStore.visibleProductUuids();
-    if (uuids.length === 0) return [];
-
-    const scope = this.tabStore.scope();
-    const known = scope.kind === 'explicit' ? scope.items : [];
-    const signalMap = this.productOrchestrator.getSignalViewModel();
-
-    return uuids
-      .map(uuid => {
-        const vmSignal = signalMap.get(uuid);
-        const latestVm = vmSignal ? vmSignal() : null;
-        return latestVm ?? known.find(x => x.uuid === uuid);
-      })
-      .filter((vm): vm is ProductVM => vm !== undefined);
-  });
+  /** Produkty renderowane przez panel — komplet zaznaczonych albo próbka z filtra. */
+  protected readonly _products = this.tabStore.products;
 
   /**
    * Wszystkie multimedia widocznych produktów — jedna wspólna, płaska lista wierszy.
@@ -174,8 +102,6 @@ export class MultimediaTabComponent {
     )
   );
 
-  protected readonly _subSelectionCount = computed(() => this.tabStore.selectedMultimedia().size);
-
   protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
     icon: '@tui.mouse-pointer-click',
     message: PRODUCT_KEYS.base.multimedia.panel.emptySelection,
@@ -183,8 +109,16 @@ export class MultimediaTabComponent {
 
   protected readonly resolvingConfig: ErpEmptyStateConfig = {
     icon: '@tui.loader',
-    message: PRODUCT_KEYS.base.multimedia.panel.resolving,
+    message: PRODUCT_KEYS.base.selectionScope.resolving,
   };
+
+  protected readonly scopeBannerConfig = ErpSelectionScopeBannerBuilder.create(b => b
+    .setScope(this.tabStore.scope)
+    .setShownCount(this.tabStore.shownProductCount)
+    .setPreviewTitle(PRODUCT_KEYS.base.selectionScope.previewTitle)
+    .setPreviewDescription(PRODUCT_KEYS.base.selectionScope.previewDescription)
+    .setAllTitle(PRODUCT_KEYS.base.selectionScope.allTitle)
+  );
 
   // Zbiór UUID produktów, dla których już zażądaliśmy bazowego załadowania (dedupikacja).
   private readonly loadedProductUuids = new Set<string>();
@@ -193,7 +127,7 @@ export class MultimediaTabComponent {
 
   protected readonly toolbarConfig = ErpActionToolbarBuilder.create(b => b
     .setMenuId('multimedia-toolbar')
-    .setSelectionCount(this._subSelectionCount)
+    .setSelectionCount(this.tabStore.selectedChildrenCount)
     .setSelectionLabel('shared.selectionToolbar.selectedFiles')
     // Zasięg produktów (nie plików!) — na jego podstawie toolbar blokuje akcje wymagające
     // wskazanych pozycji, gdy zaznaczenie jest filtrem.
@@ -276,7 +210,7 @@ export class MultimediaTabComponent {
       table
         .setStateKey('product-tab-multimedia')
         .setMode('client')
-        .setSelectionMode(this.tabStore.canSelectMedia() ? 'multi' : 'none')
+        .setSelectionMode(this.tabStore.canSelectChildren() ? 'multi' : 'none')
         .setRowIdAccessor(r => `${r.productUuid}:${r.uuid}`)
         .setItems(this._rows)
         .setItemCount(computed(() => this._rows().length))
@@ -369,23 +303,27 @@ export class MultimediaTabComponent {
   }
 
   protected onSelectionChange(state: ErpSelectionState<MultimediaRow>): void {
-    this.tabStore.selectedMultimedia.set(new Set(state.selectedItems.map(r => r.uuid)));
+    this.tabStore.setSelectedChildren(state.selectedItems);
   }
 
   /**
    * Akcje masowe adresują ZASIĘG, nie to, co widać w panelu — w trybie filtra cele rozwiąże
    * backend (`targetFilter`), w trybie listy lecą wprost identyfikatory (`targetUuids`).
-   * Składanie celów idzie przez `erpBuildBatchTargets`, żeby żaden komponent nie decydował
-   * o tym po swojemu.
+   * Składanie celów idzie przez `ProductScopeTabStore.batchTargets()`, żeby żaden komponent
+   * nie decydował o tym po swojemu.
    */
   protected onAddMass(): void {
-    const targets = erpBuildBatchTargets(this.tabStore.scope());
-    console.log('Masowe dodawanie multimediów', { targets, count: this._scopeCount() });
+    console.log('Masowe dodawanie multimediów', {
+      targets: this.tabStore.batchTargets(),
+      count: this.tabStore.scopeCount(),
+    });
   }
 
   protected onDeleteMass(): void {
-    const targets = erpBuildBatchTargets(this.tabStore.scope());
-    console.log('Masowe usuwanie multimediów', { targets, count: this._scopeCount() });
+    console.log('Masowe usuwanie multimediów', {
+      targets: this.tabStore.batchTargets(),
+      count: this.tabStore.scopeCount(),
+    });
   }
 
   protected onDeleteSelectedMedia(): void {
@@ -393,6 +331,6 @@ export class MultimediaTabComponent {
   }
 
   protected onClearMediaSelection(): void {
-    this.tabStore.selectedMultimedia.set(new Set());
+    this.tabStore.clearChildSelection();
   }
 }

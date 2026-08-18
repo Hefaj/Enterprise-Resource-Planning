@@ -2,9 +2,9 @@
 
 Ten dokument opisuje, jak strona z listą + panelami bocznymi ma się zachować, gdy użytkownik kliknie **„Zaznacz wszystko"**, a filtry pasują do tysięcy pozycji: co jest celem akcji masowej, co wolno pokazać w panelu i które akcje muszą wtedy zniknąć z zasięgu ręki.
 
-Implementacja referencyjna: strona produktów katalogu — [`product.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (właściciel zasięgu), [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/multimedia/multimedia-tab.component.ts) + [`multimedia-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/multimedia/multimedia-tab.store.ts) (panel zależny od zaznaczenia), [`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-tab.component.ts) (toolbar + modale wsadowe).
+Implementacja referencyjna: strona produktów katalogu — [`product.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (właściciel zasięgu), [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-scope-tab.store.ts) (wspólna podstawa zakładek zależnych od zaznaczenia), [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/multimedia/multimedia-tab.component.ts) i [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/warranty/warranty-tab.component.ts) (panele zależne od zaznaczenia), [`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-tab.component.ts) (toolbar + modale wsadowe).
 
-Warstwa współdzielona: [`erp-selection.utils.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.ts) (+ testy [`erp-selection.utils.spec.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.spec.ts)).
+Warstwa współdzielona: [`erp-selection.utils.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.ts) (+ testy [`erp-selection.utils.spec.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.spec.ts)) oraz atom [`erp-selection-scope-banner`](../../frontend/libs/shared/ui/src/lib/atoms/erp-selection-scope-banner) — zdanie o zasięgu nad panelem.
 
 ---
 
@@ -87,14 +87,28 @@ Liczność zasięgu czytaj przez `erpSelectionScopeCount(scope)` (a nie `erpSele
 
 ## 4. Panel zależny od zaznaczenia w trybie `query`
 
-Trzy reguły, wszystkie widoczne w [`multimedia-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/multimedia/multimedia-tab.store.ts):
+Trzy reguły, wszystkie zaszyte w [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-scope-tab.store.ts) — store'y poszczególnych zakładek (multimedia, gwarancje…) dziedziczą je zamiast odtwarzać po swojemu:
 
-**1. Próbka zamiast listy.** Panel ładuje kilka pierwszych rodziców (`MULTIMEDIA_PREVIEW_PRODUCT_LIMIT = 10`), rozwiązanych tym samym mechanizmem co materializacja (`ProductStore.resolveUuids(filters, limit)` — z cache per (filtry, limit)). Scroll nie doładowuje kolejnych: to próbka i ma taką się czuć.
+**1. Próbka zamiast listy.** Panel ładuje kilka pierwszych rodziców (`PRODUCT_SCOPE_PREVIEW_LIMIT = 10`), rozwiązanych tym samym mechanizmem co materializacja (`ProductStore.resolveUuids(filters, limit)` — z cache per (filtry, limit)). Scroll nie doładowuje kolejnych: to próbka i ma taką się czuć.
 
 **2. Zdanie o zasięgu nad tabelą.** Promień rażenia musi być widoczny bez klikania:
 
 > Podgląd **10** z **1500** produktów pasujących do filtrów
 > Akcje masowe obejmą wszystkie pasujące produkty, nie tylko widoczne poniżej.
+
+Renderuje je atom `erp-selection-scope-banner` — sam rozstrzyga po zasięgu, czy pokazać ostrzegawczy baner próbki (`query`), spokojne potwierdzenie po materializacji, czy nic (zwykłe zaznaczenie, w którym nie ma czego tłumaczyć):
+
+```typescript
+protected readonly scopeBannerConfig = ErpSelectionScopeBannerBuilder.create(b => b
+  .setScope(this.tabStore.scope)
+  .setShownCount(this.tabStore.shownProductCount)
+  .setPreviewTitle(PRODUCT_KEYS.base.selectionScope.previewTitle)
+  .setPreviewDescription(PRODUCT_KEYS.base.selectionScope.previewDescription)
+  .setAllTitle(PRODUCT_KEYS.base.selectionScope.allTitle)
+);
+```
+
+Bez podanych tekstów atom bierze ogólne `SHARED_KEYS.selectionScope.*` („pozycji"); moduł nadpisuje je, gdy chce nazwać rodziców po imieniu („produktów").
 
 **3. Brak granularnego wyboru** — `selectionMode: 'none'`, więc znikają checkboxy wierszy **i** grup. Checkbox obiecuje „operacja obejmie dokładnie to", a przy próbce z tysięcy to nieprawda; lepiej odebrać obietnicę niż ją złamać. To ta sama reguła, którą tabela stosuje do własnych wierszy przy „Zaznacz wszystko" — spójność robi tu robotę za dokumentację.
 
@@ -103,7 +117,7 @@ Konfiguracja tabeli musi być wtedy `computed`, bo tryb zaznaczenia zależy od z
 ```typescript
 protected readonly tableConfig = computed<ErpTableConfig<MultimediaRow>>(() =>
   ErpTableBuilder.create<ErpTableBuilder<MultimediaRow>>(table => table
-    .setSelectionMode(this.tabStore.canSelectMedia() ? 'multi' : 'none')
+    .setSelectionMode(this.tabStore.canSelectChildren() ? 'multi' : 'none')
     // ...
   )
 );
@@ -142,13 +156,31 @@ Które akcje ograniczać: te, które potrzebują **tożsamości pozycji** (zmian
 
 ## 6. Przepis: nowy panel zależny od zaznaczenia
 
+### Nowa zakładka strony produktów — dziedzicz, nie przepisuj
+
+```typescript
+@Injectable() // rejestrowany na poziomie komponentu zakładki
+export class WarrantyTabStore extends ProductScopeTabStore<ProductWarrantyVM> {
+  // tylko to, co specyficzne: payload akcji operujących na wskazanych pozycjach
+  public readonly selectedWarrantiesByProduct = computed(() => { /* z selectedChildren() */ });
+
+  constructor() {
+    super(WARRANTY_PREVIEW_PRODUCT_LIMIT);
+  }
+}
+```
+
+Z bazy zakładka dostaje gotowe: `scope`/`scopeKind`/`scopeCount`, `products` (modele widoku z orkiestratora po UUID — czyli też aktualizacje z SignalR), `shownProductCount`, `resolving`, `canSelectChildren`, `selectedChildren` z licznikiem i czyszczeniem przy zmianie zbioru rodziców oraz `batchTargets()`. Komponent dokłada wyłącznie swoje wiersze, kolumny, doładowywanie szczegółów i akcje.
+
+### Panel w innym module (bez `ProductScopeTabStore`)
+
 1. **Store strony** wystawia `scope` (`computed` z `erpResolveSelectionScope`) i `scopeKind`; materializację obsługuje `effect` odpalany przy `isAllSelected` poniżej progu, z odrzucaniem wyników nieaktualnych filtrów (token z filtrów).
 2. **Panel czyta `scope`, nigdy `selection` wprost.** Modele widoku bierz z orkiestratora po UUID — zaznaczenie zmaterializowane nie niesie ze sobą pozycji, a odczyt z orkiestratora daje przy okazji aktualizacje z SignalR.
-3. **Tryb `query`** → próbka N rodziców + baner z zasięgiem + `selectionMode: 'none'`.
+3. **Tryb `query`** → próbka N rodziców + `erp-selection-scope-banner` + `selectionMode: 'none'`.
 4. **Tryb `explicit` z `loading: true`** (materializacja w toku) → stan „rozwiązywanie zaznaczenia", nie pusty ekran i nie baner trybu filtra.
 5. **Toolbar** dostaje `.setSelectionScope(...)`, a akcje wymagające wskazanych pozycji — `.setScopes(['explicit'])` + `.setUnavailableHint(...)`.
 6. **Akcje masowe** budują cele przez `erpBuildBatchTargets(scope)` i przekazują `targetCount` metadanymi.
-7. **Teksty** — wyłącznie klucze Transloco (patrz [tłumaczenia](./translations.md)); dla panelu multimediów: `PRODUCT_KEYS.base.multimedia.panel.{resolving,scopeAllTitle,scopePreviewTitle,scopePreviewDescription,scopeFileSelectionUnavailable}`.
+7. **Teksty** — wyłącznie klucze Transloco (patrz [tłumaczenia](./translations.md)). Wspólne dla całej strony produktów: `PRODUCT_KEYS.base.selectionScope.{resolving,allTitle,previewTitle,previewDescription}`; per zakładka zostaje tylko podpowiedź o zablokowanej akcji (`…multimedia.panel.scopeFileSelectionUnavailable`, `…warranty.panel.scopeWarrantySelectionUnavailable`). Domyślne, ogólne teksty banera: `SHARED_KEYS.selectionScope.*`.
 
 ---
 
@@ -161,6 +193,7 @@ Które akcje ograniczać: te, które potrzebują **tożsamości pozycji** (zmian
 - **Adresowanie filtrem po materializacji** — użytkownik widzi pięć pozycji, a operacja obejmuje to, co filtr zwróci w chwili wykonania.
 - **Brak zdania o zasięgu** przy akcjach nad filtrem — użytkownik nie zna promienia rażenia, dopóki nie zobaczy raportu zadania.
 - **Ukrywanie zablokowanych akcji** zamiast blokowania z podpowiedzią.
+- **Powielanie mechaniki zasięgu w nowej zakładce** zamiast dziedziczenia po `ProductScopeTabStore` — progi, próbki i momenty czyszczenia podzaznaczenia rozjeżdżają się po pierwszej zmianie.
 
 ---
 
@@ -169,7 +202,6 @@ Które akcje ograniczać: te, które potrzebują **tożsamości pozycji** (zmian
 - **Filtr multimediów po stronie backendu.** `SearchMultimediaRequest` ma dziś tylko `Uuids` — nie ma ani „multimedia produktów pasujących do filtra X", ani taniego `COUNT` plików. Dlatego baner podaje liczbę **produktów**, nie plików, a akcje masowe panelu multimediów pozostają zaślepkami (niosą już poprawne cele). Docelowo: `ProductFilter` + kryteria mediów w requeście, `BatchEndpointBase<…, SearchMultimediaRequest>` z joinem `product → product_multimedia_link → multimedia`, `job_item` per plik.
 - **Granulacja przez kryteria w trybie `query`** („wszystkie pliki bez miniatury", „tylko obrazy") — naturalne rozszerzenie punktu wyżej: przy dziesiątkach tysięcy plików precyzję wyraża predykat, nie lista identyfikatorów.
 - **Dwustopniowe „Zaznacz wszystko"** w `erp-table` (najpierw bieżąca strona, potem baner „Zaznacz wszystkie N pasujących do filtrów"). Dziś checkbox nagłówka od razu wchodzi w tryb filtra, więc użytkownik podejmuje decyzję o zasięgu, nie widząc liczby w tym momencie. Zmiana dotyczy każdej tabeli serwerowej — warto ją zrobić jako opcję konfiguracji.
-- **Zakładka gwarancji** (`warranty-tab.component.ts`) czyta jeszcze `selection` wprost i ma opisaną w sekcji 7 lukę.
 - **„Zaznacz wszystko minus wyjątki"** (`excludedIds` w stanie tabeli + `ExcludedUuids` w `BatchCommand`) — czysto addytywne, ale komplikuje licznik i podgląd; sensowne dopiero, gdy użytkownicy sami się o to upomną.
 
 ---

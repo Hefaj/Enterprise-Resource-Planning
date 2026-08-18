@@ -34,6 +34,7 @@ export * from './lib/atoms/erp-tree';
 export * from './lib/atoms/erp-scroll-viewport';
 export * from './lib/atoms/erp-group-card';
 export * from './lib/atoms/erp-empty-state';
+export * from './lib/atoms/erp-selection-scope-banner';
 
 // // Molecules
 export * from './lib/molecules/erp-filter';

@@ -17,7 +17,7 @@ namespace Catalog.Infrastructure.Persistence;
 public sealed class CatalogDbContextFactory : IDesignTimeDbContextFactory<CatalogDbContext>
 {
     private const string DefaultConnectionString =
-        "Host=localhost;Port=5432;Database=erp;Username=erp;Password=erp";
+        "Host=127.0.0.1;Port=5432;Database=erp;Username=erp;Password=erp";
 
     public CatalogDbContext CreateDbContext(string[] args)
     {

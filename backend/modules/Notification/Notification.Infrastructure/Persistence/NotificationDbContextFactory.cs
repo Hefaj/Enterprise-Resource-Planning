@@ -9,7 +9,7 @@ namespace Notification.Infrastructure.Persistence;
 public sealed class NotificationDbContextFactory : IDesignTimeDbContextFactory<NotificationDbContext>
 {
     private const string DefaultConnectionString =
-        "Host=localhost;Port=5432;Database=erp;Username=erp;Password=erp";
+        "Host=127.0.0.1;Port=5432;Database=erp;Username=erp;Password=erp";
 
     public NotificationDbContext CreateDbContext(string[] args)
     {

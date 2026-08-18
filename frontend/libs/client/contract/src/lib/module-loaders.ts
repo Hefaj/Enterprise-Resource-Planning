@@ -9,6 +9,7 @@ export const MODULE_LOADERS: Record<string, () => Promise<any>> = {
   dms: () => import('@erp/dms/contract'),
   'task-management': () => import('@erp/task-management/contract'),
   notification: () => import('@erp/notification/contract'),
+  identity: () => import('@erp/identity/contract'),
 };
 
 export async function loadModuleContract(modulePrefix: string): Promise<any> {

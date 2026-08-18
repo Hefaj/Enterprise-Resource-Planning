@@ -52,6 +52,10 @@ export const appRoutes: Route[] = [
         path: 'notification',
         loadChildren: () => loadModuleRoutes('notification'),
       },
+      {
+        path: 'identity',
+        loadChildren: () => loadModuleRoutes('identity'),
+      },
     ],
   },
   {

@@ -4,5 +4,6 @@
   "sales": "http://localhost:4203/remoteEntry.json",
   "dms": "http://localhost:4204/remoteEntry.json",
   "task-management": "http://localhost:4205/remoteEntry.json",
-  "notification": "http://localhost:4206/remoteEntry.json"
+  "notification": "http://localhost:4206/remoteEntry.json",
+  "identity": "http://localhost:4207/remoteEntry.json"
 }

@@ -3,7 +3,10 @@
 Stan: **Fazy 1-3 ✅ wdrożone i zweryfikowane end-to-end** (realny Keycloak, realne logowanie
 w przeglądarce, mikroserwis Identity z domeną ról/uprawnień, hierarchia z wykrywaniem cykli,
 efektywne uprawnienia i ścieżka dziedziczenia, JIT provisioning, egzekwowanie uprawnień
-w Catalog i Sales z potwierdzonym SLA odwołania ≤60s). **Fazy 4-6 📐 projekt, brak kodu.**
+w Catalog i Sales z potwierdzonym SLA odwołania ≤60s). **Faza 4 ✅ szkielet modułu frontendowego
+`identity`** (routing, menu, federacja, tłumaczenia — zweryfikowane w przeglądarce), **📐 trzy
+właściwe strony (users/roles/permissions) — świadomie odłożone jako osobny przyrost**.
+**Fazy 5-6 📐 projekt, brak kodu.**
 Legenda znaczników jak w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
 Szczegóły zaimplementowanych faz → §7 niżej i sekcje 2-6 (opisują już wdrożony stan, nie
 tylko projekt).
@@ -308,11 +311,21 @@ Bez tego kroku żaden z powyższych elementów by nie zadziałał, mimo poprawne
 
 **Znany dług, świadomie odłożony:** Identity NIE bramkuje własnych endpointów (`role/create`, `user/assign-role`...) przez `Permissions(...)` — dziś każdy zalogowany użytkownik może zarządzać rolami. Powód: `UserProvisioningMiddleware` (JIT) biegnie PO `PermissionClaimsTransformation` w potoku ASP.NET Core (uwierzytelnianie przed `ExecutionContextMiddleware`/customowymi hakami), więc pierwsze żądanie zupełnie nowego użytkownika miałoby permission cache zapisany jako PUSTY (bo `user_account` jeszcze nie istnieje) na 60 sekund — zanim JIT zdąży nadać `administrator`. Włączenie bramkowania na Identity bez naprawy tej kolejności zablokowałoby świeżo utworzonych administratorów na minutę. Naprawa (np. invalidacja cache'u zaraz po JIT, albo przesunięcie provisioningu przed autentykacją) to zadanie na Fazę 5 razem z bramkowaniem UI, nie coś do zrobienia w pośpiechu tutaj.
 
-### Faza 4 — moduł frontendowy `identity`
+### Faza 4 — moduł frontendowy `identity` ✅ (szkielet), 📐 (trzy strony z §6)
 
-Generacja wg [`new-module.md`](../frontend/new-module.md) (port 4207, `scope:identity`, 5 warstw, `federation.config.mjs`, rejestracja w `REMOTE_MODULES_CONFIG`, `app.routes.ts`, `remote-api.providers.ts` → `http://localhost:5280`), klient NSwag, orkiestratory wg [`orchestrators.md`](../frontend/orchestrators.md) z `signalrSignature: 'identity.user'` / `'identity.role'`, tłumaczenia `pl-PL`/`en-US` + `pnpm translate:keys`. Trzy strony z §6.
+Wygenerowany dokładnie wg [`new-module.md`](../frontend/new-module.md): 5 warstw (`contract`, `feature`, `ui`, `data-access`, `util`, port **4207**), `federation.config.mjs`, rejestracja w `REMOTE_MODULES_CONFIG`, `module-loaders.ts`, `app.routes.ts`, `remote-api.providers.ts` → `http://localhost:5280`, reguła `scope:identity` w `eslint.config.mjs` (root + `scope:host`), aliasy w `tsconfig.base.json`, tłumaczenia `pl-PL`/`en-US` przez `pnpm translate:keys`.
 
-**Weryfikacja:** `npx nx run-many -t lint,test,build`; nadanie roli w jednej karcie odświeża drugą przez SignalR.
+**Zweryfikowane end-to-end w przeglądarce** (nie tylko build): zalogowanie, przejście na `/identity/dashboard`, placeholder z poprawnie przetłumaczoną treścią, pozycja "Tożsamość" w szufladzie nawigacji obok pozostałych modułów. `npx nx lint` na wszystkich 6 nowych projektów + `client`/`client-contract`, build monolit (dev) i MFE (`identity:build:production` + `client:build:production`) — wszystko bez błędów.
+
+**Świadomie odłożone do kolejnej iteracji — trzy właściwe strony (§6).** Ten przebieg dostarczył kompletny, działający SZKIELET modułu (routing, menu, federacja, tłumaczenia) z jedną stroną-placeholderem, zgodnie z Krokiem 4.3 przepisu ("`data-access`/`ui`/`util` mogą być puste na start"). `Users`/`Roles`/`Permissions` (klient NSwag z OpenAPI Identity, orkiestratory z `signalrSignature: 'identity.user'`/`'identity.role'`, realne tabele/formularze) to osobny, dobrze odizolowany przyrost — nie jest wymagany, żeby moduł "istniał" i żeby Faza 5 (bramkowanie UI) miała się do czego podłączyć.
+
+**Napotkane i naprawione w trakcie problemy:**
+1. **Generator `@nx/angular:remote` domyślnie scaffolduje pod Webpack Module Federation**, nie Native Federation — dopisał `@nx/module-federation`/`@nx/webpack`/`@module-federation/enhanced` do `package.json` i webpack-owy `project.json`. Odrzucone: usunięte niepotrzebne zależności (`pnpm install` po przywróceniu `package.json`), `project.json` zastąpiony w całości szablonem hybrydowym z `new-module.md`, wygenerowany `module-federation.manifest.json` poprawiony z `/mf-manifest.json` (webpack) na `/remoteEntry.json` (Native Federation).
+2. **`tsconfig.base.json` — te same błędy, przed którymi ostrzega dokument**: generator dodał aliasy bez prefiksu `@erp/identity/` (`"contract"`, `"feature"`...) i osierocony wpis `"identity/Routes"` wskazujący na usunięty plik `remote-entry/entry.routes.ts`. Poprawione ręcznie na `@erp/identity/*`.
+3. **`app.config.ts` wg dosłownego szablonu z dokumentu (`contractLoader: () => import(...)`) nie przechodzi lintu** — `@nx/enforce-module-boundaries` odrzuca plik, który zarówno statycznie, jak i dynamicznie importuje tę samą bibliotekę. Rzeczywisty działający wzorzec (potwierdzony na `catalog`) to statyczny import `remoteRoutes`/`remoteModalIds`/`registerModals`/`getModalProviders` przekazywanych wprost do `provideRemoteDevSupport(...)`, bez `contractLoader`. Dokument wymaga poprawki — patrz TODO niżej.
+4. **Puste klucze tłumaczeń mimo poprawnego `pl-PL.json`** — strona pokazywała surowe `identity.dashboard.title` zamiast tekstu. Przyczyna: scope Transloco trzeba zarejestrować w `providers: [provideIdentityTranslations()]` SAMEGO routowanego komponentu (wzorzec z `ProductComponent` w Catalogu), nie wystarczy sam import kluczy — dokument o tym nie wspomina explicite poza ogólnym odesłaniem do `translations.md`.
+
+**TODO dla dokumentacji:** `docs/frontend/new-module.md` Krok 3.6 (`app.config.ts`) pokazuje wzorzec z `contractLoader`, który realnie nie przechodzi lintu — do zamiany na wzorzec ze statycznymi importami (jak w tym module i w `catalog`).
 
 ### Faza 5 — bramkowanie UI
 

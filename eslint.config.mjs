@@ -15,25 +15,13 @@ export default [
         {
           enforceBuildableLibDependency: true,
           // Pozwalamy linterowi na swobodne importy w plikach konfiguracyjnych
-          allow: [
-            '^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$',
-            '@ngrx/.*'
-          ],
+          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$', '@ngrx/.*'],
 
           depConstraints: [
             // --- 1. ZASADY DOMENOWE (SCOPE) ---
             {
               sourceTag: 'scope:host',
-              onlyDependOnLibsWithTags: [
-                'scope:shared',
-                'scope:host',
-                'scope:catalog',
-                'scope:inventory',
-                'scope:sales',
-                'scope:dms',
-                'scope:task-management',
-                'scope:notification'
-              ],
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:host', 'scope:catalog', 'scope:inventory', 'scope:sales', 'scope:dms', 'scope:task-management', 'scope:notification', 'scope:identity'],
             },
             {
               sourceTag: 'scope:catalog',
@@ -58,6 +46,10 @@ export default [
             {
               sourceTag: 'scope:notification',
               onlyDependOnLibsWithTags: ['scope:shared', 'scope:notification'],
+            },
+            {
+              sourceTag: 'scope:identity',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:identity'],
             },
             {
               sourceTag: 'scope:shared',
@@ -132,7 +124,7 @@ export default [
       '**/libs/modules/catalog/**/*.ts',
       '**/libs/modules/catalog/**/*.html',
       '**/libs/modules/dms/ui/**/*.ts',
-      '**/libs/modules/dms/ui/**/*.html'
+      '**/libs/modules/dms/ui/**/*.html',
     ],
     rules: {
       '@typescript-eslint/explicit-member-accessibility': 'off',

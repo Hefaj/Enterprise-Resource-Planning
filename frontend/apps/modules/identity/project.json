@@ -1,0 +1,119 @@
+{
+  "name": "identity",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "frontend/apps/modules/identity/src",
+  "tags": ["scope:identity", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@angular-architects/native-federation:build",
+      "options": { "cacheExternalArtifacts": true },
+      "configurations": {
+        "production": { "target": "identity:esbuild:production" },
+        "development": { "target": "identity:esbuild:development", "dev": true },
+        "mfe": { "target": "identity:esbuild:mfe", "dev": true }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "options": {
+        "port": 4207,
+        "publicHost": "http://localhost:4207",
+        "headers": { "Access-Control-Allow-Origin": "*" }
+      },
+      "configurations": {
+        "production": { "buildTarget": "identity:build:production" },
+        "development": { "buildTarget": "identity:esbuild:development" }
+      },
+      "defaultConfiguration": "development"
+    },
+    "serve-mfe": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx run identity:serve-mfe-remote", "nx run client:serve-mfe"],
+        "parallel": true
+      }
+    },
+    "serve-mfe-remote": {
+      "executor": "@angular-architects/native-federation:build",
+      "options": {
+        "target": "identity:serve-original:mfe",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 4207
+      }
+    },
+    "esbuild": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/frontend/apps/modules/identity",
+        "index": "frontend/apps/modules/identity/src/index.html",
+        "tsConfig": "frontend/apps/modules/identity/tsconfig.app.json",
+        "assets": [
+          { "glob": "**/*", "input": "frontend/apps/modules/identity/public" },
+          { "glob": "**/*", "input": "node_modules/@taiga-ui/icons/src", "output": "assets/taiga-ui/icons" }
+        ],
+        "styles": [
+          "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
+          "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+          "frontend/apps/modules/identity/src/styles.css"
+        ],
+        "polyfills": ["es-module-shims"],
+        "browser": "frontend/apps/modules/identity/src/main.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            { "type": "initial", "maximumWarning": "1mb", "maximumError": "2mb" },
+            { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            { "replace": "frontend/apps/modules/identity/src/main.ts", "with": "frontend/apps/modules/identity/src/main.mfe.ts" }
+          ]
+        },
+        "development": {
+          "optimization": false, "extractLicenses": false, "sourceMap": true, "namedChunks": true
+        },
+        "mfe": {
+          "optimization": false, "extractLicenses": false, "sourceMap": true, "namedChunks": true,
+          "fileReplacements": [
+            { "replace": "frontend/apps/modules/identity/src/main.ts", "with": "frontend/apps/modules/identity/src/main.mfe.ts" }
+          ]
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-original": {
+      "continuous": true,
+      "executor": "@nx/angular:dev-server",
+      "options": {
+        "port": 4207,
+        "publicHost": "http://localhost:4207",
+        "headers": { "Access-Control-Allow-Origin": "*" }
+      },
+      "configurations": {
+        "production": { "buildTarget": "identity:esbuild:production" },
+        "development": { "buildTarget": "identity:esbuild:development" },
+        "mfe": { "buildTarget": "identity:esbuild:mfe" }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": { "buildTarget": "identity:build" }
+    },
+    "lint": { "executor": "@nx/eslint:lint" },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": { "reportsDirectory": "../../../../coverage/frontend/apps/modules/identity" }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { Provider } from '@angular/core';
 import { API_BASE_URL as CATALOG_API_BASE_URL } from '@erp/catalog/data-access';
 import { API_BASE_URL as NOTIFICATION_API_BASE_URL } from '@erp/notification/data-access';
+import { API_BASE_URL as IDENTITY_API_BASE_URL } from '@erp/identity/data-access';
 import { SIGNALR_HUB_URL } from '@erp/shared/data-access';
 
 /**
@@ -10,6 +11,7 @@ import { SIGNALR_HUB_URL } from '@erp/shared/data-access';
 export const remoteApiProviders: Provider[] = [
   { provide: CATALOG_API_BASE_URL, useValue: 'http://localhost:5149' },
   { provide: NOTIFICATION_API_BASE_URL, useValue: 'http://localhost:5250' },
+  { provide: IDENTITY_API_BASE_URL, useValue: 'http://localhost:5280' },
   // Hub SignalR mieszka w Notification — domyślna ścieżka względna `/hubs/sync` zakłada
   // wspólny origin za gatewayem, którego jeszcze nie ma, więc do czasu jego powstania
   // wskazujemy wprost na port Notification.

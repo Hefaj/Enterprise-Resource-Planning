@@ -18,7 +18,7 @@ Dodanie nowego modułu biznesowego (kolejny remote obok `catalog`, `inventory`, 
 | Alias TS | `@erp/MODULE_NAME/*` | `@erp/warehouse/feature` |
 | App path | `frontend/apps/modules/MODULE_NAME` | `frontend/apps/modules/warehouse` |
 | Lib path | `frontend/libs/modules/MODULE_NAME` | `frontend/libs/modules/warehouse` |
-| Selektor entry | `erp-MODULE_NAME-entry` | `erp-warehouse-entry` |
+| Selektor entry | `app-MODULE_NAME-entry` | `app-warehouse-entry` |
 
 ---
 
@@ -340,7 +340,7 @@ import { RouterOutlet } from '@angular/router';
 import { TuiRoot } from '@taiga-ui/core';
 
 @Component({
-  selector: 'erp-MODULE_NAME-entry',
+  selector: 'app-MODULE_NAME-entry',
   standalone: true,
   imports: [RouterOutlet, TuiRoot],
   template: `<tui-root><router-outlet></router-outlet></tui-root>`,
@@ -351,12 +351,15 @@ export class AppComponent {}
 
 ### 3.6 `src/app/app.config.ts`
 
-`provideRemoteDevSupport()` z `@erp/shared/ui` konfiguruje automatycznie podstawowe usługi (Transloco, HttpClient, TaigaUI) i rejestruje modale modułu w `ErpModalService` przy samodzielnym uruchomieniu remota:
+`provideRemoteDevSupport()` z `@erp/shared/ui` konfiguruje automatycznie podstawowe usługi (Transloco, HttpClient, TaigaUI) i rejestruje modale modułu w `ErpModalService` przy samodzielnym uruchomieniu remota.
+
+> [!WARNING]
+> Importuj `remoteRoutes`/`remoteModalIds`/`registerModals`/`getModalProviders` STATYCZNIE i przekaż je wprost do `provideRemoteDevSupport()`, NIE przez `contractLoader: () => import(...)`. Ten plik już importuje `remoteRoutes` statycznie (potrzebne synchronicznie dla `provideRouter`) — dołożenie do niego DODATKOWO dynamicznego `import('@erp/MODULE_NAME/contract')` w `contractLoader` sprawia, że `@nx/enforce-module-boundaries` widzi tę samą bibliotekę importowaną i statycznie, i dynamicznie w jednym pliku, i wywala `npx nx lint MODULE_NAME` błędem "Static imports of lazy-loaded libraries are forbidden". Zweryfikowane empirycznie przy module `identity` — wzorzec poniżej (statyczne importy) jest tym, którego faktycznie używa `catalog` i który przechodzi lint.
 
 ```ts
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { remoteRoutes } from '@erp/MODULE_NAME/contract';
+import { remoteRoutes, remoteModalIds, registerModals, getModalProviders } from '@erp/MODULE_NAME/contract';
 import { API_BASE_URL } from '@erp/MODULE_NAME/data-access';
 import { provideRemoteDevSupport } from '@erp/shared/ui';
 
@@ -364,7 +367,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRemoteDevSupport({
       modulePrefix: 'MODULE_NAME',
-      contractLoader: () => import('@erp/MODULE_NAME/contract'),
+      remoteModalIds,
+      registerModals,
+      getModalProviders,
     }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
@@ -376,7 +381,7 @@ export const appConfig: ApplicationConfig = {
 ### 3.7 `src/styles.css`
 
 ```css
-html, body, erp-MODULE_NAME-entry, tui-root {
+html, body, app-MODULE_NAME-entry, tui-root {
   margin: 0; padding: 0; height: 100%; width: 100%; display: block;
 }
 ```
@@ -394,7 +399,7 @@ html, body, erp-MODULE_NAME-entry, tui-root {
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
   </head>
   <body>
-    <erp-MODULE_NAME-entry></erp-MODULE_NAME-entry>
+    <app-MODULE_NAME-entry></app-MODULE_NAME-entry>
   </body>
 </html>
 ```

@@ -56,7 +56,12 @@
       "@erp/notification/feature": ["frontend/libs/modules/notification/feature/src/index.ts"],
       "@erp/notification/ui": ["frontend/libs/modules/notification/ui/src/index.ts"],
       "@erp/notification/data-access": ["frontend/libs/modules/notification/data-access/src/index.ts"],
-      "@erp/notification/util": ["frontend/libs/modules/notification/util/src/index.ts"]
+      "@erp/notification/util": ["frontend/libs/modules/notification/util/src/index.ts"],
+      "@erp/identity/contract": ["frontend/libs/modules/identity/contract/src/index.ts"],
+      "@erp/identity/feature": ["frontend/libs/modules/identity/feature/src/index.ts"],
+      "@erp/identity/ui": ["frontend/libs/modules/identity/ui/src/index.ts"],
+      "@erp/identity/data-access": ["frontend/libs/modules/identity/data-access/src/index.ts"],
+      "@erp/identity/util": ["frontend/libs/modules/identity/util/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

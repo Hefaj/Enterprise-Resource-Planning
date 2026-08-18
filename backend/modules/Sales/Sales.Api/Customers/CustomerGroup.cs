@@ -8,7 +8,6 @@ public class CustomerGroup : Group
     {
         Configure("customer", ep =>
         {
-            ep.AllowAnonymous();
         });
     }
 }

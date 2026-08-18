@@ -1,6 +1,7 @@
 using System.Reflection;
 using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Messaging;
+using Microsoft.AspNetCore.SignalR;
 using Notification.Api.Hubs;
 using Notification.Api.Realtime;
 using Notification.Infrastructure;
@@ -10,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Wspólny bootstrap HTTP: FastEndpoints, Swagger, CORS dla mikrofrontendów (z AllowCredentials
 // wymaganym przez negocjację SignalR).
-builder.Services.AddErpApi("Notification");
+builder.Services.AddErpApi("Notification", builder.Configuration);
 
 // Baza repliki zadań + zapytania + mapa sygnatur SignalR.
 builder.Services.AddNotificationInfrastructure(builder.Configuration);
@@ -25,6 +26,8 @@ builder.AddErpMessaging<NotificationDbContext>(
     Assembly.GetExecutingAssembly());
 
 builder.Services.AddSignalR();
+// "sub" zamiast domyślnego ClaimTypes.NameIdentifier — patrz SubjectUserIdProvider.
+builder.Services.AddSingleton<IUserIdProvider, SubjectUserIdProvider>();
 builder.Services.Configure<RealtimeBroadcastOptions>(
     builder.Configuration.GetSection(RealtimeBroadcastOptions.SectionName));
 builder.Services.AddSingleton<RealtimeBroadcaster>();
@@ -36,7 +39,10 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // Dokumentacja API jawnie publiczna — inaczej Swagger UI/NSwag potrzebowałyby tokenu,
+    // żeby zobaczyć, jak w ogóle zdobyć token. Fallback policy z ErpAuthExtensions objęłaby
+    // też ten endpoint bez tego jawnego wyjątku.
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.UseErpApi("Notification");

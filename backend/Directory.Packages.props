@@ -12,6 +12,12 @@
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
   </ItemGroup>
 
+  <ItemGroup Label="Uwierzytelnianie">
+    <!-- Handler JWT wysyłany razem z Microsoft.AspNetCore.App, ale bez jawnego pakietu
+         referencja się nie rozwiązuje przy kompilacji (tylko w runtime) — patrz ErpAuthExtensions. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
+  </ItemGroup>
+
   <ItemGroup Label="Rozszerzenia platformy">
     <!-- Biblioteki klas (nie Web SDK) nie dostają tych typów z frameworka — stąd jawne pakiety. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />

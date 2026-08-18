@@ -87,7 +87,8 @@
       "fixed": "Przypnij nagłówek"
     },
     "loading": "Wczytywanie...",
-    "reportIssue": "Zgłoś problem"
+    "reportIssue": "Zgłoś problem",
+    "logout": "Wyloguj się"
   },
   "inputPicker": {
     "empty": "Brak wyników",
@@ -177,23 +178,10 @@
     },
     "login": {
       "title": "Zaloguj się",
-      "subtitle": "Wprowadź dane dostępowe, aby przejść do panelu.",
-      "email": {
-        "label": "Adres e-mail",
-        "placeholder": "imie.nazwisko@firma.pl",
-        "required": "Podaj adres e-mail",
-        "email": "Nieprawidłowy format adresu e-mail"
-      },
-      "password": {
-        "label": "Hasło",
-        "placeholder": "Wprowadź hasło",
-        "required": "Podaj hasło"
-      },
-      "remember": "Nie wylogowuj mnie",
-      "submit": "Zaloguj się",
+      "subtitle": "Logowanie odbywa się przez centralny system tożsamości firmy.",
+      "submit": "Przejdź do logowania",
       "errors": {
-        "credentials": "Nieprawidłowy adres e-mail lub hasło.",
-        "network": "Nie udało się połączyć z serwerem. Spróbuj ponownie."
+        "oidc": "Logowanie nie powiodło się. Spróbuj ponownie."
       }
     },
     "footer": {

@@ -93,6 +93,7 @@ export const SHARED_KEYS = {
       },
       loading: 'shared.settings.loading',
       reportIssue: 'shared.settings.reportIssue',
+      logout: 'shared.settings.logout',
     },
     inputPicker: {
       empty: 'shared.inputPicker.empty',
@@ -183,22 +184,9 @@ export const SHARED_KEYS = {
       login: {
         title: 'shared.auth.login.title',
         subtitle: 'shared.auth.login.subtitle',
-        email: {
-          label: 'shared.auth.login.email.label',
-          placeholder: 'shared.auth.login.email.placeholder',
-          required: 'shared.auth.login.email.required',
-          email: 'shared.auth.login.email.email',
-        },
-        password: {
-          label: 'shared.auth.login.password.label',
-          placeholder: 'shared.auth.login.password.placeholder',
-          required: 'shared.auth.login.password.required',
-        },
-        remember: 'shared.auth.login.remember',
         submit: 'shared.auth.login.submit',
         errors: {
-          credentials: 'shared.auth.login.errors.credentials',
-          network: 'shared.auth.login.errors.network',
+          oidc: 'shared.auth.login.errors.oidc',
         },
       },
       footer: {

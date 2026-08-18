@@ -8,7 +8,6 @@ public class MultimediaGroup : Group
     {
         Configure("multimedia", ep =>
         {
-            ep.AllowAnonymous();
         });
     }
 }

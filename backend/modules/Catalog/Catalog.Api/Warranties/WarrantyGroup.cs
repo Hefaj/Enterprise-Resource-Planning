@@ -8,7 +8,6 @@ public class WarrantyGroup : Group
     {
         Configure("warranty", ep =>
         {
-            ep.AllowAnonymous();
         });
     }
 }

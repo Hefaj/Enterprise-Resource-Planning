@@ -10,7 +10,9 @@ import { provideSharedTranslations, TranslocoInlineLoader } from '@erp/shared/ui
 import { remoteApiProviders } from './remote-api.providers';
 import { provideTaiga } from '@taiga-ui/core';
 import { TUI_LANGUAGE } from '@taiga-ui/i18n';
-import { ErpLanguageService, AppLanguage, erpClientIdInterceptor } from '@erp/shared/data-access';
+import { ErpLanguageService, AppLanguage, erpClientIdInterceptor, SIGNALR_ACCESS_TOKEN_FACTORY, ERP_LOGOUT_HANDLER } from '@erp/shared/data-access';
+import { erpAuthInterceptor, ErpAuthService } from '@erp/shared/auth';
+import { provideAuth, withAppInitializerAuthCheck } from 'angular-auth-oidc-client';
 
 
 registerLocaleData(localePl);
@@ -28,7 +30,51 @@ export const appConfig: ApplicationConfig = {
     ),
     // X-Client-Id na każdym żądaniu — bez niego zadania masowe powstają bez adresata
     // i powiadomienie o ich zakończeniu nie ma dokąd trafić (patrz erpClientIdInterceptor).
-    provideHttpClient(withInterceptors([erpClientIdInterceptor])),
+    // erpAuthInterceptor dokłada `Authorization: Bearer` wyłącznie do żądań pasujących do
+    // `secureRoutes` niżej — bez tokenu backend odrzuca każde wywołanie (patrz ErpAuthExtensions).
+    provideHttpClient(withInterceptors([erpAuthInterceptor, erpClientIdInterceptor])),
+    // Authorization Code + PKCE przeciw Keycloakowi — patrz docs/backend/identity-authz.md §5-6.
+    // withAppInitializerAuthCheck() wywołuje checkAuth() przy starcie (obsługuje zarówno powrót
+    // z przekierowania logowania z `?code=...`, jak i odczyt istniejącej sesji z pamięci) — guardy
+    // (`erpAuthGuard`/`erpGuestGuard`) czekają na jego wynik, więc żadna trasa nie migocze między
+    // stanem zalogowany/niezalogowany przy odświeżeniu strony.
+    provideAuth(
+      {
+        config: {
+          authority: 'http://localhost:8080/realms/erp',
+          clientId: 'erp-client',
+          scope: 'openid profile email',
+          responseType: 'code',
+          // Ze slashem na końcu — realm-erp.json dopuszcza `http://localhost:4200/*`,
+          // a Keycloak nie dopasowuje tego wzorca do gołego originu bez ścieżki.
+          redirectUrl: `${window.location.origin}/`,
+          postLogoutRedirectUri: `${window.location.origin}/`,
+          silentRenew: true,
+          useRefreshToken: true,
+          // Token dołączany tylko do naszych mikroserwisów — nigdy do Keycloaka samego
+          // (odświeżanie tokenu, endpoint /token) ani do zewnętrznych zasobów.
+          secureRoutes: ['http://localhost:5149', 'http://localhost:5250'],
+        },
+      },
+      withAppInitializerAuthCheck(),
+    ),
+    // SyncHub wymaga [Authorize] (patrz backend/modules/Notification/Notification.Api/Hubs/SyncHub.cs) —
+    // bez tego providera negocjacja SignalR dostaje 401 mimo zalogowanego użytkownika, bo
+    // `SignalrSyncService` w @erp/shared/data-access nie może zależeć od @erp/shared/auth
+    // (granice warstw), więc dostawcę tokenu podstawia host.
+    {
+      provide: SIGNALR_ACCESS_TOKEN_FACTORY,
+      useFactory: (authService: ErpAuthService) => () => authService.getAccessToken(),
+      deps: [ErpAuthService],
+    },
+    // Analogiczny most jak wyżej — `erp-settings-menu` (ShellLayoutComponent, warstwa
+    // `feature`) nie może zależeć od `@erp/shared/auth`, więc wywołanie `logoff()` Keycloaka
+    // podstawia host. `logoff()` kończy też sesję SSO (nie tylko lokalny token).
+    {
+      provide: ERP_LOGOUT_HANDLER,
+      useFactory: (authService: ErpAuthService) => () => authService.logout(),
+      deps: [ErpAuthService],
+    },
     provideZonelessChangeDetection(),
     provideAppInitializer(STARTUP),
     { provide: LOCALE_ID, useValue: 'pl-PL' },

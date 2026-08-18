@@ -8,7 +8,6 @@ public class JobGroup : Group
     {
         Configure("job", ep =>
         {
-            ep.AllowAnonymous();
         });
     }
 }

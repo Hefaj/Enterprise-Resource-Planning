@@ -14,6 +14,7 @@ import {
   ErpWidgetRegistryService,
   JobService,
   JOB_LIST_WIDGET_ID,
+  ERP_LOGOUT_HANDLER,
 } from '@erp/shared/data-access';
 import { AppSettingsService } from '@erp/client/util';
 import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
@@ -73,6 +74,7 @@ export class ShellLayoutComponent {
   private readonly _userPreferences = inject(ErpUserPreferencesService);
   private readonly _widgetRegistry = inject(ErpWidgetRegistryService);
   private readonly _jobService = inject(JobService);
+  private readonly _logoutHandler = inject(ERP_LOGOUT_HANDLER);
 
   // ── Powiadomienia o zadaniach masowych ──
 
@@ -224,8 +226,14 @@ export class ShellLayoutComponent {
         id: 'report-issue',
         label: SHARED_KEYS.settings.reportIssue,
         icon: '@tui.message-circle',
-        separator: true,
         fn: () => this.reportIssue()
+      },
+      {
+        id: 'logout',
+        label: SHARED_KEYS.settings.logout,
+        icon: '@tui.log-out',
+        separator: true,
+        fn: () => this.logout()
       }
     ]
   };
@@ -256,6 +264,10 @@ export class ShellLayoutComponent {
 
   public reportIssue(): void {
     console.log('Report issue clicked');
+  }
+
+  public logout(): void {
+    void this._logoutHandler();
   }
 
   public selectCompany(company: string): void {

@@ -1,8 +1,10 @@
+using Erp.BuildingBlocks.Api.Auth;
 using Erp.BuildingBlocks.Application.Abstractions;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Erp.BuildingBlocks.Api;
@@ -37,17 +39,25 @@ public static class ErpApiExtensions
     /// </param>
     /// <param name="allowedOrigins">Dozwolone originy. Domyślnie porty dev hosta i remotów
     /// (4200–4210) — patrz mapa portów w <c>CLAUDE.md</c>.</param>
+    /// <param name="configuration">Konfiguracja hosta — potrzebna do odczytania sekcji
+    /// <c>Keycloak</c> dla <see cref="ErpAuthExtensions.AddErpAuth"/>. Wymagana, nie opcjonalna:
+    /// uwierzytelnianie jest częścią wspólnego bootstrapu, tak samo jak CORS i FastEndpoints —
+    /// żaden mikroserwis nie powinien mieć możliwości cichego jej pominięcia.</param>
     public static IServiceCollection AddErpApi(
         this IServiceCollection services,
         string serviceTitle,
+        IConfiguration configuration,
         IEnumerable<string>? allowedOrigins = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceTitle);
+        ArgumentNullException.ThrowIfNull(configuration);
 
         var origins = allowedOrigins?.ToArray() ?? DefaultDevOrigins();
 
         services.AddSingleton<IClock, SystemClock>();
+
+        services.AddErpAuth(configuration);
 
         // Kontekst wykonania jest scoped i mutowalny: wypełnia go middleware HTTP,
         // a przy zadaniach w tle podstawia go BulkCommandRunner.
@@ -95,11 +105,23 @@ public static class ErpApiExtensions
         ArgumentNullException.ThrowIfNull(app);
         ArgumentException.ThrowIfNullOrWhiteSpace(serviceTitle);
 
+        // Jawny UseRouting jako zabezpieczenie kolejności: bez niego niejawne wstawianie
+        // routingu przez ASP.NET Core zależy od tego, które wywołanie zostanie rozpoznane
+        // jako pierwsze mapowanie endpointów — a UseFastEndpoints() (wołane niżej) nie zawsze
+        // jest rozpoznawane przez tę heurystykę tak samo jak MapGet/MapControllers. Jawne
+        // wywołanie usuwa tę niepewność raz na zawsze.
+        app.UseRouting();
+
         app.UseCors(CorsPolicyName);
 
+        // Uwierzytelnianie/autoryzacja PRZED ExecutionContextMiddleware — middleware czyta
+        // claim "sub" z context.User, więc musi biec po tym, jak JwtBearerHandler go ustawi.
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         // Przed endpointami, bo to one (a dokładniej BatchEndpointBase → IJobStore) czytają
-        // kontekst przy tworzeniu zadania. Po CORS, żeby preflight nie przechodził przez
-        // logikę tożsamości.
+        // kontekst przy tworzeniu zadania. Po CORS i auth, żeby preflight nie przechodził przez
+        // logikę tożsamości, a middleware widział już zweryfikowanego użytkownika.
         app.UseMiddleware<ExecutionContextMiddleware>();
 
         app.UseFastEndpoints(config =>

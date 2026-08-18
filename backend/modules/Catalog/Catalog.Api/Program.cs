@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Wspólny bootstrap HTTP: FastEndpoints, Swagger, CORS dla mikrofrontendów,
 // IClock i kontekst wykonania. Jedno miejsce dla wszystkich mikroserwisów.
-builder.Services.AddErpApi("Catalog");
+builder.Services.AddErpApi("Catalog", builder.Configuration);
 
 // Baza, zapytania, dane startowe, mapa sygnatur SignalR.
 builder.Services.AddCatalogInfrastructure(builder.Configuration);
@@ -55,7 +55,10 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // Dokumentacja API jawnie publiczna — inaczej Swagger UI/NSwag potrzebowałyby tokenu,
+    // żeby zobaczyć, jak w ogóle zdobyć token. Fallback policy z ErpAuthExtensions objęłaby
+    // też ten endpoint bez tego jawnego wyjątku.
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.UseErpApi("Catalog");

@@ -8,7 +8,6 @@ public class AttributeGroup : Group
     {
         Configure("attribute", ep =>
         {
-            ep.AllowAnonymous();
         });
     }
 }

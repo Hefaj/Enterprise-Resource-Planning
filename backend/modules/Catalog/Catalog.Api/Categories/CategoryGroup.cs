@@ -8,7 +8,6 @@ public class CategoryGroup : Group
     {
         Configure("category", ep =>
         {
-            ep.AllowAnonymous();
         });
     }
 }

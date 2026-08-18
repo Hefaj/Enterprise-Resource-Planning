@@ -9,6 +9,22 @@ export const SIGNALR_HUB_URL = new InjectionToken<string>('SIGNALR_HUB_URL', {
   factory: (): string => '/hubs/sync'
 });
 
+/**
+ * Dostawca access tokenu dla negocjacji SignalR. Wstrzykiwany jako funkcja (nie bezpośrednia
+ * zależność od `@erp/shared/auth`) — `data-access` nie może importować warstwy `auth` (patrz
+ * granice modułów w `CLAUDE.md`: `auth` jest dostępne tylko dla `contract`), więc hosta
+ * (`app.config.ts`, warstwa `contract`) podstawia tu `() => authService.getAccessToken()`.
+ * Domyślnie `null` — SignalR łączy się bez tokenu (dopóki `SyncHub` nie miał `[Authorize]`,
+ * tak właśnie działało; teraz host MUSI nadpisać ten provider, inaczej negocjacja dostaje 401).
+ */
+export const SIGNALR_ACCESS_TOKEN_FACTORY = new InjectionToken<() => Promise<string> | string | null>(
+  'SIGNALR_ACCESS_TOKEN_FACTORY',
+  {
+    providedIn: 'root',
+    factory: (): (() => null) => () => null,
+  },
+);
+
 export interface AggregateUpdateMessage {
   signature: string;
   uuids: string[];
@@ -19,6 +35,7 @@ export interface AggregateUpdateMessage {
 })
 export class SignalrSyncService {
   private readonly _hubUrl: string = inject(SIGNALR_HUB_URL);
+  private readonly _accessTokenFactory = inject(SIGNALR_ACCESS_TOKEN_FACTORY);
   private readonly _update$: Subject<AggregateUpdateMessage> = new Subject<AggregateUpdateMessage>();
   private readonly _delete$: Subject<AggregateUpdateMessage> = new Subject<AggregateUpdateMessage>();
   /** Emituje samą sygnaturę, gdy trzeba porzucić cache i przeładować widoczne dane —
@@ -47,7 +64,9 @@ export class SignalrSyncService {
     const clientId = getOrCreateClientId();
 
     this._connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${this._hubUrl}?clientId=${encodeURIComponent(clientId)}`)
+      .withUrl(`${this._hubUrl}?clientId=${encodeURIComponent(clientId)}`, {
+        accessTokenFactory: () => this._accessTokenFactory() ?? '',
+      })
       .withAutomaticReconnect()
       .build();
 

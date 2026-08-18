@@ -1,35 +1,20 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
 import { TuiButton, TuiIcon } from '@taiga-ui/core';
 import { ErpAuthService } from '@erp/shared/auth';
 import { AppLanguage, ErpLanguageService, ErpThemeService } from '@erp/shared/data-access';
 
 import { ErpButtonBuilder, ErpButtonComponent } from '../../atoms/erp-button';
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
-import { ErpCheckboxBuilder, ErpCheckboxComponent } from '../../form/erp-checkbox';
-import { ErpInputBuilder, ErpInputComponent } from '../../form/erp-input';
 import { SHARED_KEYS } from '../../translation/keys';
 import { ErpCursorVarsDirective } from './erp-cursor-vars.directive';
 
 const AUTH_KEYS = SHARED_KEYS.auth;
-const LAST_EMAIL_STORAGE_KEY = 'erp.auth.last-email';
-const LEAVE_ANIMATION_MS = 320;
 
 @Component({
   selector: 'erp-login',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    TuiButton,
-    TuiIcon,
-    ErpButtonComponent,
-    ErpCheckboxComponent,
-    ErpCursorVarsDirective,
-    ErpInputComponent,
-    ErpTranslatePipe,
-  ],
+  imports: [TuiButton, TuiIcon, ErpButtonComponent, ErpCursorVarsDirective, ErpTranslatePipe],
   template: `
     <div class="login">
       <!-- ── Panel marki ─────────────────────────────────────────────── -->
@@ -129,12 +114,7 @@ const LEAVE_ANIMATION_MS = 320;
             <p class="card__subtitle">{{ AUTH_KEYS.login.subtitle | erpTranslate }}</p>
           </header>
 
-          <form
-            class="form"
-            [formGroup]="form"
-            (ngSubmit)="submit()"
-            (keydown.enter)="submit()"
-          >
+          <div class="form">
             @if (errorKey(); as key) {
               <p
                 class="alert"
@@ -148,30 +128,10 @@ const LEAVE_ANIMATION_MS = 320;
               </p>
             }
 
-            <div class="field">
-              <erp-input
-                [config]="emailConfig"
-                [control]="form.controls.email"
-              />
-            </div>
-
-            <div class="field">
-              <erp-input
-                [config]="passwordConfig"
-                [control]="form.controls.password"
-              />
-            </div>
-
-            <erp-checkbox
-              class="remember"
-              [config]="rememberConfig"
-              [control]="form.controls.remember"
-            />
-
             <div class="cta">
               <erp-button [config]="submitConfig" />
             </div>
-          </form>
+          </div>
 
           <footer class="card__footer">
             <div
@@ -482,36 +442,6 @@ const LEAVE_ANIMATION_MS = 320;
         gap: 1.25rem;
       }
 
-      /* Akcent aktywnego pola — pionowa kreska przy lewej krawędzi. */
-      .field {
-        position: relative;
-      }
-
-      .field::before {
-        content: '';
-        position: absolute;
-        inset-inline-start: -1rem;
-        inset-block-start: 0;
-        block-size: var(--tui-height-l);
-        inline-size: 2px;
-        border-radius: 2px;
-        background: var(--tui-background-accent-1);
-        opacity: 0;
-        transform: scaleY(0.2);
-        transition:
-          opacity 0.25s ease,
-          transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .field:focus-within::before {
-        opacity: 1;
-        transform: scaleY(1);
-      }
-
-      .remember {
-        margin-block-start: -0.25rem;
-      }
-
       .cta {
         position: relative;
         margin-block-start: 0.5rem;
@@ -692,8 +622,6 @@ export class LoginComponent {
   private readonly _authService = inject(ErpAuthService);
   private readonly _languageService = inject(ErpLanguageService);
   private readonly _themeService = inject(ErpThemeService);
-  private readonly _route = inject(ActivatedRoute);
-  private readonly _router = inject(Router);
 
   protected readonly AUTH_KEYS = AUTH_KEYS;
   protected readonly currentYear = new Date().getFullYear();
@@ -712,6 +640,9 @@ export class LoginComponent {
     { value: 'en-US', label: 'EN' },
   ];
 
+  /** Zawsze `false` w praktyce — przekierowanie do Keycloaka opuszcza tę stronę natychmiast,
+   * ale `erp-button` wymaga sygnału dla stanu `loading`, a krótki spinner jest lepszy niż
+   * martwy przycisk w tej ułamkowej chwili między kliknięciem a nawigacją. */
   protected readonly isSubmitting = signal(false);
   protected readonly isLeaving = signal(false);
   protected readonly errorKey = signal<string | null>(null);
@@ -719,87 +650,21 @@ export class LoginComponent {
   protected readonly language = this._languageService.language;
   protected readonly isDarkMode = this._themeService.isDarkMode;
 
-  protected readonly form = new FormGroup({
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    remember: new FormControl(true, { nonNullable: true }),
-  });
-
-  protected readonly emailConfig = new ErpInputBuilder()
-    .setSize('l')
-    .setType('text')
-    .setLabel(AUTH_KEYS.login.email.label)
-    .setPlaceholder(AUTH_KEYS.login.email.placeholder)
-    .setIconStart('@tui.mail')
-    .setAutocomplete('username')
-    .setErrorMessages({
-      required: AUTH_KEYS.login.email.required,
-      email: AUTH_KEYS.login.email.email,
-    })
-    .build();
-
-  protected readonly passwordConfig = new ErpInputBuilder()
-    .setSize('l')
-    .setType('password')
-    .setLabel(AUTH_KEYS.login.password.label)
-    .setPlaceholder(AUTH_KEYS.login.password.placeholder)
-    .setIconStart('@tui.lock-keyhole')
-    .setAutocomplete('current-password')
-    .setErrorMessages({ required: AUTH_KEYS.login.password.required })
-    .build();
-
-  protected readonly rememberConfig = new ErpCheckboxBuilder().setLabel(AUTH_KEYS.login.remember).build();
-
   protected readonly submitConfig = new ErpButtonBuilder()
     .setLabel(AUTH_KEYS.login.submit)
     .setSize('l')
     .setAppearance('primary')
     .setIconEnd('@tui.arrow-right')
     .setLoading(this.isSubmitting)
-    .setFn(() => this.submit())
+    .setFn(() => this.signIn())
     .build();
 
-  public constructor() {
-    const lastEmail = this._readLastEmail();
-    if (lastEmail) {
-      this.form.controls.email.setValue(lastEmail);
-    }
-  }
-
-  protected async submit(): Promise<void> {
-    if (this.isSubmitting() || this.isLeaving()) {
-      return;
-    }
-
+  /** Przekierowuje do hostowanej strony logowania Keycloaka — hasło nigdy nie dotyka tej
+   * strony (Authorization Code + PKCE, patrz `docs/backend/identity-authz.md` §1). */
+  protected signIn(): void {
     this.errorKey.set(null);
-
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
     this.isSubmitting.set(true);
-    const { email, password, remember } = this.form.getRawValue();
-
-    try {
-      const token = await this._authenticate(email, password);
-
-      this._authService.setToken(token, remember);
-      this._writeLastEmail(remember ? email : null);
-
-      this.isLeaving.set(true);
-      await wait(LEAVE_ANIMATION_MS);
-      await this._router.navigateByUrl(this._resolveReturnUrl());
-    } catch {
-      this.errorKey.set(AUTH_KEYS.login.errors.credentials);
-      this.isSubmitting.set(false);
-    }
+    this._authService.login();
   }
 
   protected setLanguage(language: AppLanguage): void {
@@ -809,53 +674,4 @@ export class LoginComponent {
   protected toggleTheme(): void {
     this._themeService.toggleTheme();
   }
-
-  /**
-   * TODO: podmienić na realne wywołanie API mikroserwisu tożsamości.
-   * Oczekiwany kontrakt: `POST /auth/login` → `{ accessToken }`; odrzucenie promise
-   * oznacza błędne dane logowania i zapala komunikat w formularzu.
-   */
-  private _authenticate(email: string, password: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      setTimeout(() => {
-        if (!password) {
-          reject(new Error('invalid_credentials'));
-          return;
-        }
-        resolve(`mock.${window.btoa(encodeURIComponent(email))}.token`);
-      }, 650);
-    });
-  }
-
-  /** Zwraca adres powrotu z query params, odrzucając adresy zewnętrzne (ochrona przed open redirect). */
-  private _resolveReturnUrl(): string {
-    const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');
-    const isSafe = !!returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//');
-
-    return isSafe ? returnUrl : '/dashboard';
-  }
-
-  private _readLastEmail(): string | null {
-    try {
-      return localStorage.getItem(LAST_EMAIL_STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  }
-
-  private _writeLastEmail(email: string | null): void {
-    try {
-      if (email) {
-        localStorage.setItem(LAST_EMAIL_STORAGE_KEY, email);
-      } else {
-        localStorage.removeItem(LAST_EMAIL_STORAGE_KEY);
-      }
-    } catch {
-      // Prywatny tryb przeglądarki — pominięcie zapamiętania adresu nie jest błędem krytycznym.
-    }
-  }
-}
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

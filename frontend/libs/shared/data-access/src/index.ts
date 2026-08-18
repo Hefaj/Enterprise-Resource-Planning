@@ -3,6 +3,8 @@ export * from './lib/erp-nav-registry/remote-route-cache';
 
 export * from './lib/erp-breadcrumb/erp-breadcrumb.service';
 
+export * from './lib/session/erp-logout-handler';
+
 export * from './lib/sync/signalr-sync.service';
 export * from './lib/sync/client-id';
 export * from './lib/sync/client-id.interceptor';

@@ -1,19 +1,10 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { ErpAuthService } from './erp-auth-service';
+import { authInterceptor } from 'angular-auth-oidc-client';
 
-export const erpAuthInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(ErpAuthService);
-  const token = authService.$token();
-
-  if (token) {
-    const clonedRequest = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return next(clonedRequest);
-  }
-
-  return next(req);
-};
+/**
+ * Re-eksport `authInterceptor()` biblioteki `angular-auth-oidc-client` pod nazwą zgodną
+ * z konwencją reszty repo (`erp*`) — dołącza `Authorization: Bearer <token>` wyłącznie do
+ * żądań pasujących do `secureRoutes` w konfiguracji `provideAuth()` (patrz `app.config.ts`
+ * hosta), więc nie trzeba było pisać własnej logiki dopasowania URL-i API modułów.
+ */
+export const erpAuthInterceptor: HttpInterceptorFn = authInterceptor();

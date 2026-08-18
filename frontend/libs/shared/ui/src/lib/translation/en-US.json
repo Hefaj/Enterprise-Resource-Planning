@@ -87,7 +87,8 @@
       "fixed": "Pin header"
     },
     "loading": "Loading...",
-    "reportIssue": "Report issue"
+    "reportIssue": "Report issue",
+    "logout": "Sign out"
   },
   "inputPicker": {
     "empty": "No results",
@@ -177,23 +178,10 @@
     },
     "login": {
       "title": "Sign in",
-      "subtitle": "Enter your credentials to open the dashboard.",
-      "email": {
-        "label": "Email address",
-        "placeholder": "name.surname@company.com",
-        "required": "Enter your email address",
-        "email": "Invalid email address format"
-      },
-      "password": {
-        "label": "Password",
-        "placeholder": "Enter your password",
-        "required": "Enter your password"
-      },
-      "remember": "Keep me signed in",
-      "submit": "Sign in",
+      "subtitle": "Sign-in happens through the company's central identity provider.",
+      "submit": "Continue to sign in",
       "errors": {
-        "credentials": "Invalid email address or password.",
-        "network": "Could not reach the server. Please try again."
+        "oidc": "Sign-in failed. Please try again."
       }
     },
     "footer": {

@@ -10,7 +10,7 @@ using Sales.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 // Wspólny bootstrap HTTP — identyczny z Catalog.Api/Notification.Api.
-builder.Services.AddErpApi("Sales");
+builder.Services.AddErpApi("Sales", builder.Configuration);
 
 // Baza, zapytania, seed, mapa sygnatur SignalR.
 builder.Services.AddSalesInfrastructure(builder.Configuration);
@@ -34,7 +34,10 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // Dokumentacja API jawnie publiczna — inaczej Swagger UI/NSwag potrzebowałyby tokenu,
+    // żeby zobaczyć, jak w ogóle zdobyć token. Fallback policy z ErpAuthExtensions objęłaby
+    // też ten endpoint bez tego jawnego wyjątku.
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.UseErpApi("Sales");

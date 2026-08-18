@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Notification.Api.Realtime;
 
@@ -24,14 +25,18 @@ namespace Notification.Api.Hubs;
 ///     połączeniu, używane do adresowania powiadomień o zadaniach wyłącznie do zleceniodawcy.</item>
 /// </list>
 ///
-/// <para><b>Znany dług techniczny — brak realnej autoryzacji.</b> Backend nie ma dziś warstwy
-/// uwierzytelniania (endpointy HTTP są <c>AllowAnonymous</c>), więc <c>userId</c>/<c>clientId</c>
-/// są na razie czytane wprost z query stringu połączenia, bez weryfikacji tożsamości. To
-/// świadomy placeholder pod przyszłe uwierzytelnianie (JWT) — do podmiany, gdy powstanie,
-/// na odczyt z <c>Context.User</c>. Dopóki go nie ma, każdy klient może podać dowolny
-/// <c>userId</c> i podsłuchać cudze powiadomienia o zadaniach — akceptowalne w fazie rozwoju,
-/// nie do wystawienia na produkcję bez uwierzytelniania.</para>
+/// <para><b>Autoryzacja.</b> Hub wymaga zalogowania (<see cref="AuthorizeAttribute"/>) — klient
+/// łączy się przez <c>accessTokenFactory</c> (patrz <c>ErpAuthExtensions.OnMessageReceived</c>,
+/// który czyta token z query stringu <c>access_token</c>, bo SignalR/WebSocket nie pozwala na
+/// customowe nagłówki przy negocjacji). Grupa <c>user:{userId}</c> jest wyprowadzana z
+/// <see cref="Hub.Context"/>.<see cref="HubCallerContext.UserIdentifier"/>, którego wartość
+/// ustawia <c>SubjectUserIdProvider</c> (patrz <c>Program.cs</c>) z claimu <c>sub</c> tokenu —
+/// nie z query stringu. Do 2026-08 <c>userId</c> był czytany wprost z query stringu połączenia
+/// bez żadnej weryfikacji tożsamości; ta luka zniknęła razem z Keycloakiem (patrz
+/// <c>docs/backend/identity-authz.md</c> §5). <c>clientId</c> zostaje w query — to nie jest
+/// tożsamość, tylko identyfikator karty przeglądarki (patrz <c>ExecutionContextMiddleware</c>).</para>
 /// </summary>
+[Authorize]
 public sealed class SyncHub : Hub
 {
     /// <summary>Ścieżka, pod którą hub jest mapowany — patrz <c>Program.cs</c>.</summary>
@@ -47,7 +52,7 @@ public sealed class SyncHub : Hub
     public override async Task OnConnectedAsync()
     {
         var httpContext = Context.GetHttpContext();
-        var userId = httpContext?.Request.Query["userId"].ToString();
+        var userId = Context.UserIdentifier;
         var clientId = httpContext?.Request.Query["clientId"].ToString();
 
         if (!string.IsNullOrWhiteSpace(userId))

@@ -8,24 +8,23 @@ namespace Erp.BuildingBlocks.Api;
 /// z pustym <c>UserId</c>/<c>ClientId</c>, a powiadomienie o ich zakończeniu leci do grupy
 /// SignalR, do której nikt nie należy (patrz <c>RealtimeBroadcaster.BroadcastJobsAsync</c>).
 ///
-/// <para><b>To nie jest uwierzytelnianie.</b> Wartości pochodzą wprost z nagłówków żądania,
-/// bez żadnej weryfikacji tożsamości — dokładnie tak, jak <c>SyncHub</c> czyta je dziś z query
-/// stringu połączenia. Jest to świadomy placeholder na czas, gdy backend nie ma jeszcze JWT:
-/// pozwala domknąć pętlę „zleć zadanie → dostań powiadomienie” dla właściwej karty przeglądarki,
-/// ale każdy klient może podać cudzy identyfikator. Gdy powstanie uwierzytelnianie, to jest
-/// jedyne miejsce do podmiany — odczyt z <c>context.User</c> zamiast z nagłówków.</para>
+/// <para><c>UserId</c> pochodzi z claimu <c>sub</c> zweryfikowanego tokenu JWT
+/// (<c>Erp.BuildingBlocks.Api.Auth.ErpAuthExtensions</c>) — middleware biegnie PO
+/// <c>UseAuthentication</c>/<c>UseAuthorization</c>, więc <c>context.User</c> jest tu już
+/// ustawiony i zweryfikowany. Do 2026-08 był czytany wprost z nagłówka <c>X-User-Id</c> bez
+/// żadnej weryfikacji — każdy klient mógł podać cudzy identyfikator; ten placeholder zniknął
+/// razem z wdrożeniem Keycloaka (patrz <c>docs/backend/identity-authz.md</c> §5).</para>
 ///
-/// <para><c>X-Client-Id</c> jest generowany przez przeglądarkę raz na kartę (sessionStorage)
-/// i tym samym identyfikatorem klient przedstawia się hubowi, więc HTTP i SignalR wskazują
-/// na tego samego adresata.</para>
+/// <para><c>X-Client-Id</c> zostaje nagłówkiem — to nie jest tożsamość, tylko identyfikator
+/// karty przeglądarki generowany po stronie klienta raz na kartę (sessionStorage), używany
+/// wyłącznie do adresowania powiadomień o zadaniach do właściwej karty tego samego
+/// użytkownika. Tym samym identyfikatorem klient przedstawia się hubowi SignalR, więc HTTP
+/// i SignalR wskazują na tego samego adresata.</para>
 /// </summary>
 public sealed class ExecutionContextMiddleware
 {
     /// <summary>Nagłówek z identyfikatorem karty przeglądarki.</summary>
     public const string ClientIdHeader = "X-Client-Id";
-
-    /// <summary>Nagłówek z identyfikatorem użytkownika — do czasu wdrożenia JWT.</summary>
-    public const string UserIdHeader = "X-User-Id";
 
     /// <summary>Nagłówek korelacji; nierozpoznawalna wartość jest ignorowana.</summary>
     public const string CorrelationIdHeader = "X-Correlation-Id";
@@ -44,7 +43,7 @@ public sealed class ExecutionContextMiddleware
         if (executionContext is MutableExecutionContext mutable)
         {
             var clientId = Trimmed(context.Request.Headers[ClientIdHeader].ToString());
-            var userId = Trimmed(context.Request.Headers[UserIdHeader].ToString());
+            var userId = context.User.FindFirst("sub")?.Value;
             var correlationId = Guid.TryParse(context.Request.Headers[CorrelationIdHeader].ToString(), out var parsed)
                 ? parsed
                 : (Guid?)null;

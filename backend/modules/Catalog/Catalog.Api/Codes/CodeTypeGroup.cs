@@ -8,7 +8,6 @@ public class CodeTypeGroup : Group
     {
         Configure("codeType", ep =>
         {
-            ep.AllowAnonymous();
         });
     }
 }

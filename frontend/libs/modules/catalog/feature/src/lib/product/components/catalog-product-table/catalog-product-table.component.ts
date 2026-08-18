@@ -26,6 +26,7 @@ import {
   SearchProductRequest,
   CategoryVM,
   ProductCodeVM,
+  SortOption,
 } from '@erp/catalog/data-access';
 
 import { PRODUCT_KEYS } from '../../translation';
@@ -56,6 +57,14 @@ export class CatalogProductTableComponent {
 
   /** Zdarzenie emitowane podczas rozpoczęcia i zakończenia pobierania danych */
   loadingChange = output<boolean>();
+
+  /**
+   * Aktualne sortowanie tabeli w postaci kontraktu HTTP. Sortowanie żyje w stanie tabeli, a nie
+   * w filtrach — a strona potrzebuje go, gdy sama odpytuje API o listę uuidów („Zaznacz wszystko"
+   * rozwiązane do identyfikatorów, podgląd zakładek). Bez tego panele boczne pokazywałyby
+   * produkty w domyślnej kolejności backendu, a nie w tej, którą widać w tabeli.
+   */
+  sortsChange = output<SortOption[] | undefined>();
 
   // ── Stan wewnętrzny ──
   private readonly currentUuids = signal<string[]>([]);
@@ -184,11 +193,17 @@ export class CatalogProductTableComponent {
       );
 
       builder.setOnStateChange((state) => {
+        const sortingChanged = !this.lastTableState ||
+          JSON.stringify(this.lastTableState.sorting) !== JSON.stringify(state.sorting);
         const dataStateChanged = !this.lastTableState ||
           JSON.stringify(this.lastTableState.pagination) !== JSON.stringify(state.pagination) ||
-          JSON.stringify(this.lastTableState.sorting) !== JSON.stringify(state.sorting);
+          sortingChanged;
 
         this.lastTableState = state;
+
+        if (sortingChanged) {
+          this.sortsChange.emit(this.toSorts(state));
+        }
 
         if (dataStateChanged) {
           this.fetchData(this.filters(), state);
@@ -200,6 +215,16 @@ export class CatalogProductTableComponent {
 
       return builder.build();
   });
+
+  /** Sortowanie tabeli → kontrakt HTTP (`SortOption`). Jedno miejsce dla zapytania i dla strony. */
+  private toSorts(tableState: ErpTableState | null): SortOption[] | undefined {
+    if (!tableState?.sorting || tableState.sorting.length === 0) return undefined;
+
+    return tableState.sorting.map((sort) => ({
+      field: sort.columnId,
+      order: sort.direction === 'asc' ? 1 : -1,
+    }));
+  }
 
   private async fetchData(filters: SearchProductRequest, tableState: ErpTableState | null): Promise<void> {
     this.loading.set(true);
@@ -214,11 +239,9 @@ export class CatalogProductTableComponent {
         pageSize: tableState?.pagination?.pageSize ?? 20,
       };
 
-      if (tableState?.sorting && tableState.sorting.length > 0) {
-        request.sorts = tableState.sorting.map((sort) => ({
-          field: sort.columnId,
-          order: sort.direction === 'asc' ? 1 : -1,
-        }));
+      const sorts = this.toSorts(tableState);
+      if (sorts) {
+        request.sorts = sorts;
       }
 
       const response = await this.catalogProductOrchestrator.searchAsync(request, {

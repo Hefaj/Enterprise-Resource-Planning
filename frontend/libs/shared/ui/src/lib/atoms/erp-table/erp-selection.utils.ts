@@ -51,6 +51,28 @@ export function erpSelectionCount<TData>(
     : selection.selectedIds?.length ?? selection.selectedItems?.length ?? 0;
 }
 
+/**
+ * Układa identyfikatory zaznaczenia w kolejności tabeli na podstawie zapamiętanych pozycji
+ * wierszy (globalny indeks przez wszystkie strony — patrz `ErpTableComponent`).
+ *
+ * Surowe zaznaczenie pamięta wyłącznie *zbiór* identyfikatorów w kolejności klikania, a panele
+ * boczne i podglądy operacji masowych mają pokazywać pozycje tak, jak stoją w tabeli — także
+ * wtedy, gdy użytkownik zaznaczył najpierw coś ze strony trzeciej, a potem z pierwszej.
+ *
+ * Identyfikatory o nieznanej pozycji (np. zaznaczenie odtworzone ze stanu, zanim ich strona
+ * się wczytała) lądują na końcu z zachowaniem dotychczasowej kolejności — `Array.sort` w JS
+ * jest stabilny.
+ */
+export function erpOrderIdsByPosition(
+  ids: string[],
+  positions: ReadonlyMap<string, number>,
+): string[] {
+  return [...ids].sort(
+    (a, b) =>
+      (positions.get(a) ?? Number.MAX_SAFE_INTEGER) - (positions.get(b) ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
 // ─────────────────────────────────────────────────
 // Zasięg zaznaczenia (selection scope)
 // ─────────────────────────────────────────────────

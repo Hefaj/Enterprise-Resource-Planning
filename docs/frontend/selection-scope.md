@@ -125,6 +125,15 @@ protected readonly tableConfig = computed<ErpTableConfig<MultimediaRow>>(() =>
 
 **Podzaznaczenie ginie razem ze zmianą zbioru rodziców** — inaczej „usuń zaznaczone" zadziałałoby na pliki produktu, którego nie ma już w panelu.
 
+### Kolejność w panelu = kolejność w tabeli
+
+Panel renderuje rodziców w kolejności `scope.ids`, więc to zaznaczenie musi nieść kolejność tabeli, a nie kolejność klikania. Składają się na to dwie rzeczy:
+
+- **Zaznaczenie ręczne** — `ErpTableComponent` pamięta globalną pozycję każdego zaznaczonego wiersza (`pageIndex * pageSize + indeks`) i emituje `selectedIds` posortowane po niej (`erpOrderIdsByPosition`). Dzięki temu zaznaczenie ze strony trzeciej i pierwszej wraca w kolejności tabeli, mimo że wierszy z poprzedniej strony nie ma już w pamięci. Pozycje zapisujemy **tylko w momencie zmiany zaznaczenia** (i nigdy w trakcie ładowania): przy samej zmianie strony `pageIndex` wskazuje już nową stronę, a wyrenderowane wiersze są jeszcze ze starej, więc policzone wtedy pozycje wrzuciłyby zaznaczenie z poprzedniej strony nad to z następnej.
+- **Zaznaczenie zmaterializowane** — `ProductStore.resolveUuids` dokłada do zapytania bieżące `sorts` tabeli (strona dostaje je outputem `sortsChange`, bo sortowanie żyje w stanie tabeli, nie w filtrach). Sortowanie wchodzi też do tokenu cache'u uuidów — inaczej po przesortowaniu panel pokazywałby kolejność sprzed zmiany.
+
+**Zmiana sortowania albo filtrów czyści zaznaczenie** (`ErpTableComponent`). Oba opisy zaznaczenia — lista identyfikatorów i filtr z „Zaznacz wszystko" — dotyczą konkretnego zbioru i konkretnej kolejności; po zmianie przestają być prawdą, a przeniesione po cichu dałyby akcje masowe celujące w pozycje, których użytkownik na ekranie już nie widzi. Lepiej kazać zaznaczyć od nowa niż wykonać operację na zbiorze sprzed zmiany.
+
 ---
 
 ## 5. Bramkowanie akcji toolbara

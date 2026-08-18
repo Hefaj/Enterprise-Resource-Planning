@@ -55,6 +55,7 @@ import {
   ErpGroupedRowsConfig,
   ErpGroupRowAction,
 } from './erp-table.types';
+import { erpOrderIdsByPosition } from './erp-selection.utils';
 import { ErpTablePaginationComponent } from './erp-table-pagination.component';
 import { ErpTableColumnMenuComponent } from './erp-table-column-menu.component';
 import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
@@ -998,6 +999,22 @@ export class ErpTableComponent<T> implements AfterViewInit {
       });
     });
 
+    // Zmiana filtrów = inny zbiór wierszy. Zaznaczenie opisywało poprzedni (listę identyfikatorów
+    // albo sam filtr przy „Zaznacz wszystko"), więc zostawienie go dawałoby akcje masowe celujące
+    // w pozycje, których użytkownik już nie widzi. Sortowanie czyścimy w `onSortingChange`.
+    effect(() => {
+      const filtersToken = JSON.stringify(unwrapSignal(this.config().filters) ?? {});
+
+      untracked(() => {
+        if (this._lastFiltersToken === filtersToken) return;
+        const isFirstRun = this._lastFiltersToken === null;
+        this._lastFiltersToken = filtersToken;
+        if (isFirstRun) return; // pierwsze przypisanie filtrów to nie zmiana
+
+        this._resetSelectionOnDataShapeChange();
+      });
+    });
+
     // Effect to emit state changes (triggers data fetching in host components)
     effect(() => {
       // Re-run effect only on pagination, sorting, or column config changes
@@ -1020,7 +1037,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
           columnSizing,
           selection: {
             isAllSelected: this._isServerMode() ? this._serverAllSelected() : this.table.getIsAllRowsSelected(),
-            selectedIds: Object.keys(this._rowSelection()).filter(k => this._rowSelection()[k]),
+            selectedIds: this._orderedSelectedIds(),
             filters: (this._isServerMode() && this._serverAllSelected()) ? filters : undefined
           },
           rowSelectionOnClick: this._rowSelectionOnClick(),
@@ -1182,6 +1199,56 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
 
 
+  /**
+   * Pozycja każdego kiedykolwiek zaznaczonego wiersza w kolejności tabeli (globalnie, przez
+   * wszystkie strony). Zaznaczenie samo w sobie pamięta tylko *zbiór* identyfikatorów w
+   * kolejności klikania — a panele boczne i akcje masowe mają pokazywać pozycje w tej samej
+   * kolejności, w jakiej stoją w tabeli, niezależnie od tego, że użytkownik zaznaczył najpierw
+   * coś ze strony trzeciej, a potem z pierwszej.
+   *
+   * Pozycje zapisujemy WYŁĄCZNIE przy zmianie zaznaczenia (`_recordSelectionPositions`), bo tylko
+   * wtedy mamy pewność, że wyrenderowane wiersze odpowiadają bieżącej stronie. Zapis przy zmianie
+   * samej paginacji dawałby fałszywe wyniki: `pageIndex` wskazuje już nową stronę, a wiersze są
+   * jeszcze ze starej, więc zaznaczenie z poprzedniej strony dostawałoby offset następnej i
+   * wskakiwałoby nad pozycje, które faktycznie są niżej.
+   */
+  private readonly _selectionPositions = new Map<string, number>();
+
+  /** Ostatnio widziane filtry (serializowane) — `null` do pierwszego przebiegu efektu. */
+  private _lastFiltersToken: string | null = null;
+
+  /**
+   * Zapamiętuje pozycje aktualnie widocznych zaznaczonych wierszy w kolejności tabeli.
+   * Dzięki temu pozycja zaznaczenia z poprzedniej strony przeżywa przejście dalej, mimo że
+   * jej wiersza nie ma już w pamięci.
+   */
+  private _recordSelectionPositions(selectedIds: string[]): void {
+    // W trakcie ładowania wiersze pochodzą jeszcze z POPRZEDNIEJ strony, a `pageIndex` wskazuje
+    // już nową — policzone wtedy pozycje byłyby fałszywe, więc zostajemy przy zapamiętanych.
+    if (selectedIds.length === 0 || this.loading()) return;
+
+    const selectedSet = new Set(selectedIds);
+    const { pageIndex, pageSize } = this._pagination();
+    // W trybie serwerowym wiersze to jedna strona — do indeksu w niej doliczamy offset strony,
+    // żeby porównywać pozycje z różnych stron. W trybie klienckim tabela ma komplet danych.
+    const offset = this._isServerMode() ? pageIndex * pageSize : 0;
+
+    this._logicalRowOrder().forEach((row, index) => {
+      if (selectedSet.has(row.id)) {
+        this._selectionPositions.set(row.id, offset + index);
+      }
+    });
+  }
+
+  /** Identyfikatory zaznaczenia w kolejności tabeli (reguła sortowania: `erpOrderIdsByPosition`). */
+  private _orderedSelectedIds(): string[] {
+    const selection = this._rowSelection();
+    const selectedIds = Object.keys(selection).filter(id => selection[id]);
+    if (selectedIds.length === 0) return selectedIds;
+
+    return erpOrderIdsByPosition(selectedIds, this._selectionPositions);
+  }
+
   private _emitSelectionChange() {
     const isServer = this._isServerMode();
     const idAccessor = this.config().rowIdAccessor;
@@ -1198,17 +1265,22 @@ export class ErpTableComponent<T> implements AfterViewInit {
       return;
     }
 
-    const newVal = this._rowSelection();
-    const selectedIds = Object.keys(newVal).filter(k => newVal[k]);
+    // Kolejność zaznaczenia ma odpowiadać kolejności w tabeli, więc najpierw zapisujemy pozycje
+    // wierszy widocznych TERAZ (moment kliknięcia to jedyna chwila, gdy na pewno pasują do strony),
+    // a dopiero potem układamy po nich całe zaznaczenie — także to z wcześniejszych stron.
+    const rawSelection = this._rowSelection();
+    this._recordSelectionPositions(Object.keys(rawSelection).filter(id => rawSelection[id]));
+
+    const selectedIds = this._orderedSelectedIds();
     const items = this.items();
     let selectedItems: T[] = [];
     if (idAccessor) {
-      const selectedSet = new Set(selectedIds);
-      selectedItems = items.filter(item => selectedSet.has(idAccessor(item)));
+      const itemsById = new Map(items.map(item => [idAccessor(item), item]));
+      selectedItems = selectedIds.map(id => itemsById.get(id)).filter((item): item is T => item !== undefined);
     } else {
       selectedItems = selectedIds.map(id => items[parseInt(id, 10)]).filter(Boolean);
     }
-    
+
     this.config().onSelectionChange?.({
       mode: isServer ? 'server' : 'client',
       isAllSelected: isServer ? false : this.table.getIsAllRowsSelected(),
@@ -1412,6 +1484,9 @@ export class ErpTableComponent<T> implements AfterViewInit {
       onSortingChange: (updaterOrValue: any) => {
         const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(this._sorting()) : updaterOrValue;
         this._sorting.set(newVal);
+        // Sortowanie zmienia kolejność, w której zaznaczenie jest pokazywane i wykonywane —
+        // zamiast przenosić je w nowy układ, zaczynamy od czystej kartki.
+        this._resetSelectionOnDataShapeChange();
         if (this._isServerMode()) {
           this.config().onSortChange?.(newVal.map((s: any) => ({ columnId: s.id, direction: s.desc ? 'desc' : 'asc' })));
         }
@@ -1738,7 +1813,28 @@ export class ErpTableComponent<T> implements AfterViewInit {
       this._serverAllSelected.set(false);
     }
     this._rowSelection.set({});
+    this._selectionPositions.clear();
+    this._lastSelectedRowId.set(null);
     this.table().setRowSelection({});
     this._emitSelectionChange();
+  }
+
+  /**
+   * Czyści zaznaczenie po zmianie zbioru lub kolejności wierszy (sortowanie, filtry).
+   *
+   * Zaznaczenie w tabeli serwerowej opisuje albo listę identyfikatorów, albo filtr — jedno i
+   * drugie przestaje być prawdą, gdy użytkownik zmieni filtry (zaznaczenie z poprzedniego
+   * zbioru) albo sortowanie (kolejność, na której opierają się panele i „zaznacz zakres").
+   * Milcząco przeniesione zaznaczenie byłoby obietnicą, której widok już nie pokazuje.
+   */
+  private _resetSelectionOnDataShapeChange(): void {
+    const hasSelection = this._serverAllSelected() || Object.values(this._rowSelection()).some(Boolean);
+    if (!hasSelection) {
+      // Same pozycje i tak są już nieaktualne — opisują poprzedni układ tabeli.
+      this._selectionPositions.clear();
+      return;
+    }
+
+    this.clearSelection();
   }
 }

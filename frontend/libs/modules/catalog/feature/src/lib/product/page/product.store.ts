@@ -1,5 +1,5 @@
 import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
-import { CatalogProductOrchestrator, SearchProductRequest, ProductVM } from '@erp/catalog/data-access';
+import { CatalogProductOrchestrator, SearchProductRequest, ProductVM, SortOption } from '@erp/catalog/data-access';
 import {
   ErpSelectionScope,
   ErpSelectionState,
@@ -33,6 +33,19 @@ export class ProductStore {
   public updateFilters(partial: Partial<SearchProductRequest>): void {
     this._uuidCache.clear();
     this.filters.update(f => ({ ...f, ...partial }));
+  }
+
+  /**
+   * Sortowanie tabeli produktów. Nie jest częścią filtrów (żyje w stanie tabeli), a store go
+   * potrzebuje: zapytania o listy uuidów (materializacja „Zaznacz wszystko", podglądy zakładek)
+   * muszą zwracać produkty w tej samej kolejności, w jakiej widać je w tabeli.
+   */
+  public readonly sorts = signal<SortOption[] | undefined>(undefined);
+
+  public setSorts(sorts: SortOption[] | undefined): void {
+    if (JSON.stringify(sorts ?? []) === JSON.stringify(this.sorts() ?? [])) return;
+    this._uuidCache.clear();
+    this.sorts.set(sorts);
   }
 
   // 2. Zaznaczenia w tabeli produktów — odczytywane też przez zakładki multimedia/gwarancje,
@@ -91,6 +104,9 @@ export class ProductStore {
     // cele operacji) zachowuje się jak przy ręcznym zaznaczeniu.
     effect(() => {
       const selection = this.selection();
+      // Zmiana sortowania unieważnia materializację: identyfikatory są te same, ale ich KOLEJNOŚĆ
+      // ma odpowiadać tabeli, więc listę trzeba rozwiązać od nowa.
+      this.sorts();
       if (!selection?.isAllSelected) {
         untracked(() => this._materialized.set(null));
         return;
@@ -120,8 +136,10 @@ export class ProductStore {
     const cached = this._uuidCache.get(key);
     if (cached) return cached;
 
+    // Sortowanie idzie razem z filtrem — lista uuidów ma opisywać tę samą kolejność, którą
+    // użytkownik widzi w tabeli (panele boczne renderują produkty właśnie w tej kolejności).
     const response = await this.orchestrator.searchAsync(
-      { ...filters, page: 1, pageSize: limit } as SearchProductRequest,
+      { ...filters, sorts: this.sorts(), page: 1, pageSize: limit } as SearchProductRequest,
       { autoLoad: true },
     );
 
@@ -144,7 +162,11 @@ export class ProductStore {
     this._materialized.set({ token, uuids });
   }
 
+  /**
+   * Token opisujący zbiór ORAZ jego kolejność — dlatego obejmuje sortowanie, a nie same filtry.
+   * Rozwiązana lista uuidów jest ważna tylko dopóki oba się nie zmienią.
+   */
   private _filterToken(filters: Record<string, any> | null | undefined): string {
-    return JSON.stringify(filters ?? {});
+    return JSON.stringify({ filters: filters ?? {}, sorts: this.sorts() ?? [] });
   }
 }

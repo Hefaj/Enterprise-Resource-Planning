@@ -36,6 +36,7 @@ import { ProductStore } from '../product.store';
             [filters]="currentFilters()"
             (selectionChange)="onSelectionChange($event)"
             (loadingChange)="store.setLoading($event)"
+            (sortsChange)="store.setSorts($event)"
             class="block h-full"
           />
         </div>

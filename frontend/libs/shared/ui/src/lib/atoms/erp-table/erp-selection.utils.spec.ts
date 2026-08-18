@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   erpBuildBatchTargets,
+  erpOrderIdsByPosition,
   erpResolveSelectionScope,
   erpSelectionCount,
   erpSelectionScopeCount,
@@ -123,6 +124,37 @@ describe('erpBuildBatchTargets', () => {
 
   it('pusty zasięg nie adresuje niczego', () => {
     expect(erpBuildBatchTargets({ kind: 'none' })).toEqual({});
+  });
+});
+
+describe('erpOrderIdsByPosition', () => {
+  it('układa zaznaczenie w kolejności tabeli, a nie klikania', () => {
+    // Użytkownik zaznaczył najpierw pozycje z drugiej strony, potem wrócił na pierwszą.
+    const clickedOrder = ['p2-a', 'p2-b', 'p1-a'];
+    const positions = new Map([
+      ['p1-a', 3],
+      ['p2-a', 21],
+      ['p2-b', 24],
+    ]);
+
+    expect(erpOrderIdsByPosition(clickedOrder, positions)).toEqual(['p1-a', 'p2-a', 'p2-b']);
+  });
+
+  it('pozycje nieznane lądują na końcu, w dotychczasowej kolejności', () => {
+    const positions = new Map([['b', 1]]);
+
+    expect(erpOrderIdsByPosition(['nieznane-1', 'b', 'nieznane-2'], positions)).toEqual([
+      'b',
+      'nieznane-1',
+      'nieznane-2',
+    ]);
+  });
+
+  it('nie modyfikuje wejściowej tablicy', () => {
+    const ids = ['b', 'a'];
+    erpOrderIdsByPosition(ids, new Map([['a', 0], ['b', 1]]));
+
+    expect(ids).toEqual(['b', 'a']);
   });
 });
 

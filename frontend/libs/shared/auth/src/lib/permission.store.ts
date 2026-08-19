@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { IDENTITY_PERMISSIONS_API_BASE_URL } from './identity-permissions-api-base-url';
@@ -21,19 +21,59 @@ export class PermissionStore {
 
   public readonly $loaded = this._loaded.asReadonly();
 
+  /** Pojedyncza próba — bez retry. Do odświeżeń w trakcie życia sesji (np. po zdarzeniu
+   * SignalR `identity.user`), gdzie token jest już od dawna gotowy. */
   public async load(): Promise<void> {
-    try {
-      const codes = await firstValueFrom(this._http.get<string[]>(`${this._baseUrl}/me/permissions`));
-      this._permissions.set(new Set(codes));
-    } catch (error) {
-      console.error('[PermissionStore] Nie udało się pobrać uprawnień — zakładam pusty zbiór.', error);
-      this._permissions.set(new Set());
-    } finally {
-      this._loaded.set(true);
+    await this._fetchOnce();
+  }
+
+  /**
+   * Retry z krótkim odstępem na `401` — do wywołania przy starcie appki (`STARTUP.ts`).
+   * `provideAppInitializer(STARTUP)` biegnie równolegle z `withAppInitializerAuthCheck()`
+   * (Angular nie serializuje initializerów), a przy świeżym logowaniu (wymiana `code` na
+   * token, nie cichy odczyt z pamięci) samo `isAuthenticated$` bywa niewystarczającym
+   * sygnałem — `erpAuthInterceptor` potrafi jeszcze przez chwilę nie mieć tokenu mimo
+   * `isAuthenticated$ === true`. W odróżnieniu od `load()`, retry-uje TYLKO `401`
+   * (rozjazd tokenu w czasie), nie inne błędy (np. 403/5xx — tam retry niczego by nie
+   * naprawił) — po wyczerpaniu prób i tak zostaje fail-closed jak w `load()`.
+   */
+  public async loadWithRetry(maxAttempts = 6, delayMs = 400): Promise<void> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const result = await this._fetchOnce();
+
+      if (result === 'ok' || result === 'error') {
+        return;
+      }
+
+      if (attempt === maxAttempts) {
+        console.warn(`[PermissionStore] /me/permissions dalej 401 po ${maxAttempts} próbach — zakładam pusty zbiór.`);
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
   public has(code: string): boolean {
     return this._permissions().has(code);
+  }
+
+  private async _fetchOnce(): Promise<'ok' | 'unauthorized' | 'error'> {
+    try {
+      const codes = await firstValueFrom(this._http.get<string[]>(`${this._baseUrl}/me/permissions`));
+      this._permissions.set(new Set(codes));
+      this._loaded.set(true);
+      return 'ok';
+    } catch (error) {
+      this._permissions.set(new Set());
+      this._loaded.set(true);
+
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        return 'unauthorized';
+      }
+
+      console.error('[PermissionStore] Nie udało się pobrać uprawnień — zakładam pusty zbiór.', error);
+      return 'error';
+    }
   }
 }

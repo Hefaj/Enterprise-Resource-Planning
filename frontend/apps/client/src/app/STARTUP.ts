@@ -29,15 +29,16 @@ export async function STARTUP(): Promise<void> {
   inject(AppSettingsService); // Triggers theme and language initialization and effects
 
   // `provideAppInitializer(STARTUP)` biegnie RÓWNOLEGLE z `withAppInitializerAuthCheck()`
-  // (Angular nie serializuje initializerów), więc bez tego czekania pierwsze żądanie
-  // `/me/permissions` leci zanim `checkAuth()` zdąży ustawić token — i dostaje 401 na stałe
-  // (PermissionStore nie ma własnego retry, w odróżnieniu od SignalR niżej).
+  // (Angular nie serializuje initializerów). `waitUntilAuthReady()` łagodzi to w większości
+  // przypadków, ale przy ŚWIEŻYM logowaniu (wymiana `code` na token, nie cichy odczyt z
+  // pamięci) samo `isAuthenticated$` bywa niewystarczającym sygnałem — `erpAuthInterceptor`
+  // potrafi jeszcze przez chwilę nie mieć tokenu. `loadWithRetry()` dogania to retry-em na 401.
   await authService.waitUntilAuthReady();
 
   // Musi się zakończyć PRZED budową menu (patrz `loadContractDirect` niżej) — filtr menu
   // po `requiredPermission` czyta `PermissionStore` synchronicznie. Fail-closed: błąd sieci
   // zostawia pusty zbiór (menu schowane), nie przerywa startu appki.
-  await permissionStore.load();
+  await permissionStore.loadWithRetry();
 
   // Odświeżenie uprawnień na żywo, gdy admin zmieni role/nadania bieżącego użytkownika —
   // NIE przebudowuje już zarejestrowanego menu (świadome uproszczenie, patrz plan Fazy 5),

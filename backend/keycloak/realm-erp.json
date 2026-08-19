@@ -27,6 +27,19 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:4200/*"
       }
+    },
+    {
+      "clientId": "erp-identity-service",
+      "name": "Erp Identity Service",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "erp-identity-service-secret"
     }
   ],
   "users": [
@@ -44,6 +57,14 @@
           "temporary": false
         }
       ]
+    },
+    {
+      "username": "service-account-erp-identity-service",
+      "enabled": true,
+      "serviceAccountClientId": "erp-identity-service",
+      "clientRoles": {
+        "realm-management": ["manage-users"]
+      }
     }
   ]
 }

@@ -114,6 +114,39 @@ public static class ErpAuthExtensions
     }
 
     /// <summary>
+    /// Rejestruje <see cref="IKeycloakAdminClient"/> — dziś wołane wyłącznie z
+    /// <c>Identity.Api/Program.cs</c> (wymuszone wylogowanie, Faza 6). Osobna metoda, nie
+    /// część <see cref="AddErpAuth"/>, bo żaden inny mikroserwis nie potrzebuje Admin API
+    /// Keycloaka — płacenie za rejestrację HttpClienta, którego się nie używa, byłoby
+    /// niepotrzebnym kosztem startu.
+    /// </summary>
+    public static IServiceCollection AddErpKeycloakAdmin(this IServiceCollection services, IConfiguration configuration)
+    {
+        var adminOptions = configuration.GetSection(KeycloakAdminOptions.SectionName).Get<KeycloakAdminOptions>()
+            ?? throw new InvalidOperationException(
+                $"Brak sekcji konfiguracji '{KeycloakAdminOptions.SectionName}' — bez adresu i " +
+                "poświadczeń service-account Identity nie ma jak wołać Admin API Keycloaka. Dodaj " +
+                "'KeycloakAdmin:AuthServerUrl/Realm/ClientId/ClientSecret' do appsettings.");
+
+        if (string.IsNullOrWhiteSpace(adminOptions.AuthServerUrl))
+        {
+            throw new InvalidOperationException($"'{KeycloakAdminOptions.SectionName}:AuthServerUrl' jest puste.");
+        }
+
+        services.Configure<KeycloakAdminOptions>(configuration.GetSection(KeycloakAdminOptions.SectionName));
+
+        services.AddHttpClient(KeycloakAdminClient.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(adminOptions.AuthServerUrl);
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+
+        services.AddSingleton<IKeycloakAdminClient, KeycloakAdminClient>();
+
+        return services;
+    }
+
+    /// <summary>
     /// Faza 3 — dokłada claimy <c>permissions</c> zaraz po uwierzytelnieniu, żeby
     /// <c>Permissions(...)</c> na endpointach FastEndpoints miało czym sprawdzać (patrz
     /// <see cref="PermissionClaimsTransformation"/>). Wywoływane z <see cref="AddErpAuth"/>,

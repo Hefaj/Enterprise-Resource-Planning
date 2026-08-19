@@ -6,5 +6,35 @@
       "title": "Role management",
       "placeholder": "Visible only with the identity.role.manage permission. The roles screen lands in a future increment."
     }
+  },
+  "grantAudit": {
+    "title": "Grant history",
+    "subtitle": "Audit log: who granted or revoked what, and to whom (roles, permissions).",
+    "menuLabel": "Grant history",
+    "table": {
+      "emptyMessage": "No entries in the audit log.",
+      "columns": {
+        "occurredAt": "When",
+        "actor": "Who",
+        "subject": "Whom",
+        "action": "Action",
+        "target": "What",
+        "source": "Source"
+      }
+    },
+    "filters": {
+      "subjectUuid": {
+        "label": "Subject UUID",
+        "placeholder": "e.g. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      },
+      "subjectType": {
+        "label": "Subject type",
+        "placeholder": "user / role"
+      },
+      "action": {
+        "label": "Action",
+        "placeholder": "e.g. role_assigned"
+      }
+    }
   }
 }

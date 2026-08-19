@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Persistence;
 using Identity.Application.Abstractions;
+using Identity.Application.Audit;
 using Identity.Application.Permissions;
 using Identity.Application.Roles;
 using Identity.Application.Users;
@@ -54,6 +55,9 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IRoleQueries, RoleQueries>();
         services.AddScoped<IUserAccountQueries, UserAccountQueries>();
         services.AddScoped<IPermissionCatalogQueries, PermissionCatalogQueries>();
+        services.AddScoped<IGrantAuditWriter, GrantAuditWriter>();
+        services.AddScoped<IGrantAuditQueries, GrantAuditQueries>();
+        services.AddScoped<IUserProvisioningService, Provisioning.UserProvisioningService>();
 
         services.AddScoped<RoleSeeder>();
 

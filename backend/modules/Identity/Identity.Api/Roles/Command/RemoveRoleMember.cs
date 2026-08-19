@@ -1,4 +1,5 @@
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 using Identity.Application.Roles;
 
 namespace Identity.Roles.Command;
@@ -13,6 +14,7 @@ public sealed class RemoveRoleMemberEndpoint : Endpoint<RoleRemoveMemberCommand,
     {
         Post("remove-member");
         Group<RoleGroup>();
+        Permissions(P.Identity.RoleManage);
     }
 
     public override async Task HandleAsync(RoleRemoveMemberCommand req, CancellationToken ct)

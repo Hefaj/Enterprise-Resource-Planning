@@ -1,4 +1,5 @@
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 using Identity.Application.Roles;
 
 namespace Identity.Roles.Command;
@@ -16,6 +17,7 @@ public sealed class CreateRoleEndpoint : Endpoint<RoleCreateCommand, Guid>
     {
         Post("create");
         Group<RoleGroup>();
+        Permissions(P.Identity.RoleManage);
     }
 
     public override async Task HandleAsync(RoleCreateCommand req, CancellationToken ct)

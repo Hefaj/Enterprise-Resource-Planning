@@ -1,4 +1,5 @@
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 using Identity.Application.Users;
 
 namespace Identity.Users.Command;
@@ -13,6 +14,7 @@ public sealed class GrantUserPermissionEndpoint : Endpoint<UserGrantPermissionCo
     {
         Post("grant-permission");
         Group<UserGroup>();
+        Permissions(P.Identity.UserManage);
     }
 
     public override async Task HandleAsync(UserGrantPermissionCommand req, CancellationToken ct)

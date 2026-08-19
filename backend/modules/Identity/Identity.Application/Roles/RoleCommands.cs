@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using Identity.Application.Abstractions;
+using Identity.Domain.Audit;
 using Identity.Domain.Roles;
 
 namespace Identity.Application.Roles;
@@ -62,11 +63,22 @@ public sealed class RoleAddPermissionCommand : ICommand<Guid>
 public sealed class RoleAddPermissionCommandHandler : CommandHandler<RoleAddPermissionCommand, Guid>
 {
     private readonly IRoleRepository _repository;
+    private readonly IClock _clock;
+    private readonly IExecutionContext _executionContext;
+    private readonly IGrantAuditWriter _auditWriter;
     private readonly IUnitOfWork _unitOfWork;
 
-    public RoleAddPermissionCommandHandler(IRoleRepository repository, IUnitOfWork unitOfWork)
+    public RoleAddPermissionCommandHandler(
+        IRoleRepository repository,
+        IClock clock,
+        IExecutionContext executionContext,
+        IGrantAuditWriter auditWriter,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _clock = clock;
+        _executionContext = executionContext;
+        _auditWriter = auditWriter;
         _unitOfWork = unitOfWork;
     }
 
@@ -79,10 +91,19 @@ public sealed class RoleAddPermissionCommandHandler : CommandHandler<RoleAddPerm
 
         role.AddPermission(command.PermissionCode);
 
+        await _auditWriter.RecordAsync(
+            GrantAuditEntry.Create(
+                _clock.UtcNow, ActorUuid(_executionContext), "role", role.Uuid,
+                "role_permission_added", command.PermissionCode, reason: null, source: "identity.api"),
+            ct).ConfigureAwait(false);
+
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
         return role.Uuid;
     }
+
+    internal static Guid ActorUuid(IExecutionContext executionContext)
+        => Guid.TryParse(executionContext.UserId, out var actorUuid) ? actorUuid : Guid.Empty;
 }
 
 public sealed class RoleRemovePermissionCommand : ICommand<Guid>
@@ -95,11 +116,22 @@ public sealed class RoleRemovePermissionCommand : ICommand<Guid>
 public sealed class RoleRemovePermissionCommandHandler : CommandHandler<RoleRemovePermissionCommand, Guid>
 {
     private readonly IRoleRepository _repository;
+    private readonly IClock _clock;
+    private readonly IExecutionContext _executionContext;
+    private readonly IGrantAuditWriter _auditWriter;
     private readonly IUnitOfWork _unitOfWork;
 
-    public RoleRemovePermissionCommandHandler(IRoleRepository repository, IUnitOfWork unitOfWork)
+    public RoleRemovePermissionCommandHandler(
+        IRoleRepository repository,
+        IClock clock,
+        IExecutionContext executionContext,
+        IGrantAuditWriter auditWriter,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _clock = clock;
+        _executionContext = executionContext;
+        _auditWriter = auditWriter;
         _unitOfWork = unitOfWork;
     }
 
@@ -111,6 +143,12 @@ public sealed class RoleRemovePermissionCommandHandler : CommandHandler<RoleRemo
             ?? throw new AggregateNotFoundException(nameof(Role), command.RoleUuid);
 
         role.RemovePermission(command.PermissionCode);
+
+        await _auditWriter.RecordAsync(
+            GrantAuditEntry.Create(
+                _clock.UtcNow, RoleAddPermissionCommandHandler.ActorUuid(_executionContext), "role", role.Uuid,
+                "role_permission_removed", command.PermissionCode, reason: null, source: "identity.api"),
+            ct).ConfigureAwait(false);
 
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
@@ -131,12 +169,24 @@ public sealed class RoleAddMemberCommandHandler : CommandHandler<RoleAddMemberCo
 {
     private readonly IRoleRepository _repository;
     private readonly IRoleQueries _queries;
+    private readonly IClock _clock;
+    private readonly IExecutionContext _executionContext;
+    private readonly IGrantAuditWriter _auditWriter;
     private readonly IUnitOfWork _unitOfWork;
 
-    public RoleAddMemberCommandHandler(IRoleRepository repository, IRoleQueries queries, IUnitOfWork unitOfWork)
+    public RoleAddMemberCommandHandler(
+        IRoleRepository repository,
+        IRoleQueries queries,
+        IClock clock,
+        IExecutionContext executionContext,
+        IGrantAuditWriter auditWriter,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
         _queries = queries;
+        _clock = clock;
+        _executionContext = executionContext;
+        _auditWriter = auditWriter;
         _unitOfWork = unitOfWork;
     }
 
@@ -172,6 +222,12 @@ public sealed class RoleAddMemberCommandHandler : CommandHandler<RoleAddMemberCo
 
         container.AddMember(command.MemberRoleUuid, cycleCheckedByCaller: true);
 
+        await _auditWriter.RecordAsync(
+            GrantAuditEntry.Create(
+                _clock.UtcNow, RoleAddPermissionCommandHandler.ActorUuid(_executionContext), "role", container.Uuid,
+                "role_member_added", command.MemberRoleUuid.ToString(), reason: null, source: "identity.api"),
+            ct).ConfigureAwait(false);
+
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
         return container.Uuid;
@@ -188,11 +244,22 @@ public sealed class RoleRemoveMemberCommand : ICommand<Guid>
 public sealed class RoleRemoveMemberCommandHandler : CommandHandler<RoleRemoveMemberCommand, Guid>
 {
     private readonly IRoleRepository _repository;
+    private readonly IClock _clock;
+    private readonly IExecutionContext _executionContext;
+    private readonly IGrantAuditWriter _auditWriter;
     private readonly IUnitOfWork _unitOfWork;
 
-    public RoleRemoveMemberCommandHandler(IRoleRepository repository, IUnitOfWork unitOfWork)
+    public RoleRemoveMemberCommandHandler(
+        IRoleRepository repository,
+        IClock clock,
+        IExecutionContext executionContext,
+        IGrantAuditWriter auditWriter,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _clock = clock;
+        _executionContext = executionContext;
+        _auditWriter = auditWriter;
         _unitOfWork = unitOfWork;
     }
 
@@ -204,6 +271,12 @@ public sealed class RoleRemoveMemberCommandHandler : CommandHandler<RoleRemoveMe
             ?? throw new AggregateNotFoundException(nameof(Role), command.ContainerRoleUuid);
 
         container.RemoveMember(command.MemberRoleUuid);
+
+        await _auditWriter.RecordAsync(
+            GrantAuditEntry.Create(
+                _clock.UtcNow, RoleAddPermissionCommandHandler.ActorUuid(_executionContext), "role", container.Uuid,
+                "role_member_removed", command.MemberRoleUuid.ToString(), reason: null, source: "identity.api"),
+            ct).ConfigureAwait(false);
 
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 

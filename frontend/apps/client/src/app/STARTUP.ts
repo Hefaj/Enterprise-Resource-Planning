@@ -40,22 +40,59 @@ export async function STARTUP(): Promise<void> {
   // zostawia pusty zbiór (menu schowane), nie przerywa startu appki.
   await permissionStore.loadWithRetry();
 
+  // Nieprzefiltrowane drzewa menu (per moduł + statyczny `dashbord`) — trzymane obok
+  // zarejestrowanego (już przefiltrowanego) menu, żeby SignalR `onUpdate` niżej mógł je
+  // przefiltrować PONOWNIE po odświeżeniu uprawnień i realnie przebudować widoczne menu,
+  // zamiast tylko odświeżać stan guardów (patrz komentarz przy `onUpdate` niżej).
+  const unfilteredMenus = new Map<string, ErpNavigationItem[]>();
+
+  const DASHBORD_MENU_ID = 'dashbord';
+  const dashbordMenuItem: ErpNavigationItem = {
+    id: DASHBORD_MENU_ID,
+    label: 'Home',
+    iconId: 'home',
+    route: 'dashbord',
+  };
+  // Statyczny wpis nie ma `requiredPermission`, więc nie musi przechodzić przez
+  // `filterMenuByPermissions` — ale i tak trafia do rejestru nieprzefiltrowanych drzew,
+  // żeby pętla rebuildu niżej mogła być jednolita (rejestruje WSZYSTKIE drzewa, nie tylko
+  // remote'y).
+  unfilteredMenus.set(DASHBORD_MENU_ID, [dashbordMenuItem]);
+  menuRegistry.register(dashbordMenuItem);
+
   // Odświeżenie uprawnień na żywo, gdy admin zmieni role/nadania bieżącego użytkownika —
-  // NIE przebudowuje już zarejestrowanego menu (świadome uproszczenie, patrz plan Fazy 5),
-  // ale guardy tras i realne wywołania API i tak korzystają ze świeżego stanu.
+  // po doładowaniu świeżego stanu `PermissionStore` przelicza WSZYSTKIE zarejestrowane
+  // drzewa menu (statyczne + remote'y) z nieprzefiltrowanej kopii i rejestruje je ponownie
+  // (`register` upsertuje po `id`) — to realnie przebudowuje widoczne menu, nie tylko
+  // odświeża stan guardów tras/API, które i tak zawsze czytają świeży `PermissionStore`.
   signalrSync.subscribe(IDENTITY_USER_SIGNATURE);
   signalrSync.onUpdate(IDENTITY_USER_SIGNATURE).subscribe((uuids) => {
     const currentUserId = authService.$currentUser()?.id;
     if (currentUserId && uuids.includes(currentUserId)) {
-      void permissionStore.load();
-    }
-  });
+      void (async (): Promise<void> => {
+        await permissionStore.load();
 
-  menuRegistry.register({
-    id: 'dashbord',
-    label: 'Home',
-    iconId: 'home',
-    route: 'dashbord',
+        for (const [id, unfilteredTree] of unfilteredMenus) {
+          if (id === DASHBORD_MENU_ID) {
+            // Statyczny wpis bez `requiredPermission` — nic do przefiltrowania, zostaje jak jest.
+            continue;
+          }
+
+          const visibleMenu = filterMenuByPermissions(unfilteredTree, permissionStore);
+          const config = REMOTE_MODULES_CONFIG.find((c) => c.id === id);
+
+          if (visibleMenu.length === 0 || !config) {
+            continue;
+          }
+
+          menuRegistry.register({
+            id: config.id,
+            label: config.label,
+            children: visibleMenu,
+          });
+        }
+      })();
+    }
   });
 
   // Rejestracja centralnych loaderów w serwisie modali (działa w trybie Monolit i w MFE)
@@ -74,7 +111,7 @@ export async function STARTUP(): Promise<void> {
   });
 
   const loadPromises = REMOTE_MODULES_CONFIG.map((config) =>
-    loadContractDirect(config.routePrefix, config, modalService, permissionStore),
+    loadContractDirect(config.routePrefix, config, modalService, permissionStore, unfilteredMenus),
   );
   const remoteMenus = await Promise.all(loadPromises);
 
@@ -117,6 +154,7 @@ async function loadContractDirect(
   config: RemoteModuleConfig,
   modalService: ErpModalService,
   permissionStore: PermissionStore,
+  unfilteredMenus: Map<string, ErpNavigationItem[]>,
 ): Promise<ErpNavigationItem | null> {
   try {
     const module = (await loadModuleContract(modulePrefix)) as EntryContractModule;
@@ -132,6 +170,9 @@ async function loadContractDirect(
 
     if (module?.remoteMenu) {
       const prefixedMenu = applyRoutePrefixToMenu(module.remoteMenu, config.routePrefix);
+      // Zachowane NIEPRZEFILTROWANE (ale już prefiksowane routingiem) drzewo — SignalR
+      // `onUpdate` w `STARTUP()` filtruje je ponownie po każdym odświeżeniu uprawnień.
+      unfilteredMenus.set(config.id, prefixedMenu);
       const visibleMenu = filterMenuByPermissions(prefixedMenu, permissionStore);
 
       if (visibleMenu.length === 0) {

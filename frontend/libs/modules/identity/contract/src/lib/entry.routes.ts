@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { erpAuthGuard } from '@erp/shared/auth';
+import { ERP_PERMISSIONS, erpAuthGuard, erpPermissionGuard } from '@erp/shared/auth';
 
 export const remoteRoutes: Route[] = [
   {
@@ -11,6 +11,12 @@ export const remoteRoutes: Route[] = [
       {
         path: 'dashboard',
         loadComponent: () => import('@erp/identity/feature').then((m) => m.IdentityDashboardComponent),
+      },
+      {
+        path: 'grants',
+        data: { breadcrumb: 'Historia nadań' },
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.Identity.RoleManage)],
+        loadComponent: () => import('@erp/identity/feature').then((m) => m.GrantAuditComponent),
       },
     ],
   },

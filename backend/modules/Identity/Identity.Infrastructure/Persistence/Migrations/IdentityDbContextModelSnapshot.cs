@@ -23,6 +23,66 @@ namespace Identity.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Identity.Domain.Audit.GrantAuditEntry", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("action");
+
+                    b.Property<Guid>("ActorUserUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_user_uuid");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("source");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("subject_type");
+
+                    b.Property<Guid>("SubjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_uuid");
+
+                    b.Property<string>("TargetCode")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("target_code");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_grant_audit");
+
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("ix_grant_audit_occurred_at");
+
+                    b.HasIndex("SubjectUuid")
+                        .HasDatabaseName("ix_grant_audit_subject_uuid");
+
+                    b.ToTable("grant_audit", "identity");
+                });
+
             modelBuilder.Entity("Identity.Domain.Roles.Role", b =>
                 {
                     b.Property<Guid>("Uuid")

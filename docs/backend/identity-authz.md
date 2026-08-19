@@ -4,12 +4,17 @@ Stan: **Fazy 1-3 ✅ wdrożone i zweryfikowane end-to-end** (realny Keycloak, re
 w przeglądarce, mikroserwis Identity z domeną ról/uprawnień, hierarchia z wykrywaniem cykli,
 efektywne uprawnienia i ścieżka dziedziczenia, JIT provisioning, egzekwowanie uprawnień
 w Catalog i Sales z potwierdzonym SLA odwołania ≤60s). **Faza 4 ✅ szkielet modułu frontendowego
-`identity`** (routing, menu, federacja, tłumaczenia — zweryfikowane w przeglądarce), **📐 trzy
-właściwe strony (users/roles/permissions) — świadomie odłożone jako osobny przyrost**.
+`identity`** (routing, menu, federacja, tłumaczenia — zweryfikowane w przeglądarce), z pierwszą
+właściwą stroną (historia nadań, dodana w Fazie 6) obok placeholdera dashboardu — `users`/`roles`
+jako pełne ekrany zarządzania nadal odłożone jako osobny przyrost.
 **Faza 5 ✅ bramkowanie UI, zweryfikowane end-to-end** (`PermissionStore`, `erpPermissionGuard`,
 `*erpHasPermission`, filtr menu, strona `/forbidden`, toast na 403 — potwierdzone w
 przeglądarce z realnym Keycloak + Catalog + Notification + Identity, kontem `administrator`
-i nowo utworzonym kontem bez żadnej roli). **Faza 6 📐 projekt, brak kodu.**
+i nowo utworzonym kontem bez żadnej roli). **Faza 6 ✅ audyt i domknięcie** (`grant_audit`
+append-only, czyszczenie wygasłych nadań, wymuszone wylogowanie przez Keycloak Admin API,
+bramkowanie własnych endpointów Identity, przebudowa menu na żywą zmianę uprawnień —
+zweryfikowane buildem/testami całego rozwiązania i w przeglądarce; szczegóły i znane
+ograniczenia w §7 niżej).
 Legenda znaczników jak w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
 Szczegóły zaimplementowanych faz → §7 niżej i sekcje 2-6 (opisują już wdrożony stan, nie
 tylko projekt).
@@ -358,9 +363,38 @@ Wygenerowany dokładnie wg [`new-module.md`](../frontend/new-module.md): 5 warst
 
 **Napotkany i naprawiony w trakcie problem — wyścig `STARTUP()` vs `checkAuth()`.** `provideAppInitializer(STARTUP)` i `withAppInitializerAuthCheck()` to dwa NIEZALEŻNE initializery — Angular nie gwarantuje ich kolejności (uruchamiają się równolegle). Pierwsza wersja `PermissionStore.load()` w `STARTUP.ts` odpalała się więc czasem PRZED tym, jak `checkAuth()` zdążył ustawić token w `erpAuthInterceptor`, dostawała 401 i (w odróżnieniu od SignalR, które ma `withAutomaticReconnect()`) zostawała z pustym zbiorem uprawnień NA STAŁE — mimo poprawnego zalogowania. Naprawione nową metodą `ErpAuthService.waitUntilAuthReady()` (opakowuje `isAuthenticated$`, ten sam mechanizm co `erpAuthGuard` — emituje dopiero PO `checkAuth()`), na którą `STARTUP.ts` czeka przed pierwszym `permissionStore.load()`.
 
-### Faza 6 — audyt i domknięcie
+### Faza 6 — audyt i domknięcie ✅
 
-Append-only `grant_audit` z ekranem historii nadań, wygasające nadania (`expires_at` + zadanie czyszczące), wymuszone wylogowanie (bump `perm_ver` + odwołanie sesji przez Admin API), aktualizacja [`CLAUDE.md`](../../CLAUDE.md) (wiersz w tabeli przepisów, mapa portów 4207/5280) i `docs/backend/architecture.md` (§1 stan wdrożenia, §7 cache).
+| Element | Pliki |
+|---|---|
+| `grant_audit` (append-only) | `Identity.Domain/Aggregates/Audit/GrantAuditEntry.cs` (plain `Entity`, bez `xmin` — nie jest `AggregateRoot`), `Identity.Infrastructure/Persistence/Configurations/Audit/GrantAuditEntryConfiguration.cs`, migracja `20260819124324_AddGrantAudit`, `IGrantAuditWriter`/`GrantAuditWriter` (zapis w tej samej transakcji co handler, bez własnego `SaveChangesAsync`), `IGrantAuditQueries`/`GrantAuditQueries` — `POST /grant-audit/search`, `POST /grant-audit/getGrantAudit` (ungated, read-only, wzorem `SearchRole`/`GetRole`) |
+| Wpięcie audytu w handlery | 8 handlerów w `UserCommands.cs`/`RoleCommands.cs` (assign/revoke role, grant/revoke permission, add/remove member, add/remove permission) piszą wiersz audytu przed `SaveChangesAsync`; actor zawsze z `IExecutionContext.UserId`, nigdy z payloadu |
+| Czyszczenie wygasłych nadań | `Identity.Infrastructure/Jobs/ExpiredGrantCleanupService.cs` — pierwszy `BackgroundService`/`PeriodicTimer` w repo (co 5 min), usuwa `user_role` z `expires_at <= now()`, zapisuje `grant_audit` (`action=role_grant_expired`, `source=cleanup-job`). Higiena audytu, nie warunek poprawności — efektywne uprawnienia i tak już respektowały `expires_at` od Fazy 2 |
+| Wymuszone wylogowanie | `backend/keycloak/realm-erp.json` — nowy klient poufny `erp-identity-service` (service-account, rola `manage-users` na `realm-management`); `Erp.BuildingBlocks.Api/Auth/{KeycloakAdminOptions,IKeycloakAdminClient,KeycloakAdminClient}.cs` (zwykły `HttpClient`, `client_credentials` do Keycloaka, `POST /admin/realms/erp/users/{sub}/logout`); `IPermissionProvider.InvalidateAsync` (nowa metoda, czyści `IMemoryCache`); `UserForceLogoutCommand`/handler, `POST /user/{uuid}/force-logout` (gated `identity.user.manage`) |
+| Naprawa JIT vs claims transformation + bramkowanie Identity | `IUserProvisioningService`/`UserProvisioningService` (logika wydzielona z usuniętego `UserProvisioningMiddleware`), `Identity.Api/Auth/IdentityInProcessPermissionProvider.cs` — liczy efektywne uprawnienia bezpośrednio przez `IUserAccountQueries` (bez HTTP self-call, usuwa przyczynę dawnej rekurencji), woła `EnsureProvisionedAsync` PRZED policzeniem uprawnień, więc nowy użytkownik nigdy nie dostaje pustego cache'u na 60s. `Program.cs`: `enablePermissionClaims: true`, `IPermissionProvider` nadpisany na provider in-process. `Permissions(identity.role.manage)`/`Permissions(identity.user.manage)` dodane na `role/*`/`user/*`/`force-logout`; `me/permissions*`, `permission/catalog`, `GetRole`/`SearchRole`/`GetUser`/`SearchUser`, `grant-audit/*` zostają bez wymogu uprawnień (własny profil / katalogi i historia read-only) |
+| Frontend — przebudowa menu na żywo | `apps/client/src/app/STARTUP.ts` — niefiltrowane drzewa menu per moduł zachowane po starcie; handler SignalR `identity.user` po `permissionStore.load()` przelicza `filterMenuByPermissions` i re-rejestruje przez `ErpNavRegistryService.register()` (już upsertuje po `id` — nie wymagało zmian w rejestrze) |
+| Frontend — ekran historii nadań | Pierwsza właściwa strona modułu `identity`: `libs/modules/identity/{data-access,feature,contract}/**` — orkiestrator na regenerowanym kliencie NSwag (`searchGrantAudit`), tabela TaigaUI (kiedy/kto/komu/akcja+co/źródło), trasa `/identity/grants` i pozycja menu "Historia nadań" za `identity.role.manage` |
+
+**Zweryfikowane:** `dotnet build`/`dotnet test` na całym rozwiązaniu — 45/45 bez regresji (5
+`Erp.ArchitectureTests` + 40 `Catalog.Tests`), `Erp.ArchitectureTests` bez regresji warstw
+Clean Architecture. W przeglądarce (realny Keycloak + Identity + Catalog, konto
+`administrator`): `POST /grant-audit/search` zwraca 200 (pusty log — brak nadań od czasu
+wdrożenia), strona `/identity/grants` renderuje pusty stan poprawnie przetłumaczony, pozycja
+"Historia nadań" widoczna w menu pod "Tożsamość", sekcja "Zarządzanie rolami" na dashboardzie
+nadal widoczna dla administratora (potwierdza brak regresji po dodaniu `Permissions(...)` na
+endpointach Identity). `npx nx lint`/`pnpm translate:keys`/`npx nx run client:esbuild:development`
+bez błędów.
+
+**Świadomie niezweryfikowane w tej iteracji (do zrobienia przy najbliższej okazji, nie
+blokujące):** żywy przebieg wymuszonego wylogowania i przebudowy menu na SignalR wymaga
+wygenerowania realnej zmiany ról na koncie testowym oraz reimportu realm Keycloaka z nowym
+klientem `erp-identity-service` (destrukcyjne dla współdzielonego środowiska deweloperskiego w
+tej sesji — istniejące sesje/konta testowe zostałyby utracone) — obie ścieżki zweryfikowane
+tylko przez przegląd kodu i testy jednostkowe/integracyjne, nie end-to-end w przeglądarce.
+Deklaratywna składnia `realm-erp.json` przypisująca rolę service-account `manage-users` na
+kliencie `realm-management` jest znanym wzorcem Keycloaka, ale nie została potwierdzona
+importem na żywo — jeśli import jej nie podepnie, rolę trzeba nadać ręcznie przez Admin
+Console w dev.
 
 ---
 
@@ -385,7 +419,7 @@ Faza 1 jest twardym warunkiem wstępnym: budowanie zarządzania uprawnieniami na
 | Tabela domknięcia ról | Gdy CTE zacznie być wąskim gardłem | Wzorzec gotowy w `CategoryClosureMaintainer`, ale uwaga: DAG wymaga `MIN(depth)` na parze (przodek, potomek) |
 | Wielofirmowość / tenant | Poza zakresem | Dotknie tokenu, schematów i każdego zapytania — osobny projekt |
 | Backplane Redis dla cache uprawnień | Razem z drugą instancją Notification | Patrz `architecture.md` §7 |
-| Aktywne unieważnianie cache'u uprawnień (`AggregateChanged` na `identity.user`/`identity.role`) | Gdy TTL=60s przestanie wystarczać | Dziś tylko TTL, zweryfikowane end-to-end w Fazie 3 — patrz jej sekcja. Konsument istniałby w `Erp.BuildingBlocks.Messaging`, nie wymaga nowego kontraktu (reużycie `AggregateChanged`) |
-| Bramkowanie własnych endpointów Identity przez `Permissions(...)` | Faza 6 | Faza 5 zrobiła tylko front (patrz jej sekcja) — backendowe endpointy Identity nadal bez `Permissions(...)`. Wymaga najpierw naprawy kolejności JIT provisioning vs. claims transformation — patrz Faza 3 "znany dług" |
+| Aktywne unieważnianie cache'u uprawnień w konsumentach (Catalog/Sales) przez zdarzenie zamiast TTL | Gdy TTL=60s przestanie wystarczać | Faza 6 dodała `IPermissionProvider.InvalidateAsync`, ale tylko wymuszone wylogowanie w Identity go używa i tylko w PROCESIE, który obsłużył żądanie — patrz `architecture.md` §7. Aktywny fanout do Catalog/Sales (`AggregateChanged` na `identity.user`/`identity.role`) nadal nie istnieje; konsument istniałby w `Erp.BuildingBlocks.Messaging`, nie wymaga nowego kontraktu |
 | Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś dowolny ważny token wystarcza; docelowo client credentials Keycloaka albo izolacja sieciowa |
-| Przebudowa już zarejestrowanego menu na odświeżenie `PermissionStore` przez SignalR | Faza 6 | Dziś `PermissionStore` się odświeża, ale filtr menu w `STARTUP.ts` liczy się tylko raz przy starcie — patrz sekcja Fazy 5 |
+| `perm_ver` w JWT | Prawdopodobnie nigdy | Faza 6 świadomie NIE wprowadziła tego do tokenu — wymuszone wylogowanie działa przez odwołanie sesji Keycloak (Admin API) + invalidację cache'u, bez zmian w protocol mapperach. Konsekwencja: już wydany access token JWT pozostaje ważny do naturalnego wygaśnięcia (brak introspekcji) — patrz Faza 6 "świadomie niezweryfikowane" i `architecture.md` §7 |
+| Backplane dla wymuszonego wylogowania przy >1 instancji konsumentów uprawnień | Razem z backplane'em Redis dla cache'u uprawnień | Patrz `architecture.md` §7, nowy wiersz "Wymuszone wylogowanie (Faza 6)" |

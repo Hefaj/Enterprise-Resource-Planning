@@ -52,8 +52,10 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Zdarzenie domenowe / integracyjne, outbox, nowy konsument RabbitMQ | [`docs/backend/events-outbox.md`](docs/backend/events-outbox.md) |
 | Realtime SignalR — nowa sygnatura, grupy, koalescencja, resync | [`docs/backend/realtime-signalr.md`](docs/backend/realtime-signalr.md) |
 | Migracja EF, mapowanie agregatu, seed, drzewo/closure table | [`docs/backend/persistence-ef.md`](docs/backend/persistence-ef.md) |
+| Autoryzacja/role/uprawnienia — Keycloak (AuthN), moduł Identity (AuthZ), `grant_audit`, wygasające nadania, wymuszone wylogowanie | [`docs/backend/identity-authz.md`](docs/backend/identity-authz.md) |
 
-**Mapa portów**: client 4200, catalog 4201, inventory 4202, sales 4203, dms 4204, task-management 4205, notification 4206, identity 4207, nowy moduł → następny wolny.
+**Mapa portów (frontend)**: client 4200, catalog 4201, inventory 4202, sales 4203, dms 4204, task-management 4205, notification 4206, identity 4207, nowy moduł → następny wolny.
+**Mapa portów (backend, HTTP dev)**: catalog 5149, notification 5250, sales 5269, identity 5280 (Inventory/Dms/Task-management nie mają jeszcze backendu — brak portu do czasu wdrożenia).
 
 ## Backend
 

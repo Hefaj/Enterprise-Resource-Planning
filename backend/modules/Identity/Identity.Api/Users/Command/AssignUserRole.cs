@@ -1,4 +1,5 @@
 using FastEndpoints;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
 using Identity.Application.Users;
 
 namespace Identity.Users.Command;
@@ -13,6 +14,7 @@ public sealed class AssignUserRoleEndpoint : Endpoint<UserAssignRoleCommand, Gui
     {
         Post("assign-role");
         Group<UserGroup>();
+        Permissions(P.Identity.UserManage);
     }
 
     public override async Task HandleAsync(UserAssignRoleCommand req, CancellationToken ct)

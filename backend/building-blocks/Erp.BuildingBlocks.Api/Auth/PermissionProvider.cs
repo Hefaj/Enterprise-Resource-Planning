@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
@@ -33,6 +34,33 @@ public interface IPermissionProvider
     /// <param name="cancellationToken">Token anulowania.</param>
     Task<IReadOnlyCollection<string>> GetPermissionsAsync(
         string userId, string? bearerToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Wariant przyjmujący pełny principal, nie sam <c>sub</c> — pozwala implementacjom
+    /// in-process (patrz <c>Identity.Api.Auth.IdentityInProcessPermissionProvider</c>) wykonać
+    /// JIT provisioning użytkownika PRZED odczytem efektywnych uprawnień, bez podwójnego
+    /// wyciągania claimów w <see cref="PermissionClaimsTransformation"/>.
+    ///
+    /// Domyślna implementacja interfejsu deleguje do wariantu string-owego, ignorując resztę
+    /// principala — wystarczające dla <see cref="HttpPermissionProvider"/>, który i tak nie ma
+    /// jak nic zrobić z JIT provisioning (to zadanie samego Identity).
+    /// </summary>
+    Task<IReadOnlyCollection<string>> GetPermissionsAsync(
+        ClaimsPrincipal principal, string? bearerToken, CancellationToken cancellationToken)
+    {
+        var userId = principal?.FindFirst("sub")?.Value;
+        return string.IsNullOrWhiteSpace(userId)
+            ? Task.FromResult<IReadOnlyCollection<string>>([])
+            : GetPermissionsAsync(userId, bearerToken, cancellationToken);
+    }
+
+    /// <summary>
+    /// Usuwa uprawnienia użytkownika z cache'u — wołane po wymuszonym wylogowaniu
+    /// (<c>UserForceLogoutCommand</c>), żeby nie czekać na TTL. Implementacje, które nie
+    /// cache'ują nic (np. <c>IdentityInProcessPermissionProvider</c>, zawsze czyta bazę wprost),
+    /// mogą zaimplementować to jako no-op.
+    /// </summary>
+    Task InvalidateAsync(string userId, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -111,6 +139,14 @@ public sealed class HttpPermissionProvider : IPermissionProvider
             LogIdentityUnavailable(_logger, userId, ex);
             return [];
         }
+    }
+
+    /// <inheritdoc />
+    public Task InvalidateAsync(string userId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        _cache.Remove($"perm:{userId}");
+        return Task.CompletedTask;
     }
 
     /// <summary>Nazwa nazwanego <see cref="HttpClient"/> rejestrowanego w <c>AddErpAuth</c>.</summary>

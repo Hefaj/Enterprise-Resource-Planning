@@ -12,4 +12,34 @@ export const IDENTITY_KEYS = {
         placeholder: 'identity.dashboard.roleManagement.placeholder',
       },
     },
+    grantAudit: {
+      title: 'identity.grantAudit.title',
+      subtitle: 'identity.grantAudit.subtitle',
+      menuLabel: 'identity.grantAudit.menuLabel',
+      table: {
+        emptyMessage: 'identity.grantAudit.table.emptyMessage',
+        columns: {
+          occurredAt: 'identity.grantAudit.table.columns.occurredAt',
+          actor: 'identity.grantAudit.table.columns.actor',
+          subject: 'identity.grantAudit.table.columns.subject',
+          action: 'identity.grantAudit.table.columns.action',
+          target: 'identity.grantAudit.table.columns.target',
+          source: 'identity.grantAudit.table.columns.source',
+        },
+      },
+      filters: {
+        subjectUuid: {
+          label: 'identity.grantAudit.filters.subjectUuid.label',
+          placeholder: 'identity.grantAudit.filters.subjectUuid.placeholder',
+        },
+        subjectType: {
+          label: 'identity.grantAudit.filters.subjectType.label',
+          placeholder: 'identity.grantAudit.filters.subjectType.placeholder',
+        },
+        action: {
+          label: 'identity.grantAudit.filters.action.label',
+          placeholder: 'identity.grantAudit.filters.action.placeholder',
+        },
+      },
+    },
   } as const;

@@ -57,7 +57,10 @@ public sealed class PermissionClaimsTransformation : IClaimsTransformation
             ? authorizationHeader["Bearer ".Length..]
             : null;
 
-        var permissions = await _permissionProvider.GetPermissionsAsync(userId, bearerToken, CancellationToken.None)
+        // Wariant przyjmujący cały principal — pozwala implementacjom in-process (Identity)
+        // wykonać JIT provisioning przed odczytem efektywnych uprawnień, patrz uzasadnienie
+        // na IPermissionProvider.GetPermissionsAsync(ClaimsPrincipal, ...).
+        var permissions = await _permissionProvider.GetPermissionsAsync(principal, bearerToken, CancellationToken.None)
             .ConfigureAwait(false);
 
         var identity = new ClaimsIdentity();

@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Persistence;
+using Identity.Domain.Audit;
 using Identity.Domain.Roles;
 using Identity.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,8 @@ public sealed class IdentityDbContext : ErpDbContext
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
 
     public DbSet<PermissionCatalogEntry> PermissionCatalogEntries => Set<PermissionCatalogEntry>();
+
+    public DbSet<GrantAuditEntry> GrantAuditEntries => Set<GrantAuditEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

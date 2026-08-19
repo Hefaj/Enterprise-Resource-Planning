@@ -18,6 +18,7 @@ import {
   ErpTableState,
   ErpTableConfig,
   ErpSelectionState,
+  ErpSelectionMode,
 } from '@erp/shared/ui';
 
 import {
@@ -57,6 +58,9 @@ export class CatalogProductTableComponent {
 
   /** Zdarzenie emitowane podczas rozpoczęcia i zakończenia pobierania danych */
   loadingChange = output<boolean>();
+
+  /** Tryb zaznaczania w tabeli */
+  selectionMode = input<ErpSelectionMode>('multi');
 
   /**
    * Aktualne sortowanie tabeli w postaci kontraktu HTTP. Sortowanie żyje w stanie tabeli, a nie
@@ -123,7 +127,7 @@ export class CatalogProductTableComponent {
       .setEstimatedRowHeight(50)
       .setDefaultPageSize(20)
       .setPageSizeOptions([10, 20, 50, 100])
-      .setSelectionMode('multi')
+      .setSelectionMode(this.selectionMode())
       .setItems(this.items)
       .setItemCount(this.totalCount)
       .setLoading(this.loading)

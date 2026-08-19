@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using Erp.BuildingBlocks.Api.Contracts;
 using Identity.Application.Audit;
+using Identity.Domain.Audit;
 using Identity.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,9 +39,7 @@ public sealed class GrantAuditQueries : IGrantAuditQueries
 
         var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
-        var uuids = await query
-            .OrderByDescending(e => e.OccurredAt)
-            .ThenBy(e => e.Uuid)
+        var uuids = await ApplySorting(query, request)
             .Skip((Math.Max(request.Page, 1) - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(e => e.Uuid)
@@ -47,6 +47,53 @@ public sealed class GrantAuditQueries : IGrantAuditQueries
             .ConfigureAwait(false);
 
         return new SearchResponse { Uuids = uuids, TotalCount = totalCount };
+    }
+
+    /// <summary>Sortowanie po polach dopuszczonych przez kontrakt — whitelist, nie dynamiczne
+    /// wyrażenie z nazwy pola żądania (patrz uzasadnienie w <c>Catalog ProductQueries</c>).
+    /// <c>SubjectUuid</c>/<c>SubjectType</c> pomijamy: kolumna "subject" na froncie łączy oba
+    /// pola w jeden tekst, więc nie odpowiada pojedynczej kolumnie do posortowania.</summary>
+    private static IQueryable<GrantAuditEntry> ApplySorting(IQueryable<GrantAuditEntry> query, SearchGrantAuditRequest request)
+    {
+        if (request.Sorts is null || request.Sorts.Count == 0)
+        {
+            return query.OrderByDescending(e => e.OccurredAt).ThenBy(e => e.Uuid);
+        }
+
+        IOrderedQueryable<GrantAuditEntry>? ordered = null;
+
+        foreach (var sort in request.Sorts)
+        {
+            var descending = sort.Order == -1;
+
+            ordered = sort.Field.ToUpperInvariant() switch
+            {
+                "OCCURREDAT" => Chain(ordered, query, e => e.OccurredAt, descending),
+                "ACTORUSERUUID" => Chain(ordered, query, e => e.ActorUserUuid, descending),
+                "ACTION" => Chain(ordered, query, e => e.Action, descending),
+                "TARGETCODE" => Chain(ordered, query, e => e.TargetCode, descending),
+                "SOURCE" => Chain(ordered, query, e => e.Source, descending),
+                _ => ordered,
+            };
+        }
+
+        return ordered is null
+            ? query.OrderByDescending(e => e.OccurredAt).ThenBy(e => e.Uuid)
+            : ordered.ThenBy(e => e.Uuid);
+    }
+
+    private static IOrderedQueryable<GrantAuditEntry> Chain<TKey>(
+        IOrderedQueryable<GrantAuditEntry>? ordered,
+        IQueryable<GrantAuditEntry> query,
+        Expression<Func<GrantAuditEntry, TKey>> selector,
+        bool descending)
+    {
+        if (ordered is null)
+        {
+            return descending ? query.OrderByDescending(selector) : query.OrderBy(selector);
+        }
+
+        return descending ? ordered.ThenByDescending(selector) : ordered.ThenBy(selector);
     }
 
     public async Task<List<GrantAuditDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken)

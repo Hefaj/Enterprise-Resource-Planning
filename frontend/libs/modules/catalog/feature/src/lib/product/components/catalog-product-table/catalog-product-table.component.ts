@@ -7,7 +7,6 @@ import {
   output,
   signal,
   effect,
-  untracked,
   viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -74,7 +73,7 @@ export class CatalogProductTableComponent {
   private readonly currentUuids = signal<string[]>([]);
   private readonly totalCount = signal<number>(0);
   private readonly loading = signal<boolean>(false);
-  
+
   private readonly tableComponent = viewChild(ErpTableComponent);
 
   // Zapisany ostatni stan tabeli (paginacja, sortowanie)
@@ -88,24 +87,18 @@ export class CatalogProductTableComponent {
   items = computed<ProductVM[]>(() => {
     const uuids = this.currentUuids();
     const vmMap = this.catalogProductOrchestrator.getViewModel()();
-    
+
     return uuids
       .map(uuid => vmMap.get(uuid))
       .filter((vm): vm is ProductVM => vm !== undefined);
   });
 
   constructor() {
-    // Reaguj na zmiany filtrów i pobierz dane z zachowaniem aktualnego stanu tabeli
+    // Reaguj na zmiany filtrów i pobierz dane z zachowaniem aktualnego stanu tabeli.
+    // Zaznaczenie przy zmianie filtrów czyści sam `erp-table` (wewnętrzny efekt na
+    // `config().filters`, patrz erp-table.component.ts) — nie dublujemy tego tutaj.
     effect(() => {
       const currentFilters = this.filters();
-      
-      untracked(() => {
-        try {
-          this.tableComponent()?.clearSelection();
-        } catch (e) {
-          // Ignoruj błąd gdy komponent tabeli nie ma jeszcze przekazanego inputa [config]
-        }
-      });
 
       // Nie pobieraj przy pierwszej inicjalizacji, zanim tabela nie wyemituje swojego początkowego stanu.
       // Pobraniem danych przy pierwszym wejściu zajmie się builder.setOnStateChange

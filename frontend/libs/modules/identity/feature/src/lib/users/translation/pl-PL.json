@@ -21,6 +21,7 @@
     "statusActive": "Aktywny",
     "statusInactive": "Nieaktywny",
     "tabs": {
+      "list": "Lista użytkowników",
       "roles": "Role",
       "permissions": "Uprawnienia bezpośrednie",
       "effective": "Efektywne uprawnienia"
@@ -39,6 +40,7 @@
         "grantedAt": "Nadano",
         "expiresAt": "Wygasa"
       },
+      "revokeAction": "Odbierz rolę",
       "revokeConfirmTitle": "Odebrać rolę?",
       "revokeConfirmMessage": "Użytkownik straci wszystkie uprawnienia płynące z tej roli.",
       "revokeConfirmYes": "Odbierz",
@@ -58,7 +60,11 @@
     },
     "effective": {
       "hint": "Bezpośrednie i przez wszystkie role w łańcuchu dziedziczenia. Bez rozwinięcia „skąd” — dostępne tylko dla własnego konta.",
-      "emptyMessage": "Brak efektywnych uprawnień."
+      "emptyMessage": "Brak efektywnych uprawnień.",
+      "columns": {
+        "module": "Moduł",
+        "code": "Uprawnienie"
+      }
     }
   },
   "commands": {

@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ErpGridLayoutBuilder, ErpGridLayoutComponent } from '@erp/shared/ui';
 
 import { GrantAuditStore } from './grant-audit.store';
-import { GrantAuditFilterComponent } from './filters/grant-audit-filter.component';
-import { GrantAuditContentComponent } from './content/grant-audit-content.component';
+import { GrantAuditFilterComponent } from './grant-audit-filter.component';
+import { GrantAuditContentComponent } from './grant-audit-content.component';
 import { provideGrantAuditTranslations } from './translation';
 
 /**

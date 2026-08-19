@@ -217,6 +217,7 @@ Z bazy zakładka dostaje gotowe: `scope`/`scopeKind`/`scopeCount`, `products` (m
 
 ## 9. Zobacz też
 
+- [Page dla agregatu](./pages.md) — gdzie zasięg zaznaczenia mieszka w szkielecie całej strony (store, zakładki, panel boczny)
 - [Operacje masowe (backend)](../backend/bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, częściowy sukces, cancel/retry
 - [Walidacja wsadowa](../backend/batch-validation.md) — pre-check przed utworzeniem zadania, górne ograniczenia wsadu
 - [Modale](./modals.md) — modale wsadowe, `ErpBatchMetadata`

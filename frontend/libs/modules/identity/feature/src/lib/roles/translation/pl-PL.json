@@ -15,6 +15,7 @@
     "emptySelection": "Wybierz rolę z listy, aby zobaczyć szczegóły.",
     "systemBadge": "Systemowa",
     "tabs": {
+      "list": "Lista ról",
       "permissions": "Uprawnienia",
       "members": "Role składowe",
       "containers": "Zawarta w",

@@ -21,6 +21,7 @@
     "statusActive": "Active",
     "statusInactive": "Inactive",
     "tabs": {
+      "list": "Users list",
       "roles": "Roles",
       "permissions": "Direct permissions",
       "effective": "Effective permissions"
@@ -39,6 +40,7 @@
         "grantedAt": "Granted",
         "expiresAt": "Expires"
       },
+      "revokeAction": "Revoke role",
       "revokeConfirmTitle": "Revoke this role?",
       "revokeConfirmMessage": "The user will lose all permissions coming from this role.",
       "revokeConfirmYes": "Revoke",
@@ -58,7 +60,11 @@
     },
     "effective": {
       "hint": "Direct and through every role in the inheritance chain. No \"source\" breakdown — only available for your own account.",
-      "emptyMessage": "No effective permissions."
+      "emptyMessage": "No effective permissions.",
+      "columns": {
+        "module": "Module",
+        "code": "Permission"
+      }
     }
   },
   "commands": {

@@ -1,44 +1,37 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpTranslatePipe } from '@erp/shared/ui';
+import { ErpTableComponent, ErpTableBuilder, ErpTranslatePipe } from '@erp/shared/ui';
 import { UserOrchestrator } from '@erp/identity/data-access';
 import { UsersStore } from '../users.store';
 import { USERS_KEYS } from '../translation';
 
-interface ModuleGroup {
+interface EffectivePermissionRow {
   readonly module: string;
-  readonly codes: string[];
+  readonly code: string;
 }
 
 /**
  * Zakładka "Efektywne uprawnienia" — płaski, tylko-do-odczytu zbiór (bezpośrednie + przez
- * wszystkie role w łańcuchu dziedziczenia). BEZ rozwinięcia „skąd" — backend eksponuje ścieżkę
- * dziedziczenia (`GetMyPermissionSources`) tylko dla `/me` (patrz `docs/backend/identity-authz.md`
- * §9, „Właściwa autoryzacja service-to-service..."), rozszerzenie na dowolnego użytkownika to
+ * wszystkie role w łańcuchu dziedziczenia), w `erp-table` (`mode: 'client'`), nie w ręcznie
+ * renderowanej liście chipów. BEZ rozwinięcia „skąd" — backend eksponuje ścieżkę dziedziczenia
+ * (`GetMyPermissionSources`) tylko dla `/me` (patrz `docs/backend/identity-authz.md` §9,
+ * „Właściwa autoryzacja service-to-service..."), rozszerzenie na dowolnego użytkownika to
  * osobny przyrost backendowy, świadomie nieuwzględniony w tym zadaniu.
  */
 @Component({
   selector: 'erp-identity-user-effective-permissions-tab',
   standalone: true,
-  imports: [CommonModule, ErpTranslatePipe],
+  imports: [CommonModule, ErpTranslatePipe, ErpTableComponent],
   template: `
-    <div class="flex flex-col h-full w-full gap-3 p-3 overflow-y-auto">
+    <div class="flex flex-col h-full w-full gap-2 p-2">
       <p class="hint">{{ USERS_KEYS.detail.effective.hint | erpTranslate }}</p>
 
-      @if (groups().length === 0) {
-        <p class="empty">{{ USERS_KEYS.detail.effective.emptyMessage | erpTranslate }}</p>
-      }
-
-      @for (group of groups(); track group.module) {
-        <div class="flex flex-col gap-1">
-          <h4 class="module-title">{{ group.module }}</h4>
-          <div class="flex flex-wrap gap-1">
-            @for (code of group.codes; track code) {
-              <span class="chip">{{ code }}</span>
-            }
-          </div>
-        </div>
-      }
+      <div class="flex-1 min-h-0">
+        <erp-table
+          class="block h-full w-full"
+          [config]="tableConfig()"
+        />
+      </div>
     </div>
   `,
   styles: [
@@ -47,26 +40,6 @@ interface ModuleGroup {
         margin: 0;
         color: var(--tui-text-tertiary);
         font-size: 0.8rem;
-      }
-      .empty {
-        margin: 0;
-        color: var(--tui-text-secondary);
-      }
-      .module-title {
-        margin: 0;
-        font: var(--tui-typography-text-s-bold);
-        text-transform: uppercase;
-        color: var(--tui-text-secondary);
-      }
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.15rem 0.5rem;
-        border-radius: 1rem;
-        background: var(--tui-background-neutral-1);
-        color: var(--tui-text-primary);
-        font-size: 0.75rem;
-        border: 1px solid var(--tui-border-normal);
       }
     `,
   ],
@@ -78,20 +51,26 @@ export class UserEffectivePermissionsTabComponent {
   private readonly _store = inject(UsersStore);
   private readonly _orchestrator = inject(UserOrchestrator);
 
-  protected readonly groups = computed<ModuleGroup[]>(() => {
+  protected readonly rows = computed<EffectivePermissionRow[]>(() => {
     const uuid = this._store.selectedUuid();
     const codes = uuid ? this._orchestrator.getEffectivePermissions(uuid)() : [];
 
-    const byModule = new Map<string, string[]>();
-    for (const code of codes) {
-      const module = code.split('.')[0] ?? code;
-      const list = byModule.get(module) ?? [];
-      list.push(code);
-      byModule.set(module, list);
-    }
-
-    return [...byModule.entries()].map(([module, moduleCodes]) => ({ module, codes: moduleCodes.sort() })).sort((a, b) => a.module.localeCompare(b.module));
+    return codes
+      .map((code) => ({ module: code.split('.')[0] ?? code, code }))
+      .sort((a, b) => a.module.localeCompare(b.module) || a.code.localeCompare(b.code));
   });
+
+  protected readonly tableConfig = computed(() =>
+    new ErpTableBuilder<EffectivePermissionRow>()
+      .setMode('client')
+      .setRowIdAccessor((x) => x.code)
+      .setItems(this.rows)
+      .setSelectionMode('none')
+      .setEmptyMessage(USERS_KEYS.detail.effective.emptyMessage)
+      .addColumn((c) => c.setId('module').setAccessorKey('module').setHeader(USERS_KEYS.detail.effective.columns.module).setSize(200))
+      .addColumn((c) => c.setId('code').setAccessorKey('code').setHeader(USERS_KEYS.detail.effective.columns.code).setSize(280))
+      .build(),
+  );
 
   public constructor() {
     effect(() => {

@@ -15,6 +15,7 @@
     "emptySelection": "Select a role from the list to see details.",
     "systemBadge": "System",
     "tabs": {
+      "list": "Roles list",
       "permissions": "Permissions",
       "members": "Member roles",
       "containers": "Contained in",

@@ -17,11 +17,6 @@ import { USERS_KEYS } from './translation';
   imports: [ErpTranslatePipe, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, IdentityUsersTableComponent],
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
-      <div class="flex flex-col gap-1">
-        <h1 class="page-title">{{ USERS_KEYS.title | erpTranslate }}</h1>
-        <p class="page-subtitle">{{ USERS_KEYS.subtitle | erpTranslate }}</p>
-      </div>
-
       <div
         class="flex-1 min-h-0 flex flex-col gap-2"
         erpActionToolbarZone
@@ -40,22 +35,9 @@ import { USERS_KEYS } from './translation';
       </div>
     </div>
   `,
-  styles: [
-    `
-      .page-title {
-        font: var(--tui-typography-heading-h3);
-        margin: 0;
-      }
-      .page-subtitle {
-        color: var(--tui-text-secondary);
-        margin: 0;
-      }
-    `,
-  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsersContentComponent {
-  protected readonly USERS_KEYS = USERS_KEYS;
   protected readonly store = inject(UsersStore);
 
   private readonly _orchestrator = inject(UserOrchestrator);

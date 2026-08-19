@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -9,15 +9,18 @@ import {
   ErpTableComponent,
   ErpTableBuilder,
   ErpModalService,
+  ErpSelectionState,
 } from '@erp/shared/ui';
-import { IdentityRowRemoveCellComponent, IdentityConfirmDialogService } from '@erp/identity/ui';
+import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, UserRoleGrantVM } from '@erp/identity/data-access';
 import { ASSIGN_USER_ROLE_MODAL_ID } from '@erp/identity/util';
 import { UsersStore } from '../users.store';
 import { USERS_KEYS } from '../translation';
 
-/** Zakładka "Role" panelu szczegółów użytkownika — tabela `roleGrants` + nadawanie/odbieranie. */
+/** Zakładka "Role" panelu szczegółów użytkownika — tabela `roleGrants` + nadawanie/odbieranie.
+ * Odbieranie roli jest akcją zaznaczenia w `erp-action-toolbar` (zaznacz wiersz radiem, potem
+ * "Odbierz rolę" w toolbarze), nie osobnym przyciskiem w komórce tabeli. */
 @Component({
   selector: 'erp-identity-user-roles-tab',
   standalone: true,
@@ -59,6 +62,9 @@ export class UserRolesTabComponent {
 
   protected readonly canManage = computed(() => this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage));
 
+  private readonly _selectedRoleUuid = signal<string | null>(null);
+  protected readonly selectionCount = computed(() => (this._selectedRoleUuid() ? 1 : 0));
+
   protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
     b
       .setMenuId('identity-user-roles-toolbar')
@@ -77,6 +83,25 @@ export class UserRolesTabComponent {
               .setFn(() => this._openAssignModal()),
           ),
       )
+      .addSelectionGroup((g) =>
+        g
+          .setId('role-selection')
+          .setLabel(USERS_KEYS.detail.roles.revokeAction)
+          .setIcon('@tui.trash-2')
+          .addAction((a) =>
+            a
+              .setId('revoke-role')
+              .setLabel(USERS_KEYS.detail.roles.revokeAction)
+              .setIcon('@tui.trash-2')
+              .setAppearance('warning')
+              .setHidden(computed(() => !this.canManage()))
+              .setFn(() => this._onRevokeSelected()),
+          ),
+      )
+      .setSelectionCount(this.selectionCount)
+      .setSelectionScope(computed(() => (this._selectedRoleUuid() ? 'explicit' : 'none')))
+      .setSelectionLabel(USERS_KEYS.detail.tabs.roles)
+      .setOnClearSelection(() => this._selectedRoleUuid.set(null))
       .setPinnedActionIds(['assign-role']),
   );
 
@@ -86,7 +111,8 @@ export class UserRolesTabComponent {
       .setMode('client')
       .setRowIdAccessor((x) => x.roleUuid)
       .setItems(computed(() => this.user()?.roleGrants ?? []))
-      .setSelectionMode('none')
+      .setSelectionMode(canManage ? 'single' : 'none')
+      .setOnSelectionChange((state: ErpSelectionState<UserRoleGrantVM>) => this._selectedRoleUuid.set(state.selectedIds[0] ?? null))
       .setEmptyMessage(USERS_KEYS.detail.roles.emptyMessage)
       .addColumn((c) =>
         c
@@ -112,17 +138,6 @@ export class UserRolesTabComponent {
           .setCellFormatter((value: Date | undefined) => (value ? new Date(value).toLocaleDateString() : '—')),
       );
 
-    if (canManage) {
-      builder.addColumn((c) =>
-        c
-          .setId('actions')
-          .setHeader('')
-          .setEnableSorting(false)
-          .setSize(60)
-          .setCell(IdentityRowRemoveCellComponent, { onRemove: (row: UserRoleGrantVM) => this._onRevoke(row) }),
-      );
-    }
-
     return builder.build();
   });
 
@@ -132,9 +147,10 @@ export class UserRolesTabComponent {
     this._modalService.open(ASSIGN_USER_ROLE_MODAL_ID, { userUuid });
   }
 
-  private _onRevoke(row: UserRoleGrantVM): void {
+  private _onRevokeSelected(): void {
     const userUuid = this.user()?.uuid;
-    if (!userUuid) return;
+    const roleUuid = this._selectedRoleUuid();
+    if (!userUuid || !roleUuid) return;
 
     this._confirm
       .confirm({
@@ -145,7 +161,10 @@ export class UserRolesTabComponent {
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator.revokeRoleAsync({ userUuid, roleUuid: row.roleUuid }).catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
+        this._orchestrator
+          .revokeRoleAsync({ userUuid, roleUuid })
+          .then(() => this._selectedRoleUuid.set(null))
+          .catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
       });
   }
 }

@@ -41,6 +41,8 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Nowy modal (lazy-loaded, przez `ErpModalService`) | [`docs/frontend/modals.md`](docs/frontend/modals.md) |
 | Nowy moduł — generacja NX, `project.json` hybrydowy (monolit/MFE), `federation.config.mjs`, rejestracja w Client, tłumaczenia, weryfikacja | [`docs/frontend/new-module.md`](docs/frontend/new-module.md) |
 | Orkiestrator w `data-access` (`BaseOrchestrator`, cache `IdentityMapStore`, SignalR, mapowanie DTO→ViewModel, wzorce dla drzew) | [`docs/frontend/orchestrators.md`](docs/frontend/orchestrators.md) |
+| Smart tabela dla agregatu (lista serwerowa `ErpTableBuilder`, wiersze z orkiestratora po UUID, paginacja/sortowanie) | [`docs/frontend/smart-tables.md`](docs/frontend/smart-tables.md) |
+| Nowy page dla agregatu (`erp-grid-layout`, filtr, smart tabela + action toolbar, zakładki i prawy panel zależny od zaznaczenia, store strony) | [`docs/frontend/pages.md`](docs/frontend/pages.md) |
 | Nowy atom UI wg wzorca "Single Config Builder" (`*.types.ts`/`*.builder.ts`/`*.component.ts`) | [`docs/frontend/atoms.md`](docs/frontend/atoms.md) |
 | Zaznaczenie i akcje masowe w UI — „Zaznacz wszystko" jako filtr, `ErpSelectionScope`, próg materializacji, panel/zakładka zależna od zaznaczenia (`ProductScopeTabStore`, `erp-selection-scope-banner`), bramkowanie akcji toolbara | [`docs/frontend/selection-scope.md`](docs/frontend/selection-scope.md) |
 | Tłumaczenia — dodawanie kluczy, bootstrapping scope'u, DI shadowing | [`docs/frontend/translations.md`](docs/frontend/translations.md) |

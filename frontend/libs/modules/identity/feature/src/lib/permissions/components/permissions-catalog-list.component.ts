@@ -20,11 +20,6 @@ interface ModuleGroup {
   imports: [CommonModule, ErpTranslatePipe],
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
-      <div class="flex flex-col gap-1">
-        <h1 class="page-title">{{ PERMISSIONS_KEYS.title | erpTranslate }}</h1>
-        <p class="page-subtitle">{{ PERMISSIONS_KEYS.subtitle | erpTranslate }}</p>
-      </div>
-
       <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
         @for (group of groups(); track group.module) {
           <div class="flex flex-col gap-1.5">
@@ -56,14 +51,6 @@ interface ModuleGroup {
   `,
   styles: [
     `
-      .page-title {
-        font: var(--tui-typography-heading-h3);
-        margin: 0;
-      }
-      .page-subtitle {
-        color: var(--tui-text-secondary);
-        margin: 0;
-      }
       .module-title {
         margin: 0;
         font: var(--tui-typography-text-s-bold);

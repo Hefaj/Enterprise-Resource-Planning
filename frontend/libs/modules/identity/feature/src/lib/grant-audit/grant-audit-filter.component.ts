@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { ErpFilterComponent, ErpFilterBuilder, ErpFilterConfig } from '@erp/shared/ui';
 import { SearchGrantAuditRequest } from '@erp/identity/data-access';
 
-import { GrantAuditStore } from '../grant-audit.store';
-import { GRANTAUDIT_KEYS } from '../translation';
+import { GrantAuditStore } from './grant-audit.store';
+import { GRANTAUDIT_KEYS } from './translation';
 
 /**
  * Panel filtrów dziennika audytu — świadomie ograniczony do pól, które backend faktycznie

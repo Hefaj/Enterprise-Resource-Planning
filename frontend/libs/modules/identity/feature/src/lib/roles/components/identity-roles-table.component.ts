@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { ErpTableComponent, ErpTableBuilder, ErpTableConfig, ErpSelectionState } from '@erp/shared/ui';
+import { ErpTableComponent, ErpTableBuilder, ErpTableConfig, ErpSelectionState, ErpSelectionMode } from '@erp/shared/ui';
 import { RoleOrchestrator, RoleVM } from '@erp/identity/data-access';
 
 import { ROLES_KEYS } from '../translation';
 
 /** Tabela ról w trybie 'client' — CAŁY zbiór ról jest już w cache orkiestratora (strona ładuje
  * go raz na starcie, patrz `RolesStore`), więc nie ma tu żadnego serwerowego wyszukiwania.
- * Wybór pojedynczego wiersza (radio, `selectionMode: 'single'`), nie klik w wiersz. */
+ * Domyślnie wybór pojedynczego wiersza (radio, `selectionMode` input, domyślnie `'single'`),
+ * nie klik w wiersz. `selectionMode` jest inputem, nie wartością zaszytą na sztywno w builderze
+ * — patrz `docs/frontend/smart-tables.md` §2 i `docs/frontend/pages.md` §10 (częste błędy). */
 @Component({
   selector: 'erp-identity-roles-table',
   standalone: true,
@@ -21,6 +23,8 @@ import { ROLES_KEYS } from '../translation';
 })
 export class IdentityRolesTableComponent {
   private readonly _orchestrator = inject(RoleOrchestrator);
+
+  public selectionMode = input<ErpSelectionMode>('single');
 
   public loadingChange = output<boolean>();
   public selectionChange = output<string | null>();
@@ -48,7 +52,7 @@ export class IdentityRolesTableComponent {
       .setRowIdAccessor((x) => x.uuid)
       .setItems(this.items)
       .setLoading(this._loading())
-      .setSelectionMode('single')
+      .setSelectionMode(this.selectionMode())
       .setEmptyMessage(ROLES_KEYS.table.emptyMessage)
       .setOnSelectionChange((state: ErpSelectionState<RoleVM>) => this.selectionChange.emit(state.selectedIds[0] ?? null))
       .addColumn((c) => c.setId('code').setAccessorKey('code').setHeader(ROLES_KEYS.table.columns.code).setSize(200))

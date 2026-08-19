@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { ErpGridLayoutBuilder, ErpGridLayoutComponent, ErpTabsBuilder, ErpTabsComponent } from '@erp/shared/ui';
 import { noop } from 'rxjs';
 
@@ -15,8 +15,12 @@ import { USERS_KEYS } from './translation';
  * Strona `/identity/users` — dokładnie ten sam szkielet siatki co `ProductComponent`
  * (`frontend/libs/modules/catalog/feature/src/lib/product/page/product.component.ts`):
  * filtr po lewej, poziomy pasek zakładek nad treścią, stała lista w `content`, a zakładki
- * (Role/Uprawnienia bezpośrednie/Efektywne uprawnienia) renderowane w `rightPanel` —
- * przeciągalnym (`resizable: 'left'`) i chowanym, gdy nic nie jest zaznaczone.
+ * (Lista/Role/Uprawnienia bezpośrednie/Efektywne uprawnienia) renderowane w `rightPanel` —
+ * przeciągalnym (`resizable: 'left'`) i chowanym. Pierwsza zakładka (`'list'`) to — tak jak
+ * `'products'` w `ProductComponent` — zakładka bez `component` (patrz `docs/frontend/pages.md`
+ * §3 pkt 1): jej „treścią" jest sąsiedni obszar `content`, a jej jedyna rola to dać użytkownikowi
+ * sposób na ręczne schowanie panelu bocznego bez utraty zaznaczenia. Panel chowa się więc w
+ * dwóch sytuacjach: gdy ta zakładka jest aktywna ALBO gdy nic nie jest zaznaczone.
  */
 @Component({
   selector: 'erp-identity-users',
@@ -40,9 +44,13 @@ import { USERS_KEYS } from './translation';
 export class UsersComponent {
   private readonly _store = inject(UsersStore);
 
+  protected readonly activeTabId = signal<string | null>(null);
+
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
       .setLayout('horizontal')
+      .withSharedState(this.activeTabId)
+      .addTab(USERS_KEYS.detail.tabs.list, 'list', { icon: '@tui.list' })
       .addTab(USERS_KEYS.detail.tabs.roles, 'roles', {
         component: UserRolesTabComponent,
         icon: '@tui.shield',
@@ -55,9 +63,20 @@ export class UsersComponent {
         component: UserEffectivePermissionsTabComponent,
         icon: '@tui.list-checks',
       })
-      .setInitialValue('roles')
+      .setInitialValue('list')
       .setOnTabChange(noop),
   );
+
+  public constructor() {
+    // Wybranie wiersza, gdy panel jest ręcznie schowany na zakładce 'list', przełącza z powrotem
+    // na pierwszą zakładkę szczegółu — inaczej zaznaczenie użytkownika nie miałoby żadnego
+    // widocznego efektu (warunek `collapsed` zostałby prawdziwy przez samo `activeTabId() === 'list'`).
+    effect(() => {
+      if (this._store.selectedUuid() && this.activeTabId() === 'list') {
+        this.activeTabId.set('roles');
+      }
+    });
+  }
 
   protected readonly pageConfig = ErpGridLayoutBuilder.create((b) =>
     b
@@ -80,7 +99,7 @@ export class UsersComponent {
           resizable: 'left',
           minWidth: 340,
           maxWidth: 900,
-          collapsed: computed(() => !this._store.selectedUuid()),
+          collapsed: computed(() => this.activeTabId() === 'list'),
         },
       ),
   );

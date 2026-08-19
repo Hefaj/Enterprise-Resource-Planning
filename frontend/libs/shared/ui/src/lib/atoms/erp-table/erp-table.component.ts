@@ -962,7 +962,14 @@ export class ErpTableComponent<T> implements AfterViewInit {
           : newOrder;
 
         if (!state?.columnVisibility) this._columnVisibility.set(newVisibility);
-        if (!state?.columnOrder) this._columnOrder.set(finalOrder);
+        // Zawsze `finalOrder`, nigdy surowy `state.columnOrder` — `finalOrder` już go w sobie
+        // niesie (przez `currentOrder`, ustawiony z zapisanego stanu wyżej) i dokleja do niego
+        // kolumny, których zapisany stan jeszcze nie znał (nowe kolumny, `__selection` po
+        // włączeniu zaznaczania). Pominięcie tego merge'a dla zapisanego stanu zostawiało takie
+        // kolumny całkiem poza `columnOrder` — TanStack dokleja je wtedy na sam koniec listy
+        // widocznych kolumn, więc np. kolumna zaznaczania renderowała się jako ostatnia zamiast
+        // pierwsza, mimo poprawnego pinningu (patrz identity-users-table, docs/frontend/pages.md §10).
+        this._columnOrder.set(finalOrder);
         this._columnPinning.set(newPinning);
         
         this._isInitialized = true;

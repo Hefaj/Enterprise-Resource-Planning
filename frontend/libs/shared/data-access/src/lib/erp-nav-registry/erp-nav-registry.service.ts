@@ -7,6 +7,9 @@ export interface ErpNavigationItem {
   iconId?: string; // Zamiast "pi pi-box", np. po prostu "box"
   disabled?: boolean;
   children?: ErpNavigationItem[];
+  /** Kod uprawnienia (patrz `ERP_PERMISSIONS`) wymagany, żeby pozycja była widoczna —
+   * shell filtruje menu w `STARTUP.ts` przed rejestracją, patrz docs/backend/identity-authz.md §6. */
+  requiredPermission?: string;
 }
 
 @Injectable({

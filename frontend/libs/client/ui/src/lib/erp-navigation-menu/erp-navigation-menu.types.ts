@@ -7,6 +7,9 @@ export interface ErpNavigationItem {
   iconId?: string;
   disabled?: boolean;
   children?: ErpNavigationItem[];
+  /** Kod uprawnienia wymagany, żeby pozycja była widoczna — filtrowane w `STARTUP.ts`
+   * przed rejestracją, więc tu pole jest już tylko pamiętane dla zgodności typów. */
+  requiredPermission?: string;
 }
 
 export interface ErpNavigationMenuConfig {

@@ -184,6 +184,12 @@
         "oidc": "Logowanie nie powiodło się. Spróbuj ponownie."
       }
     },
+    "forbidden": {
+      "title": "Brak uprawnień",
+      "message": "Nie masz uprawnień, aby wyświetlić tę stronę. Jeśli uważasz, że to pomyłka, skontaktuj się z administratorem.",
+      "backToDashboard": "Wróć do pulpitu",
+      "toastMessage": "Brak uprawnień do wykonania tej operacji."
+    },
     "footer": {
       "copyright": "© {{year}} ERP"
     },

@@ -1,6 +1,10 @@
 {
   "dashboard": {
     "title": "Identity & permissions",
-    "placeholder": "Manage users, roles and permissions."
+    "placeholder": "Manage users, roles and permissions.",
+    "roleManagement": {
+      "title": "Role management",
+      "placeholder": "Visible only with the identity.role.manage permission. The roles screen lands in a future increment."
+    }
   }
 }

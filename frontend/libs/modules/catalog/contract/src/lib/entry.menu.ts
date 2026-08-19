@@ -1,4 +1,5 @@
 import { ErpNavigationItem } from '@erp/shared/data-access';
+import { ERP_PERMISSIONS } from '@erp/shared/auth';
 
 export const remoteMenu: ErpNavigationItem[] = [
   {
@@ -6,6 +7,7 @@ export const remoteMenu: ErpNavigationItem[] = [
     label: 'Dashboard Analityczny Produktów',
     iconId: 'chart-bar',
     route: 'products',
+    requiredPermission: ERP_PERMISSIONS.Catalog.ProductRead,
   },
   {
     // (PIM): Zaawansowany grid (PrimeNG Table) z filtrowaniem, pozwalający na edycję parametrów technicznych i marketingowych.

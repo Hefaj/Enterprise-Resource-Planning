@@ -60,6 +60,18 @@ export class ErpAuthService {
   public getAccessToken(): Promise<string> {
     return firstValueFrom(this._oidcSecurityService.getAccessToken());
   }
+
+  /**
+   * Czeka, aż `checkAuth()` (patrz `app.config.ts`, `withAppInitializerAuthCheck`) rozstrzygnie
+   * stan sesji — `isAuthenticated$` emituje dopiero PO tym sprawdzeniu (ten sam mechanizm co
+   * `erpAuthGuard`). Bez tego kod odpalany jako `provideAppInitializer` (np. `STARTUP.ts`)
+   * może wystartować RÓWNOLEGLE z `checkAuth()`, więc pierwsze żądanie z tokenem poleci bez
+   * niego i dostanie 401 — `PermissionStore.load()` musi na to poczekać, bo (w odróżnieniu od
+   * SignalR z jego `withAutomaticReconnect()`) nie ma własnego retry.
+   */
+  public async waitUntilAuthReady(): Promise<void> {
+    await firstValueFrom(this._oidcSecurityService.isAuthenticated$);
+  }
 }
 
 interface KeycloakUserData {

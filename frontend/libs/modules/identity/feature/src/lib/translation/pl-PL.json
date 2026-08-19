@@ -1,6 +1,10 @@
 {
   "dashboard": {
     "title": "Tożsamość i uprawnienia",
-    "placeholder": "Zarządzanie użytkownikami, rolami i uprawnieniami."
+    "placeholder": "Zarządzanie użytkownikami, rolami i uprawnieniami.",
+    "roleManagement": {
+      "title": "Zarządzanie rolami",
+      "placeholder": "Widoczne tylko z uprawnieniem identity.role.manage. Ekran ról dojdzie w kolejnym przyroście."
+    }
   }
 }

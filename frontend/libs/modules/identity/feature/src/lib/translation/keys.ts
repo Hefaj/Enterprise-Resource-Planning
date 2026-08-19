@@ -7,5 +7,9 @@ export const IDENTITY_KEYS = {
     dashboard: {
       title: 'identity.dashboard.title',
       placeholder: 'identity.dashboard.placeholder',
+      roleManagement: {
+        title: 'identity.dashboard.roleManagement.title',
+        placeholder: 'identity.dashboard.roleManagement.placeholder',
+      },
     },
   } as const;

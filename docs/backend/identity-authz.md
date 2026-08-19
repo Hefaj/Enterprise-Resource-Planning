@@ -6,7 +6,10 @@ efektywne uprawnienia i ścieżka dziedziczenia, JIT provisioning, egzekwowanie 
 w Catalog i Sales z potwierdzonym SLA odwołania ≤60s). **Faza 4 ✅ szkielet modułu frontendowego
 `identity`** (routing, menu, federacja, tłumaczenia — zweryfikowane w przeglądarce), **📐 trzy
 właściwe strony (users/roles/permissions) — świadomie odłożone jako osobny przyrost**.
-**Fazy 5-6 📐 projekt, brak kodu.**
+**Faza 5 ✅ bramkowanie UI, zweryfikowane end-to-end** (`PermissionStore`, `erpPermissionGuard`,
+`*erpHasPermission`, filtr menu, strona `/forbidden`, toast na 403 — potwierdzone w
+przeglądarce z realnym Keycloak + Catalog + Notification + Identity, kontem `administrator`
+i nowo utworzonym kontem bez żadnej roli). **Faza 6 📐 projekt, brak kodu.**
 Legenda znaczników jak w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
 Szczegóły zaimplementowanych faz → §7 niżej i sekcje 2-6 (opisują już wdrożony stan, nie
 tylko projekt).
@@ -327,11 +330,33 @@ Wygenerowany dokładnie wg [`new-module.md`](../frontend/new-module.md): 5 warst
 
 **TODO dla dokumentacji:** `docs/frontend/new-module.md` Krok 3.6 (`app.config.ts`) pokazuje wzorzec z `contractLoader`, który realnie nie przechodzi lintu — do zamiany na wzorzec ze statycznymi importami (jak w tym module i w `catalog`).
 
-### Faza 5 — bramkowanie UI
+### Faza 5 — bramkowanie UI ✅
 
-`erpPermissionGuard` na trasach modułów, `*erpHasPermission` na akcjach, `requiredPermission` w `remoteMenu`, bramkowanie toolbara operacji masowych spięte z istniejącym mechanizmem zaznaczenia ([`selection-scope.md`](../frontend/selection-scope.md)), obsługa 403 w interceptorze (komunikat, nie wylogowanie).
+| Element | Pliki |
+|---|---|
+| Katalog kodów uprawnień (kopia `Permissions.cs` po stronie frontu) | `libs/shared/auth/src/lib/permission-codes.ts` (`ERP_PERMISSIONS`) |
+| `PermissionStore` | `libs/shared/auth/src/lib/permission.store.ts` — goły `HttpClient` na `GET {IDENTITY_PERMISSIONS_API_BASE_URL}/me/permissions`, fail-closed (błąd → pusty zbiór, nie wyjątek) |
+| `erpPermissionGuard` / `*erpHasPermission` | `libs/shared/auth/src/lib/erp-permission.guard.ts` / `erp-has-permission.directive.ts` — obie w `shared/auth` (nie `shared/ui`), bo `type:ui` nie wolno zależeć od `type:auth` |
+| Filtr menu po `requiredPermission` | `STARTUP.ts` (`filterMenuByPermissions`) — rekurencyjnie usuwa pozycje bez uprawnienia i opróżnione grupy, liczony raz przy starcie po `await permissionStore.load()` |
+| Strona `/forbidden` | `libs/shared/ui/src/lib/auth/forbidden/erp-forbidden.component.ts`, trasa w `libs/client/contract/src/lib/app.routes.ts` |
+| Toast na 403 | `apps/client/src/app/erp-permission-error.interceptor.ts` przez `ErpToastBridgeService`/`ErpToastBridgeComponent` (patrz „napotkany problem" niżej) |
+| Odświeżanie po SignalR | `STARTUP.ts` — subskrypcja sygnatury `identity.user`, `permissionStore.load()` ponownie na zdarzenie dot. własnego `userId`. Samo menu **nie** jest przebudowywane na to zdarzenie (świadome uproszczenie) |
+| Zastosowanie | Trasa i pozycja menu Catalogu zbramkowane `catalog.product.read`; akcje toolbara „Ustaw nazwę"/„Ustaw ceny" (jedyne realnie podłączone do komend masowych) schowane bez `catalog.product.bulk`; sekcja „Zarządzanie rolami" w placeholderze Identity jako przykład `*erpHasPermission` na całej sekcji |
+| Naprawione przy okazji | `secureRoutes` w `app.config.ts` nie miał portu Identity (5280) — bez tego `/me/permissions` leciałoby bez tokenu; `sales`/`inventory` nie miały w ogóle `erpAuthGuard` na trasach (luka z Fazy 1) |
 
-**Weryfikacja:** konto testowe bez `catalog.product.update` — brak przycisku, brak pozycji menu, ręczne wejście w URL kończy się 403 z czytelnym komunikatem.
+**Świadomie pominięte moduły bez realnego bramkowania:** `inventory`/`dms`/`task-management` nie mają w backendowym katalogu żadnych kodów uprawnień, a menu wszystkich czterech modułów (`sales` włącznie) wskazuje dziś na fasadowe, nieistniejące trasy z wcześniejszych faz — dopisanie tam `requiredPermission`/`erpPermissionGuard` byłoby fabrykowaniem ochrony nad kodem, który nic nie robi. Dostały tylko naprawę realnej luki (`erpAuthGuard`), nie `erpPermissionGuard`.
+
+**Napotkany i naprawiony w trakcie problem — `TuiAlertService` nie da się wstrzyknąć poza `<tui-root>`.** Pierwsza wersja interceptora 403 wołała `inject(TuiAlertService)` bezpośrednio. `TuiAlertService` dziedziczy z `TuiPortal`, którego konstruktor robi `inject(TuiPopupService)` — a `TuiPopupService` jest dostarczany lokalnie przez `<tui-popups>`, komponent **wewnątrz szablonu `TuiRoot`**, widoczny tylko przez nazwany slot `tuiOverContent`. Zawartość projektowana do domyślnego slotu `<tui-root>` (czyli m.in. `<router-outlet>` w `app.html`) dostaje injector z miejsca deklaracji (`App`), nie z pozycji w drzewie DOM, więc nigdy nie widzi `TuiPopupService` — stąd `NG0201: No provider found for TuiAlertService` przy KAŻDYM requeście przechodzącym przez interceptor, nie tylko przy 403. Naprawione własnym, prostym komponentem toastu (`ErpToastBridgeService`/`ErpToastBridgeComponent`, `apps/client`) stylowanym tokenami `--tui-*`, bez zależności od portalowego API TaigaUI.
+
+**Znany dług, świadomie odłożony:** filtr menu liczy się raz przy starcie — odświeżenie uprawnień przez SignalR (`identity.user`) odświeża `PermissionStore`, ale już zarejestrowane menu zostaje takie, jak przy starcie (guardy tras i realne wywołania API i tak korzystają ze świeżego stanu). Dynamiczne przebudowanie menu to kandydat na Fazę 6.
+
+**Weryfikacja:** `npx nx lint` na wszystkich dotkniętych projektach bez nowych błędów (baseline potwierdzone przez `git stash`). `pnpm translate:keys` bez błędów. `npx nx run client:esbuild:development` przechodzi.
+
+**Zweryfikowane end-to-end w przeglądarce z realnymi Keycloak + Catalog + Notification + Identity:**
+- `admin@erp.local` (pierwszy user, JIT → rola `administrator`, pełny katalog uprawnień): `/catalog/products` przechodzi przez `erpPermissionGuard`, renderuje realne dane (1500 rekordów); po zaznaczeniu wierszy przyciski „Ustaw nazwę"/„Ustaw ceny" widoczne (ma `catalog.product.bulk`).
+- Nowo utworzony `testuser@erp.local` (zero ról — JIT `administrator` dostaje tylko PIERWSZY user w systemie): `GET /me/permissions` zwraca `[]`; pozycja „Katalog" znika z menu; ręczne wejście w `/catalog/products` → przekierowanie na `/forbidden` z czytelnym komunikatem, **bez wylogowania**; bezpośrednie `POST /product/searchProduct` z tokenem testusera → realne `403` z backendu (Faza 3 nadal jedynym źródłem prawdy); toast (`ErpToastBridgeService`/`Component`) renderuje się poprawnie.
+
+**Napotkany i naprawiony w trakcie problem — wyścig `STARTUP()` vs `checkAuth()`.** `provideAppInitializer(STARTUP)` i `withAppInitializerAuthCheck()` to dwa NIEZALEŻNE initializery — Angular nie gwarantuje ich kolejności (uruchamiają się równolegle). Pierwsza wersja `PermissionStore.load()` w `STARTUP.ts` odpalała się więc czasem PRZED tym, jak `checkAuth()` zdążył ustawić token w `erpAuthInterceptor`, dostawała 401 i (w odróżnieniu od SignalR, które ma `withAutomaticReconnect()`) zostawała z pustym zbiorem uprawnień NA STAŁE — mimo poprawnego zalogowania. Naprawione nową metodą `ErpAuthService.waitUntilAuthReady()` (opakowuje `isAuthenticated$`, ten sam mechanizm co `erpAuthGuard` — emituje dopiero PO `checkAuth()`), na którą `STARTUP.ts` czeka przed pierwszym `permissionStore.load()`.
 
 ### Faza 6 — audyt i domknięcie
 
@@ -361,5 +386,6 @@ Faza 1 jest twardym warunkiem wstępnym: budowanie zarządzania uprawnieniami na
 | Wielofirmowość / tenant | Poza zakresem | Dotknie tokenu, schematów i każdego zapytania — osobny projekt |
 | Backplane Redis dla cache uprawnień | Razem z drugą instancją Notification | Patrz `architecture.md` §7 |
 | Aktywne unieważnianie cache'u uprawnień (`AggregateChanged` na `identity.user`/`identity.role`) | Gdy TTL=60s przestanie wystarczać | Dziś tylko TTL, zweryfikowane end-to-end w Fazie 3 — patrz jej sekcja. Konsument istniałby w `Erp.BuildingBlocks.Messaging`, nie wymaga nowego kontraktu (reużycie `AggregateChanged`) |
-| Bramkowanie własnych endpointów Identity przez `Permissions(...)` | Faza 5, razem z bramkowaniem UI | Wymaga najpierw naprawy kolejności JIT provisioning vs. claims transformation — patrz Faza 3 "znany dług" |
+| Bramkowanie własnych endpointów Identity przez `Permissions(...)` | Faza 6 | Faza 5 zrobiła tylko front (patrz jej sekcja) — backendowe endpointy Identity nadal bez `Permissions(...)`. Wymaga najpierw naprawy kolejności JIT provisioning vs. claims transformation — patrz Faza 3 "znany dług" |
 | Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś dowolny ważny token wystarcza; docelowo client credentials Keycloaka albo izolacja sieciowa |
+| Przebudowa już zarejestrowanego menu na odświeżenie `PermissionStore` przez SignalR | Faza 6 | Dziś `PermissionStore` się odświeża, ale filtr menu w `STARTUP.ts` liczy się tylko raz przy starcie — patrz sekcja Fazy 5 |

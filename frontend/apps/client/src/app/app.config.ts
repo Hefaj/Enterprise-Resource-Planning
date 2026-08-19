@@ -8,6 +8,7 @@ import localePl from '@angular/common/locales/pl';
 import { provideTransloco } from '@jsverse/transloco';
 import { provideSharedTranslations, TranslocoInlineLoader } from '@erp/shared/ui';
 import { remoteApiProviders } from './remote-api.providers';
+import { erpPermissionErrorInterceptor } from './erp-permission-error.interceptor';
 import { provideTaiga } from '@taiga-ui/core';
 import { TUI_LANGUAGE } from '@taiga-ui/i18n';
 import { ErpLanguageService, AppLanguage, erpClientIdInterceptor, SIGNALR_ACCESS_TOKEN_FACTORY, ERP_LOGOUT_HANDLER } from '@erp/shared/data-access';
@@ -32,7 +33,7 @@ export const appConfig: ApplicationConfig = {
     // i powiadomienie o ich zakończeniu nie ma dokąd trafić (patrz erpClientIdInterceptor).
     // erpAuthInterceptor dokłada `Authorization: Bearer` wyłącznie do żądań pasujących do
     // `secureRoutes` niżej — bez tokenu backend odrzuca każde wywołanie (patrz ErpAuthExtensions).
-    provideHttpClient(withInterceptors([erpAuthInterceptor, erpClientIdInterceptor])),
+    provideHttpClient(withInterceptors([erpAuthInterceptor, erpClientIdInterceptor, erpPermissionErrorInterceptor])),
     // Authorization Code + PKCE przeciw Keycloakowi — patrz docs/backend/identity-authz.md §5-6.
     // withAppInitializerAuthCheck() wywołuje checkAuth() przy starcie (obsługuje zarówno powrót
     // z przekierowania logowania z `?code=...`, jak i odczyt istniejącej sesji z pamięci) — guardy
@@ -53,7 +54,7 @@ export const appConfig: ApplicationConfig = {
           useRefreshToken: true,
           // Token dołączany tylko do naszych mikroserwisów — nigdy do Keycloaka samego
           // (odświeżanie tokenu, endpoint /token) ani do zewnętrznych zasobów.
-          secureRoutes: ['http://localhost:5149', 'http://localhost:5250'],
+          secureRoutes: ['http://localhost:5149', 'http://localhost:5250', 'http://localhost:5280'],
         },
       },
       withAppInitializerAuthCheck(),

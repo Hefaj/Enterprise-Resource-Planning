@@ -184,6 +184,12 @@
         "oidc": "Sign-in failed. Please try again."
       }
     },
+    "forbidden": {
+      "title": "Access denied",
+      "message": "You don't have permission to view this page. If you believe this is a mistake, contact your administrator.",
+      "backToDashboard": "Back to dashboard",
+      "toastMessage": "You don't have permission to perform this action."
+    },
     "footer": {
       "copyright": "© {{year}} ERP"
     },

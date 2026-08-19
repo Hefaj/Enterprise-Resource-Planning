@@ -17,8 +17,9 @@ import {
   ERP_LOGOUT_HANDLER,
 } from '@erp/shared/data-access';
 import { AppSettingsService } from '@erp/client/util';
-import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent } from '@erp/client/ui';
+import { ErpSettingsMenuComponent, ErpSettingsMenuConfig, ErpSettingsMenuItem, ErpCompanySelectorComponent, ErpUpdateIndicatorComponent, ErpNotificationsComponent, ErpTasksComponent, ErpNavigationMenuComponent, ErpUserBadgeComponent } from '@erp/client/ui';
 import { ErpToggleGroupComponent, ErpToggleGroupBuilder } from '@erp/shared/ui';
+import { ErpAuthService } from '@erp/shared/auth';
 
 @Component({
   selector: 'erp-shell',
@@ -35,6 +36,7 @@ import { ErpToggleGroupComponent, ErpToggleGroupBuilder } from '@erp/shared/ui';
     ErpUpdateIndicatorComponent,
     ErpNotificationsComponent,
     ErpTasksComponent,
+    ErpUserBadgeComponent,
   ],
   templateUrl: './shell.component.html',
   styles: [`
@@ -75,6 +77,12 @@ export class ShellLayoutComponent {
   private readonly _widgetRegistry = inject(ErpWidgetRegistryService);
   private readonly _jobService = inject(JobService);
   private readonly _logoutHandler = inject(ERP_LOGOUT_HANDLER);
+  private readonly _authService = inject(ErpAuthService);
+
+  /** Zalogowany użytkownik — pokazywany w nagłówku (`erp-user-badge`). `null` w krótkim oknie
+   * między startem appki a odczytaniem danych z tokenu, choć guard tras i tak nie wpuszcza tu
+   * nikogo niezalogowanego, więc w praktyce zawsze ma wartość. */
+  public readonly currentUser = this._authService.$currentUser;
 
   // ── Powiadomienia o zadaniach masowych ──
 

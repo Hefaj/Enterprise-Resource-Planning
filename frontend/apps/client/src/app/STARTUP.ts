@@ -6,18 +6,49 @@ import {
   ErpWidgetRegistryService,
   ErpWidgetDefinition,
   JOB_LIST_WIDGET_ID,
+  SignalrSyncService,
 } from '@erp/shared/data-access';
 import { ErpModalService } from '@erp/shared/ui';
 import { AppSettingsService } from '@erp/client/util';
+import { ErpAuthService, PermissionStore } from '@erp/shared/auth';
+
+/** Sygnatura SignalR dla zmian uprawnień/ról użytkownika — `AggregateSignatures.IdentityUser`
+ * po stronie backendu (patrz docs/backend/identity-authz.md §4/§6). */
+const IDENTITY_USER_SIGNATURE = 'identity.user';
 
 export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
   const modalService = inject(ErpModalService);
   const widgetRegistry = inject(ErpWidgetRegistryService);
+  const permissionStore = inject(PermissionStore);
+  const authService = inject(ErpAuthService);
+  const signalrSync = inject(SignalrSyncService);
   // Pobrany synchronicznie: kontekst wstrzykiwania nie przeżywa `await` niżej,
   // a bootstrap feedu zadań potrzebuje injectora już po doładowaniu remota.
   const injector = inject(Injector);
   inject(AppSettingsService); // Triggers theme and language initialization and effects
+
+  // `provideAppInitializer(STARTUP)` biegnie RÓWNOLEGLE z `withAppInitializerAuthCheck()`
+  // (Angular nie serializuje initializerów), więc bez tego czekania pierwsze żądanie
+  // `/me/permissions` leci zanim `checkAuth()` zdąży ustawić token — i dostaje 401 na stałe
+  // (PermissionStore nie ma własnego retry, w odróżnieniu od SignalR niżej).
+  await authService.waitUntilAuthReady();
+
+  // Musi się zakończyć PRZED budową menu (patrz `loadContractDirect` niżej) — filtr menu
+  // po `requiredPermission` czyta `PermissionStore` synchronicznie. Fail-closed: błąd sieci
+  // zostawia pusty zbiór (menu schowane), nie przerywa startu appki.
+  await permissionStore.load();
+
+  // Odświeżenie uprawnień na żywo, gdy admin zmieni role/nadania bieżącego użytkownika —
+  // NIE przebudowuje już zarejestrowanego menu (świadome uproszczenie, patrz plan Fazy 5),
+  // ale guardy tras i realne wywołania API i tak korzystają ze świeżego stanu.
+  signalrSync.subscribe(IDENTITY_USER_SIGNATURE);
+  signalrSync.onUpdate(IDENTITY_USER_SIGNATURE).subscribe((uuids) => {
+    const currentUserId = authService.$currentUser()?.id;
+    if (currentUserId && uuids.includes(currentUserId)) {
+      void permissionStore.load();
+    }
+  });
 
   menuRegistry.register({
     id: 'dashbord',
@@ -41,7 +72,9 @@ export async function STARTUP(): Promise<void> {
     return contract.loadJobListComponent();
   });
 
-  const loadPromises = REMOTE_MODULES_CONFIG.map((config) => loadContractDirect(config.routePrefix, config, modalService));
+  const loadPromises = REMOTE_MODULES_CONFIG.map((config) =>
+    loadContractDirect(config.routePrefix, config, modalService, permissionStore),
+  );
   const remoteMenus = await Promise.all(loadPromises);
 
   for (const menu of remoteMenus) {
@@ -82,6 +115,7 @@ async function loadContractDirect(
   modulePrefix: string,
   config: RemoteModuleConfig,
   modalService: ErpModalService,
+  permissionStore: PermissionStore,
 ): Promise<ErpNavigationItem | null> {
   try {
     const module = (await loadModuleContract(modulePrefix)) as EntryContractModule;
@@ -97,11 +131,16 @@ async function loadContractDirect(
 
     if (module?.remoteMenu) {
       const prefixedMenu = applyRoutePrefixToMenu(module.remoteMenu, config.routePrefix);
+      const visibleMenu = filterMenuByPermissions(prefixedMenu, permissionStore);
+
+      if (visibleMenu.length === 0) {
+        return null;
+      }
 
       return {
         id: config.id,
         label: config.label,
-        children: prefixedMenu,
+        children: visibleMenu,
       };
     }
 
@@ -115,6 +154,25 @@ async function loadContractDirect(
       disabled: true,
     };
   }
+}
+
+/**
+ * Usuwa z drzewa menu pozycje, których `requiredPermission` nie jest w bieżącym zbiorze
+ * uprawnień — patrz docs/backend/identity-authz.md §6 Faza 5 („shell filtruje menu, nie
+ * każdy moduł osobno"). Brak `requiredPermission` = pozycja zawsze widoczna (domyślne
+ * zachowanie sprzed Fazy 5). Węzeł-grupa, który po przefiltrowaniu dzieci zostaje pusty,
+ * a oryginalnie miał dzieci, też znika — nie pokazujemy pustych podmenu.
+ */
+function filterMenuByPermissions(items: ErpNavigationItem[], permissionStore: PermissionStore): ErpNavigationItem[] {
+  return items
+    .filter((item) => !item.requiredPermission || permissionStore.has(item.requiredPermission))
+    .map((item) => {
+      if (!item.children || item.children.length === 0) {
+        return item;
+      }
+      return { ...item, children: filterMenuByPermissions(item.children, permissionStore) };
+    })
+    .filter((item) => !(item.children && item.children.length === 0));
 }
 
 function applyRoutePrefixToMenu(items: ErpNavigationItem[], prefix: string): ErpNavigationItem[] {

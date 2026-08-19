@@ -21,6 +21,8 @@ export * from './lib/layouts/erp-grid-layout';
 
 export * from './lib/auth/login/login.component';
 
+export * from './lib/auth/forbidden/erp-forbidden.component';
+
 // // Atoms
 export * from './lib/atoms/erp-button';
 export * from './lib/atoms/erp-breadcrumb';

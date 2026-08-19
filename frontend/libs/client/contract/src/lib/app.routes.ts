@@ -29,6 +29,10 @@ export const appRoutes: Route[] = [
         loadComponent: () => import('@erp/client/feature').then((m) => m.DashboardComponent),
       },
       {
+        path: 'forbidden',
+        loadComponent: () => import('@erp/shared/ui').then((m) => m.ErpForbiddenComponent),
+      },
+      {
         path: 'sales',
         loadChildren: () => loadModuleRoutes('sales'),
       },

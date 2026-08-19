@@ -189,6 +189,12 @@ export const SHARED_KEYS = {
           oidc: 'shared.auth.login.errors.oidc',
         },
       },
+      forbidden: {
+        title: 'shared.auth.forbidden.title',
+        message: 'shared.auth.forbidden.message',
+        backToDashboard: 'shared.auth.forbidden.backToDashboard',
+        toastMessage: 'shared.auth.forbidden.toastMessage',
+      },
       footer: {
         copyright: 'shared.auth.footer.copyright',
       },

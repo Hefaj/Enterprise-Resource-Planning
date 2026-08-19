@@ -13,6 +13,7 @@ import {
 } from '@erp/shared/ui';
 import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductVM, SearchProductRequest } from '@erp/catalog/data-access';
+import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { CatalogProductTableComponent } from '../../components/catalog-product-table/catalog-product-table.component';
 import { ProductStore } from '../product.store';
 
@@ -47,7 +48,12 @@ import { ProductStore } from '../product.store';
 })
 export class ProductTabComponent {
   private readonly modalService = inject(ErpModalService);
+  private readonly permissionStore = inject(PermissionStore);
   protected readonly store = inject(ProductStore);
+
+  /** `catalog.product.bulk` — patrz docs/backend/identity-authz.md §6 Faza 5: front tylko
+   * chowa akcje, na które backend i tak odpowie 403 (już egzekwowane w Fazie 3). */
+  protected readonly canBulkEdit = computed(() => this.permissionStore.has(ERP_PERMISSIONS.Catalog.ProductBulk));
 
   private readonly productTable = viewChild(CatalogProductTableComponent);
 
@@ -155,6 +161,7 @@ export class ProductTabComponent {
               .setLabel('Ustaw nazwe')
               .setIcon('@tui.bookmark')
               .setShortcut('Ctrl+E')
+              .setHidden(computed(() => !this.canBulkEdit()))
               .setFn(() => this.openSetNameModal())
           )
           .addAction((a) =>
@@ -163,6 +170,7 @@ export class ProductTabComponent {
               .setLabel('Ustaw ceny')
               .setIcon('@tui.dollar-sign')
               .setShortcut('Ctrl+P')
+              .setHidden(computed(() => !this.canBulkEdit()))
               .setFn(() => this.openSetPriceModal())
           )
           .addAction((a) =>

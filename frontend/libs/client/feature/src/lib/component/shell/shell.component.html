@@ -45,6 +45,14 @@
         (companyChange)="selectCompany($event)"
       />
 
+      <!-- Zalogowany użytkownik -->
+      @if (currentUser(); as user) {
+        <erp-user-badge
+          [fullName]="user.fullName"
+          [email]="user.email"
+        />
+      }
+
       <!-- Settings Menu -->
       <erp-settings-menu [config]="settingsMenuConfig" />
     </div>

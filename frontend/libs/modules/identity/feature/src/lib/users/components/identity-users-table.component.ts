@@ -1,20 +1,10 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-  effect,
-  untracked,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ErpTableComponent, ErpTableBuilder, ErpTableState, ErpTableConfig, ErpSelectionState } from '@erp/shared/ui';
 import { UserOrchestrator, UserVM, SearchUserAccountRequest, SortOption } from '@erp/identity/data-access';
 
-import { IDENTITY_KEYS } from '../../translation';
+import { USERS_KEYS } from '../translation';
 
 /** Tabela listy użytkowników — wybór pojedynczego wiersza (radio, `selectionMode: 'single'`),
  * nie klik w wiersz. Konsument dostaje uuid wybranego użytkownika (albo `null` przy odznaczeniu)
@@ -23,7 +13,10 @@ import { IDENTITY_KEYS } from '../../translation';
   selector: 'erp-identity-users-table',
   standalone: true,
   imports: [CommonModule, ErpTableComponent],
-  template: `<erp-table class="block h-full w-full" [config]="tableConfig()" />`,
+  template: `<erp-table
+    class="block h-full w-full"
+    [config]="tableConfig()"
+  />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IdentityUsersTableComponent {
@@ -72,28 +65,16 @@ export class IdentityUsersTableComponent {
       .setItems(this.items)
       .setItemCount(this._totalCount)
       .setLoading(this._loading)
-      .setEmptyMessage(IDENTITY_KEYS.users.table.emptyMessage)
+      .setEmptyMessage(USERS_KEYS.table.emptyMessage)
       .setOnSelectionChange((state: ErpSelectionState<UserVM>) => this.selectionChange.emit(state.selectedIds[0] ?? null))
 
-      .addColumn((c) =>
-        c
-          .setId('email')
-          .setAccessorKey('email')
-          .setHeader(IDENTITY_KEYS.users.table.columns.email)
-          .setSize(280),
-      )
-      .addColumn((c) =>
-        c
-          .setId('displayName')
-          .setAccessorKey('displayName')
-          .setHeader(IDENTITY_KEYS.users.table.columns.displayName)
-          .setSize(220),
-      )
+      .addColumn((c) => c.setId('email').setAccessorKey('email').setHeader(USERS_KEYS.table.columns.email).setSize(280))
+      .addColumn((c) => c.setId('displayName').setAccessorKey('displayName').setHeader(USERS_KEYS.table.columns.displayName).setSize(220))
       .addColumn((c) =>
         c
           .setId('isActive')
           .setAccessorKey('isActive')
-          .setHeader(IDENTITY_KEYS.users.table.columns.isActive)
+          .setHeader(USERS_KEYS.table.columns.isActive)
           .setEnableSorting(false)
           .setSize(120)
           .setCellFormatter((value: boolean) => (value ? '✓' : '—')),
@@ -102,7 +83,7 @@ export class IdentityUsersTableComponent {
         c
           .setId('roleCount')
           .setAccessorFn((row) => row.roleGrants?.length ?? 0)
-          .setHeader(IDENTITY_KEYS.users.table.columns.roleCount)
+          .setHeader(USERS_KEYS.table.columns.roleCount)
           .setEnableSorting(false)
           .setSize(120),
       )

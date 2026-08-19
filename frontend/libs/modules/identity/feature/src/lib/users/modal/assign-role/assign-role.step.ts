@@ -3,7 +3,7 @@ import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig, ErpModalStepBase } from '@erp/shared/ui';
 import { RoleOrchestrator, UserAssignRoleCommand } from '@erp/identity/data-access';
 import { AssignRoleMetadata } from './assign-role.definition';
-import { IDENTITY_KEYS } from '../../../translation';
+import { USERS_KEYS } from '../../translation';
 
 /** Puste pole (opcjonalne) albo dokładnie `RRRR-MM-DD` — bez tego zły wpis dałby `Invalid Date`
  * po cichu wysłaną do API. `erp-input` nie ma trybu 'date' (tylko 'text'/'password'), stąd
@@ -34,42 +34,23 @@ export class AssignRoleStepComponent extends ErpModalStepBase<UserAssignRoleComm
     const config = ErpStepContentBuilder.create((b) =>
       b
         .setLayout('stack')
-        .addFormField(
-          'roleUuid',
-          'inputPicker',
-          (f) =>
-            f
-              .setLabel(IDENTITY_KEYS.users.commands.assignRole.roleLabel)
-              .setItems(this._roles)
-              .setLabelKey('name')
-              .setValueKey('uuid')
-              .setStrategy('single'),
-          {
-            validators: [Validators.required],
-            value: () => this.command()().roleUuid ?? null,
-            onChange: (value) => this.command().update((cmd) => ({ ...cmd, roleUuid: value ?? undefined })),
+        .addFormField('roleUuid', 'inputPicker', (f) => f.setLabel(USERS_KEYS.commands.assignRole.roleLabel).setItems(this._roles).setLabelKey('name').setValueKey('uuid').setStrategy('single'), {
+          validators: [Validators.required],
+          value: () => this.command()().roleUuid ?? null,
+          onChange: (value) => this.command().update((cmd) => ({ ...cmd, roleUuid: value ?? undefined })),
+        })
+        .addFormField('expiresAt', 'text', (f) => f.setLabel(USERS_KEYS.commands.assignRole.expiresAtLabel).setPlaceholder(USERS_KEYS.commands.assignRole.expiresAtPlaceholder), {
+          validators: [optionalIsoDateValidator],
+          value: () => {
+            const expiresAt = this.command()().expiresAt;
+            return expiresAt ? new Date(expiresAt).toISOString().slice(0, 10) : '';
           },
-        )
-        .addFormField(
-          'expiresAt',
-          'text',
-          (f) =>
-            f
-              .setLabel(IDENTITY_KEYS.users.commands.assignRole.expiresAtLabel)
-              .setPlaceholder(IDENTITY_KEYS.users.commands.assignRole.expiresAtPlaceholder),
-          {
-            validators: [optionalIsoDateValidator],
-            value: () => {
-              const expiresAt = this.command()().expiresAt;
-              return expiresAt ? new Date(expiresAt).toISOString().slice(0, 10) : '';
-            },
-            onChange: (value) =>
-              this.command().update((cmd) => ({
-                ...cmd,
-                expiresAt: value ? new Date(value) : undefined,
-              })),
-          },
-        ),
+          onChange: (value) =>
+            this.command().update((cmd) => ({
+              ...cmd,
+              expiresAt: value ? new Date(value) : undefined,
+            })),
+        }),
     );
 
     super(config);

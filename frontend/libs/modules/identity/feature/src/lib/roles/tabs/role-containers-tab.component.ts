@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ErpTableComponent, ErpTableBuilder } from '@erp/shared/ui';
 import { RoleOrchestrator, RoleVM } from '@erp/identity/data-access';
 import { RolesStore } from '../roles.store';
-import { IDENTITY_KEYS } from '../../translation';
+import { ROLES_KEYS } from '../translation';
 
 /** Zakładka "Zawarta w" — role-kontenery zawierające tę rolę jako składową (odwrotny kierunek
  * DAG). Tylko do odczytu: dodawanie/usuwanie idzie z poziomu roli-kontenera (zakładka "Role
@@ -14,7 +14,10 @@ import { IDENTITY_KEYS } from '../../translation';
   imports: [CommonModule, ErpTableComponent],
   template: `
     <div class="h-full w-full p-2">
-      <erp-table class="block h-full w-full" [config]="tableConfig()" />
+      <erp-table
+        class="block h-full w-full"
+        [config]="tableConfig()"
+      />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,9 +37,9 @@ export class RoleContainersTabComponent {
         }),
       )
       .setSelectionMode('none')
-      .setEmptyMessage(IDENTITY_KEYS.roles.detail.containers.emptyMessage)
-      .addColumn((c) => c.setId('code').setAccessorKey('code').setHeader(IDENTITY_KEYS.roles.detail.containers.columns.code).setSize(200))
-      .addColumn((c) => c.setId('name').setAccessorKey('name').setHeader(IDENTITY_KEYS.roles.detail.containers.columns.name).setSize(220))
+      .setEmptyMessage(ROLES_KEYS.detail.containers.emptyMessage)
+      .addColumn((c) => c.setId('code').setAccessorKey('code').setHeader(ROLES_KEYS.detail.containers.columns.code).setSize(200))
+      .addColumn((c) => c.setId('name').setAccessorKey('name').setHeader(ROLES_KEYS.detail.containers.columns.name).setSize(220))
       .build(),
   );
 }

@@ -1,0 +1,16 @@
+{
+  "title": "Permissions",
+  "subtitle": "Permission catalog defined in code — read-only view.",
+  "searchLabel": "Search by code or module",
+  "emptyMessage": "No permissions match the criteria.",
+  "obsoleteBadge": "Obsolete",
+  "holders": {
+    "hint": "Effectively — directly or through any role in the inheritance chain.",
+    "emptySelection": "Select a permission from the list to see who has it.",
+    "emptyMessage": "No user has this permission.",
+    "columns": {
+      "email": "Email",
+      "displayName": "Name"
+    }
+  }
+}

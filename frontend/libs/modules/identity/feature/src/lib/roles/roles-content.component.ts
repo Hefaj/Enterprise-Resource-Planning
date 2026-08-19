@@ -1,19 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
-import {
-  ErpActionToolbarBuilder,
-  ErpActionToolbarComponent,
-  ErpActionToolbarContextDirective,
-  ErpActionToolbarZoneDirective,
-  ErpModalService,
-  ErpTranslatePipe,
-} from '@erp/shared/ui';
+import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpModalService, ErpTranslatePipe } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { CREATE_ROLE_MODAL_ID } from '@erp/identity/util';
 
 import { RolesStore } from './roles.store';
 import { IdentityRolesTableComponent } from './components/identity-roles-table.component';
-import { IDENTITY_KEYS } from '../translation';
+import { ROLES_KEYS } from './translation';
 
 /** Nagłówek + pasek akcji ("Nowa rola") + tabela ról (wybór pojedynczy, radio). */
 @Component({
@@ -23,11 +16,15 @@ import { IDENTITY_KEYS } from '../translation';
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
       <div class="flex flex-col gap-1">
-        <h1 class="page-title">{{ IDENTITY_KEYS.roles.title | erpTranslate }}</h1>
-        <p class="page-subtitle">{{ IDENTITY_KEYS.roles.subtitle | erpTranslate }}</p>
+        <h1 class="page-title">{{ ROLES_KEYS.title | erpTranslate }}</h1>
+        <p class="page-subtitle">{{ ROLES_KEYS.subtitle | erpTranslate }}</p>
       </div>
 
-      <div class="flex-1 min-h-0 flex flex-col gap-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+      <div
+        class="flex-1 min-h-0 flex flex-col gap-2"
+        erpActionToolbarZone
+        [erpActionToolbarContext]="actionToolbar"
+      >
         <erp-action-toolbar [config]="actionToolbar" />
 
         <div class="flex-1 min-h-0">
@@ -41,14 +38,20 @@ import { IDENTITY_KEYS } from '../translation';
   `,
   styles: [
     `
-      .page-title { font: var(--tui-typography-heading-h3); margin: 0; }
-      .page-subtitle { color: var(--tui-text-secondary); margin: 0; }
+      .page-title {
+        font: var(--tui-typography-heading-h3);
+        margin: 0;
+      }
+      .page-subtitle {
+        color: var(--tui-text-secondary);
+        margin: 0;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RolesContentComponent {
-  protected readonly IDENTITY_KEYS = IDENTITY_KEYS;
+  protected readonly ROLES_KEYS = ROLES_KEYS;
   protected readonly store = inject(RolesStore);
 
   private readonly _modalService = inject(ErpModalService);
@@ -62,12 +65,12 @@ export class RolesContentComponent {
       .addDefaultGroup((g) =>
         g
           .setId('roles')
-          .setLabel(IDENTITY_KEYS.roles.title)
+          .setLabel(ROLES_KEYS.title)
           .setIcon('@tui.shield')
           .addAction((a) =>
             a
               .setId('create-role')
-              .setLabel(IDENTITY_KEYS.roles.commands.create.label)
+              .setLabel(ROLES_KEYS.commands.create.label)
               .setIcon('@tui.plus')
               .setAppearance('success')
               .setHidden(computed(() => !this.canManage()))

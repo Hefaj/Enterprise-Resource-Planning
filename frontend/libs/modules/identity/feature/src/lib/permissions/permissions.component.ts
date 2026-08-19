@@ -5,7 +5,7 @@ import { PermissionsStore } from './permissions.store';
 import { PermissionsFilterComponent } from './permissions-filter.component';
 import { PermissionsCatalogListComponent } from './components/permissions-catalog-list.component';
 import { PermissionHoldersPanelComponent } from './components/permission-holders-panel.component';
-import { provideIdentityTranslations } from '../translation';
+import { providePermissionsTranslations } from './translation';
 
 /** Strona `/identity/permissions` — read-only przeglądarka katalogu uprawnień (grupowanie po
  * module, filtr po lewej) + panel "kto ma to uprawnienie" dla wybranego kodu, przeciągalny i
@@ -17,7 +17,7 @@ import { provideIdentityTranslations } from '../translation';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ErpGridLayoutComponent],
-  providers: [PermissionsStore, provideIdentityTranslations()],
+  providers: [PermissionsStore, providePermissionsTranslations()],
   template: `<erp-grid-layout [config]="pageConfig" />`,
   styles: [
     `

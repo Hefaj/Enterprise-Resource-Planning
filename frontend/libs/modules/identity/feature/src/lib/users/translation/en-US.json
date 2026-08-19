@@ -1,0 +1,82 @@
+{
+  "title": "Users",
+  "subtitle": "Account list, assigned roles and direct permissions.",
+  "filters": {
+    "email": {
+      "label": "Email",
+      "placeholder": "e.g. jan.kowalski@erp.local"
+    }
+  },
+  "table": {
+    "emptyMessage": "No users match the criteria.",
+    "columns": {
+      "email": "Email",
+      "displayName": "Name",
+      "isActive": "Active",
+      "roleCount": "Roles"
+    }
+  },
+  "detail": {
+    "emptySelection": "Select a user from the list to see details.",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "tabs": {
+      "roles": "Roles",
+      "permissions": "Direct permissions",
+      "effective": "Effective permissions"
+    },
+    "forceLogout": {
+      "label": "Force logout",
+      "confirmTitle": "Force logout?",
+      "confirmMessage": "The user's Keycloak session will be revoked immediately.",
+      "confirmYes": "Log out",
+      "confirmNo": "Cancel"
+    },
+    "roles": {
+      "emptyMessage": "The user has no assigned roles.",
+      "columns": {
+        "role": "Role",
+        "grantedAt": "Granted",
+        "expiresAt": "Expires"
+      },
+      "revokeConfirmTitle": "Revoke this role?",
+      "revokeConfirmMessage": "The user will lose all permissions coming from this role.",
+      "revokeConfirmYes": "Revoke",
+      "revokeConfirmNo": "Cancel"
+    },
+    "permissions": {
+      "emptyMessage": "The user has no directly granted permissions.",
+      "columns": {
+        "permissionCode": "Permission code",
+        "reason": "Reason",
+        "grantedAt": "Granted"
+      },
+      "revokeConfirmTitle": "Revoke this permission?",
+      "revokeConfirmMessage": "The directly granted permission will be revoked.",
+      "revokeConfirmYes": "Revoke",
+      "revokeConfirmNo": "Cancel"
+    },
+    "effective": {
+      "hint": "Direct and through every role in the inheritance chain. No \"source\" breakdown — only available for your own account.",
+      "emptyMessage": "No effective permissions."
+    }
+  },
+  "commands": {
+    "assignRole": {
+      "label": "Assign role",
+      "modalTitle": "Assign role",
+      "roleLabel": "Role",
+      "expiresAtLabel": "Expiration date (YYYY-MM-DD, optional)",
+      "expiresAtPlaceholder": "YYYY-MM-DD",
+      "submitButton": "Assign"
+    },
+    "grantPermission": {
+      "label": "Grant permission",
+      "modalTitle": "Grant permission directly",
+      "permissionLabel": "Permission",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. temporary access while the manager is away",
+      "submitButton": "Grant"
+    }
+  }
+}

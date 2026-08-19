@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ErpTableComponent, ErpTableBuilder } from '@erp/shared/ui';
 import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
 import { RolesStore } from '../roles.store';
-import { IDENTITY_KEYS } from '../../translation';
+import { ROLES_KEYS } from '../translation';
 
 /** Zakładka "Kto ma tę rolę" — użytkownicy z BEZPOŚREDNIM przypisaniem tej roli, przez nowy
  * filtr backendowy `SearchUserAccountRequest.RoleUuid` (patrz plan implementacji §1). Świadomie
@@ -14,7 +14,10 @@ import { IDENTITY_KEYS } from '../../translation';
   imports: [CommonModule, ErpTableComponent],
   template: `
     <div class="h-full w-full p-2">
-      <erp-table class="block h-full w-full" [config]="tableConfig()" />
+      <erp-table
+        class="block h-full w-full"
+        [config]="tableConfig()"
+      />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,15 +66,9 @@ export class RoleHoldersTabComponent {
       .setItems(this.items)
       .setLoading(this._loading())
       .setSelectionMode('none')
-      .setEmptyMessage(IDENTITY_KEYS.roles.detail.holders.emptyMessage)
-      .addColumn((c) => c.setId('email').setAccessorKey('email').setHeader(IDENTITY_KEYS.roles.detail.holders.columns.email).setSize(240))
-      .addColumn((c) =>
-        c
-          .setId('displayName')
-          .setAccessorKey('displayName')
-          .setHeader(IDENTITY_KEYS.roles.detail.holders.columns.displayName)
-          .setSize(220),
-      )
+      .setEmptyMessage(ROLES_KEYS.detail.holders.emptyMessage)
+      .addColumn((c) => c.setId('email').setAccessorKey('email').setHeader(ROLES_KEYS.detail.holders.columns.email).setSize(240))
+      .addColumn((c) => c.setId('displayName').setAccessorKey('displayName').setHeader(ROLES_KEYS.detail.holders.columns.displayName).setSize(220))
       .build(),
   );
 }

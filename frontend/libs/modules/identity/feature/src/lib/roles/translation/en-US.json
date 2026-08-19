@@ -1,0 +1,81 @@
+{
+  "title": "Roles",
+  "subtitle": "Role hierarchy, their permissions and members.",
+  "table": {
+    "emptyMessage": "No roles defined.",
+    "columns": {
+      "code": "Code",
+      "name": "Name",
+      "isSystem": "System",
+      "permissionCount": "Permissions",
+      "memberCount": "Members"
+    }
+  },
+  "detail": {
+    "emptySelection": "Select a role from the list to see details.",
+    "systemBadge": "System",
+    "tabs": {
+      "permissions": "Permissions",
+      "members": "Member roles",
+      "containers": "Contained in",
+      "holders": "Who has this role"
+    },
+    "permissions": {
+      "emptyMessage": "The role has no assigned permissions.",
+      "removeConfirmTitle": "Remove permission from role?",
+      "removeConfirmMessage": "Every user with this role will lose this permission (unless they have it from another source).",
+      "removeConfirmYes": "Remove",
+      "removeConfirmNo": "Cancel"
+    },
+    "members": {
+      "emptyMessage": "The role does not contain any member roles.",
+      "columns": {
+        "code": "Code",
+        "name": "Name"
+      },
+      "removeConfirmTitle": "Remove member role?",
+      "removeConfirmMessage": "Permissions inherited from this member role will stop being inherited.",
+      "removeConfirmYes": "Remove",
+      "removeConfirmNo": "Cancel"
+    },
+    "containers": {
+      "emptyMessage": "This role is not a member of any other role.",
+      "columns": {
+        "code": "Code",
+        "name": "Name"
+      }
+    },
+    "holders": {
+      "emptyMessage": "No user has this role directly.",
+      "columns": {
+        "email": "Email",
+        "displayName": "Name"
+      }
+    }
+  },
+  "commands": {
+    "create": {
+      "label": "New role",
+      "modalTitle": "New role",
+      "codeLabel": "Code",
+      "codePlaceholder": "e.g. warehouse-manager",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Warehouse manager",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Short description of the role",
+      "submitButton": "Create"
+    },
+    "addPermission": {
+      "label": "Add permission",
+      "modalTitle": "Add permission to role",
+      "permissionLabel": "Permission",
+      "submitButton": "Add"
+    },
+    "addMember": {
+      "label": "Add member role",
+      "modalTitle": "Add member role",
+      "roleLabel": "Member role",
+      "submitButton": "Add"
+    }
+  }
+}

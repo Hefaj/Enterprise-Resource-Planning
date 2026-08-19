@@ -3,7 +3,7 @@ import { ErpFilterComponent, ErpFilterBuilder, ErpFilterConfig } from '@erp/shar
 import { SearchUserAccountRequest } from '@erp/identity/data-access';
 
 import { UsersStore } from './users.store';
-import { IDENTITY_KEYS } from '../translation';
+import { USERS_KEYS } from './translation';
 
 /** Panel filtrów listy użytkowników — jedyne pole filtrowalne przez backend to `email`
  * (`SearchUserAccountRequest`), patrz `frontend/libs/modules/identity/data-access`. */
@@ -25,11 +25,7 @@ export class UsersFilterComponent {
       .setInitialValues(this._initialValues)
       .setOnSearch((val) => this.onSearch(val))
       .setLoading(this._store.loading)
-      .addFormField('email', 'text', (f) =>
-        f
-          .setLabel(IDENTITY_KEYS.users.filters.email.label)
-          .setPlaceholder(IDENTITY_KEYS.users.filters.email.placeholder),
-      ),
+      .addFormField('email', 'text', (f) => f.setLabel(USERS_KEYS.filters.email.label).setPlaceholder(USERS_KEYS.filters.email.placeholder)),
   );
 
   public onSearch(filters: Partial<SearchUserAccountRequest>): void {

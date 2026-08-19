@@ -3,7 +3,7 @@ import { Validators } from '@angular/forms';
 import { ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig, ErpModalStepBase } from '@erp/shared/ui';
 import { PermissionCatalogOrchestrator, UserGrantPermissionCommand } from '@erp/identity/data-access';
 import { GrantPermissionMetadata } from './grant-permission.definition';
-import { IDENTITY_KEYS } from '../../../translation';
+import { USERS_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-identity-grant-permission-step',
@@ -25,32 +25,18 @@ export class GrantPermissionStepComponent extends ErpModalStepBase<UserGrantPerm
         .addFormField(
           'permissionCode',
           'inputPicker',
-          (f) =>
-            f
-              .setLabel(IDENTITY_KEYS.users.commands.grantPermission.permissionLabel)
-              .setItems(this._permissions)
-              .setLabelKey('code')
-              .setValueKey('code')
-              .setStrategy('single'),
+          (f) => f.setLabel(USERS_KEYS.commands.grantPermission.permissionLabel).setItems(this._permissions).setLabelKey('code').setValueKey('code').setStrategy('single'),
           {
             validators: [Validators.required],
             value: () => this.command()().permissionCode ?? null,
             onChange: (value) => this.command().update((cmd) => ({ ...cmd, permissionCode: value ?? undefined })),
           },
         )
-        .addFormField(
-          'reason',
-          'text',
-          (f) =>
-            f
-              .setLabel(IDENTITY_KEYS.users.commands.grantPermission.reasonLabel)
-              .setPlaceholder(IDENTITY_KEYS.users.commands.grantPermission.reasonPlaceholder),
-          {
-            validators: [Validators.required],
-            value: () => this.command()().reason ?? '',
-            onChange: (value) => this.command().update((cmd) => ({ ...cmd, reason: value ?? '' })),
-          },
-        ),
+        .addFormField('reason', 'text', (f) => f.setLabel(USERS_KEYS.commands.grantPermission.reasonLabel).setPlaceholder(USERS_KEYS.commands.grantPermission.reasonPlaceholder), {
+          validators: [Validators.required],
+          value: () => this.command()().reason ?? '',
+          onChange: (value) => this.command().update((cmd) => ({ ...cmd, reason: value ?? '' })),
+        }),
     );
 
     super(config);

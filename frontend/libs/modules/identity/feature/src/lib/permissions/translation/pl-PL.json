@@ -1,0 +1,16 @@
+{
+  "title": "Uprawnienia",
+  "subtitle": "Katalog uprawnień zdefiniowany w kodzie — widok tylko do odczytu.",
+  "searchLabel": "Szukaj po kodzie lub module",
+  "emptyMessage": "Brak uprawnień spełniających kryteria.",
+  "obsoleteBadge": "Wycofane",
+  "holders": {
+    "hint": "Efektywnie — bezpośrednio lub przez dowolną rolę w łańcuchu dziedziczenia.",
+    "emptySelection": "Wybierz uprawnienie z listy, aby zobaczyć, kto je ma.",
+    "emptyMessage": "Żaden użytkownik nie ma tego uprawnienia.",
+    "columns": {
+      "email": "E-mail",
+      "displayName": "Nazwa"
+    }
+  }
+}

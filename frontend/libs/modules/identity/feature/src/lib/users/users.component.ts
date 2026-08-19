@@ -8,8 +8,8 @@ import { UsersContentComponent } from './users-content.component';
 import { UserRolesTabComponent } from './tabs/user-roles-tab.component';
 import { UserPermissionsTabComponent } from './tabs/user-permissions-tab.component';
 import { UserEffectivePermissionsTabComponent } from './tabs/user-effective-permissions-tab.component';
-import { provideIdentityTranslations } from '../translation';
-import { IDENTITY_KEYS } from '../translation';
+import { provideUsersTranslations } from './translation';
+import { USERS_KEYS } from './translation';
 
 /**
  * Strona `/identity/users` — dokładnie ten sam szkielet siatki co `ProductComponent`
@@ -23,7 +23,7 @@ import { IDENTITY_KEYS } from '../translation';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ErpGridLayoutComponent],
-  providers: [UsersStore, provideIdentityTranslations()],
+  providers: [UsersStore, provideUsersTranslations()],
   template: `<erp-grid-layout [config]="pageConfig" />`,
   styles: [
     `
@@ -43,15 +43,15 @@ export class UsersComponent {
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
       .setLayout('horizontal')
-      .addTab(IDENTITY_KEYS.users.detail.tabs.roles, 'roles', {
+      .addTab(USERS_KEYS.detail.tabs.roles, 'roles', {
         component: UserRolesTabComponent,
         icon: '@tui.shield',
       })
-      .addTab(IDENTITY_KEYS.users.detail.tabs.permissions, 'permissions', {
+      .addTab(USERS_KEYS.detail.tabs.permissions, 'permissions', {
         component: UserPermissionsTabComponent,
         icon: '@tui.key',
       })
-      .addTab(IDENTITY_KEYS.users.detail.tabs.effective, 'effective', {
+      .addTab(USERS_KEYS.detail.tabs.effective, 'effective', {
         component: UserEffectivePermissionsTabComponent,
         icon: '@tui.list-checks',
       })

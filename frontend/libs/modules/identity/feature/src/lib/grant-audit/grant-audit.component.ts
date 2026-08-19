@@ -4,7 +4,7 @@ import { ErpGridLayoutBuilder, ErpGridLayoutComponent } from '@erp/shared/ui';
 import { GrantAuditStore } from './grant-audit.store';
 import { GrantAuditFilterComponent } from './filters/grant-audit-filter.component';
 import { GrantAuditContentComponent } from './content/grant-audit-content.component';
-import { provideIdentityTranslations } from '../translation';
+import { provideGrantAuditTranslations } from './translation';
 
 /**
  * Historia nadań (`grant_audit`) — append-only dziennik audytu: kto/komu/co/kiedy nadał lub
@@ -22,7 +22,7 @@ import { provideIdentityTranslations } from '../translation';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ErpGridLayoutComponent],
-  providers: [GrantAuditStore, provideIdentityTranslations()],
+  providers: [GrantAuditStore, provideGrantAuditTranslations()],
   template: `<erp-grid-layout [config]="pageConfig" />`,
   styles: [
     `

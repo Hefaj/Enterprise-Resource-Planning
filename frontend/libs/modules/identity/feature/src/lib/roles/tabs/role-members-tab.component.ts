@@ -15,7 +15,7 @@ import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { RoleOrchestrator, RoleVM } from '@erp/identity/data-access';
 import { ADD_ROLE_MEMBER_MODAL_ID } from '@erp/identity/util';
 import { RolesStore } from '../roles.store';
-import { IDENTITY_KEYS } from '../../translation';
+import { ROLES_KEYS } from '../translation';
 
 /** Zakładka "Role składowe" — `role.members` (rozwiązane z `memberRoleUuids`), dodawanie i
  * usuwanie. Cykle DALEJ nie są wykrywane po stronie klienta — backend waliduje
@@ -25,10 +25,17 @@ import { IDENTITY_KEYS } from '../../translation';
   standalone: true,
   imports: [CommonModule, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, ErpTableComponent],
   template: `
-    <div class="flex flex-col h-full w-full gap-2 p-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+    <div
+      class="flex flex-col h-full w-full gap-2 p-2"
+      erpActionToolbarZone
+      [erpActionToolbarContext]="actionToolbar"
+    >
       <erp-action-toolbar [config]="actionToolbar" />
       <div class="flex-1 min-h-0">
-        <erp-table class="block h-full w-full" [config]="tableConfig()" />
+        <erp-table
+          class="block h-full w-full"
+          [config]="tableConfig()"
+        />
       </div>
     </div>
   `,
@@ -56,12 +63,12 @@ export class RoleMembersTabComponent {
       .addDefaultGroup((g) =>
         g
           .setId('members')
-          .setLabel(IDENTITY_KEYS.roles.detail.tabs.members)
+          .setLabel(ROLES_KEYS.detail.tabs.members)
           .setIcon('@tui.git-branch')
           .addAction((a) =>
             a
               .setId('add-member')
-              .setLabel(IDENTITY_KEYS.roles.commands.addMember.label)
+              .setLabel(ROLES_KEYS.commands.addMember.label)
               .setIcon('@tui.plus')
               .setAppearance('success')
               .setHidden(computed(() => !this.canManage() || !!this.role()?.isSystem))
@@ -85,9 +92,9 @@ export class RoleMembersTabComponent {
       .setRowIdAccessor((x) => x.uuid)
       .setItems(computed(() => this.role()?.members ?? []))
       .setSelectionMode('none')
-      .setEmptyMessage(IDENTITY_KEYS.roles.detail.members.emptyMessage)
-      .addColumn((c) => c.setId('code').setAccessorKey('code').setHeader(IDENTITY_KEYS.roles.detail.members.columns.code).setSize(200))
-      .addColumn((c) => c.setId('name').setAccessorKey('name').setHeader(IDENTITY_KEYS.roles.detail.members.columns.name).setSize(220));
+      .setEmptyMessage(ROLES_KEYS.detail.members.emptyMessage)
+      .addColumn((c) => c.setId('code').setAccessorKey('code').setHeader(ROLES_KEYS.detail.members.columns.code).setSize(200))
+      .addColumn((c) => c.setId('name').setAccessorKey('name').setHeader(ROLES_KEYS.detail.members.columns.name).setSize(220));
 
     if (canManage) {
       builder.addColumn((c) =>
@@ -109,16 +116,14 @@ export class RoleMembersTabComponent {
 
     this._confirm
       .confirm({
-        title: IDENTITY_KEYS.roles.detail.members.removeConfirmTitle,
-        message: IDENTITY_KEYS.roles.detail.members.removeConfirmMessage,
-        yes: IDENTITY_KEYS.roles.detail.members.removeConfirmYes,
-        no: IDENTITY_KEYS.roles.detail.members.removeConfirmNo,
+        title: ROLES_KEYS.detail.members.removeConfirmTitle,
+        message: ROLES_KEYS.detail.members.removeConfirmMessage,
+        yes: ROLES_KEYS.detail.members.removeConfirmYes,
+        no: ROLES_KEYS.detail.members.removeConfirmNo,
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator
-          .removeMemberAsync({ containerRoleUuid, memberRoleUuid: member.uuid })
-          .catch((err) => console.error('[RoleMembersTabComponent] Nie udało się usunąć roli składowej.', err));
+        this._orchestrator.removeMemberAsync({ containerRoleUuid, memberRoleUuid: member.uuid }).catch((err) => console.error('[RoleMembersTabComponent] Nie udało się usunąć roli składowej.', err));
       });
   }
 }

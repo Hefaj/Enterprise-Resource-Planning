@@ -4,7 +4,7 @@ import { ErpTableComponent, ErpTableBuilder, ErpTranslatePipe } from '@erp/share
 import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
 
 import { PermissionsStore } from '../permissions.store';
-import { IDENTITY_KEYS } from '../../translation';
+import { PERMISSIONS_KEYS } from '../translation';
 
 /** Prawy panel strony `/identity/permissions` — "kto ma to uprawnienie" dla wybranego kodu,
  * przez nowy filtr backendowy `SearchUserAccountRequest.PermissionCode` (patrz plan
@@ -19,28 +19,42 @@ import { IDENTITY_KEYS } from '../../translation';
     @if (store.selectedCode(); as code) {
       <div class="flex flex-col h-full w-full min-h-0 gap-2 p-3">
         <h4 class="title">{{ code }}</h4>
-        <p class="hint">{{ IDENTITY_KEYS.permissions.holders.hint | erpTranslate }}</p>
+        <p class="hint">{{ PERMISSIONS_KEYS.holders.hint | erpTranslate }}</p>
         <div class="flex-1 min-h-0">
-          <erp-table class="block h-full w-full" [config]="tableConfig()" />
+          <erp-table
+            class="block h-full w-full"
+            [config]="tableConfig()"
+          />
         </div>
       </div>
     } @else {
       <div class="flex h-full w-full items-center justify-center p-4">
-        <p class="empty">{{ IDENTITY_KEYS.permissions.holders.emptySelection | erpTranslate }}</p>
+        <p class="empty">{{ PERMISSIONS_KEYS.holders.emptySelection | erpTranslate }}</p>
       </div>
     }
   `,
   styles: [
     `
-      .title { margin: 0; font-family: monospace; font: var(--tui-typography-text-m-bold); }
-      .hint { margin: 0; color: var(--tui-text-tertiary); font-size: 0.75rem; }
-      .empty { color: var(--tui-text-tertiary); text-align: center; }
+      .title {
+        margin: 0;
+        font-family: monospace;
+        font: var(--tui-typography-text-m-bold);
+      }
+      .hint {
+        margin: 0;
+        color: var(--tui-text-tertiary);
+        font-size: 0.75rem;
+      }
+      .empty {
+        color: var(--tui-text-tertiary);
+        text-align: center;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionHoldersPanelComponent {
-  protected readonly IDENTITY_KEYS = IDENTITY_KEYS;
+  protected readonly PERMISSIONS_KEYS = PERMISSIONS_KEYS;
   protected readonly store = inject(PermissionsStore);
 
   private readonly _orchestrator = inject(UserOrchestrator);
@@ -84,15 +98,9 @@ export class PermissionHoldersPanelComponent {
       .setItems(this.items)
       .setLoading(this._loading())
       .setSelectionMode('none')
-      .setEmptyMessage(IDENTITY_KEYS.permissions.holders.emptyMessage)
-      .addColumn((c) => c.setId('email').setAccessorKey('email').setHeader(IDENTITY_KEYS.permissions.holders.columns.email).setSize(240))
-      .addColumn((c) =>
-        c
-          .setId('displayName')
-          .setAccessorKey('displayName')
-          .setHeader(IDENTITY_KEYS.permissions.holders.columns.displayName)
-          .setSize(220),
-      )
+      .setEmptyMessage(PERMISSIONS_KEYS.holders.emptyMessage)
+      .addColumn((c) => c.setId('email').setAccessorKey('email').setHeader(PERMISSIONS_KEYS.holders.columns.email).setSize(240))
+      .addColumn((c) => c.setId('displayName').setAccessorKey('displayName').setHeader(PERMISSIONS_KEYS.holders.columns.displayName).setSize(220))
       .build(),
   );
 }

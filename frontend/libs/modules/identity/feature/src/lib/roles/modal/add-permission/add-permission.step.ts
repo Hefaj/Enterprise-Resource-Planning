@@ -3,7 +3,7 @@ import { Validators } from '@angular/forms';
 import { ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig, ErpModalStepBase } from '@erp/shared/ui';
 import { PermissionCatalogOrchestrator, RoleAddPermissionCommand } from '@erp/identity/data-access';
 import { AddPermissionMetadata } from './add-permission.definition';
-import { IDENTITY_KEYS } from '../../../translation';
+import { ROLES_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-identity-add-permission-step',
@@ -29,13 +29,7 @@ export class AddPermissionStepComponent extends ErpModalStepBase<RoleAddPermissi
         .addFormField(
           'permissionCode',
           'inputPicker',
-          (f) =>
-            f
-              .setLabel(IDENTITY_KEYS.roles.commands.addPermission.permissionLabel)
-              .setItems(this._availablePermissions)
-              .setLabelKey('code')
-              .setValueKey('code')
-              .setStrategy('single'),
+          (f) => f.setLabel(ROLES_KEYS.commands.addPermission.permissionLabel).setItems(this._availablePermissions).setLabelKey('code').setValueKey('code').setStrategy('single'),
           {
             validators: [Validators.required],
             value: () => this.command()().permissionCode ?? null,

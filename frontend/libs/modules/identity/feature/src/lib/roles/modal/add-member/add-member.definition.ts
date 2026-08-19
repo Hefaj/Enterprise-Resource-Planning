@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
 import { AddMemberStepComponent } from './add-member.step';
 import { RoleAddMemberCommand, RoleOrchestrator } from '@erp/identity/data-access';
-import { IDENTITY_KEYS } from '../../../translation';
+import { ROLES_KEYS } from '../../translation';
 import { ADD_ROLE_MEMBER_MODAL_ID } from '@erp/identity/util';
 
 /** `excludeUuids` — rola-kontener sama (nie może być swoją własną składową) i role już będące
@@ -20,11 +20,11 @@ export class AddMemberModalDefinition implements ErpModalDefinition<RoleAddMembe
   public build(command: RoleAddMemberCommand, metadata?: AddMemberMetadata): ErpModalConfig<RoleAddMemberCommand, AddMemberMetadata> {
     return ErpModalBuilder.modal<RoleAddMemberCommand, AddMemberMetadata>((b) =>
       b
-        .setTitle([IDENTITY_KEYS.roles.title, IDENTITY_KEYS.roles.commands.addMember.modalTitle])
+        .setTitle([ROLES_KEYS.title, ROLES_KEYS.commands.addMember.modalTitle])
         .setCommand(command)
         .setMetadata(metadata ?? { excludeUuids: [] })
-        .addStep(IDENTITY_KEYS.roles.commands.addMember.label, AddMemberStepComponent)
-        .setSaveLabel(IDENTITY_KEYS.roles.commands.addMember.submitButton)
+        .addStep(ROLES_KEYS.commands.addMember.label, AddMemberStepComponent)
+        .setSaveLabel(ROLES_KEYS.commands.addMember.submitButton)
         .setOnSave(async (cmd) => {
           await this._roleOrchestrator.addMemberAsync(cmd);
         }),

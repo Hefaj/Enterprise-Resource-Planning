@@ -15,7 +15,7 @@ import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, UserPermissionGrantVM } from '@erp/identity/data-access';
 import { GRANT_USER_PERMISSION_MODAL_ID } from '@erp/identity/util';
 import { UsersStore } from '../users.store';
-import { IDENTITY_KEYS } from '../../translation';
+import { USERS_KEYS } from '../translation';
 
 /** Zakładka "Uprawnienia bezpośrednie" — wyjątek z powodem, nie równoprawna ścieżka obok ról
  * (patrz `docs/backend/identity-authz.md` §2). */
@@ -24,10 +24,17 @@ import { IDENTITY_KEYS } from '../../translation';
   standalone: true,
   imports: [CommonModule, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, ErpTableComponent],
   template: `
-    <div class="flex flex-col h-full w-full gap-2 p-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+    <div
+      class="flex flex-col h-full w-full gap-2 p-2"
+      erpActionToolbarZone
+      [erpActionToolbarContext]="actionToolbar"
+    >
       <erp-action-toolbar [config]="actionToolbar" />
       <div class="flex-1 min-h-0">
-        <erp-table class="block h-full w-full" [config]="tableConfig()" />
+        <erp-table
+          class="block h-full w-full"
+          [config]="tableConfig()"
+        />
       </div>
     </div>
   `,
@@ -55,12 +62,12 @@ export class UserPermissionsTabComponent {
       .addDefaultGroup((g) =>
         g
           .setId('permissions')
-          .setLabel(IDENTITY_KEYS.users.detail.tabs.permissions)
+          .setLabel(USERS_KEYS.detail.tabs.permissions)
           .setIcon('@tui.key')
           .addAction((a) =>
             a
               .setId('grant-permission')
-              .setLabel(IDENTITY_KEYS.users.commands.grantPermission.label)
+              .setLabel(USERS_KEYS.commands.grantPermission.label)
               .setIcon('@tui.plus')
               .setAppearance('success')
               .setHidden(computed(() => !this.canManage()))
@@ -77,26 +84,14 @@ export class UserPermissionsTabComponent {
       .setRowIdAccessor((x) => x.permissionCode)
       .setItems(computed(() => this.user()?.permissionGrants ?? []))
       .setSelectionMode('none')
-      .setEmptyMessage(IDENTITY_KEYS.users.detail.permissions.emptyMessage)
-      .addColumn((c) =>
-        c
-          .setId('permissionCode')
-          .setAccessorKey('permissionCode')
-          .setHeader(IDENTITY_KEYS.users.detail.permissions.columns.permissionCode)
-          .setSize(240),
-      )
-      .addColumn((c) =>
-        c
-          .setId('reason')
-          .setAccessorKey('reason')
-          .setHeader(IDENTITY_KEYS.users.detail.permissions.columns.reason)
-          .setSize(260),
-      )
+      .setEmptyMessage(USERS_KEYS.detail.permissions.emptyMessage)
+      .addColumn((c) => c.setId('permissionCode').setAccessorKey('permissionCode').setHeader(USERS_KEYS.detail.permissions.columns.permissionCode).setSize(240))
+      .addColumn((c) => c.setId('reason').setAccessorKey('reason').setHeader(USERS_KEYS.detail.permissions.columns.reason).setSize(260))
       .addColumn((c) =>
         c
           .setId('grantedAt')
           .setAccessorKey('grantedAt')
-          .setHeader(IDENTITY_KEYS.users.detail.permissions.columns.grantedAt)
+          .setHeader(USERS_KEYS.detail.permissions.columns.grantedAt)
           .setSize(160)
           .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleDateString() : '—')),
       );
@@ -127,10 +122,10 @@ export class UserPermissionsTabComponent {
 
     this._confirm
       .confirm({
-        title: IDENTITY_KEYS.users.detail.permissions.revokeConfirmTitle,
-        message: IDENTITY_KEYS.users.detail.permissions.revokeConfirmMessage,
-        yes: IDENTITY_KEYS.users.detail.permissions.revokeConfirmYes,
-        no: IDENTITY_KEYS.users.detail.permissions.revokeConfirmNo,
+        title: USERS_KEYS.detail.permissions.revokeConfirmTitle,
+        message: USERS_KEYS.detail.permissions.revokeConfirmMessage,
+        yes: USERS_KEYS.detail.permissions.revokeConfirmYes,
+        no: USERS_KEYS.detail.permissions.revokeConfirmNo,
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;

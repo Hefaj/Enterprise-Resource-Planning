@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
 import { AssignRoleStepComponent } from './assign-role.step';
 import { RoleOrchestrator, UserAssignRoleCommand, UserOrchestrator } from '@erp/identity/data-access';
-import { IDENTITY_KEYS } from '../../../translation';
+import { USERS_KEYS } from '../../translation';
 import { ASSIGN_USER_ROLE_MODAL_ID } from '@erp/identity/util';
 
 export type AssignRoleMetadata = Record<string, never>;
@@ -22,11 +22,11 @@ export class AssignRoleModalDefinition implements ErpModalDefinition<UserAssignR
 
     return ErpModalBuilder.modal<UserAssignRoleCommand, AssignRoleMetadata>((b) =>
       b
-        .setTitle([IDENTITY_KEYS.users.title, IDENTITY_KEYS.users.commands.assignRole.modalTitle])
+        .setTitle([USERS_KEYS.title, USERS_KEYS.commands.assignRole.modalTitle])
         .setCommand(command)
         .setMetadata(metadata)
-        .addStep(IDENTITY_KEYS.users.commands.assignRole.label, AssignRoleStepComponent)
-        .setSaveLabel(IDENTITY_KEYS.users.commands.assignRole.submitButton)
+        .addStep(USERS_KEYS.commands.assignRole.label, AssignRoleStepComponent)
+        .setSaveLabel(USERS_KEYS.commands.assignRole.submitButton)
         .setOnSave(async (cmd) => {
           await this._userOrchestrator.assignRoleAsync(cmd);
         }),

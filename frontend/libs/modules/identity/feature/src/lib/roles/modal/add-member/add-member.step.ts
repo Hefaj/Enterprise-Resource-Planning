@@ -3,7 +3,7 @@ import { Validators } from '@angular/forms';
 import { ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig, ErpModalStepBase } from '@erp/shared/ui';
 import { RoleAddMemberCommand, RoleOrchestrator } from '@erp/identity/data-access';
 import { AddMemberMetadata } from './add-member.definition';
-import { IDENTITY_KEYS } from '../../../translation';
+import { ROLES_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-identity-add-member-step',
@@ -29,13 +29,7 @@ export class AddMemberStepComponent extends ErpModalStepBase<RoleAddMemberComman
         .addFormField(
           'memberRoleUuid',
           'inputPicker',
-          (f) =>
-            f
-              .setLabel(IDENTITY_KEYS.roles.commands.addMember.roleLabel)
-              .setItems(this._availableRoles)
-              .setLabelKey('name')
-              .setValueKey('uuid')
-              .setStrategy('single'),
+          (f) => f.setLabel(ROLES_KEYS.commands.addMember.roleLabel).setItems(this._availableRoles).setLabelKey('name').setValueKey('uuid').setStrategy('single'),
           {
             validators: [Validators.required],
             value: () => this.command()().memberRoleUuid ?? null,

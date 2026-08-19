@@ -1,0 +1,30 @@
+{
+  "title": "Historia nadań",
+  "subtitle": "Dziennik audytu: kto, komu i co nadał lub odebrał (role, uprawnienia).",
+  "menuLabel": "Historia nadań",
+  "table": {
+    "emptyMessage": "Brak wpisów w dzienniku audytu.",
+    "columns": {
+      "occurredAt": "Kiedy",
+      "actor": "Kto",
+      "subject": "Komu",
+      "action": "Akcja",
+      "target": "Co",
+      "source": "Źródło"
+    }
+  },
+  "filters": {
+    "subjectUuid": {
+      "label": "UUID podmiotu",
+      "placeholder": "np. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    },
+    "subjectType": {
+      "label": "Typ podmiotu",
+      "placeholder": "user / role"
+    },
+    "action": {
+      "label": "Akcja",
+      "placeholder": "np. role_assigned"
+    }
+  }
+}

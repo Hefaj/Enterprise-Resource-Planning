@@ -8,8 +8,8 @@ import { RolePermissionsTabComponent } from './tabs/role-permissions-tab.compone
 import { RoleMembersTabComponent } from './tabs/role-members-tab.component';
 import { RoleContainersTabComponent } from './tabs/role-containers-tab.component';
 import { RoleHoldersTabComponent } from './tabs/role-holders-tab.component';
-import { provideIdentityTranslations } from '../translation';
-import { IDENTITY_KEYS } from '../translation';
+import { provideRolesTranslations } from './translation';
+import { ROLES_KEYS } from './translation';
 
 /**
  * Strona `/identity/roles` — ten sam szkielet siatki co `ProductComponent`: poziomy pasek
@@ -22,7 +22,7 @@ import { IDENTITY_KEYS } from '../translation';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ErpGridLayoutComponent],
-  providers: [RolesStore, provideIdentityTranslations()],
+  providers: [RolesStore, provideRolesTranslations()],
   template: `<erp-grid-layout [config]="pageConfig" />`,
   styles: [
     `
@@ -42,19 +42,19 @@ export class RolesComponent {
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
       .setLayout('horizontal')
-      .addTab(IDENTITY_KEYS.roles.detail.tabs.permissions, 'permissions', {
+      .addTab(ROLES_KEYS.detail.tabs.permissions, 'permissions', {
         component: RolePermissionsTabComponent,
         icon: '@tui.key',
       })
-      .addTab(IDENTITY_KEYS.roles.detail.tabs.members, 'members', {
+      .addTab(ROLES_KEYS.detail.tabs.members, 'members', {
         component: RoleMembersTabComponent,
         icon: '@tui.git-branch',
       })
-      .addTab(IDENTITY_KEYS.roles.detail.tabs.containers, 'containers', {
+      .addTab(ROLES_KEYS.detail.tabs.containers, 'containers', {
         component: RoleContainersTabComponent,
         icon: '@tui.arrow-up',
       })
-      .addTab(IDENTITY_KEYS.roles.detail.tabs.holders, 'holders', {
+      .addTab(ROLES_KEYS.detail.tabs.holders, 'holders', {
         component: RoleHoldersTabComponent,
         icon: '@tui.users',
       })

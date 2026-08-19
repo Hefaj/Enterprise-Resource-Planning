@@ -1,0 +1,82 @@
+{
+  "title": "Użytkownicy",
+  "subtitle": "Lista kont, przypisane role i uprawnienia bezpośrednie.",
+  "filters": {
+    "email": {
+      "label": "E-mail",
+      "placeholder": "np. jan.kowalski@erp.local"
+    }
+  },
+  "table": {
+    "emptyMessage": "Brak użytkowników spełniających kryteria.",
+    "columns": {
+      "email": "E-mail",
+      "displayName": "Nazwa",
+      "isActive": "Aktywny",
+      "roleCount": "Liczba ról"
+    }
+  },
+  "detail": {
+    "emptySelection": "Wybierz użytkownika z listy, aby zobaczyć szczegóły.",
+    "statusActive": "Aktywny",
+    "statusInactive": "Nieaktywny",
+    "tabs": {
+      "roles": "Role",
+      "permissions": "Uprawnienia bezpośrednie",
+      "effective": "Efektywne uprawnienia"
+    },
+    "forceLogout": {
+      "label": "Wymuś wylogowanie",
+      "confirmTitle": "Wymusić wylogowanie?",
+      "confirmMessage": "Sesja użytkownika w Keycloak zostanie natychmiast odwołana.",
+      "confirmYes": "Wyloguj",
+      "confirmNo": "Anuluj"
+    },
+    "roles": {
+      "emptyMessage": "Użytkownik nie ma przypisanych ról.",
+      "columns": {
+        "role": "Rola",
+        "grantedAt": "Nadano",
+        "expiresAt": "Wygasa"
+      },
+      "revokeConfirmTitle": "Odebrać rolę?",
+      "revokeConfirmMessage": "Użytkownik straci wszystkie uprawnienia płynące z tej roli.",
+      "revokeConfirmYes": "Odbierz",
+      "revokeConfirmNo": "Anuluj"
+    },
+    "permissions": {
+      "emptyMessage": "Użytkownik nie ma bezpośrednio nadanych uprawnień.",
+      "columns": {
+        "permissionCode": "Kod uprawnienia",
+        "reason": "Powód",
+        "grantedAt": "Nadano"
+      },
+      "revokeConfirmTitle": "Odebrać uprawnienie?",
+      "revokeConfirmMessage": "Uprawnienie nadane bezpośrednio zostanie odebrane.",
+      "revokeConfirmYes": "Odbierz",
+      "revokeConfirmNo": "Anuluj"
+    },
+    "effective": {
+      "hint": "Bezpośrednie i przez wszystkie role w łańcuchu dziedziczenia. Bez rozwinięcia „skąd” — dostępne tylko dla własnego konta.",
+      "emptyMessage": "Brak efektywnych uprawnień."
+    }
+  },
+  "commands": {
+    "assignRole": {
+      "label": "Nadaj rolę",
+      "modalTitle": "Nadanie roli",
+      "roleLabel": "Rola",
+      "expiresAtLabel": "Data wygaśnięcia (RRRR-MM-DD, opcjonalnie)",
+      "expiresAtPlaceholder": "RRRR-MM-DD",
+      "submitButton": "Nadaj"
+    },
+    "grantPermission": {
+      "label": "Nadaj uprawnienie",
+      "modalTitle": "Nadanie uprawnienia bezpośrednio",
+      "permissionLabel": "Uprawnienie",
+      "reasonLabel": "Powód",
+      "reasonPlaceholder": "np. tymczasowy dostęp na czas nieobecności kierownika",
+      "submitButton": "Nadaj"
+    }
+  }
+}

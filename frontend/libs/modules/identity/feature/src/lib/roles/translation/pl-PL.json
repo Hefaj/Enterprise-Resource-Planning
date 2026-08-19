@@ -1,0 +1,81 @@
+{
+  "title": "Role",
+  "subtitle": "Hierarchia ról, ich uprawnienia i składowe.",
+  "table": {
+    "emptyMessage": "Brak zdefiniowanych ról.",
+    "columns": {
+      "code": "Kod",
+      "name": "Nazwa",
+      "isSystem": "Systemowa",
+      "permissionCount": "Uprawnienia",
+      "memberCount": "Składowe"
+    }
+  },
+  "detail": {
+    "emptySelection": "Wybierz rolę z listy, aby zobaczyć szczegóły.",
+    "systemBadge": "Systemowa",
+    "tabs": {
+      "permissions": "Uprawnienia",
+      "members": "Role składowe",
+      "containers": "Zawarta w",
+      "holders": "Kto ma tę rolę"
+    },
+    "permissions": {
+      "emptyMessage": "Rola nie ma przypisanych uprawnień.",
+      "removeConfirmTitle": "Usunąć uprawnienie z roli?",
+      "removeConfirmMessage": "Wszyscy użytkownicy mający tę rolę stracą to uprawnienie (chyba że mają je z innego źródła).",
+      "removeConfirmYes": "Usuń",
+      "removeConfirmNo": "Anuluj"
+    },
+    "members": {
+      "emptyMessage": "Rola nie zawiera żadnych ról składowych.",
+      "columns": {
+        "code": "Kod",
+        "name": "Nazwa"
+      },
+      "removeConfirmTitle": "Usunąć rolę składową?",
+      "removeConfirmMessage": "Uprawnienia płynące z tej roli składowej przestaną się dziedziczyć.",
+      "removeConfirmYes": "Usuń",
+      "removeConfirmNo": "Anuluj"
+    },
+    "containers": {
+      "emptyMessage": "Ta rola nie jest składową żadnej innej roli.",
+      "columns": {
+        "code": "Kod",
+        "name": "Nazwa"
+      }
+    },
+    "holders": {
+      "emptyMessage": "Żaden użytkownik nie ma bezpośrednio tej roli.",
+      "columns": {
+        "email": "E-mail",
+        "displayName": "Nazwa"
+      }
+    }
+  },
+  "commands": {
+    "create": {
+      "label": "Nowa rola",
+      "modalTitle": "Nowa rola",
+      "codeLabel": "Kod",
+      "codePlaceholder": "np. warehouse-manager",
+      "nameLabel": "Nazwa",
+      "namePlaceholder": "np. Kierownik magazynu",
+      "descriptionLabel": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Krótki opis roli",
+      "submitButton": "Utwórz"
+    },
+    "addPermission": {
+      "label": "Dodaj uprawnienie",
+      "modalTitle": "Dodanie uprawnienia do roli",
+      "permissionLabel": "Uprawnienie",
+      "submitButton": "Dodaj"
+    },
+    "addMember": {
+      "label": "Dodaj rolę składową",
+      "modalTitle": "Dodanie roli składowej",
+      "roleLabel": "Rola składowa",
+      "submitButton": "Dodaj"
+    }
+  }
+}

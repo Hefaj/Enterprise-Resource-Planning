@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
 import { CreateRoleStepComponent } from './create-role.step';
 import { RoleCreateCommand, RoleOrchestrator } from '@erp/identity/data-access';
-import { IDENTITY_KEYS } from '../../../translation';
+import { ROLES_KEYS } from '../../translation';
 import { CREATE_ROLE_MODAL_ID } from '@erp/identity/util';
 
 export type CreateRoleMetadata = Record<string, never>;
@@ -20,11 +20,11 @@ export class CreateRoleModalDefinition implements ErpModalDefinition<RoleCreateC
   public build(command: RoleCreateCommand, metadata?: CreateRoleMetadata): ErpModalConfig<RoleCreateCommand, CreateRoleMetadata> {
     return ErpModalBuilder.modal<RoleCreateCommand, CreateRoleMetadata>((b) =>
       b
-        .setTitle([IDENTITY_KEYS.roles.title, IDENTITY_KEYS.roles.commands.create.modalTitle])
+        .setTitle([ROLES_KEYS.title, ROLES_KEYS.commands.create.modalTitle])
         .setCommand(command)
         .setMetadata(metadata)
-        .addStep(IDENTITY_KEYS.roles.commands.create.label, CreateRoleStepComponent)
-        .setSaveLabel(IDENTITY_KEYS.roles.commands.create.submitButton)
+        .addStep(ROLES_KEYS.commands.create.label, CreateRoleStepComponent)
+        .setSaveLabel(ROLES_KEYS.commands.create.submitButton)
         .setOnSave(async (cmd) => {
           await this._orchestrator.createRoleAsync(cmd);
         }),

@@ -1,21 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-  effect,
-  untracked,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ErpTableComponent, ErpTableBuilder, ErpTableState, ErpTableConfig } from '@erp/shared/ui';
 
 import { GrantAuditOrchestrator, GrantAuditVM, SearchGrantAuditRequest, SortOption } from '@erp/identity/data-access';
 
-import { IDENTITY_KEYS } from '../../../translation';
+import { GRANTAUDIT_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-identity-grant-audit-table',
@@ -81,55 +71,31 @@ export class IdentityGrantAuditTableComponent {
       .setItems(this.items)
       .setItemCount(this._totalCount)
       .setLoading(this._loading)
-      .setEmptyMessage(IDENTITY_KEYS.grantAudit.table.emptyMessage)
+      .setEmptyMessage(GRANTAUDIT_KEYS.table.emptyMessage)
 
       .addColumn((c) =>
         c
           .setId('occurredAt')
           .setAccessorKey('occurredAt')
-          .setHeader(IDENTITY_KEYS.grantAudit.table.columns.occurredAt)
+          .setHeader(GRANTAUDIT_KEYS.table.columns.occurredAt)
           .setSize(180)
           .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleString() : '—')),
       )
-      .addColumn((c) =>
-        c
-          .setId('actorUserUuid')
-          .setAccessorKey('actorUserUuid')
-          .setHeader(IDENTITY_KEYS.grantAudit.table.columns.actor)
-          .setSize(260),
-      )
+      .addColumn((c) => c.setId('actorUserUuid').setAccessorKey('actorUserUuid').setHeader(GRANTAUDIT_KEYS.table.columns.actor).setSize(260))
       .addColumn((c) =>
         c
           .setId('subject')
           .setAccessorKey('subjectUuid')
-          .setHeader(IDENTITY_KEYS.grantAudit.table.columns.subject)
+          .setHeader(GRANTAUDIT_KEYS.table.columns.subject)
           .setEnableSorting(false)
           .setSize(280)
           .setCellRichContent((value: string, row: GrantAuditVM) => ({
             lines: [{ text: `${row.subjectType}: ${value}` }],
           })),
       )
-      .addColumn((c) =>
-        c
-          .setId('action')
-          .setAccessorKey('action')
-          .setHeader(IDENTITY_KEYS.grantAudit.table.columns.action)
-          .setSize(160),
-      )
-      .addColumn((c) =>
-        c
-          .setId('targetCode')
-          .setAccessorKey('targetCode')
-          .setHeader(IDENTITY_KEYS.grantAudit.table.columns.target)
-          .setSize(220),
-      )
-      .addColumn((c) =>
-        c
-          .setId('source')
-          .setAccessorKey('source')
-          .setHeader(IDENTITY_KEYS.grantAudit.table.columns.source)
-          .setSize(140),
-      )
+      .addColumn((c) => c.setId('action').setAccessorKey('action').setHeader(GRANTAUDIT_KEYS.table.columns.action).setSize(160))
+      .addColumn((c) => c.setId('targetCode').setAccessorKey('targetCode').setHeader(GRANTAUDIT_KEYS.table.columns.target).setSize(220))
+      .addColumn((c) => c.setId('source').setAccessorKey('source').setHeader(GRANTAUDIT_KEYS.table.columns.source).setSize(140))
 
       .setOnStateChange((state) => {
         this._lastTableState = state;

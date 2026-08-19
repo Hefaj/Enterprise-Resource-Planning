@@ -1,18 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import {
-  ErpActionToolbarBuilder,
-  ErpActionToolbarComponent,
-  ErpActionToolbarContextDirective,
-  ErpActionToolbarZoneDirective,
-  ErpTranslatePipe,
-} from '@erp/shared/ui';
+import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpTranslatePipe } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator } from '@erp/identity/data-access';
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 
 import { UsersStore } from './users.store';
 import { IdentityUsersTableComponent } from './components/identity-users-table.component';
-import { IDENTITY_KEYS } from '../translation';
+import { USERS_KEYS } from './translation';
 
 /** Nagłówek + pasek akcji + tabela listy użytkowników (wybór pojedynczy, radio). Zaznaczenie
  * wiersza ustawia wybranego użytkownika w `UsersStore`, co pokazuje panel zakładek w sąsiednim
@@ -24,11 +18,15 @@ import { IDENTITY_KEYS } from '../translation';
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
       <div class="flex flex-col gap-1">
-        <h1 class="page-title">{{ IDENTITY_KEYS.users.title | erpTranslate }}</h1>
-        <p class="page-subtitle">{{ IDENTITY_KEYS.users.subtitle | erpTranslate }}</p>
+        <h1 class="page-title">{{ USERS_KEYS.title | erpTranslate }}</h1>
+        <p class="page-subtitle">{{ USERS_KEYS.subtitle | erpTranslate }}</p>
       </div>
 
-      <div class="flex-1 min-h-0 flex flex-col gap-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+      <div
+        class="flex-1 min-h-0 flex flex-col gap-2"
+        erpActionToolbarZone
+        [erpActionToolbarContext]="actionToolbar"
+      >
         <erp-action-toolbar [config]="actionToolbar" />
 
         <div class="flex-1 min-h-0">
@@ -44,14 +42,20 @@ import { IDENTITY_KEYS } from '../translation';
   `,
   styles: [
     `
-      .page-title { font: var(--tui-typography-heading-h3); margin: 0; }
-      .page-subtitle { color: var(--tui-text-secondary); margin: 0; }
+      .page-title {
+        font: var(--tui-typography-heading-h3);
+        margin: 0;
+      }
+      .page-subtitle {
+        color: var(--tui-text-secondary);
+        margin: 0;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsersContentComponent {
-  protected readonly IDENTITY_KEYS = IDENTITY_KEYS;
+  protected readonly USERS_KEYS = USERS_KEYS;
   protected readonly store = inject(UsersStore);
 
   private readonly _orchestrator = inject(UserOrchestrator);
@@ -66,12 +70,12 @@ export class UsersContentComponent {
       .addSelectionGroup((g) =>
         g
           .setId('user-actions')
-          .setLabel(IDENTITY_KEYS.users.detail.forceLogout.label)
+          .setLabel(USERS_KEYS.detail.forceLogout.label)
           .setIcon('@tui.log-out')
           .addAction((a) =>
             a
               .setId('force-logout')
-              .setLabel(IDENTITY_KEYS.users.detail.forceLogout.label)
+              .setLabel(USERS_KEYS.detail.forceLogout.label)
               .setIcon('@tui.log-out')
               .setAppearance('warning')
               .setHidden(computed(() => !this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage)))
@@ -80,7 +84,7 @@ export class UsersContentComponent {
       )
       .setSelectionCount(this._selectionCount)
       .setSelectionScope(computed(() => (this.store.selectedUuid() ? 'explicit' : 'none')))
-      .setSelectionLabel(IDENTITY_KEYS.users.title)
+      .setSelectionLabel(USERS_KEYS.title)
       .setOnClearSelection(() => this.store.selectUser(null))
       .setPinnedActionIds(['force-logout']),
   );
@@ -91,10 +95,10 @@ export class UsersContentComponent {
 
     this._confirm
       .confirm({
-        title: IDENTITY_KEYS.users.detail.forceLogout.confirmTitle,
-        message: IDENTITY_KEYS.users.detail.forceLogout.confirmMessage,
-        yes: IDENTITY_KEYS.users.detail.forceLogout.confirmYes,
-        no: IDENTITY_KEYS.users.detail.forceLogout.confirmNo,
+        title: USERS_KEYS.detail.forceLogout.confirmTitle,
+        message: USERS_KEYS.detail.forceLogout.confirmMessage,
+        yes: USERS_KEYS.detail.forceLogout.confirmYes,
+        no: USERS_KEYS.detail.forceLogout.confirmNo,
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;

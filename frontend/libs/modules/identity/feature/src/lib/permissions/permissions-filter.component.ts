@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { ErpFilterComponent, ErpFilterBuilder, ErpFilterConfig } from '@erp/shared/ui';
 
 import { PermissionsStore } from './permissions.store';
-import { IDENTITY_KEYS } from '../translation';
+import { PERMISSIONS_KEYS } from './translation';
 
 /** Panel filtrów katalogu uprawnień — jedno pole tekstowe (kod/moduł), filtrowanie klient-side
  * (cały katalog jest już załadowany, patrz `PermissionCatalogOrchestrator`). Po lewej, jak na
@@ -24,10 +24,6 @@ export class PermissionsFilterComponent {
       .setFilterKey('identity-permissions')
       .setInitialValues(this._initialValues)
       .setOnSearch((val) => this._store.setSearch(val['search'] ?? ''))
-      .addFormField('search', 'text', (f) =>
-        f
-          .setLabel(IDENTITY_KEYS.permissions.searchLabel)
-          .setIconStart('@tui.search'),
-      ),
+      .addFormField('search', 'text', (f) => f.setLabel(PERMISSIONS_KEYS.searchLabel).setIconStart('@tui.search')),
   );
 }

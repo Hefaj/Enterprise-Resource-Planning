@@ -15,7 +15,7 @@ import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, UserRoleGrantVM } from '@erp/identity/data-access';
 import { ASSIGN_USER_ROLE_MODAL_ID } from '@erp/identity/util';
 import { UsersStore } from '../users.store';
-import { IDENTITY_KEYS } from '../../translation';
+import { USERS_KEYS } from '../translation';
 
 /** Zakładka "Role" panelu szczegółów użytkownika — tabela `roleGrants` + nadawanie/odbieranie. */
 @Component({
@@ -23,10 +23,17 @@ import { IDENTITY_KEYS } from '../../translation';
   standalone: true,
   imports: [CommonModule, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, ErpTableComponent],
   template: `
-    <div class="flex flex-col h-full w-full gap-2 p-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+    <div
+      class="flex flex-col h-full w-full gap-2 p-2"
+      erpActionToolbarZone
+      [erpActionToolbarContext]="actionToolbar"
+    >
       <erp-action-toolbar [config]="actionToolbar" />
       <div class="flex-1 min-h-0">
-        <erp-table class="block h-full w-full" [config]="tableConfig()" />
+        <erp-table
+          class="block h-full w-full"
+          [config]="tableConfig()"
+        />
       </div>
     </div>
   `,
@@ -58,12 +65,12 @@ export class UserRolesTabComponent {
       .addDefaultGroup((g) =>
         g
           .setId('roles')
-          .setLabel(IDENTITY_KEYS.users.detail.tabs.roles)
+          .setLabel(USERS_KEYS.detail.tabs.roles)
           .setIcon('@tui.shield')
           .addAction((a) =>
             a
               .setId('assign-role')
-              .setLabel(IDENTITY_KEYS.users.commands.assignRole.label)
+              .setLabel(USERS_KEYS.commands.assignRole.label)
               .setIcon('@tui.plus')
               .setAppearance('success')
               .setHidden(computed(() => !this.canManage()))
@@ -80,19 +87,19 @@ export class UserRolesTabComponent {
       .setRowIdAccessor((x) => x.roleUuid)
       .setItems(computed(() => this.user()?.roleGrants ?? []))
       .setSelectionMode('none')
-      .setEmptyMessage(IDENTITY_KEYS.users.detail.roles.emptyMessage)
+      .setEmptyMessage(USERS_KEYS.detail.roles.emptyMessage)
       .addColumn((c) =>
         c
           .setId('code')
           .setAccessorFn((row) => row.role?.code ?? row.roleUuid)
-          .setHeader(IDENTITY_KEYS.users.detail.roles.columns.role)
+          .setHeader(USERS_KEYS.detail.roles.columns.role)
           .setSize(200),
       )
       .addColumn((c) =>
         c
           .setId('grantedAt')
           .setAccessorKey('grantedAt')
-          .setHeader(IDENTITY_KEYS.users.detail.roles.columns.grantedAt)
+          .setHeader(USERS_KEYS.detail.roles.columns.grantedAt)
           .setSize(160)
           .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleDateString() : '—')),
       )
@@ -100,7 +107,7 @@ export class UserRolesTabComponent {
         c
           .setId('expiresAt')
           .setAccessorKey('expiresAt')
-          .setHeader(IDENTITY_KEYS.users.detail.roles.columns.expiresAt)
+          .setHeader(USERS_KEYS.detail.roles.columns.expiresAt)
           .setSize(160)
           .setCellFormatter((value: Date | undefined) => (value ? new Date(value).toLocaleDateString() : '—')),
       );
@@ -131,16 +138,14 @@ export class UserRolesTabComponent {
 
     this._confirm
       .confirm({
-        title: IDENTITY_KEYS.users.detail.roles.revokeConfirmTitle,
-        message: IDENTITY_KEYS.users.detail.roles.revokeConfirmMessage,
-        yes: IDENTITY_KEYS.users.detail.roles.revokeConfirmYes,
-        no: IDENTITY_KEYS.users.detail.roles.revokeConfirmNo,
+        title: USERS_KEYS.detail.roles.revokeConfirmTitle,
+        message: USERS_KEYS.detail.roles.revokeConfirmMessage,
+        yes: USERS_KEYS.detail.roles.revokeConfirmYes,
+        no: USERS_KEYS.detail.roles.revokeConfirmNo,
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator
-          .revokeRoleAsync({ userUuid, roleUuid: row.roleUuid })
-          .catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
+        this._orchestrator.revokeRoleAsync({ userUuid, roleUuid: row.roleUuid }).catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
       });
   }
 }

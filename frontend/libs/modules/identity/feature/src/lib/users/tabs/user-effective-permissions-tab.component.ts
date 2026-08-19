@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ErpTranslatePipe } from '@erp/shared/ui';
 import { UserOrchestrator } from '@erp/identity/data-access';
 import { UsersStore } from '../users.store';
-import { IDENTITY_KEYS } from '../../translation';
+import { USERS_KEYS } from '../translation';
 
 interface ModuleGroup {
   readonly module: string;
@@ -23,10 +23,10 @@ interface ModuleGroup {
   imports: [CommonModule, ErpTranslatePipe],
   template: `
     <div class="flex flex-col h-full w-full gap-3 p-3 overflow-y-auto">
-      <p class="hint">{{ IDENTITY_KEYS.users.detail.effective.hint | erpTranslate }}</p>
+      <p class="hint">{{ USERS_KEYS.detail.effective.hint | erpTranslate }}</p>
 
       @if (groups().length === 0) {
-        <p class="empty">{{ IDENTITY_KEYS.users.detail.effective.emptyMessage | erpTranslate }}</p>
+        <p class="empty">{{ USERS_KEYS.detail.effective.emptyMessage | erpTranslate }}</p>
       }
 
       @for (group of groups(); track group.module) {
@@ -43,21 +43,37 @@ interface ModuleGroup {
   `,
   styles: [
     `
-      .hint { margin: 0; color: var(--tui-text-tertiary); font-size: 0.8rem; }
-      .empty { margin: 0; color: var(--tui-text-secondary); }
-      .module-title { margin: 0; font: var(--tui-typography-text-s-bold); text-transform: uppercase; color: var(--tui-text-secondary); }
+      .hint {
+        margin: 0;
+        color: var(--tui-text-tertiary);
+        font-size: 0.8rem;
+      }
+      .empty {
+        margin: 0;
+        color: var(--tui-text-secondary);
+      }
+      .module-title {
+        margin: 0;
+        font: var(--tui-typography-text-s-bold);
+        text-transform: uppercase;
+        color: var(--tui-text-secondary);
+      }
       .chip {
-        display: inline-flex; align-items: center;
-        padding: 0.15rem 0.5rem; border-radius: 1rem;
-        background: var(--tui-background-neutral-1); color: var(--tui-text-primary);
-        font-size: 0.75rem; border: 1px solid var(--tui-border-normal);
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.5rem;
+        border-radius: 1rem;
+        background: var(--tui-background-neutral-1);
+        color: var(--tui-text-primary);
+        font-size: 0.75rem;
+        border: 1px solid var(--tui-border-normal);
       }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserEffectivePermissionsTabComponent {
-  protected readonly IDENTITY_KEYS = IDENTITY_KEYS;
+  protected readonly USERS_KEYS = USERS_KEYS;
 
   private readonly _store = inject(UsersStore);
   private readonly _orchestrator = inject(UserOrchestrator);
@@ -74,9 +90,7 @@ export class UserEffectivePermissionsTabComponent {
       byModule.set(module, list);
     }
 
-    return [...byModule.entries()]
-      .map(([module, moduleCodes]) => ({ module, codes: moduleCodes.sort() }))
-      .sort((a, b) => a.module.localeCompare(b.module));
+    return [...byModule.entries()].map(([module, moduleCodes]) => ({ module, codes: moduleCodes.sort() })).sort((a, b) => a.module.localeCompare(b.module));
   });
 
   public constructor() {
@@ -84,9 +98,7 @@ export class UserEffectivePermissionsTabComponent {
       const uuid = this._store.selectedUuid();
       if (!uuid) return;
       untracked(() => {
-        this._orchestrator
-          .loadEffectivePermissionsAsync(uuid)
-          .catch((err) => console.error('[UserEffectivePermissionsTabComponent] Nie udało się pobrać efektywnych uprawnień.', err));
+        this._orchestrator.loadEffectivePermissionsAsync(uuid).catch((err) => console.error('[UserEffectivePermissionsTabComponent] Nie udało się pobrać efektywnych uprawnień.', err));
       });
     });
   }

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig } from '@erp/shared/ui';
 import { AddPermissionStepComponent } from './add-permission.step';
 import { PermissionCatalogOrchestrator, RoleAddPermissionCommand, RoleOrchestrator } from '@erp/identity/data-access';
-import { IDENTITY_KEYS } from '../../../translation';
+import { ROLES_KEYS } from '../../translation';
 import { ADD_ROLE_PERMISSION_MODAL_ID } from '@erp/identity/util';
 
 /** `excludeCodes` — uprawnienia, które rola ma już przypisane wprost; wywołujący
@@ -17,19 +17,16 @@ export class AddPermissionModalDefinition implements ErpModalDefinition<RoleAddP
   private readonly _roleOrchestrator = inject(RoleOrchestrator);
   private readonly _permissionCatalog = inject(PermissionCatalogOrchestrator);
 
-  public build(
-    command: RoleAddPermissionCommand,
-    metadata?: AddPermissionMetadata,
-  ): ErpModalConfig<RoleAddPermissionCommand, AddPermissionMetadata> {
+  public build(command: RoleAddPermissionCommand, metadata?: AddPermissionMetadata): ErpModalConfig<RoleAddPermissionCommand, AddPermissionMetadata> {
     this._permissionCatalog.loadAllAsync().catch((err) => console.error(err));
 
     return ErpModalBuilder.modal<RoleAddPermissionCommand, AddPermissionMetadata>((b) =>
       b
-        .setTitle([IDENTITY_KEYS.roles.title, IDENTITY_KEYS.roles.commands.addPermission.modalTitle])
+        .setTitle([ROLES_KEYS.title, ROLES_KEYS.commands.addPermission.modalTitle])
         .setCommand(command)
         .setMetadata(metadata ?? { excludeCodes: [] })
-        .addStep(IDENTITY_KEYS.roles.commands.addPermission.label, AddPermissionStepComponent)
-        .setSaveLabel(IDENTITY_KEYS.roles.commands.addPermission.submitButton)
+        .addStep(ROLES_KEYS.commands.addPermission.label, AddPermissionStepComponent)
+        .setSaveLabel(ROLES_KEYS.commands.addPermission.submitButton)
         .setOnSave(async (cmd) => {
           await this._roleOrchestrator.addPermissionAsync(cmd);
         }),

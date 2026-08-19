@@ -3,7 +3,7 @@ import { ErpTranslatePipe } from '@erp/shared/ui';
 
 import { GrantAuditStore } from '../grant-audit.store';
 import { IdentityGrantAuditTableComponent } from '../components/identity-grant-audit-table/identity-grant-audit-table.component';
-import { IDENTITY_KEYS } from '../../translation';
+import { GRANTAUDIT_KEYS } from '../translation';
 
 /**
  * Treść obszaru "content" siatki strony: nagłówek (tytuł/podtytuł) + tabela dziennika audytu.
@@ -17,8 +17,8 @@ import { IDENTITY_KEYS } from '../../translation';
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
       <div class="flex flex-col gap-1">
-        <h1 class="page-title">{{ IDENTITY_KEYS.grantAudit.title | erpTranslate }}</h1>
-        <p class="page-subtitle">{{ IDENTITY_KEYS.grantAudit.subtitle | erpTranslate }}</p>
+        <h1 class="page-title">{{ GRANTAUDIT_KEYS.title | erpTranslate }}</h1>
+        <p class="page-subtitle">{{ GRANTAUDIT_KEYS.subtitle | erpTranslate }}</p>
       </div>
 
       <div class="flex-1 min-h-0">
@@ -46,6 +46,6 @@ import { IDENTITY_KEYS } from '../../translation';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GrantAuditContentComponent {
-  protected readonly IDENTITY_KEYS = IDENTITY_KEYS;
+  protected readonly GRANTAUDIT_KEYS = GRANTAUDIT_KEYS;
   protected readonly store = inject(GrantAuditStore);
 }

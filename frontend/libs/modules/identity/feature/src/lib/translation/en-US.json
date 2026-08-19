@@ -36,5 +36,184 @@
         "placeholder": "e.g. role_assigned"
       }
     }
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Account list, assigned roles and direct permissions.",
+    "filters": {
+      "email": {
+        "label": "Email",
+        "placeholder": "e.g. jan.kowalski@erp.local"
+      }
+    },
+    "table": {
+      "emptyMessage": "No users match the criteria.",
+      "columns": {
+        "email": "Email",
+        "displayName": "Name",
+        "isActive": "Active",
+        "roleCount": "Roles"
+      }
+    },
+    "detail": {
+      "emptySelection": "Select a user from the list to see details.",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "tabs": {
+        "roles": "Roles",
+        "permissions": "Direct permissions",
+        "effective": "Effective permissions"
+      },
+      "forceLogout": {
+        "label": "Force logout",
+        "confirmTitle": "Force logout?",
+        "confirmMessage": "The user's Keycloak session will be revoked immediately.",
+        "confirmYes": "Log out",
+        "confirmNo": "Cancel"
+      },
+      "roles": {
+        "emptyMessage": "The user has no assigned roles.",
+        "columns": {
+          "role": "Role",
+          "grantedAt": "Granted",
+          "expiresAt": "Expires"
+        },
+        "revokeConfirmTitle": "Revoke this role?",
+        "revokeConfirmMessage": "The user will lose all permissions coming from this role.",
+        "revokeConfirmYes": "Revoke",
+        "revokeConfirmNo": "Cancel"
+      },
+      "permissions": {
+        "emptyMessage": "The user has no directly granted permissions.",
+        "columns": {
+          "permissionCode": "Permission code",
+          "reason": "Reason",
+          "grantedAt": "Granted"
+        },
+        "revokeConfirmTitle": "Revoke this permission?",
+        "revokeConfirmMessage": "The directly granted permission will be revoked.",
+        "revokeConfirmYes": "Revoke",
+        "revokeConfirmNo": "Cancel"
+      },
+      "effective": {
+        "hint": "Direct and through every role in the inheritance chain. No \"source\" breakdown — only available for your own account.",
+        "emptyMessage": "No effective permissions."
+      }
+    },
+    "commands": {
+      "assignRole": {
+        "label": "Assign role",
+        "modalTitle": "Assign role",
+        "roleLabel": "Role",
+        "expiresAtLabel": "Expiration date (YYYY-MM-DD, optional)",
+        "expiresAtPlaceholder": "YYYY-MM-DD",
+        "submitButton": "Assign"
+      },
+      "grantPermission": {
+        "label": "Grant permission",
+        "modalTitle": "Grant permission directly",
+        "permissionLabel": "Permission",
+        "reasonLabel": "Reason",
+        "reasonPlaceholder": "e.g. temporary access while the manager is away",
+        "submitButton": "Grant"
+      }
+    }
+  },
+  "roles": {
+    "title": "Roles",
+    "subtitle": "Role hierarchy, their permissions and members.",
+    "table": {
+      "emptyMessage": "No roles defined.",
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "isSystem": "System",
+        "permissionCount": "Permissions",
+        "memberCount": "Members"
+      }
+    },
+    "detail": {
+      "emptySelection": "Select a role from the list to see details.",
+      "systemBadge": "System",
+      "tabs": {
+        "permissions": "Permissions",
+        "members": "Member roles",
+        "containers": "Contained in",
+        "holders": "Who has this role"
+      },
+      "permissions": {
+        "emptyMessage": "The role has no assigned permissions.",
+        "removeConfirmTitle": "Remove permission from role?",
+        "removeConfirmMessage": "Every user with this role will lose this permission (unless they have it from another source).",
+        "removeConfirmYes": "Remove",
+        "removeConfirmNo": "Cancel"
+      },
+      "members": {
+        "emptyMessage": "The role does not contain any member roles.",
+        "columns": {
+          "code": "Code",
+          "name": "Name"
+        },
+        "removeConfirmTitle": "Remove member role?",
+        "removeConfirmMessage": "Permissions inherited from this member role will stop being inherited.",
+        "removeConfirmYes": "Remove",
+        "removeConfirmNo": "Cancel"
+      },
+      "containers": {
+        "emptyMessage": "This role is not a member of any other role.",
+        "columns": {
+          "code": "Code",
+          "name": "Name"
+        }
+      },
+      "holders": {
+        "emptyMessage": "No user has this role directly.",
+        "columns": {
+          "email": "Email",
+          "displayName": "Name"
+        }
+      }
+    },
+    "commands": {
+      "create": {
+        "label": "New role",
+        "modalTitle": "New role",
+        "codeLabel": "Code",
+        "codePlaceholder": "e.g. warehouse-manager",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. Warehouse manager",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "Short description of the role",
+        "submitButton": "Create"
+      },
+      "addPermission": {
+        "label": "Add permission",
+        "modalTitle": "Add permission to role",
+        "permissionLabel": "Permission",
+        "submitButton": "Add"
+      },
+      "addMember": {
+        "label": "Add member role",
+        "modalTitle": "Add member role",
+        "roleLabel": "Member role",
+        "submitButton": "Add"
+      }
+    }
+  },
+  "permissions": {
+    "title": "Permissions",
+    "subtitle": "Permission catalog defined in code — read-only view.",
+    "searchLabel": "Search by code or module",
+    "emptyMessage": "No permissions match the criteria.",
+    "obsoleteBadge": "Obsolete",
+    "holders": {
+      "hint": "Effectively — directly or through any role in the inheritance chain.",
+      "emptySelection": "Select a permission from the list to see who has it.",
+      "emptyMessage": "No user has this permission.",
+      "columns": {
+        "email": "Email",
+        "displayName": "Name"
+      }
+    }
   }
 }

@@ -86,7 +86,7 @@ export interface IIdentityClient {
     /**
      * @return OK
      */
-    getUserPermissions(body: GetUserPermissionsRequest): Observable<string[]>;
+    getUserPermissions(id: string): Observable<string[]>;
     /**
      * @return OK
      */
@@ -1127,18 +1127,17 @@ export class IdentityClient implements IIdentityClient {
     /**
      * @return OK
      */
-    getUserPermissions(body: GetUserPermissionsRequest): Observable<string[]> {
+    getUserPermissions(id: string): Observable<string[]> {
         let url_ = this.baseUrl + "/internal/users/{Id}/permissions";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{Id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(body);
-
         let options_ : any = {
-            body: content_,
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
-                "Content-Type": "*/*",
                 "Accept": "application/json"
             })
         };
@@ -1332,12 +1331,6 @@ export interface GetUserAccountRequest {
     [key: string]: any;
 }
 
-export interface GetUserPermissionsRequest {
-    id?: string;
-
-    [key: string]: any;
-}
-
 export interface GrantAuditDto {
     uuid: string;
     occurredAt: Date;
@@ -1440,6 +1433,8 @@ export interface SearchRoleRequest {
 
 export interface SearchUserAccountRequest {
     email?: string | undefined;
+    roleUuid?: string | undefined;
+    permissionCode?: string | undefined;
     page?: number;
     pageSize?: number;
     sorts?: SortOption[] | undefined;

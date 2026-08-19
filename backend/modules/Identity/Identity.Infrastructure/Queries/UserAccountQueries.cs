@@ -32,6 +32,23 @@ public sealed class UserAccountQueries : IUserAccountQueries
             query = query.Where(u => EF.Functions.ILike(u.Email, $"%{email}%"));
         }
 
+        if (request.RoleUuid is { } roleUuid)
+        {
+            query = query.Where(u => u.RoleGrants.Any(g => g.RoleUuid == roleUuid));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.PermissionCode))
+        {
+            var permissionCode = request.PermissionCode;
+            var grantingRoleUuids = await GetGrantingRoleUuidsAsync(permissionCode, cancellationToken)
+                .ConfigureAwait(false);
+            var now = DateTimeOffset.UtcNow;
+
+            query = query.Where(u =>
+                u.RoleGrants.Any(g => grantingRoleUuids.Contains(g.RoleUuid) && (g.ExpiresAt == null || g.ExpiresAt > now)) ||
+                u.PermissionGrants.Any(pg => pg.PermissionCode == permissionCode));
+        }
+
         var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var uuids = await query
@@ -163,6 +180,52 @@ public sealed class UserAccountQueries : IUserAccountQueries
             }
 
             return results;
+        }
+        finally
+        {
+            await connection.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Zbiór ról "nadających" dane uprawnienie — role, które mają je bezpośrednio w
+    /// <c>role_permission</c>, plus wszyscy ich transytywni kontenerzy (odwrotny kierunek niż
+    /// <see cref="GetEffectivePermissionCodesAsync"/>: tam schodzimy w dół po składowych, tu
+    /// wchodzimy w górę po kontenerach). Zasila filtr <see cref="SearchUserAccountRequest.PermissionCode"/>
+    /// — bez domknięcia hierarchii wynik pokazywałby prawie nikogo, bo większość uprawnień
+    /// trafia do użytkowników przez rolę-kontener, nie bezpośrednio.</summary>
+    private async Task<HashSet<Guid>> GetGrantingRoleUuidsAsync(string permissionCode, CancellationToken cancellationToken)
+    {
+        const string sql = $"""
+            WITH RECURSIVE base_roles AS (
+                SELECT role_uuid FROM {IdentityDbContext.SchemaName}.role_permission
+                WHERE permission_code = @permission_code
+            ),
+            containing_roles AS (
+                SELECT role_uuid FROM base_roles
+
+                UNION
+
+                SELECT rm.container_uuid
+                FROM {IdentityDbContext.SchemaName}.role_member rm
+                JOIN containing_roles cr ON rm.member_uuid = cr.role_uuid
+            )
+            SELECT role_uuid FROM containing_roles;
+            """;
+
+        var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await using var command = new NpgsqlCommand(sql, connection);
+            command.Parameters.AddWithValue("permission_code", permissionCode);
+
+            var roleUuids = new HashSet<Guid>();
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                roleUuids.Add(reader.GetGuid(0));
+            }
+
+            return roleUuids;
         }
         finally
         {

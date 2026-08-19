@@ -46,7 +46,9 @@
     "../../libs/shared/ui/src/lib/form/erp-input/index.ts",
     "../../libs/modules/identity/contract/src/index.ts",
     "../../libs/modules/identity/feature/src/index.ts",
-    "../../libs/modules/identity/data-access/src/index.ts"
+    "../../libs/modules/identity/data-access/src/index.ts",
+    "../../libs/modules/identity/ui/src/index.ts",
+    "../../libs/modules/identity/util/src/index.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts",

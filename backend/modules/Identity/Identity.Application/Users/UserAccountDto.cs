@@ -35,6 +35,16 @@ public sealed record EffectivePermissionSourceDto(
 public sealed class SearchUserAccountRequest : PagedRequest
 {
     public string? Email { get; set; }
+
+    /// <summary>Tylko użytkownicy z BEZPOŚREDNIM przypisaniem tej roli — zasila "kto ma tę
+    /// rolę" na stronie Ról. Świadomie nie efektywnie (przez hierarchię): to jedyny zbiór,
+    /// który administrator faktycznie może odebrać z tego ekranu.</summary>
+    public Guid? RoleUuid { get; set; }
+
+    /// <summary>Użytkownicy EFEKTYWNIE mający to uprawnienie — bezpośrednio nadane albo przez
+    /// dowolną rolę w łańcuchu dziedziczenia. Zasila "kto ma to uprawnienie" na stronie
+    /// katalogu uprawnień, patrz <see cref="Identity.Infrastructure.Queries.UserAccountQueries"/>.</summary>
+    public string? PermissionCode { get; set; }
 }
 
 /// <summary>Pobranie użytkowników po identyfikatorach.</summary>

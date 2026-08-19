@@ -22,18 +22,43 @@ export async function STARTUP(): Promise<void> {
   const widgetRegistry = inject(ErpWidgetRegistryService);
   const permissionStore = inject(PermissionStore);
   const authService = inject(ErpAuthService);
-  const signalrSync = inject(SignalrSyncService);
   // Pobrany synchronicznie: kontekst wstrzykiwania nie przeżywa `await` niżej,
-  // a bootstrap feedu zadań potrzebuje injectora już po doładowaniu remota.
+  // a bootstrap feedu zadań potrzebuje injectora już po doładowaniu remota. `SignalrSyncService`
+  // jest CELOWO pobierany przez `injector.get(...)` niżej, PO bramce autoryzacji, a nie
+  // przez `inject()` tutaj — jego konstruktor od razu otwiera połączenie SignalR (patrz
+  // `SignalrSyncService._initConnection`), więc wcześniejsze pobranie odpalałoby negocjację
+  // (i jej retry) także na stronach, na których nigdy nie będzie tokenu.
   const injector = inject(Injector);
   inject(AppSettingsService); // Triggers theme and language initialization and effects
 
-  // `provideAppInitializer(STARTUP)` biegnie RÓWNOLEGLE z `withAppInitializerAuthCheck()`
-  // (Angular nie serializuje initializerów). `waitUntilAuthReady()` łagodzi to w większości
-  // przypadków, ale przy ŚWIEŻYM logowaniu (wymiana `code` na token, nie cichy odczyt z
-  // pamięci) samo `isAuthenticated$` bywa niewystarczającym sygnałem — `erpAuthInterceptor`
-  // potrafi jeszcze przez chwilę nie mieć tokenu. `loadWithRetry()` dogania to retry-em na 401.
+  // `provideAppInitializer(STARTUP)` biegnie RÓWNOLEGLE z drugim initializerem, który odpala
+  // `checkAuth()` (patrz `app.config.ts`). `waitUntilAuthReady()` czeka na TĘ SAMĄ (zamemoizowaną
+  // w `ErpAuthService`) obietnicę PRAWDZIWEGO zakończenia `checkAuth()` — nie na pierwszą wartość
+  // `isAuthenticated$`, bo to `BehaviorSubject` startujący od `{isAuthenticated: false}` i
+  // subskrybowanie go PRZED zakończeniem `checkAuth()` (reguła przy ŚWIEŻYM logowaniu — realna
+  // wymiana `code`→token przez sieć) łapało ten nietknięty stan startowy, nie wynik sprawdzenia
+  // (pełna historia tego wyścigu — w komentarzu przy `ErpAuthService.checkAuth()`). Dzięki temu
+  // token jest już zapisany (`AuthStateService.setAuthorizationData` pisze do storage PRZED
+  // opublikowaniem stanu), więc `erpAuthInterceptor` (czyta go synchronicznie) ma go od razu —
+  // `PermissionStore.loadWithRetry()` niżej zostaje jako dodatkowa siatka bezpieczeństwa na
+  // realną wolność backendu, nie jako obejście tego wyścigu.
   await authService.waitUntilAuthReady();
+
+  // `waitUntilAuthReady()` gwarantuje TYLKO, że `checkAuth()` się zakończył — nie że
+  // użytkownik jest zalogowany. Na świeżej wizycie na publicznej trasie (`/login`, przed
+  // kliknięciem „Przejdź do logowania") `checkAuth()` rozstrzyga się szybko jako
+  // „niezalogowany" i nie ma tu żadnego tokenu ani szans na jego zdobycie w tej karcie —
+  // logowanie idzie przez pełny redirect do Keycloaka (nowy load strony), więc `STARTUP()`
+  // uruchomi się od nowa po powrocie z code→token, tym razem z `$isAuthenticated() === true`.
+  // Odpalanie PermissionStore/SignalR/feedu zadań tutaj i tak dostałoby gwarantowany 401 na
+  // każdej próbie retry — to jest dokładnie regresja opisana w komentarzach przy
+  // `PermissionStore.loadWithRetry` i `SignalrSyncService._startWithRetry`: te retry są dla
+  // PRAWDZIWEGO wyścigu (logowanie w toku, token zaraz będzie), nie dla jego całkowitego braku.
+  if (!authService.$isAuthenticated()) {
+    return;
+  }
+
+  const signalrSync = injector.get(SignalrSyncService);
 
   // Musi się zakończyć PRZED budową menu (patrz `loadContractDirect` niżej) — filtr menu
   // po `requiredPermission` czyta `PermissionStore` synchronicznie. Fail-closed: błąd sieci

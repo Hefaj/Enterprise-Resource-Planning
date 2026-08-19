@@ -29,15 +29,17 @@ export class PermissionStore {
 
   /**
    * Retry z krótkim odstępem na `401` — do wywołania przy starcie appki (`STARTUP.ts`).
-   * `provideAppInitializer(STARTUP)` biegnie równolegle z `withAppInitializerAuthCheck()`
-   * (Angular nie serializuje initializerów), a przy świeżym logowaniu (wymiana `code` na
-   * token, nie cichy odczyt z pamięci) samo `isAuthenticated$` bywa niewystarczającym
-   * sygnałem — `erpAuthInterceptor` potrafi jeszcze przez chwilę nie mieć tokenu mimo
-   * `isAuthenticated$ === true`. W odróżnieniu od `load()`, retry-uje TYLKO `401`
-   * (rozjazd tokenu w czasie), nie inne błędy (np. 403/5xx — tam retry niczego by nie
-   * naprawił) — po wyczerpaniu prób i tak zostaje fail-closed jak w `load()`.
+   * Główny wyścig „token jeszcze nie gotowy mimo `isAuthenticated === true`" jest już
+   * usunięty u źródła: `STARTUP.ts` czeka na `ErpAuthService.waitUntilAuthReady()`, które
+   * czeka na PRAWDZIWE zakończenie `checkAuth()` (nie na pierwszą wartość `isAuthenticated$`
+   * — patrz komentarz przy `ErpAuthService.checkAuth()` po pełną historię), a token trafia do
+   * storage PRZED opublikowaniem tego stanu. Ten retry zostaje jako siatka bezpieczeństwa na
+   * inne źródła rozjazdu w czasie (np. realna wolność backendu Identity przy starcie), nie
+   * jako podstawowa obrona. W odróżnieniu od `load()`, retry-uje TYLKO `401` (rozjazd tokenu
+   * w czasie), nie inne błędy (np. 403/5xx — tam retry niczego by nie naprawił) — po
+   * wyczerpaniu prób i tak zostaje fail-closed jak w `load()`.
    */
-  public async loadWithRetry(maxAttempts = 6, delayMs = 400): Promise<void> {
+  public async loadWithRetry(maxAttempts = 10, delayMs = 500): Promise<void> {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const result = await this._fetchOnce();
 

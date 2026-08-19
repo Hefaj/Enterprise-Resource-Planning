@@ -102,15 +102,40 @@ export class SignalrSyncService {
       }
     });
 
-    this._connection
-      .start()
-      .then(() => {
-        console.log(`[SignalrSyncService] Connected to Real-time Sync Hub: ${this._hubUrl}`);
-        for (const signature of this._refCounts.keys()) {
-          this._invokeSubscribe(signature);
-        }
-      })
-      .catch(err => console.error('[SignalrSyncService] Connection error: ', err));
+    void this._startWithRetry();
+  }
+
+  /**
+   * Pierwsze `.start()` może przegonić token — `SignalrSyncService` jest `providedIn: 'root'`
+   * i startuje połączenie już w konstruktorze, czyli w chwili PIERWSZEGO wstrzyknięcia (dziś:
+   * synchronicznie na początku `STARTUP()`, PRZED `authService.waitUntilAuthReady()`). Negocjacja
+   * wysłana z pustym/nieaktualnym tokenem z `_accessTokenFactory()` kończy się `401`, a
+   * `withAutomaticReconnect()` NIE obejmuje tego przypadku — łapie tylko rozłączenie PO udanym
+   * połączeniu, nie porażkę pierwszego `.start()`. Retry z krótkim odstępem daje tokenowi czas
+   * (ten sam problem i to samo remedium co `PermissionStore.loadWithRetry`, z którym `data-access`
+   * nie może się dzielić kodem — `type:data-access` nie wolno zależeć od `type:auth`, patrz
+   * granice modułów w CLAUDE.md).
+   */
+  private async _startWithRetry(attempt = 1, maxAttempts = 10, delayMs = 500): Promise<void> {
+    if (!this._connection) {
+      return;
+    }
+
+    try {
+      await this._connection.start();
+      console.log(`[SignalrSyncService] Connected to Real-time Sync Hub: ${this._hubUrl}`);
+      for (const signature of this._refCounts.keys()) {
+        this._invokeSubscribe(signature);
+      }
+    } catch (err) {
+      if (attempt >= maxAttempts) {
+        console.error('[SignalrSyncService] Connection error: ', err);
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await this._startWithRetry(attempt + 1, maxAttempts, delayMs);
+    }
   }
 
   /**

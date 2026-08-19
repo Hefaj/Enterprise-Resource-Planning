@@ -1,5 +1,5 @@
 import { computed, inject, Injectable } from '@angular/core';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { LoginResponse, OidcSecurityService } from 'angular-auth-oidc-client';
 import { firstValueFrom } from 'rxjs';
 
 export interface ErpUserProfile {
@@ -26,6 +26,9 @@ export interface ErpUserProfile {
 })
 export class ErpAuthService {
   private readonly _oidcSecurityService = inject(OidcSecurityService);
+
+  /** Memoizacja pojedynczego wywołania `checkAuth()` — patrz `checkAuth()` niżej. */
+  private _authCheckPromise: Promise<LoginResponse[]> | null = null;
 
   /** `true`, gdy sesja OIDC jest aktywna. Odczytywane jako sygnał — bez subskrypcji ręcznej. */
   public readonly $isAuthenticated = computed(() => this._oidcSecurityService.authenticated().isAuthenticated);
@@ -62,15 +65,41 @@ export class ErpAuthService {
   }
 
   /**
-   * Czeka, aż `checkAuth()` (patrz `app.config.ts`, `withAppInitializerAuthCheck`) rozstrzygnie
-   * stan sesji — `isAuthenticated$` emituje dopiero PO tym sprawdzeniu (ten sam mechanizm co
-   * `erpAuthGuard`). Bez tego kod odpalany jako `provideAppInitializer` (np. `STARTUP.ts`)
-   * może wystartować RÓWNOLEGLE z `checkAuth()`, więc pierwsze żądanie z tokenem poleci bez
-   * niego i dostanie 401 — `PermissionStore.load()` musi na to poczekać, bo (w odróżnieniu od
-   * SignalR z jego `withAutomaticReconnect()`) nie ma własnego retry.
+   * Uruchamia `checkAuth()` biblioteki DOKŁADNIE RAZ (kolejne wywołania dostają tę samą
+   * zapamiętaną obietnicę) i zwraca obietnicę jego PRAWDZIWEGO zakończenia.
+   *
+   * Zastępuje `withAppInitializerAuthCheck()` z `angular-auth-oidc-client` — ten wariant sam
+   * rejestruje `APP_INITIALIZER`, ale nie eksponuje NIGDZIE wyniku/zakończenia tego wywołania,
+   * więc `STARTUP.ts` (osobny `provideAppInitializer`, biegnący RÓWNOLEGLE — Angular nie
+   * serializuje initializerów) nie miał jak na nie poczekać. Zamiast tego czekał na
+   * `isAuthenticated$`, a to jest `BehaviorSubject` (`AuthStateService.authenticatedInternal$`)
+   * zainicjalizowany na `{isAuthenticated: false}` — subskrybując go PRZED zakończeniem
+   * `checkAuth()` (co przy ŚWIEŻYM logowaniu, wymagającym realnej wymiany `code`→token przez
+   * sieć, jest regułą, nie wyjątkiem — inicjalizatory startują w tym samym takcie), `firstValueFrom`
+   * łapał ten JESZCZE nietknięty stan startowy natychmiast (mikrotask, nie realne zakończenie
+   * sprawdzenia), a nie wynik faktycznego sprawdzenia. Efekt: `STARTUP()` widział
+   * `$isAuthenticated() === false` i przerywał start (menu nigdy się nie budowało — puste,
+   * naprawiał to dopiero reload, bo przy nim `checkAuth()` może rozstrzygnąć się w pełni
+   * synchronicznie z danych w `sessionStorage`, bez sieci).
+   *
+   * `checkAuth()` tutaj czeka na REALNE zakończenie `checkAuthMultiple()` — cała asynchroniczna
+   * praca (well-known, wymiana kodu, JWKS) musi się zakończyć, zanim obietnica się rozstrzygnie,
+   * niezależnie od tego, ile trwa. Ten sam serwis rejestruje initializer w `app.config.ts`
+   * (`provideAppInitializer(() => inject(ErpAuthService).checkAuth())`), więc obie strony
+   * (initializer biblioteki-zastępczy i `STARTUP()`) czekają na TĘ SAMĄ obietnicę.
+   */
+  public checkAuth(): Promise<LoginResponse[]> {
+    this._authCheckPromise ??= firstValueFrom(this._oidcSecurityService.checkAuthMultiple());
+    return this._authCheckPromise;
+  }
+
+  /**
+   * Czeka, aż `checkAuth()` (patrz wyżej) faktycznie się zakończy — w odróżnieniu od
+   * poprzedniej implementacji (subskrypcja `isAuthenticated$`) to jest gwarancja PRAWDZIWEGO
+   * zakończenia, nie odczyt aktualnej (możliwie jeszcze nierozstrzygniętej) wartości.
    */
   public async waitUntilAuthReady(): Promise<void> {
-    await firstValueFrom(this._oidcSecurityService.isAuthenticated$);
+    await this.checkAuth();
   }
 }
 

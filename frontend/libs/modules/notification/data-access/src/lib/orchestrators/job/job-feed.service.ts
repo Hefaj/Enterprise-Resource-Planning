@@ -101,6 +101,12 @@ export class JobFeedService {
    * Ładuje początkową porcję zadań tej karty przeglądarki. Idempotentne — wołane przy starcie
    * aplikacji z kontraktu remota, a przy nawigacji na widok historii może zostać wywołane
    * ponownie bez skutków ubocznych.
+   *
+   * Retry na `401` tylko tutaj, nie w `reload()` ogólnie: `bootstrapJobFeed()` w `STARTUP.ts`
+   * woła to zaraz po `authService.waitUntilAuthReady()`, ale — jak dokumentuje komentarz przy
+   * `PermissionStore.loadWithRetry` — samo `isAuthenticated$` bywa niewystarczającym sygnałem,
+   * `erpAuthInterceptor` potrafi jeszcze przez chwilę nie mieć tokenu. Kolejne wywołania `reload()`
+   * (z nawigacji na historię, z SignalR) biegną długo po starcie, token jest już od dawna gotowy.
    */
   public async bootstrap(): Promise<void> {
     if (this._bootstrapped()) {
@@ -108,7 +114,47 @@ export class JobFeedService {
     }
     this._bootstrapped.set(true);
 
-    await this.reload({ pageSize: JOB_FEED_PAGE_SIZE });
+    await this._reloadWithRetry({ pageSize: JOB_FEED_PAGE_SIZE });
+  }
+
+  private async _reloadWithRetry(
+    options: { page?: number; pageSize?: number; isComplete?: boolean },
+    attempt = 1,
+    maxAttempts = 10,
+    delayMs = 500,
+  ): Promise<void> {
+    this._isLoading.set(true);
+
+    try {
+      const response = await this._orchestrator.searchAsync({
+        clientId: getOrCreateClientId(),
+        page: options.page ?? 1,
+        pageSize: options.pageSize ?? JOB_HISTORY_PAGE_SIZE,
+        isComplete: options.isComplete,
+        sorts: [{ field: 'createdAt', order: -1 }],
+      });
+
+      this._totalCount.set(response.totalCount ?? 0);
+    } catch (error) {
+      const isUnauthorized = error instanceof Error && 'status' in error && (error as { status: unknown }).status === 401;
+
+      if (isUnauthorized && attempt < maxAttempts) {
+        this._isLoading.set(false);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        await this._reloadWithRetry(options, attempt + 1, maxAttempts, delayMs);
+        return;
+      }
+
+      if (isUnauthorized) {
+        // Wyczerpane próby (patrz `maxAttempts`) — poddajemy się tak samo jak
+        // `PermissionStore.loadWithRetry`: zostaje pusty feed zamiast dobijania się w kółko.
+        console.warn(`[JobFeedService] /job/searchJob dalej 401 po ${maxAttempts} próbach — poddaję się.`);
+      }
+      // Błąd trafił już do `errors` orkiestratora — feed powiadomień nie może z tego powodu
+      // przewrócić aplikacji ani wyczyścić tego, co użytkownik już widzi.
+    } finally {
+      this._isLoading.set(false);
+    }
   }
 
   /**

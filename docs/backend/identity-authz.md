@@ -377,24 +377,36 @@ Wygenerowany dokładnie wg [`new-module.md`](../frontend/new-module.md): 5 warst
 
 **Zweryfikowane:** `dotnet build`/`dotnet test` na całym rozwiązaniu — 45/45 bez regresji (5
 `Erp.ArchitectureTests` + 40 `Catalog.Tests`), `Erp.ArchitectureTests` bez regresji warstw
-Clean Architecture. W przeglądarce (realny Keycloak + Identity + Catalog, konto
-`administrator`): `POST /grant-audit/search` zwraca 200 (pusty log — brak nadań od czasu
-wdrożenia), strona `/identity/grants` renderuje pusty stan poprawnie przetłumaczony, pozycja
-"Historia nadań" widoczna w menu pod "Tożsamość", sekcja "Zarządzanie rolami" na dashboardzie
-nadal widoczna dla administratora (potwierdza brak regresji po dodaniu `Permissions(...)` na
-endpointach Identity). `npx nx lint`/`pnpm translate:keys`/`npx nx run client:esbuild:development`
+Clean Architecture. `npx nx lint`/`pnpm translate:keys`/`npx nx run client:esbuild:development`
 bez błędów.
 
-**Świadomie niezweryfikowane w tej iteracji (do zrobienia przy najbliższej okazji, nie
-blokujące):** żywy przebieg wymuszonego wylogowania i przebudowy menu na SignalR wymaga
-wygenerowania realnej zmiany ról na koncie testowym oraz reimportu realm Keycloaka z nowym
-klientem `erp-identity-service` (destrukcyjne dla współdzielonego środowiska deweloperskiego w
-tej sesji — istniejące sesje/konta testowe zostałyby utracone) — obie ścieżki zweryfikowane
-tylko przez przegląd kodu i testy jednostkowe/integracyjne, nie end-to-end w przeglądarce.
-Deklaratywna składnia `realm-erp.json` przypisująca rolę service-account `manage-users` na
-kliencie `realm-management` jest znanym wzorcem Keycloaka, ale nie została potwierdzona
-importem na żywo — jeśli import jej nie podepnie, rolę trzeba nadać ręcznie przez Admin
-Console w dev.
+**Zweryfikowane end-to-end w przeglądarce i przez realne Keycloak Admin API (konto
+`administrator` + `testuser@erp.local`):**
+- Strona `/identity/grants`: grid layout z panelem filtrów (UUID podmiotu, typ podmiotu,
+  akcja — dopasowane do faktycznie filtrowalnych pól `SearchGrantAuditRequest`, bez pól-widm
+  które backend by ignorował), `POST /grant-audit/search` zwraca 200 i realne wiersze; pozycja
+  "Historia nadań" widoczna w menu pod "Tożsamość" za `identity.role.manage`, poprawnie
+  ukryta dla `testuser` bez tego uprawnienia. Sekcja "Zarządzanie rolami" na dashboardzie
+  nadal widoczna dla administratora (brak regresji po dodaniu `Permissions(...)` na
+  endpointach Identity).
+- **Audyt nadań:** `POST /user/assign-role` (rola `warehouse-reader` → `testuser`) zapisało
+  wiersz `role_assigned` w `grant_audit` z poprawnym `actor_user_uuid` (administrator) i
+  `subject_uuid` (testuser), widoczny natychmiast na stronie audytu.
+- **Wymuszone wylogowanie:** klient service-account `erp-identity-service` utworzony przez
+  Keycloak Admin API (bez reimportu realm — dodatkowo, nieniszcząco, na działającym
+  kontenerze), rola `manage-users` z `realm-management` nadana i potwierdzona działającym
+  tokenem `client_credentials`. `POST /user/{uuid}/force-logout` z tokenem administratora →
+  200; sesja Keycloak `testuser` (uprzednio zalogowanego przez prawdziwy przepływ hasła)
+  **realnie zniknęła** z `GET /admin/realms/erp/users/{id}/sessions` (pusta lista), a próba
+  odświeżenia starym `refresh_token` zwróciła `invalid_grant: Session not active` — dowód
+  faktycznego odwołania sesji, nie tylko zapisu w logu. Wiersz `user_forced_logout` poprawnie
+  w `grant_audit`.
+- **Przebudowa menu na żywo:** `testuser` zalogowany w przeglądarce (zero ról, pozycja
+  "Dashboard Analityczny Produktów" ukryta), administrator z DRUGIEJ karty nadał mu rolę
+  `warehouse-reader` przez `POST /user/assign-role` — bez żadnego przeładowania strony
+  testusera pozycja "Dashboard Analityczny Produktów" pojawiła się w drawerze w ciągu kilku
+  sekund (SignalR `identity.user` → `permissionStore.load()` → re-filter → re-register).
+  Potwierdza naprawę "znanego długu" z Fazy 5.
 
 ---
 
@@ -421,5 +433,5 @@ Faza 1 jest twardym warunkiem wstępnym: budowanie zarządzania uprawnieniami na
 | Backplane Redis dla cache uprawnień | Razem z drugą instancją Notification | Patrz `architecture.md` §7 |
 | Aktywne unieważnianie cache'u uprawnień w konsumentach (Catalog/Sales) przez zdarzenie zamiast TTL | Gdy TTL=60s przestanie wystarczać | Faza 6 dodała `IPermissionProvider.InvalidateAsync`, ale tylko wymuszone wylogowanie w Identity go używa i tylko w PROCESIE, który obsłużył żądanie — patrz `architecture.md` §7. Aktywny fanout do Catalog/Sales (`AggregateChanged` na `identity.user`/`identity.role`) nadal nie istnieje; konsument istniałby w `Erp.BuildingBlocks.Messaging`, nie wymaga nowego kontraktu |
 | Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś dowolny ważny token wystarcza; docelowo client credentials Keycloaka albo izolacja sieciowa |
-| `perm_ver` w JWT | Prawdopodobnie nigdy | Faza 6 świadomie NIE wprowadziła tego do tokenu — wymuszone wylogowanie działa przez odwołanie sesji Keycloak (Admin API) + invalidację cache'u, bez zmian w protocol mapperach. Konsekwencja: już wydany access token JWT pozostaje ważny do naturalnego wygaśnięcia (brak introspekcji) — patrz Faza 6 "świadomie niezweryfikowane" i `architecture.md` §7 |
+| `perm_ver` w JWT | Prawdopodobnie nigdy | Faza 6 świadomie NIE wprowadziła tego do tokenu — wymuszone wylogowanie działa przez odwołanie sesji Keycloak (Admin API) + invalidację cache'u, bez zmian w protocol mapperach, zweryfikowane end-to-end (sesja realnie odwołana, `refresh_token` odrzucony). Konsekwencja: już wydany access token JWT pozostaje ważny do naturalnego wygaśnięcia (brak introspekcji) — patrz `architecture.md` §7 |
 | Backplane dla wymuszonego wylogowania przy >1 instancji konsumentów uprawnień | Razem z backplane'em Redis dla cache'u uprawnień | Patrz `architecture.md` §7, nowy wiersz "Wymuszone wylogowanie (Faza 6)" |

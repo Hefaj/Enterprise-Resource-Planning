@@ -5,9 +5,15 @@ import { map } from 'rxjs/operators';
 
 /**
  * Blokuje trasy chronione, dopóki `checkAuth()` (patrz `app.config.ts`,
- * `withAppInitializerAuthCheck`) nie ustali stanu sesji OIDC. `isAuthenticated$` emituje
- * dopiero PO tym sprawdzeniu, więc guard nigdy nie widzi przejściowego stanu „jeszcze nie
- * wiadomo" jako `false` — nie ma efektu migania na `/login` przy odświeżeniu strony.
+ * `provideAppInitializer(() => inject(ErpAuthService).checkAuth())`) nie ustali stanu sesji
+ * OIDC. Guardy są bezpieczne mimo że same subskrybują `isAuthenticated$` (a nie zamemoizowaną
+ * obietnicę z `ErpAuthService.checkAuth()`, jak `STARTUP.ts`) — Angular Router z definicji
+ * odkłada nawigację startową do czasu ukończenia WSZYSTKICH `APP_INITIALIZER`-ów, więc w
+ * momencie, gdy guard w ogóle się uruchamia, `checkAuth()` już dawno się zakończył i
+ * `isAuthenticated$` niesie prawdziwy stan, nie wartość startową `BehaviorSubject`u. Ten sam
+ * wyścig, który to dotyczyło w `STARTUP.ts` (osobny initializer biegnący RÓWNOLEGLE z
+ * `checkAuth()`), guardów nie dotyczy — nie ma tu efektu migania na `/login` przy odświeżeniu
+ * strony.
  */
 export const erpAuthGuard: CanActivateFn = () => {
   const oidcSecurityService = inject(OidcSecurityService);

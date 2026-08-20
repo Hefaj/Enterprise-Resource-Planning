@@ -10,7 +10,7 @@ Implementacja referencyjna: strona produktów katalogu —
 [`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/tables/catalog-product-table/catalog-product-table.component.ts) (smart tabela),
 [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) + [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/multimedia/multimedia-tab.component.ts) / [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/warranty/warranty-tab.component.ts) (panele boczne zależne od zaznaczenia).
 
-Wariant z akcjami masowymi PLUS panelem szczegółu jednego wiersza (`ErpSelectionScope` + wyprowadzony `selectedUuid`): [`users.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/users.component.ts) + [`users.store.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/users.store.ts) — patrz §7. Czysty master-detail bez żadnej akcji masowej (sam `selectedUuid`, bez zasięgu) — patrz §7.1.
+Ten sam kształt na innym module: [`users.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/users.component.ts) + [`user-scope-tab.store.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/content/side-panel/user-scope-tab.store.ts) + [`user-roles-tab.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/content/side-panel/roles/user-roles-tab.component.ts) — role wszystkich zaznaczonych użytkowników w jednej tabeli.
 
 Dokumenty, na których ten się opiera i których nie powiela: [smart tabele](./smart-tables.md) (anatomia `erp-catalog-product-table`), [zasięg zaznaczenia](./selection-scope.md) (`ErpSelectionScope`, materializacja, bramkowanie toolbara), [atomy UI](./atoms.md) (wzorzec Single Config Builder, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-action-toolbar`).
 
@@ -30,14 +30,13 @@ Page to zawsze jeden komponent renderujący `<erp-grid-layout [config]="pageConf
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductComponent {
-  protected readonly activeTabId = signal<string | null>('products');
+  protected readonly activeTabId = signal<string | null>('list');   // start na zakładce-liście = panel schowany
 
   protected readonly tabsConfig = ErpTabsBuilder.create(b => b
     .setLayout('horizontal')
     .withSharedState(this.activeTabId)
-    .addTab('Lista produktów', 'products', { icon: '@tui.list' })          // bez `component` — patrz §3
+    .addTab(PRODUCT_KEYS.base.tabs.products, 'list', { icon: '@tui.list' })   // bez `component` — patrz §3
     .addTab(PRODUCT_KEYS.base.tabs.multimedia, 'multimedia', { component: MultimediaTabComponent, icon: '@tui.image' })
-    .setInitialValue('multimedia')
     .setOnTabChange(noop)
   );
 
@@ -59,7 +58,7 @@ export class ProductComponent {
       resizable: 'left',
       minWidth: 600,
       maxWidth: 1600,
-      collapsed: computed(() => this.activeTabId() === 'products'),
+      collapsed: computed(() => this.activeTabId() === 'list'),
     })
   );
 }
@@ -72,7 +71,7 @@ Cztery obszary, zawsze te same nazwy i ta sama rola:
 | `filter` | `erp-filter` opakowany w komponent strony (patrz §2) | tak |
 | `tabs` | nagłówki zakładek (`ErpTabsComponent` z `renderMode: 'tabs'`) | tylko gdy są zakładki (patrz §3) |
 | `content` | stała lista agregatu — action toolbar + smart tabela (patrz §4) | tak |
-| `rightPanel` | treść aktywnej zakładki (`ErpTabsComponent` z `renderMode: 'content'`), przeciągalny i chowany | tylko gdy są zakładki |
+| `rightPanel` | treść aktywnej zakładki (`ErpTabsComponent` z `renderMode: 'content'`), przeciągalny i chowany **wyłącznie wyborem zakładki** (§3) | tylko gdy są zakładki |
 
 Jeśli page **nie ma** zakładek (patrz §3), grid ma tylko `filter` i `content` — bez `tabs`/`rightPanel` i bez `ErpTabsBuilder` w ogóle.
 
@@ -116,21 +115,31 @@ export class ProductFilterComponent {
 
 **Nie dodawaj zakładek, jeśli page ma tylko tabelę i akcje.** Wtedy `content` renderuje bezpośrednio wrapper action-toolbar + smart tabela (patrz §4), grid ma dwa obszary (`filter`, `content`), a `ErpTabsBuilder`/`rightPanel` w ogóle nie istnieją w komponencie.
 
-**Jeśli page trzeba podzielić na zakładki, obowiązują dwie zasady bez wyjątków:**
+**Jeśli page trzeba podzielić na zakładki, obowiązują trzy zasady bez wyjątków:**
 
-1. **Pierwsza zakładka to zawsze lista, bez prawego panelu.** W `tabsConfig` pierwszy `addTab(...)` (id `'products'` w przykładzie) **nie dostaje** `component` — bo jego treść nie renderuje się przez `ErpTabsComponent renderMode:'content'` w `rightPanel`, tylko osobno, w obszarze `content` (`.fill('content', ProductTabComponent)`). `rightPanel` chowa się, gdy ta zakładka jest aktywna:
+1. **Pierwsza zakładka to zawsze lista, bez prawego panelu.** W `tabsConfig` pierwszy `addTab(...)` (id `'list'`, ta sama nazwa na każdej stronie) **nie dostaje** `component` — bo jego treść nie renderuje się przez `ErpTabsComponent renderMode:'content'` w `rightPanel`, tylko osobno, w obszarze `content` (`.fill('content', ProductTabComponent)`). `rightPanel` chowa się, gdy ta zakładka jest aktywna:
    ```typescript
    .fill('rightPanel', ErpTabsComponent, { config: this.tabsConfig, renderMode: 'content' }, {
-     collapsed: computed(() => this.activeTabId() === 'products'),
+     collapsed: computed(() => this.activeTabId() === 'list'),
    })
    ```
    Wymaga to `activeTabId` (`signal<string | null>`) współdzielonego między `tabsConfig` (`.withSharedState(this.activeTabId)`) a warunkiem `collapsed` — to jedyny sposób, w jaki `rightPanel` wie, która zakładka jest aktywna.
 
-2. **Każda kolejna zakładka to panel zależny od zaznaczenia w głównej tabeli** — musi wspierać zaznaczenie wielokrotne (nie pojedynczy wiersz) i renderować się w `rightPanel`, z `component` ustawionym w `addTab(...)`. Zasady budowy takiego panelu — patrz §6.
+2. **Panel otwiera i zamyka wyłącznie wybór zakładki — nigdy zaznaczenie w tabeli.** To jedyna mechanika panelu bocznego w całej aplikacji: zakładka `'list'` = panel schowany, każda kolejna = alternatywny widok otwarty na żądanie użytkownika. Stąd `collapsed` ma **dokładnie jeden** warunek i nie czyta store'a:
+
+   ```typescript
+   collapsed: computed(() => this.activeTabId() === 'list'),   // i nic więcej
+   ```
+
+   Zaznaczenie wiersza nie otwiera panelu, nie przełącza zakładki i nie zamyka panelu, gdy zaznaczenie znika. Konsekwencja, którą trzeba obsłużyć: panel bywa otwarty, gdy nie zaznaczono nic — za komunikat „nic nie wybrano" odpowiada wtedy **sama zakładka** (`erp-empty-state`, patrz §6), nie warunek `collapsed`.
+
+   Dlaczego tak: panel jest alternatywnym widokiem strony, a nie efektem ubocznym klikania w tabelę. Widok, który sam się otwiera i zamyka pod użytkownikiem, zabiera mu kontrolę nad szerokością pracy z listą i sprawia, że to samo kliknięcie raz coś odsłania, a raz nie — zależnie od stanu, którego użytkownik w tym momencie nie widzi.
+
+3. **Każda kolejna zakładka to panel zależny od zaznaczenia w głównej tabeli** — musi wspierać zaznaczenie wielokrotne (nie pojedynczy wiersz) **i pusty wybór**, i renderować się w `rightPanel`, z `component` ustawionym w `addTab(...)`. Zasady budowy takiego panelu — patrz §6.
 
 `ErpTabsComponent` renderowany dwa razy z **tym samym** `tabsConfig` (raz `renderMode: 'tabs'` w obszarze `tabs`, raz `renderMode: 'content'` w `rightPanel`) to jedyny poprawny sposób rozdzielenia nagłówków zakładek od ich treści między dwa obszary siatki — nie twórz dwóch osobnych konfiguracji ani nie renderuj zakładek ręcznie w `content`.
 
-Zagnieżdżone pod-zakładki (np. „Oferta sprzedażowa” → „Wykluczenia” / „Dostawa”) idą przez `children: [...]` w `addTab(...)` — patrz `sales-offer-tabs/` w przykładzie referencyjnym.
+Zagnieżdżone pod-zakładki (np. „Oferta sprzedażowa” → „Wykluczenia” / „Dostawa”) idą przez `children: [...]` w `addTab(...)` — patrz `content/side-panel/sales-offer/` w przykładzie referencyjnym.
 
 ---
 
@@ -145,7 +154,7 @@ Store strony (`page/AGGREGATE.store.ts`, `@Injectable()` rejestrowany w `provide
 
 Store strony jest jedynym miejscem, które zna regułę „lista czy filtr" (`scope`). Ani filtr, ani smart tabela, ani panele boczne nie podejmują tej decyzji same — czytają gotowy `scope`/`scopeKind` ze store'a.
 
-Jeżeli page ma **jednocześnie** akcje masowe i panel podglądu/edycji jednego wybranego wiersza — store dokłada do tego zasięgu wyprowadzony `selectedUuid` dla panelu, patrz §7. Jeżeli page **nie ma** akcji masowych w ogóle i zakładki służą tylko do podglądu/edycji jednego wiersza (czysty master-detail, nie bulk) — store jest dużo prostszy, patrz §7.1. Nie buduj wtedy `ErpSelectionScope`, którego nikt nie skonsumuje.
+Store **nie** trzyma „aktualnie wybranego wiersza" — panel czyta zasięg i pokazuje dane wszystkich zaznaczonych (§6). Strony z tabelą kliencką (cały zbiór w cache, np. `roles.store.ts`) mają zasięg uproszczony: zawsze `explicit` albo `none`, bez materializacji i `resolveUuids` — nie ma czego materializować, gdy wszystko już jest w pamięci.
 
 ---
 
@@ -175,7 +184,7 @@ template: `
 
 - **Bez własnego nagłówka strony (`<h1>`/tytuł+podtytuł) w `content`.** Referencyjny `product-tab.component.ts` (i cały przykład w §1) nie ma takiego nagłówka — nazwa strony żyje w routingu/menu (patrz [nowy moduł](./new-module.md)), nie jest powtarzana wewnątrz `content`. Dodanie `<h1>{{ X_KEYS.title | erpTranslate }}</h1>` + `<p>{{ X_KEYS.subtitle | erpTranslate }}</p>` na górze `content` zabiera miejsce filtrowi/tabeli i dubluje informację, którą użytkownik już widzi w tytule zakładki przeglądarki/breadcrumbie. Znalezione i usunięte w `users-tab.component.ts`, `roles-tab.component.ts`, `grant-audit-list.component.ts`, `permissions-catalog-list.component.ts` — wszystkie cztery dodały taki nagłówek niezależnie od siebie, mimo że żaden przykład referencyjny go nie ma.
 - **Smart tabela** (`erp-catalog-product-table` w przykładzie) — komponent osobny, zbudowany wg [smart-tables.md](./smart-tables.md); page go tylko konsumuje, nie zna jego wewnętrznej logiki paginacji/fetchowania.
-- **`selectionMode` smart tabeli jest jej własnym inputem** (`selectionMode = input<ErpSelectionMode>('multi')`, patrz [smart-tables.md §2](./smart-tables.md#2-anatomia)), **nigdy** wartością zaszytą na sztywno w `.setSelectionMode(...)` wewnątrz buildera tabeli — nawet gdy dany page używa jej tylko z jednym trybem (np. `'single'` w wariancie master-detail, §7). Zaszycie na sztywno nie boli, dopóki tabela ma jednego konsumenta, ale blokuje ponowne użycie tego samego komponentu w innym page z innym trybem zaznaczenia — a to jest właśnie cel wydzielenia jej jako osobnego Smart Component.
+- **`selectionMode` smart tabeli jest jej własnym inputem** (`selectionMode = input<ErpSelectionMode>('multi')`, patrz [smart-tables.md §2](./smart-tables.md#2-anatomia)), **nigdy** wartością zaszytą na sztywno w `.setSelectionMode(...)` wewnątrz buildera tabeli — nawet gdy dany page używa jej dziś tylko z jednym trybem. Zaszycie na sztywno nie boli, dopóki tabela ma jednego konsumenta, ale blokuje ponowne użycie tego samego komponentu w innym page z innym trybem zaznaczenia — a to jest właśnie cel wydzielenia jej jako osobnego Smart Component.
 - **`erp-action-toolbar`** zawsze **nad** tabelą, wewnątrz `div` z `erpActionToolbarZone` + `[erpActionToolbarContext]="actionToolbar"` (włącza skróty klawiszowe i Mega Menu zakresu tej strefy) — nigdy pod tabelą, nigdy jako osobny obszar siatki.
 - `actionToolbar` (`ErpActionToolbarBuilder`) rozdziela akcje na `addDefaultGroup` (zawsze dostępne — dodaj, eksport, odśwież) i `addSelectionGroup` (wymagają zaznaczenia — edycja masowa, zmiana statusu). Podłącz zawsze:
   ```typescript
@@ -192,11 +201,70 @@ template: `
 
 ## 6. Panel boczny zależny od zaznaczenia (kolejne zakładki, `rightPanel`)
 
-Każda zakładka poza pierwszą renderuje się w `rightPanel` i **musi** wspierać wielokrotne zaznaczenie z głównej tabeli — nigdy nie zakłada, że zaznaczono dokładnie jeden wiersz. Trzy elementy, zawsze razem:
+**Panel pokazuje JEDNĄ tabelę zbierającą wiersze podrzędne WSZYSTKICH zaznaczonych pozycji, pogrupowaną po pozycji nadrzędnej.** Zaznaczasz pięć produktów i otwierasz „Multimedia" — widzisz jedną tabelę plików wszystkich pięciu, z grupą na produkt; tak samo role wszystkich zaznaczonych użytkowników, posiadacze wszystkich zaznaczonych uprawnień. To jedyny dozwolony kształt panelu: żadna zakładka nie pokazuje danych „tego jednego zaznaczonego wiersza" i nie chowa się, gdy zaznaczono ich więcej.
+
+Dlaczego tak: panel jest **dowodem zasięgu** — pokazuje, czego dotknie akcja masowa uruchomiona z jego toolbara. Panel pokazujący jeden wiersz z pięciu zaznaczonych kłamałby o tym zasięgu, a użytkownik straciłby jedyne miejsce, w którym widzi zebrane dane całego zbioru.
+
+Grupowanie po rodzicu robi `erp-table` (`setGroupedRows`), nie ręczne sekcje w szablonie:
+
+```typescript
+.setGroupedRows<UserVM>(g => g
+  .setGroups(this.users)                                  // rodzice z tabStore.parents
+  .setGetGroupKey(u => u.uuid)
+  .setGetRowGroupKey((r: UserRoleGrantRow) => r.userUuid) // wiersz niesie UUID swojego rodzica
+  .setGetGroupTitle(u => u.displayName ?? u.email)
+  .setDefaultExpanded(true)
+)
+```
+
+Wiersz musi nieść identyfikator rodzica (`{ userUuid, grant }`, `{ productUuid, uuid }`), bo identyfikator dziecka sam w sobie nie jest unikalny w zbiorze wielu rodziców — ta sama rola bywa przypisana wielu użytkownikom. Stąd też `setRowIdAccessor(r => `${r.userUuid}:${r.grant.roleUuid}`)`.
+
+Każda zakładka poza pierwszą renderuje się w `rightPanel` i **musi** wspierać wielokrotne zaznaczenie z głównej tabeli — nigdy nie zakłada, że zaznaczono dokładnie jeden wiersz.
+
+**Musi też obsłużyć pusty wybór.** Panel otwiera się wyborem zakładki, niezależnie od zaznaczenia (§3), więc „nic nie zaznaczono" to jego normalny, częsty stan — a nie sytuacja, której nie zobaczy, bo `collapsed` go schowa. Pierwszą gałęzią szablonu każdej zakładki bocznej jest `erp-empty-state` z instrukcją, co użytkownik ma zrobić:
+
+```typescript
+template: `
+  @if (scopeKind() !== 'none') {  // stan pusty jest pierwszą gałęzią szablonu — patrz §6.2
+    ...właściwa treść panelu...
+  } @else {
+    <div class="h-full w-full p-2">
+      <erp-empty-state [config]="emptySelectionConfig" />
+    </div>
+  }
+`,
+// ...
+protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
+  icon: '@tui.mouse-pointer-click',
+  message: USERS_KEYS.detail.emptySelection,     // „Wybierz użytkownika z listy, aby zobaczyć szczegóły."
+};
+```
+
+Trzy elementy zakładki-panelu, zawsze razem:
 
 ### 6.1 Store zakładki dziedziczy po wspólnej bazie zasięgu strony
 
-Jedna abstrakcyjna klasa na page (`page/content/side-panel/AGGREGATE-scope-tab.store.ts`, wzór: `product-scope-tab.store.ts`) implementuje raz całą mechanikę „Zaznacz wszystko" opisaną w [zasięgu zaznaczenia §4](./selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query): próbkę N pierwszych pozycji w trybie `query`, blokadę granularnego wyboru, modele widoku po UUID z orkiestratora (aktualizacje SignalR za darmo), czyszczenie podzaznaczenia przy zmianie zbioru. Store konkretnej zakładki tylko dziedziczy i dokłada to, co specyficzne dla jej wierszy podrzędnych:
+Mechanika jest jedna dla całej aplikacji i mieszka w `ErpScopeTabStore` (`libs/shared/ui`, [erp-scope-tab.store.ts](../../frontend/libs/shared/ui/src/lib/base/erp-scope-tab.store.ts)). Każdy page dokłada nad nią **cienką** klasę (`page/content/side-panel/AGGREGATE-scope-tab.store.ts`, wzór: `product-scope-tab.store.ts`, `user-scope-tab.store.ts`, `role-scope-tab.store.ts`), która podłącza swój zasięg i orkiestrator oraz nadaje dziedzinowe nazwy (`products`/`users`/`roles` zamiast ogólnego `parents`):
+
+```typescript
+export abstract class UserScopeTabStore<TChild = unknown> extends ErpScopeTabStore<UserVM, SearchUserAccountRequest, TChild> {
+  public readonly users = this.parents;                 // alias dziedzinowy
+  public readonly shownUserCount = this.shownParentCount;
+
+  protected constructor(previewLimit: number = USER_SCOPE_PREVIEW_LIMIT) {
+    const page = inject(UsersStore);
+    const orchestrator = inject(UserOrchestrator);
+    super({
+      scope: page.scope,
+      parentById: uuid => orchestrator.getOne(uuid)(),
+      resolveUuids: (filter, limit) => page.resolveUuids(filter, limit),   // pomiń dla stron z tabelą kliencką
+      previewLimit,
+    });
+  }
+}
+```
+
+Store konkretnej zakładki dziedziczy po TEJ klasie. Baza implementuje raz całą mechanikę „Zaznacz wszystko" opisaną w [zasięgu zaznaczenia §4](./selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query): próbkę N pierwszych pozycji w trybie `query`, blokadę granularnego wyboru, modele widoku po UUID z orkiestratora (aktualizacje SignalR za darmo), czyszczenie podzaznaczenia przy zmianie zbioru. Store konkretnej zakładki tylko dziedziczy i dokłada to, co specyficzne dla jej wierszy podrzędnych:
 
 ```typescript
 @Injectable() // rejestrowany na poziomie komponentu zakładki, nie page
@@ -272,98 +340,35 @@ Akcje wyrażalne nad całym zbiorem (dodaj, usuń wszystkie, ustaw wartość) zo
 
 ---
 
-## 7. Wariant z zaznaczeniem wielokrotnym i panelem szczegółu jednego wiersza
+## 7. Panel a akcje jednowierszowe
 
-Gdy page ma **jednocześnie** akcje masowe (dodaj/zmień coś dla całego zaznaczonego zbioru) **i** panel podglądu/edycji jednego konkretnego wiersza (`/identity/users`: zaznacz wielu, żeby nadać rolę grupowo z toolbara, ale kliknij jednego, żeby zobaczyć jego role/uprawnienia w `rightPanel`) — store łączy pełny `ErpSelectionScope` (§1–6) z **wyprowadzonym** `selectedUuid`, który karmi wyłącznie panel:
+Wariant „panel pokazuje szczegóły JEDNEGO zaznaczonego wiersza" (`selectedUuid` w store strony, `collapsed` czytający zaznaczenie, tabela `selectionMode: 'single'`) **nie istnieje** — §6 obowiązuje wszędzie. Strona, która wcześniej pokazywała role jednego użytkownika, pokazuje role wszystkich zaznaczonych, pogrupowane po użytkowniku.
+
+Zostaje pytanie, co z akcjami, które z natury dotyczą jednej pary rodzic+dziecko („odbierz TĘ rolę TEMU użytkownikowi"). Odpowiedź: to akcje **podzaznaczenia wierszy panelu**, nie akcje wiersza tabeli:
 
 ```typescript
-@Injectable()
-export class UsersStore {
-  public readonly filters = signal<Partial<SearchUserAccountRequest>>({});
-  public readonly loading = signal<boolean>(false);
+// store zakładki: podzaznaczenie pogrupowane po rodzicu — payload akcji
+public readonly selectedRolesByUser = computed<Record<string, string[]>>(() => {
+  const dict: Record<string, string[]> = {};
+  for (const row of this.selectedChildren()) {
+    (dict[row.userUuid] ??= []).push(row.grant.roleUuid);
+  }
+  return dict;
+});
 
-  // Zaznaczenie i zasięg — identyczne jak w product.store.ts (§4), aż do materializacji.
-  public readonly selection = signal<ErpSelectionState<UserVM> | null>(null);
-  public setSelection(state: ErpSelectionState<UserVM>): void { this.selection.set(state); }
-  public clearSelection(): void { /* patrz product.store.ts */ }
-
-  public readonly scope = computed<ErpSelectionScope<UserVM, SearchUserAccountRequest>>(() =>
-    erpResolveSelectionScope(this.selection(), {
-      materializeLimit: USER_SELECTION_MATERIALIZE_LIMIT,
-      materializedIds: /* patrz materializacja w product.store.ts §4 */ null,
-    })
-  );
-  public readonly scopeKind = computed(() => this.scope().kind);
-
-  // Panel szczegółu czyta TEN sygnał, NIGDY `scope` wprost — ma sens tylko dla zasięgu
-  // rozwiązanego do DOKŁADNIE JEDNEGO identyfikatora (ręczne zaznaczenie jednego wiersza albo
-  // „Zaznacz wszystko" zmaterializowane do jednego trafienia filtra). Przy zaznaczeniu wielu
-  // wierszy albo trybie `query` panel się chowa — „role tego jednego użytkownika" nie ma
-  // sensownego odpowiednika dla zbioru.
-  public readonly selectedUuid = computed<string | null>(() => {
-    const scope = this.scope();
-    return scope.kind === 'explicit' && scope.ids.length === 1 ? scope.ids[0] : null;
-  });
+// komponent: jedna akcja toolbara obsługuje N par, nie jedną
+private _onRevokeSelected(): void {
+  const pairs = Object.entries(this._tabStore.selectedRolesByUser())
+    .flatMap(([userUuid, roleUuids]) => roleUuids.map(roleUuid => ({ userUuid, roleUuid })));
+  // ... potwierdzenie, potem Promise.all(pairs.map(...))
 }
 ```
 
-Materializację i cache uuidów kopiuj z `product.store.ts` (§4) bez zmian — jedyna różnica jest w `selectedUuid` na końcu.
+Trzy reguły dla takich akcji:
 
-Tabela w `content` ma `selectionMode: 'multi'` (checkboxy, **nie** `'single'`/radio) i emituje pełny `ErpSelectionState`, dokładnie jak w §1–6 — nie `string | null`. Zakładki w `rightPanel` **nie** dziedziczą po żadnym `XScopeTabStore` (§6.1) — nie pokazują próbki zbioru z banerem zasięgu, tylko dane JEDNEGO wiersza — czytają wprost `store.selectedUuid()`.
-
-**`collapsed` ma dwa warunki połączone `||`, tak samo jak w czystym master-detail (§7.1) poniżej.** `rightPanel` chowa się, gdy aktywna jest zakładka-lista ALBO gdy `selectedUuid()` jest pusty (zero, wiele wierszy albo tryb `query` — we wszystkich trzech przypadkach nie ma jednego wiersza do pokazania):
-
-```typescript
-protected readonly activeTabId = signal<string | null>(null);
-
-protected readonly tabsConfig = ErpTabsBuilder.create(b => b
-  .setLayout('horizontal')
-  .withSharedState(this.activeTabId)             // wymagane zawsze, gdy ErpTabsComponent renderuje się dwa razy — patrz §10
-  .addTab(USERS_KEYS.detail.tabs.list, 'list', { icon: '@tui.list' })   // bez `component` — jak 'products' w §3
-  .addTab(USERS_KEYS.detail.tabs.roles, 'roles', { component: UserRolesTabComponent, icon: '@tui.shield' })
-  // ... kolejne zakładki szczegółu
-  .setInitialValue('list')
-  .setOnTabChange(noop)
-);
-
-// w rightPanel:
-collapsed: computed(() => this.activeTabId() === 'list' || !this._store.selectedUuid()),
-```
-
-**Zaznaczenie DOKŁADNIE jednego wiersza, gdy zakładka-lista jest aktywna, musi ją przełączyć na pierwszą zakładkę szczegółu.** Bez tego wybranie jednego wiersza na zakładce `'list'` nie miałoby żadnego widocznego efektu — `collapsed` zostałby `true` przez sam `activeTabId() === 'list'`, mimo że `selectedUuid()` przestał być pusty. To osobny `effect()` w konstruktorze page, bo `tabsConfig`/`activeTabId` i `store.selectedUuid()` żyją w dwóch różnych miejscach:
-
-```typescript
-public constructor() {
-  effect(() => {
-    if (this._store.selectedUuid() && this.activeTabId() === 'list') {
-      this.activeTabId.set('roles');   // pierwsza zakładka szczegółu, nie 'list'
-    }
-  });
-}
-```
-
-**Toolbar dostaje dwie różne rodziny akcji, nie jedną.** Grupy zaznaczenia budowane nad `store.scope()` (§5) — „nadaj rolę wszystkim zaznaczonym" — współistnieją z akcjami jednowierszowymi otwieranymi Z PANELU szczegółu (zakładka Role/Uprawnienia tego jednego użytkownika: „odbierz TĘ KONKRETNĄ rolę") — to dwie osobne ścieżki UI, każda skierowana do innego kontraktu backendu (wsad na zasięgu vs. `Commands: [command]` na jednym, znanym celu — patrz [operacje masowe (backend)](../backend/bulk-commands.md#3-endpoint--trzy-tryby-jednego-kontraktu)).
-
-### 7.1. Czysty master-detail (bez żadnej akcji masowej)
-
-Gdy page nie ma **żadnej** akcji działającej na zbiorze — tylko podgląd/edycję jednego wybranego wiersza — nie buduj `ErpSelectionScope`, którego nic nie skonsumuje. Store trzyma zwykły `selectedUuid = signal<string | null>(null)`:
-
-```typescript
-@Injectable()
-export class SomeStore {
-  public readonly filters = signal<Partial<SearchSomeRequest>>({});
-  public readonly loading = signal<boolean>(false);
-  public readonly selectedUuid = signal<string | null>(null);
-
-  public select(uuid: string | null): void { this.selectedUuid.set(uuid); }
-}
-```
-
-Reszta szkieletu (grid, filtr, `ErpTabsComponent` renderowany dwa razy, `rightPanel` chowany warunkiem, `effect` przełączający zakładkę) jest **identyczna** jak w §7 wyżej — jedyna różnica to smart tabela w `content`: `selectionMode: 'single'` (radio) zamiast `'multi'`, emituje `string | null` zamiast `ErpSelectionState`, i store nie ma pól `selection`/`scope`/`scopeKind` w ogóle.
-
-### Wybór wariantu
-
-Pełny zasięg (§1–6) — jeśli KAŻDA akcja jest wyrażalna nad zbiorem i nie ma potrzeby podglądu jednego wiersza. Hybryda (§7) — jeśli są OBIE naraz: akcje masowe I panel szczegółu (np. `/identity/users`, `/identity/roles`). Czysty master-detail (§7.1) — jeśli TYLKO podgląd jednego wiersza, bez żadnej akcji nad zbiorem.
+1. **`.setScopes(['explicit'])` + `.setUnavailableHint(...)`** — akcja na wskazanych wierszach wymaga zaznaczenia rozwiązanego do listy identyfikatorów; przy zaznaczeniu opisanym filtrem panel pokazuje tylko próbkę i wybór pojedynczych wierszy jest zablokowany (§6.3, [zasięg zaznaczenia](./selection-scope.md)).
+2. **Akcja „dodaj" adresuje CAŁY zasięg, nie próbkę** — modal dostaje `batchTargets()` ze store'a zakładki (`targetUuids`/`targetFilter` + `targetCount`), więc „nadaj rolę" z panelu obejmie wszystkich zaznaczonych użytkowników, także tych spoza widocznej próbki.
+3. **Toolbar dostaje dwie różne rodziny akcji, nie jedną.** Akcje nad zbiorem rodziców („nadaj rolę wszystkim zaznaczonym") współistnieją z akcjami nad zaznaczonymi wierszami panelu („odbierz te konkretne przypisania") — to dwie osobne ścieżki UI, każda do innego kontraktu backendu (wsad na zasięgu vs. `Commands: [command]` na znanych celach — patrz [operacje masowe (backend)](../backend/bulk-commands.md#3-endpoint--trzy-tryby-jednego-kontraktu)).
 
 ---
 
@@ -396,11 +401,11 @@ Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGR
 
 1. **Sprawdź, czy orkiestrator agregatu istnieje** (`searchAsync`, `getViewModel()`/`getSignalViewModel()`) — jeśli nie, najpierw [orkiestrator](./orchestrators.md).
 2. **Zbuduj smart tabelę** dla agregatu wg [smart-tables.md](./smart-tables.md), z `sortsChange`/`.setFilters(...)`, jeśli page będzie miał zasięg zaznaczenia (§9.9 tamtego dokumentu).
-3. **Store strony** — skopiuj `product.store.ts` (tylko pełny zasięg, §4), `users.store.ts` (pełny zasięg + `selectedUuid` dla panelu, §7) albo szkielet z §7.1 (tylko `selectedUuid`, bez zasięgu) — zależnie od tego, czy będą akcje masowe i czy będzie panel szczegółu jednego wiersza.
+3. **Store strony** — skopiuj `product.store.ts` (tabela serwerowa: pełny zasięg z materializacją i `resolveUuids`, §4) albo `roles.store.ts` (tabela kliencka: zasięg zawsze `explicit`/`none`, bez materializacji). Nie dodawaj `selectedUuid` — panel nigdy nie pokazuje jednego wiersza (§6).
 4. **Filtr** — `ErpFilterBuilder` w `page/filters/`, `setOnSearch` woła store (§2).
 5. **Zdecyduj o zakładkach** (§3). Brak akcji specyficznych dla podzbiorów danych → bez zakładek, `content` renderuje wrapper toolbar+tabela wprost. W przeciwnym razie: `ErpTabsBuilder` w komponencie page, pierwszy `addTab` bez `component`, kolejne z `component` wskazującym panel boczny.
 6. **Pierwsza zakładka / `content`** — wrapper z `erp-action-toolbar` nad smart tabelą, `onSelectionChange` woła `store.setSelection(...)` (§5).
-7. **Każdy panel boczny**: store dziedziczący po `AGGREGATE-scope-tab.store.ts` (§6.1) + komponent z trzema stanami zasięgu, `erp-table` w trybie `client`, `erp-selection-scope-banner`, toolbar bramkowany `.setScopes(['explicit'])` tam, gdzie akcja wymaga wskazanych pozycji (§6.2–6.3).
+7. **Każdy panel boczny**: store dziedziczący po `AGGREGATE-scope-tab.store.ts` (który dziedziczy po `ErpScopeTabStore`, §6.1) + komponent z trzema stanami zasięgu, `erp-table` w trybie `client` z `setGroupedRows` po rodzicu (§6), `erp-selection-scope-banner`, toolbar bramkowany `.setScopes(['explicit'])` tam, gdzie akcja wymaga wskazanych pozycji (§6.2–6.3).
 8. **Szkielet siatki** w `AGGREGATE.component.ts` — `ErpGridLayoutBuilder`, `setLayoutId` unikalny w aplikacji, `ErpTabsComponent` renderowany dwa razy (`renderMode: 'tabs'` / `'content'`), `collapsed` na `rightPanel` warunkiem po aktywnej pierwszej zakładce / braku zaznaczenia (§1, §3).
 9. **Tłumaczenia** — wyłącznie klucze z registry modułu (`AGGREGATE_KEYS...`), zero stringów na sztywno w szablonach i etykietach toolbara/zakładek — patrz [tłumaczenia](./translations.md).
 10. **Rejestracja w routingu** modułu (`contract`) i w menu — patrz [nowy moduł §…](./new-module.md), jeśli to pierwszy page modułu.
@@ -415,11 +420,19 @@ Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGR
 - **Panel boczny jako smart tabela z własnym `searchAsync`** zamiast `erp-table` w trybie `client` karmionego z `tabStore.products`/orkiestratora — panel pokazuje dowód zasięgu, nie prowadzi własnej paginacji API.
 - **Nowa zakładka odtwarzająca mechanikę zasięgu** zamiast dziedziczenia po `AGGREGATE-scope-tab.store.ts` — progi/próbki/czyszczenie podzaznaczenia rozjadą się przy pierwszej zmianie.
 - **`erp-action-toolbar` poza `erpActionToolbarZone`** albo bez `[erpActionToolbarContext]` — skróty klawiszowe i Mega Menu tej strefy nie działają.
-- **Budowanie `ErpSelectionScope` dla page bez żadnej akcji masowej** (czysty master-detail) — niepotrzebna złożoność; wystarczy sam `selectedUuid` jak w §7.1, bez `selection`/`scope`/`scopeKind`.
+- **Panel pokazujący dane jednego zaznaczonego wiersza** (`selectedUuid` w store strony, `user()?.roleGrants` jako `items`) zamiast wierszy wszystkich zaznaczonych, pogrupowanych po rodzicu (§6) — przy zaznaczeniu pięciu użytkowników panel pokazuje jednego albo nic, a toolbar obok obiecuje akcję na całym zbiorze. Znaleziony we wszystkich zakładkach `users` i `roles`.
+- **Wiersz panelu bez identyfikatora rodzica** (`setRowIdAccessor(x => x.roleUuid)`) — w tabeli zbierającej wielu rodziców identyfikatory dzieci się powtarzają, więc zaznaczenie i śledzenie wierszy się rozjeżdżają. Klucz to zawsze para, np. `${r.userUuid}:${r.grant.roleUuid}`.
+- **Akcja „dodaj" z panelu adresująca tylko widoczną próbkę** zamiast `batchTargets()` (§7 pkt 2) — przy „Zaznacz wszystko" modal dostanie 10 UUID-ów zamiast filtra obejmującego tysiące.
 - **Różne `setLayoutId` między środowiskami/kopiami tego samego page** albo kolizja z istniejącym — psuje zapisane preferencje szerokości paneli innego page.
-- **`selectionMode` zaszyty na sztywno w `.setSelectionMode(...)` smart tabeli** zamiast wystawiony jako `input()` (patrz §5, [smart-tables.md §2](./smart-tables.md#2-anatomia)) — działa dopóki tabela ma jednego konsumenta, ale blokuje jej ponowne użycie w innym page z innym trybem zaznaczenia. Znaleziony w `identity-users-table.component.ts`.
+- **`selectionMode` zaszyty na sztywno w `.setSelectionMode(...)` smart tabeli** zamiast wystawiony jako `input()` (patrz §5, [smart-tables.md §2](./smart-tables.md#2-anatomia)) — działa dopóki tabela ma jednego konsumenta, ale blokuje jej ponowne użycie w innym page z innym trybem zaznaczenia.
+- **`selectionMode: 'single'` (radio) na głównej liście** — panel agreguje zaznaczenie (§6), a akcje masowe toolbara działają na zbiorze; radio odbiera obu rację bytu. Tabela główna zawsze `'multi'`.
 - **Brak `.withSharedState(this.activeTabId)` w `tabsConfig`, gdy `ErpTabsComponent` renderuje się dwa razy** (`renderMode: 'tabs'` + `renderMode: 'content'`) — bez współdzielonego stanu obie instancje trzymają osobny, niezależny stan aktywnej zakładki; kliknięcie nagłówka w obszarze `tabs` nie zmienia niczego w `rightPanel`. Dotyczy **każdego** wariantu z zakładkami, nie tylko §3. Znaleziony w `users.component.ts` i `roles.component.ts`.
-- **Pominięcie pierwszej zakładki-listy (bez `component`) w wariancie master-detail (§7)** — to nie jest coś, co odróżnia ten wariant od §3; zasada „pierwsza zakładka to lista" obowiązuje tu tak samo. Bez niej użytkownik nie ma sposobu, żeby ręcznie schować `rightPanel` i zobaczyć pełną listę, mając nadal zaznaczony wiersz. Znaleziony w `users.component.ts` i `roles.component.ts` — brakowało zarówno tej zakładki, jak i drugiego warunku w `collapsed` (`activeTabId() === 'list' || ...`).
+- **Pominięcie pierwszej zakładki-listy (bez `component`)** — bez niej użytkownik nie ma jak schować `rightPanel` i zobaczyć pełnej listy, mając nadal zaznaczone wiersze.
+- **`collapsed` czytający zaznaczenie ze store'a** (`activeTabId() === 'list' || !store.selectedUuid()`) zamiast samej aktywnej zakładki (§3) — panel zamyka się i otwiera pod użytkownikiem przy każdej zmianie zaznaczenia, a zakładka wybrana świadomie znika, gdy odznaczy ostatni wiersz. Znaleziony w `users.component.ts` i `roles.component.ts`.
+- **`effect()` przełączający zakładkę po zaznaczeniu wiersza** (§7) — ta sama mechanika „panel otwiera się sam", tylko od strony zakładek: zaznaczanie wierszy pod akcję masową wyrzuca użytkownika z widoku listy. Znaleziony w `users.component.ts` i `roles.component.ts`.
+- **Zakładka boczna bez stanu pustego** (§6) — skoro panel otwiera się wyborem zakładki, „nic nie zaznaczono" to jego normalny stan; bez `erp-empty-state` użytkownik dostaje pustą tabelę z toolbarem, który nie ma na czym działać, albo (przy `@if` bez `@else`) całkiem pusty panel. Znaleziony we wszystkich zakładkach bocznych `users` i `roles`.
+- **`rightPanel` chowany wyłącznie zaznaczeniem, bez zakładek w ogóle** (`collapsed: !store.selectedCode()`) — panel jest wtedy niedostępny na żądanie i nie da się go schować, mając coś zaznaczonego. Potrzebne są dwie zakładki (`'list'` + panel), nawet gdy panel jest tylko jeden. Znaleziony w `permissions.component.ts`.
+- **`setInitialValue(...)` przy `withSharedState(...)`** — `initialValue` działa tylko wtedy, gdy współdzielony sygnał jest pusty, więc albo jest martwym kodem, albo (gdy sygnał startuje z `null`) rozdziela stan początkowy na dwa miejsca. Zainicjuj sygnał wprost: `signal<string | null>('list')`. W `product.component.ts` te dwa miejsca mówiły co innego (`'products'` vs `'multimedia'`).
 - **Przycisk mutujący w komórce tabeli** (np. własny komponent komórki z ikoną kosza wołający komendę) **zamiast akcji zaznaczenia w `erp-action-toolbar`** (§5) — omija bramkowanie po uprawnieniach przez toolbar, przypięte akcje i skróty klawiszowe. Znaleziony w `user-roles-tab.component.ts` (`IdentityRowRemoveCellComponent`); ten sam wzorzec żyje jeszcze w `user-permissions-tab.component.ts` i `roles/tabs/role-members-tab.component.ts` — nie kopiuj z nich tej części.
 - **Ręcznie pisany `@for` z divami/chipami zamiast `erp-table`** dla danych w zakładce/panelu, nawet prostych i tylko-do-odczytu (§5) — traci sortowanie, resize, `stateKey`, wirtualizację i spójny `emptyMessage` za darmo dostępne w `erp-table`. Znaleziony w `user-effective-permissions-tab.component.ts`.
 - **Nagłówek `<h1>`/tytuł+podtytuł na górze `content`** (§5) — żaden przykład referencyjny go nie ma, nazwa strony już żyje w routingu/menu. Znaleziony niezależnie w czterech różnych komponentach obszaru `content` tego samego modułu (`users`, `roles`, `grant-audit`, `permissions`) — silny sygnał, że trzeba było to spisać zamiast liczyć, że kolejny page „zobaczy" brak nagłówka w przykładzie.

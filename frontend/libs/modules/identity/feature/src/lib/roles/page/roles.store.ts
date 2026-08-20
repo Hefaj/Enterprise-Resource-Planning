@@ -52,12 +52,4 @@ export class RolesStore {
   });
 
   public readonly scopeKind = computed(() => this.scope().kind);
-
-  /** Panel szczegółów (zakładki Uprawnienia/Role składowe/Zawarta w/Kto ma tę rolę) czyta TEN
-   * sygnał — pokazuje dane dokładnie jednej roli, więc ma sens tylko przy zaznaczeniu
-   * dokładnie jednego wiersza. Patrz analogiczny `UsersStore.selectedUuid`. */
-  public readonly selectedUuid = computed<string | null>(() => {
-    const scope = this.scope();
-    return scope.kind === 'explicit' && scope.ids.length === 1 ? scope.ids[0] : null;
-  });
 }

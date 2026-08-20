@@ -62,6 +62,7 @@ export const USERS_KEYS = {
         revokeConfirmMessage: 'users.detail.permissions.revokeConfirmMessage',
         revokeConfirmYes: 'users.detail.permissions.revokeConfirmYes',
         revokeConfirmNo: 'users.detail.permissions.revokeConfirmNo',
+        revokeAction: 'users.detail.permissions.revokeAction',
       },
       effective: {
         hint: 'users.detail.effective.hint',
@@ -70,6 +71,16 @@ export const USERS_KEYS = {
           module: 'users.detail.effective.columns.module',
           code: 'users.detail.effective.columns.code',
         },
+      },
+      selectionScope: {
+        resolving: 'users.detail.selectionScope.resolving',
+        allTitle: 'users.detail.selectionScope.allTitle',
+        previewTitle: 'users.detail.selectionScope.previewTitle',
+        previewDescription: 'users.detail.selectionScope.previewDescription',
+        rowSelectionUnavailable: 'users.detail.selectionScope.rowSelectionUnavailable',
+      },
+      columns: {
+        user: 'users.detail.columns.user',
       },
     },
     commands: {

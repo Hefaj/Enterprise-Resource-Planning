@@ -17,7 +17,7 @@
     }
   },
   "detail": {
-    "emptySelection": "Select a user from the list to see details.",
+    "emptySelection": "Select users from the list to see their details.",
     "statusActive": "Active",
     "statusInactive": "Inactive",
     "tabs": {
@@ -56,7 +56,8 @@
       "revokeConfirmTitle": "Revoke this permission?",
       "revokeConfirmMessage": "The directly granted permission will be revoked.",
       "revokeConfirmYes": "Revoke",
-      "revokeConfirmNo": "Cancel"
+      "revokeConfirmNo": "Cancel",
+      "revokeAction": "Revoke permission"
     },
     "effective": {
       "hint": "Direct and through every role in the inheritance chain. No \"source\" breakdown — only available for your own account.",
@@ -65,6 +66,16 @@
         "module": "Module",
         "code": "Permission"
       }
+    },
+    "selectionScope": {
+      "resolving": "Resolving selection…",
+      "allTitle": "All {{ count }} users matching the filters are selected",
+      "previewTitle": "Preview of {{ shown }} out of {{ count }} users matching the filters",
+      "previewDescription": "Bulk actions will cover every matching user, not only those listed below. Selecting individual rows is unavailable for this selection — narrow the filters to work on specific users.",
+      "rowSelectionUnavailable": "Selecting individual rows requires picking specific users"
+    },
+    "columns": {
+      "user": "User"
     }
   },
   "commands": {

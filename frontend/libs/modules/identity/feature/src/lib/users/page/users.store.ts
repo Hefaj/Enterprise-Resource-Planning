@@ -13,10 +13,9 @@ export const USER_SELECTION_MATERIALIZE_LIMIT = 100;
 /**
  * Stan strony `/identity/users` — filtry, zaznaczenie (`ErpSelectionState`) i zasięg
  * (`ErpSelectionScope`) dla akcji masowych toolbara (patrz `docs/frontend/selection-scope.md`),
- * wzorem `ProductStore`. Osobno: `selectedUuid` — panel szczegółów (zakładki Role/Uprawnienia)
- * pokazuje dane TYLKO gdy zaznaczenie rozwiązuje się do DOKŁADNIE JEDNEGO identyfikatora; przy
- * zaznaczeniu wielu wierszy albo trybie `query` panel się chowa, bo "role tego jednego
- * użytkownika" nie ma sensownego odpowiednika dla zbioru.
+ * wzorem `ProductStore`. Zakładki panelu bocznego czytają `scope` (przez `UserScopeTabStore`) —
+ * pokazują role/uprawnienia WSZYSTKICH zaznaczonych użytkowników w jednej tabeli, patrz
+ * `docs/frontend/pages.md` §6.
  */
 @Injectable()
 export class UsersStore {
@@ -63,15 +62,6 @@ export class UsersStore {
 
   public readonly scopeKind = computed(() => this.scope().kind);
 
-  /** Panel szczegółów (zakładki Role/Uprawnienia/Efektywne) czyta TEN sygnał, nigdy `scope`
-   * wprost — pokazuje dane dokładnie jednego użytkownika, więc ma sens tylko dla zasięgu
-   * rozwiązanego do pojedynczego identyfikatora (ręczne zaznaczenie JEDNEGO wiersza albo
-   * „Zaznacz wszystko" zmaterializowane do jednego trafienia filtra). */
-  public readonly selectedUuid = computed<string | null>(() => {
-    const scope = this.scope();
-    return scope.kind === 'explicit' && scope.ids.length === 1 ? scope.ids[0] : null;
-  });
-
   public constructor() {
     // Materializacja małych zaznaczeń „wszystko" — patrz `ProductStore` (wzorzec identyczny).
     effect(() => {
@@ -95,21 +85,31 @@ export class UsersStore {
     });
   }
 
+  /**
+   * Pierwsze `limit` identyfikatorów pasujących do filtra. Używa tego zarówno materializacja
+   * małych zaznaczeń „wszystko", jak i próbka rodziców w panelu bocznym (`UserScopeTabStore`).
+   */
+  public async resolveUuids(filters: Partial<SearchUserAccountRequest>, limit: number): Promise<string[]> {
+    const key = `${this._filterToken(filters)}|${limit}`;
+    const cached = this._uuidCache.get(key);
+    if (cached) return cached;
+
+    const response = await this._orchestrator.searchAsync(
+      { ...filters, page: 1, pageSize: limit } as SearchUserAccountRequest,
+      { autoLoad: true },
+    );
+
+    const uuids = response.uuids ?? [];
+    this._uuidCache.set(key, uuids);
+    return uuids;
+  }
+
   private async _materialize(
     token: string,
     filters: Record<string, any>,
     count: number,
   ): Promise<void> {
-    const key = `${token}|${count}`;
-    let uuids = this._uuidCache.get(key);
-    if (!uuids) {
-      const response = await this._orchestrator.searchAsync(
-        { ...filters, page: 1, pageSize: count } as SearchUserAccountRequest,
-        { autoLoad: true },
-      );
-      uuids = response.uuids ?? [];
-      this._uuidCache.set(key, uuids);
-    }
+    const uuids = await this.resolveUuids(filters, count);
 
     // Zaznaczenie mogło się w międzyczasie zmienić — wynik dla nieaktualnych filtrów odrzucamy.
     if (this._filterToken(this.selection()?.filters) !== token) return;

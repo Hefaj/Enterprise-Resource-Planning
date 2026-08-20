@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { ErpGridLayoutBuilder, ErpGridLayoutComponent, ErpTabsBuilder, ErpTabsComponent } from '@erp/shared/ui';
 import { noop } from 'rxjs';
 
@@ -12,13 +12,16 @@ import { provideRolesTranslations } from '../translation';
 import { ROLES_KEYS } from '../translation';
 
 /**
- * Strona `/identity/roles` — ten sam szkielet siatki co `ProductComponent`: poziomy pasek
- * zakładek nad treścią, stała lista ról w `content`, a zakładki (Lista/Uprawnienia/Role
- * składowe/Zawarta w/Kto ma tę rolę) w przeciągalnym, chowanym `rightPanel`. Pierwsza zakładka
- * (`'list'`) to — tak jak `'products'` w `ProductComponent` — zakładka bez `component` (patrz
- * `docs/frontend/pages.md` §3 pkt 1): jej „treścią" jest sąsiedni obszar `content`, a jej jedyna
- * rola to ręczne schowanie panelu bocznego bez utraty zaznaczenia. Bez kolumny filtru — ról są
- * dziesiątki, wyszukiwanie w tabeli klienckiej wystarcza.
+ * Strona `/identity/roles` — dokładnie ten sam szkielet siatki co `ProductComponent`
+ * (`frontend/libs/modules/catalog/feature/src/lib/product/page/product.component.ts`).
+ *
+ * Panel boczny otwiera i zamyka WYŁĄCZNIE wybór zakładki, nigdy zaznaczenie w tabeli
+ * (patrz `docs/frontend/pages.md` §3): zakładka `'list'` (bez `component`) to stan
+ * "panel schowany", każda kolejna to alternatywny widok otwierany na żądanie —
+ * niezależnie od tego, czy i co jest zaznaczone. Za komunikat "nic nie wybrano"
+ * odpowiada sama zakładka, nie warunek `collapsed`.
+ *
+ * Bez kolumny filtru — ról są dziesiątki, wyszukiwanie w tabeli klienckiej wystarcza.
  */
 @Component({
   selector: 'erp-identity-roles',
@@ -40,9 +43,7 @@ import { ROLES_KEYS } from '../translation';
   ],
 })
 export class RolesComponent {
-  private readonly _store = inject(RolesStore);
-
-  protected readonly activeTabId = signal<string | null>(null);
+  protected readonly activeTabId = signal<string | null>('list');
 
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
@@ -65,19 +66,9 @@ export class RolesComponent {
         component: RoleHoldersTabComponent,
         icon: '@tui.users',
       })
-      .setInitialValue('list')
       .setOnTabChange(noop),
   );
 
-  public constructor() {
-    // Patrz analogiczny komentarz w `UsersComponent` — bez tego zaznaczenie roli, gdy panel jest
-    // ręcznie schowany na zakładce 'list', nie miałoby żadnego widocznego efektu.
-    effect(() => {
-      if (this._store.selectedUuid() && this.activeTabId() === 'list') {
-        this.activeTabId.set('permissions');
-      }
-    });
-  }
 
   protected readonly pageConfig = ErpGridLayoutBuilder.create((b) =>
     b
@@ -99,7 +90,7 @@ export class RolesComponent {
           resizable: 'left',
           minWidth: 340,
           maxWidth: 900,
-          collapsed: computed(() => this.activeTabId() === 'list' || !this._store.selectedUuid()),
+          collapsed: computed(() => this.activeTabId() === 'list'),
         },
       ),
   );

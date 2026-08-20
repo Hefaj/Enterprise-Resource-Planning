@@ -7,6 +7,10 @@ export const PERMISSIONS_KEYS = {
     title: 'permissions.title',
     subtitle: 'permissions.subtitle',
     searchLabel: 'permissions.searchLabel',
+    tabs: {
+      list: 'permissions.tabs.list',
+      holders: 'permissions.tabs.holders',
+    },
     emptyMessage: 'permissions.emptyMessage',
     obsoleteBadge: 'permissions.obsoleteBadge',
     holders: {
@@ -17,5 +21,10 @@ export const PERMISSIONS_KEYS = {
         email: 'permissions.holders.columns.email',
         displayName: 'permissions.holders.columns.displayName',
       },
+    },
+    columns: {
+      code: 'permissions.columns.code',
+      description: 'permissions.columns.description',
+      status: 'permissions.columns.status',
     },
   } as const;

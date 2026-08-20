@@ -93,7 +93,7 @@ Podział wewnątrz `content/` jest **po miejscu renderowania**, nie po domenie:
   - `AGGREGATE-list.component.ts` albo inna nazwa opisowa — gdy zakładek nie ma i nic tu nie jest zakładką (`grant-audit-list`, `permissions-catalog-list`).
 
   Nie nazywaj go `AGGREGATE-content.component.ts` — słowo „content" niesie już katalog, w którym plik leży.
-- **`content/side-panel/`** — zakładki obszaru `rightPanel`, czyli panele zależne od zaznaczenia ([pages.md §6](./pages.md#6-panel-boczny-zależny-od-zaznaczenia-kolejne-zakładki-rightpanel)). Wspólna baza ich store'ów (`AGGREGATE-scope-tab.store.ts`) leży płasko w `side-panel/`, bo jest dzielona przez wszystkie panele; każdy panel dostaje własny podkatalog ze swoim komponentem, store'em, modelem wiersza i komórkami.
+- **`content/side-panel/`** — zakładki obszaru `rightPanel`, czyli panele zależne od zaznaczenia ([pages.md §6](./pages.md#6-panel-boczny-zależny-od-zaznaczenia-kolejne-zakładki-rightpanel)). Wspólna baza ich store'ów (`AGGREGATE-scope-tab.store.ts` — cienka klasa nad `ErpScopeTabStore` z `libs/shared/ui`, patrz [pages.md §6.1](./pages.md#61-store-zakładki-dziedziczy-po-wspólnej-bazie-zasięgu-strony)) leży płasko w `side-panel/`, bo jest dzielona przez wszystkie panele; każdy panel dostaje własny podkatalog ze swoim komponentem, store'em, modelem wiersza i komórkami.
 
 Zakładki zagnieżdżone (`children: [...]` w `addTab`) dostają jeden wspólny podkatalog rodzica — np. `side-panel/sales-offer/` z `exclusion-tab.component.ts` i `delivery-tab.component.ts` — bez powielania słowa `tabs` w nazwie katalogu (sufiks `-tab` w nazwie pliku już to mówi).
 

@@ -32,6 +32,14 @@ export const ROLES_KEYS = {
         removeConfirmMessage: 'roles.detail.permissions.removeConfirmMessage',
         removeConfirmYes: 'roles.detail.permissions.removeConfirmYes',
         removeConfirmNo: 'roles.detail.permissions.removeConfirmNo',
+        columns: {
+          code: 'roles.detail.permissions.columns.code',
+        },
+        revokeAction: 'roles.detail.permissions.revokeAction',
+        revokeConfirmTitle: 'roles.detail.permissions.revokeConfirmTitle',
+        revokeConfirmMessage: 'roles.detail.permissions.revokeConfirmMessage',
+        revokeConfirmYes: 'roles.detail.permissions.revokeConfirmYes',
+        revokeConfirmNo: 'roles.detail.permissions.revokeConfirmNo',
       },
       members: {
         emptyMessage: 'roles.detail.members.emptyMessage',
@@ -43,6 +51,11 @@ export const ROLES_KEYS = {
         removeConfirmMessage: 'roles.detail.members.removeConfirmMessage',
         removeConfirmYes: 'roles.detail.members.removeConfirmYes',
         removeConfirmNo: 'roles.detail.members.removeConfirmNo',
+        revokeConfirmTitle: 'roles.detail.members.revokeConfirmTitle',
+        revokeConfirmMessage: 'roles.detail.members.revokeConfirmMessage',
+        revokeConfirmYes: 'roles.detail.members.revokeConfirmYes',
+        revokeConfirmNo: 'roles.detail.members.revokeConfirmNo',
+        revokeAction: 'roles.detail.members.revokeAction',
       },
       containers: {
         emptyMessage: 'roles.detail.containers.emptyMessage',
@@ -57,6 +70,12 @@ export const ROLES_KEYS = {
           email: 'roles.detail.holders.columns.email',
           displayName: 'roles.detail.holders.columns.displayName',
         },
+      },
+      selectionScope: {
+        rowSelectionUnavailable: 'roles.detail.selectionScope.rowSelectionUnavailable',
+      },
+      columns: {
+        role: 'roles.detail.columns.role',
       },
     },
     commands: {

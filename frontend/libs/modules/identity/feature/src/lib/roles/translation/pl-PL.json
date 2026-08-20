@@ -12,7 +12,7 @@
     }
   },
   "detail": {
-    "emptySelection": "Wybierz rolę z listy, aby zobaczyć szczegóły.",
+    "emptySelection": "Zaznacz role z listy, aby zobaczyć ich szczegóły.",
     "systemBadge": "Systemowa",
     "tabs": {
       "list": "Lista ról",
@@ -26,7 +26,15 @@
       "removeConfirmTitle": "Usunąć uprawnienie z roli?",
       "removeConfirmMessage": "Wszyscy użytkownicy mający tę rolę stracą to uprawnienie (chyba że mają je z innego źródła).",
       "removeConfirmYes": "Usuń",
-      "removeConfirmNo": "Anuluj"
+      "removeConfirmNo": "Anuluj",
+      "columns": {
+        "code": "Kod uprawnienia"
+      },
+      "revokeAction": "Usuń uprawnienie",
+      "revokeConfirmTitle": "Usunąć uprawnienie z roli?",
+      "revokeConfirmMessage": "Wszyscy użytkownicy mający tę rolę stracą to uprawnienie (chyba że mają je z innego źródła).",
+      "revokeConfirmYes": "Usuń",
+      "revokeConfirmNo": "Anuluj"
     },
     "members": {
       "emptyMessage": "Rola nie zawiera żadnych ról składowych.",
@@ -37,7 +45,12 @@
       "removeConfirmTitle": "Usunąć rolę składową?",
       "removeConfirmMessage": "Uprawnienia płynące z tej roli składowej przestaną się dziedziczyć.",
       "removeConfirmYes": "Usuń",
-      "removeConfirmNo": "Anuluj"
+      "removeConfirmNo": "Anuluj",
+      "revokeConfirmTitle": "Usunąć rolę składową?",
+      "revokeConfirmMessage": "Uprawnienia płynące z tej roli składowej przestaną się dziedziczyć.",
+      "revokeConfirmYes": "Usuń",
+      "revokeConfirmNo": "Anuluj",
+      "revokeAction": "Usuń rolę składową"
     },
     "containers": {
       "emptyMessage": "Ta rola nie jest składową żadnej innej roli.",
@@ -52,6 +65,12 @@
         "email": "E-mail",
         "displayName": "Nazwa"
       }
+    },
+    "selectionScope": {
+      "rowSelectionUnavailable": "Wybór pojedynczych wierszy wymaga zaznaczenia konkretnych ról"
+    },
+    "columns": {
+      "role": "Rola"
     }
   },
   "commands": {

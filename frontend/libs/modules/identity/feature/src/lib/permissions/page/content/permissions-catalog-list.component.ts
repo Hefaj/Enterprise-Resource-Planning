@@ -1,103 +1,41 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ErpTranslatePipe } from '@erp/shared/ui';
+import {
+  ErpSelectionState,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
+  ErpTranslatePipe,
+} from '@erp/shared/ui';
 import { PermissionCatalogOrchestrator, PermissionCatalogVM } from '@erp/identity/data-access';
+import { PermissionDescriptionCellComponent } from './permission-description-cell.component';
 
 import { PermissionsStore } from '../permissions.store';
 import { PERMISSIONS_KEYS } from '../../translation';
 
+/** Grupa tabeli — moduł, do którego należy uprawnienie. */
 interface ModuleGroup {
   readonly module: string;
-  readonly entries: PermissionCatalogVM[];
 }
 
-/** Katalog uprawnień grupowany po module. Wyszukiwanie (`PermissionsStore.search`, ustawiane
- * przez `PermissionsFilterComponent` po lewej) jest klient-side — cały katalog jest już w
- * pamięci, backend celowo nie paginuje (patrz `PermissionCatalogOrchestrator`). */
+/**
+ * Katalog uprawnień w obszarze `content` — `erp-table` w trybie `client`, grupowana po module,
+ * z zaznaczeniem wielokrotnym. Wyszukiwanie (`PermissionsStore.search`, ustawiane przez filtr po
+ * lewej) jest klient-side — cały katalog jest już w pamięci, backend celowo nie paginuje
+ * (patrz `PermissionCatalogOrchestrator`).
+ *
+ * Zaznaczenie karmi panel „kto ma uprawnienie" przez `PermissionsStore.scope` — panel pokazuje
+ * posiadaczy WSZYSTKICH zaznaczonych uprawnień naraz (patrz `docs/frontend/pages.md` §6).
+ */
 @Component({
   selector: 'erp-identity-permissions-catalog-list',
   standalone: true,
-  imports: [CommonModule, ErpTranslatePipe],
+  imports: [CommonModule, ErpTableComponent, ErpTranslatePipe],
   template: `
-    <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
-      <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
-        @for (group of groups(); track group.module) {
-          <div class="flex flex-col gap-1.5">
-            <h4 class="module-title">{{ group.module }}</h4>
-            <div class="flex flex-col gap-1">
-              @for (entry of group.entries; track entry.code) {
-                <button
-                  type="button"
-                  class="entry-row"
-                  [class.selected]="store.selectedCode() === entry.code"
-                  (click)="store.selectPermission(entry.code)"
-                >
-                  <span class="entry-code">{{ entry.code }}</span>
-                  <span class="entry-desc">{{ entry.descriptionKey | erpTranslate }}</span>
-                  @if (entry.isObsolete) {
-                    <span class="badge">{{ PERMISSIONS_KEYS.obsoleteBadge | erpTranslate }}</span>
-                  }
-                </button>
-              }
-            </div>
-          </div>
-        }
-
-        @if (groups().length === 0) {
-          <p class="empty">{{ PERMISSIONS_KEYS.emptyMessage | erpTranslate }}</p>
-        }
-      </div>
+    <div class="flex flex-col h-full w-full min-h-0 p-2">
+      <erp-table class="block h-full w-full" [config]="tableConfig()" />
     </div>
   `,
-  styles: [
-    `
-      .module-title {
-        margin: 0;
-        font: var(--tui-typography-text-s-bold);
-        text-transform: uppercase;
-        color: var(--tui-text-secondary);
-      }
-      .entry-row {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        text-align: left;
-        padding: 0.4rem 0.6rem;
-        border-radius: 0.375rem;
-        border: 1px solid transparent;
-        background: none;
-        cursor: pointer;
-        width: 100%;
-      }
-      .entry-row:hover {
-        background: var(--tui-background-neutral-1);
-      }
-      .entry-row.selected {
-        background: var(--tui-background-neutral-1);
-        border-color: var(--tui-border-normal);
-      }
-      .entry-code {
-        font-family: monospace;
-        font-size: 0.8rem;
-        min-width: 14rem;
-      }
-      .entry-desc {
-        color: var(--tui-text-secondary);
-        font-size: 0.8rem;
-        flex: 1;
-      }
-      .badge {
-        font-size: 0.7rem;
-        padding: 0.1rem 0.4rem;
-        border-radius: 0.25rem;
-        background: var(--tui-status-warning-pale);
-        color: var(--tui-status-warning);
-      }
-      .empty {
-        color: var(--tui-text-secondary);
-      }
-    `,
-  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionsCatalogListComponent {
@@ -106,22 +44,68 @@ export class PermissionsCatalogListComponent {
 
   private readonly _orchestrator = inject(PermissionCatalogOrchestrator);
 
-  protected readonly groups = computed<ModuleGroup[]>(() => {
+  public constructor() {
+    // Katalog nie jest paginowany i nikt inny go na tej stronie nie ładuje — bez tego lista
+    // była pusta, dopóki użytkownik nie otworzył modala nadania uprawnienia.
+    void this._orchestrator.loadAllAsync().catch((err) =>
+      console.error('[PermissionsCatalogListComponent] Nie udało się pobrać katalogu uprawnień.', err),
+    );
+  }
+
+  protected readonly entries = computed<PermissionCatalogVM[]>(() => {
     const search = this.store.search().trim().toLowerCase();
     const all = [...this._orchestrator.getViewModel()().values()];
-    const filtered = search ? all.filter((e) => e.code.toLowerCase().includes(search) || e.module.toLowerCase().includes(search)) : all;
+    const filtered = search
+      ? all.filter((e) => e.code.toLowerCase().includes(search) || e.module.toLowerCase().includes(search))
+      : all;
 
-    const byModule = new Map<string, PermissionCatalogVM[]>();
-    for (const entry of filtered) {
-      const list = byModule.get(entry.module) ?? [];
-      list.push(entry);
-      byModule.set(entry.module, list);
-    }
-
-    return [...byModule.entries()].map(([module, entries]) => ({ module, entries: entries.sort((a, b) => a.code.localeCompare(b.code)) })).sort((a, b) => a.module.localeCompare(b.module));
+    return filtered.sort((a, b) => a.module.localeCompare(b.module) || a.code.localeCompare(b.code));
   });
 
-  public constructor() {
-    this._orchestrator.loadAllAsync().catch((err) => console.error('[PermissionsCatalogListComponent] Nie udało się pobrać katalogu.', err));
-  }
+  protected readonly groups = computed<ModuleGroup[]>(() =>
+    [...new Set(this.entries().map((e) => e.module))].map((module) => ({ module })),
+  );
+
+  protected readonly tableConfig = computed<ErpTableConfig<PermissionCatalogVM>>(() =>
+    ErpTableBuilder.create<ErpTableBuilder<PermissionCatalogVM>>((table) =>
+      table
+        .setStateKey('identity-permissions-catalog')
+        .setMode('client')
+        .setRowIdAccessor((row) => row.code)
+        .setItems(this.entries)
+        .setItemCount(computed(() => this.entries().length))
+        .setEnableVirtualScroll(true)
+        .setEstimatedRowHeight(48)
+        .setSelectionMode('multi')
+        .setOnSelectionChange((state: ErpSelectionState<PermissionCatalogVM>) => this.store.setSelection(state))
+        .setEmptyMessage(PERMISSIONS_KEYS.emptyMessage)
+        .addColumn((c) =>
+          c.setId('code').setAccessorKey('code').setHeader(PERMISSIONS_KEYS.columns.code).setSize(280),
+        )
+        .addColumn((c) =>
+          c
+            .setId('description')
+            .setCell(PermissionDescriptionCellComponent)
+            .setHeader(PERMISSIONS_KEYS.columns.description)
+            .setEnableSorting(false)
+            .setSize(320),
+        )
+        .addColumn((c) =>
+          c
+            .setId('obsolete')
+            .setAccessorFn((row: PermissionCatalogVM) => (row.isObsolete ? PERMISSIONS_KEYS.obsoleteBadge : ''))
+            .setHeader(PERMISSIONS_KEYS.columns.status)
+            .setSize(120),
+        )
+        .setGroupedRows<ModuleGroup>((g) =>
+          g
+            .setGroups(this.groups)
+            .setGetGroupKey((group) => group.module)
+            .setGetRowGroupKey((row: PermissionCatalogVM) => row.module)
+            .setGetGroupTitle((group) => group.module)
+            .setGetGroupIcon(() => '@tui.key')
+            .setDefaultExpanded(true),
+        ),
+    ),
+  );
 }

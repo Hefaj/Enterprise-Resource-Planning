@@ -1,103 +1,83 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpModalService, ErpTranslatePipe } from '@erp/shared/ui';
+import {
+  ErpActionToolbarBuilder,
+  ErpActionToolbarComponent,
+  ErpActionToolbarContextDirective,
+  ErpActionToolbarZoneDirective,
+  ErpEmptyStateComponent,
+  ErpEmptyStateConfig,
+  ErpModalService,
+  ErpSelectionState,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
+} from '@erp/shared/ui';
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
-import { RoleOrchestrator } from '@erp/identity/data-access';
+import { RoleOrchestrator, RoleVM } from '@erp/identity/data-access';
 import { ADD_ROLE_PERMISSION_MODAL_ID } from '@erp/identity/util';
-import { RolesStore } from '../../../roles.store';
 import { ROLES_KEYS } from '../../../../translation';
+import { RolePermissionRow, RolePermissionsTabStore } from './role-permissions-tab.store';
 
-/** Zakładka "Uprawnienia" panelu szczegółów roli — chipsy `permissions` + dodawanie/usuwanie.
- * Zablokowana dla ról systemowych (`isSystem`) — patrz `RoleSeeder.AdministratorRoleCode`
- * w `docs/backend/identity-authz.md` §7 Faza 2. */
+/**
+ * Zakładka „Uprawnienia" — uprawnienia WSZYSTKICH zaznaczonych ról w JEDNEJ tabeli,
+ * pogrupowane po roli (patrz `docs/frontend/pages.md` §6).
+ *
+ * Odbieranie uprawnienia jest akcją zaznaczenia w toolbarze, nie przyciskiem przy chipie —
+ * dzięki temu podlega bramkowaniu po uprawnieniach (`docs/frontend/pages.md` §10).
+ * Role systemowe są niemodyfikowalne, więc ich wiersze nie wchodzą do akcji.
+ */
 @Component({
   selector: 'erp-identity-role-permissions-tab',
   standalone: true,
-  imports: [CommonModule, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, ErpTranslatePipe],
-  template: `
-    @if (role(); as r) {
-      <div
-        class="flex flex-col h-full w-full gap-2 p-2 overflow-y-auto"
-        erpActionToolbarZone
-        [erpActionToolbarContext]="actionToolbar"
-      >
-        <erp-action-toolbar [config]="actionToolbar" />
-
-        @if (r.permissions.length === 0) {
-          <p class="empty">{{ ROLES_KEYS.detail.permissions.emptyMessage | erpTranslate }}</p>
-        }
-
-        <div class="flex flex-wrap gap-1.5">
-          @for (code of r.permissions; track code) {
-            <span class="chip">
-              {{ code }}
-              @if (canManage() && !r.isSystem) {
-                <button
-                  type="button"
-                  class="chip-remove"
-                  (click)="onRemove(code)"
-                >
-                  ×
-                </button>
-              }
-            </span>
-          }
-        </div>
-      </div>
-    }
-  `,
-  styles: [
-    `
-      .empty {
-        margin: 0;
-        color: var(--tui-text-secondary);
-      }
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 1rem;
-        background: var(--tui-background-neutral-1);
-        color: var(--tui-text-primary);
-        font-size: 0.75rem;
-        border: 1px solid var(--tui-border-normal);
-      }
-      .chip-remove {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-        color: var(--tui-text-tertiary);
-        font-size: 0.9rem;
-      }
-      .chip-remove:hover {
-        color: var(--tui-status-negative);
-      }
-    `,
+  imports: [
+    CommonModule,
+    ErpActionToolbarComponent,
+    ErpActionToolbarZoneDirective,
+    ErpActionToolbarContextDirective,
+    ErpTableComponent,
+    ErpEmptyStateComponent,
   ],
+  providers: [RolePermissionsTabStore],
+  template: `
+    <div class="h-full w-full p-2">
+      @if (scopeKind() === 'none') {
+        <erp-empty-state [config]="emptySelectionConfig" />
+      } @else {
+        <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+          <erp-action-toolbar [config]="actionToolbar" />
+          <div class="flex-1 min-h-0">
+            <erp-table class="block h-full w-full" [config]="tableConfig()" />
+          </div>
+        </div>
+      }
+    </div>
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RolePermissionsTabComponent {
-  protected readonly ROLES_KEYS = ROLES_KEYS;
-
-  private readonly _store = inject(RolesStore);
+  private readonly _tabStore = inject(RolePermissionsTabStore);
   private readonly _orchestrator = inject(RoleOrchestrator);
   private readonly _modalService = inject(ErpModalService);
   private readonly _confirm = inject(IdentityConfirmDialogService);
   private readonly _permissionStore = inject(PermissionStore);
 
-  /** Patrz komentarz przy tym samym wzorcu w `UserRolesTabComponent` — `NgComponentOutlet`
-   * przyjmuje tylko migawkę wartości, więc zakładka sama czyta bieżący wybór ze store'a. */
-  protected readonly role = computed(() => {
-    const uuid = this._store.selectedUuid();
-    return uuid ? this._orchestrator.getOne(uuid)() : undefined;
-  });
+  protected readonly scopeKind = this._tabStore.scopeKind;
+  protected readonly roles = this._tabStore.roles;
+
+  protected readonly rows = computed<RolePermissionRow[]>(() =>
+    this.roles().flatMap((role) =>
+      (role.permissions ?? []).map((code) => ({ roleUuid: role.uuid, code, isSystem: role.isSystem })),
+    ),
+  );
 
   protected readonly canManage = computed(() => this._permissionStore.has(ERP_PERMISSIONS.Identity.RoleManage));
+
+  protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
+    icon: '@tui.mouse-pointer-click',
+    message: ROLES_KEYS.detail.emptySelection,
+  };
 
   protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
     b
@@ -113,33 +93,97 @@ export class RolePermissionsTabComponent {
               .setLabel(ROLES_KEYS.commands.addPermission.label)
               .setIcon('@tui.plus')
               .setAppearance('success')
-              .setHidden(computed(() => !this.canManage() || !!this.role()?.isSystem))
-              .setFn(() => this._openAddPermissionModal()),
+              .setHidden(computed(() => !this.canManage()))
+              .setFn(() => this._openAddModal()),
           ),
       )
+      .addSelectionGroup((g) =>
+        g
+          .setId('permission-selection')
+          .setLabel(ROLES_KEYS.detail.permissions.revokeAction)
+          .setIcon('@tui.trash-2')
+          .addAction((a) =>
+            a
+              .setId('remove-permission')
+              .setLabel(ROLES_KEYS.detail.permissions.revokeAction)
+              .setIcon('@tui.trash-2')
+              .setAppearance('warning')
+              .setScopes(['explicit'])
+              .setUnavailableHint(ROLES_KEYS.detail.selectionScope.rowSelectionUnavailable)
+              .setHidden(computed(() => !this.canManage()))
+              .setFn(() => this._onRemoveSelected()),
+          ),
+      )
+      .setSelectionCount(this._tabStore.selectedChildrenCount)
+      .setSelectionScope(this._tabStore.scopeKind)
+      .setSelectionLabel(ROLES_KEYS.detail.tabs.permissions)
+      .setOnClearSelection(() => this._tabStore.clearChildSelection())
       .setPinnedActionIds(['add-permission']),
   );
 
-  private _openAddPermissionModal(): void {
-    const role = this.role();
-    if (!role) return;
-    this._modalService.open(ADD_ROLE_PERMISSION_MODAL_ID, { targetUuids: [role.uuid] }, { excludeCodes: role.permissions });
+  protected readonly tableConfig = computed<ErpTableConfig<RolePermissionRow>>(() =>
+    ErpTableBuilder.create<ErpTableBuilder<RolePermissionRow>>((table) =>
+      table
+        .setStateKey('identity-roles-permissions-tab')
+        .setMode('client')
+        .setRowIdAccessor((r) => `${r.roleUuid}:${r.code}`)
+        .setItems(this.rows)
+        .setItemCount(computed(() => this.rows().length))
+        .setEnableVirtualScroll(true)
+        .setEstimatedRowHeight(48)
+        .setSelectionMode(this.canManage() && this._tabStore.canSelectChildren() ? 'multi' : 'none')
+        .setOnSelectionChange((state: ErpSelectionState<RolePermissionRow>) =>
+          this._tabStore.setSelectedChildren((state.selectedItems ?? []).filter((row) => !row.isSystem)),
+        )
+        .setEmptyMessage(ROLES_KEYS.detail.permissions.emptyMessage)
+        .addColumn((c) =>
+          c.setId('code').setAccessorKey('code').setHeader(ROLES_KEYS.detail.permissions.columns.code).setSize(280),
+        )
+        .setGroupedRows<RoleVM>((g) =>
+          g
+            .setGroups(this.roles)
+            .setGetGroupKey((r) => r.uuid)
+            .setGetRowGroupKey((r: RolePermissionRow) => r.roleUuid)
+            .setGetGroupTitle((r) => r.name ?? r.code)
+            .setGetGroupSubtitle((r) => r.code)
+            .setGetGroupIcon(() => '@tui.shield')
+            .setDefaultExpanded(true),
+        ),
+    ),
+  );
+
+  /** Modal dodania uprawnienia adresuje CAŁY zasięg zaznaczonych ról. */
+  private _openAddModal(): void {
+    const targets = this._tabStore.batchTargets();
+    this._modalService.open(ADD_ROLE_PERMISSION_MODAL_ID, {
+      targetUuids: targets.targetUuids,
+      targetFilter: targets.targetFilter,
+      targetCount: this._tabStore.scopeCount(),
+    });
   }
 
-  protected onRemove(code: string): void {
-    const roleUuid = this.role()?.uuid;
-    if (!roleUuid) return;
+  private _onRemoveSelected(): void {
+    const pairs = Object.entries(this._tabStore.selectedPermissionsByRole()).flatMap(([roleUuid, codes]) =>
+      codes.map((permissionCode) => ({ roleUuid, permissionCode })),
+    );
+    if (pairs.length === 0) return;
 
     this._confirm
       .confirm({
-        title: ROLES_KEYS.detail.permissions.removeConfirmTitle,
-        message: ROLES_KEYS.detail.permissions.removeConfirmMessage,
-        yes: ROLES_KEYS.detail.permissions.removeConfirmYes,
-        no: ROLES_KEYS.detail.permissions.removeConfirmNo,
+        title: ROLES_KEYS.detail.permissions.revokeConfirmTitle,
+        message: ROLES_KEYS.detail.permissions.revokeConfirmMessage,
+        yes: ROLES_KEYS.detail.permissions.revokeConfirmYes,
+        no: ROLES_KEYS.detail.permissions.revokeConfirmNo,
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator.removePermissionAsync({ uuid: roleUuid, permissionCode: code }).catch((err) => console.error('[RolePermissionsTabComponent] Nie udało się usunąć uprawnienia.', err));
+        Promise.all(
+          pairs.map(({ roleUuid, permissionCode }) =>
+            this._orchestrator.removePermissionAsync({ uuid: roleUuid, permissionCode }),
+          ),
+        )
+          .then(() => this._tabStore.clearChildSelection())
+          .catch((err) => console.error('[RolePermissionsTabComponent] Nie udało się odebrać uprawnienia.', err));
       });
   }
 }

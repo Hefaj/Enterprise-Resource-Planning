@@ -2,6 +2,10 @@
   "title": "Uprawnienia",
   "subtitle": "Katalog uprawnień zdefiniowany w kodzie — widok tylko do odczytu.",
   "searchLabel": "Szukaj po kodzie lub module",
+  "tabs": {
+    "list": "Katalog uprawnień",
+    "holders": "Kto ma uprawnienie"
+  },
   "emptyMessage": "Brak uprawnień spełniających kryteria.",
   "obsoleteBadge": "Wycofane",
   "holders": {
@@ -12,5 +16,10 @@
       "email": "E-mail",
       "displayName": "Nazwa"
     }
+  },
+  "columns": {
+    "code": "Kod uprawnienia",
+    "description": "Opis",
+    "status": "Status"
   }
 }

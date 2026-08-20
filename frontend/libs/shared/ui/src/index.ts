@@ -3,6 +3,7 @@ export * from './lib/base/erp-base-builder';
 export * from './lib/base/erp-translate.pipe';
 export * from './lib/base/erp-icon.types';
 export * from './lib/base/erp-dropdown-min-width.directive';
+export * from './lib/base/erp-scope-tab.store';
 
 // Form
 export * from './lib/form/erp-input';

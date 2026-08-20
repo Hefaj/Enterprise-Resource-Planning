@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -6,64 +6,101 @@ import {
   ErpActionToolbarComponent,
   ErpActionToolbarContextDirective,
   ErpActionToolbarZoneDirective,
-  ErpTableComponent,
-  ErpTableBuilder,
+  ErpEmptyStateComponent,
+  ErpEmptyStateConfig,
   ErpModalService,
+  ErpSelectionScopeBannerBuilder,
+  ErpSelectionScopeBannerComponent,
   ErpSelectionState,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
 } from '@erp/shared/ui';
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
-import { UserOrchestrator, UserRoleGrantVM } from '@erp/identity/data-access';
+import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
 import { ASSIGN_USER_ROLE_MODAL_ID } from '@erp/identity/util';
-import { UsersStore } from '../../../users.store';
 import { USERS_KEYS } from '../../../../translation';
+import { UserRoleGrantRow, UserRolesTabStore } from './user-roles-tab.store';
 
-/** Zakładka "Role" panelu szczegółów użytkownika — tabela `roleGrants` + nadawanie/odbieranie.
- * Odbieranie roli jest akcją zaznaczenia w `erp-action-toolbar` (zaznacz wiersz radiem, potem
- * "Odbierz rolę" w toolbarze), nie osobnym przyciskiem w komórce tabeli. */
+/**
+ * Zakładka „Role" — role WSZYSTKICH zaznaczonych użytkowników w JEDNEJ tabeli, pogrupowane po
+ * użytkowniku (patrz `docs/frontend/pages.md` §6). Panel otwiera wybór zakładki, nie zaznaczenie,
+ * więc obsługuje też stan „nic nie zaznaczono" oraz próbkę w trybie `query`.
+ *
+ * Odbieranie roli jest akcją zaznaczenia w `erp-action-toolbar` (zaznacz wiersze, potem
+ * „Odbierz rolę" w toolbarze), nie przyciskiem w komórce tabeli.
+ */
 @Component({
   selector: 'erp-identity-user-roles-tab',
   standalone: true,
-  imports: [CommonModule, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, ErpTableComponent],
+  imports: [
+    CommonModule,
+    ErpActionToolbarComponent,
+    ErpActionToolbarZoneDirective,
+    ErpActionToolbarContextDirective,
+    ErpTableComponent,
+    ErpEmptyStateComponent,
+    ErpSelectionScopeBannerComponent,
+  ],
+  providers: [UserRolesTabStore],
   template: `
-    <div
-      class="flex flex-col h-full w-full gap-2 p-2"
-      erpActionToolbarZone
-      [erpActionToolbarContext]="actionToolbar"
-    >
-      <erp-action-toolbar [config]="actionToolbar" />
-      <div class="flex-1 min-h-0">
-        <erp-table
-          class="block h-full w-full"
-          [config]="tableConfig()"
-        />
-      </div>
+    <div class="h-full w-full p-2">
+      @if (scopeKind() === 'none') {
+        <erp-empty-state [config]="emptySelectionConfig" />
+      } @else if (resolving()) {
+        <erp-empty-state [config]="resolvingConfig" />
+      } @else {
+        <div class="flex flex-col gap-2 h-full w-full" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+          <erp-action-toolbar [config]="actionToolbar" />
+          <erp-selection-scope-banner [config]="scopeBannerConfig" />
+          <div class="flex-1 min-h-0">
+            <erp-table class="block h-full w-full" [config]="tableConfig()" />
+          </div>
+        </div>
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserRolesTabComponent {
-  private readonly _store = inject(UsersStore);
+  private readonly _tabStore = inject(UserRolesTabStore);
   private readonly _orchestrator = inject(UserOrchestrator);
   private readonly _modalService = inject(ErpModalService);
   private readonly _confirm = inject(IdentityConfirmDialogService);
   private readonly _permissionStore = inject(PermissionStore);
 
-  /** Panel-nadrzędny renderuje tę zakładkę tylko, gdy jakiś użytkownik jest wybrany — patrz
-   * `UsersComponent` — więc w praktyce zawsze zdefiniowany. Typowany jako `| undefined`, bo
-   * `NgComponentOutlet` (przez który ta zakładka jest osadzana, patrz `ErpTabsComponent`) nie
-   * potrafi przyjąć reaktywnego inputu — czyta migawkę wartości, nie `Signal`, więc każda
-   * zakładka sama odczytuje bieżący wybór ze wspólnego `UsersStore` zamiast dostawać go jako
-   * `@Input`. */
-  protected readonly user = computed(() => {
-    const uuid = this._store.selectedUuid();
-    return uuid ? this._orchestrator.getOne(uuid)() : undefined;
-  });
+  protected readonly scopeKind = this._tabStore.scopeKind;
+  protected readonly resolving = this._tabStore.resolving;
+
+  /** Użytkownicy renderowani przez panel — komplet zaznaczonych albo próbka z filtra. */
+  protected readonly users = this._tabStore.users;
+
+  /** Wszystkie przypisania ról widocznych użytkowników — jedna wspólna, płaska lista wierszy. */
+  protected readonly rows = computed<UserRoleGrantRow[]>(() =>
+    this.users().flatMap((user) => (user.roleGrants ?? []).map((grant) => ({ userUuid: user.uuid, grant }))),
+  );
 
   protected readonly canManage = computed(() => this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage));
 
-  private readonly _selectedRoleUuid = signal<string | null>(null);
-  protected readonly selectionCount = computed(() => (this._selectedRoleUuid() ? 1 : 0));
+  protected readonly emptySelectionConfig: ErpEmptyStateConfig = {
+    icon: '@tui.mouse-pointer-click',
+    message: USERS_KEYS.detail.emptySelection,
+  };
+
+  protected readonly resolvingConfig: ErpEmptyStateConfig = {
+    icon: '@tui.loader',
+    message: USERS_KEYS.detail.selectionScope.resolving,
+  };
+
+  protected readonly scopeBannerConfig = ErpSelectionScopeBannerBuilder.create((b) =>
+    b
+      .setScope(this._tabStore.scope)
+      .setShownCount(this._tabStore.shownUserCount)
+      .setPreviewTitle(USERS_KEYS.detail.selectionScope.previewTitle)
+      .setPreviewDescription(USERS_KEYS.detail.selectionScope.previewDescription)
+      .setAllTitle(USERS_KEYS.detail.selectionScope.allTitle),
+  );
 
   protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
     b
@@ -83,6 +120,8 @@ export class UserRolesTabComponent {
               .setFn(() => this._openAssignModal()),
           ),
       )
+      // Operacje na WSKAZANYCH przypisaniach — wymagają zaznaczenia rozwiązanego do listy
+      // użytkowników, bo „odbierz tę rolę" adresuje konkretną parę użytkownik+rola.
       .addSelectionGroup((g) =>
         g
           .setId('role-selection')
@@ -94,63 +133,89 @@ export class UserRolesTabComponent {
               .setLabel(USERS_KEYS.detail.roles.revokeAction)
               .setIcon('@tui.trash-2')
               .setAppearance('warning')
+              .setScopes(['explicit'])
+              .setUnavailableHint(USERS_KEYS.detail.selectionScope.rowSelectionUnavailable)
               .setHidden(computed(() => !this.canManage()))
               .setFn(() => this._onRevokeSelected()),
           ),
       )
-      .setSelectionCount(this.selectionCount)
-      .setSelectionScope(computed(() => (this._selectedRoleUuid() ? 'explicit' : 'none')))
+      .setSelectionCount(this._tabStore.selectedChildrenCount)
+      .setSelectionScope(this._tabStore.scopeKind)
       .setSelectionLabel(USERS_KEYS.detail.tabs.roles)
-      .setOnClearSelection(() => this._selectedRoleUuid.set(null))
+      .setOnClearSelection(() => this._tabStore.clearChildSelection())
       .setPinnedActionIds(['assign-role']),
   );
 
-  protected readonly tableConfig = computed(() => {
-    const canManage = this.canManage();
-    const builder = new ErpTableBuilder<UserRoleGrantVM>()
-      .setMode('client')
-      .setRowIdAccessor((x) => x.roleUuid)
-      .setItems(computed(() => this.user()?.roleGrants ?? []))
-      .setSelectionMode(canManage ? 'single' : 'none')
-      .setOnSelectionChange((state: ErpSelectionState<UserRoleGrantVM>) => this._selectedRoleUuid.set(state.selectedIds[0] ?? null))
-      .setEmptyMessage(USERS_KEYS.detail.roles.emptyMessage)
-      .addColumn((c) =>
-        c
-          .setId('code')
-          .setAccessorFn((row) => row.role?.code ?? row.roleUuid)
-          .setHeader(USERS_KEYS.detail.roles.columns.role)
-          .setSize(200),
-      )
-      .addColumn((c) =>
-        c
-          .setId('grantedAt')
-          .setAccessorKey('grantedAt')
-          .setHeader(USERS_KEYS.detail.roles.columns.grantedAt)
-          .setSize(160)
-          .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleDateString() : '—')),
-      )
-      .addColumn((c) =>
-        c
-          .setId('expiresAt')
-          .setAccessorKey('expiresAt')
-          .setHeader(USERS_KEYS.detail.roles.columns.expiresAt)
-          .setSize(160)
-          .setCellFormatter((value: Date | undefined) => (value ? new Date(value).toLocaleDateString() : '—')),
-      );
+  /**
+   * Konfiguracja jest `computed`, bo tryb zaznaczenia zależy od zasięgu: przy zaznaczeniu
+   * opisanym filtrem panel pokazuje tylko próbkę, więc checkboxy wierszy znikają.
+   */
+  protected readonly tableConfig = computed<ErpTableConfig<UserRoleGrantRow>>(() =>
+    ErpTableBuilder.create<ErpTableBuilder<UserRoleGrantRow>>((table) =>
+      table
+        .setStateKey('identity-users-roles-tab')
+        .setMode('client')
+        .setRowIdAccessor((r) => `${r.userUuid}:${r.grant.roleUuid}`)
+        .setItems(this.rows)
+        .setItemCount(computed(() => this.rows().length))
+        .setEnableVirtualScroll(true)
+        .setEstimatedRowHeight(48)
+        .setSelectionMode(this.canManage() && this._tabStore.canSelectChildren() ? 'multi' : 'none')
+        .setOnSelectionChange((state: ErpSelectionState<UserRoleGrantRow>) =>
+          this._tabStore.setSelectedChildren(state.selectedItems ?? []),
+        )
+        .setEmptyMessage(USERS_KEYS.detail.roles.emptyMessage)
+        .addColumn((c) =>
+          c
+            .setId('code')
+            .setAccessorFn((row: UserRoleGrantRow) => row.grant.role?.code ?? row.grant.roleUuid)
+            .setHeader(USERS_KEYS.detail.roles.columns.role)
+            .setSize(200),
+        )
+        .addColumn((c) =>
+          c
+            .setId('grantedAt')
+            .setAccessorFn((row: UserRoleGrantRow) => row.grant.grantedAt)
+            .setHeader(USERS_KEYS.detail.roles.columns.grantedAt)
+            .setSize(160)
+            .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleDateString() : '—')),
+        )
+        .addColumn((c) =>
+          c
+            .setId('expiresAt')
+            .setAccessorFn((row: UserRoleGrantRow) => row.grant.expiresAt)
+            .setHeader(USERS_KEYS.detail.roles.columns.expiresAt)
+            .setSize(160)
+            .setCellFormatter((value: Date | undefined) => (value ? new Date(value).toLocaleDateString() : '—')),
+        )
+        .setGroupedRows<UserVM>((g) =>
+          g
+            .setGroups(this.users)
+            .setGetGroupKey((u) => u.uuid)
+            .setGetRowGroupKey((r: UserRoleGrantRow) => r.userUuid)
+            .setGetGroupTitle((u) => u.displayName ?? u.email)
+            .setGetGroupSubtitle((u) => u.email)
+            .setGetGroupIcon(() => '@tui.user')
+            .setDefaultExpanded(true),
+        ),
+    ),
+  );
 
-    return builder.build();
-  });
-
+  /** Modal nadania roli adresuje CAŁY zasięg — nie tylko widoczną próbkę. */
   private _openAssignModal(): void {
-    const userUuid = this.user()?.uuid;
-    if (!userUuid) return;
-    this._modalService.open(ASSIGN_USER_ROLE_MODAL_ID, { targetUuids: [userUuid] });
+    const targets = this._tabStore.batchTargets();
+    this._modalService.open(ASSIGN_USER_ROLE_MODAL_ID, {
+      targetUuids: targets.targetUuids,
+      targetFilter: targets.targetFilter,
+      targetCount: this._tabStore.scopeCount(),
+    });
   }
 
   private _onRevokeSelected(): void {
-    const userUuid = this.user()?.uuid;
-    const roleUuid = this._selectedRoleUuid();
-    if (!userUuid || !roleUuid) return;
+    const pairs = Object.entries(this._tabStore.selectedRolesByUser()).flatMap(([userUuid, roleUuids]) =>
+      roleUuids.map((roleUuid) => ({ userUuid, roleUuid })),
+    );
+    if (pairs.length === 0) return;
 
     this._confirm
       .confirm({
@@ -161,9 +226,10 @@ export class UserRolesTabComponent {
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator
-          .revokeRoleAsync({ uuid: userUuid, roleUuid })
-          .then(() => this._selectedRoleUuid.set(null))
+        Promise.all(
+          pairs.map(({ userUuid, roleUuid }) => this._orchestrator.revokeRoleAsync({ uuid: userUuid, roleUuid })),
+        )
+          .then(() => this._tabStore.clearChildSelection())
           .catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
       });
   }

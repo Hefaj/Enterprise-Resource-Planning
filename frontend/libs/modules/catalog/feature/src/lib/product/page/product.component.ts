@@ -34,13 +34,18 @@ import { ProductFilterComponent } from './filters/product-filter.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductComponent {
-  protected readonly activeTabId = signal<string | null>('products');
+  /**
+   * Panel boczny otwiera się WYŁĄCZNIE wyborem zakładki — nigdy zaznaczeniem w tabeli
+   * (patrz `docs/frontend/pages.md` §3). Zakładka `'list'` (bez `component`) to stan
+   * "panel schowany": jej treścią jest sąsiedni obszar `content`.
+   */
+  protected readonly activeTabId = signal<string | null>('list');
 
   protected readonly tabsConfig = ErpTabsBuilder.create((b) =>
     b
       .setLayout('horizontal')
       .withSharedState(this.activeTabId)
-      .addTab('Lista produktów', 'products', {
+      .addTab(PRODUCT_KEYS.base.tabs.products, 'list', {
         icon: '@tui.list',
       })
       .addTab(PRODUCT_KEYS.base.tabs.multimedia, 'multimedia', {
@@ -68,7 +73,6 @@ export class ProductComponent {
         component: WarrantyTabComponent,
         icon: '@tui.shield-check',
       })
-      .setInitialValue('multimedia')
       .setOnTabChange(noop)
   );
 
@@ -94,7 +98,7 @@ export class ProductComponent {
         resizable: 'left',
         minWidth: 600,
         maxWidth: 1600,
-        collapsed: computed(() => this.activeTabId() === 'products'),
+        collapsed: computed(() => this.activeTabId() === 'list'),
       })
   );
 }

@@ -2,6 +2,10 @@
   "title": "Permissions",
   "subtitle": "Permission catalog defined in code — read-only view.",
   "searchLabel": "Search by code or module",
+  "tabs": {
+    "list": "Permission catalog",
+    "holders": "Permission holders"
+  },
   "emptyMessage": "No permissions match the criteria.",
   "obsoleteBadge": "Obsolete",
   "holders": {
@@ -12,5 +16,10 @@
       "email": "Email",
       "displayName": "Name"
     }
+  },
+  "columns": {
+    "code": "Permission code",
+    "description": "Description",
+    "status": "Status"
   }
 }

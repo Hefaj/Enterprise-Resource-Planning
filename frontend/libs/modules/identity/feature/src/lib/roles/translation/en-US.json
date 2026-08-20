@@ -12,7 +12,7 @@
     }
   },
   "detail": {
-    "emptySelection": "Select a role from the list to see details.",
+    "emptySelection": "Select roles from the list to see their details.",
     "systemBadge": "System",
     "tabs": {
       "list": "Roles list",
@@ -26,7 +26,15 @@
       "removeConfirmTitle": "Remove permission from role?",
       "removeConfirmMessage": "Every user with this role will lose this permission (unless they have it from another source).",
       "removeConfirmYes": "Remove",
-      "removeConfirmNo": "Cancel"
+      "removeConfirmNo": "Cancel",
+      "columns": {
+        "code": "Permission code"
+      },
+      "revokeAction": "Remove permission",
+      "revokeConfirmTitle": "Remove permission from role?",
+      "revokeConfirmMessage": "Every user with this role will lose this permission (unless they have it from another source).",
+      "revokeConfirmYes": "Remove",
+      "revokeConfirmNo": "Cancel"
     },
     "members": {
       "emptyMessage": "The role does not contain any member roles.",
@@ -37,7 +45,12 @@
       "removeConfirmTitle": "Remove member role?",
       "removeConfirmMessage": "Permissions inherited from this member role will stop being inherited.",
       "removeConfirmYes": "Remove",
-      "removeConfirmNo": "Cancel"
+      "removeConfirmNo": "Cancel",
+      "revokeConfirmTitle": "Remove member role?",
+      "revokeConfirmMessage": "Permissions inherited from this member role will stop being inherited.",
+      "revokeConfirmYes": "Remove",
+      "revokeConfirmNo": "Cancel",
+      "revokeAction": "Remove member role"
     },
     "containers": {
       "emptyMessage": "This role is not a member of any other role.",
@@ -52,6 +65,12 @@
         "email": "Email",
         "displayName": "Name"
       }
+    },
+    "selectionScope": {
+      "rowSelectionUnavailable": "Selecting individual rows requires picking specific roles"
+    },
+    "columns": {
+      "role": "Role"
     }
   },
   "commands": {

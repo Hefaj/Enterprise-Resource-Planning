@@ -17,7 +17,7 @@
     }
   },
   "detail": {
-    "emptySelection": "Wybierz użytkownika z listy, aby zobaczyć szczegóły.",
+    "emptySelection": "Zaznacz użytkowników z listy, aby zobaczyć ich szczegóły.",
     "statusActive": "Aktywny",
     "statusInactive": "Nieaktywny",
     "tabs": {
@@ -56,7 +56,8 @@
       "revokeConfirmTitle": "Odebrać uprawnienie?",
       "revokeConfirmMessage": "Uprawnienie nadane bezpośrednio zostanie odebrane.",
       "revokeConfirmYes": "Odbierz",
-      "revokeConfirmNo": "Anuluj"
+      "revokeConfirmNo": "Anuluj",
+      "revokeAction": "Odbierz uprawnienie"
     },
     "effective": {
       "hint": "Bezpośrednie i przez wszystkie role w łańcuchu dziedziczenia. Bez rozwinięcia „skąd” — dostępne tylko dla własnego konta.",
@@ -65,6 +66,16 @@
         "module": "Moduł",
         "code": "Uprawnienie"
       }
+    },
+    "selectionScope": {
+      "resolving": "Rozwiązywanie zaznaczenia…",
+      "allTitle": "Zaznaczono wszystkich {{ count }} użytkowników pasujących do filtrów",
+      "previewTitle": "Podgląd {{ shown }} z {{ count }} użytkowników pasujących do filtrów",
+      "previewDescription": "Akcje masowe obejmą wszystkich pasujących użytkowników, nie tylko widocznych poniżej. Wybór pojedynczych pozycji jest przy tym zaznaczeniu niedostępny — zawęź filtry, aby pracować na konkretnych użytkownikach.",
+      "rowSelectionUnavailable": "Wybór pojedynczych wierszy wymaga zaznaczenia konkretnych użytkowników"
+    },
+    "columns": {
+      "user": "Użytkownik"
     }
   },
   "commands": {

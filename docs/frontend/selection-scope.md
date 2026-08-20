@@ -87,7 +87,7 @@ Liczność zasięgu czytaj przez `erpSelectionScopeCount(scope)` (a nie `erpSele
 
 ## 4. Panel zależny od zaznaczenia w trybie `query`
 
-Trzy reguły, wszystkie zaszyte w [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) — store'y poszczególnych zakładek (multimedia, gwarancje…) dziedziczą je zamiast odtwarzać po swojemu:
+Trzy reguły, wszystkie zaszyte w [`ErpScopeTabStore`](../../frontend/libs/shared/ui/src/lib/base/erp-scope-tab.store.ts) — wspólnej bazie zakładek panelu dla wszystkich stron aplikacji, po której dziedziczą cienkie klasy per page ([`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts), `user-scope-tab.store.ts`, `role-scope-tab.store.ts`) — store'y poszczególnych zakładek (multimedia, gwarancje, role…) dziedziczą je zamiast odtwarzać po swojemu:
 
 **1. Próbka zamiast listy.** Panel ładuje kilka pierwszych rodziców (`PRODUCT_SCOPE_PREVIEW_LIMIT = 10`), rozwiązanych tym samym mechanizmem co materializacja (`ProductStore.resolveUuids(filters, limit)` — z cache per (filtry, limit)). Scroll nie doładowuje kolejnych: to próbka i ma taką się czuć.
 

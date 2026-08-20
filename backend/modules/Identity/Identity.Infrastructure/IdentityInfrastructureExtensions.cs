@@ -20,9 +20,10 @@ namespace Identity.Infrastructure;
 
 /// <summary>
 /// Rejestracja warstwy infrastruktury modułu Identity. Kształt jeden do jednego z
-/// <c>Sales.Infrastructure.SalesInfrastructureExtensions</c>, z dwiema różnicami: brak
-/// <c>IJobDbContext</c>/<c>AddErpBulkJobs</c> (patrz <c>IdentityDbContext</c>) i dwa hosted
-/// service'y uzgadniające stan zamiast jednego seedu przykładowych danych —
+/// <c>Sales.Infrastructure.SalesInfrastructureExtensions</c> — od Fazy 0 przejścia na operacje
+/// masowe (patrz <c>docs/backend/identity-bulk-migration.md</c>) rejestruje też
+/// <c>IPersistenceExceptionTranslator</c>, tak jak Catalog. Wciąż jedna świadoma różnica: dwa
+/// hosted service'y uzgadniające stan zamiast jednego seedu przykładowych danych —
 /// <see cref="PermissionCatalogReconciler"/> i <see cref="RoleSeedInitializer"/> działają
 /// bezwarunkowo przy KAŻDYM starcie, nie tylko na pustej bazie.
 /// </summary>
@@ -75,6 +76,23 @@ public static class IdentityInfrastructureExtensions
             .Register<Role>(AggregateSignatures.IdentityRole)
             .Register<UserAccount>(AggregateSignatures.IdentityUser));
 
+        services.AddSingleton<IPersistenceExceptionTranslator>(
+            new PostgresExceptionTranslator(BuildUniqueConstraintErrorCodes()));
+
         return services;
     }
+
+    /// <summary>
+    /// Mapa indeks unikalny → kod błędu domenowego. Nazwy pochodzą z migracji
+    /// <c>InitialIdentitySchema</c>; przemianowanie indeksu bez aktualizacji tej mapy nie wywali
+    /// builda, tylko po cichu wróci do raportowania <c>persistence_error</c> — patrz
+    /// <c>docs/backend/bulk-commands.md</c> §"Naruszenie unikalności to reguła biznesowa,
+    /// nie awaria".
+    /// </summary>
+    private static Dictionary<string, string> BuildUniqueConstraintErrorCodes()
+        => new(StringComparer.Ordinal)
+        {
+            ["ix_role_code"] = "role_code_duplicate",
+            ["ix_user_account_email"] = "user_email_duplicate",
+        };
 }

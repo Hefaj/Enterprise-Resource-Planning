@@ -65,6 +65,10 @@ public static class Permissions
         public const string RoleRead = "identity.role.read";
         public const string RoleManage = "identity.role.manage";
         public const string PermissionRead = "identity.permission.read";
+
+        /// <summary>Sterowanie zadaniami masowymi Identity (`job/cancel`, `job/retry-failed`) —
+        /// patrz Faza 0 w <c>docs/backend/identity-bulk-migration.md</c>.</summary>
+        public const string JobControl = "identity.job.control";
     }
 
     /// <summary>Pełny katalog — źródło seedu <c>permission_catalog</c> i uzgadniania przy starcie.
@@ -92,5 +96,6 @@ public static class Permissions
         new(Identity.RoleRead, "identity", "role", "read", "identity.permissions.identity.role.read"),
         new(Identity.RoleManage, "identity", "role", "manage", "identity.permissions.identity.role.manage"),
         new(Identity.PermissionRead, "identity", "permission", "read", "identity.permissions.identity.permission.read"),
+        new(Identity.JobControl, "identity", "job", "control", "identity.permissions.identity.job.control"),
     ];
 }

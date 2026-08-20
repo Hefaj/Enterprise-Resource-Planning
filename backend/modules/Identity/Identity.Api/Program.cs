@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Api.Auth;
+using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
 using FastEndpoints;
 using Identity.Api.Auth;
@@ -36,9 +37,15 @@ builder.Services.AddHostedService<ExpiredGrantCleanupService>();
 // Wolverine: outbox spięty z transakcją EF Core — ta sama rejestracja co w pozostałych modułach.
 builder.AddErpMessaging<IdentityDbContext>(typeof(IdentityDbContext).Assembly);
 
-// Handlery komend jawnie w DI — patrz uzasadnienie w Catalog.Api/Program.cs. Identity nie ma
-// BulkCommandRunnera (brak operacji masowych, patrz IdentityDbContext), więc to jedyne miejsce,
-// z którego handlery są w ogóle wołane — przez endpointy w Api, wprost.
+// Silnik zadań masowych (Faza 0 przejścia opisanego w docs/backend/identity-bulk-migration.md):
+// trwałe zadania w schemacie `identity`, wznawiane po restarcie. Na razie bez żadnego
+// IBulkCommandExecutor — komendy niżej wciąż wołają endpointy Api wprost, tak jak dziś. Runner
+// startuje i po prostu nie znajduje żadnego zadania Pending/Running, dopóki Fazy 2-3 nie
+// przepiszą endpointów na BatchEndpointBase.
+builder.Services.AddScoped<IJobStore, JobStore<IdentityDbContext>>();
+builder.Services.AddErpBulkJobs<IdentityDbContext>(builder.Configuration);
+
+// Handlery komend jawnie w DI — patrz uzasadnienie w Catalog.Api/Program.cs.
 builder.Services.AddScoped<ICommandHandler<RoleCreateCommand, Guid>, RoleCreateCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<RoleAddPermissionCommand, Guid>, RoleAddPermissionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<RoleRemovePermissionCommand, Guid>, RoleRemovePermissionCommandHandler>();

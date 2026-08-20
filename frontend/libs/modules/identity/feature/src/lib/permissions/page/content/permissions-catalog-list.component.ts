@@ -5,7 +5,6 @@ import {
   ErpTableBuilder,
   ErpTableComponent,
   ErpTableConfig,
-  ErpTranslatePipe,
 } from '@erp/shared/ui';
 import { PermissionCatalogOrchestrator, PermissionCatalogVM } from '@erp/identity/data-access';
 import { PermissionDescriptionCellComponent } from './permission-description-cell.component';
@@ -30,7 +29,7 @@ interface ModuleGroup {
 @Component({
   selector: 'erp-identity-permissions-catalog-list',
   standalone: true,
-  imports: [CommonModule, ErpTableComponent, ErpTranslatePipe],
+  imports: [CommonModule, ErpTableComponent],
   template: `
     <div class="flex flex-col h-full w-full min-h-0 p-2">
       <erp-table class="block h-full w-full" [config]="tableConfig()" />

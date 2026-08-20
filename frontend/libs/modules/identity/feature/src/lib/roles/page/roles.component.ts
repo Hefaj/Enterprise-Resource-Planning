@@ -89,7 +89,7 @@ export class RolesComponent {
         {
           resizable: 'left',
           minWidth: 340,
-          maxWidth: 900,
+          maxWidth: 1600,
           collapsed: computed(() => this.activeTabId() === 'list'),
         },
       ),

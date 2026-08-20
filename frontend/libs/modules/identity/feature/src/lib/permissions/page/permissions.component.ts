@@ -76,8 +76,8 @@ export class PermissionsComponent {
         { config: this.tabsConfig, renderMode: 'content' },
         {
           resizable: 'left',
-          minWidth: 320,
-          maxWidth: 800,
+          minWidth: 340,
+          maxWidth: 1600,
           collapsed: computed(() => this.activeTabId() === 'list'),
         },
       ),

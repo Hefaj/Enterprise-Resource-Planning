@@ -96,7 +96,7 @@ export class ProductComponent {
       .fill('content', ProductTabComponent)
       .fill('rightPanel', ErpTabsComponent, { config: this.tabsConfig, renderMode: 'content' }, {
         resizable: 'left',
-        minWidth: 600,
+        minWidth: 340,
         maxWidth: 1600,
         collapsed: computed(() => this.activeTabId() === 'list'),
       })

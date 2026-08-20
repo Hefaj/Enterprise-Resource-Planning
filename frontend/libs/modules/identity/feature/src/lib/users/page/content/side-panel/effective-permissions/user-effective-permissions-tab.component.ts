@@ -120,7 +120,7 @@ export class UserEffectivePermissionsTabComponent {
         .setSelectionMode('none')
         .setEmptyMessage(USERS_KEYS.detail.effective.emptyMessage)
         .addColumn((c) =>
-          c.setId('module').setAccessorKey('module').setHeader(USERS_KEYS.detail.effective.columns.module).setSize(160),
+          c.setId('module').setAccessorKey('module').setHeader(USERS_KEYS.detail.effective.columns.module).setSize(160).setGrow(0),
         )
         .addColumn((c) =>
           c.setId('code').setAccessorKey('code').setHeader(USERS_KEYS.detail.effective.columns.code).setSize(280),

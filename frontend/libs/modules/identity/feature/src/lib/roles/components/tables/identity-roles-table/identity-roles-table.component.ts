@@ -71,6 +71,7 @@ export class IdentityRolesTableComponent {
           .setAccessorKey('isSystem')
           .setHeader(ROLES_KEYS.table.columns.isSystem)
           .setSize(100)
+          .setGrow(0)
           .setCellFormatter((value: boolean) => (value ? '✓' : '—')),
       )
       .addColumn((c) =>
@@ -79,7 +80,8 @@ export class IdentityRolesTableComponent {
           .setAccessorFn((row) => row.permissions?.length ?? 0)
           .setHeader(ROLES_KEYS.table.columns.permissionCount)
           .setEnableSorting(false)
-          .setSize(120),
+          .setSize(120)
+          .setGrow(0),
       )
       .addColumn((c) =>
         c
@@ -87,7 +89,8 @@ export class IdentityRolesTableComponent {
           .setAccessorFn((row) => row.memberRoleUuids?.length ?? 0)
           .setHeader(ROLES_KEYS.table.columns.memberCount)
           .setEnableSorting(false)
-          .setSize(120),
+          .setSize(120)
+          .setGrow(0),
       )
       .build(),
   );

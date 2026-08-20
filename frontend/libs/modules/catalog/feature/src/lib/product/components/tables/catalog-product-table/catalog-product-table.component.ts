@@ -179,6 +179,7 @@ export class CatalogProductTableComponent {
           .setAccessorKey('status')
           .setHeader(PRODUCT_KEYS.base.table.columns.status)
           .setSize(150)
+          .setGrow(0)
         )
         .addColumn((c) => c
           .setId('price')
@@ -186,6 +187,7 @@ export class CatalogProductTableComponent {
           .setHeader(PRODUCT_KEYS.base.table.columns.price)
           .setAlign('right')
           .setSize(150)
+          .setGrow(0)
         )
       );
 

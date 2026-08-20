@@ -94,6 +94,7 @@ export class IdentityUsersTableComponent {
           .setHeader(USERS_KEYS.table.columns.isActive)
           .setEnableSorting(false)
           .setSize(120)
+          .setGrow(0)
           .setCellFormatter((value: boolean) => (value ? '✓' : '—')),
       )
       .addColumn((c) =>
@@ -102,7 +103,8 @@ export class IdentityUsersTableComponent {
           .setAccessorFn((row) => row.roleGrants?.length ?? 0)
           .setHeader(USERS_KEYS.table.columns.roleCount)
           .setEnableSorting(false)
-          .setSize(120),
+          .setSize(120)
+          .setGrow(0),
       )
 
       .setOnStateChange((state) => {

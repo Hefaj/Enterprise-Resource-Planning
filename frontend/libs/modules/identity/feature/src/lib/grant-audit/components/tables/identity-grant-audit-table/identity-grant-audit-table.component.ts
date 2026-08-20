@@ -80,6 +80,7 @@ export class IdentityGrantAuditTableComponent {
           .setHeader(GRANTAUDIT_KEYS.table.columns.occurredAt)
           .setEnableSorting(true)
           .setSize(180)
+          .setGrow(0)
           .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleString() : '—')),
       )
       .addColumn((c) =>
@@ -107,7 +108,8 @@ export class IdentityGrantAuditTableComponent {
           .setAccessorKey('action')
           .setHeader(GRANTAUDIT_KEYS.table.columns.action)
           .setEnableSorting(true)
-          .setSize(160),
+          .setSize(160)
+          .setGrow(0),
       )
       .addColumn((c) =>
         c
@@ -123,7 +125,8 @@ export class IdentityGrantAuditTableComponent {
           .setAccessorKey('source')
           .setHeader(GRANTAUDIT_KEYS.table.columns.source)
           .setEnableSorting(true)
-          .setSize(140),
+          .setSize(140)
+          .setGrow(0),
       )
 
       .setOnStateChange((state) => {

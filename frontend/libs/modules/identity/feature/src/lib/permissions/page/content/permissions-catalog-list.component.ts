@@ -92,7 +92,8 @@ export class PermissionsCatalogListComponent {
             .setId('obsolete')
             .setAccessorFn((row: PermissionCatalogVM) => (row.isObsolete ? PERMISSIONS_KEYS.obsoleteBadge : ''))
             .setHeader(PERMISSIONS_KEYS.columns.status)
-            .setSize(120),
+            .setSize(120)
+            .setGrow(0),
         )
         .setGroupedRows<ModuleGroup>((g) =>
           g

@@ -56,6 +56,7 @@ import {
   ErpGroupRowAction,
 } from './erp-table.types';
 import { erpOrderIdsByPosition } from './erp-selection.utils';
+import { ErpSizingColumn, erpFitColumnWidths, erpRescaleColumnWidths } from './erp-column-sizing';
 import { ErpTablePaginationComponent } from './erp-table-pagination.component';
 import { ErpTableColumnMenuComponent } from './erp-table-column-menu.component';
 import { unwrapSignal, Translatable } from '../../base/erp-signal-utils';
@@ -283,8 +284,8 @@ export class ErpTableSelectionCell {
                             <div
                               class="erp-table__resizer absolute right-0 top-0 h-full w-3 cursor-col-resize select-none touch-none"
                               [class.is-resizing]="header.column.getIsResizing()"
-                              (mousedown)="header.getResizeHandler()($event)"
-                              (touchstart)="header.getResizeHandler()($event)"
+                              (mousedown)="onColumnResizeStart(header, $event)"
+                              (touchstart)="onColumnResizeStart(header, $event)"
                               (click)="$event.stopPropagation()"
                             ></div>
                           }
@@ -873,6 +874,11 @@ export class ErpTableComponent<T> implements AfterViewInit {
   private _pagination = signal<PaginationState>({ pageIndex: 0, pageSize: 20 });
   private _columnVisibility = signal<VisibilityState>({});
   private _columnOrder = signal<string[]>([]);
+  /**
+   * Szerokości kolumn jako źródło prawdy: nadpisania z ręcznych zmian i z odtworzonych
+   * preferencji (brak wpisu = `size` z definicji kolumny). Do renderu i do TanStacka idzie
+   * `_fittedSizing()` — te same wartości po rozdzieleniu wolnej przestrzeni.
+   */
   private _columnSizing = signal<ColumnSizingState>({});
   private _rowSelection = signal<RowSelectionState>({});
   private _columnFilters = signal<ColumnFiltersState>([]);
@@ -907,6 +913,10 @@ export class ErpTableComponent<T> implements AfterViewInit {
           }
           if (state.columnSizing) {
             this._columnSizing.set(state.columnSizing);
+            this._pendingSizingRescale = state.columnSizingViewportWidth ?? null;
+          }
+          if (state.manuallyResizedColumns) {
+            this._manuallyResized.set(new Set(state.manuallyResizedColumns));
           }
           // Restore selection
           if (state.selection) {
@@ -1057,6 +1067,8 @@ export class ErpTableComponent<T> implements AfterViewInit {
           columnVisibility,
           columnOrder,
           columnSizing,
+          columnSizingViewportWidth: this._viewportWidth() || undefined,
+          manuallyResizedColumns: [...this._manuallyResized()],
           selection: {
             isAllSelected: this._isServerMode() ? this._serverAllSelected() : this.table.getIsAllRowsSelected(),
             selectedIds: this._orderedSelectedIds(),
@@ -1146,77 +1158,122 @@ export class ErpTableComponent<T> implements AfterViewInit {
     this.destroyRef.onDestroy(() => clearTimeout(this._saveStateTimeout));
   }
 
-  private _autoSized = false;
+  // ── Dopasowanie szerokości kolumn do szerokości tabeli ─────────────────────────────────
+  //
+  // `_columnSizing` to JEDYNE źródło prawdy: nadpisania szerokości z ręcznych zmian użytkownika
+  // i z odtworzonych preferencji (brak wpisu = `size` z definicji kolumny). `_fittedSizing` jest
+  // wartością POCHODNĄ — tymi samymi szerokościami po rozdzieleniu wolnej przestrzeni — i to ona
+  // trafia do TanStacka, żeby `getSize()`, przypięte kolumny i wirtualizer liczyły na tych samych
+  // liczbach, które faktycznie widać na ekranie. Algorytm: `erp-column-sizing.ts`.
+
+  private static readonly DEFAULT_COLUMN_SIZE = 150;
+  private static readonly DEFAULT_MIN_COLUMN_SIZE = 80;
+  private static readonly SELECTION_COLUMN_SIZE = 48;
+
+  /** Szerokość obszaru roboczego tabeli (content box kontenera scrolla). 0 do pierwszego pomiaru. */
+  private readonly _viewportWidth = signal(0);
+
+  /** Kolumny, których szerokość użytkownik ustawił ręcznie — wyłączone z rozdziału wolnej przestrzeni. */
+  private readonly _manuallyResized = signal<Set<string>>(new Set());
+
+  /**
+   * Szerokość obszaru tabeli zapamiętana razem z odtworzonym `columnSizing` — do jednorazowej
+   * normalizacji układu zbudowanego na innej rozdzielczości. `null` = nic do znormalizowania.
+   */
+  private _pendingSizingRescale: number | null = null;
+
   private _resizeObserver: ResizeObserver | null = null;
   private destroyRef = inject(DestroyRef);
+
+  /**
+   * Widoczne kolumny liściowe sprowadzone do parametrów szerokości — łącznie z kolumną
+   * zaznaczania. `base` to szerokość z definicji, bez ręcznych nadpisań.
+   */
+  private readonly _sizingColumns = computed<ErpSizingColumn[]>(() => {
+    const visibility = this._columnVisibility();
+    const columns: ErpSizingColumn[] = [];
+
+    if (this.config().selectionMode !== 'none') {
+      const size = ErpTableComponent.SELECTION_COLUMN_SIZE;
+      columns.push({ id: '__selection', base: size, min: size, max: size, grow: 0 });
+    }
+
+    for (const col of this._flattenLeafColumns()) {
+      if (visibility[col.id] === false) continue;
+      columns.push({
+        id: col.id,
+        base: col.size ?? ErpTableComponent.DEFAULT_COLUMN_SIZE,
+        min: col.minSize ?? ErpTableComponent.DEFAULT_MIN_COLUMN_SIZE,
+        max: col.maxSize ?? Number.POSITIVE_INFINITY,
+        grow: col.grow ?? 1,
+      });
+    }
+
+    return columns;
+  });
+
+  /** `_sizingColumns` z bazą podmienioną na ręczne ustawienia użytkownika, jeśli takie są. */
+  private readonly _effectiveSizingColumns = computed<ErpSizingColumn[]>(() => {
+    const declared = this._columnSizing();
+    return this._sizingColumns().map(col => ({ ...col, base: declared[col.id] ?? col.base }));
+  });
+
+  protected readonly _fittedSizing = computed<ColumnSizingState>(() => {
+    const sizes = erpFitColumnWidths(this._effectiveSizingColumns(), {
+      viewport: this._viewportWidth(),
+      manuallyResized: this._manuallyResized(),
+    });
+
+    // Zaczynamy od `_columnSizing`, żeby ręczne szerokości kolumn aktualnie ukrytych nie przepadły
+    // po ich ponownym pokazaniu — TanStack i tak czyta tylko wpisy kolumn widocznych.
+    const result: ColumnSizingState = { ...this._columnSizing() };
+    for (const [id, size] of sizes) result[id] = size;
+    return result;
+  });
 
   ngAfterViewInit() {
     const el = this.scrollElement()?.nativeElement;
     if (!el) return;
 
-    const config = this.config();
-    if (config.initialState?.columnSizing && Object.keys(config.initialState.columnSizing).length > 0) {
-      this._autoSized = true;
-      return;
-    }
-
-    this._resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = entry.contentRect.width;
-        if (width > 0 && !this._autoSized) {
-          this._autoSized = true;
-          this.calculateAutoColumnSizing(width);
-          this._resizeObserver?.disconnect();
-          break;
-        }
-      }
+    // Obserwator zostaje podłączony na stałe — dopasowanie ma reagować na każdą zmianę layoutu
+    // (rozmiar okna, otwarcie panelu bocznego, zwinięcie menu), a nie tylko na pierwszy render.
+    this._resizeObserver = new ResizeObserver(entries => {
+      const width = Math.floor(entries[0]?.contentRect.width ?? 0);
+      if (width <= 0 || width === this._viewportWidth()) return;
+      this._applyPendingSizingRescale(width);
+      this._viewportWidth.set(width);
     });
 
     this._resizeObserver.observe(el);
     this.destroyRef.onDestroy(() => this._resizeObserver?.disconnect());
   }
 
-  private calculateAutoColumnSizing(totalWidth: number) {
-    const visibility = this._columnVisibility();
-    const leafCols = this._flattenLeafColumns();
-    const config = this.config();
-    
-    let fixedWidth = 0;
-    const autoCols: ErpColumnDef<any>[] = [];
-    
-    if (config.selectionMode !== 'none') {
-      fixedWidth += 48; // from tanstack selection column definition
-    }
-    
-    for (const col of leafCols) {
-      const isVisible = visibility[col.id] !== false;
-      if (!isVisible) continue;
-      
-      if (col.size !== undefined) {
-        fixedWidth += col.size;
-      } else {
-        autoCols.push(col);
-        fixedWidth += (col.minSize ?? 80);
-      }
-    }
-    
-    const remainingWidth = totalWidth - fixedWidth;
-    
-    if (remainingWidth > 0 && autoCols.length > 0) {
-      const extraPerCol = Math.floor(remainingWidth / autoCols.length);
-      const newSizing = { ...this._columnSizing() };
-      
-      for (let i = 0; i < autoCols.length; i++) {
-        const col = autoCols[i];
-        let newWidth = (col.minSize ?? 80) + extraPerCol;
-        if (i === autoCols.length - 1) {
-           newWidth += remainingWidth % autoCols.length; 
-        }
-        newSizing[col.id] = newWidth;
-      }
-      
-      this._columnSizing.set(newSizing);
-    }
+  /** Jednorazowo normalizuje szerokości odtworzone z preferencji do bieżącej rozdzielczości. */
+  private _applyPendingSizingRescale(viewportWidth: number): void {
+    const savedViewport = this._pendingSizingRescale;
+    if (savedViewport === null) return;
+    this._pendingSizingRescale = null;
+
+    const rescaled = erpRescaleColumnWidths(
+      this._sizingColumns(),
+      this._columnSizing(),
+      savedViewport,
+      viewportWidth,
+    );
+    if (rescaled) this._columnSizing.set(rescaled);
+  }
+
+  /**
+   * Start ręcznej zmiany szerokości. Zanim oddamy zdarzenie TanStackowi, materializujemy
+   * aktualnie wyrenderowane szerokości jako nową bazę — dzięki temu współczynnik rozciągnięcia
+   * wynosi 1 i przeciągnięcie o N px zmienia kolumnę dokładnie o N px, zamiast o N przemnożone
+   * przez ten współczynnik. Od tej chwili kolumna jest „ręczna": nie bierze już udziału
+   * w rozdziale wolnej przestrzeni, więc zwężenie jej nie odbija się z powrotem.
+   */
+  protected onColumnResizeStart(header: any, event: MouseEvent | TouchEvent): void {
+    this._columnSizing.set({ ...this._fittedSizing() });
+    this._manuallyResized.update(ids => new Set(ids).add(header.column.id));
+    header.getResizeHandler()(event);
   }
 
 
@@ -1391,9 +1448,9 @@ export class ErpTableComponent<T> implements AfterViewInit {
             }
           });
         },
-        size: 48,
-        minSize: 48,
-        maxSize: 48,
+        size: ErpTableComponent.SELECTION_COLUMN_SIZE,
+        minSize: ErpTableComponent.SELECTION_COLUMN_SIZE,
+        maxSize: ErpTableComponent.SELECTION_COLUMN_SIZE,
         enableSorting: false,
         enableResizing: false,
         meta: { 
@@ -1442,8 +1499,8 @@ export class ErpTableComponent<T> implements AfterViewInit {
         : col.cellFormatter
         ? ({ getValue, row }) => col.cellFormatter!(getValue(), row.original)
         : ({ getValue }) => getValue(),
-      size: col.size ?? 150,
-      minSize: col.minSize ?? 80,
+      size: col.size ?? ErpTableComponent.DEFAULT_COLUMN_SIZE,
+      minSize: col.minSize ?? ErpTableComponent.DEFAULT_MIN_COLUMN_SIZE,
       maxSize: col.maxSize,
       enableSorting: col.enableSorting ?? true,
       enableResizing: col.enableResizing ?? true,
@@ -1483,7 +1540,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
         pagination: this._pagination(),
         columnVisibility: this._columnVisibility(),
         columnOrder: this._columnOrder(),
-        columnSizing: this._columnSizing(),
+        columnSizing: this._fittedSizing(),
         rowSelection: this._rowSelection(),
         columnFilters: this._columnFilters(),
         columnPinning: this._columnPinning(),

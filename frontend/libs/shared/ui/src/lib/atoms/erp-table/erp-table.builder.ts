@@ -125,6 +125,19 @@ export class ErpColumnBuilder<TData = any> extends ErpBaseBuilder<ErpColumnDef<T
   }
 
   /**
+   * Ustawia wagę udziału kolumny w rozdziale wolnej przestrzeni (gdy kolumny nie wypełniają
+   * całej szerokości tabeli). Nadmiar dzielony jest proporcjonalnie do `grow * size`, więc
+   * przy domyślnym `grow: 1` szersza kolumna dostaje proporcjonalnie więcej.
+   *
+   * `setGrow(0)` — kolumna nie rośnie (stała szerokość: status, data, ikona, akcje).
+   * `setGrow(2)` — kolumna rośnie dwa razy szybciej niż wynikałoby z samego `size`.
+   */
+  public setGrow(grow: number): this {
+    this._data.grow = grow;
+    return this;
+  }
+
+  /**
    * Ustawia minimalną szerokość kolumny w pikselach.
    */
   public setMinSize(min: number): this {

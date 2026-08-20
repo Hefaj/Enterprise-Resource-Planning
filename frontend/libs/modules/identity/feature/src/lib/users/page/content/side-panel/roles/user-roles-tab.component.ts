@@ -178,6 +178,7 @@ export class UserRolesTabComponent {
             .setAccessorFn((row: UserRoleGrantRow) => row.grant.grantedAt)
             .setHeader(USERS_KEYS.detail.roles.columns.grantedAt)
             .setSize(160)
+            .setGrow(0)
             .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleDateString() : '—')),
         )
         .addColumn((c) =>
@@ -186,6 +187,7 @@ export class UserRolesTabComponent {
             .setAccessorFn((row: UserRoleGrantRow) => row.grant.expiresAt)
             .setHeader(USERS_KEYS.detail.roles.columns.expiresAt)
             .setSize(160)
+            .setGrow(0)
             .setCellFormatter((value: Date | undefined) => (value ? new Date(value).toLocaleDateString() : '—')),
         )
         .setGroupedRows<UserVM>((g) =>

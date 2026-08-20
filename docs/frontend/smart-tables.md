@@ -174,7 +174,24 @@ Osiem elementów, zawsze w tym układzie:
 
 ---
 
-## 5. Warianty
+## 5. Szerokości kolumn
+
+`.setSize(...)` **nie jest twardą szerokością — jest wagą.** Gdy suma szerokości widocznych kolumn nie wypełnia tabeli, nadmiar rozdzielany jest między kolumny proporcjonalnie do ich `size`, więc kolumna opisu (`setSize(320)`) dostaje z luki ~3.5x więcej niż kolumna identyfikatora (`setSize(90)`). Gdy kolumny się nie mieszczą — nic się nie dzieje i zostaje poziomy scroll. Niezmiennik: **nigdy nie ma pustej przestrzeni po prawej, a scroll pojawia się wyłącznie przy realnym braku miejsca.** Algorytm: [`erp-column-sizing.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-column-sizing.ts).
+
+Praktyczne konsekwencje przy pisaniu kolumn:
+
+- **Podawaj `size` proporcjonalnie do przewidywanej treści**, nie „na oko pod swój monitor". Liczby są względne — układ sam dopasuje się do każdej rozdzielczości.
+- **`.setGrow(0)` dla kolumn o z góry znanej szerokości** — status, data, ikona, krótki kod. Nie rosną, a ich część luki idzie do kolumn tekstowych. Bez tego chip statusu dostaje w szerokim oknie absurdalnie dużo miejsca.
+- **`.setMaxSize(...)`, gdy kolumna nie powinna rosnąć w nieskończoność** — odcięty nadmiar wraca do puli i trafia do pozostałych kolumn.
+- **`.setGrow(2)`** tylko wtedy, gdy sam `size` nie oddaje potencjału wzrostu (kolumna wąska domyślnie, ale z długą treścią do pokazania, gdy jest miejsce).
+
+Ręczna zmiana szerokości przez użytkownika wygrywa: przeciągnięta kolumna zostaje wyłączona z rozdziału luki (zwężenie jej nie odbija się z powrotem), a lukę zasypują pozostałe. Stan zapisywany przez `stateKey` niesie ze sobą szerokość okna z momentu zapisu — układ zbudowany na 1920 px odtwarza się na 1280 px przeskalowany w dół, zamiast wywoływać scroll. Układ, który już przy zapisie wychodził poza okno, zostaje w pikselach bez zmian (świadomy scroll użytkownika).
+
+Sama zmiana rozmiaru okna **nie** emituje `onStateChange` — nie wywołuje więc refetchu w hoście (o samym `onStateChange` przy przeciąganiu krawędzi kolumny: §7).
+
+---
+
+## 6. Warianty
 
 **Zaznaczanie pojedynczego wiersza zamiast listy** (`identity-users-table.component.ts`) — `selectionMode` na sztywno `'single'`, `.setOnSelectionChange` mapuje `ErpSelectionState` na pojedynczy `string | null` zamiast przepuszczać cały stan:
 ```typescript
@@ -199,7 +216,7 @@ Zwykłe aktualizacje istniejących wierszy (nie nowe) obsługuje sam `items` com
 
 ---
 
-## 6. Częste błędy
+## 7. Częste błędy
 
 - **Ręczne czyszczenie zaznaczenia przy zmianie filtrów** (`tableComponent()?.clearSelection()` w efekcie od `filters()`) — zbędne, `erp-table` robi to sam (§4); wymaga jedynie `.setFilters(...)` w konfiguracji.
 - **Brak `.setFilters(this.filters)`**, gdy strona potrzebuje `ErpSelectionState.filters` (zasięg „Zaznacz wszystko") albo automatycznego czyszczenia zaznaczenia po zmianie filtrów — bez tego oba mechanizmy milczą.
@@ -213,7 +230,7 @@ Zwykłe aktualizacje istniejących wierszy (nie nowe) obsługuje sam `items` com
 
 ---
 
-## 7. Zobacz też
+## 8. Zobacz też
 
 - [Page dla agregatu](./pages.md) — gdzie smart tabela mieszkuje w szkielecie całej strony (filtr, action toolbar, zakładki, panel boczny)
 - [Struktura katalogów agregatu](./feature-structure.md) — dlaczego smart tabela leży w `components/tables/`, a nie w `page/`

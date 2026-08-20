@@ -237,6 +237,7 @@ export class WarrantyTabComponent {
           .setCell(WarrantyInfoCellComponent, { field: 'durationMonths' })
           .setCellClass('text-right')
           .setSize(150)
+          .setGrow(0)
         )
         .addColumn(c => c
           .setId('productDurationMonths')
@@ -244,6 +245,7 @@ export class WarrantyTabComponent {
           .setHeader('Okres dla produktu (mc)')
           .setCellClass('text-right')
           .setSize(150)
+          .setGrow(0)
         )
         .addColumn(c => c
           .setId('description')

@@ -224,6 +224,7 @@ export class MultimediaTabComponent {
           .setCell(MultimediaThumbnailCellComponent)
           .setEnableSorting(false)
           .setSize(100)
+          .setGrow(0)
         )
         .addColumn(c => c
           .setId('fileName')
@@ -236,6 +237,7 @@ export class MultimediaTabComponent {
           .setHeader('Typ')
           .setCell(MultimediaInfoCellComponent, { field: 'mediaType' })
           .setSize(140)
+          .setGrow(0)
         )
         .addColumn(c => c
           .setId('fileSize')
@@ -243,6 +245,7 @@ export class MultimediaTabComponent {
           .setCell(MultimediaInfoCellComponent, { field: 'fileSize' })
           .setCellClass('text-right')
           .setSize(120)
+          .setGrow(0)
         )
         .setGroupedRows<ProductVM>(g => g
           .setGroups(this._products)

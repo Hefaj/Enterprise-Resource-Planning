@@ -144,12 +144,14 @@ export class NotificationJobTableComponent {
           .setHeader(JOB_KEYS.page.table.columns.status)
           .setCell(JobStatusCellComponent)
           .setSize(200)
+          .setGrow(0)
         )
         .addColumn(c => c
           .setId('createdAt')
           .setAccessorKey('createdAt')
           .setHeader(JOB_KEYS.page.table.columns.createdAt)
           .setSize(180)
+          .setGrow(0)
           .setCellFormatter((value: Date | undefined) => value ? value.toLocaleString() : '—')
         )
       )
@@ -163,6 +165,7 @@ export class NotificationJobTableComponent {
           .setEnableSorting(false)
           .setAlign('right')
           .setSize(140)
+          .setGrow(0)
           .setAccessorFn(job => job.totalCount)
           .setCellFormatter((_value: number, job: JobVM) =>
             job.totalCount > 0 ? `${job.succeededCount + job.failedCount} / ${job.totalCount}` : '—',
@@ -175,6 +178,7 @@ export class NotificationJobTableComponent {
           .setEnableSorting(false)
           .setAlign('right')
           .setSize(120)
+          .setGrow(0)
         )
         .addColumn(c => c
           .setId('failedCount')
@@ -183,6 +187,7 @@ export class NotificationJobTableComponent {
           .setEnableSorting(false)
           .setAlign('right')
           .setSize(120)
+          .setGrow(0)
         )
         .addColumn(c => c
           .setId('errorsSummary')

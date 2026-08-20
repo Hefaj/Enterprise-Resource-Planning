@@ -179,6 +179,7 @@ export class UserPermissionsTabComponent {
             .setAccessorFn((row: UserPermissionGrantRow) => row.grant.grantedAt)
             .setHeader(USERS_KEYS.detail.permissions.columns.grantedAt)
             .setSize(160)
+            .setGrow(0)
             .setCellFormatter((value: Date) => (value ? new Date(value).toLocaleDateString() : '—')),
         )
         .setGroupedRows<UserVM>((g) =>

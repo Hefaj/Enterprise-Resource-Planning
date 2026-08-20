@@ -65,6 +65,22 @@ export interface ErpColumnDef<TData = any> {
   minSize?: number;
   size?: number;
   maxSize?: number;
+  /**
+   * Waga, z jaką kolumna uczestniczy w rozdziale wolnej przestrzeni, gdy suma szerokości
+   * wszystkich widocznych kolumn jest mniejsza niż szerokość tabeli.
+   *
+   * Nadmiar rozdzielany jest proporcjonalnie do `grow * size` — czyli domyślnie (`grow: 1`)
+   * kolumna zadeklarowana jako `setSize(320)` (opis) dostaje z luki ~3.5x więcej niż
+   * `setSize(90)` (identyfikator). Sama deklaracja `size` niesie już informację o tym,
+   * ile treści mieści kolumna, więc w typowym przypadku nie trzeba nic dodatkowo ustawiać.
+   *
+   * `grow: 0` wyłącza kolumnę z rozdziału — dla kolumn o z góry znanej, stałej szerokości
+   * (status, data, ikona, kolumna akcji), które nic nie zyskują na dodatkowym miejscu.
+   * `maxSize` ogranicza wzrost — odcięty nadmiar wraca do puli i trafia do pozostałych kolumn.
+   *
+   * Domyślnie: 1.
+   */
+  grow?: number;
   enableSorting?: boolean;
   enableResizing?: boolean;
   visible?: boolean;
@@ -98,6 +114,19 @@ export interface ErpTableState {
   columnVisibility: Record<string, boolean>;
   columnOrder: string[];
   columnSizing: Record<string, number>;
+  /**
+   * Szerokość obszaru tabeli (w px) w momencie zapisu `columnSizing`. Pozwala odtworzyć układ
+   * na innej rozdzielczości niż ta, na której go zbudowano: układ, który wtedy mieścił się
+   * w oknie, przy węższym oknie jest proporcjonalnie skalowany w dół, zamiast wywoływać
+   * poziomy scroll. Układ, który już wtedy nie mieścił się w oknie (świadomy scroll),
+   * zostaje w pikselach bez zmian.
+   */
+  columnSizingViewportWidth?: number;
+  /**
+   * Kolumny, których szerokość użytkownik ustawił ręcznie — są wyłączone z automatycznego
+   * rozdziału wolnej przestrzeni (lukę zasypują pozostałe kolumny).
+   */
+  manuallyResizedColumns?: string[];
   filters: Record<string, any>;
   selection: Pick<ErpSelectionState, 'isAllSelected' | 'selectedIds' | 'filters'>;
   rowSelectionOnClick?: boolean;

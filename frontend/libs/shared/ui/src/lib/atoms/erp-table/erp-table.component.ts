@@ -333,7 +333,117 @@ export class ErpTableSelectionCell {
                 }
               }
 
-              <!-- Wirtualizacja lub zwykła pętla -->
+              <!--
+                Definicje wierszy wyciągnięte do szablonów, bo używa ich i tryb wirtualny,
+                i zwykły — grupowanie (setGroupedRows) działa niezależnie od wirtualizacji.
+                Dyrektywa erpVirtualMeasure z pustym virtualizerem nie robi nic, więc ten sam
+                wiersz obsługuje oba tryby.
+              -->
+              <ng-template #groupRowTpl let-flatRow let-virtualizer="virtualizer" let-index="index">
+                <!-- Sztuczny wiersz-rodzic grupy — bez związku z kolumnami danych -->
+                <tr
+                  [erpVirtualMeasure]="virtualizer"
+                  [index]="index"
+                  [attr.data-index]="index"
+                  class="erp-table__group-row"
+                  (click)="toggleGroupExpanded(flatRow.key)"
+                >
+                  <td [colSpan]="table.getVisibleFlatColumns().length" class="erp-table__group-cell">
+                    <div class="erp-table__group-content">
+                      @if (config().selectionMode !== 'none') {
+                        <div class="erp-table__group-checkbox" (click)="$event.stopPropagation()">
+                          <erp-table-selection-cell
+                            [checked]="flatRow.totalCount > 0 && flatRow.selectedCount === flatRow.totalCount"
+                            [indeterminate]="flatRow.selectedCount > 0 && flatRow.selectedCount < flatRow.totalCount"
+                            [selectionMode]="'multi'"
+                            (changed)="toggleGroupSelection(flatRow.key, $event.checked, $event.shiftKey)"
+                          />
+                        </div>
+                      }
+
+                      <tui-icon
+                        icon="@tui.chevron-right"
+                        class="erp-table__group-chevron"
+                        [class.erp-table__group-chevron--expanded]="flatRow.expanded"
+                      />
+
+                      @if (_groupIcon(flatRow.group); as groupIcon) {
+                        <tui-icon [icon]="groupIcon" class="erp-table__group-icon" />
+                      }
+
+                      <div class="erp-table__group-titles">
+                        <span class="erp-table__group-title">{{ _groupTitle(flatRow.group) | erpTranslate }}</span>
+                        @if (_groupSubtitle(flatRow.group); as groupSubtitle) {
+                          <span class="erp-table__group-subtitle">{{ groupSubtitle | erpTranslate }}</span>
+                        }
+                      </div>
+
+                      @if (flatRow.loading) {
+                        <tui-icon icon="@tui.loader-circle" class="erp-table__group-spinner" />
+                      } @else if (flatRow.totalCount > 0) {
+                        <span class="erp-table__group-count">{{ flatRow.totalCount }}</span>
+                      }
+
+                      @if (_groupActions().length > 0) {
+                        <div class="erp-table__group-actions" (click)="$event.stopPropagation()">
+                          @for (action of _groupActions(); track action.label) {
+                            <button
+                              tuiButton
+                              type="button"
+                              appearance="flat"
+                              size="xs"
+                              [disabled]="_isGroupActionDisabled(action, flatRow.group)"
+                              (click)="onGroupActionClick(action, flatRow.group)"
+                            >
+                              @if (action.icon) {
+                                <tui-icon [icon]="action.icon" />
+                              }
+                              {{ action.label | erpTranslate }}
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+
+              <ng-template #leafRowTpl let-row let-virtualizer="virtualizer" let-index="index">
+                <tr
+                  [erpVirtualMeasure]="virtualizer"
+                  [index]="index"
+                  [attr.data-index]="index"
+                  class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
+                  [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
+                  (click)="onRowClickEvent(row.original, $event)"
+                  (dblclick)="onRowDoubleClickEvent(row.original)"
+                  (contextmenu)="onRowContextMenuEvent(row.original, $event)"
+                >
+                  @for (cell of _getOrderedCells(row); track cell.id) {
+                    <td
+                      class="erp-table__cell p-3 text-sm {{ $any(cell.column.columnDef.meta)?.['cellClass'] || '' }}"
+                      [style.width.px]="cell.column.getSize()"
+                      [attr.data-pinned]="cell.column.getIsPinned()"
+                      [class.erp-table__cell--pinned-left]="cell.column.getIsPinned() === 'left'"
+                      [class.erp-table__cell--pinned-right]="cell.column.getIsPinned() === 'right'"
+                      [class.erp-table__cell--pinned-left-last]="cell.column.id === _lastLeftPinnedColumnId()"
+                      [class.erp-table__cell--pinned-right-first]="cell.column.id === _firstRightPinnedColumnId()"
+                      [class.!overflow-visible]="cell.column.id === '__selection'"
+                      [style.left.px]="cell.column.getIsPinned() === 'left' ? cell.column.getStart('left') : null"
+                      [style.right.px]="cell.column.getIsPinned() === 'right' ? cell.column.getAfter('right') : null"
+                      [class.text-right]="$any(cell.column.columnDef.meta)?.['align'] === 'right'"
+                      [class.text-center]="$any(cell.column.columnDef.meta)?.['align'] === 'center'"
+                    >
+                      <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellValue">
+                        <span [tuiSkeleton]="loading()" class="rounded-sm inline-flex items-center min-w-[3rem] min-h-[1.25rem] max-w-full">
+                          {{ cellValue }}
+                        </span>
+                      </ng-container>
+                    </td>
+                  }
+                </tr>
+              </ng-template>
+
               @if (_enableVirtualScroll()) {
                 <!-- Virtual Padding Top -->
                 @if (virtualizer().getVirtualItems().length > 0) {
@@ -345,107 +455,13 @@ export class ErpTableSelectionCell {
                 @for (virtualRow of virtualizer().getVirtualItems(); track virtualRow.key) {
                   @let flatRow = _flatDisplayRows()[virtualRow.index];
                   @if (flatRow.kind === 'group') {
-                    <!-- Sztuczny wiersz-rodzic grupy — bez związku z kolumnami danych -->
-                    <tr
-                      [erpVirtualMeasure]="virtualizer()"
-                      [index]="virtualRow.index"
-                      [attr.data-index]="virtualRow.index"
-                      class="erp-table__group-row"
-                      (click)="toggleGroupExpanded(flatRow.key)"
-                    >
-                      <td [colSpan]="table.getVisibleFlatColumns().length" class="erp-table__group-cell">
-                        <div class="erp-table__group-content">
-                          @if (config().selectionMode !== 'none') {
-                            <div class="erp-table__group-checkbox" (click)="$event.stopPropagation()">
-                              <erp-table-selection-cell
-                                [checked]="flatRow.totalCount > 0 && flatRow.selectedCount === flatRow.totalCount"
-                                [indeterminate]="flatRow.selectedCount > 0 && flatRow.selectedCount < flatRow.totalCount"
-                                [selectionMode]="'multi'"
-                                (changed)="toggleGroupSelection(flatRow.key, $event.checked, $event.shiftKey)"
-                              />
-                            </div>
-                          }
-
-                          <tui-icon
-                            icon="@tui.chevron-right"
-                            class="erp-table__group-chevron"
-                            [class.erp-table__group-chevron--expanded]="flatRow.expanded"
-                          />
-
-                          @if (_groupIcon(flatRow.group); as groupIcon) {
-                            <tui-icon [icon]="groupIcon" class="erp-table__group-icon" />
-                          }
-
-                          <div class="erp-table__group-titles">
-                            <span class="erp-table__group-title">{{ _groupTitle(flatRow.group) | erpTranslate }}</span>
-                            @if (_groupSubtitle(flatRow.group); as groupSubtitle) {
-                              <span class="erp-table__group-subtitle">{{ groupSubtitle | erpTranslate }}</span>
-                            }
-                          </div>
-
-                          @if (flatRow.loading) {
-                            <tui-icon icon="@tui.loader-circle" class="erp-table__group-spinner" />
-                          } @else if (flatRow.totalCount > 0) {
-                            <span class="erp-table__group-count">{{ flatRow.totalCount }}</span>
-                          }
-
-                          @if (_groupActions().length > 0) {
-                            <div class="erp-table__group-actions" (click)="$event.stopPropagation()">
-                              @for (action of _groupActions(); track action.label) {
-                                <button
-                                  tuiButton
-                                  type="button"
-                                  appearance="flat"
-                                  size="xs"
-                                  [disabled]="_isGroupActionDisabled(action, flatRow.group)"
-                                  (click)="onGroupActionClick(action, flatRow.group)"
-                                >
-                                  @if (action.icon) {
-                                    <tui-icon [icon]="action.icon" />
-                                  }
-                                  {{ action.label | erpTranslate }}
-                                </button>
-                              }
-                            </div>
-                          }
-                        </div>
-                      </td>
-                    </tr>
+                    <ng-container
+                      *ngTemplateOutlet="groupRowTpl; context: { $implicit: flatRow, virtualizer: virtualizer(), index: virtualRow.index }"
+                    ></ng-container>
                   } @else {
-                    @let row = flatRow.row;
-                    <tr
-                      [erpVirtualMeasure]="virtualizer()"
-                      [index]="virtualRow.index"
-                      [attr.data-index]="virtualRow.index"
-                      class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
-                      [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
-                      (click)="onRowClickEvent(row.original, $event)"
-                      (dblclick)="onRowDoubleClickEvent(row.original)"
-                      (contextmenu)="onRowContextMenuEvent(row.original, $event)"
-                    >
-                      @for (cell of _getOrderedCells(row); track cell.id) {
-                        <td
-                          class="erp-table__cell p-3 text-sm {{ $any(cell.column.columnDef.meta)?.['cellClass'] || '' }}"
-                          [style.width.px]="cell.column.getSize()"
-                          [attr.data-pinned]="cell.column.getIsPinned()"
-                          [class.erp-table__cell--pinned-left]="cell.column.getIsPinned() === 'left'"
-                          [class.erp-table__cell--pinned-right]="cell.column.getIsPinned() === 'right'"
-                          [class.erp-table__cell--pinned-left-last]="cell.column.id === _lastLeftPinnedColumnId()"
-                          [class.erp-table__cell--pinned-right-first]="cell.column.id === _firstRightPinnedColumnId()"
-                          [class.!overflow-visible]="cell.column.id === '__selection'"
-                          [style.left.px]="cell.column.getIsPinned() === 'left' ? cell.column.getStart('left') : null"
-                          [style.right.px]="cell.column.getIsPinned() === 'right' ? cell.column.getAfter('right') : null"
-                          [class.text-right]="$any(cell.column.columnDef.meta)?.['align'] === 'right'"
-                          [class.text-center]="$any(cell.column.columnDef.meta)?.['align'] === 'center'"
-                        >
-                          <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellValue">
-                            <span [tuiSkeleton]="loading()" class="rounded-sm inline-flex items-center min-w-[3rem] min-h-[1.25rem] max-w-full">
-                              {{ cellValue }}
-                            </span>
-                          </ng-container>
-                        </td>
-                      }
-                    </tr>
+                    <ng-container
+                      *ngTemplateOutlet="leafRowTpl; context: { $implicit: flatRow.row, virtualizer: virtualizer(), index: virtualRow.index }"
+                    ></ng-container>
                   }
                 }
 
@@ -455,39 +471,25 @@ export class ErpTableSelectionCell {
                     <td [colSpan]="table.getVisibleFlatColumns().length" [style.height.px]="virtualizer().getTotalSize() - virtualizer().getVirtualItems()[virtualizer().getVirtualItems().length - 1].end"></td>
                   </tr>
                 }
+              } @else if (_isGroupedMode()) {
+                <!-- Zwykła pętla z grupami — te same wiersze, bez wirtualizera -->
+                @for (flatRow of _flatDisplayRows(); track _flatRowKey(flatRow); let i = $index) {
+                  @if (flatRow.kind === 'group') {
+                    <ng-container
+                      *ngTemplateOutlet="groupRowTpl; context: { $implicit: flatRow, virtualizer: null, index: i }"
+                    ></ng-container>
+                  } @else {
+                    <ng-container
+                      *ngTemplateOutlet="leafRowTpl; context: { $implicit: flatRow.row, virtualizer: null, index: i }"
+                    ></ng-container>
+                  }
+                }
               } @else {
                 <!-- Zwykła pętla -->
-                @for (row of table.getRowModel().rows; track row.id) {
-                  <tr 
-                    class="erp-table__row border-b border-(--erp-table-border) hover:bg-(--erp-table-row-hover) transition-colors"
-                    [class.bg-(--erp-table-row-selected)]="isRowSelected(row)"
-                    (click)="onRowClickEvent(row.original, $event)"
-                    (dblclick)="onRowDoubleClickEvent(row.original)"
-                    (contextmenu)="onRowContextMenuEvent(row.original, $event)"
-                  >
-                    @for (cell of _getOrderedCells(row); track cell.id) {
-                      <td 
-                        class="erp-table__cell p-3 text-sm {{ $any(cell.column.columnDef.meta)?.['cellClass'] || '' }}"
-                        [style.width.px]="cell.column.getSize()"
-                        [attr.data-pinned]="cell.column.getIsPinned()"
-                        [class.erp-table__cell--pinned-left]="cell.column.getIsPinned() === 'left'"
-                        [class.erp-table__cell--pinned-right]="cell.column.getIsPinned() === 'right'"
-                        [class.erp-table__cell--pinned-left-last]="cell.column.id === _lastLeftPinnedColumnId()"
-                        [class.erp-table__cell--pinned-right-first]="cell.column.id === _firstRightPinnedColumnId()"
-                        [class.!overflow-visible]="cell.column.id === '__selection'"
-                        [style.left.px]="cell.column.getIsPinned() === 'left' ? cell.column.getStart('left') : null"
-                        [style.right.px]="cell.column.getIsPinned() === 'right' ? cell.column.getAfter('right') : null"
-                        [class.text-right]="$any(cell.column.columnDef.meta)?.['align'] === 'right'"
-                        [class.text-center]="$any(cell.column.columnDef.meta)?.['align'] === 'center'"
-                      >
-                        <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellValue">
-                          <span [tuiSkeleton]="loading()" class="rounded-sm inline-flex items-center min-w-[3rem] min-h-[1.25rem] max-w-full">
-                            {{ cellValue }}
-                          </span>
-                        </ng-container>
-                      </td>
-                    }
-                  </tr>
+                @for (row of table.getRowModel().rows; track row.id; let i = $index) {
+                  <ng-container
+                    *ngTemplateOutlet="leafRowTpl; context: { $implicit: row, virtualizer: null, index: i }"
+                  ></ng-container>
                 }
               }
             </tbody>
@@ -825,6 +827,11 @@ export class ErpTableComponent<T> implements AfterViewInit {
 
     return result;
   });
+
+  /** Klucz śledzenia wiersza w płaskiej liście (grupa albo wiersz danych w obrębie grupy). */
+  protected _flatRowKey(flatRow: FlatDisplayRow<T>): string {
+    return flatRow.kind === 'group' ? `g:${flatRow.key}` : `r:${flatRow.groupKey ?? ''}:${flatRow.row.id}`;
+  }
 
   protected _lastLeftPinnedColumnId = computed(() => {
     const cols = this.table().getVisibleLeafColumns();

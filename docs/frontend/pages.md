@@ -217,6 +217,8 @@ Grupowanie po rodzicu robi `erp-table` (`setGroupedRows`), nie ręczne sekcje w 
 )
 ```
 
+Grupowanie działa **niezależnie od wirtualizacji** — `erp-table` renderuje wiersze-rodziców tak samo w trybie zwykłym i wirtualnym. `setEnableVirtualScroll(true)` włączaj wtedy, gdy panel może mieć setki wierszy (multimedia kilkunastu produktów), a nie po to, żeby zobaczyć nagłówki grup.
+
 Wiersz musi nieść identyfikator rodzica (`{ userUuid, grant }`, `{ productUuid, uuid }`), bo identyfikator dziecka sam w sobie nie jest unikalny w zbiorze wielu rodziców — ta sama rola bywa przypisana wielu użytkownikom. Stąd też `setRowIdAccessor(r => `${r.userUuid}:${r.grant.roleUuid}`)`.
 
 Każda zakładka poza pierwszą renderuje się w `rightPanel` i **musi** wspierać wielokrotne zaznaczenie z głównej tabeli — nigdy nie zakłada, że zaznaczono dokładnie jeden wiersz.

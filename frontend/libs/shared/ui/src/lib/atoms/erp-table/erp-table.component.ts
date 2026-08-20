@@ -141,6 +141,14 @@ export class ErpTableSelectionCell {
   onClick(event: MouseEvent) {
     event.stopPropagation();
     this._lastShiftKey = event.shiftKey;
+
+    // Natywny radio nie emituje zmiany po kliknięciu w już zaznaczoną opcję —
+    // bez tego pojedyncze zaznaczenie nie dałoby się odznaczyć.
+    if (this.selectionMode() === 'single' && this.checked()) {
+      event.preventDefault();
+      this.changed.emit({ checked: false, shiftKey: event.shiftKey });
+      this._lastShiftKey = false;
+    }
   }
 
   onModelChange(val: boolean) {

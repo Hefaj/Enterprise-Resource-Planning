@@ -1,21 +1,24 @@
 using Erp.BuildingBlocks.Validation;
-using Identity.Application.Permissions;
 
-namespace Identity.Application.Users;
+namespace Identity.Application.Permissions;
 
-/// <summary>Element wsadu <c>user/batch-grant-permission</c>: użytkownik-cel i kod uprawnienia,
-/// które komenda chce mu nadać bezpośrednio.</summary>
-/// <param name="UserUuid">Agregat, do którego trafi błąd.</param>
+/// <summary>Referencja do kodu uprawnienia wewnątrz komendy wykonywanej na INNYM agregacie —
+/// błąd trafia do <see cref="AggregateUuid"/> (element zadania). Współdzielony przez
+/// <c>UserGrantPermissionCommand.PermissionCode</c> (agregat = użytkownik) i
+/// <c>RoleAddPermissionCommand.PermissionCode</c> (agregat = rola) — stąd generyczna nazwa
+/// pola, nie <c>UserUuid</c>.</summary>
+/// <param name="AggregateUuid">Element zadania, do którego trafi błąd.</param>
 /// <param name="PermissionCode">Kod z <see cref="Erp.BuildingBlocks.Contracts.Permissions"/>.</param>
-public sealed record PermissionCodeTarget(Guid UserUuid, string PermissionCode);
+public sealed record PermissionCodeTarget(Guid AggregateUuid, string PermissionCode);
 
 /// <summary>
 /// Reguła wsadowa: kod uprawnienia musi istnieć w katalogu i nie być <c>IsObsolete</c>.
 ///
 /// <para><b>To sprawdzenie NIE ma dziś odpowiednika w pojedynczej ścieżce komendy</b> —
-/// <c>UserAccount.GrantPermission</c> przyjmuje dowolny string. Literówka w kodzie zapisuje się
-/// do bazy jako martwy <c>permission_code</c>, którego żaden <c>if</c> nigdy nie sprawdzi. Reguła
-/// wsadowa to pierwsza linia obrony przed tym błędem — jeden <c>SELECT</c> na cały wsad.</para>
+/// ani <c>UserAccount.GrantPermission</c>, ani <c>Role.AddPermission</c> nie sprawdzają kodu.
+/// Literówka zapisuje się do bazy jako martwy <c>permission_code</c>, którego żaden <c>if</c>
+/// nigdy nie sprawdzi. Reguła wsadowa to pierwsza linia obrony przed tym błędem — jeden
+/// <c>SELECT</c> na cały wsad.</para>
 /// </summary>
 public sealed class PermissionCodeMustExistRule : IBatchRule<PermissionCodeTarget>
 {

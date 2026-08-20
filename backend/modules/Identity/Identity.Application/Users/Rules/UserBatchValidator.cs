@@ -1,5 +1,7 @@
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Validation;
+using Identity.Application.Permissions;
+using Identity.Application.Roles;
 
 namespace Identity.Application.Users;
 
@@ -46,7 +48,7 @@ public sealed class UserBatchValidator
 
         var references = targets.Select(t => new RoleReferenceTarget(t.AggregateUuid, t.Command.RoleUuid)).ToList();
         await _referencedRoleMustExist
-            .ExecuteAsync(references, r => r.UserUuid, tracker, cancellationToken)
+            .ExecuteAsync(references, r => r.AggregateUuid, tracker, cancellationToken)
             .ConfigureAwait(false);
 
         return tracker;
@@ -76,7 +78,7 @@ public sealed class UserBatchValidator
 
         var codes = targets.Select(t => new PermissionCodeTarget(t.AggregateUuid, t.Command.PermissionCode)).ToList();
         await _permissionCodeMustExist
-            .ExecuteAsync(codes, c => c.UserUuid, tracker, cancellationToken)
+            .ExecuteAsync(codes, c => c.AggregateUuid, tracker, cancellationToken)
             .ConfigureAwait(false);
 
         return tracker;

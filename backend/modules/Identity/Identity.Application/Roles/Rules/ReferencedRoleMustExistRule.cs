@@ -1,22 +1,20 @@
 using Erp.BuildingBlocks.Validation;
-using Identity.Application.Roles;
 
-namespace Identity.Application.Users;
+namespace Identity.Application.Roles;
 
-/// <summary>Element wsadu <c>user/batch-assign-role</c>: użytkownik-cel i rola, którą komenda
-/// chce mu nadać. Lekki typ, nie <c>BatchTarget&lt;UserAssignRoleCommand&gt;</c> wprost — reguła
-/// nie potrzebuje reszty komendy (<c>ExpiresAt</c>), tylko dwóch identyfikatorów.</summary>
-/// <param name="UserUuid">Agregat, do którego trafi błąd — to on jest celem elementu zadania.</param>
+/// <summary>Referencja do roli wewnątrz komendy wykonywanej na INNYM agregacie —
+/// błąd trafia do <see cref="AggregateUuid"/> (element zadania), rola jest tylko wartością
+/// w payloadzie. Współdzielony przez dwa przypadki użycia: <c>UserAssignRoleCommand.RoleUuid</c>
+/// (agregat = użytkownik) i <c>RoleAddMemberCommand.MemberRoleUuid</c> (agregat = rola-kontener)
+/// — stąd generyczna nazwa pola, nie <c>UserUuid</c>.</summary>
+/// <param name="AggregateUuid">Element zadania, do którego trafi błąd.</param>
 /// <param name="RoleUuid">Rola wskazana w komendzie, której istnienie sprawdzamy.</param>
-public sealed record RoleReferenceTarget(Guid UserUuid, Guid RoleUuid);
+public sealed record RoleReferenceTarget(Guid AggregateUuid, Guid RoleUuid);
 
 /// <summary>
-/// Reguła wsadowa: rola wskazana w komendzie (np. <c>UserAssignRoleCommand.RoleUuid</c>) musi
-/// istnieć. Odpowiednik sprawdzenia, które dziś robi <c>UserAssignRoleCommandHandler</c> przez
+/// Reguła wsadowa: rola wskazana w komendzie musi istnieć. Odpowiednik sprawdzenia, które
+/// dziś robią <c>UserAssignRoleCommandHandler</c> i <c>RoleAddMemberCommandHandler</c> przez
 /// <c>IRoleRepository.FindAsync</c> per element — tutaj jedno zbiorcze zapytanie na cały wsad.
-///
-/// Błąd trafia do UŻYTKOWNIKA (elementu zadania), nie do roli — to użytkownik jest agregatem,
-/// którego dotyczy `job_item`, rola jest tylko referencją w payloadzie.
 /// </summary>
 public sealed class ReferencedRoleMustExistRule : IBatchRule<RoleReferenceTarget>
 {

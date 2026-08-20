@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Api.Contracts;
 using Identity.Application.Roles;
+using Identity.Domain.Roles;
 using Identity.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -26,13 +27,7 @@ public sealed class RoleQueries : IRoleQueries
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var query = _dbContext.Roles.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(request.Name))
-        {
-            var name = request.Name;
-            query = query.Where(r => EF.Functions.ILike(r.Name, $"%{name}%"));
-        }
+        var query = ApplyFilters(request);
 
         var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
@@ -46,6 +41,35 @@ public sealed class RoleQueries : IRoleQueries
             .ConfigureAwait(false);
 
         return new SearchResponse { Uuids = uuids, TotalCount = totalCount };
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Guid>> GetMatchingUuidsAsync(SearchRoleRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // Bez stronicowania — operacja masowa obejmuje cały zbiór pasujący do filtra.
+        return await ApplyFilters(request)
+            .OrderBy(r => r.Uuid)
+            .Select(r => r.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Filtry współdzielone przez <see cref="SearchAsync"/> i
+    /// <see cref="GetMatchingUuidsAsync"/> — jedno miejsce, w którym filtr może się rozjechać,
+    /// zamiast dwóch.</summary>
+    private IQueryable<Role> ApplyFilters(SearchRoleRequest request)
+    {
+        var query = _dbContext.Roles.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.Name))
+        {
+            var name = request.Name;
+            query = query.Where(r => EF.Functions.ILike(r.Name, $"%{name}%"));
+        }
+
+        return query;
     }
 
     /// <inheritdoc />
@@ -68,6 +92,57 @@ public sealed class RoleQueries : IRoleQueries
             .Select(r => r.Uuid)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<List<string>> GetExistingCodesAsync(
+        IReadOnlyCollection<string> codes,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(codes);
+
+        if (codes.Count == 0)
+        {
+            return [];
+        }
+
+        // Ta sama normalizacja co Role.ValidateCode — Code w bazie jest zawsze przycięty
+        // i pisany małymi literami, więc porównanie musi iść po tej samej formie.
+        var normalizedCodes = codes
+            .Select(c => c.Trim().ToLowerInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        return await _dbContext.Roles
+            .AsNoTracking()
+            .Where(r => normalizedCodes.Contains(r.Code))
+            .Select(r => r.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<List<RoleMembershipEdge>> GetAllMembershipEdgesAsync(CancellationToken cancellationToken)
+    {
+        const string sql = $"""
+            SELECT container_uuid, member_uuid FROM {IdentityDbContext.SchemaName}.role_member;
+            """;
+
+        // Dedykowane połączenie, tak jak IsDescendantAsync niżej — role_member jest kolekcją
+        // własną (OwnsMany), bez osobnego DbSet do odpytania przez LINQ-to-Entities.
+        await using var connection = new NpgsqlConnection(_connectionStringProvider.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var command = new NpgsqlCommand(sql, connection);
+
+        var edges = new List<RoleMembershipEdge>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            edges.Add(new RoleMembershipEdge(reader.GetGuid(0), reader.GetGuid(1)));
+        }
+
+        return edges;
     }
 
     public async Task<List<RoleDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken)

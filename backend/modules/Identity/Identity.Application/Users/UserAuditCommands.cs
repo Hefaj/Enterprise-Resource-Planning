@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Api.Auth;
+using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
@@ -14,10 +15,16 @@ namespace Identity.Application.Users;
 /// dwa systemy zewnętrzne (Keycloak Admin API, cache uprawnień) i zostawia ślad audytowy —
 /// inny kształt niż reszta komend w tym module (patrz <c>docs/backend/identity-authz.md</c>
 /// Faza 6).
+///
+/// <para>Od Fazy 2 przejścia na operacje masowe (<c>docs/backend/identity-bulk-migration.md</c>)
+/// idzie przez <c>BulkCommandRunner</c> tak jak reszta komend <c>user/*</c> — skutki poza bazą
+/// (odwołanie sesji Keycloak, invalidacja cache'u) nie cofają się przy rollbacku chunka, ale są
+/// idempotentne, więc ponowienie elementu jest bezpieczne. Mitygacja kosztu N wywołań HTTP
+/// w jednej transakcji: <c>BulkJobs:ChunkSize</c> obniżony w konfiguracji Identity.</para>
 /// </summary>
-public sealed class UserForceLogoutCommand : ICommand<Guid>
+public sealed class UserForceLogoutCommand : ICommand<Guid>, IAggregateCommand
 {
-    public Guid UserUuid { get; set; }
+    public Guid Uuid { get; set; }
 }
 
 public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogoutCommand, Guid>
@@ -28,7 +35,6 @@ public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogo
     private readonly IClock _clock;
     private readonly IExecutionContext _executionContext;
     private readonly IGrantAuditWriter _auditWriter;
-    private readonly IUnitOfWork _unitOfWork;
 
     public UserForceLogoutCommandHandler(
         IUserAccountRepository repository,
@@ -36,8 +42,7 @@ public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogo
         IPermissionProvider permissionProvider,
         IClock clock,
         IExecutionContext executionContext,
-        IGrantAuditWriter auditWriter,
-        IUnitOfWork unitOfWork)
+        IGrantAuditWriter auditWriter)
     {
         _repository = repository;
         _keycloakAdminClient = keycloakAdminClient;
@@ -45,15 +50,14 @@ public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogo
         _clock = clock;
         _executionContext = executionContext;
         _auditWriter = auditWriter;
-        _unitOfWork = unitOfWork;
     }
 
     public override async Task<Guid> ExecuteAsync(UserForceLogoutCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var user = await _repository.FindAsync(command.UserUuid, ct).ConfigureAwait(false)
-            ?? throw new AggregateNotFoundException(nameof(UserAccount), command.UserUuid);
+        var user = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(UserAccount), command.Uuid);
 
         // Uuid użytkownika JEST claimem `sub` Keycloaka (patrz komentarz klasy UserAccount) —
         // nie ma osobnej kolumny "keycloak sub" do przekazania dalej.
@@ -67,8 +71,6 @@ public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogo
                 _clock.UtcNow, UserAssignRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
                 "user_forced_logout", userSub, reason: null, source: "identity.api"),
             ct).ConfigureAwait(false);
-
-        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
         return user.Uuid;
     }

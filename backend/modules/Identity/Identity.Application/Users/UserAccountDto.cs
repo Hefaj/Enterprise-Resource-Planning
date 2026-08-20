@@ -60,6 +60,20 @@ public interface IUserAccountQueries
 
     Task<List<UserAccountDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken);
 
+    /// <summary>Identyfikatory użytkowników pasujących do filtra, bez stronicowania —
+    /// używane przez operacje masowe do wyznaczenia zbioru celów (tryb szablon+filtr
+    /// <c>BatchEndpointBase</c>).</summary>
+    Task<List<Guid>> GetMatchingUuidsAsync(SearchUserAccountRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Spośród podanych identyfikatorów zwraca te, które faktycznie istnieją jako użytkownicy.
+    ///
+    /// Jedno zbiorcze zapytanie zamiast N osobnych <c>FindAsync</c> — używane przez walidację
+    /// wsadową (<c>UserMustExistRule</c>), która musi odsiać nieistniejące cele operacji masowej
+    /// PRZED utworzeniem zadania, nie po jednym elemencie naraz.
+    /// </summary>
+    Task<List<Guid>> GetExistingUuidsAsync(IReadOnlyCollection<Guid> uuids, CancellationToken cancellationToken);
+
     /// <summary>Efektywny zbiór kodów uprawnień — role przypisane wprost + ich składowe
     /// (rekursywnie) + uprawnienia bezpośrednie. Zasila <c>GET /me/permissions</c> i
     /// <c>GET /internal/users/{id}/permissions</c> (Faza 3).</summary>

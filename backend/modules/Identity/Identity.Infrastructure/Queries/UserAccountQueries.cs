@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Api.Contracts;
 using Identity.Application.Users;
+using Identity.Domain.Users;
 using Identity.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -24,6 +25,47 @@ public sealed class UserAccountQueries : IUserAccountQueries
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var query = await ApplyFiltersAsync(request, cancellationToken).ConfigureAwait(false);
+
+        // Liczymy PRZED stronicowaniem — totalCount opisuje cały zbiór wyników, nie stronę.
+        var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+
+        var uuids = await query
+            .OrderBy(u => u.Email)
+            .ThenBy(u => u.Uuid)
+            .Skip((Math.Max(request.Page, 1) - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(u => u.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return new SearchResponse { Uuids = uuids, TotalCount = totalCount };
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Guid>> GetMatchingUuidsAsync(
+        SearchUserAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var query = await ApplyFiltersAsync(request, cancellationToken).ConfigureAwait(false);
+
+        // Bez stronicowania — operacja masowa obejmuje cały zbiór pasujący do filtra.
+        return await query
+            .OrderBy(u => u.Uuid)
+            .Select(u => u.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Filtry współdzielone przez <see cref="SearchAsync"/> (stronicowany odczyt)
+    /// i <see cref="GetMatchingUuidsAsync"/> (pełny zbiór celów operacji masowej) — jedno
+    /// miejsce, w którym filtr może się rozjechać, zamiast dwóch.</summary>
+    private async Task<IQueryable<UserAccount>> ApplyFiltersAsync(
+        SearchUserAccountRequest request,
+        CancellationToken cancellationToken)
+    {
         var query = _dbContext.UserAccounts.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Email))
@@ -49,18 +91,29 @@ public sealed class UserAccountQueries : IUserAccountQueries
                 u.PermissionGrants.Any(pg => pg.PermissionCode == permissionCode));
         }
 
-        var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        return query;
+    }
 
-        var uuids = await query
-            .OrderBy(u => u.Email)
-            .ThenBy(u => u.Uuid)
-            .Skip((Math.Max(request.Page, 1) - 1) * request.PageSize)
-            .Take(request.PageSize)
+    /// <inheritdoc />
+    public async Task<List<Guid>> GetExistingUuidsAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+
+        if (uuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = uuids as List<Guid> ?? uuids.ToList();
+
+        return await _dbContext.UserAccounts
+            .AsNoTracking()
+            .Where(u => uuidList.Contains(u.Uuid))
             .Select(u => u.Uuid)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-
-        return new SearchResponse { Uuids = uuids, TotalCount = totalCount };
     }
 
     public async Task<List<UserAccountDto>> GetAsync(

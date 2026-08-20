@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Api.Auth;
+using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
 using FastEndpoints;
@@ -37,15 +38,22 @@ builder.Services.AddHostedService<ExpiredGrantCleanupService>();
 // Wolverine: outbox spięty z transakcją EF Core — ta sama rejestracja co w pozostałych modułach.
 builder.AddErpMessaging<IdentityDbContext>(typeof(IdentityDbContext).Assembly);
 
-// Silnik zadań masowych (Faza 0 przejścia opisanego w docs/backend/identity-bulk-migration.md):
-// trwałe zadania w schemacie `identity`, wznawiane po restarcie. Na razie bez żadnego
-// IBulkCommandExecutor — komendy niżej wciąż wołają endpointy Api wprost, tak jak dziś. Runner
-// startuje i po prostu nie znajduje żadnego zadania Pending/Running, dopóki Fazy 2-3 nie
-// przepiszą endpointów na BatchEndpointBase.
+// Silnik zadań masowych: trwałe zadania w schemacie `identity`, wznawiane po restarcie.
 builder.Services.AddScoped<IJobStore, JobStore<IdentityDbContext>>();
 builder.Services.AddErpBulkJobs<IdentityDbContext>(builder.Configuration);
 
-// Handlery komend jawnie w DI — patrz uzasadnienie w Catalog.Api/Program.cs.
+// Reguły wsadowe użytkowników i ich kompozycja (Faza 1 przejścia opisanego w
+// docs/backend/identity-bulk-migration.md). Endpointy operacji masowych wołają wyłącznie
+// walidator — to on wie, jakie reguły obowiązują dla której operacji
+// (BatchEndpointBase.ValidateTargetsAsync). Role zostają na komendach synchronicznych do Fazy 3.
+builder.Services.AddScoped<UserMustExistRule>();
+builder.Services.AddScoped<ReferencedRoleMustExistRule>();
+builder.Services.AddScoped<PermissionCodeMustExistRule>();
+builder.Services.AddScoped<UserBatchValidator>();
+
+// Handlery komend jawnie w DI — patrz uzasadnienie w Catalog.Api/Program.cs. Komendy `role/*`
+// zapisują same przez IUnitOfWork (patrz RoleCommands.cs) do czasu Fazy 3; komendy `user/*`
+// od Fazy 2 idą wyłącznie przez runnera, który zapisuje raz na chunk.
 builder.Services.AddScoped<ICommandHandler<RoleCreateCommand, Guid>, RoleCreateCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<RoleAddPermissionCommand, Guid>, RoleAddPermissionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<RoleRemovePermissionCommand, Guid>, RoleRemovePermissionCommandHandler>();
@@ -56,6 +64,14 @@ builder.Services.AddScoped<ICommandHandler<UserRevokeRoleCommand, Guid>, UserRev
 builder.Services.AddScoped<ICommandHandler<UserGrantPermissionCommand, Guid>, UserGrantPermissionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<UserRevokePermissionCommand, Guid>, UserRevokePermissionCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<UserForceLogoutCommand, Guid>, UserForceLogoutCommandHandler>();
+
+// Egzekutory per typ komendy — runner odnajduje je po nazwie typu zapisanej w zadaniu.
+// Tylko `user/*`: `role/*` dołączy w Fazie 3, gdy przejdzie na BatchEndpointBase.
+builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserAssignRoleCommand>>();
+builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserRevokeRoleCommand>>();
+builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserGrantPermissionCommand>>();
+builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserRevokePermissionCommand>>();
+builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserForceLogoutCommand>>();
 
 builder.Services.AddOpenApi();
 

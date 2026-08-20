@@ -19,4 +19,26 @@ public sealed class PermissionCatalogQueries : IPermissionCatalogQueries
             .Select(p => new PermissionCatalogEntryDto(p.Code, p.Module, p.Resource, p.Action, p.DescriptionKey, p.IsObsolete))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async Task<List<string>> GetExistingCodesAsync(
+        IReadOnlyCollection<string> codes,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(codes);
+
+        if (codes.Count == 0)
+        {
+            return [];
+        }
+
+        var codeList = codes as List<string> ?? codes.ToList();
+
+        return await _dbContext.PermissionCatalogEntries
+            .AsNoTracking()
+            .Where(p => codeList.Contains(p.Code) && !p.IsObsolete)
+            .Select(p => p.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

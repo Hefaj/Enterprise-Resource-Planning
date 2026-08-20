@@ -48,6 +48,28 @@ public sealed class RoleQueries : IRoleQueries
         return new SearchResponse { Uuids = uuids, TotalCount = totalCount };
     }
 
+    /// <inheritdoc />
+    public async Task<List<Guid>> GetExistingUuidsAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+
+        if (uuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = uuids as List<Guid> ?? uuids.ToList();
+
+        return await _dbContext.Roles
+            .AsNoTracking()
+            .Where(r => uuidList.Contains(r.Uuid))
+            .Select(r => r.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<List<RoleDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken)
     {
         var query = _dbContext.Roles.AsNoTracking();

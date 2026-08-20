@@ -10,4 +10,12 @@ public sealed record PermissionCatalogEntryDto(
 public interface IPermissionCatalogQueries
 {
     Task<List<PermissionCatalogEntryDto>> GetAllAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Spośród podanych kodów zwraca te, które istnieją w katalogu i NIE są oznaczone jako
+    /// <c>IsObsolete</c> — nadawanie uprawnienia po kodzie, którego katalog już nie zna (literówka
+    /// albo wycofany kod), ma być odrzucone przed utworzeniem zadania, nie zapisane do bazy
+    /// jako martwy `permission_code`. Używane przez <c>PermissionCodeMustExistRule</c>.
+    /// </summary>
+    Task<List<string>> GetExistingCodesAsync(IReadOnlyCollection<string> codes, CancellationToken cancellationToken);
 }

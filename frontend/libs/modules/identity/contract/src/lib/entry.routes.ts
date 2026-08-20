@@ -10,7 +10,7 @@ export const remoteRoutes: Route[] = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {
         path: 'dashboard',
-        loadComponent: () => import('@erp/identity/feature').then((m) => m.IdentityDashboardComponent),
+        loadComponent: () => import('@erp/identity/feature').then((m) => m.DashboardComponent),
       },
       {
         path: 'grants',

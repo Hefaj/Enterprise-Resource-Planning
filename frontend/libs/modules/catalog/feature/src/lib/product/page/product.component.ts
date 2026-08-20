@@ -10,11 +10,11 @@ import { ProductStore } from './product.store';
 import { provideProductTranslations, PRODUCT_KEYS } from '../translation';
 import { provideCategoryTranslations } from '../../category/translation';
 
-import { ProductTabComponent } from './tabs/product-tab.component';
-import { MultimediaTabComponent } from './tabs/multimedia/multimedia-tab.component';
-import { ExclusionTabComponent } from './tabs/sales-offer-tabs/exclusion-tab.component';
-import { DeliveryTabComponent } from './tabs/sales-offer-tabs/delivery-tab.component';
-import { WarrantyTabComponent } from './tabs/warranty/warranty-tab.component';
+import { ProductTabComponent } from './content/product-tab.component';
+import { MultimediaTabComponent } from './content/side-panel/multimedia/multimedia-tab.component';
+import { ExclusionTabComponent } from './content/side-panel/sales-offer/exclusion-tab.component';
+import { DeliveryTabComponent } from './content/side-panel/sales-offer/delivery-tab.component';
+import { WarrantyTabComponent } from './content/side-panel/warranty/warranty-tab.component';
 import { ProductFilterComponent } from './filters/product-filter.component';
 
 @Component({

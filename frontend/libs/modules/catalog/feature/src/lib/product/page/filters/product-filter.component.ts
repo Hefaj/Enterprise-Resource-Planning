@@ -9,7 +9,7 @@ import {
   CatalogCategoryTreePickerConfig,
   categorySelectionToUuids,
   categoryUuidsToSelection,
-} from '../../../category/components/catalog-category-tree-picker/catalog-category-tree-picker.component';
+} from '../../../category/components/pickers/catalog-category-tree-picker/catalog-category-tree-picker.component';
 
 /** Kształt wartości formularza filtrów — `category` trzyma natywny deskryptor zaznaczenia drzewa, nie sam uuid. */
 type ProductFilterFormValue = Omit<Partial<SearchProductRequest>, 'category'> & {

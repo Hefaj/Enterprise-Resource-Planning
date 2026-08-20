@@ -449,25 +449,27 @@ Po usunięciu wygenerowanych plików routingu/remote-entry wyczyść `"files"` i
 
 ### 4.1 Feature — pierwszy komponent strony
 
-`frontend/libs/modules/MODULE_NAME/feature/src/lib/MODULE_NAME.component.ts`:
+Strona startowa modułu jest **jednostką jak każda inna** — leży w `lib/dashboard/`, nie luzem w `lib/` (patrz [struktura katalogów agregatu](./feature-structure.md)).
+
+`frontend/libs/modules/MODULE_NAME/feature/src/lib/dashboard/page/dashboard.component.ts`:
 
 ```ts
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'erp-MODULE_NAME-placeholder',
+  selector: 'erp-MODULE_NAME-dashboard',
   standalone: true,
   template: `MODULE_NAME works!`,
   styles: [`:host { display: block; padding: 1rem; }`],
 })
-export class MODULE_NAMEComponent {}
+export class DashboardComponent {}
 ```
 
 `frontend/libs/modules/MODULE_NAME/feature/src/index.ts`:
 
 ```ts
-export * from './lib/MODULE_NAME.component';
-export * from './lib/translation';
+export * from './lib/dashboard/page/dashboard.component';
+export * from './lib/dashboard/translation';
 ```
 
 ### 4.2 Contract — Routes, Menu, Modale
@@ -487,7 +489,7 @@ export const remoteRoutes: Route[] = [
     canActivate: [erpAuthGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', loadComponent: () => import('@erp/MODULE_NAME/feature').then((m) => m.MODULE_NAMEComponent) },
+      { path: 'dashboard', loadComponent: () => import('@erp/MODULE_NAME/feature').then((m) => m.DashboardComponent) },
     ],
   },
 ];
@@ -539,7 +541,7 @@ Upewnij się, że `src/index.ts` każdej biblioteki istnieje (może być pusty n
 
 ### 4.4 Tłumaczenia (Transloco + generator)
 
-Nowy moduł potrzebuje własnego scope'u Transloco od pierwszego commita. Utwórz `frontend/libs/modules/MODULE_NAME/feature/src/lib/translation/{index.ts,pl-PL.json,en-US.json}` i uruchom `pnpm translate:keys`. Pełny mechanizm (DI shadowing, `getModalProviders`, bootstrapping scope'u vs. dodawanie kluczy): [Tłumaczenia](./translations.md), sekcja 4.
+Nowy moduł potrzebuje własnego scope'u Transloco od pierwszego commita. Utwórz `frontend/libs/modules/MODULE_NAME/feature/src/lib/dashboard/translation/{index.ts,pl-PL.json,en-US.json}` i uruchom `pnpm translate:keys`. Pełny mechanizm (DI shadowing, `getModalProviders`, bootstrapping scope'u vs. dodawanie kluczy): [Tłumaczenia](./translations.md), sekcja 4.
 
 ---
 
@@ -654,7 +656,7 @@ npx nx run client:build:production
 - [ ] `federation.config.mjs` — eksponuje `./contract`, wewnętrzne biblioteki w `skip`
 - [ ] `src/main.ts` (`import('./bootstrap')`) oraz `src/main.mfe.ts` (`initFederation()`) podmieniane przez `fileReplacements`
 - [ ] `entry.routes.ts`, `entry.menu.ts`, `entry.modals.ts` (z `getModalProviders`) w `contract`, wyeksportowane w `index.ts`
-- [ ] Tłumaczenia w `feature/src/lib/translation/`, wygenerowane przez `pnpm translate:keys`
+- [ ] Tłumaczenia w `feature/src/lib/dashboard/translation/`, wygenerowane przez `pnpm translate:keys`
 - [ ] `module-federation.manifest.json` — wpis z URL `remoteEntry.json`
 - [ ] `module-loaders.ts` — dodana funkcja importująca `@erp/MODULE_NAME/contract`
 - [ ] `app.routes.ts` (client) — route z `loadChildren: () => loadModuleRoutes('MODULE_NAME')`

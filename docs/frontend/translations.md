@@ -114,4 +114,5 @@ To jest czynność, którą robisz **za każdym razem**, gdy dodajesz nowy tekst
 ## Zobacz też
 
 - [Modale](./modals.md) — `getModalProviders()` w praktyce
+- [Struktura katalogów agregatu](./feature-structure.md) — gdzie leży katalog `translation/` agregatu
 - [Nowy moduł](./new-module.md) — bootstrapping scope'u przy tworzeniu modułu

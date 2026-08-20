@@ -6,11 +6,11 @@ Implementacja referencyjna: strona produktów katalogu —
 [`product.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.component.ts) (szkielet siatki),
 [`product.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (store strony — filtry, sortowanie, zaznaczenie, zasięg),
 [`product-filter.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/filters/product-filter.component.ts) (filtry),
-[`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-tab.component.ts) (pierwsza zakładka — lista),
-[`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/catalog-product-table/catalog-product-table.component.ts) (smart tabela),
-[`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-scope-tab.store.ts) + [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/multimedia/multimedia-tab.component.ts) / [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/warranty/warranty-tab.component.ts) (panele boczne zależne od zaznaczenia).
+[`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/product-tab.component.ts) (pierwsza zakładka — lista),
+[`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/tables/catalog-product-table/catalog-product-table.component.ts) (smart tabela),
+[`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) + [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/multimedia/multimedia-tab.component.ts) / [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/warranty/warranty-tab.component.ts) (panele boczne zależne od zaznaczenia).
 
-Wariant z akcjami masowymi PLUS panelem szczegółu jednego wiersza (`ErpSelectionScope` + wyprowadzony `selectedUuid`): [`users.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/users.component.ts) + [`users.store.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/users.store.ts) — patrz §7. Czysty master-detail bez żadnej akcji masowej (sam `selectedUuid`, bez zasięgu) — patrz §7.1.
+Wariant z akcjami masowymi PLUS panelem szczegółu jednego wiersza (`ErpSelectionScope` + wyprowadzony `selectedUuid`): [`users.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/users.component.ts) + [`users.store.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/users.store.ts) — patrz §7. Czysty master-detail bez żadnej akcji masowej (sam `selectedUuid`, bez zasięgu) — patrz §7.1.
 
 Dokumenty, na których ten się opiera i których nie powiela: [smart tabele](./smart-tables.md) (anatomia `erp-catalog-product-table`), [zasięg zaznaczenia](./selection-scope.md) (`ErpSelectionScope`, materializacja, bramkowanie toolbara), [atomy UI](./atoms.md) (wzorzec Single Config Builder, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-action-toolbar`).
 
@@ -151,7 +151,7 @@ Jeżeli page ma **jednocześnie** akcje masowe i panel podglądu/edycji jednego 
 
 ## 5. Główna lista (`content`)
 
-Jeden Smart Component w `page/tabs/` (jeśli są zakładki — wtedy to pierwsza zakładka, patrz §3) albo bezpośrednio w `page/` (jeśli zakładek nie ma), łączący:
+Jeden Smart Component w `page/content/` (`AGGREGATE-tab.component.ts` — jeśli są zakładki, to jednocześnie pierwsza zakładka, patrz §3), łączący:
 
 ```typescript
 template: `
@@ -173,7 +173,7 @@ template: `
 `
 ```
 
-- **Bez własnego nagłówka strony (`<h1>`/tytuł+podtytuł) w `content`.** Referencyjny `product-tab.component.ts` (i cały przykład w §1) nie ma takiego nagłówka — nazwa strony żyje w routingu/menu (patrz [nowy moduł](./new-module.md)), nie jest powtarzana wewnątrz `content`. Dodanie `<h1>{{ X_KEYS.title | erpTranslate }}</h1>` + `<p>{{ X_KEYS.subtitle | erpTranslate }}</p>` na górze `content` zabiera miejsce filtrowi/tabeli i dubluje informację, którą użytkownik już widzi w tytule zakładki przeglądarki/breadcrumbie. Znalezione i usunięte w `users-content.component.ts`, `roles-content.component.ts`, `grant-audit-content.component.ts`, `permissions-catalog-list.component.ts` — wszystkie cztery dodały taki nagłówek niezależnie od siebie, mimo że żaden przykład referencyjny go nie ma.
+- **Bez własnego nagłówka strony (`<h1>`/tytuł+podtytuł) w `content`.** Referencyjny `product-tab.component.ts` (i cały przykład w §1) nie ma takiego nagłówka — nazwa strony żyje w routingu/menu (patrz [nowy moduł](./new-module.md)), nie jest powtarzana wewnątrz `content`. Dodanie `<h1>{{ X_KEYS.title | erpTranslate }}</h1>` + `<p>{{ X_KEYS.subtitle | erpTranslate }}</p>` na górze `content` zabiera miejsce filtrowi/tabeli i dubluje informację, którą użytkownik już widzi w tytule zakładki przeglądarki/breadcrumbie. Znalezione i usunięte w `users-tab.component.ts`, `roles-tab.component.ts`, `grant-audit-list.component.ts`, `permissions-catalog-list.component.ts` — wszystkie cztery dodały taki nagłówek niezależnie od siebie, mimo że żaden przykład referencyjny go nie ma.
 - **Smart tabela** (`erp-catalog-product-table` w przykładzie) — komponent osobny, zbudowany wg [smart-tables.md](./smart-tables.md); page go tylko konsumuje, nie zna jego wewnętrznej logiki paginacji/fetchowania.
 - **`selectionMode` smart tabeli jest jej własnym inputem** (`selectionMode = input<ErpSelectionMode>('multi')`, patrz [smart-tables.md §2](./smart-tables.md#2-anatomia)), **nigdy** wartością zaszytą na sztywno w `.setSelectionMode(...)` wewnątrz buildera tabeli — nawet gdy dany page używa jej tylko z jednym trybem (np. `'single'` w wariancie master-detail, §7). Zaszycie na sztywno nie boli, dopóki tabela ma jednego konsumenta, ale blokuje ponowne użycie tego samego komponentu w innym page z innym trybem zaznaczenia — a to jest właśnie cel wydzielenia jej jako osobnego Smart Component.
 - **`erp-action-toolbar`** zawsze **nad** tabelą, wewnątrz `div` z `erpActionToolbarZone` + `[erpActionToolbarContext]="actionToolbar"` (włącza skróty klawiszowe i Mega Menu zakresu tej strefy) — nigdy pod tabelą, nigdy jako osobny obszar siatki.
@@ -196,7 +196,7 @@ Każda zakładka poza pierwszą renderuje się w `rightPanel` i **musi** wspiera
 
 ### 6.1 Store zakładki dziedziczy po wspólnej bazie zasięgu strony
 
-Jedna abstrakcyjna klasa na page (`page/tabs/AGGREGATE-scope-tab.store.ts`, wzór: `product-scope-tab.store.ts`) implementuje raz całą mechanikę „Zaznacz wszystko" opisaną w [zasięgu zaznaczenia §4](./selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query): próbkę N pierwszych pozycji w trybie `query`, blokadę granularnego wyboru, modele widoku po UUID z orkiestratora (aktualizacje SignalR za darmo), czyszczenie podzaznaczenia przy zmianie zbioru. Store konkretnej zakładki tylko dziedziczy i dokłada to, co specyficzne dla jej wierszy podrzędnych:
+Jedna abstrakcyjna klasa na page (`page/content/side-panel/AGGREGATE-scope-tab.store.ts`, wzór: `product-scope-tab.store.ts`) implementuje raz całą mechanikę „Zaznacz wszystko" opisaną w [zasięgu zaznaczenia §4](./selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query): próbkę N pierwszych pozycji w trybie `query`, blokadę granularnego wyboru, modele widoku po UUID z orkiestratora (aktualizacje SignalR za darmo), czyszczenie podzaznaczenia przy zmianie zbioru. Store konkretnej zakładki tylko dziedziczy i dokłada to, co specyficzne dla jej wierszy podrzędnych:
 
 ```typescript
 @Injectable() // rejestrowany na poziomie komponentu zakładki, nie page
@@ -369,26 +369,26 @@ Pełny zasięg (§1–6) — jeśli KAŻDA akcja jest wyrażalna nad zbiorem i n
 
 ## 8. Struktura katalogów
 
+Pełna konwencja rozmieszczenia plików agregatu w warstwie `feature` (`components/`, `modal/`, `page/`, `translation/`) — [struktura katalogów agregatu](./feature-structure.md). Część dotycząca page'a:
+
 ```
-libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/
-├── page/
-│   ├── AGGREGATE.component.ts          # szkielet erp-grid-layout (§1)
-│   ├── AGGREGATE.store.ts              # store strony — filtry/sortowanie/zaznaczenie/zasięg (§4)
-│   ├── filters/
-│   │   └── AGGREGATE-filter.component.ts
-│   └── tabs/                            # tylko jeśli są zakładki (§3)
-│       ├── AGGREGATE-tab.component.ts             # pierwsza zakładka — lista (§5)
-│       ├── AGGREGATE-scope-tab.store.ts           # baza dla paneli bocznych (§6.1)
-│       └── CHILD_NAME/                            # jedna zakładka boczna = jeden podkatalog
-│           ├── CHILD_NAME-tab.component.ts        # §6.2
-│           ├── CHILD_NAME-tab.store.ts            # dziedziczy po AGGREGATE-scope-tab.store.ts
-│           └── CHILD_NAME-row.model.ts             # kształt wiersza tabeli panelu, jeśli spłaszczony
-├── components/
-│   └── MODULE-AGGREGATE-table/
-│       └── MODULE-AGGREGATE-table.component.ts    # smart tabela główna (§5, patrz smart-tables.md)
-├── modal/                               # modale akcji masowych, jeśli są
-└── translation/
+libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/page/
+├── AGGREGATE.component.ts                      # szkielet erp-grid-layout (§1)
+├── AGGREGATE.store.ts                          # store strony — filtry/sortowanie/zaznaczenie/zasięg (§4)
+├── filters/
+│   └── AGGREGATE-filter.component.ts           # obszar `filter` (§2)
+└── content/
+    ├── AGGREGATE-tab.component.ts              # obszar `content` — toolbar + smart tabela (§5)
+    └── side-panel/                             # obszar `rightPanel` — tylko jeśli są zakładki (§3)
+        ├── AGGREGATE-scope-tab.store.ts        # baza store'ów paneli bocznych (§6.1)
+        └── CHILD_NAME/                         # jedna zakładka boczna = jeden podkatalog
+            ├── CHILD_NAME-tab.component.ts     # §6.2
+            ├── CHILD_NAME-tab.store.ts         # dziedziczy po AGGREGATE-scope-tab.store.ts
+            ├── CHILD_NAME-row.model.ts         # kształt wiersza tabeli panelu, jeśli spłaszczony
+            └── CHILD_NAME-*-cell.component.ts  # komórki tylko tego panelu
 ```
+
+Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGREGATE/components/tables/` (§5, [smart-tables.md](./smart-tables.md)), bo używa jej też inny kod niż ta strona. Wszystko pozostałe w `page/` jest prywatne: z całego drzewa tylko `AGGREGATE.component.ts` trafia do barrela biblioteki.
 
 ---
 
@@ -422,7 +422,7 @@ libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/
 - **Pominięcie pierwszej zakładki-listy (bez `component`) w wariancie master-detail (§7)** — to nie jest coś, co odróżnia ten wariant od §3; zasada „pierwsza zakładka to lista" obowiązuje tu tak samo. Bez niej użytkownik nie ma sposobu, żeby ręcznie schować `rightPanel` i zobaczyć pełną listę, mając nadal zaznaczony wiersz. Znaleziony w `users.component.ts` i `roles.component.ts` — brakowało zarówno tej zakładki, jak i drugiego warunku w `collapsed` (`activeTabId() === 'list' || ...`).
 - **Przycisk mutujący w komórce tabeli** (np. własny komponent komórki z ikoną kosza wołający komendę) **zamiast akcji zaznaczenia w `erp-action-toolbar`** (§5) — omija bramkowanie po uprawnieniach przez toolbar, przypięte akcje i skróty klawiszowe. Znaleziony w `user-roles-tab.component.ts` (`IdentityRowRemoveCellComponent`); ten sam wzorzec żyje jeszcze w `user-permissions-tab.component.ts` i `roles/tabs/role-members-tab.component.ts` — nie kopiuj z nich tej części.
 - **Ręcznie pisany `@for` z divami/chipami zamiast `erp-table`** dla danych w zakładce/panelu, nawet prostych i tylko-do-odczytu (§5) — traci sortowanie, resize, `stateKey`, wirtualizację i spójny `emptyMessage` za darmo dostępne w `erp-table`. Znaleziony w `user-effective-permissions-tab.component.ts`.
-- **Nagłówek `<h1>`/tytuł+podtytuł na górze `content`** (§5) — żaden przykład referencyjny go nie ma, nazwa strony już żyje w routingu/menu. Znaleziony niezależnie w czterech różnych `*-content.component.ts` tego samego modułu (`users`, `roles`, `grant-audit`, `permissions`) — silny sygnał, że trzeba było to spisać zamiast liczyć, że kolejny page „zobaczy" brak nagłówka w przykładzie.
+- **Nagłówek `<h1>`/tytuł+podtytuł na górze `content`** (§5) — żaden przykład referencyjny go nie ma, nazwa strony już żyje w routingu/menu. Znaleziony niezależnie w czterech różnych komponentach obszaru `content` tego samego modułu (`users`, `roles`, `grant-audit`, `permissions`) — silny sygnał, że trzeba było to spisać zamiast liczyć, że kolejny page „zobaczy" brak nagłówka w przykładzie.
 
 ---
 
@@ -432,5 +432,6 @@ libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/
 - [Zasięg zaznaczenia i akcje masowe](./selection-scope.md) — `ErpSelectionScope`, materializacja, cele operacji masowych, bramkowanie toolbara
 - [Orkiestratory](./orchestrators.md) — `searchAsync`, `getViewModel()`/`getSignalViewModel()`, którymi karmią się tabela główna i panele
 - [Atomy UI — Single Config Builder](./atoms.md) — wzorzec, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-filter`, `erp-action-toolbar`
+- [Struktura katalogów agregatu](./feature-structure.md) — gdzie w drzewie `feature` leżą pliki page'a, tabeli, modali i tłumaczeń
 - [Modale](./modals.md) — modale akcji masowych otwierane z toolbara
 - [Tłumaczenia](./translations.md) — klucze dla etykiet filtrów, kolumn, zakładek, akcji toolbara

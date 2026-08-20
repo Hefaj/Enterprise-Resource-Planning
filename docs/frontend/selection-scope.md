@@ -2,7 +2,7 @@
 
 Ten dokument opisuje, jak strona z listą + panelami bocznymi ma się zachować, gdy użytkownik kliknie **„Zaznacz wszystko"**, a filtry pasują do tysięcy pozycji: co jest celem akcji masowej, co wolno pokazać w panelu i które akcje muszą wtedy zniknąć z zasięgu ręki.
 
-Implementacja referencyjna: strona produktów katalogu — [`product.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (właściciel zasięgu), [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-scope-tab.store.ts) (wspólna podstawa zakładek zależnych od zaznaczenia), [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/multimedia/multimedia-tab.component.ts) i [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/warranty/warranty-tab.component.ts) (panele zależne od zaznaczenia), [`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-tab.component.ts) (toolbar + modale wsadowe).
+Implementacja referencyjna: strona produktów katalogu — [`product.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (właściciel zasięgu), [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) (wspólna podstawa zakładek zależnych od zaznaczenia), [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/multimedia/multimedia-tab.component.ts) i [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/warranty/warranty-tab.component.ts) (panele zależne od zaznaczenia), [`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/product-tab.component.ts) (toolbar + modale wsadowe).
 
 Warstwa współdzielona: [`erp-selection.utils.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.ts) (+ testy [`erp-selection.utils.spec.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.spec.ts)) oraz atom [`erp-selection-scope-banner`](../../frontend/libs/shared/ui/src/lib/atoms/erp-selection-scope-banner) — zdanie o zasięgu nad panelem.
 
@@ -87,7 +87,7 @@ Liczność zasięgu czytaj przez `erpSelectionScopeCount(scope)` (a nie `erpSele
 
 ## 4. Panel zależny od zaznaczenia w trybie `query`
 
-Trzy reguły, wszystkie zaszyte w [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-scope-tab.store.ts) — store'y poszczególnych zakładek (multimedia, gwarancje…) dziedziczą je zamiast odtwarzać po swojemu:
+Trzy reguły, wszystkie zaszyte w [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) — store'y poszczególnych zakładek (multimedia, gwarancje…) dziedziczą je zamiast odtwarzać po swojemu:
 
 **1. Próbka zamiast listy.** Panel ładuje kilka pierwszych rodziców (`PRODUCT_SCOPE_PREVIEW_LIMIT = 10`), rozwiązanych tym samym mechanizmem co materializacja (`ProductStore.resolveUuids(filters, limit)` — z cache per (filtry, limit)). Scroll nie doładowuje kolejnych: to próbka i ma taką się czuć.
 

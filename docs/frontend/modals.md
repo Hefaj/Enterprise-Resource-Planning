@@ -266,6 +266,7 @@ export { registerModals, remoteModalIds } from './lib/entry.modals';
 ## Zobacz też
 
 - [Tłumaczenia](./translations.md) — `getModalProviders()`, zasada zero-hardcoded-stringów
+- [Struktura katalogów agregatu](./feature-structure.md) — gdzie w drzewie `feature` leży katalog `modal/`
 - [Orkiestratory](./orchestrators.md) — skąd modal bierze metodę do wywołania w `setOnSave`
 - [Nowy moduł](./new-module.md) — jeśli `entry.modals.ts` jeszcze nie istnieje w module
 - [Zasięg zaznaczenia](./selection-scope.md) — skąd modal wsadowy bierze cele (`erpBuildBatchTargets`) i `targetCount`

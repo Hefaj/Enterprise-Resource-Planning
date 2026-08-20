@@ -2,7 +2,7 @@
 
 Prawie każdy agregat dostaje własny komponent tabeli: cienki Smart Component w warstwie `feature`, który spina orkiestrator (dane) z atomem `erp-table` (prezentacja, `libs/shared/ui`). Ten dokument opisuje anatomię takiego komponentu i przepis na dodanie kolejnego.
 
-Implementacja referencyjna: [`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/catalog-product-table/catalog-product-table.component.ts). Inne przykłady tego samego wzorca: [`notification-job-table.component.ts`](../../frontend/libs/modules/notification/feature/src/lib/job/components/notification-job-table/notification-job-table.component.ts) (własne komponenty komórek + odświeżanie po SignalR), [`identity-users-table.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/components/identity-users-table.component.ts) (`selectionMode: 'single'`).
+Implementacja referencyjna: [`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/tables/catalog-product-table/catalog-product-table.component.ts). Inne przykłady tego samego wzorca: [`notification-job-table.component.ts`](../../frontend/libs/modules/notification/feature/src/lib/job/components/notification-job-table/notification-job-table.component.ts) (własne komponenty komórek + odświeżanie po SignalR), [`identity-users-table.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/components/tables/identity-users-table/identity-users-table.component.ts) (`selectionMode: 'single'`).
 
 Atom, który te komponenty opakowują: [`erp-table.component.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.component.ts) + [`erp-table.builder.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.builder.ts) (wzorzec "Single Config Builder", patrz [atomy UI](./atoms.md)).
 
@@ -10,7 +10,7 @@ Atom, który te komponenty opakowują: [`erp-table.component.ts`](../../frontend
 
 ## 1. Gdzie to żyje i dlaczego to nie jest kolejny atom
 
-Smart tabela mieszka w `libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/components/MODULE-AGGREGATE-table/` — to warstwa `feature`, nie `ui`. Zna konkretny orkiestrator, konkretny `SearchXRequest` i konkretny `XVM` — właśnie dlatego nie może być atomem współdzielonym (atomy nie znają `data-access`, patrz granice warstw w [architekturze](./architecture.md)).
+Smart tabela mieszka w `libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/components/tables/MODULE-AGGREGATE-table/` — to warstwa `feature`, nie `ui`. Zna konkretny orkiestrator, konkretny `SearchXRequest` i konkretny `XVM` — właśnie dlatego nie może być atomem współdzielonym (atomy nie znają `data-access`, patrz granice warstw w [architekturze](./architecture.md)).
 
 Sam komponent **nie** dostaje własnego buildera w stylu [atomów UI](./atoms.md) — ma kilka prostych `input()`/`output()` (`filters`, `stateKey`, `selectionMode`, `selectionChange`...), a całą złożoność chowa w jednym `computed<ErpTableConfig<TVm>>` budowanym przez `ErpTableBuilder` z `erp-table`. To ten sam config trafia do jedynego `[config]` inputa `<erp-table>` w szablonie.
 
@@ -216,6 +216,7 @@ Zwykłe aktualizacje istniejących wierszy (nie nowe) obsługuje sam `items` com
 ## 7. Zobacz też
 
 - [Page dla agregatu](./pages.md) — gdzie smart tabela mieszkuje w szkielecie całej strony (filtr, action toolbar, zakładki, panel boczny)
+- [Struktura katalogów agregatu](./feature-structure.md) — dlaczego smart tabela leży w `components/tables/`, a nie w `page/`
 - [Orkiestratory](./orchestrators.md) — `searchAsync`, `getViewModel()`, mapowanie DTO→VM, którym karmi się `items`
 - [Zasięg zaznaczenia i akcje masowe](./selection-scope.md) — co robić z `selectionChange`/`sortsChange` na poziomie strony, „Zaznacz wszystko", panele boczne
 - [Atomy UI — Single Config Builder](./atoms.md) — wzorzec, którym zbudowany jest sam `erp-table`

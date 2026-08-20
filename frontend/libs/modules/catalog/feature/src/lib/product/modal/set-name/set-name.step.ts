@@ -6,13 +6,10 @@ import {
   inject,
 } from '@angular/core';
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { TuiIcon } from '@taiga-ui/core';
 import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, CatalogProductOrchestrator } from '@erp/catalog/data-access';
 import { SetNameMetadata } from './set-name.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
-  ErpTextComponent,
   ErpStepContentComponent,
   ErpStepContentBuilder,
   ErpStepContentConfig,
@@ -32,81 +29,20 @@ function nameNotBlankValidator(control: AbstractControl): ValidationErrors | nul
 /**
  * Step komponent do seryjnej edycji nazwy produktów.
  *
- * Formularz jest budowany deklaratywnie przez `ErpStepContentBuilder`; komponent
- * odpowiada wyłącznie za logikę: synchronizację `command.templateCommand.name` ↔ formularz,
- * wstępne wypełnienie pola przy jednym zaznaczonym produkcie i blokadę zapisu bez celów.
+ * Cała treść (podsumowanie zaznaczonych produktów + pole nazwy) jest deklaratywnie
+ * zbudowana przez `ErpStepContentBuilder` i wyrenderowana przez jeden `<erp-step-content>`.
+ * Komponent odpowiada wyłącznie za logikę: synchronizację `command.templateCommand.name` ↔
+ * formularz i wstępne wypełnienie pola przy jednym zaznaczonym produkcie.
  */
 @Component({
   selector: 'erp-catalog-set-name-step',
   standalone: true,
-  imports: [CommonModule, TuiIcon, ErpStepContentComponent, ErpTextComponent],
-  template: `
-    @let _products = products();
-
-    <div class="set-name-step">
-      @if (isFilterMode()) {
-        <p class="set-name-step__message">
-          <erp-text [config]="{ value: keys.commands.setName.editMessage }" />
-          <strong> {{ targetCount() }} </strong>
-          <erp-text [config]="{ value: targetCount() === 1 ? keys.commands.setName.productSuffixSingle : keys.commands.setName.productSuffixPlural }" />
-          <erp-text [config]="{ value: keys.commands.setName.filterModeSuffix }" />
-        </p>
-
-        <p class="set-name-step__hint">
-          <tui-icon icon="@tui.filter" class="set-name-step__badge-icon" />
-          <erp-text [config]="{ value: keys.commands.setName.filterModeHint }" />
-        </p>
-      } @else if (_products.length === 0) {
-        <p class="set-name-step__empty">
-          <erp-text [config]="{ value: keys.commands.setName.emptySelection }" />
-        </p>
-      } @else {
-        <p class="set-name-step__message">
-          <erp-text [config]="{ value: keys.commands.setName.editMessage }" />
-          <strong> {{ _products.length }} </strong>
-          <erp-text [config]="{ value: _products.length === 1 ? keys.commands.setName.productSuffixSingle : keys.commands.setName.productSuffixPlural }" />:
-        </p>
-
-        <div class="set-name-step__badges">
-          @for (p of _products; track p.uuid) {
-            <div class="set-name-step__badge">
-              <tui-icon icon="@tui.box" class="set-name-step__badge-icon" />
-              @if (p.name) {
-                <span>{{ p.sku ? p.sku + ' — ' : '' }}{{ p.name }}</span>
-              } @else {
-                <erp-text [config]="{ value: keys.base.loading }" />
-              }
-            </div>
-          }
-        </div>
-      }
-
-      <erp-step-content [contentConfig]="formContent" />
-    </div>
-  `,
-  styles: [`
-    .set-name-step { padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
-    .set-name-step__message { margin: 0; color: var(--tui-text-secondary); }
-    .set-name-step__hint {
-      margin: 0; display: flex; align-items: center; gap: 0.4rem;
-      color: var(--tui-text-tertiary); font-size: 0.8rem;
-    }
-    .set-name-step__empty { margin: 0; color: var(--tui-status-warning); }
-    .set-name-step__badges { display: flex; flex-wrap: wrap; gap: 0.5rem; max-height: 12rem; overflow-y: auto; }
-    .set-name-step__badge {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      padding: 0.2rem 0.6rem; border-radius: 1rem;
-      background: var(--tui-background-neutral-1); color: var(--tui-text-primary);
-      font-size: 0.8rem; font-weight: 500; border: 1px solid var(--tui-border-normal);
-    }
-    .set-name-step__badge-icon { font-size: 0.9rem; }
-  `],
+  imports: [ErpStepContentComponent],
+  template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetNameStepComponent extends ErpBatchStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
-  protected readonly keys = PRODUCT_KEYS;
-
-  /** Deklaratywna konfiguracja formularza zbudowana przez builder. */
+  /** Deklaratywna konfiguracja treści stepu zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
 
   private readonly _orchestrator = inject(CatalogProductOrchestrator);
@@ -127,9 +63,34 @@ export class SetNameStepComponent extends ErpBatchStepBase<BatchCommandOfProduct
     });
   });
 
+  /** Produkty zmapowane na kontrakt podsumowania (`ErpBatchTargetItem`). */
+  protected readonly targetItems = computed(() =>
+    this.products().map((p) => ({
+      uuid: p.uuid,
+      label: p.name ? (p.sku ? `${p.sku} — ` : '') + p.name : null,
+    })),
+  );
+
   public constructor() {
     const config = ErpStepContentBuilder.create(b => b
       .setLayout('stack')
+      .addBatchTargetsSummary(s => s
+        // Gettery, nie odczyty `this.pole` wprost — `super()` (a z nią pola bazy
+        // `ErpBatchStepBase.targetCount`/`isFilterMode` i pole `targetItems` tej klasy)
+        // jeszcze nie wystartował w momencie budowania tego configu.
+        .setItems(() => this.targetItems())
+        .setTargetCount(() => this.targetCount())
+        .setIsFilterMode(() => this.isFilterMode())
+        .setMessages({
+          messageKey: PRODUCT_KEYS.commands.setName.editMessage,
+          suffixSingleKey: PRODUCT_KEYS.commands.setName.productSuffixSingle,
+          suffixPluralKey: PRODUCT_KEYS.commands.setName.productSuffixPlural,
+          filterModeSuffixKey: PRODUCT_KEYS.commands.setName.filterModeSuffix,
+          filterModeHintKey: PRODUCT_KEYS.commands.setName.filterModeHint,
+        })
+        .setEmptyKey(PRODUCT_KEYS.commands.setName.emptySelection)
+        .setLoadingKey(PRODUCT_KEYS.base.loading),
+      )
       .addFormField('name', 'text',
         ib => ib
           .setLabel(PRODUCT_KEYS.commands.setName.nameLabel)

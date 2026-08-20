@@ -100,53 +100,100 @@ export class PascalCaseModalNameModalDefinition implements ErpModalDefinition<CO
 
 ### 5.2 `MODAL_NAME.step.ts`
 
-Komponent kroku reprezentuje zawartość formularza. Przyjmuje `command`/`metadata` jako `WritableSignal` (input), zgłasza stan walidacji przez `registerCanGoNext`:
+Komponent kroku reprezentuje zawartość formularza. **Nie pisz ręcznego HTML/CSS w szablonie** —
+cała treść (podsumowanie celów, pola formularza, layout) jest deklaratywnie złożona przez
+`ErpStepContentBuilder` i wyrenderowana przez jeden `<erp-step-content [contentConfig]="formContent" />`.
+To pokrywa ~90% przypadków; patrz [Atomy UI](./atoms.md) po ogólny wzorzec buildera i
+`ErpStepContentBuilder` (`libs/shared/ui/src/lib/atoms/erp-step-content/`) po pełne API
+(`addFormField`, `addComponent`, `addSection`, `addBatchTargetsSummary`...).
+
+Dla modalu **operacji masowej** (`BatchCommand<TCommand, TFilter>`, patrz [Zasięg zaznaczenia](./selection-scope.md))
+krok rozszerza `ErpBatchStepBase<COMMAND_TYPE, METADATA_TYPE>` — baza dostarcza `targetUuids`,
+`isFilterMode`, `targetCount` i blokadę zapisu bez celów. Podsumowanie zaznaczonych pozycji
+("Edytujesz N produktów" + lista nazw / hint trybu filtra), wyświetlane jako baner w tym samym
+stylu co `erp-selection-scope-banner` (patrz [Zasięg zaznaczenia](./selection-scope.md)), idzie
+przez `.addBatchTargetsSummary(...)` zamiast ręcznego `@if (isFilterMode()) {...} @else if (...) {...}`:
 
 ```typescript
+import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
+import { Validators } from '@angular/forms';
 import {
-  ChangeDetectionStrategy, Component, computed, effect, input, Signal, WritableSignal,
-} from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { TuiTextfield } from '@taiga-ui/kit';
-import { COMMAND_TYPE } from '@erp/MODULE_NAME/data-access';
+  ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig,
+  ErpBatchStepBase, ErpBatchTargetItem,
+} from '@erp/shared/ui';
+import { COMMAND_TYPE, MODULE_NAMEOrchestrator } from '@erp/MODULE_NAME/data-access';
 import { PascalCaseModalNameMetadata } from './MODAL_NAME.definition';
+import { MODULE_NAME_KEYS } from '../../translation';
 
 @Component({
   selector: 'erp-MODULE_NAME-MODAL_NAME-step',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TuiTextfield],
-  template: `<div class="MODAL_NAME-step"><!-- formularz --></div>`,
+  imports: [ErpStepContentComponent],
+  template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PascalCaseModalNameStepComponent {
-  public command = input.required<WritableSignal<COMMAND_TYPE>>();
-  public metadata = input.required<WritableSignal<PascalCaseModalNameMetadata>>();
-  public registerCanGoNext = input<(canGoNext: Signal<boolean>) => void>();
+export class PascalCaseModalNameStepComponent extends ErpBatchStepBase<COMMAND_TYPE, PascalCaseModalNameMetadata> {
+  private readonly _orchestrator: MODULE_NAMEOrchestrator;
 
-  protected formControl = new FormControl<any>(null, [Validators.required]);
-  protected canGoNext = computed(() => this.formControl.valid);
+  /** Zaznaczone pozycje zmapowane na kontrakt podsumowania (nazwa w opisie banera). */
+  protected readonly targetItems: Signal<ErpBatchTargetItem[]>;
 
-  constructor() {
-    // Rejestracja walidacji kroku w formularzu nadrzędnym
-    effect(() => {
-      const register = this.registerCanGoNext();
-      if (register) register(this.canGoNext);
+  protected readonly formContent: ErpStepContentConfig;
+
+  public constructor() {
+    // `super()` jeszcze nie wystartował — żaden odczyt `this.pole` (nawet samo pole klasy) nie
+    // jest tu legalny. Zależności idą do zmiennych lokalnych; wartości przekazywane do buildera
+    // to gettery (`() => this...`), nie bezpośrednie odczyty — ich ciało wykona się dopiero
+    // po pełnej konstrukcji.
+    const orchestrator = inject(MODULE_NAMEOrchestrator);
+
+    const config = ErpStepContentBuilder.create(b => b
+      .setLayout('stack')
+      .addBatchTargetsSummary(s => s
+        .setItems(() => this.targetItems())
+        .setTargetCount(() => this.targetCount())
+        .setIsFilterMode(() => this.isFilterMode())
+        .setMessages({
+          messageKey: MODULE_NAME_KEYS.commands.modalAction.editMessage,
+          suffixSingleKey: MODULE_NAME_KEYS.commands.modalAction.suffixSingle,
+          suffixPluralKey: MODULE_NAME_KEYS.commands.modalAction.suffixPlural,
+          filterModeSuffixKey: MODULE_NAME_KEYS.commands.modalAction.filterModeSuffix,
+          filterModeHintKey: MODULE_NAME_KEYS.commands.modalAction.filterModeHint,
+        }),
+      )
+      .addFormField('fieldName', 'text',
+        ib => ib.setLabel(MODULE_NAME_KEYS.commands.modalAction.fieldLabel),
+        {
+          validators: [Validators.required],
+          value: () => this.command()().templateCommand?.fieldName ?? '',
+          onChange: (value) => this.command().update((cmd) => ({
+            ...cmd,
+            templateCommand: { ...cmd.templateCommand, fieldName: value ?? '' },
+          })),
+        },
+      )
+    );
+
+    super(config);
+
+    this._orchestrator = orchestrator;
+    this.targetItems = computed(() => {
+      const vmMap = this._orchestrator.getViewModel()();
+      return this.targetUuids()
+        .map((uuid) => vmMap.get(uuid))
+        .filter((vm): vm is NonNullable<typeof vm> => vm !== undefined)
+        .map((vm) => ({ uuid: vm.uuid, label: vm.name }));
     });
-
-    // Command → Form: synchronizacja z początkowym stanem
-    effect(() => {
-      const cmd = this.command()();
-      // zmapuj cmd na formControl
-    });
-
-    // Form → Command: aktualizacja stanu komendy
-    this.formControl.valueChanges.subscribe((value) => {
-      this.command().update((cmd) => ({ ...cmd /* zmapuj value */ }));
-    });
+    this.formContent = config;
   }
 }
 ```
+
+Dla modalu **nie-masowego** (jeden cel, bez `ErpBatchStepBase`) pomiń `addBatchTargetsSummary` —
+zostaje sam `.addFormField(...)`/`.addComponent(...)` w `ErpStepContentBuilder`. Zobacz
+gotowe przykłady w repo: `SetNameStepComponent` (`libs/modules/catalog/feature/src/lib/product/modal/set-name/`)
+dla modalu masowego z ładowaniem nazw z orkiestratora, `AssignRoleStepComponent`
+(`libs/modules/identity/feature/src/lib/users/modal/assign-role/`) dla wielu pól formularza.
 
 ### 5.3 `index.ts` (katalog modalu)
 

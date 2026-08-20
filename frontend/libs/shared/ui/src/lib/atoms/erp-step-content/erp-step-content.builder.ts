@@ -16,6 +16,8 @@ import { ErpInputColorBuilder } from '../../form/erp-input-color/erp-input-color
 import { ErpCheckboxComponent, ErpCheckboxBuilder } from '../../form/erp-checkbox';
 import { ErpInputNumberComponent, ErpInputNumberBuilder } from '../../form/erp-input-number';
 import { ErpInputPickerComponent, ErpInputPickerBuilder } from '../../form/erp-input-picker';
+import { ErpBatchTargetsSummaryComponent } from '../erp-batch-targets-summary/erp-batch-targets-summary.component';
+import { ErpBatchTargetsSummaryBuilder } from '../erp-batch-targets-summary/erp-batch-targets-summary.builder';
 
 /** Mapowanie typów pól formularza na odpowiadające im komponenty atomowe UI. */
 const FIELD_TYPE_COMPONENT_MAP: Record<Exclude<ErpFormFieldType, 'custom'>, Type<any>> = {
@@ -325,6 +327,34 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   /** Dodaje wizualny separator (linia pozioma). */
   public addDivider(options?: { slot?: string }): this {
     this._pushElement({ type: 'divider', slot: options?.slot });
+    return this;
+  }
+
+  /**
+   * Dodaje podsumowanie celów kroku modalu operacji masowej — komunikat "Edytujesz N pozycji",
+   * lista badge z zaznaczonymi pozycjami albo hint trybu filtra ("Zaznacz wszystko").
+   *
+   * Zastępuje ręcznie pisany blok `@if (isFilterMode()) {...} @else if (...) {...}` — krok
+   * modalu (rozszerzający `ErpBatchStepBase`) dostarcza tylko `items`/`targetCount`/`isFilterMode`
+   * (już policzone przez bazę) i klucze tłumaczeń.
+   *
+   * @example
+   * ```ts
+   * .addBatchTargetsSummary(s => s
+   *   .setItems(this.targetItems)
+   *   .setTargetCount(this.targetCount)
+   *   .setIsFilterMode(this.isFilterMode)
+   *   .setIcon(ERP_ICONS.box)
+   *   .setMessages({ messageKey: KEYS.editMessage, ... })
+   * )
+   * ```
+   */
+  public addBatchTargetsSummary(
+    configure: (builder: ErpBatchTargetsSummaryBuilder) => void,
+    options?: ErpElementLayoutOptions
+  ): this {
+    const config = ErpBatchTargetsSummaryBuilder.create(configure);
+    this.addComponent(ErpBatchTargetsSummaryComponent, { config } as any, options);
     return this;
   }
 

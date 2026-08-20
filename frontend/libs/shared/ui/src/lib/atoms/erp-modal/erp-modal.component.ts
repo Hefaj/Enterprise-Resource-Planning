@@ -158,7 +158,8 @@ import { provideSharedTranslations, SHARED_KEYS } from '../../translation';
     }
     
     .erp-modal-body {
-      padding: 0;
+      // padding: 0;
+      padding: 1rem;
     }
 
     .erp-modal-footer {

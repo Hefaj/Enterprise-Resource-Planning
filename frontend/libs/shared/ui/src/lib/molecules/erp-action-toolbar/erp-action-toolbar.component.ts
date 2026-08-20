@@ -260,7 +260,11 @@ import {
       background: var(--tui-background-base);
       border-bottom: 1px solid var(--tui-border-normal);
       border-radius: 0.5rem;
-      min-height: 2.75rem;
+      /* Wysokość liczona z gabarytu przycisku (tuiButton size="m" = --tui-height-m),
+         a nie z aktualnej zawartości: pusty toolbar ma tylko zębatkę (2rem), więc bez
+         tego pasek skakałby o kilkanaście pikseli przy każdej zmianie liczby akcji.
+         box-sizing: border-box (Tailwind preflight) => doliczamy padding i dolną krawędź. */
+      min-height: calc(var(--tui-height-m, 2.75rem) + 1rem + 1px);
       transition: background-color 0.25s ease, border-color 0.25s ease;
     }
 

@@ -70,13 +70,23 @@
       "label": "Add permission",
       "modalTitle": "Add permission to role",
       "permissionLabel": "Permission",
-      "submitButton": "Add"
+      "submitButton": "Add",
+      "editMessage": "Adding a permission to",
+      "roleSuffixSingle": "role",
+      "roleSuffixPlural": "roles",
+      "filterModeSuffix": "matching the current filters.",
+      "filterModeHint": "All results are selected — the operation will cover every role matching the filters, including further pages."
     },
     "addMember": {
       "label": "Add member role",
       "modalTitle": "Add member role",
       "roleLabel": "Member role",
-      "submitButton": "Add"
+      "submitButton": "Add",
+      "editMessage": "Adding a member role to",
+      "roleSuffixSingle": "role",
+      "roleSuffixPlural": "roles",
+      "filterModeSuffix": "matching the current filters.",
+      "filterModeHint": "All results are selected — the operation will cover every role matching the filters, including further pages."
     }
   }
 }

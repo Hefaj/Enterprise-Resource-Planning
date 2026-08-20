@@ -99,7 +99,10 @@ export class UsersComponent {
           resizable: 'left',
           minWidth: 340,
           maxWidth: 900,
-          collapsed: computed(() => this.activeTabId() === 'list'),
+          // Treść panelu zależy od `selectedUuid` (dokładnie JEDEN zaznaczony wiersz) — patrz
+          // `UsersStore.selectedUuid` — więc chowa się także wtedy, gdy zaznaczono zero, wiele
+          // wierszy albo tryb `query`, nie tylko na zakładce-liście.
+          collapsed: computed(() => this.activeTabId() === 'list' || !this._store.selectedUuid()),
         },
       ),
   );

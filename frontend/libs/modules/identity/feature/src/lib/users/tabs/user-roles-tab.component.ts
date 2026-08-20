@@ -144,7 +144,7 @@ export class UserRolesTabComponent {
   private _openAssignModal(): void {
     const userUuid = this.user()?.uuid;
     if (!userUuid) return;
-    this._modalService.open(ASSIGN_USER_ROLE_MODAL_ID, { userUuid });
+    this._modalService.open(ASSIGN_USER_ROLE_MODAL_ID, { targetUuids: [userUuid] });
   }
 
   private _onRevokeSelected(): void {
@@ -162,7 +162,7 @@ export class UserRolesTabComponent {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this._orchestrator
-          .revokeRoleAsync({ userUuid, roleUuid })
+          .revokeRoleAsync({ uuid: userUuid, roleUuid })
           .then(() => this._selectedRoleUuid.set(null))
           .catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
       });

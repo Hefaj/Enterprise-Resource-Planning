@@ -113,7 +113,7 @@ export class UserPermissionsTabComponent {
   private _openGrantModal(): void {
     const userUuid = this.user()?.uuid;
     if (!userUuid) return;
-    this._modalService.open(GRANT_USER_PERMISSION_MODAL_ID, { userUuid });
+    this._modalService.open(GRANT_USER_PERMISSION_MODAL_ID, { targetUuids: [userUuid] });
   }
 
   private _onRevoke(row: UserPermissionGrantVM): void {
@@ -130,7 +130,7 @@ export class UserPermissionsTabComponent {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this._orchestrator
-          .revokePermissionAsync({ userUuid, permissionCode: row.permissionCode })
+          .revokePermissionAsync({ uuid: userUuid, permissionCode: row.permissionCode })
           .catch((err) => console.error('[UserPermissionsTabComponent] Nie udało się odebrać uprawnienia.', err));
       });
   }

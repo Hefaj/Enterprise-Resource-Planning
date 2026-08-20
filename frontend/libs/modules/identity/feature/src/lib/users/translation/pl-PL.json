@@ -74,7 +74,12 @@
       "roleLabel": "Rola",
       "expiresAtLabel": "Data wygaśnięcia (RRRR-MM-DD, opcjonalnie)",
       "expiresAtPlaceholder": "RRRR-MM-DD",
-      "submitButton": "Nadaj"
+      "submitButton": "Nadaj",
+      "editMessage": "Nadajesz rolę dla",
+      "userSuffixSingle": "użytkownika",
+      "userSuffixPlural": "użytkowników",
+      "filterModeSuffix": "pasujących do bieżących filtrów.",
+      "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdego użytkownika pasującego do filtrów, także z dalszych stron."
     },
     "grantPermission": {
       "label": "Nadaj uprawnienie",
@@ -82,7 +87,12 @@
       "permissionLabel": "Uprawnienie",
       "reasonLabel": "Powód",
       "reasonPlaceholder": "np. tymczasowy dostęp na czas nieobecności kierownika",
-      "submitButton": "Nadaj"
+      "submitButton": "Nadaj",
+      "editMessage": "Nadajesz uprawnienie dla",
+      "userSuffixSingle": "użytkownika",
+      "userSuffixPlural": "użytkowników",
+      "filterModeSuffix": "pasujących do bieżących filtrów.",
+      "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdego użytkownika pasującego do filtrów, także z dalszych stron."
     }
   }
 }

@@ -1,20 +1,31 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ErpActionToolbarBuilder, ErpActionToolbarComponent, ErpActionToolbarContextDirective, ErpActionToolbarZoneDirective, ErpTranslatePipe } from '@erp/shared/ui';
+import { ChangeDetectionStrategy, Component, computed, inject, viewChild } from '@angular/core';
+import {
+  ErpActionToolbarBuilder,
+  ErpActionToolbarComponent,
+  ErpActionToolbarContextDirective,
+  ErpActionToolbarZoneDirective,
+  ErpModalService,
+  ErpBatchMetadata,
+  erpBuildBatchTargets,
+  erpSelectionScopeCount,
+} from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
-import { UserOrchestrator } from '@erp/identity/data-access';
+import { UserOrchestrator, SearchUserAccountRequest, BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest } from '@erp/identity/data-access';
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
+import { ASSIGN_USER_ROLE_MODAL_ID, GRANT_USER_PERMISSION_MODAL_ID } from '@erp/identity/util';
 
 import { UsersStore } from './users.store';
 import { IdentityUsersTableComponent } from './components/identity-users-table.component';
 import { USERS_KEYS } from './translation';
 
-/** Nagłówek + pasek akcji + tabela listy użytkowników (wybór pojedynczy, radio). Zaznaczenie
- * wiersza ustawia wybranego użytkownika w `UsersStore`, co pokazuje panel zakładek w sąsiednim
- * obszarze siatki (`rightPanel`) — wzorzec identyczny jak `ProductComponent`. */
+/** Nagłówek + pasek akcji + tabela listy użytkowników. Zaznaczenie wielokrotne (checkboxy)
+ * napędza akcje masowe toolbara (nadaj rolę/uprawnienie/wymuś wylogowanie na całym zasięgu —
+ * patrz `docs/frontend/selection-scope.md`); zaznaczenie DOKŁADNIE jednego wiersza pokazuje
+ * dodatkowo panel zakładek w sąsiednim obszarze (`rightPanel`, `UsersStore.selectedUuid`). */
 @Component({
   selector: 'erp-identity-users-content',
   standalone: true,
-  imports: [ErpTranslatePipe, ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, IdentityUsersTableComponent],
+  imports: [ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, IdentityUsersTableComponent],
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
       <div
@@ -29,7 +40,7 @@ import { USERS_KEYS } from './translation';
             stateKey="identity-users"
             [filters]="store.filters()"
             (loadingChange)="store.setLoading($event)"
-            (selectionChange)="store.selectUser($event)"
+            (selectionChange)="store.setSelection($event)"
           />
         </div>
       </div>
@@ -41,19 +52,40 @@ export class UsersContentComponent {
   protected readonly store = inject(UsersStore);
 
   private readonly _orchestrator = inject(UserOrchestrator);
+  private readonly _modalService = inject(ErpModalService);
   private readonly _confirm = inject(IdentityConfirmDialogService);
   private readonly _permissionStore = inject(PermissionStore);
 
-  private readonly _selectionCount = computed(() => (this.store.selectedUuid() ? 1 : 0));
+  private readonly _table = viewChild(IdentityUsersTableComponent);
+
+  protected readonly selectionCount = computed(() => erpSelectionScopeCount(this.store.scope()));
 
   protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
     b
       .setMenuId('identity-users-toolbar')
       .addSelectionGroup((g) =>
         g
-          .setId('user-actions')
-          .setLabel(USERS_KEYS.detail.forceLogout.label)
-          .setIcon('@tui.log-out')
+          .setId('user-bulk')
+          .setLabel(USERS_KEYS.title)
+          .setIcon('@tui.users')
+          .addAction((a) =>
+            a
+              .setId('assign-role')
+              .setLabel(USERS_KEYS.commands.assignRole.label)
+              .setIcon('@tui.shield')
+              .setAppearance('success')
+              .setHidden(computed(() => !this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage)))
+              .setFn(() => this._openAssignRoleModal()),
+          )
+          .addAction((a) =>
+            a
+              .setId('grant-permission')
+              .setLabel(USERS_KEYS.commands.grantPermission.label)
+              .setIcon('@tui.key')
+              .setAppearance('success')
+              .setHidden(computed(() => !this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage)))
+              .setFn(() => this._openGrantPermissionModal()),
+          )
           .addAction((a) =>
             a
               .setId('force-logout')
@@ -64,17 +96,33 @@ export class UsersContentComponent {
               .setFn(() => this._onForceLogout()),
           ),
       )
-      .setSelectionCount(this._selectionCount)
-      .setSelectionScope(computed(() => (this.store.selectedUuid() ? 'explicit' : 'none')))
+      .setSelectionCount(this.selectionCount)
+      .setSelectionScope(this.store.scopeKind)
       .setSelectionLabel(USERS_KEYS.title)
-      .setOnClearSelection(() => this.store.selectUser(null))
-      .setPinnedActionIds(['force-logout']),
+      .setOnClearSelection(() => {
+        this.store.clearSelection();
+        this._table()?.clearSelection();
+      })
+      .setPinnedActionIds(['assign-role', 'grant-permission', 'force-logout']),
   );
 
-  private _onForceLogout(): void {
-    const uuid = this.store.selectedUuid();
-    if (!uuid) return;
+  private _openAssignRoleModal(): void {
+    this._modalService.open<BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
+      ASSIGN_USER_ROLE_MODAL_ID,
+      erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()),
+      { targetCount: this.selectionCount() },
+    );
+  }
 
+  private _openGrantPermissionModal(): void {
+    this._modalService.open<BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
+      GRANT_USER_PERMISSION_MODAL_ID,
+      erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()),
+      { targetCount: this.selectionCount() },
+    );
+  }
+
+  private _onForceLogout(): void {
     this._confirm
       .confirm({
         title: USERS_KEYS.detail.forceLogout.confirmTitle,
@@ -84,7 +132,9 @@ export class UsersContentComponent {
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator.forceLogoutAsync(uuid).catch((err) => console.error('[UsersContentComponent] Nie udało się wymusić wylogowania.', err));
+        this._orchestrator
+          .forceLogoutMultipleAsync({ ...erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()), templateCommand: {} })
+          .catch((err: unknown) => console.error('[UsersContentComponent] Nie udało się wymusić wylogowania.', err));
       });
   }
 }

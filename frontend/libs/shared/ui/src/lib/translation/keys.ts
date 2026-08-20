@@ -208,6 +208,16 @@ export const SHARED_KEYS = {
       commands: {
         catalogProductSetPrice: 'shared.jobs.commands.catalogProductSetPrice',
         catalogProductSetName: 'shared.jobs.commands.catalogProductSetName',
+        identityUserAssignRole: 'shared.jobs.commands.identityUserAssignRole',
+        identityUserRevokeRole: 'shared.jobs.commands.identityUserRevokeRole',
+        identityUserGrantPermission: 'shared.jobs.commands.identityUserGrantPermission',
+        identityUserRevokePermission: 'shared.jobs.commands.identityUserRevokePermission',
+        identityUserForceLogout: 'shared.jobs.commands.identityUserForceLogout',
+        identityRoleCreate: 'shared.jobs.commands.identityRoleCreate',
+        identityRoleAddPermission: 'shared.jobs.commands.identityRoleAddPermission',
+        identityRoleRemovePermission: 'shared.jobs.commands.identityRoleRemovePermission',
+        identityRoleAddMember: 'shared.jobs.commands.identityRoleAddMember',
+        identityRoleRemoveMember: 'shared.jobs.commands.identityRoleRemoveMember',
       },
     },
   } as const;

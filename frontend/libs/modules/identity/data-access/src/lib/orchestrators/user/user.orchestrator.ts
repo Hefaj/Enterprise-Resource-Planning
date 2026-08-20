@@ -1,16 +1,19 @@
 import { Injectable, Injector, Signal, WritableSignal, inject, signal } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 
-import { BaseOrchestrator, LoadOptions, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
+import { BaseOrchestrator, JobMeta, LoadOptions, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
+import { IDENTITY_JOB_COMMAND_KEYS } from '@erp/identity/util';
 import {
   IdentityClient,
+  BatchResult,
+  BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest,
+  BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest,
+  BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest,
   GetUserAccountRequest,
   SearchUserAccountRequest,
   SearchResponse,
   UserAccountDto,
-  UserAssignRoleCommand,
   UserRevokeRoleCommand,
-  UserGrantPermissionCommand,
   UserRevokePermissionCommand,
 } from '../../api-client';
 import { RoleOrchestrator } from '../role/role.orchestrator';
@@ -85,34 +88,117 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
     }
   }
 
-  // ── Komendy ──
+  // ── Komendy — cele wsadu (§3 docs/frontend/selection-scope.md) ──
+  //
+  // Wszystkie idą przez odpowiednik `BatchEndpointBase` (patrz Faza 1+2 w
+  // docs/backend/identity-bulk-migration.md). `assignRoleMultipleAsync`/`grantPermissionMultipleAsync`/
+  // `forceLogoutMultipleAsync` obsługują OBA przypadki wywołania — panel szczegółów podaje
+  // `targetUuids: [uuid]` (jeden, konkretny użytkownik), lista `erpBuildBatchTargets(scope)`
+  // (zaznaczenie wielokrotne albo filtr „Zaznacz wszystko"); backend nie rozróżnia tych dwóch
+  // ścieżek, więc frontend też nie musi. `revokeRoleAsync`/`revokePermissionAsync` zostają
+  // jako jedyne metody w trybie `Commands: [command]` — odbieranie KONKRETNEGO, znanego grantu
+  // nie jest naturalną operacją nad zaznaczeniem wielu wierszy (patrz uzasadnienie przy
+  // `RoleOrchestrator`).
 
-  public async assignRoleAsync(command: UserAssignRoleCommand): Promise<void> {
-    await this._runCommand(() => this._api.assignUserRole(command), command.userUuid);
+  public async revokeRoleAsync(command: UserRevokeRoleCommand, queueID?: string): Promise<string> {
+    return this._runSingleTargetCommand(
+      (payload) => this._api.userRevokeRoleMultipleCommand(payload),
+      command,
+      IDENTITY_JOB_COMMAND_KEYS.revokeRole,
+      queueID,
+    );
   }
 
-  public async revokeRoleAsync(command: UserRevokeRoleCommand): Promise<void> {
-    await this._runCommand(() => this._api.revokeUserRole(command), command.userUuid);
+  public async revokePermissionAsync(command: UserRevokePermissionCommand, queueID?: string): Promise<string> {
+    return this._runSingleTargetCommand(
+      (payload) => this._api.userRevokePermissionMultipleCommand(payload),
+      command,
+      IDENTITY_JOB_COMMAND_KEYS.revokePermission,
+      queueID,
+    );
   }
 
-  public async grantPermissionAsync(command: UserGrantPermissionCommand): Promise<void> {
-    await this._runCommand(() => this._api.grantUserPermission(command), command.userUuid);
+  public async assignRoleMultipleAsync(
+    payload: BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest,
+    queueID?: string,
+  ): Promise<string> {
+    return this._runBatchCommand(
+      (p) => this._api.userAssignRoleMultipleCommand(p),
+      payload,
+      IDENTITY_JOB_COMMAND_KEYS.assignRole,
+      queueID,
+    );
   }
 
-  public async revokePermissionAsync(command: UserRevokePermissionCommand): Promise<void> {
-    await this._runCommand(() => this._api.revokeUserPermission(command), command.userUuid);
+  public async grantPermissionMultipleAsync(
+    payload: BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest,
+    queueID?: string,
+  ): Promise<string> {
+    return this._runBatchCommand(
+      (p) => this._api.userGrantPermissionMultipleCommand(p),
+      payload,
+      IDENTITY_JOB_COMMAND_KEYS.grantPermission,
+      queueID,
+    );
   }
 
-  public async forceLogoutAsync(userUuid: string): Promise<void> {
-    await this._runCommand(() => this._api.forceLogoutUser({ uuid: userUuid }), undefined);
+  public async forceLogoutMultipleAsync(
+    payload: BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest,
+    queueID?: string,
+  ): Promise<string> {
+    return this._runBatchCommand(
+      (p) => this._api.userForceLogoutMultipleCommand(p),
+      payload,
+      IDENTITY_JOB_COMMAND_KEYS.forceLogout,
+      queueID,
+    );
   }
 
-  private async _runCommand(call: () => Observable<string>, affectedUuid?: string): Promise<void> {
+  private async _runBatchCommand<TPayload extends { queueId?: string; uiMetadata?: string }>(
+    call: (payload: TPayload) => Observable<BatchResult>,
+    payload: TPayload,
+    commandNameKey: string,
+    queueID?: string,
+  ): Promise<string> {
+    const meta: JobMeta = { commandName: commandNameKey, timestamp: new Date() };
+
     try {
-      await firstValueFrom(call());
-      if (affectedUuid) {
-        await this.dataLoader.reloadAsync([affectedUuid]);
-      }
+      const result = await firstValueFrom(call({ ...payload, queueId: queueID, uiMetadata: JSON.stringify(meta) }));
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, meta);
+
+      return jobUuid;
+    } catch (err) {
+      this.addError({ operation: 'command', message: err instanceof Error ? err.message : String(err), timestamp: new Date() });
+      throw err;
+    }
+  }
+
+  /**
+   * Wysyła komendę jako zadanie z JEDNYM elementem (tryb `Commands: [command]` kontraktu
+   * `BatchCommand`) i rejestruje je w {@link JobService} — dokładnie tak samo jak wsad na wielu
+   * celach, bo backend nie rozróżnia tych dwóch przypadków (patrz Faza 1+2 przejścia opisanego
+   * w docs/backend/identity-bulk-migration.md). Wynik zadania (sukces, `aggregate_not_found`
+   * itp.) przychodzi asynchronicznie przez dzwonek powiadomień, nie przez zwróconą wartość.
+   */
+  private async _runSingleTargetCommand<TCommand extends { uuid?: string }>(
+    call: (payload: { commands: TCommand[]; queueId?: string; uiMetadata?: string }) => Observable<BatchResult>,
+    command: TCommand,
+    commandNameKey: string,
+    queueID?: string,
+  ): Promise<string> {
+    const meta: JobMeta = { commandName: commandNameKey, aggregateUuid: command.uuid, timestamp: new Date() };
+
+    try {
+      const result = await firstValueFrom(
+        call({ commands: [command], queueId: queueID, uiMetadata: JSON.stringify(meta) }),
+      );
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, meta);
+
+      return jobUuid;
     } catch (err) {
       this.addError({ operation: 'command', message: err instanceof Error ? err.message : String(err), timestamp: new Date() });
       throw err;

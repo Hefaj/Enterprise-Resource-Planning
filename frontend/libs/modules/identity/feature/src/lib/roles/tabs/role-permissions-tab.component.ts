@@ -123,7 +123,7 @@ export class RolePermissionsTabComponent {
   private _openAddPermissionModal(): void {
     const role = this.role();
     if (!role) return;
-    this._modalService.open(ADD_ROLE_PERMISSION_MODAL_ID, { roleUuid: role.uuid }, { excludeCodes: role.permissions });
+    this._modalService.open(ADD_ROLE_PERMISSION_MODAL_ID, { targetUuids: [role.uuid] }, { excludeCodes: role.permissions });
   }
 
   protected onRemove(code: string): void {
@@ -139,7 +139,7 @@ export class RolePermissionsTabComponent {
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator.removePermissionAsync({ roleUuid, permissionCode: code }).catch((err) => console.error('[RolePermissionsTabComponent] Nie udało się usunąć uprawnienia.', err));
+        this._orchestrator.removePermissionAsync({ uuid: roleUuid, permissionCode: code }).catch((err) => console.error('[RolePermissionsTabComponent] Nie udało się usunąć uprawnienia.', err));
       });
   }
 }

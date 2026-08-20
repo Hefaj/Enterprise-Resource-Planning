@@ -24,25 +24,30 @@ export interface IIdentityClient {
      */
     searchUser(body: SearchUserAccountRequest): Observable<SearchResponse>;
     /**
+     * Seryjne nadanie roli użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    assignUserRole(body: UserAssignRoleCommand): Observable<string>;
+    userAssignRoleMultipleCommand(body: BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
+     * Seryjne wymuszenie wylogowania z obsługą błędów cząstkowych
      * @return OK
      */
-    forceLogoutUser(body: ForceLogoutUserRequest): Observable<string>;
+    userForceLogoutMultipleCommand(body: BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
+     * Seryjne bezpośrednie nadanie uprawnienia użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    grantUserPermission(body: UserGrantPermissionCommand): Observable<string>;
+    userGrantPermissionMultipleCommand(body: BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
+     * Seryjne odebranie bezpośrednio nadanego uprawnienia z obsługą błędów cząstkowych
      * @return OK
      */
-    revokeUserPermission(body: UserRevokePermissionCommand): Observable<string>;
+    userRevokePermissionMultipleCommand(body: BatchCommandOfUserRevokePermissionCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
+     * Seryjne odebranie roli użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    revokeUserRole(body: UserRevokeRoleCommand): Observable<string>;
+    userRevokeRoleMultipleCommand(body: BatchCommandOfUserRevokeRoleCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
      * @return OK
      */
@@ -52,25 +57,30 @@ export interface IIdentityClient {
      */
     searchRole(body: SearchRoleRequest): Observable<SearchResponse>;
     /**
+     * Seryjne dołączenie roli składowej z obsługą błędów cząstkowych
      * @return OK
      */
-    addRoleMember(body: RoleAddMemberCommand): Observable<string>;
+    roleAddMemberMultipleCommand(body: BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest): Observable<BatchResult>;
     /**
+     * Seryjne dodanie uprawnienia rolom z obsługą błędów cząstkowych
      * @return OK
      */
-    addRolePermission(body: RoleAddPermissionCommand): Observable<string>;
+    roleAddPermissionMultipleCommand(body: BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest): Observable<BatchResult>;
     /**
+     * Seryjne zakładanie ról z obsługą błędów cząstkowych
      * @return OK
      */
-    createRole(body: RoleCreateCommand): Observable<string>;
+    roleCreateMultipleCommand(body: BatchCommandOfRoleCreateCommandAndSearchRoleRequest): Observable<BatchResult>;
     /**
+     * Seryjne odłączenie roli składowej z obsługą błędów cząstkowych
      * @return OK
      */
-    removeRoleMember(body: RoleRemoveMemberCommand): Observable<string>;
+    roleRemoveMemberMultipleCommand(body: BatchCommandOfRoleRemoveMemberCommandAndSearchRoleRequest): Observable<BatchResult>;
     /**
+     * Seryjne odebranie uprawnienia rolom z obsługą błędów cząstkowych
      * @return OK
      */
-    removeRolePermission(body: RoleRemovePermissionCommand): Observable<string>;
+    roleRemovePermissionMultipleCommand(body: BatchCommandOfRoleRemovePermissionCommandAndSearchRoleRequest): Observable<BatchResult>;
     /**
      * @return OK
      */
@@ -83,6 +93,14 @@ export interface IIdentityClient {
      * @return OK
      */
     getMyPermissionSources(): Observable<EffectivePermissionSourceDto[]>;
+    /**
+     * @return OK
+     */
+    jobCancel(body: JobControlRequest): Observable<JobCancelResult>;
+    /**
+     * @return OK
+     */
+    jobRetryFailed(body: JobControlRequest): Observable<JobRetryFailedResult>;
     /**
      * @return OK
      */
@@ -227,10 +245,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne nadanie roli użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    assignUserRole(body: UserAssignRoleCommand): Observable<string> {
-        let url_ = this.baseUrl + "/user/assign-role";
+    userAssignRoleMultipleCommand(body: BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-assign-role";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -246,20 +265,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processAssignUserRole(response_);
+            return this.processUserAssignRoleMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processAssignUserRole(response_ as any);
+                    return this.processUserAssignRoleMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processAssignUserRole(response: HttpResponseBase): Observable<string> {
+    protected processUserAssignRoleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -269,7 +288,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -289,10 +308,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne wymuszenie wylogowania z obsługą błędów cząstkowych
      * @return OK
      */
-    forceLogoutUser(body: ForceLogoutUserRequest): Observable<string> {
-        let url_ = this.baseUrl + "/user/{Uuid}/force-logout";
+    userForceLogoutMultipleCommand(body: BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-force-logout";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -308,20 +328,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processForceLogoutUser(response_);
+            return this.processUserForceLogoutMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processForceLogoutUser(response_ as any);
+                    return this.processUserForceLogoutMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processForceLogoutUser(response: HttpResponseBase): Observable<string> {
+    protected processUserForceLogoutMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -331,7 +351,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -351,10 +371,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne bezpośrednie nadanie uprawnienia użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    grantUserPermission(body: UserGrantPermissionCommand): Observable<string> {
-        let url_ = this.baseUrl + "/user/grant-permission";
+    userGrantPermissionMultipleCommand(body: BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-grant-permission";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -370,20 +391,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGrantUserPermission(response_);
+            return this.processUserGrantPermissionMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processGrantUserPermission(response_ as any);
+                    return this.processUserGrantPermissionMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processGrantUserPermission(response: HttpResponseBase): Observable<string> {
+    protected processUserGrantPermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -393,7 +414,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -413,10 +434,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne odebranie bezpośrednio nadanego uprawnienia z obsługą błędów cząstkowych
      * @return OK
      */
-    revokeUserPermission(body: UserRevokePermissionCommand): Observable<string> {
-        let url_ = this.baseUrl + "/user/revoke-permission";
+    userRevokePermissionMultipleCommand(body: BatchCommandOfUserRevokePermissionCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-revoke-permission";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -432,20 +454,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processRevokeUserPermission(response_);
+            return this.processUserRevokePermissionMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processRevokeUserPermission(response_ as any);
+                    return this.processUserRevokePermissionMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processRevokeUserPermission(response: HttpResponseBase): Observable<string> {
+    protected processUserRevokePermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -455,7 +477,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -475,10 +497,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne odebranie roli użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    revokeUserRole(body: UserRevokeRoleCommand): Observable<string> {
-        let url_ = this.baseUrl + "/user/revoke-role";
+    userRevokeRoleMultipleCommand(body: BatchCommandOfUserRevokeRoleCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-revoke-role";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -494,20 +517,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processRevokeUserRole(response_);
+            return this.processUserRevokeRoleMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processRevokeUserRole(response_ as any);
+                    return this.processUserRevokeRoleMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processRevokeUserRole(response: HttpResponseBase): Observable<string> {
+    protected processUserRevokeRoleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -517,7 +540,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -653,10 +676,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne dołączenie roli składowej z obsługą błędów cząstkowych
      * @return OK
      */
-    addRoleMember(body: RoleAddMemberCommand): Observable<string> {
-        let url_ = this.baseUrl + "/role/add-member";
+    roleAddMemberMultipleCommand(body: BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/role/batch-add-member";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -672,20 +696,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processAddRoleMember(response_);
+            return this.processRoleAddMemberMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processAddRoleMember(response_ as any);
+                    return this.processRoleAddMemberMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processAddRoleMember(response: HttpResponseBase): Observable<string> {
+    protected processRoleAddMemberMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -695,7 +719,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -715,10 +739,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne dodanie uprawnienia rolom z obsługą błędów cząstkowych
      * @return OK
      */
-    addRolePermission(body: RoleAddPermissionCommand): Observable<string> {
-        let url_ = this.baseUrl + "/role/add-permission";
+    roleAddPermissionMultipleCommand(body: BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/role/batch-add-permission";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -734,20 +759,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processAddRolePermission(response_);
+            return this.processRoleAddPermissionMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processAddRolePermission(response_ as any);
+                    return this.processRoleAddPermissionMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processAddRolePermission(response: HttpResponseBase): Observable<string> {
+    protected processRoleAddPermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -757,7 +782,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -777,10 +802,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne zakładanie ról z obsługą błędów cząstkowych
      * @return OK
      */
-    createRole(body: RoleCreateCommand): Observable<string> {
-        let url_ = this.baseUrl + "/role/create";
+    roleCreateMultipleCommand(body: BatchCommandOfRoleCreateCommandAndSearchRoleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/role/batch-create";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -796,20 +822,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processCreateRole(response_);
+            return this.processRoleCreateMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processCreateRole(response_ as any);
+                    return this.processRoleCreateMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processCreateRole(response: HttpResponseBase): Observable<string> {
+    protected processRoleCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -819,7 +845,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -839,10 +865,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne odłączenie roli składowej z obsługą błędów cząstkowych
      * @return OK
      */
-    removeRoleMember(body: RoleRemoveMemberCommand): Observable<string> {
-        let url_ = this.baseUrl + "/role/remove-member";
+    roleRemoveMemberMultipleCommand(body: BatchCommandOfRoleRemoveMemberCommandAndSearchRoleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/role/batch-remove-member";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -858,20 +885,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processRemoveRoleMember(response_);
+            return this.processRoleRemoveMemberMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processRemoveRoleMember(response_ as any);
+                    return this.processRoleRemoveMemberMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processRemoveRoleMember(response: HttpResponseBase): Observable<string> {
+    protected processRoleRemoveMemberMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -881,7 +908,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -901,10 +928,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjne odebranie uprawnienia rolom z obsługą błędów cząstkowych
      * @return OK
      */
-    removeRolePermission(body: RoleRemovePermissionCommand): Observable<string> {
-        let url_ = this.baseUrl + "/role/remove-permission";
+    roleRemovePermissionMultipleCommand(body: BatchCommandOfRoleRemovePermissionCommandAndSearchRoleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/role/batch-remove-permission";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -920,20 +948,20 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processRemoveRolePermission(response_);
+            return this.processRoleRemovePermissionMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processRemoveRolePermission(response_ as any);
+                    return this.processRoleRemovePermissionMultipleCommand(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<string>;
+                    return _observableThrow(e) as any as Observable<BatchResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<string>;
+                return _observableThrow(response_) as any as Observable<BatchResult>;
         }));
     }
 
-    protected processRemoveRolePermission(response: HttpResponseBase): Observable<string> {
+    protected processRoleRemovePermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -943,7 +971,7 @@ export class IdentityClient implements IIdentityClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -1127,6 +1155,130 @@ export class IdentityClient implements IIdentityClient {
     /**
      * @return OK
      */
+    jobCancel(body: JobControlRequest): Observable<JobCancelResult> {
+        let url_ = this.baseUrl + "/job/cancel";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processJobCancel(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processJobCancel(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JobCancelResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JobCancelResult>;
+        }));
+    }
+
+    protected processJobCancel(response: HttpResponseBase): Observable<JobCancelResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JobCancelResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    jobRetryFailed(body: JobControlRequest): Observable<JobRetryFailedResult> {
+        let url_ = this.baseUrl + "/job/retry-failed";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processJobRetryFailed(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processJobRetryFailed(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JobRetryFailedResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JobRetryFailedResult>;
+        }));
+    }
+
+    protected processJobRetryFailed(response: HttpResponseBase): Observable<JobRetryFailedResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JobRetryFailedResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
     getUserPermissions(id: string): Observable<string[]> {
         let url_ = this.baseUrl + "/internal/users/{Id}/permissions";
         if (id === undefined || id === null)
@@ -1298,17 +1450,257 @@ export class IdentityClient implements IIdentityClient {
     }
 }
 
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest {
+    commands?: RoleAddMemberCommand[] | undefined;
+    templateCommand?: RoleAddMemberCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchRoleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest {
+    commands?: RoleAddPermissionCommand[] | undefined;
+    templateCommand?: RoleAddPermissionCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchRoleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfRoleCreateCommandAndSearchRoleRequest {
+    commands?: RoleCreateCommand[] | undefined;
+    templateCommand?: RoleCreateCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchRoleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfRoleRemoveMemberCommandAndSearchRoleRequest {
+    commands?: RoleRemoveMemberCommand[] | undefined;
+    templateCommand?: RoleRemoveMemberCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchRoleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfRoleRemovePermissionCommandAndSearchRoleRequest {
+    commands?: RoleRemovePermissionCommand[] | undefined;
+    templateCommand?: RoleRemovePermissionCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchRoleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest {
+    commands?: UserAssignRoleCommand[] | undefined;
+    templateCommand?: UserAssignRoleCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchUserAccountRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest {
+    commands?: UserForceLogoutCommand[] | undefined;
+    templateCommand?: UserForceLogoutCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchUserAccountRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest {
+    commands?: UserGrantPermissionCommand[] | undefined;
+    templateCommand?: UserGrantPermissionCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchUserAccountRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfUserRevokePermissionCommandAndSearchUserAccountRequest {
+    commands?: UserRevokePermissionCommand[] | undefined;
+    templateCommand?: UserRevokePermissionCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchUserAccountRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfUserRevokeRoleCommandAndSearchUserAccountRequest {
+    commands?: UserRevokeRoleCommand[] | undefined;
+    templateCommand?: UserRevokeRoleCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchUserAccountRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface BatchResult {
+    jobUuid?: string;
+
+    [key: string]: any;
+}
+
 export interface EffectivePermissionSourceDto {
     permissionCode: string;
     sourceRoleUuid: string | undefined;
     sourceRoleCode: string | undefined;
     viaContainerRoleUuid: string | undefined;
-
-    [key: string]: any;
-}
-
-export interface ForceLogoutUserRequest {
-    uuid?: string;
 
     [key: string]: any;
 }
@@ -1345,6 +1737,28 @@ export interface GrantAuditDto {
     [key: string]: any;
 }
 
+/** Wynik anulowania — status zwrócony od razu, bez czekania na runner. */
+export interface JobCancelResult {
+    jobUuid?: string;
+    status?: string;
+
+    [key: string]: any;
+}
+
+/** Żądanie sterujące zadaniem masowym po jego identyfikatorze. */
+export interface JobControlRequest {
+    jobUuid?: string;
+
+    [key: string]: any;
+}
+
+/** Wynik ponowienia — identyfikator nowo utworzonego zadania. */
+export interface JobRetryFailedResult {
+    newJobUuid?: string;
+
+    [key: string]: any;
+}
+
 export interface PermissionCatalogEntryDto {
     code: string;
     module: string;
@@ -1357,20 +1771,21 @@ export interface PermissionCatalogEntryDto {
 }
 
 export interface RoleAddMemberCommand {
-    containerRoleUuid?: string;
+    uuid?: string;
     memberRoleUuid?: string;
 
     [key: string]: any;
 }
 
 export interface RoleAddPermissionCommand {
-    roleUuid?: string;
+    uuid?: string;
     permissionCode?: string;
 
     [key: string]: any;
 }
 
 export interface RoleCreateCommand {
+    uuid?: string;
     code?: string;
     name?: string;
     description?: string | undefined;
@@ -1391,14 +1806,14 @@ export interface RoleDto {
 }
 
 export interface RoleRemoveMemberCommand {
-    containerRoleUuid?: string;
+    uuid?: string;
     memberRoleUuid?: string;
 
     [key: string]: any;
 }
 
 export interface RoleRemovePermissionCommand {
-    roleUuid?: string;
+    uuid?: string;
     permissionCode?: string;
 
     [key: string]: any;
@@ -1461,15 +1876,21 @@ export interface UserAccountDto {
 }
 
 export interface UserAssignRoleCommand {
-    userUuid?: string;
+    uuid?: string;
     roleUuid?: string;
     expiresAt?: Date | undefined;
 
     [key: string]: any;
 }
 
+export interface UserForceLogoutCommand {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
 export interface UserGrantPermissionCommand {
-    userUuid?: string;
+    uuid?: string;
     permissionCode?: string;
     reason?: string;
 
@@ -1486,14 +1907,14 @@ export interface UserPermissionGrantDto {
 }
 
 export interface UserRevokePermissionCommand {
-    userUuid?: string;
+    uuid?: string;
     permissionCode?: string;
 
     [key: string]: any;
 }
 
 export interface UserRevokeRoleCommand {
-    userUuid?: string;
+    uuid?: string;
     roleUuid?: string;
 
     [key: string]: any;

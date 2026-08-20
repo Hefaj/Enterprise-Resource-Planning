@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ErpTableComponent, ErpTableBuilder, ErpTableConfig, ErpSelectionState, ErpSelectionMode } from '@erp/shared/ui';
@@ -8,9 +8,11 @@ import { ROLES_KEYS } from '../translation';
 
 /** Tabela ról w trybie 'client' — CAŁY zbiór ról jest już w cache orkiestratora (strona ładuje
  * go raz na starcie, patrz `RolesStore`), więc nie ma tu żadnego serwerowego wyszukiwania.
- * Domyślnie wybór pojedynczego wiersza (radio, `selectionMode` input, domyślnie `'single'`),
- * nie klik w wiersz. `selectionMode` jest inputem, nie wartością zaszytą na sztywno w builderze
- * — patrz `docs/frontend/smart-tables.md` §2 i `docs/frontend/pages.md` §10 (częste błędy). */
+ * `selectionMode` input (domyślnie `'multi'`, checkboxy) — strona ma akcje masowe toolbara
+ * (patrz `docs/frontend/selection-scope.md`) i panel szczegółów zależny od zaznaczenia dokładnie
+ * jednego wiersza (`RolesStore.selectedUuid`). Konsument dostaje pełny `ErpSelectionState<RoleVM>`
+ * — `selectionMode` jest inputem, nie wartością zaszytą na sztywno w builderze, patrz
+ * `docs/frontend/smart-tables.md` §2 i `docs/frontend/pages.md` §10 (częste błędy). */
 @Component({
   selector: 'erp-identity-roles-table',
   standalone: true,
@@ -24,10 +26,16 @@ import { ROLES_KEYS } from '../translation';
 export class IdentityRolesTableComponent {
   private readonly _orchestrator = inject(RoleOrchestrator);
 
-  public selectionMode = input<ErpSelectionMode>('single');
+  public selectionMode = input<ErpSelectionMode>('multi');
 
   public loadingChange = output<boolean>();
-  public selectionChange = output<string | null>();
+  public selectionChange = output<ErpSelectionState<RoleVM>>();
+
+  private readonly _tableComponent = viewChild(ErpTableComponent);
+
+  public clearSelection(): void {
+    this._tableComponent()?.clearSelection();
+  }
 
   private readonly _loading = signal<boolean>(true);
   protected readonly items = computed<RoleVM[]>(() => [...this._orchestrator.getViewModel()().values()]);
@@ -54,7 +62,7 @@ export class IdentityRolesTableComponent {
       .setLoading(this._loading())
       .setSelectionMode(this.selectionMode())
       .setEmptyMessage(ROLES_KEYS.table.emptyMessage)
-      .setOnSelectionChange((state: ErpSelectionState<RoleVM>) => this.selectionChange.emit(state.selectedIds[0] ?? null))
+      .setOnSelectionChange((state: ErpSelectionState<RoleVM>) => this.selectionChange.emit(state))
       .addColumn((c) => c.setId('code').setAccessorKey('code').setHeader(ROLES_KEYS.table.columns.code).setSize(200))
       .addColumn((c) => c.setId('name').setAccessorKey('name').setHeader(ROLES_KEYS.table.columns.name).setSize(220))
       .addColumn((c) =>

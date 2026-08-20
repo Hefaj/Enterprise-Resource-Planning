@@ -80,6 +80,11 @@ export const USERS_KEYS = {
         expiresAtLabel: 'users.commands.assignRole.expiresAtLabel',
         expiresAtPlaceholder: 'users.commands.assignRole.expiresAtPlaceholder',
         submitButton: 'users.commands.assignRole.submitButton',
+        editMessage: 'users.commands.assignRole.editMessage',
+        userSuffixSingle: 'users.commands.assignRole.userSuffixSingle',
+        userSuffixPlural: 'users.commands.assignRole.userSuffixPlural',
+        filterModeSuffix: 'users.commands.assignRole.filterModeSuffix',
+        filterModeHint: 'users.commands.assignRole.filterModeHint',
       },
       grantPermission: {
         label: 'users.commands.grantPermission.label',
@@ -88,6 +93,11 @@ export const USERS_KEYS = {
         reasonLabel: 'users.commands.grantPermission.reasonLabel',
         reasonPlaceholder: 'users.commands.grantPermission.reasonPlaceholder',
         submitButton: 'users.commands.grantPermission.submitButton',
+        editMessage: 'users.commands.grantPermission.editMessage',
+        userSuffixSingle: 'users.commands.grantPermission.userSuffixSingle',
+        userSuffixPlural: 'users.commands.grantPermission.userSuffixPlural',
+        filterModeSuffix: 'users.commands.grantPermission.filterModeSuffix',
+        filterModeHint: 'users.commands.grantPermission.filterModeHint',
       },
     },
   } as const;

@@ -202,7 +202,17 @@
   "jobs": {
     "commands": {
       "catalogProductSetPrice": "Product price change",
-      "catalogProductSetName": "Product name change"
+      "catalogProductSetName": "Product name change",
+      "identityUserAssignRole": "Role assigned to user",
+      "identityUserRevokeRole": "Role revoked from user",
+      "identityUserGrantPermission": "Permission granted to user",
+      "identityUserRevokePermission": "Permission revoked from user",
+      "identityUserForceLogout": "Forced logout",
+      "identityRoleCreate": "Role created",
+      "identityRoleAddPermission": "Permission added to role",
+      "identityRoleRemovePermission": "Permission removed from role",
+      "identityRoleAddMember": "Member role added",
+      "identityRoleRemoveMember": "Member role removed"
     }
   }
 }

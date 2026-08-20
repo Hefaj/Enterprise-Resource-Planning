@@ -74,7 +74,12 @@
       "roleLabel": "Role",
       "expiresAtLabel": "Expiration date (YYYY-MM-DD, optional)",
       "expiresAtPlaceholder": "YYYY-MM-DD",
-      "submitButton": "Assign"
+      "submitButton": "Assign",
+      "editMessage": "Assigning a role to",
+      "userSuffixSingle": "user",
+      "userSuffixPlural": "users",
+      "filterModeSuffix": "matching the current filters.",
+      "filterModeHint": "All results are selected — the operation will cover every user matching the filters, including further pages."
     },
     "grantPermission": {
       "label": "Grant permission",
@@ -82,7 +87,12 @@
       "permissionLabel": "Permission",
       "reasonLabel": "Reason",
       "reasonPlaceholder": "e.g. temporary access while the manager is away",
-      "submitButton": "Grant"
+      "submitButton": "Grant",
+      "editMessage": "Granting a permission to",
+      "userSuffixSingle": "user",
+      "userSuffixPlural": "users",
+      "filterModeSuffix": "matching the current filters.",
+      "filterModeHint": "All results are selected — the operation will cover every user matching the filters, including further pages."
     }
   }
 }

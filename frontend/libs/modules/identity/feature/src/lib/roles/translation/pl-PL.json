@@ -70,13 +70,23 @@
       "label": "Dodaj uprawnienie",
       "modalTitle": "Dodanie uprawnienia do roli",
       "permissionLabel": "Uprawnienie",
-      "submitButton": "Dodaj"
+      "submitButton": "Dodaj",
+      "editMessage": "Dodajesz uprawnienie dla",
+      "roleSuffixSingle": "roli",
+      "roleSuffixPlural": "ról",
+      "filterModeSuffix": "pasujących do bieżących filtrów.",
+      "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdą rolę pasującą do filtrów, także z dalszych stron."
     },
     "addMember": {
       "label": "Dodaj rolę składową",
       "modalTitle": "Dodanie roli składowej",
       "roleLabel": "Rola składowa",
-      "submitButton": "Dodaj"
+      "submitButton": "Dodaj",
+      "editMessage": "Dodajesz rolę składową dla",
+      "roleSuffixSingle": "roli",
+      "roleSuffixPlural": "ról",
+      "filterModeSuffix": "pasujących do bieżących filtrów.",
+      "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdą rolę pasującą do filtrów, także z dalszych stron."
     }
   }
 }

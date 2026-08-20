@@ -82,7 +82,7 @@ export class RoleMembersTabComponent {
     const role = this.role();
     if (!role) return;
     const excludeUuids = [role.uuid, ...role.memberRoleUuids];
-    this._modalService.open(ADD_ROLE_MEMBER_MODAL_ID, { containerRoleUuid: role.uuid }, { excludeUuids });
+    this._modalService.open(ADD_ROLE_MEMBER_MODAL_ID, { targetUuids: [role.uuid] }, { excludeUuids });
   }
 
   protected readonly tableConfig = computed(() => {
@@ -123,7 +123,7 @@ export class RoleMembersTabComponent {
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this._orchestrator.removeMemberAsync({ containerRoleUuid, memberRoleUuid: member.uuid }).catch((err) => console.error('[RoleMembersTabComponent] Nie udało się usunąć roli składowej.', err));
+        this._orchestrator.removeMemberAsync({ uuid: containerRoleUuid, memberRoleUuid: member.uuid }).catch((err) => console.error('[RoleMembersTabComponent] Nie udało się usunąć roli składowej.', err));
       });
   }
 }

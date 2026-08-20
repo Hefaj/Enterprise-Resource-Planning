@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, effect, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, effect, untracked, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ErpTableComponent, ErpTableBuilder, ErpTableState, ErpTableConfig, ErpSelectionState, ErpSelectionMode } from '@erp/shared/ui';
@@ -6,11 +6,13 @@ import { UserOrchestrator, UserVM, SearchUserAccountRequest } from '@erp/identit
 
 import { USERS_KEYS } from '../translation';
 
-/** Tabela listy użytkowników — domyślnie wybór pojedynczego wiersza (radio, `selectionMode`
- * input, domyślnie `'single'`), nie klik w wiersz. Konsument dostaje uuid wybranego użytkownika
- * (albo `null` przy odznaczeniu) przez `selectionChange`. `selectionMode` jest inputem, nie
- * wartością zaszytą na sztywno w builderze — patrz `docs/frontend/smart-tables.md` §2 (anatomia
- * smart tabeli) i `docs/frontend/pages.md` §10 (częste błędy). */
+/** Tabela listy użytkowników — `selectionMode` input (domyślnie `'multi'`, checkboxy), bo strona
+ * ma zarówno akcje masowe toolbara (patrz `docs/frontend/selection-scope.md`), jak i panel
+ * szczegółów zależny od zaznaczenia dokładnie jednego wiersza (`UsersStore.selectedUuid`).
+ * Konsument dostaje pełny `ErpSelectionState<UserVM>` przez `selectionChange` — to on, przez
+ * `erpResolveSelectionScope`, rozstrzyga „lista czy filtr", nie ta tabela. `selectionMode` jest
+ * inputem, nie wartością zaszytą na sztywno w builderze — patrz `docs/frontend/smart-tables.md`
+ * §2 (anatomia smart tabeli) i `docs/frontend/pages.md` §10 (częste błędy). */
 @Component({
   selector: 'erp-identity-users-table',
   standalone: true,
@@ -26,10 +28,16 @@ export class IdentityUsersTableComponent {
 
   public filters = input<SearchUserAccountRequest>({});
   public stateKey = input<string>();
-  public selectionMode = input<ErpSelectionMode>('single');
+  public selectionMode = input<ErpSelectionMode>('multi');
 
   public loadingChange = output<boolean>();
-  public selectionChange = output<string | null>();
+  public selectionChange = output<ErpSelectionState<UserVM>>();
+
+  private readonly _tableComponent = viewChild(ErpTableComponent);
+
+  public clearSelection(): void {
+    this._tableComponent()?.clearSelection();
+  }
 
   private readonly _currentUuids = signal<string[]>([]);
   private readonly _totalCount = signal<number>(0);
@@ -69,7 +77,7 @@ export class IdentityUsersTableComponent {
       .setItemCount(this._totalCount)
       .setLoading(this._loading)
       .setEmptyMessage(USERS_KEYS.table.emptyMessage)
-      .setOnSelectionChange((state: ErpSelectionState<UserVM>) => this.selectionChange.emit(state.selectedIds[0] ?? null))
+      .setOnSelectionChange((state: ErpSelectionState<UserVM>) => this.selectionChange.emit(state))
 
       // `UserAccountQueries.SearchAsync` (backend) ignoruje `request.Sorts` — zawsze zwraca
       // `OrderBy(Email)`, bez whitelisty `ApplySorting`. Sortowanie wyłączone na każdej kolumnie,

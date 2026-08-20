@@ -10,7 +10,7 @@ Implementacja referencyjna: strona produktów katalogu —
 [`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/catalog-product-table/catalog-product-table.component.ts) (smart tabela),
 [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/product-scope-tab.store.ts) + [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/multimedia/multimedia-tab.component.ts) / [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/tabs/warranty/warranty-tab.component.ts) (panele boczne zależne od zaznaczenia).
 
-Wariant bez akcji masowych (pojedynczy wybór wiersza zamiast zasięgu): [`users.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/users.component.ts) + [`users.store.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/users.store.ts) — patrz §7.
+Wariant z akcjami masowymi PLUS panelem szczegółu jednego wiersza (`ErpSelectionScope` + wyprowadzony `selectedUuid`): [`users.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/users.component.ts) + [`users.store.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/users.store.ts) — patrz §7. Czysty master-detail bez żadnej akcji masowej (sam `selectedUuid`, bez zasięgu) — patrz §7.1.
 
 Dokumenty, na których ten się opiera i których nie powiela: [smart tabele](./smart-tables.md) (anatomia `erp-catalog-product-table`), [zasięg zaznaczenia](./selection-scope.md) (`ErpSelectionScope`, materializacja, bramkowanie toolbara), [atomy UI](./atoms.md) (wzorzec Single Config Builder, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-action-toolbar`).
 
@@ -145,7 +145,7 @@ Store strony (`page/AGGREGATE.store.ts`, `@Injectable()` rejestrowany w `provide
 
 Store strony jest jedynym miejscem, które zna regułę „lista czy filtr" (`scope`). Ani filtr, ani smart tabela, ani panele boczne nie podejmują tej decyzji same — czytają gotowy `scope`/`scopeKind` ze store'a.
 
-Jeżeli page **nie ma** akcji masowych i zakładki służą tylko do podglądu/edycji **jednego** wybranego wiersza (master-detail, nie bulk) — store jest dużo prostszy, patrz wariant w §7. Nie buduj wtedy `ErpSelectionScope`, którego nikt nie skonsumuje.
+Jeżeli page ma **jednocześnie** akcje masowe i panel podglądu/edycji jednego wybranego wiersza — store dokłada do tego zasięgu wyprowadzony `selectedUuid` dla panelu, patrz §7. Jeżeli page **nie ma** akcji masowych w ogóle i zakładki służą tylko do podglądu/edycji jednego wiersza (czysty master-detail, nie bulk) — store jest dużo prostszy, patrz §7.1. Nie buduj wtedy `ErpSelectionScope`, którego nikt nie skonsumuje.
 
 ---
 
@@ -272,24 +272,46 @@ Akcje wyrażalne nad całym zbiorem (dodaj, usuń wszystkie, ustaw wartość) zo
 
 ---
 
-## 7. Wariant bez akcji masowych: pojedynczy wybór (master-detail)
+## 7. Wariant z zaznaczeniem wielokrotnym i panelem szczegółu jednego wiersza
 
-Gdy page nie potrzebuje zaznaczenia wielokrotnego ani operacji masowych — tylko podgląd/edycję jednego wybranego wiersza (np. `/identity/users`: klik w użytkownika pokazuje jego role/uprawnienia) — nie buduj `ErpSelectionScope`, którego nic nie skonsumuje. Store strony trzyma zwykły `selectedUuid = signal<string | null>(null)`:
+Gdy page ma **jednocześnie** akcje masowe (dodaj/zmień coś dla całego zaznaczonego zbioru) **i** panel podglądu/edycji jednego konkretnego wiersza (`/identity/users`: zaznacz wielu, żeby nadać rolę grupowo z toolbara, ale kliknij jednego, żeby zobaczyć jego role/uprawnienia w `rightPanel`) — store łączy pełny `ErpSelectionScope` (§1–6) z **wyprowadzonym** `selectedUuid`, który karmi wyłącznie panel:
 
 ```typescript
 @Injectable()
 export class UsersStore {
   public readonly filters = signal<Partial<SearchUserAccountRequest>>({});
   public readonly loading = signal<boolean>(false);
-  public readonly selectedUuid = signal<string | null>(null);
 
-  public selectUser(uuid: string | null): void { this.selectedUuid.set(uuid); }
+  // Zaznaczenie i zasięg — identyczne jak w product.store.ts (§4), aż do materializacji.
+  public readonly selection = signal<ErpSelectionState<UserVM> | null>(null);
+  public setSelection(state: ErpSelectionState<UserVM>): void { this.selection.set(state); }
+  public clearSelection(): void { /* patrz product.store.ts */ }
+
+  public readonly scope = computed<ErpSelectionScope<UserVM, SearchUserAccountRequest>>(() =>
+    erpResolveSelectionScope(this.selection(), {
+      materializeLimit: USER_SELECTION_MATERIALIZE_LIMIT,
+      materializedIds: /* patrz materializacja w product.store.ts §4 */ null,
+    })
+  );
+  public readonly scopeKind = computed(() => this.scope().kind);
+
+  // Panel szczegółu czyta TEN sygnał, NIGDY `scope` wprost — ma sens tylko dla zasięgu
+  // rozwiązanego do DOKŁADNIE JEDNEGO identyfikatora (ręczne zaznaczenie jednego wiersza albo
+  // „Zaznacz wszystko" zmaterializowane do jednego trafienia filtra). Przy zaznaczeniu wielu
+  // wierszy albo trybie `query` panel się chowa — „role tego jednego użytkownika" nie ma
+  // sensownego odpowiednika dla zbioru.
+  public readonly selectedUuid = computed<string | null>(() => {
+    const scope = this.scope();
+    return scope.kind === 'explicit' && scope.ids.length === 1 ? scope.ids[0] : null;
+  });
 }
 ```
 
-Reszta szkieletu (grid, filtr, `ErpTabsComponent` renderowany dwa razy, `rightPanel` chowany warunkiem) jest **identyczna** jak w §1–3, **łącznie z zasadą §3 pkt 1** — pierwszy `addTab(...)` (id `'list'` w przykładzie) **nie dostaje** `component`, dokładnie jak `'products'` w `ProductComponent`. Smart tabela w `content` ma `selectionMode` `'single'` zamiast `'multi'` (patrz [smart-tables.md §5](./smart-tables.md#5-warianty)) i emituje `selectionChange` jako `string | null`, nie `ErpSelectionState`. Zakładki w `rightPanel` nie dziedziczą po żadnym `XScopeTabStore` — czytają wprost `selectedUuid` ze store'a strony i renderują dane jednego wiersza.
+Materializację i cache uuidów kopiuj z `product.store.ts` (§4) bez zmian — jedyna różnica jest w `selectedUuid` na końcu.
 
-**Jedyna różnica względem §3: `collapsed` ma dwa warunki połączone `||`, nie jeden.** W §3 `rightPanel` chowa się wyłącznie wtedy, gdy aktywna jest zakładka-lista. Tu chowa się także wtedy, gdy nic nie jest zaznaczone — bo w tym wariancie treść `rightPanel` zależy od wybranego wiersza, nie tylko od tego, którą zakładkę otworzył użytkownik:
+Tabela w `content` ma `selectionMode: 'multi'` (checkboxy, **nie** `'single'`/radio) i emituje pełny `ErpSelectionState`, dokładnie jak w §1–6 — nie `string | null`. Zakładki w `rightPanel` **nie** dziedziczą po żadnym `XScopeTabStore` (§6.1) — nie pokazują próbki zbioru z banerem zasięgu, tylko dane JEDNEGO wiersza — czytają wprost `store.selectedUuid()`.
+
+**`collapsed` ma dwa warunki połączone `||`, tak samo jak w czystym master-detail (§7.1) poniżej.** `rightPanel` chowa się, gdy aktywna jest zakładka-lista ALBO gdy `selectedUuid()` jest pusty (zero, wiele wierszy albo tryb `query` — we wszystkich trzech przypadkach nie ma jednego wiersza do pokazania):
 
 ```typescript
 protected readonly activeTabId = signal<string | null>(null);
@@ -308,7 +330,7 @@ protected readonly tabsConfig = ErpTabsBuilder.create(b => b
 collapsed: computed(() => this.activeTabId() === 'list' || !this._store.selectedUuid()),
 ```
 
-**Zaznaczenie wiersza, gdy zakładka-lista jest aktywna, musi ją przełączyć na pierwszą zakładkę szczegółu.** Bez tego wybranie wiersza na zakładce `'list'` nie miałoby żadnego widocznego efektu — `collapsed` zostałby `true` przez sam `activeTabId() === 'list'`, mimo że `selectedUuid()` przestał być pusty. To osobny `effect()` w konstruktorze page, bo `tabsConfig`/`activeTabId` i `store.selectedUuid()` żyją w dwóch różnych miejscach:
+**Zaznaczenie DOKŁADNIE jednego wiersza, gdy zakładka-lista jest aktywna, musi ją przełączyć na pierwszą zakładkę szczegółu.** Bez tego wybranie jednego wiersza na zakładce `'list'` nie miałoby żadnego widocznego efektu — `collapsed` zostałby `true` przez sam `activeTabId() === 'list'`, mimo że `selectedUuid()` przestał być pusty. To osobny `effect()` w konstruktorze page, bo `tabsConfig`/`activeTabId` i `store.selectedUuid()` żyją w dwóch różnych miejscach:
 
 ```typescript
 public constructor() {
@@ -320,7 +342,28 @@ public constructor() {
 }
 ```
 
-Wybór wariantu: jeśli page ma **jakąkolwiek** akcję masową (edycja/usunięcie/eksport wielu pozycji naraz) — wariant z §1–6 (`ErpSelectionScope`, `selectionMode: 'multi'`). Jeśli page tylko pokazuje szczegóły jednej wybranej pozycji — ten wariant.
+**Toolbar dostaje dwie różne rodziny akcji, nie jedną.** Grupy zaznaczenia budowane nad `store.scope()` (§5) — „nadaj rolę wszystkim zaznaczonym" — współistnieją z akcjami jednowierszowymi otwieranymi Z PANELU szczegółu (zakładka Role/Uprawnienia tego jednego użytkownika: „odbierz TĘ KONKRETNĄ rolę") — to dwie osobne ścieżki UI, każda skierowana do innego kontraktu backendu (wsad na zasięgu vs. `Commands: [command]` na jednym, znanym celu — patrz [operacje masowe (backend)](../backend/bulk-commands.md#3-endpoint--trzy-tryby-jednego-kontraktu)).
+
+### 7.1. Czysty master-detail (bez żadnej akcji masowej)
+
+Gdy page nie ma **żadnej** akcji działającej na zbiorze — tylko podgląd/edycję jednego wybranego wiersza — nie buduj `ErpSelectionScope`, którego nic nie skonsumuje. Store trzyma zwykły `selectedUuid = signal<string | null>(null)`:
+
+```typescript
+@Injectable()
+export class SomeStore {
+  public readonly filters = signal<Partial<SearchSomeRequest>>({});
+  public readonly loading = signal<boolean>(false);
+  public readonly selectedUuid = signal<string | null>(null);
+
+  public select(uuid: string | null): void { this.selectedUuid.set(uuid); }
+}
+```
+
+Reszta szkieletu (grid, filtr, `ErpTabsComponent` renderowany dwa razy, `rightPanel` chowany warunkiem, `effect` przełączający zakładkę) jest **identyczna** jak w §7 wyżej — jedyna różnica to smart tabela w `content`: `selectionMode: 'single'` (radio) zamiast `'multi'`, emituje `string | null` zamiast `ErpSelectionState`, i store nie ma pól `selection`/`scope`/`scopeKind` w ogóle.
+
+### Wybór wariantu
+
+Pełny zasięg (§1–6) — jeśli KAŻDA akcja jest wyrażalna nad zbiorem i nie ma potrzeby podglądu jednego wiersza. Hybryda (§7) — jeśli są OBIE naraz: akcje masowe I panel szczegółu (np. `/identity/users`, `/identity/roles`). Czysty master-detail (§7.1) — jeśli TYLKO podgląd jednego wiersza, bez żadnej akcji nad zbiorem.
 
 ---
 
@@ -353,7 +396,7 @@ libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/
 
 1. **Sprawdź, czy orkiestrator agregatu istnieje** (`searchAsync`, `getViewModel()`/`getSignalViewModel()`) — jeśli nie, najpierw [orkiestrator](./orchestrators.md).
 2. **Zbuduj smart tabelę** dla agregatu wg [smart-tables.md](./smart-tables.md), z `sortsChange`/`.setFilters(...)`, jeśli page będzie miał zasięg zaznaczenia (§9.9 tamtego dokumentu).
-3. **Store strony** — skopiuj `product.store.ts` (pełny zasięg, §4) albo `users.store.ts` (pojedynczy wybór, §7) — zależnie od tego, czy będą akcje masowe.
+3. **Store strony** — skopiuj `product.store.ts` (tylko pełny zasięg, §4), `users.store.ts` (pełny zasięg + `selectedUuid` dla panelu, §7) albo szkielet z §7.1 (tylko `selectedUuid`, bez zasięgu) — zależnie od tego, czy będą akcje masowe i czy będzie panel szczegółu jednego wiersza.
 4. **Filtr** — `ErpFilterBuilder` w `page/filters/`, `setOnSearch` woła store (§2).
 5. **Zdecyduj o zakładkach** (§3). Brak akcji specyficznych dla podzbiorów danych → bez zakładek, `content` renderuje wrapper toolbar+tabela wprost. W przeciwnym razie: `ErpTabsBuilder` w komponencie page, pierwszy `addTab` bez `component`, kolejne z `component` wskazującym panel boczny.
 6. **Pierwsza zakładka / `content`** — wrapper z `erp-action-toolbar` nad smart tabelą, `onSelectionChange` woła `store.setSelection(...)` (§5).
@@ -372,7 +415,7 @@ libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/
 - **Panel boczny jako smart tabela z własnym `searchAsync`** zamiast `erp-table` w trybie `client` karmionego z `tabStore.products`/orkiestratora — panel pokazuje dowód zasięgu, nie prowadzi własnej paginacji API.
 - **Nowa zakładka odtwarzająca mechanikę zasięgu** zamiast dziedziczenia po `AGGREGATE-scope-tab.store.ts` — progi/próbki/czyszczenie podzaznaczenia rozjadą się przy pierwszej zmianie.
 - **`erp-action-toolbar` poza `erpActionToolbarZone`** albo bez `[erpActionToolbarContext]` — skróty klawiszowe i Mega Menu tej strefy nie działają.
-- **Budowanie `ErpSelectionScope` dla page z pojedynczym wyborem** (master-detail bez akcji masowych) — niepotrzebna złożoność; wystarczy `selectedUuid` jak w §7.
+- **Budowanie `ErpSelectionScope` dla page bez żadnej akcji masowej** (czysty master-detail) — niepotrzebna złożoność; wystarczy sam `selectedUuid` jak w §7.1, bez `selection`/`scope`/`scopeKind`.
 - **Różne `setLayoutId` między środowiskami/kopiami tego samego page** albo kolizja z istniejącym — psuje zapisane preferencje szerokości paneli innego page.
 - **`selectionMode` zaszyty na sztywno w `.setSelectionMode(...)` smart tabeli** zamiast wystawiony jako `input()` (patrz §5, [smart-tables.md §2](./smart-tables.md#2-anatomia)) — działa dopóki tabela ma jednego konsumenta, ale blokuje jej ponowne użycie w innym page z innym trybem zaznaczenia. Znaleziony w `identity-users-table.component.ts`.
 - **Brak `.withSharedState(this.activeTabId)` w `tabsConfig`, gdy `ErpTabsComponent` renderuje się dwa razy** (`renderMode: 'tabs'` + `renderMode: 'content'`) — bez współdzielonego stanu obie instancje trzymają osobny, niezależny stan aktywnej zakładki; kliknięcie nagłówka w obszarze `tabs` nie zmienia niczego w `rightPanel`. Dotyczy **każdego** wariantu z zakładkami, nie tylko §3. Znaleziony w `users.component.ts` i `roles.component.ts`.

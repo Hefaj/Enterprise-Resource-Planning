@@ -27,7 +27,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Strona odczytu (CQRS queries) | ✅ | Catalog: produkty, kategorie, drzewo, modele, gwarancje, multimedia |
 | Strona zapisu (komendy, `IUnitOfWork`) | ✅ | `AddErpMessaging<TContext>()` wołane w `Program.cs` Catalogu, Sales i Notification — rejestruje `IUnitOfWork` |
 | Domain events → outbox → RabbitMQ | ✅ | [`events-outbox.md`](./events-outbox.md) |
-| Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — `job/cancel`, `job/retry-failed` dodane w fazie 5 |
+| Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — wykonują Catalog, Sales, Identity (`job/cancel`, `job/retry-failed` dodane w fazie 5) |
 | Walidacja wsadowa (pre-check reguł zbiorczych) | ✅ | [`batch-validation.md`](./batch-validation.md) — mechanizm wspólny, podpięty w Catalog (`ProductMustExistRule`) |
 | SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; skalowanie poziome wymaga zmian z [§7](#7-założenia-jednoinstancyjne) |
 | Middleware komend (walidacja, idempotencja, logowanie) | 📐 | Handler dziś sam woła `IUnitOfWork`; walidacja żyje wyłącznie w agregacie — patrz [`cqrs.md`](./cqrs.md#6-czego-jeszcze-nie-ma) |
@@ -37,6 +37,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Egzekwowanie uprawnień w Catalog/Sales/Notification | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 3 — zweryfikowane end-to-end (odebranie roli → 403 w ciągu SLA cache'u ≤60s). Notification świadomie bez bramkowania (własny feed, nie zasób uprzywilejowany) |
 | Bramkowanie UI (front) | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 5 — `PermissionStore`, guardy, `*erpHasPermission`, filtr menu, `/forbidden`, toast 403 |
 | Audyt nadań, wygasające nadania, wymuszone wylogowanie, bramkowanie własnych endpointów Identity | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 6 — `grant_audit` append-only, `ExpiredGrantCleanupService`, odwołanie sesji Keycloak przez Admin API, `role/*`/`user/*` w Identity za `Permissions(...)` |
+| Operacje masowe w Identity — wszystkie 10 komend `role/*`/`user/*` na `BatchEndpointBase` | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 7 i [`identity-bulk-migration.md`](./identity-bulk-migration.md) — `RoleGraphCycleRule` (cykl wewnątrz wsadu), `RoleCodeUniqueRule`, pełny `ErpSelectionScope` na `/identity/users`/`/identity/roles`, 76/76 testów backendowych |
 
 ---
 

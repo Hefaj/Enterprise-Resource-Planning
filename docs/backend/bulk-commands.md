@@ -26,7 +26,7 @@ brzegowy: klienty NSwag i orkiestratory frontendowe nie wymagały żadnej zmiany
 
 ## 2. Model danych
 
-Schemat modułu **wykonującego** zadanie (Catalog, Sales — nie Notification, patrz sekcja 4):
+Schemat modułu **wykonującego** zadanie (Catalog, Sales, Identity — nie Notification, patrz sekcja 4):
 
 ```
 job(uuid pk, command_type, command_json, queue_id, status,
@@ -188,8 +188,9 @@ przed każdym chunkiem — inaczej zdarzenia i powiadomienia SignalR nie miałyb
   oryginału — ponowienie odtwarza dokładnie to, co się nie udało, nie jego przybliżenie.
 
 Oba są zaimplementowane w Catalogu
-([`Catalog.Api/Jobs/JobControlEndpoints.cs`](../../backend/modules/Catalog/Catalog.Api/Jobs/JobControlEndpoints.cs)); Sales ma
-infrastrukturę zadań gotową (`IJobStore`, `BulkCommandRunner<SalesDbContext>` zarejestrowane),
+([`Catalog.Api/Jobs/JobControlEndpoints.cs`](../../backend/modules/Catalog/Catalog.Api/Jobs/JobControlEndpoints.cs))
+i w Identity ([`Identity.Api/Jobs/JobControlEndpoints.cs`](../../backend/modules/Identity/Identity.Api/Jobs/JobControlEndpoints.cs));
+Sales ma infrastrukturę zadań gotową (`IJobStore`, `BulkCommandRunner<SalesDbContext>` zarejestrowane),
 ale nie wystawia jeszcze tych dwóch endpointów.
 
 ---

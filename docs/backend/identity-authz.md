@@ -289,14 +289,18 @@ Bez tego kroku żaden z powyższych elementów by nie zadziałał, mimo poprawne
 | Agregaty | `Role` (`RolePermissionEntry`/`RoleMemberEntry` jako owned encje — EF nie mapuje `List<string>`/`List<Guid>` wprost jako encji własnej), `UserAccount` (`UserRoleGrant`/`UserPermissionGrant`) |
 | Persystencja | `IdentityDbContext` (schemat `identity`), migracja `InitialIdentitySchema`, `PermissionCatalogReconciler` uzgadnia katalog przy KAŻDYM starcie (nie tylko na pustej bazie) |
 | Zapytania | `IRoleQueries`/`IUserAccountQueries`/`IPermissionCatalogQueries` (rozbite z jednego `IIdentityQueries` z planu — czytelniejszy podział per agregat) — efektywne uprawnienia i ścieżka dziedziczenia surowym rekursywnym CTE przez dedykowane połączenie ADO.NET (`IdentityConnectionStringProvider` — Npgsql nie utrzymuje hasła w `DbConnection.ConnectionString` po otwarciu, więc odczyt connection stringa z już używanego przez EF połączenia zawodzi w runtime) |
-| Endpointy | CRUD ról (`role/create`, `add-permission`, `add-member`...), nadawanie/odbieranie (`user/assign-role`, `grant-permission`...), `GET /me/permissions`, `GET /me/permissions/sources` (ścieżka dziedziczenia), `GET /internal/users/{id}/permissions`, `GET /permission/catalog` |
+| Endpointy | CRUD ról (`role/create`, `add-permission`, `add-member`...), nadawanie/odbieranie (`user/assign-role`, `grant-permission`...)¹, `GET /me/permissions`, `GET /me/permissions/sources` (ścieżka dziedziczenia), `GET /internal/users/{id}/permissions`, `GET /permission/catalog` |
 | Seed | rola systemowa `administrator` (kod `RoleSeeder.AdministratorRoleCode`) z pełnym katalogiem, zsynchronizowana bezwarunkowo przy starcie (nie za flagą `Seed:Enabled` jak dane przykładowe — to strukturalny warunek wstępny, nie demo) |
 | JIT provisioning | `Identity.Api/Provisioning/UserProvisioningMiddleware` — zakłada `user_account` przy pierwszym uwierzytelnionym żądaniu, pierwszy użytkownik w systemie dostaje `administrator` automatycznie. Wymagało nowego haka `configureBeforeEndpoints` w `ErpApiExtensions.UseErpApi` (opcjonalny, domyślnie no-op — inne serwisy nic nie płacą), bo middleware musi zobaczyć zweryfikowanego `context.User` i zdążyć przed dopasowaniem endpointu |
 | Sygnatury | `AggregateSignatures`: `identity.user`, `identity.role` |
 
 **Zweryfikowane end-to-end przez realne HTTP z tokenem Keycloaka** (nie tylko testy jednostkowe): utworzenie dwóch ról, dodanie uprawnienia, złożenie hierarchii (`warehouse-manager` zawiera `warehouse-reader`), próba zamknięcia cyklu odrzucona z `role_cycle_detected`, `GET /me/permissions` zwraca poprawny efektywny zbiór po przypisaniu zagnieżdżonej roli, `GET /me/permissions/sources` poprawnie atrybutuje `catalog.product.read` do `warehouse-reader` z `viaContainerRoleUuid` wskazującym `warehouse-manager`. `dotnet build`/`dotnet test` na całym rozwiązaniu (45/45) i `Erp.ArchitectureTests` (5/5) bez regresji.
 
-**Znany dług, świadomie odłożony:** wyjątki domenowe (`DomainException`, np. `role_cycle_detected`) kończą się dziś generycznym 500, nie 422 — to nie jest regresja Fazy 2, tylko brak middleware komend opisany w [`cqrs.md` §6](./cqrs.md#6-czego-jeszcze-nie-ma) jako nieistniejący w całym repo. `GET /internal/users/{id}/permissions` dziś wymaga tylko ważnego tokenu (dowolny zalogowany użytkownik może odpytać o cudze uprawnienia) — docelowa polityka service-to-service to zadanie Fazy 3.
+¹ Nazwy tras w tej tabeli opisują stan Fazy 2. Od Fazy 7 wszystkie dziesięć komend `role/*`/`user/*`
+idzie przez odpowiednik `BatchEndpointBase` pod trasami `role/batch-*`/`user/batch-*` —
+patrz [Faza 7](#faza-7--operacje-masowe-) niżej i [`identity-bulk-migration.md`](./identity-bulk-migration.md).
+
+**Znany dług, świadomie odłożony:** wyjątki domenowe (`DomainException`, np. `role_cycle_detected`) kończą się dziś generycznym 500, nie 422 — to nie jest regresja Fazy 2, tylko brak middleware komend opisany w [`cqrs.md` §6](./cqrs.md#6-czego-jeszcze-nie-ma) jako nieistniejący w całym repo. `GET /internal/users/{id}/permissions` dziś wymaga tylko ważnego tokenu (dowolny zalogowany użytkownik może odpytać o cudze uprawnienia) — docelowa polityka service-to-service to zadanie Fazy 3. Od Fazy 7 ten dług jest bez znaczenia dla `role/*`/`user/*`: błąd domenowy trafia do `job_item.error_code` w raporcie zadania, nie do kodu odpowiedzi HTTP synchronicznego żądania — droga synchroniczna, dla której 422 miałoby sens, przestała istnieć.
 
 ### Faza 3 — egzekwowanie w pozostałych serwisach ✅
 
@@ -368,12 +372,17 @@ Wygenerowany dokładnie wg [`new-module.md`](../frontend/new-module.md): 5 warst
 | Element | Pliki |
 |---|---|
 | `grant_audit` (append-only) | `Identity.Domain/Aggregates/Audit/GrantAuditEntry.cs` (plain `Entity`, bez `xmin` — nie jest `AggregateRoot`), `Identity.Infrastructure/Persistence/Configurations/Audit/GrantAuditEntryConfiguration.cs`, migracja `20260819124324_AddGrantAudit`, `IGrantAuditWriter`/`GrantAuditWriter` (zapis w tej samej transakcji co handler, bez własnego `SaveChangesAsync`), `IGrantAuditQueries`/`GrantAuditQueries` — `POST /grant-audit/search`, `POST /grant-audit/getGrantAudit` (ungated, read-only, wzorem `SearchRole`/`GetRole`) |
-| Wpięcie audytu w handlery | 8 handlerów w `UserCommands.cs`/`RoleCommands.cs` (assign/revoke role, grant/revoke permission, add/remove member, add/remove permission) piszą wiersz audytu przed `SaveChangesAsync`; actor zawsze z `IExecutionContext.UserId`, nigdy z payloadu |
+| Wpięcie audytu w handlery | 8 handlerów w `UserCommands.cs`/`RoleCommands.cs` (assign/revoke role, grant/revoke permission, add/remove member, add/remove permission) wołają `IGrantAuditWriter.RecordAsync` (samo `Add()`, bez własnego zapisu — patrz Faza 7²); actor zawsze z `IExecutionContext.UserId`, nigdy z payloadu |
 | Czyszczenie wygasłych nadań | `Identity.Infrastructure/Jobs/ExpiredGrantCleanupService.cs` — pierwszy `BackgroundService`/`PeriodicTimer` w repo (co 5 min), usuwa `user_role` z `expires_at <= now()`, zapisuje `grant_audit` (`action=role_grant_expired`, `source=cleanup-job`). Higiena audytu, nie warunek poprawności — efektywne uprawnienia i tak już respektowały `expires_at` od Fazy 2 |
 | Wymuszone wylogowanie | `backend/keycloak/realm-erp.json` — nowy klient poufny `erp-identity-service` (service-account, rola `manage-users` na `realm-management`); `Erp.BuildingBlocks.Api/Auth/{KeycloakAdminOptions,IKeycloakAdminClient,KeycloakAdminClient}.cs` (zwykły `HttpClient`, `client_credentials` do Keycloaka, `POST /admin/realms/erp/users/{sub}/logout`); `IPermissionProvider.InvalidateAsync` (nowa metoda, czyści `IMemoryCache`); `UserForceLogoutCommand`/handler, `POST /user/{uuid}/force-logout` (gated `identity.user.manage`) |
 | Naprawa JIT vs claims transformation + bramkowanie Identity | `IUserProvisioningService`/`UserProvisioningService` (logika wydzielona z usuniętego `UserProvisioningMiddleware`), `Identity.Api/Auth/IdentityInProcessPermissionProvider.cs` — liczy efektywne uprawnienia bezpośrednio przez `IUserAccountQueries` (bez HTTP self-call, usuwa przyczynę dawnej rekurencji), woła `EnsureProvisionedAsync` PRZED policzeniem uprawnień, więc nowy użytkownik nigdy nie dostaje pustego cache'u na 60s. `Program.cs`: `enablePermissionClaims: true`, `IPermissionProvider` nadpisany na provider in-process. `Permissions(identity.role.manage)`/`Permissions(identity.user.manage)` dodane na `role/*`/`user/*`/`force-logout`; `me/permissions*`, `permission/catalog`, `GetRole`/`SearchRole`/`GetUser`/`SearchUser`, `grant-audit/*` zostają bez wymogu uprawnień (własny profil / katalogi i historia read-only) |
 | Frontend — przebudowa menu na żywo | `apps/client/src/app/STARTUP.ts` — niefiltrowane drzewa menu per moduł zachowane po starcie; handler SignalR `identity.user` po `permissionStore.load()` przelicza `filterMenuByPermissions` i re-rejestruje przez `ErpNavRegistryService.register()` (już upsertuje po `id` — nie wymagało zmian w rejestrze) |
 | Frontend — ekran historii nadań | Pierwsza właściwa strona modułu `identity`: `libs/modules/identity/{data-access,feature,contract}/**` — orkiestrator na regenerowanym kliencie NSwag (`searchGrantAudit`), tabela TaigaUI (kiedy/kto/komu/akcja+co/źródło), trasa `/identity/grants` i pozycja menu "Historia nadań" za `identity.role.manage` |
+
+² Opis z Fazy 6: w tamtym momencie handler faktycznie wołał `IUnitOfWork.SaveChangesAsync` sam,
+zaraz po zapisie audytu. Od Fazy 7 zapis wyznacza `BulkCommandRunner` (jeden raz na chunk) —
+`IGrantAuditWriter` i tak zawsze robił samo `Add()`, więc wpis audytowy nadal ląduje w TEJ SAMEJ
+transakcji co zmiana, którą opisuje, tylko że transakcję otwiera i zamyka runner, nie handler.
 
 **Zweryfikowane:** `dotnet build`/`dotnet test` na całym rozwiązaniu — 45/45 bez regresji (5
 `Erp.ArchitectureTests` + 40 `Catalog.Tests`), `Erp.ArchitectureTests` bez regresji warstw
@@ -410,12 +419,45 @@ bez błędów.
 
 ---
 
+### Faza 7 — operacje masowe ✅
+
+Wszystkie dziesięć komend `role/*`/`user/*` przeszło z wywołań synchronicznych na wspólny
+mechanizm operacji masowych Catalogu/Sales (`BatchEndpointBase`/`BulkCommandRunner`, patrz
+[`bulk-commands.md`](./bulk-commands.md)) — **każda** mutacja, nawet na jednym agregacie, jest
+teraz zadaniem z jednym elementem. Pełny opis decyzji projektowych, kolejności wdrożenia i
+weryfikacji end-to-end: [`identity-bulk-migration.md`](./identity-bulk-migration.md).
+
+| Element | Pliki |
+|---|---|
+| Infrastruktura jobów | `IdentityDbContext : IJobDbContext`, migracja `AddBulkJobs` (`identity.job`/`identity.job_item`), `IPersistenceExceptionTranslator` (`ix_role_code`→`role_code_duplicate`, `ix_user_account_email`→`user_email_duplicate`), `job/cancel`+`job/retry-failed`, kod uprawnienia `identity.job.control` |
+| Komendy `user/*` | `UserAssignRoleCommand`/`UserRevokeRoleCommand`/`UserGrantPermissionCommand`/`UserRevokePermissionCommand`/`UserForceLogoutCommand` — pole celu przemianowane na `Uuid` (kontrakt `IAggregateCommand`), handlery bez własnego `SaveChangesAsync`; trasy `user/batch-*` |
+| Komendy `role/*` | `RoleCreateCommand`/`RoleAddPermissionCommand`/`RoleRemovePermissionCommand`/`RoleAddMemberCommand`/`RoleRemoveMemberCommand` — jw., `RoleCreateCommand.Uuid` generowany PO STRONIE KLIENTA (tryb `Commands[]` jest jedynym sensownym trybem tworzenia); trasy `role/batch-*` |
+| Reguły wsadowe | `UserMustExistRule`, `RoleMustExistRule`, `ReferencedRoleMustExistRule` (współdzielona user/role), `PermissionCodeMustExistRule` (współdzielona, **nowe sprawdzenie** — synchroniczna ścieżka nigdy nie waliduje kodu uprawnienia), `RoleCodeUniqueRule`, `RoleGraphCycleRule` — jedyna linia obrony przed cyklem powstałym WEWNĄTRZ jednego wsadu, bo `IsDescendantAsync` czyta stan zacommitowany i nie widzi krawędzi z wcześniejszych elementów tego samego chunka |
+| Testy | `backend/tests/Identity.Tests` (nowy projekt, wzorem `Catalog.Tests`) — 31 testów, nacisk na `RoleGraphCycleRuleTests` (para `A→B`+`B→A` w jednym wsadzie, cykl tranzytywny przez trzy elementy, cykl przez stan już zacommitowany) i `RoleCodeUniqueRuleTests` (duplikat wewnątrz wsadu) |
+| Frontend | Klient NSwag zregenerowany (10 metod `*MultipleCommand`), orkiestratory z metodami wsadowymi (`erpBuildBatchTargets(scope)`) i single-target (`Commands: [command]`), 4 modale (`assign-role`/`grant-permission`/`add-permission`/`add-member`) na `ErpBatchStepBase`, pełny `ErpSelectionScope` na `/identity/users` i `/identity/roles` (patrz [`pages.md` §7](../frontend/pages.md#7-wariant-z-zaznaczeniem-wielokrotnym-i-panelem-szczegółu-jednego-wiersza)) |
+
+**Zweryfikowane end-to-end w przeglądarce** (konto `administrator`): zaznaczenie wielu
+użytkowników → toolbar pokazuje realny licznik zasięgu → modal „Nadaj rolę"/„Nadaj uprawnienie"
+renderuje odznaki wszystkich celów → zadanie kończy się w ~1-2 s (jeden chunk, `IdlePollingInterval`).
+`dotnet build`/`dotnet test` na całym rozwiązaniu — 76/76 bez regresji (5 `Erp.ArchitectureTests`
++ 40 `Catalog.Tests` + 31 `Identity.Tests`).
+
+**Napotkany i naprawiony w trakcie problem — `ReferenceError: Must call super constructor`.**
+Cztery kroki modali (`AssignRoleStepComponent` i trzy analogiczne) rzucały ten błąd przy próbie
+otwarcia — `.setItems(this._roles)` czytało pole klasy synchronicznie PRZED wywołaniem `super()`
+we własnym konstruktorze, co JS zabrania dla klas pochodnych. Błąd był w kodzie od Fazy 4/5
+(nikt wcześniej nie otworzył tych modali na żywo w przeglądarce — TypeScript go nie łapie, bo to
+błąd czasu wykonania, nie typów). Naprawione przeniesieniem zależności do zmiennych lokalnych
+budowanych PRZED `super(config)`, z przypisaniem do pól `this.` dopiero po nim.
+
+---
+
 ## 8. Kolejność i zależności
 
 ```
 Faza 1 (AuthN) ──► Faza 2 (domena) ──► Faza 3 (egzekwowanie) ──► Faza 5 (bramkowanie UI)
                             └────────► Faza 4 (moduł UI) ───────┘
-                                                                └──► Faza 6 (audyt)
+                                                                └──► Faza 6 (audyt) ──► Faza 7 (operacje masowe)
 ```
 
 Faza 1 jest twardym warunkiem wstępnym: budowanie zarządzania uprawnieniami na `X-User-Id` z nagłówka daje ekrany, które wyglądają na działające, a niczego nie chronią.

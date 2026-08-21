@@ -203,6 +203,7 @@
     "commands": {
       "catalogProductSetPrice": "Product price change",
       "catalogProductSetName": "Product name change",
+      "catalogProductCreate": "Products created",
       "identityUserAssignRole": "Role assigned to user",
       "identityUserRevokeRole": "Role revoked from user",
       "identityUserGrantPermission": "Permission granted to user",

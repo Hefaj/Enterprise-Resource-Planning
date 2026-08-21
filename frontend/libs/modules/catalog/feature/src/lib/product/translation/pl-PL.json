@@ -155,11 +155,26 @@
       "emptySelection": "Nie wybrano żadnych produktów — zamknij okno i zaznacz produkty na liście.",
       "filterModeSuffix": "pasujących do bieżących filtrów.",
       "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdy produkt pasujący do filtrów, także z dalszych stron."
+    },
+    "create": {
+      "label": "Dodaj produkty",
+      "modalTitle": "Nowe produkty",
+      "intro": "Każdy wiersz to jeden nowy produkt. Dodaj tyle wierszy, ile pozycji ma powstać — wszystkie utworzy jedna operacja.",
+      "nameLabel": "Nazwa produktu",
+      "namePlaceholder": "Wprowadź nazwę",
+      "priceLabel": "Cena netto (PLN)",
+      "pricePlaceholder": "0,00",
+      "addRow": "Dodaj wiersz",
+      "removeRow": "Usuń wiersz",
+      "submitButton": "Utwórz produkty",
+      "cancelButton": "Anuluj"
     }
   },
   "validations": {
     "priceRequired": "Cena jest wymagana",
     "priceMin": "Cena musi być większa od zera",
-    "nameRequired": "Nazwa jest wymagana"
+    "nameRequired": "Nazwa jest wymagana",
+    "priceNegative": "Cena nie może być ujemna",
+    "rowsRequired": "Dodaj przynajmniej jeden kompletny wiersz"
   }
 }

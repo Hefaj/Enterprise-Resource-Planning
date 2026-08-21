@@ -208,6 +208,7 @@ export const SHARED_KEYS = {
       commands: {
         catalogProductSetPrice: 'shared.jobs.commands.catalogProductSetPrice',
         catalogProductSetName: 'shared.jobs.commands.catalogProductSetName',
+        catalogProductCreate: 'shared.jobs.commands.catalogProductCreate',
         identityUserAssignRole: 'shared.jobs.commands.identityUserAssignRole',
         identityUserRevokeRole: 'shared.jobs.commands.identityUserRevokeRole',
         identityUserGrantPermission: 'shared.jobs.commands.identityUserGrantPermission',

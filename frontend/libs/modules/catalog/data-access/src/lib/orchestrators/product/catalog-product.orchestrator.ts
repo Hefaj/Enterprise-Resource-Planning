@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, JobMeta, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
-import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchResult } from '../../api-client';
+import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductCreateCommandAndSearchProductRequest, BatchResult } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM, ProductCodeVM, ProductAttributeVM } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
@@ -322,6 +322,45 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
         // przechowuje je przy zadaniu i oddaje w `JobDto.uiMetadata`, dzięki czemu opis
         // („Zmiana ceny”) przeżywa odświeżenie strony i jest widoczny na innej karcie.
         this._api.productSetPriceMultipleCommand({
+          ...command,
+          queueId: queueID,
+          uiMetadata: JSON.stringify(meta),
+        })
+      );
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, meta);
+
+      return jobUuid;
+    } catch (err) {
+      this.addError({
+        operation: 'command',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+      throw err;
+    }
+  }
+
+  /**
+   * Zleć seryjne zakładanie produktów.
+   *
+   * W odróżnieniu od pozostałych operacji masowych komenda nie ma celów: produkty jeszcze
+   * nie istnieją, więc jedynym sensownym trybem kontraktu `BatchCommand` jest `commands[]`
+   * — każda pozycja niesie własny uuid (nadany przez klienta), nazwę i cenę.
+   */
+  public async createMultiple(
+    command: BatchCommandOfProductCreateCommandAndSearchProductRequest,
+    queueID?: string,
+  ): Promise<string> {
+    const meta: JobMeta = {
+      commandName: CATALOG_JOB_COMMAND_KEYS.create,
+      timestamp: new Date(),
+    };
+
+    try {
+      const result = await firstValueFrom(
+        this._api.productCreateMultipleCommand({
           ...command,
           queueId: queueID,
           uiMetadata: JSON.stringify(meta),

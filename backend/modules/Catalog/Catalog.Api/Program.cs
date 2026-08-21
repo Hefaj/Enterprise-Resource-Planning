@@ -24,6 +24,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 // to on wie, jakie reguły obowiązują dla której operacji (BatchEndpointBase.ValidateTargetsAsync).
 builder.Services.AddScoped<ProductMustExistRule>();
 builder.Services.AddScoped<ProductDuplicateRule>();
+builder.Services.AddScoped<ProductUuidAvailableRule>();
 builder.Services.AddScoped<ProductBatchValidator>();
 
 // Wolverine: transport RabbitMQ + outbox spięty z transakcją EF. Rejestruje też
@@ -38,6 +39,7 @@ builder.Services.AddErpBulkJobs<CatalogDbContext>(builder.Configuration);
 // Handlery komend jawnie w DI. FastEndpoints trzyma je we własnym rejestrze i tworzy
 // z root providera, co poza żądaniem HTTP uniemożliwia wstrzyknięcie czegokolwiek scoped
 // (DbContext, repozytoria). Rejestracja tutaj sprawia, że handler powstaje w scope'ie runnera.
+builder.Services.AddScoped<ICommandHandler<ProductCreateCommand, Guid>, ProductCreateCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ProductSetNameCommand, Guid>, ProductSetNameCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ProductSetPriceCommand, Guid>, ProductSetPriceCommandHandler>();
 builder.Services
@@ -45,6 +47,7 @@ builder.Services
 
 // Egzekutory per typ komendy — runner odnajduje je po nazwie typu zapisanej w zadaniu.
 // Każda nowa komenda masowa wymaga dopisania dwóch linijek: handlera wyżej i egzekutora tutaj.
+builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<ProductCreateCommand>>();
 builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<ProductSetNameCommand>>();
 builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<ProductSetPriceCommand>>();
 builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<ProductSetClassificationCommand>>();

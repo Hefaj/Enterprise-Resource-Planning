@@ -155,11 +155,26 @@
       "emptySelection": "No products selected — close this window and select products in the list.",
       "filterModeSuffix": "matching the current filters.",
       "filterModeHint": "All results are selected — the operation will cover every product matching the filters, including those on other pages."
+    },
+    "create": {
+      "label": "Add products",
+      "modalTitle": "New products",
+      "intro": "Each row is one new product. Add as many rows as you need — a single operation creates them all.",
+      "nameLabel": "Product name",
+      "namePlaceholder": "Enter a name",
+      "priceLabel": "Net price (USD)",
+      "pricePlaceholder": "0.00",
+      "addRow": "Add row",
+      "removeRow": "Remove row",
+      "submitButton": "Create products",
+      "cancelButton": "Cancel"
     }
   },
   "validations": {
     "priceRequired": "Price is required",
     "priceMin": "Price must be greater than zero",
-    "nameRequired": "Name is required"
+    "nameRequired": "Name is required",
+    "priceNegative": "Price cannot be negative",
+    "rowsRequired": "Add at least one complete row"
   }
 }

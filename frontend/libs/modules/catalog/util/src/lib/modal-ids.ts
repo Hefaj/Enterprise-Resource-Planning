@@ -16,3 +16,5 @@ export const SET_PRICE_MODAL_ID = '2cff8772bd344f1faa99b31e8c1bfccd';
 /** Modal: Seryjna edycja nazwy produktów */
 export const SET_NAME_MODAL_ID = 'fcd357f55a77f081759dc43ee69aa6a3';
 
+/** Modal: Seryjne zakładanie produktów */
+export const CREATE_PRODUCT_MODAL_ID = '2bf619067844e23725d4d5ff898ca0ba';

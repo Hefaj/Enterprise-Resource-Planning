@@ -21,11 +21,34 @@ public sealed class ProductBatchValidator
 {
     private readonly ProductMustExistRule _mustExist;
     private readonly ProductDuplicateRule _duplicate;
+    private readonly ProductUuidAvailableRule _uuidAvailable;
 
-    public ProductBatchValidator(ProductMustExistRule mustExist, ProductDuplicateRule duplicate)
+    public ProductBatchValidator(
+        ProductMustExistRule mustExist,
+        ProductDuplicateRule duplicate,
+        ProductUuidAvailableRule uuidAvailable)
     {
         _mustExist = mustExist;
         _duplicate = duplicate;
+        _uuidAvailable = uuidAvailable;
+    }
+
+    /// <summary>Pre-check masowego zakładania produktów: cel jest NOWYM agregatem, więc reguła
+    /// istnienia nie ma zastosowania — odwrotnie, identyfikator musi być wolny. Nazwę i cenę
+    /// waliduje agregat.</summary>
+    public async Task<ValidationTracker> ValidateCreateAsync(
+        IReadOnlyList<Guid> aggregateUuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(aggregateUuids);
+
+        var tracker = new ValidationTracker();
+
+        // Bez deduplikacji — powtórzony identyfikator jest tu naruszeniem, które reguła ma
+        // zobaczyć, a nie szumem do odsiania (inaczej niż przy regule istnienia niżej).
+        await _uuidAvailable.ExecuteAsync(aggregateUuids, uuid => uuid, tracker, cancellationToken).ConfigureAwait(false);
+
+        return tracker;
     }
 
     /// <summary>Pre-check masowej zmiany nazw. Nazwa nie zależy od stanu bazy, więc jedyną

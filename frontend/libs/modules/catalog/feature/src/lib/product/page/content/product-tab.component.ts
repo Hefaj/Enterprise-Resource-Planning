@@ -11,8 +11,8 @@ import {
   erpBuildBatchTargets,
   erpSelectionScopeCount
 } from '@erp/shared/ui';
-import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
-import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductVM, SearchProductRequest } from '@erp/catalog/data-access';
+import { CREATE_PRODUCT_MODAL_ID, SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
+import { BatchCommandOfProductCreateCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductVM, SearchProductRequest } from '@erp/catalog/data-access';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { CatalogProductTableComponent } from '../../components/tables/catalog-product-table/catalog-product-table.component';
 import { ProductStore } from '../product.store';
@@ -55,6 +55,10 @@ export class ProductTabComponent {
    * chowa akcje, na które backend i tak odpowie 403 (już egzekwowane w Fazie 3). */
   protected readonly canBulkEdit = computed(() => this.permissionStore.has(ERP_PERMISSIONS.Catalog.ProductBulk));
 
+  /** `catalog.product.update` — uprawnienie, którego wymaga endpoint seryjnego zakładania
+   * produktów (`product/batch-create`); bez niego modal kończyłby się 403 po wypełnieniu formularza. */
+  protected readonly canCreateProduct = computed(() => this.permissionStore.has(ERP_PERMISSIONS.Catalog.ProductUpdate));
+
   private readonly productTable = viewChild(CatalogProductTableComponent);
 
   protected readonly selectionCount = computed(() => erpSelectionScopeCount(this.store.scope()));
@@ -81,7 +85,8 @@ export class ProductTabComponent {
               .setIcon('@tui.plus')
               .setShortcut('Ctrl+N')
               .setAppearance('success')
-              .setFn(() => console.log('Dodaj nowy'))
+              .setHidden(computed(() => !this.canCreateProduct()))
+              .setFn(() => this.openCreateProductModal())
           )
           .addAction((a) =>
             a
@@ -257,6 +262,15 @@ export class ProductTabComponent {
 
   onSelectionChange(state: ErpSelectionState<ProductVM>): void {
     this.store.setSelection(state);
+  }
+
+  private openCreateProductModal(): void {
+    // Zakładanie nie ma celów — produkty dopiero powstaną, więc komenda idzie do modalu pusta,
+    // a krok wypełnia jej `commands[]` (po jednej pozycji na wiersz edytora).
+    this.modalService.open<BatchCommandOfProductCreateCommandAndSearchProductRequest>(
+      CREATE_PRODUCT_MODAL_ID,
+      {},
+    );
   }
 
   private openSetPriceModal(): void {

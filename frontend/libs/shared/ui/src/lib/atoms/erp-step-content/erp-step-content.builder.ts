@@ -2,7 +2,7 @@ import { Type, effect, computed, Signal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup, FormControl, ValidatorFn } from '@angular/forms';
 import { ErpBaseBuilder } from '../../base/erp-base-builder';
-import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs';
+import { ErpComponentSignalInputs, ErpFieldConfigInput } from '../../base/erp-component-signal-inputs';
 import { MaybeSignal, Translatable, unwrapSignal } from '../../base/erp-signal-utils';
 import { ErpStepContentConfig, ErpStepContentElement, ErpGridAreasConfig, ErpFormFieldType } from './erp-step-content.types';
 import { ErpTextComponent } from '../../atoms/erp-text/erp-text.component';
@@ -297,7 +297,7 @@ export class ErpStepContentBuilder extends ErpBaseBuilder<ErpStepContentConfig> 
   public addCustomFormField<TComp>(
     key: string,
     component: MaybeSignal<Type<TComp>>,
-    config: ErpComponentSignalInputs<TComp> | { build: () => ErpComponentSignalInputs<TComp> },
+    config: ErpFieldConfigInput<TComp> | { build: () => ErpFieldConfigInput<TComp> },
     options: ErpElementLayoutOptions & {
       defaultValue?: any;
       validators?: any[];

@@ -15,7 +15,7 @@ namespace Identity.Application.Roles;
 /// bez <see cref="ValidationChain{T}"/> — zależy nam na zebraniu WSZYSTKICH naruszeń elementu
 /// naraz.</para>
 /// </summary>
-public sealed class RoleBatchValidator
+public sealed class RoleBatchValidator : IBatchValidator
 {
     private readonly RoleMustExistRule _roleMustExist;
     private readonly ReferencedRoleMustExistRule _referencedRoleMustExist;

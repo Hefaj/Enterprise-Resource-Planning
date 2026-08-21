@@ -50,13 +50,10 @@ public static class CatalogInfrastructureExtensions
         services.AddScoped<CategoryClosureMaintainer>();
         services.AddScoped<CatalogSeeder>();
 
-        services.AddScoped<IProductQueries, ProductQueries>();
-        services.AddScoped<ICategoryQueries, CategoryQueries>();
-        services.AddScoped<IModelQueries, ModelQueries>();
-        services.AddScoped<IMultimediaQueries, MultimediaQueries>();
-        services.AddScoped<IWarrantyQueries, WarrantyQueries>();
-        services.AddScoped<ICodeTypeQueries, CodeTypeQueries>();
-        services.AddScoped<IAttributeQueries, AttributeQueries>();
+        // Repozytoria i zapytania (IProductQueries → ProductQueries itd.) rejestruje
+        // `AddErpModule` z Program.cs po konwencji nazewniczej — jedna klasa, zero linijek tutaj.
+        // Zostają wyłącznie wpisy, w których jest decyzja: cykl życia inny niż scoped, gotowa
+        // instancja, usługa hostowana.
 
         var seedOptions = configuration.GetSection(CatalogSeedOptions.SectionName).Get<CatalogSeedOptions>()
             ?? new CatalogSeedOptions();

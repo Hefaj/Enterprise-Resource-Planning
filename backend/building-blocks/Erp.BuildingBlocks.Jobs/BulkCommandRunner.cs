@@ -386,16 +386,21 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
             : string.Join("; ", groups.Select(g => $"{g.ErrorCode}: {g.Count}"));
     }
 
+    /// <summary>
+    /// Odnajduje egzekutora po nazwie typu komendy zapisanej w zadaniu.
+    ///
+    /// <para>Wyszukiwanie po KLUCZU, nie przez <c>GetServices&lt;IBulkCommandExecutor&gt;()</c>:
+    /// tamto konstruowało wszystkie zarejestrowane egzekutory — a przez nie wszystkie handlery
+    /// komend i ich repozytoria — tylko po to, żeby wybrać jeden i wyrzucić resztę. Przy ręcznych
+    /// rejestracjach było ich kilkanaście i dawało się to znieść; odkąd rejestruje je skanowanie
+    /// zestawu, rośnie to razem z liczbą komend modułu, a koszt płaci się przy KAŻDYM chunku.</para>
+    /// </summary>
     private static IBulkCommandExecutor ResolveExecutor(IServiceProvider services, string commandType)
-    {
-        var executor = services
-            .GetServices<IBulkCommandExecutor>()
-            .FirstOrDefault(e => string.Equals(e.CommandType, commandType, StringComparison.Ordinal));
-
-        return executor ?? throw new InvalidOperationException(
-            $"Brak zarejestrowanego {nameof(IBulkCommandExecutor)} dla komendy '{commandType}'. " +
-            "Zarejestruj go w kontenerze DI modułu wykonującego zadanie.");
-    }
+        => services.GetKeyedService<IBulkCommandExecutor>(commandType)
+           ?? throw new InvalidOperationException(
+               $"Brak zarejestrowanego {nameof(IBulkCommandExecutor)} dla komendy '{commandType}'. " +
+               "Egzekutory rejestruje AddErpModule ze skanu zestawów modułu — komenda musi " +
+               "implementować IAggregateCommand i ICommand<Guid> oraz mieć handler.");
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Information,
         Message = "BulkCommandRunner wystartował dla {Context} (chunk: {ChunkSize}).")]

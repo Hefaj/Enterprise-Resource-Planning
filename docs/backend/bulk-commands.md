@@ -150,6 +150,27 @@ normalną szynę komend — ten sam `IBulkCommandExecutor`, który resolwuje han
 dla `job.CommandType`, więc reguły domenowe są identyczne dla pojedynczej komendy i dla operacji
 masowej.
 
+### Skąd bierze się egzekutor
+
+Nie z ręcznej rejestracji. `AddErpModule` skanuje zestawy modułu i dla **każdej komendy, która ma
+handler** i spełnia ograniczenia `BulkCommandExecutor<TCommand>` (`IAggregateCommand`,
+`ICommand<Guid>`, konstruktor bezparametrowy), zakłada wpis **kluczowany nazwą typu komendy**:
+
+```csharp
+services.AddKeyedScoped(typeof(IBulkCommandExecutor), command.Name,
+    typeof(BulkCommandExecutor<>).MakeGenericType(command));
+```
+
+Klucz to dokładnie to, co `BatchEndpointBase` zapisuje w `job.command_type`
+(`typeof(TCommand).Name`), więc runner sięga po egzekutora jednym
+`GetKeyedService<IBulkCommandExecutor>(job.CommandType)`.
+
+Klucz zamiast dawnego `GetServices<IBulkCommandExecutor>().FirstOrDefault(...)` jest tu warunkiem
+opłacalności skanowania: tamten wariant konstruował **wszystkie** egzekutory — a przez nie
+wszystkie handlery i repozytoria modułu — przy każdym chunku, żeby wybrać jeden. Przy kilkunastu
+ręcznych wpisach było to niezauważalne; przy rejestracji automatycznej rosłoby razem z liczbą
+komend modułu.
+
 ### Jeden chunk = jedno wczytanie
 
 Przed pętlą runner woła `IBulkCommandExecutor.PreloadAsync` z uuidami całego chunka. Bez tego

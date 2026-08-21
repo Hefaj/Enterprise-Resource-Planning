@@ -136,8 +136,8 @@ public static class SalesInfrastructureExtensions
             connectionString, SalesDbContext.SchemaName,
             typeof(SalesDbContext).Assembly.GetName().Name));
 
-        services.AddScoped<ICustomerRepository, CustomerRepository>();
-        services.AddScoped<ICustomerQueries, CustomerQueries>();
+        // Repozytoria i zapytania rejestruje `AddErpModule` z Program.cs po konwencji
+        // I{Nazwa} → {Nazwa} — tutaj zostają wyłącznie wpisy niosące decyzję.
 
         // Migracja PRZED seedem — hosted service'y startują w kolejności rejestracji.
         services.AddHostedService<ErpDatabaseMigrator<SalesDbContext>>();
@@ -170,17 +170,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddErpApi("Sales");                              // FastEndpoints, CORS, Swagger, ProblemDetails
 builder.Services.AddSalesInfrastructure(builder.Configuration);   // Krok 3
 
+// Skan zestawów modułu: handlery komend, reguły i walidatory wsadowe, egzekutory zadań
+// masowych, repozytoria i zapytania. Ta jedna linijka zastępuje wpis per komenda i per reguła —
+// patrz ErpModuleRegistrationExtensions.
+builder.Services.AddErpModule(
+    typeof(SetCustomerNameCommand).Assembly,
+    typeof(SalesDbContext).Assembly);
+
 builder.AddErpMessaging<SalesDbContext>(typeof(SalesDbContext).Assembly);  // outbox + IUnitOfWork
 
-// Handler jawnie w DI: Wolverine potrzebuje statycznie rozwiązywalnego grafu zależności,
-// FastEndpoints tworzy handlery komend z root providera — dwie różne konwencje DI,
-// które trzeba pogodzić ręcznie dla każdej komendy.
-builder.Services.AddScoped<ICommandHandler<SetCustomerNameCommand, Guid>, SetCustomerNameCommandHandler>();
-
 // Silnik zadań masowych — pomiń, jeśli moduł na start nie ma bulk commands.
-builder.Services.AddScoped<IJobStore, JobStore<SalesDbContext>>();
+// Rejestruje też IJobStore; egzekutory przyszły ze skanu wyżej.
 builder.Services.AddErpBulkJobs<SalesDbContext>(builder.Configuration);
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<SetCustomerNameCommand>>();
 
 builder.Services.AddOpenApi();
 

@@ -40,8 +40,8 @@ public static class SalesInfrastructureExtensions
             SalesDbContext.SchemaName,
             typeof(SalesDbContext).Assembly.GetName().Name));
 
-        services.AddScoped<ICustomerRepository, CustomerRepository>();
-        services.AddScoped<ICustomerQueries, CustomerQueries>();
+        // Repozytoria i zapytania (ICustomerQueries → CustomerQueries) rejestruje `AddErpModule`
+        // z Program.cs po konwencji nazewniczej — patrz ErpModuleRegistrationExtensions.
         services.AddScoped<SalesSeeder>();
 
         var seedOptions = configuration.GetSection(SalesSeedOptions.SectionName).Get<SalesSeedOptions>()

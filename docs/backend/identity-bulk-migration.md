@@ -67,7 +67,7 @@ Bez zmiany zachowania istniejących endpointów. Osobny, samodzielnie wdrażalny
 | 0.1 | [`IdentityDbContext.cs`](../../backend/modules/Identity/Identity.Infrastructure/Persistence/IdentityDbContext.cs) — `: ErpDbContext, IJobDbContext`, `DbSet<Job> Jobs => Set<Job>()`, `DbSet<JobItem> JobItems => Set<JobItem>()`; w `OnModelCreating` dołożyć `ApplyConfiguration(new JobConfiguration())` i `new JobItemConfiguration()` — konfiguracje żyją w BuildingBlocks, więc `ApplyConfigurationsFromAssembly` ich nie złapie. Skasować komentarz „Bez `IJobDbContext`" |
 | 0.2 | Migracja `AddBulkJobs` → tabele `identity.job` / `identity.job_item`. Stosuje się sama przez `ErpDatabaseMigrator<IdentityDbContext>` przy starcie |
 | 0.3 | [`IdentityInfrastructureExtensions.cs`](../../backend/modules/Identity/Identity.Infrastructure/IdentityInfrastructureExtensions.cs) — rejestracja `IPersistenceExceptionTranslator` (mapa niżej) i poprawka komentarza klasy |
-| 0.4 | [`Program.cs`](../../backend/modules/Identity/Identity.Api/Program.cs) — `AddScoped<IJobStore, JobStore<IdentityDbContext>>()` + `AddErpBulkJobs<IdentityDbContext>(builder.Configuration)` |
+| 0.4 | [`Program.cs`](../../backend/modules/Identity/Identity.Api/Program.cs) — `AddErpBulkJobs<IdentityDbContext>(builder.Configuration)` (rejestruje też `IJobStore`) |
 | 0.5 | `Identity.Api/Jobs/JobGroup.cs` + `JobControlEndpoints.cs` — `JobCancelEndpointBase<IdentityDbContext>` / `JobRetryFailedEndpointBase<IdentityDbContext>`, trasy `cancel` / `retry-failed`. Wzór: [`Catalog.Api/Jobs/JobControlEndpoints.cs`](../../backend/modules/Catalog/Catalog.Api/Jobs/JobControlEndpoints.cs) |
 | 0.6 | [`Permissions.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/Permissions.cs) — `Identity.JobControl = "identity.job.control"` w klasie i w `Permissions.All`. `PermissionCatalogReconciler` dopisze kod do bazy przy najbliższym starcie |
 
@@ -201,7 +201,9 @@ w Catalogu, gdzie podwojenie utrwalił już wygenerowany klient.
 
 `ForceLogoutUserRequest` (uuid w ścieżce) znika — uuid wchodzi w `TargetUuids`/`TargetFilter`.
 
-W `Program.cs`: pięć rejestracji `AddScoped<IBulkCommandExecutor, BulkCommandExecutor<TCommand>>()`.
+W `Program.cs`: **nic**. Egzekutory zakłada `AddErpModule` ze skanu zestawów modułu — komenda
+z handlerem, `IAggregateCommand` i konstruktorem bezparametrowym dostaje go automatycznie
+(patrz [`bulk-commands.md`](./bulk-commands.md#skąd-bierze-się-egzekutor)).
 
 **Uwaga do `force-logout`.** Handler woła Keycloak Admin API i `IPermissionProvider.InvalidateAsync`
 — to skutki **poza bazą**, których rollback chunka nie cofnie. Odwołanie sesji jest idempotentne,
@@ -231,7 +233,7 @@ trybów kontraktu.
 ale komentarz klasy musi powiedzieć wprost, że przypadek **intra-chunk** łapie
 `RoleGraphCycleRule`, a nie on.
 
-Pięć kolejnych `IBulkCommandExecutor` w `Program.cs` (razem 10).
+Pięć kolejnych egzekutorów — również bez ani jednej linijki w `Program.cs`, ze skanu (razem 10).
 
 ---
 

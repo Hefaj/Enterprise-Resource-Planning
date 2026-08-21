@@ -51,15 +51,9 @@ public static class IdentityInfrastructureExtensions
         // Osobno od DbContext — patrz uzasadnienie w IdentityConnectionStringProvider.
         services.AddSingleton(new IdentityConnectionStringProvider(connectionString));
 
-        services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IUserAccountRepository, UserAccountRepository>();
-        services.AddScoped<IRoleQueries, RoleQueries>();
-        services.AddScoped<IUserAccountQueries, UserAccountQueries>();
-        services.AddScoped<IPermissionCatalogQueries, PermissionCatalogQueries>();
-        services.AddScoped<IGrantAuditWriter, GrantAuditWriter>();
-        services.AddScoped<IGrantAuditQueries, GrantAuditQueries>();
-        services.AddScoped<IUserProvisioningService, Provisioning.UserProvisioningService>();
-
+        // Repozytoria, zapytania i pozostałe implementacje nazwane po swoim interfejsie
+        // (IRoleQueries → RoleQueries, IGrantAuditWriter → GrantAuditWriter…) rejestruje
+        // `AddErpModule` z Program.cs po konwencji — patrz ErpModuleRegistrationExtensions.
         services.AddScoped<RoleSeeder>();
 
         // Kolejność ma znaczenie: hosted service'y startują sekwencyjnie w tej kolejności —

@@ -216,8 +216,13 @@ protected override Task<ValidationTracker> ValidateTargetsAsync(
 Skutek uboczny, ale nie drugorzędny: pre-check da się przetestować bez podnoszenia endpointu
 FastEndpoints przez `Factory.Create<>` — patrz `backend/tests/Catalog.Tests`.
 
-Rejestracja w DI (`Program.cs`): `ProductMustExistRule`, `ProductDuplicateRule`
-i `ProductBatchValidator`, wszystkie `AddScoped`.
+Rejestracja w DI: **żadna ręczna**. `AddErpModule` (wołane raz w `Program.cs`) wyłapuje reguły
+po implementowanym `IBatchRule<T>`, a kompozytory po znaczniku `IBatchValidator` — obie grupy
+rejestruje jako `Scoped` pod ich własnym typem. Nowa reguła nie dopisuje linijki nigdzie:
+wystarczy, że implementuje interfejs i leży w skanowanym zestawie modułu.
+
+Kompozytor **musi** dziedziczyć `IBatchValidator` — inaczej wypadnie z kontenera i wyjdzie to
+dopiero przy pierwszym żądaniu do endpointu masowego. Sufiks w nazwie nic tu nie znaczy.
 
 ### Reguła duplikatu — kolizje wewnątrz wsadu
 

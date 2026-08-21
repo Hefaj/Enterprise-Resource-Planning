@@ -16,7 +16,7 @@ namespace Identity.Application.Users;
 /// wołamy je po kolei na tej samej pełnej liście, bez <see cref="ValidationChain{T}"/> —
 /// zależy nam na zebraniu WSZYSTKICH naruszeń elementu naraz.</para>
 /// </summary>
-public sealed class UserBatchValidator
+public sealed class UserBatchValidator : IBatchValidator
 {
     private readonly UserMustExistRule _userMustExist;
     private readonly ReferencedRoleMustExistRule _referencedRoleMustExist;

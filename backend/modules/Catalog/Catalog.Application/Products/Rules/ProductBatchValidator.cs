@@ -17,7 +17,7 @@ namespace Catalog.Application.Products;
 /// zależy nam na zebraniu WSZYSTKICH naruszeń elementu naraz. Łańcuch ma sens tam, gdzie
 /// kolejny krok zakłada, że poprzedni przeszedł.</para>
 /// </summary>
-public sealed class ProductBatchValidator
+public sealed class ProductBatchValidator : IBatchValidator
 {
     private readonly ProductMustExistRule _mustExist;
     private readonly ProductDuplicateRule _duplicate;

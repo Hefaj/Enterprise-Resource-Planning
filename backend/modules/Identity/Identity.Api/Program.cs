@@ -1,12 +1,8 @@
 using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Api.Auth;
-using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
-using FastEndpoints;
 using Identity.Api.Auth;
-using Identity.Application.Permissions;
-using Identity.Application.Roles;
 using Identity.Application.Users;
 using Identity.Infrastructure;
 using Identity.Infrastructure.Jobs;
@@ -28,6 +24,13 @@ builder.Services.AddErpKeycloakAdmin(builder.Configuration);
 // Baza, zapytania, uzgodnienie katalogu uprawnień, rola administrator, mapa sygnatur SignalR.
 builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
+// Skan zestawów modułu: 10 handlerów komend, 10 egzekutorów zadań masowych, 6 reguł wsadowych,
+// 2 walidatory, repozytoria i zapytania — wszystko, co wcześniej stało tu wypisane z ręki.
+// Nowa komenda albo reguła nie dotyka już tego pliku.
+builder.Services.AddErpModule(
+    typeof(UserAssignRoleCommand).Assembly,
+    typeof(IdentityDbContext).Assembly);
+
 // Nadpisuje rejestrację z AddErpApi (HttpPermissionProvider) — Identity czyta swoją własną bazę
 // wprost zamiast pytać samego siebie przez sieć. Musi być PO AddErpApi/AddIdentityInfrastructure:
 // w Microsoft.Extensions.DependencyInjection wygrywa OSTATNIA rejestracja danego interfejsu.
@@ -40,48 +43,7 @@ builder.Services.AddHostedService<ExpiredGrantCleanupService>();
 builder.AddErpMessaging<IdentityDbContext>(typeof(IdentityDbContext).Assembly);
 
 // Silnik zadań masowych: trwałe zadania w schemacie `identity`, wznawiane po restarcie.
-builder.Services.AddScoped<IJobStore, JobStore<IdentityDbContext>>();
 builder.Services.AddErpBulkJobs<IdentityDbContext>(builder.Configuration);
-
-// Reguły wsadowe i ich kompozycja (Faza 1+3 przejścia opisanego w
-// docs/backend/identity-bulk-migration.md). Endpointy operacji masowych wołają wyłącznie
-// walidator — to on wie, jakie reguły obowiązują dla której operacji
-// (BatchEndpointBase.ValidateTargetsAsync). ReferencedRoleMustExistRule i
-// PermissionCodeMustExistRule są współdzielone między user/* i role/* — patrz komentarz klas.
-builder.Services.AddScoped<UserMustExistRule>();
-builder.Services.AddScoped<RoleMustExistRule>();
-builder.Services.AddScoped<ReferencedRoleMustExistRule>();
-builder.Services.AddScoped<PermissionCodeMustExistRule>();
-builder.Services.AddScoped<RoleCodeUniqueRule>();
-builder.Services.AddScoped<RoleGraphCycleRule>();
-builder.Services.AddScoped<UserBatchValidator>();
-builder.Services.AddScoped<RoleBatchValidator>();
-
-// Handlery komend jawnie w DI — patrz uzasadnienie w Catalog.Api/Program.cs. Od Fazy 3 WSZYSTKIE
-// komendy Identity idą wyłącznie przez runnera, który zapisuje raz na chunk — żaden handler
-// w tym module nie woła IUnitOfWork.SaveChangesAsync sam.
-builder.Services.AddScoped<ICommandHandler<RoleCreateCommand, Guid>, RoleCreateCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<RoleAddPermissionCommand, Guid>, RoleAddPermissionCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<RoleRemovePermissionCommand, Guid>, RoleRemovePermissionCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<RoleAddMemberCommand, Guid>, RoleAddMemberCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<RoleRemoveMemberCommand, Guid>, RoleRemoveMemberCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UserAssignRoleCommand, Guid>, UserAssignRoleCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UserRevokeRoleCommand, Guid>, UserRevokeRoleCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UserGrantPermissionCommand, Guid>, UserGrantPermissionCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UserRevokePermissionCommand, Guid>, UserRevokePermissionCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UserForceLogoutCommand, Guid>, UserForceLogoutCommandHandler>();
-
-// Egzekutory per typ komendy — runner odnajduje je po nazwie typu zapisanej w zadaniu.
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserAssignRoleCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserRevokeRoleCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserGrantPermissionCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserRevokePermissionCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<UserForceLogoutCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<RoleCreateCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<RoleAddPermissionCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<RoleRemovePermissionCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<RoleAddMemberCommand>>();
-builder.Services.AddScoped<IBulkCommandExecutor, BulkCommandExecutor<RoleRemoveMemberCommand>>();
 
 builder.Services.AddOpenApi();
 

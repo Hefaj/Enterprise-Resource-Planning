@@ -25,6 +25,10 @@ public static class ErpBulkJobsExtensions
         services.Configure<BulkJobOptions>(configuration.GetSection(BulkJobOptions.SectionName));
         services.AddHostedService<BulkCommandRunner<TContext>>();
 
+        // Elementy zadania wstawia binarne COPY — patrz IJobItemBulkWriter. Scoped, bo pisze
+        // po połączeniu tego samego DbContextu, na którym zakładany jest nagłówek zadania.
+        services.AddScoped<IJobItemBulkWriter, PostgresJobItemBulkWriter<TContext>>();
+
         return services;
     }
 }

@@ -26,4 +26,22 @@ public interface IBulkCommandExecutor
     /// <param name="commandJson">Serializowana komenda-szablon.</param>
     /// <param name="cancellationToken">Token anulowania.</param>
     Task ExecuteAsync(Guid aggregateUuid, string? commandJson, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Wczytuje z góry agregaty całego chunka, zanim runner zacznie wykonywać jego elementy —
+    /// jedno zapytanie zamiast jednego na element (N+1).
+    ///
+    /// <para>Domyślnie nie robi nic, więc egzekutory i moduły, które tego nie potrzebują,
+    /// nie zauważają zmiany. Faktyczną robotę wykonuje handler komendy, jeśli implementuje
+    /// <see cref="Application.Abstractions.IBulkPreloadingHandler"/> — to on wie, ile agregatu
+    /// wymaga jego metoda domenowa.</para>
+    ///
+    /// <para><b>Optymalizacja, nie warunek poprawności.</b> <see cref="ExecuteAsync"/> musi
+    /// działać tak samo, gdy tej metody nikt nie wywołał — tak dzieje się przy pojedynczej
+    /// komendzie z endpointu HTTP i przy elemencie powtarzanym w trybie izolacji.</para>
+    /// </summary>
+    /// <param name="aggregateUuids">Agregaty chunka, odduplikowane przez runnera.</param>
+    /// <param name="cancellationToken">Token anulowania.</param>
+    Task PreloadAsync(IReadOnlyCollection<Guid> aggregateUuids, CancellationToken cancellationToken)
+        => Task.CompletedTask;
 }

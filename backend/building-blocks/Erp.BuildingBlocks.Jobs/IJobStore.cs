@@ -43,17 +43,20 @@ public sealed class JobStore<TContext> : IJobStore
     private readonly TContext _dbContext;
     private readonly IIntegrationEventPublisher _publisher;
     private readonly IExecutionContext _executionContext;
+    private readonly IJobItemBulkWriter _itemWriter;
     private readonly IClock _clock;
 
     public JobStore(
         TContext dbContext,
         IIntegrationEventPublisher publisher,
         IExecutionContext executionContext,
+        IJobItemBulkWriter itemWriter,
         IClock clock)
     {
         _dbContext = dbContext;
         _publisher = publisher;
         _executionContext = executionContext;
+        _itemWriter = itemWriter;
         _clock = clock;
     }
 
@@ -82,7 +85,32 @@ public sealed class JobStore<TContext> : IJobStore
             expireOn: null,
             preValidatedFailures: preValidatedFailures);
 
-        _dbContext.Jobs.Add(job);
+        // ── Krok 1: sam nagłówek, w stanie Draft ────────────────────────────────────────────
+        //
+        // `Entry(...).State = Added` zamiast `Jobs.Add(job)` jest tu istotne: `Add` przeszedłby
+        // po grafie i wciągnął do ChangeTrackera wszystkie elementy, czyli dokładnie te wiersze,
+        // które zaraz wstawi COPY. Przy 50 tys. celów oznaczałoby to podwójny zapis.
+        _dbContext.Entry(job).State = EntityState.Added;
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        // ── Krok 2: elementy przez binarne COPY ─────────────────────────────────────────────
+        await _itemWriter.WriteAsync(job.Items, cancellationToken).ConfigureAwait(false);
+
+        // ── Krok 3: przyjęcie zadania i koperta — ATOMOWO ───────────────────────────────────
+        //
+        // Dopiero to przełączenie czyni zadanie faktem: runner bierze wyłącznie Pending/Running,
+        // więc do tej chwili szkic jest dla niego niewidzialny. Zapis idzie przez publisher,
+        // żeby zmiana statusu i koperta zdarzenia trafiły do JEDNEJ transakcji — inaczej dałoby
+        // się doprowadzić do zadania, które runner podejmie, a o którym Notification nigdy się
+        // nie dowie (albo odwrotnie).
+        //
+        // Dlaczego nie wszystko w jednej transakcji: outbox Wolverine'a zapisuje kopertę dopiero
+        // razem z jej wypchnięciem (`SaveChangesAndFlushMessagesAsync`), więc objęcie COPY tą
+        // samą transakcją przesunęłoby wypchnięcie PRZED commit — a wtedy nieudany commit
+        // zostawiłby Notification z zadaniem widmo. Rozbicie na dwa kroki zamienia ten scenariusz
+        // na nieszkodliwy: awaria przed krokiem 3 zostawia szkic, którego nikt nie widzi
+        // i nikt nie wykona.
+        job.MarkAccepted();
 
         await _publisher.PublishAsync(
             new JobAccepted(
@@ -98,9 +126,6 @@ public sealed class JobStore<TContext> : IJobStore
                 now),
             cancellationToken).ConfigureAwait(false);
 
-        // Zapis idzie przez publisher, żeby wiersze zadania i koperta zdarzenia trafiły
-        // do JEDNEJ transakcji. Gdyby to rozdzielić, dałoby się doprowadzić do zadania
-        // istniejącego w bazie, o którym Notification nigdy się nie dowie (albo odwrotnie).
         await _publisher.SaveChangesAndFlushAsync(cancellationToken).ConfigureAwait(false);
 
         return job.Uuid;

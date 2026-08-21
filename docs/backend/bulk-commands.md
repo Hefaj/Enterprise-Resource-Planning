@@ -40,9 +40,15 @@ job_item(uuid pk, job_uuid fk, aggregate_uuid, ordinal, status,
 
 `job.uuid` **jest** `jobUuid`/`trackingID` z kontraktu HTTP — osobnej kolumny do śledzenia nie ma.
 
-`job.status` ∈ `Pending | Running | Completed | CompletedWithErrors | Failed | Cancelled`.
+`job.status` ∈ `Pending | Running | Completed | CompletedWithErrors | Failed | Cancelled | Draft`.
 Sukces częściowy ma **własny** status (`CompletedWithErrors`) — użytkownik musi odróżnić
 „zrobione” od „zrobione, ale 1200 pozycji odpadło”, nie tylko `true`/`false`.
+
+`Draft` jest stanem **wewnętrznym, przejściowym i niewidocznym na zewnątrz** — zadanie ma go
+wyłącznie w trakcie zakładania, między wstawieniem nagłówka a przyjęciem (sekcja 3). Runner
+podejmuje tylko `Pending`/`Running`, klient nie dostaje wtedy jeszcze `jobUuid`, a Notification
+nie zna zadania, bo koperta `JobAccepted` jeszcze nie wyszła. Wartość dopisana na **końcu**
+wyliczenia `JobStatus`, żeby nie ruszyć liczb, którymi zapisane są pozostałe statusy.
 
 `job_item.command_json` bywa `null` — patrz tryby w sekcji 3.
 
@@ -75,16 +81,52 @@ public sealed class ProductSetPriceMultipleCommandEndpoint
 }
 ```
 
-Endpoint zapisuje `job` + `job_item`-y i publikuje `JobAccepted` w **jednej transakcji**
-(przez `IJobStore.CreateAsync` → `IIntegrationEventPublisher`), po czym natychmiast zwraca
+Endpoint zakłada zadanie przez `IJobStore.CreateAsync` i natychmiast zwraca
 `BatchResult { JobUuid }` — bez czekania na wykonanie.
 
-> **Znane uproszczenie względem pierwotnego projektu.** Tryb szablon+filtr miał strumieniować
-> `SELECT uuid` i wstawiać `job_item`-y porcjami, żeby nie materializować całego zbioru w pamięci
-> przy dziesiątkach tysięcy trafień. Dzisiejsza implementacja (`GetMatchingUuidsAsync` →
-> `List<Guid>` → `Job.Create` buduje całą kolekcję `JobItem` w pamięci przed jednym `Add`)
-> materializuje wszystko. Przy setkach tysięcy celów to warte rewizji; przy dzisiejszej skali
-> (≤ dziesiątki tysięcy) nieistotne.
+### Zakładanie zadania idzie w trzech krokach
+
+Zapis `job_item`-ów jest najliczniejszą rzeczą, jaką robi żądanie HTTP — i przez EF Core
+kosztował **~3,6 s na 50 tys. celów**, zanim klient w ogóle zobaczył `jobUuid`. Binarne `COPY`
+Postgresa robi to samo w ułamku tego czasu, ale nie da się go wykonać w tej samej transakcji
+co koperta outboxu: Wolverine zapisuje kopertę dopiero razem z jej wypchnięciem
+(`SaveChangesAndFlushMessagesAsync`), więc objęcie `COPY` wspólną transakcją przesunęłoby
+wysyłkę **przed** commit — a nieudany commit zostawiłby Notification z zadaniem widmo.
+
+Zamiast poświęcać atomowość, zakładanie zostało rozbite:
+
+1. **Nagłówek** `job` w stanie `Draft` — zwykły `SaveChanges`, bez koperty i bez zdarzeń.
+   (`Entry(job).State = Added`, nie `Jobs.Add(job)` — to drugie przeszłoby po grafie i wciągnęło
+   do ChangeTrackera wszystkie elementy, czyli dokładnie te wiersze, które zaraz wstawi `COPY`.)
+2. **Elementy** przez [`IJobItemBulkWriter`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/IJobItemBulkWriter.cs)
+   — binarne `COPY` po tym samym połączeniu.
+3. **Przyjęcie**: `job.MarkAccepted()` (`Draft` → `Pending`) razem z publikacją `JobAccepted`,
+   w **jednej transakcji**, przez `IIntegrationEventPublisher`.
+
+Gwarancja widoczna z zewnątrz zostaje **dokładnie ta sama**: zadanie staje się faktem w jednym
+atomowym kroku, a klient dostaje `jobUuid` dopiero, gdy ten krok się powiedzie. Awaria przed
+krokiem 3 zostawia szkic, którego nie widzi ani runner, ani klient, ani Notification — kosztem
+jest osierocony wiersz, a nie zadanie wykonane po cichu w połowie.
+
+Zmierzone (Postgres z `docker-compose`, wsad z 50% elementów niosących własny payload `jsonb`):
+
+| celów | przed (EF `AddRange`) | po (`COPY`) |
+|---|---|---|
+| 1 000 | 532 ms | 25 ms |
+| 10 000 | 1 082 ms | 151 ms |
+| 50 000 | 3 600 ms | 625 ms |
+
+`PostgresJobItemBulkWriter` bierze nazwy tabeli i kolumn **z modelu EF**, nie z literałów —
+inaczej zmiana mapowania rozjechałaby się z nim po cichu. Kolumna, której writer nie zna
+(bo ktoś dopisał pole do `JobItem`), przełącza go na ścieżkę EF: wolniej, ale bez ryzyka
+wstawienia niekompletnego wiersza.
+
+> **Co nadal jest materializowane.** Krok 1 wciąż buduje w pamięci komplet obiektów `JobItem`
+> (`Job.Create`), a `GetMatchingUuidsAsync` całą listę uuidów — przy 50 tys. celów to ~33 MB
+> sterty na żądanie. Strumieniowanie `SELECT uuid` → `COPY` bez pośredniej listy jest możliwe,
+> ale wymagałoby oderwania pre-checku wsadowego od pełnego zbioru celów (reguły z
+> [`batch-validation.md`](./batch-validation.md) z definicji widzą cały wsad naraz).
+> Przy setkach tysięcy celów warte rewizji; przy dzisiejszej skali nieistotne.
 
 ---
 
@@ -107,6 +149,44 @@ Brak pracy → `Task.Delay(IdlePollingInterval)` (domyślnie 2 s) i pętla od no
 normalną szynę komend — ten sam `IBulkCommandExecutor`, który resolwuje handler zarejestrowany
 dla `job.CommandType`, więc reguły domenowe są identyczne dla pojedynczej komendy i dla operacji
 masowej.
+
+### Jeden chunk = jedno wczytanie
+
+Przed pętlą runner woła `IBulkCommandExecutor.PreloadAsync` z uuidami całego chunka. Bez tego
+handler każdego elementu pobierałby swój agregat osobnym `FindAsync` — a przy agregacie
+z kolekcjami jeszcze **po jednym zapytaniu na kolekcję**, bo globalne `SplitQuery` rozbija każdy
+`Include` na osobny SELECT. Dla produktu to sześć zapytań na element.
+
+Ile agregatu wczytać, deklaruje **handler**, implementując
+[`IBulkPreloadingHandler`](../../backend/building-blocks/Erp.BuildingBlocks.Application/Abstractions/IBulkPreloadingHandler.cs)
+— bo to on wie, czego potrzebuje jego metoda domenowa. Handler bez tego interfejsu działa jak
+dotąd (`PreloadAsync` jest wtedy no-opem), więc moduł, który wczytywania wsadowego nie chce,
+nie zmienia niczego.
+
+W Catalogu zakres wyraża `ProductLoadScope`: `SetName`/`SetPrice` dotykają wyłącznie kolumn
+tabeli `product`, więc biorą `Root`; `SetClassification` podmienia komplet kategorii, więc
+wymaga `Full`. Repozytorium serwuje agregat z pamięci kontekstu **tylko wtedy, gdy wczytanie
+z góry objęło co najmniej żądany zakres** — przy zbyt wąskim schodzi do pełnego zapytania.
+To nie jest ostrożność na wyrost: produkt wczytany jako sam korzeń, oddany metodzie
+`SetClassification`, zobaczyłby puste `_categories` i dopisał nowe powiązania obok starych
+zamiast je zastąpić.
+
+Zmierzone na chunku 500 produktów (wczytanie + `SetName` + `SaveChanges`):
+
+| | poleceń SQL | czas |
+|---|---|---|
+| przed | 3 001 | 1 668 ms |
+| po (`Root`) | 2 | 84 ms |
+
+W przeliczeniu na zadanie o 50 tys. produktów: ~300 tys. poleceń SQL i ~167 s wobec ~200 poleceń
+i ~8 s. Przy `Full` (zmiana klasyfikacji) chunk kosztuje 6 zapytań zamiast 3 000.
+
+Poboczny efekt, też istotny: przy zakresie `Root` w ChangeTrackerze siedzi 500 encji zamiast
+8 576, więc `DetectChanges` — wołany przy każdym `SaveChanges` — spada ze 105 ms do 5 ms.
+
+**Wczytanie z góry jest wyłącznie optymalizacją.** `ExecuteAsync` musi działać tak samo, gdy go
+nie było: tak dzieje się przy pojedynczej komendzie z endpointu HTTP i przy elemencie
+powtarzanym w trybie izolacji po awarii zapisu.
 
 ### Widoczność postępu a rozmiar chunka
 

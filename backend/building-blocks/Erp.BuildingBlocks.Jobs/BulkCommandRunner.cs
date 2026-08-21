@@ -19,6 +19,14 @@ namespace Erp.BuildingBlocks.Jobs;
 /// zadania i zdarzenia w outboxie zapisują się razem. Nie da się więc doprowadzić do stanu,
 /// w którym produkt jest zmieniony, ale zadanie o tym nie wie (albo odwrotnie).</para>
 ///
+/// <para><b>Jeden chunk to też jedno wczytanie.</b> Przed pętlą runner woła
+/// <see cref="IBulkCommandExecutor.PreloadAsync"/>, które wciąga agregaty całego chunka do
+/// jednostki pracy jednym zapytaniem. Bez tego handler każdego elementu pobierałby swój agregat
+/// osobno — a przy agregacie z kolekcjami po jednym zapytaniu NA KOLEKCJĘ, bo globalne
+/// <c>SplitQuery</c> rozbija każdy <c>Include</c> na osobny SELECT. Na Catalogu zmierzono
+/// 3000 poleceń SQL na chunk 500 produktów; po wczytaniu wsadowym jest ich 6, a dla komend
+/// dotykających wyłącznie korzenia (zmiana nazwy, zmiana ceny) — jedno.</para>
+///
 /// <para><b>Częściowe niepowodzenie.</b> Naruszenie reguły biznesowej dla jednego elementu
 /// nie przerywa chunka — element dostaje status i kod błędu, reszta idzie dalej. Opiera się to
 /// na konwencji obowiązującej w całym modelu domenowym: <i>metoda agregatu waliduje przed
@@ -207,6 +215,16 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
             .OrderBy(i => i.Ordinal)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        // Agregaty całego chunka wczytujemy JEDNYM zapytaniem, zanim ruszy pętla — inaczej
+        // każdy element pobiera swój osobno, a przy agregacie z kolekcjami jeszcze po jednym
+        // zapytaniu na kolekcję (globalne SplitQuery). Odduplikowanie jest konieczne: tryb
+        // `Commands` dopuszcza kilka różnych komend dla tego samego agregatu.
+        //
+        // Egzekutor, którego handler nie umie wczytywać wsadowo, nie robi tu nic — pętla niżej
+        // działa wtedy dokładnie jak przedtem.
+        var aggregateUuids = items.Select(i => i.AggregateUuid).Distinct().ToList();
+        await executor.PreloadAsync(aggregateUuids, cancellationToken).ConfigureAwait(false);
 
         var now = clock.UtcNow;
         job.MarkStarted(now);

@@ -1,3 +1,4 @@
+using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Jobs;
 using FastEndpoints;
 
@@ -33,6 +34,19 @@ public sealed class BulkCommandExecutor<TCommand> : IBulkCommandExecutor
 
     /// <inheritdoc />
     public string CommandType => typeof(TCommand).Name;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Rzutowanie zamiast osobnej rejestracji w DI: „czy tę komendę da się wczytać wsadowo”
+    /// jest cechą handlera, nie kolejnym wpisem, który moduł musiałby pamiętać (i prędzej czy
+    /// później rozjechać z rzeczywistością). Handler, który interfejsu nie implementuje,
+    /// zachowuje dotychczasowe zachowanie — agregaty wczytają się po jednym w
+    /// <see cref="ExecuteAsync"/>.
+    /// </remarks>
+    public Task PreloadAsync(IReadOnlyCollection<Guid> aggregateUuids, CancellationToken cancellationToken)
+        => _handler is IBulkPreloadingHandler preloading
+            ? preloading.PreloadAsync(aggregateUuids, cancellationToken)
+            : Task.CompletedTask;
 
     /// <inheritdoc />
     public async Task ExecuteAsync(Guid aggregateUuid, string? commandJson, CancellationToken cancellationToken)

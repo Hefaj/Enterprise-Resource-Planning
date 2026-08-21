@@ -97,15 +97,26 @@ Handler jest cienki **z założenia**: wczytaj agregat, zawołaj metodę domenow
 ```csharp
 public override async Task<Guid> ExecuteAsync(ProductSetPriceCommand command, CancellationToken ct)
 {
-    var product = await _repository.FindAsync(command.Uuid, ct)
+    var product = await _repository.FindAsync(command.Uuid, ProductLoadScope.Root, ct)
         ?? throw new AggregateNotFoundException(nameof(Product), command.Uuid);
 
     product.SetPrice(command.Price, _clock.UtcNow);      // reguła jest TUTAJ, nie w handlerze
 
-    await _unitOfWork.SaveChangesAsync(ct);
     return product.Uuid;
 }
 ```
+
+Dwie rzeczy, które łatwo przeoczyć w tym przykładzie:
+
+- **Handler NIE woła `SaveChangesAsync`.** Granicę transakcji wyznacza wywołujący:
+  `BulkCommandRunner` zatwierdza cały chunk jednym commitem, co jest jedynym sposobem, żeby
+  operacja na 50 tys. produktów nie oznaczała 50 tys. transakcji. Endpoint pojedynczej komendy
+  musi po dyspozycji sam wywołać `IUnitOfWork.SaveChangesAsync()`.
+- **`ProductLoadScope.Root`** mówi, ile agregatu wczytać — `SetPrice` dotyka jednej kolumny,
+  więc pełny produkt z pięcioma kolekcjami byłby pięcioma zbędnymi zapytaniami. Handler
+  deklaruje ten sam zakres w `PreloadAsync` (z `IBulkPreloadingHandler`), dzięki czemu cały
+  chunk wczytuje się jednym zapytaniem — patrz
+  [`bulk-commands.md`](./bulk-commands.md#jeden-chunk--jedno-wczytanie).
 
 **Handler nigdy nie ustawia właściwości agregatu z zewnątrz.** Gdyby walidacja ceny żyła w handlerze,
 istniałaby w dwóch miejscach (handler pojedynczy + ścieżka masowa) i rozeszłaby się przy pierwszej zmianie.

@@ -20,6 +20,27 @@ public enum JobStatus
 
     /// <summary>Anulowane przez użytkownika.</summary>
     Cancelled = 5,
+
+    /// <summary>
+    /// Zadanie w trakcie zakładania — nagłówek już jest w bazie, ale jego elementy mogą jeszcze
+    /// nie być kompletne. <b>Stan wewnętrzny właściciela zadania, nigdy nie opuszcza modułu.</b>
+    ///
+    /// <para>Istnieje, bo elementy zadania wstawia binarne <c>COPY</c>, którego nie da się
+    /// wykonać w tej samej transakcji co koperta <c>JobAccepted</c> (outbox Wolverine'a zapisuje
+    /// kopertę dopiero razem z jej wypchnięciem). Zamiast poświęcać atomowość, zakładanie zostało
+    /// rozbite na dwa kroki: najpierw nagłówek w tym stanie plus elementy, potem JEDNO atomowe
+    /// przełączenie na <see cref="Pending"/> razem z kopertą.</para>
+    ///
+    /// <para>Runner podejmuje wyłącznie <see cref="Pending"/> i <see cref="Running"/>, więc
+    /// zadanie w tym stanie jest dla niego niewidzialne; klient nie dostaje <c>jobUuid</c>, dopóki
+    /// przełączenie się nie powiedzie. Awaria w trakcie zakładania zostawia więc osierocony wiersz
+    /// — nikt go nie zobaczy i nikt go nie wykona, ale nikt go też dziś nie sprząta
+    /// (patrz <c>docs/backend/bulk-commands.md</c> §3).</para>
+    ///
+    /// <para>Wartość dopisana na KOŃCU wyliczenia — kolejność pozostałych jest częścią kontraktu
+    /// zapisanego w <c>job.status</c> jako liczba.</para>
+    /// </summary>
+    Draft = 6,
 }
 
 /// <summary>

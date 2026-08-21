@@ -20,7 +20,7 @@ namespace Catalog.Application.Products;
 /// odpowiedź od razu, a nie po przetworzeniu zadania.
 /// </summary>
 public sealed class ProductSetClassificationCommandHandler
-    : CommandHandler<ProductSetClassificationCommand, Guid>
+    : CommandHandler<ProductSetClassificationCommand, Guid>, IBulkPreloadingHandler
 {
     private readonly IProductRepository _repository;
     private readonly IClock _clock;
@@ -31,13 +31,23 @@ public sealed class ProductSetClassificationCommandHandler
         _clock = clock;
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// Pełny zakres, bez wyjątku: <see cref="Product.SetClassification"/> podmienia KOMPLET
+    /// kategorii, więc na niewczytanej kolekcji zobaczyłaby pustkę i dopisała nowe powiązania
+    /// obok starych zamiast je zastąpić. To jedyna komenda produktu, dla której zawężenie
+    /// wczytania byłoby cichą utratą danych — patrz <see cref="ProductLoadScope.Root"/>.
+    /// </remarks>
+    public Task PreloadAsync(IReadOnlyCollection<Guid> aggregateUuids, CancellationToken cancellationToken)
+        => _repository.PreloadAsync(aggregateUuids, ProductLoadScope.Full, cancellationToken);
+
     public override async Task<Guid> ExecuteAsync(
         ProductSetClassificationCommand command,
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var product = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+        var product = await _repository.FindAsync(command.Uuid, ProductLoadScope.Full, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Product), command.Uuid);
 
         product.SetClassification(command.ModelUuid, command.CategoryUuids, _clock.UtcNow);

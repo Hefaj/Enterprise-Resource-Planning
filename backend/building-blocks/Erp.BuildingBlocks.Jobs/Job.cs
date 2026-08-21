@@ -46,7 +46,10 @@ public class Job : AggregateRoot
         UiMetadata = uiMetadata;
         CreatedAt = createdAt;
         ExpireOn = expireOn;
-        Status = JobStatus.Pending;
+
+        // Zadanie rodzi się jako szkic i staje się widoczne dopiero przez MarkAccepted —
+        // patrz uzasadnienie tam i przy JobStatus.Draft.
+        Status = JobStatus.Draft;
     }
 
     /// <summary>Nazwa typu komendy wykonywanej dla każdego elementu — po niej runner
@@ -162,6 +165,30 @@ public class Job : AggregateRoot
         job.TotalCount = job._items.Count;
         job.FailedCount = job._items.Count(i => i.Status == JobItemStatus.Failed);
         return job;
+    }
+
+    /// <summary>
+    /// Kończy zakładanie zadania: ze szkicu (<see cref="JobStatus.Draft"/>) robi zadanie
+    /// oczekujące, które runner może podjąć.
+    ///
+    /// <para>To przełączenie jest JEDYNYM momentem, w którym zadanie staje się faktem — musi
+    /// zostać zatwierdzone w tej samej transakcji co koperta <see cref="JobAccepted"/>. Dopóki
+    /// się nie powiedzie, nie istnieje ani dla runnera (jego zapytanie bierze tylko
+    /// <see cref="JobStatus.Pending"/> i <see cref="JobStatus.Running"/>), ani dla klienta
+    /// (nie dostał jeszcze <c>jobUuid</c>), ani dla Notification (koperta nie wyszła).</para>
+    /// </summary>
+    /// <exception cref="DomainException">Gdy zadanie nie jest już szkicem — podwójne przyjęcie
+    /// oznaczałoby drugą kopertę <see cref="JobAccepted"/> dla tego samego zadania.</exception>
+    public void MarkAccepted()
+    {
+        if (Status != JobStatus.Draft)
+        {
+            throw new DomainException(
+                "job_already_accepted",
+                "Zadanie zostało już przyjęte — tylko szkic można przyjąć.");
+        }
+
+        Status = JobStatus.Pending;
     }
 
     /// <summary>Oznacza rozpoczęcie przetwarzania (przy pierwszym chunku).</summary>

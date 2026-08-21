@@ -6,22 +6,22 @@ import {
   UserOrchestrator,
   BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest,
 } from '@erp/identity/data-access';
-import { GrantPermissionMetadata } from './grant-permission.definition';
+import { UserGrantPermissionMetadata } from './user-grant-permission.definition';
 import { USERS_KEYS } from '../../translation';
 
 /** Krok modalu seryjnego nadania uprawnienia — picker kodu uprawnienia + powód, wspólne dla
  * WSZYSTKICH zaznaczonych użytkowników (tryb `templateCommand`). Wzorzec identyczny z
- * `AssignRoleStepComponent`. */
+ * `UserAssignRoleStepComponent`. */
 @Component({
-  selector: 'erp-identity-grant-permission-step',
+  selector: 'erp-identity-user-grant-permission-step',
   standalone: true,
   imports: [ErpStepContentComponent],
   template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GrantPermissionStepComponent extends ErpBatchStepBase<
+export class UserGrantPermissionStepComponent extends ErpBatchStepBase<
   BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest,
-  GrantPermissionMetadata
+  UserGrantPermissionMetadata
 > {
   private readonly _userOrchestrator: UserOrchestrator;
 
@@ -31,7 +31,7 @@ export class GrantPermissionStepComponent extends ErpBatchStepBase<
   protected readonly formContent: ErpStepContentConfig;
 
   public constructor() {
-    // Patrz komentarz w `AssignRoleStepComponent` — `super()` jeszcze nie wystartował, więc
+    // Patrz komentarz w `UserAssignRoleStepComponent` — `super()` jeszcze nie wystartował, więc
     // żaden odczyt `this.pole` (nawet samo pole klasy) nie jest tu legalny; stąd zmienne lokalne
     // zamiast `this._permissionCatalog`/`this._permissions`.
     const permissionCatalog = inject(PermissionCatalogOrchestrator);

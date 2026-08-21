@@ -7,10 +7,33 @@ Modal nie jest zwykłym komponentem otwieranym bezpośrednio przez inny komponen
 | Parametr | Wymagany | Opis |
 |---|---|---|
 | `MODULE_NAME` | ✅ | Nazwa modułu w **kebab-case** (np. `catalog`, `sales`) |
-| `MODAL_NAME` | ✅ | Nazwa modalu w **kebab-case** (np. `set-price`, `add-discount`) |
-| `MODAL_ID` | ✅ | Stała identyfikująca modal (np. `SET_PRICE_MODAL_ID`), zdefiniowana w `@erp/MODULE_NAME/util` |
+| `MODAL_NAME` | ✅ | Nazwa modalu w **kebab-case** — patrz [konwencja nazewnicza](#konwencja-nazewnicza-modal-nazywa-się-jak-komenda) (np. `product-set-price` dla `ProductSetPriceCommand`) |
+| `MODAL_ID` | ✅ | Stała identyfikująca modal (np. `PRODUCT_SET_PRICE_MODAL_ID`), zdefiniowana w `@erp/MODULE_NAME/util` |
 | `COMMAND_TYPE` | ✅ | Klasa/interfejs komendy przekazywanej do zapisu (np. `BatchCommandOfProductSetPriceCommand`) |
 | `METADATA_TYPE` | ❌ | Opcjonalny interfejs metadanych (domyślnie puste `{}`) |
+
+### Konwencja nazewnicza: modal nazywa się jak komenda
+
+`MODAL_NAME` to **nazwa typu komendy z klienta NSwag, bez sufiksu `Command`**, w kebab-case.
+Jedno źródło prawdy: nazwa klasy komendy w C# (`ProductSetPriceCommand`) → typ w kliencie →
+nazwa folderu, plików, klas i stałej `MODAL_ID`.
+
+| Komenda (backend / klient) | Folder | Klasy | `MODAL_ID` |
+|---|---|---|---|
+| `ProductSetPriceCommand` | `product-set-price/` | `ProductSetPriceModalDefinition`, `ProductSetPriceStepComponent`, `ProductSetPriceMetadata` | `PRODUCT_SET_PRICE_MODAL_ID` |
+| `UserAssignRoleCommand` | `user-assign-role/` | `UserAssignRoleModalDefinition`, … | `USER_ASSIGN_ROLE_MODAL_ID` |
+| `RoleCreateCommand` | `role-create/` | `RoleCreateModalDefinition`, … | `ROLE_CREATE_MODAL_ID` |
+
+Nazwa **nie skraca się** do samej akcji (`set-price/`, `create-role/`): prefiks agregatu jest
+częścią nazwy komendy i to on odróżnia `RoleAddPermissionCommand` od `UserGrantPermissionCommand`.
+
+Nazwa **nie niesie** też słowa `multiple`/`batch`, mimo że endpoint nazywa się
+`ProductSetPriceMultipleCommandEndpoint`, a metoda klienta `productSetPriceMultipleCommand`.
+Operacja masowa jest domyślnym trybem każdej komendy (pojedyncza edycja to ten sam
+`BatchCommand` z jednym uuidem w `targetUuids` — patrz [operacje masowe](../backend/bulk-commands.md#3-endpoint--trzy-tryby-jednego-kontraktu)),
+więc wyróżnik w nazwie nic by nie odróżniał.
+
+Selektor kroku dokłada z przodu prefiks modułu: `erp-catalog-product-set-price-step`.
 
 ---
 
@@ -21,7 +44,7 @@ Moduł `sales` może potrzebować otworzyć modal zdefiniowany w module `catalog
 Rozwiązanie: każdy moduł rejestruje swoje modale pod globalnie unikalnym `MODAL_ID` w warstwie `contract` (jedyna warstwa eksponowana przez Native Federation). Wywołujący zna tylko `MODAL_ID` i typ komendy:
 
 ```typescript
-modalService.open(SET_PRICE_MODAL_ID, command);
+modalService.open(PRODUCT_SET_PRICE_MODAL_ID, command);
 ```
 
 `ErpModalService` w runtime mapuje `MODAL_ID → modulePrefix` (zbudowane podczas `STARTUP.ts`) i dopiero wtedy leniwie importuje `@erp/MODULE_NAME/feature`, żeby pobrać właściwą definicję.
@@ -63,6 +86,10 @@ modal/MODAL_NAME/
 ├── MODAL_NAME.step.ts
 └── index.ts
 ```
+
+Klasy w środku noszą tę samą nazwę w PascalCase: `MODAL_NAMEModalDefinition`,
+`MODAL_NAMEStepComponent`, `MODAL_NAMEMetadata` — np. `product-set-price/` →
+`ProductSetPriceModalDefinition`.
 
 ### 5.1 `MODAL_NAME.definition.ts`
 
@@ -191,9 +218,9 @@ export class PascalCaseModalNameStepComponent extends ErpBatchStepBase<COMMAND_T
 
 Dla modalu **nie-masowego** (jeden cel, bez `ErpBatchStepBase`) pomiń `addBatchTargetsSummary` —
 zostaje sam `.addFormField(...)`/`.addComponent(...)` w `ErpStepContentBuilder`. Zobacz
-gotowe przykłady w repo: `SetNameStepComponent` (`libs/modules/catalog/feature/src/lib/product/modal/set-name/`)
-dla modalu masowego z ładowaniem nazw z orkiestratora, `AssignRoleStepComponent`
-(`libs/modules/identity/feature/src/lib/users/modal/assign-role/`) dla wielu pól formularza.
+gotowe przykłady w repo: `ProductSetNameStepComponent` (`libs/modules/catalog/feature/src/lib/product/modal/product-set-name/`)
+dla modalu masowego z ładowaniem nazw z orkiestratora, `UserAssignRoleStepComponent`
+(`libs/modules/identity/feature/src/lib/users/modal/user-assign-role/`) dla wielu pól formularza.
 
 ### 5.3 `index.ts` (katalog modalu)
 

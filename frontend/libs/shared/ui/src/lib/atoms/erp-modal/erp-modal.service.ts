@@ -24,7 +24,7 @@ import { unwrapSignal } from '../../base/erp-signal-utils';
  * private modalService = inject(ErpModalService);
  *
  * // Otwieranie (z automatycznym lazy loadingiem modułu jeśli to konieczne):
- * await this.modalService.open(SET_PRICE_MODAL_ID, {
+ * await this.modalService.open(PRODUCT_SET_PRICE_MODAL_ID, {
  *   products: [...],
  *   price: null
  * });

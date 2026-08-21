@@ -16,7 +16,7 @@ import {
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { RoleOrchestrator, RoleVM } from '@erp/identity/data-access';
-import { ADD_ROLE_PERMISSION_MODAL_ID } from '@erp/identity/util';
+import { ROLE_ADD_PERMISSION_MODAL_ID } from '@erp/identity/util';
 import { ROLES_KEYS } from '../../../../translation';
 import { RolePermissionRow, RolePermissionsTabStore } from './role-permissions-tab.store';
 
@@ -155,7 +155,7 @@ export class RolePermissionsTabComponent {
   /** Modal dodania uprawnienia adresuje CAŁY zasięg zaznaczonych ról. */
   private _openAddModal(): void {
     const targets = this._tabStore.batchTargets();
-    this._modalService.open(ADD_ROLE_PERMISSION_MODAL_ID, {
+    this._modalService.open(ROLE_ADD_PERMISSION_MODAL_ID, {
       targetUuids: targets.targetUuids,
       targetFilter: targets.targetFilter,
       targetCount: this._tabStore.scopeCount(),

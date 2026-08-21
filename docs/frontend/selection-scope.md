@@ -71,7 +71,7 @@ Odwrotna zasada obowiązuje w trybie `query`: tam cele rozwiązuje backend przy 
 
 ```typescript
 this.modalService.open<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ErpBatchMetadata>(
-  SET_NAME_MODAL_ID,
+  PRODUCT_SET_NAME_MODAL_ID,
   erpBuildBatchTargets<SearchProductRequest>(this.store.scope()),
   { targetCount: this.selectionCount() },
 );

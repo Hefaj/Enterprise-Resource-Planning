@@ -1,4 +1,4 @@
 // Modal definitions & IDs
-export { SetPriceModalDefinition, SET_PRICE_MODAL_ID, type SetPriceMetadata } from './set-price';
-export { SetNameModalDefinition, SET_NAME_MODAL_ID, type SetNameMetadata } from './set-name';
+export { ProductSetPriceModalDefinition, PRODUCT_SET_PRICE_MODAL_ID, type ProductSetPriceMetadata } from './product-set-price';
+export { ProductSetNameModalDefinition, PRODUCT_SET_NAME_MODAL_ID, type ProductSetNameMetadata } from './product-set-name';
 

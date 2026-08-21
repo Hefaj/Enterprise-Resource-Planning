@@ -443,7 +443,7 @@ renderuje odznaki wszystkich celów → zadanie kończy się w ~1-2 s (jeden chu
 + 40 `Catalog.Tests` + 31 `Identity.Tests`).
 
 **Napotkany i naprawiony w trakcie problem — `ReferenceError: Must call super constructor`.**
-Cztery kroki modali (`AssignRoleStepComponent` i trzy analogiczne) rzucały ten błąd przy próbie
+Cztery kroki modali (`UserAssignRoleStepComponent` i trzy analogiczne) rzucały ten błąd przy próbie
 otwarcia — `.setItems(this._roles)` czytało pole klasy synchronicznie PRZED wywołaniem `super()`
 we własnym konstruktorze, co JS zabrania dla klas pochodnych. Błąd był w kodzie od Fazy 4/5
 (nikt wcześniej nie otworzył tych modali na żywo w przeglądarce — TypeScript go nie łapie, bo to

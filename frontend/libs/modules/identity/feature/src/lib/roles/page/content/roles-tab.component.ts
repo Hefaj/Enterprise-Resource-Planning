@@ -12,7 +12,7 @@ import {
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest, BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest } from '@erp/identity/data-access';
-import { CREATE_ROLE_MODAL_ID, ADD_ROLE_PERMISSION_MODAL_ID, ADD_ROLE_MEMBER_MODAL_ID } from '@erp/identity/util';
+import { ROLE_CREATE_MODAL_ID, ROLE_ADD_PERMISSION_MODAL_ID, ROLE_ADD_MEMBER_MODAL_ID } from '@erp/identity/util';
 
 import { RolesStore } from '../roles.store';
 import { IdentityRolesTableComponent } from '../../components/tables/identity-roles-table/identity-roles-table.component';
@@ -73,7 +73,7 @@ export class RolesTabComponent {
               .setAppearance('success')
               .setHidden(computed(() => !this.canManage()))
               .setFn(() => {
-                this._modalService.open(CREATE_ROLE_MODAL_ID, {});
+                this._modalService.open(ROLE_CREATE_MODAL_ID, {});
               }),
           ),
       )
@@ -113,7 +113,7 @@ export class RolesTabComponent {
 
   private _openAddPermissionModal(): void {
     this._modalService.open<BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest, ErpBatchMetadata>(
-      ADD_ROLE_PERMISSION_MODAL_ID,
+      ROLE_ADD_PERMISSION_MODAL_ID,
       erpBuildBatchTargets(this.store.scope()),
       { targetCount: this.selectionCount() },
     );
@@ -121,7 +121,7 @@ export class RolesTabComponent {
 
   private _openAddMemberModal(): void {
     this._modalService.open<BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest, ErpBatchMetadata>(
-      ADD_ROLE_MEMBER_MODAL_ID,
+      ROLE_ADD_MEMBER_MODAL_ID,
       erpBuildBatchTargets(this.store.scope()),
       { targetCount: this.selectionCount() },
     );

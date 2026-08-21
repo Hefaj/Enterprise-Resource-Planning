@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { ErpModalBuilder, ErpModalDefinition, ErpModalConfig, ErpBatchMetadata } from '@erp/shared/ui';
-import { SetNameStepComponent } from './set-name.step';
+import { ProductSetNameStepComponent } from './product-set-name.step';
 import { CatalogProductOrchestrator, BatchCommandOfProductSetNameCommandAndSearchProductRequest } from '@erp/catalog/data-access';
 import { PRODUCT_KEYS } from '../../translation';
-import { SET_NAME_MODAL_ID } from '@erp/catalog/util';
+import { PRODUCT_SET_NAME_MODAL_ID } from '@erp/catalog/util';
 
 /**
  * Modal nie potrzebuje niczego ponad standardowe metadane operacji masowej
  * (`targetCount` — ile pozycji obejmie operacja w trybie filtra).
  */
-export type SetNameMetadata = ErpBatchMetadata;
+export type ProductSetNameMetadata = ErpBatchMetadata;
 
 /**
  * Modal seryjnej zmiany nazwy produktów.
@@ -21,14 +21,14 @@ export type SetNameMetadata = ErpBatchMetadata;
  * kontrakt HTTP jest zamrożony dla klienta NSwag.
  */
 @Injectable({ providedIn: 'root' })
-export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
-  public readonly id = SET_NAME_MODAL_ID;
+export class ProductSetNameModalDefinition implements ErpModalDefinition<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ProductSetNameMetadata> {
+  public readonly id = PRODUCT_SET_NAME_MODAL_ID;
   private readonly _orchestrator = inject(CatalogProductOrchestrator);
 
   public build(
     command: BatchCommandOfProductSetNameCommandAndSearchProductRequest,
-    metadata?: SetNameMetadata,
-  ): ErpModalConfig<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
+    metadata?: ProductSetNameMetadata,
+  ): ErpModalConfig<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ProductSetNameMetadata> {
     const targetUuids = command.targetUuids ?? [];
 
     // Nazwy/SKU zaznaczonych produktów pokazuje krok modalu — dociągamy je do cache
@@ -38,13 +38,13 @@ export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOf
       this._orchestrator.loadAsync(targetUuids, { includeCodeTypes: true }).catch(err => console.error(err));
     }
 
-    return ErpModalBuilder.modal<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata>(b => b
+    return ErpModalBuilder.modal<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ProductSetNameMetadata>(b => b
       .setTitle([PRODUCT_KEYS.base.tabs.products, PRODUCT_KEYS.commands.setName.modalTitle])
       // Pusta lista identyfikatorów nie jest wysyłana — w trybie filtra to `targetFilter`
       // wyznacza cele, a `targetUuids: []` byłoby tylko szumem w żądaniu.
       .setCommand({ ...command, targetUuids: targetUuids.length > 0 ? targetUuids : undefined })
       .setMetadata(metadata)
-      .addStep(PRODUCT_KEYS.commands.setName.label, SetNameStepComponent)
+      .addStep(PRODUCT_KEYS.commands.setName.label, ProductSetNameStepComponent)
       .setSaveLabel(PRODUCT_KEYS.commands.setName.submitButton)
       .setOnSave(async (cmd) => {
         // Nazwa jest trymowana po stronie agregatu (`Product.SetName`) — robimy to samo tutaj,
@@ -55,7 +55,7 @@ export class SetNameModalDefinition implements ErpModalDefinition<BatchCommandOf
           targetFilter: cmd.targetFilter,
         };
 
-        return await this._orchestrator.setNameMultiple(payload, SET_NAME_MODAL_ID);
+        return await this._orchestrator.setNameMultiple(payload, PRODUCT_SET_NAME_MODAL_ID);
       })
     );
   }

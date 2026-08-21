@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, CatalogProductOrchestrator } from '@erp/catalog/data-access';
-import { SetNameMetadata } from './set-name.definition';
+import { ProductSetNameMetadata } from './product-set-name.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
   ErpStepContentComponent,
@@ -35,13 +35,13 @@ function nameNotBlankValidator(control: AbstractControl): ValidationErrors | nul
  * formularz i wstępne wypełnienie pola przy jednym zaznaczonym produkcie.
  */
 @Component({
-  selector: 'erp-catalog-set-name-step',
+  selector: 'erp-catalog-product-set-name-step',
   standalone: true,
   imports: [ErpStepContentComponent],
   template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetNameStepComponent extends ErpBatchStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest, SetNameMetadata> {
+export class ProductSetNameStepComponent extends ErpBatchStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ProductSetNameMetadata> {
   /** Deklaratywna konfiguracja treści stepu zbudowana przez builder. */
   protected readonly formContent: ErpStepContentConfig;
 

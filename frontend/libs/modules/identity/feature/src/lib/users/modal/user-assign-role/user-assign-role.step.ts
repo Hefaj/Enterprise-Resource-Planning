@@ -8,7 +8,7 @@ import {
   ErpBatchTargetItem,
 } from '@erp/shared/ui';
 import { RoleOrchestrator, UserOrchestrator, BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest } from '@erp/identity/data-access';
-import { AssignRoleMetadata } from './assign-role.definition';
+import { UserAssignRoleMetadata } from './user-assign-role.definition';
 import { USERS_KEYS } from '../../translation';
 
 /** Puste pole (opcjonalne) albo dokładnie `RRRR-MM-DD` — bez tego zły wpis dałby `Invalid Date`
@@ -25,13 +25,13 @@ function optionalIsoDateValidator(control: AbstractControl): ValidationErrors | 
  * `templateCommand` kontraktu `BatchCommand`). Tryb celów i blokadę zapisu bez celów obsługuje
  * `ErpBatchStepBase`. */
 @Component({
-  selector: 'erp-identity-assign-role-step',
+  selector: 'erp-identity-user-assign-role-step',
   standalone: true,
   imports: [ErpStepContentComponent],
   template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AssignRoleStepComponent extends ErpBatchStepBase<BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, AssignRoleMetadata> {
+export class UserAssignRoleStepComponent extends ErpBatchStepBase<BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, UserAssignRoleMetadata> {
   private readonly _userOrchestrator: UserOrchestrator;
 
   /** Zaznaczeni użytkownicy zmapowani na kontrakt podsumowania (`ErpBatchTargetItem`). */

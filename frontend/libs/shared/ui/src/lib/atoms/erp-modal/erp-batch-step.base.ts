@@ -14,7 +14,7 @@ import { ErpBatchMetadata, ErpBatchTargets } from '../erp-table/erp-selection.ut
  * Krok potomny dopisuje już tylko własne pola szablonu (`templateCommand`).
  *
  * ```ts
- * export class SetNameStepComponent extends ErpBatchStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest> {
+ * export class ProductSetNameStepComponent extends ErpBatchStepBase<BatchCommandOfProductSetNameCommandAndSearchProductRequest> {
  *   public constructor() {
  *     const config = ErpStepContentBuilder.create(b => b.addFormField('name', 'text', ...));
  *     super(config);

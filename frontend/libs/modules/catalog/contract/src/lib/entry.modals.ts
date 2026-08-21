@@ -1,4 +1,4 @@
-import { SET_PRICE_MODAL_ID, SET_NAME_MODAL_ID } from '@erp/catalog/util';
+import { PRODUCT_SET_PRICE_MODAL_ID, PRODUCT_SET_NAME_MODAL_ID } from '@erp/catalog/util';
 
 /**
  * Identyfikatory modali tego modułu.
@@ -8,8 +8,8 @@ import { SET_PRICE_MODAL_ID, SET_NAME_MODAL_ID } from '@erp/catalog/util';
  * w ErpModalService, aby wiedzieć skąd załadować modal na żądanie.
  */
 export const remoteModalIds: string[] = [
-  SET_PRICE_MODAL_ID,
-  SET_NAME_MODAL_ID,
+  PRODUCT_SET_PRICE_MODAL_ID,
+  PRODUCT_SET_NAME_MODAL_ID,
 ];
 
 /**
@@ -24,8 +24,8 @@ export const remoteModalIds: string[] = [
  * @returns Tablica tokenów DI (klas ModalDefinition) do zarejestrowania przez inject()
  */
 export async function registerModals(): Promise<any[]> {
-  const { SetPriceModalDefinition, SetNameModalDefinition } = await import('@erp/catalog/feature');
-  return [SetPriceModalDefinition, SetNameModalDefinition];
+  const { ProductSetPriceModalDefinition, ProductSetNameModalDefinition } = await import('@erp/catalog/feature');
+  return [ProductSetPriceModalDefinition, ProductSetNameModalDefinition];
 }
 
 export async function getModalProviders(): Promise<any[]> {

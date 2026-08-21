@@ -19,7 +19,7 @@ import {
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
-import { ASSIGN_USER_ROLE_MODAL_ID } from '@erp/identity/util';
+import { USER_ASSIGN_ROLE_MODAL_ID } from '@erp/identity/util';
 import { USERS_KEYS } from '../../../../translation';
 import { UserRoleGrantRow, UserRolesTabStore } from './user-roles-tab.store';
 
@@ -206,7 +206,7 @@ export class UserRolesTabComponent {
   /** Modal nadania roli adresuje CAŁY zasięg — nie tylko widoczną próbkę. */
   private _openAssignModal(): void {
     const targets = this._tabStore.batchTargets();
-    this._modalService.open(ASSIGN_USER_ROLE_MODAL_ID, {
+    this._modalService.open(USER_ASSIGN_ROLE_MODAL_ID, {
       targetUuids: targets.targetUuids,
       targetFilter: targets.targetFilter,
       targetCount: this._tabStore.scopeCount(),

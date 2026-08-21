@@ -2,20 +2,20 @@ import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@a
 import { Validators } from '@angular/forms';
 import { ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig, ErpBatchStepBase, ErpBatchTargetItem } from '@erp/shared/ui';
 import { RoleOrchestrator, BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest } from '@erp/identity/data-access';
-import { AddMemberMetadata } from './add-member.definition';
+import { RoleAddMemberMetadata } from './role-add-member.definition';
 import { ROLES_KEYS } from '../../translation';
 
 /** Krok modalu seryjnego dołączenia roli składowej — picker roli, wspólny dla WSZYSTKICH
  * zaznaczonych ról-kontenerów (tryb `templateCommand`). `excludeUuids` filtruje picker tylko
  * w trybie jednego celu (patrz definicja). */
 @Component({
-  selector: 'erp-identity-add-member-step',
+  selector: 'erp-identity-role-add-member-step',
   standalone: true,
   imports: [ErpStepContentComponent],
   template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddMemberStepComponent extends ErpBatchStepBase<BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest, AddMemberMetadata> {
+export class RoleAddMemberStepComponent extends ErpBatchStepBase<BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest, RoleAddMemberMetadata> {
   private readonly _roleOrchestrator: RoleOrchestrator;
 
   /** Zaznaczone role zmapowane na kontrakt podsumowania (`ErpBatchTargetItem`). */
@@ -24,7 +24,7 @@ export class AddMemberStepComponent extends ErpBatchStepBase<BatchCommandOfRoleA
   protected readonly formContent: ErpStepContentConfig;
 
   public constructor() {
-    // Patrz komentarz w `AssignRoleStepComponent` — zmienna lokalna zamiast `this.pole`, bo
+    // Patrz komentarz w `UserAssignRoleStepComponent` — zmienna lokalna zamiast `this.pole`, bo
     // `super()` jeszcze nie wystartował.
     const roleOrchestrator = inject(RoleOrchestrator);
     const availableRoles = computed(() => {

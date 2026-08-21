@@ -12,7 +12,7 @@ import {
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, SearchUserAccountRequest, BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest } from '@erp/identity/data-access';
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
-import { ASSIGN_USER_ROLE_MODAL_ID, GRANT_USER_PERMISSION_MODAL_ID } from '@erp/identity/util';
+import { USER_ASSIGN_ROLE_MODAL_ID, USER_GRANT_PERMISSION_MODAL_ID } from '@erp/identity/util';
 
 import { UsersStore } from '../users.store';
 import { IdentityUsersTableComponent } from '../../components/tables/identity-users-table/identity-users-table.component';
@@ -108,7 +108,7 @@ export class UsersTabComponent {
 
   private _openAssignRoleModal(): void {
     this._modalService.open<BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
-      ASSIGN_USER_ROLE_MODAL_ID,
+      USER_ASSIGN_ROLE_MODAL_ID,
       erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()),
       { targetCount: this.selectionCount() },
     );
@@ -116,7 +116,7 @@ export class UsersTabComponent {
 
   private _openGrantPermissionModal(): void {
     this._modalService.open<BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
-      GRANT_USER_PERMISSION_MODAL_ID,
+      USER_GRANT_PERMISSION_MODAL_ID,
       erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()),
       { targetCount: this.selectionCount() },
     );

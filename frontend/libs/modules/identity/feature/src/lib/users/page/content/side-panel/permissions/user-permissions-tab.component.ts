@@ -19,7 +19,7 @@ import {
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
-import { GRANT_USER_PERMISSION_MODAL_ID } from '@erp/identity/util';
+import { USER_GRANT_PERMISSION_MODAL_ID } from '@erp/identity/util';
 import { USERS_KEYS } from '../../../../translation';
 import { UserPermissionGrantRow, UserPermissionsTabStore } from './user-permissions-tab.store';
 
@@ -198,7 +198,7 @@ export class UserPermissionsTabComponent {
   /** Modal nadania uprawnienia adresuje CAŁY zasięg — nie tylko widoczną próbkę. */
   private _openGrantModal(): void {
     const targets = this._tabStore.batchTargets();
-    this._modalService.open(GRANT_USER_PERMISSION_MODAL_ID, {
+    this._modalService.open(USER_GRANT_PERMISSION_MODAL_ID, {
       targetUuids: targets.targetUuids,
       targetFilter: targets.targetFilter,
       targetCount: this._tabStore.scopeCount(),

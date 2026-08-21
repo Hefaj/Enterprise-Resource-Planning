@@ -2,17 +2,17 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig, ErpModalStepBase } from '@erp/shared/ui';
 import { RoleCreateCommand } from '@erp/identity/data-access';
-import { CreateRoleMetadata } from './create-role.definition';
+import { RoleCreateMetadata } from './role-create.definition';
 import { ROLES_KEYS } from '../../translation';
 
 @Component({
-  selector: 'erp-identity-create-role-step',
+  selector: 'erp-identity-role-create-step',
   standalone: true,
   imports: [ErpStepContentComponent],
   template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateRoleStepComponent extends ErpModalStepBase<RoleCreateCommand, CreateRoleMetadata> {
+export class RoleCreateStepComponent extends ErpModalStepBase<RoleCreateCommand, RoleCreateMetadata> {
   protected readonly formContent: ErpStepContentConfig;
 
   public constructor() {

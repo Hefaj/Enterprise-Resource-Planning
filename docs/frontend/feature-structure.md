@@ -60,7 +60,7 @@ Nazwa pliku i selektor niosą prefiks modułu, bo te komponenty wychodzą poza m
 
 ## 3. `modal/` — modale edycyjne agregatu
 
-Jeden podkatalog na modal (`set-name/`, `set-price/`), w nim `*.definition.ts` + `*.step.ts` + `index.ts`, a na wierzchu `modal/index.ts` re-eksportujący wszystkie modale agregatu — to on jest re-eksportowany z barrela biblioteki i to jego widzi `entry.modals.ts` kontraktu. Szczegóły zawartości: [modals.md](./modals.md).
+Jeden podkatalog na modal, nazwany jak komenda, którą modal wysyła — typ z klienta NSwag bez sufiksu `Command`, w kebab-case (`ProductSetNameCommand` → `product-set-name/`, patrz [modals.md](./modals.md#konwencja-nazewnicza-modal-nazywa-się-jak-komenda)). W środku `*.definition.ts` + `*.step.ts` + `index.ts`, a na wierzchu `modal/index.ts` re-eksportujący wszystkie modale agregatu — to on jest re-eksportowany z barrela biblioteki i to jego widzi `entry.modals.ts` kontraktu. Szczegóły zawartości: [modals.md](./modals.md).
 
 Modale są tu, a nie w `page/`, celowo: otwiera je toolbar strony, ale ładowane są leniwie przez `ErpModalService` i mogą być otwarte z dowolnego miejsca aplikacji — nie są częścią drzewa komponentów strony.
 

@@ -16,7 +16,7 @@ import {
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { RoleOrchestrator, RoleVM } from '@erp/identity/data-access';
-import { ADD_ROLE_MEMBER_MODAL_ID } from '@erp/identity/util';
+import { ROLE_ADD_MEMBER_MODAL_ID } from '@erp/identity/util';
 import { ROLES_KEYS } from '../../../../translation';
 import { RoleMemberRow, RoleMembersTabStore } from './role-members-tab.store';
 
@@ -170,7 +170,7 @@ export class RoleMembersTabComponent {
       ...this.rows().map((r) => r.member.uuid),
     ];
     this._modalService.open(
-      ADD_ROLE_MEMBER_MODAL_ID,
+      ROLE_ADD_MEMBER_MODAL_ID,
       {
         targetUuids: targets.targetUuids,
         targetFilter: targets.targetFilter,

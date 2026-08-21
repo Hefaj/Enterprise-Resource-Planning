@@ -11,7 +11,7 @@ import {
   erpBuildBatchTargets,
   erpSelectionScopeCount
 } from '@erp/shared/ui';
-import { SET_NAME_MODAL_ID, SET_PRICE_MODAL_ID } from '@erp/catalog/util';
+import { PRODUCT_SET_NAME_MODAL_ID, PRODUCT_SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 import { BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductVM, SearchProductRequest } from '@erp/catalog/data-access';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { CatalogProductTableComponent } from '../../components/tables/catalog-product-table/catalog-product-table.component';
@@ -261,7 +261,7 @@ export class ProductTabComponent {
 
   private openSetPriceModal(): void {
     this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ErpBatchMetadata>(
-      SET_PRICE_MODAL_ID,
+      PRODUCT_SET_PRICE_MODAL_ID,
       erpBuildBatchTargets<SearchProductRequest>(this.store.scope()),
       { targetCount: this.selectionCount() },
     );
@@ -279,7 +279,7 @@ export class ProductTabComponent {
     // `targetCount` idzie metadanymi (nie komendą) — kontrakt HTTP jest zamrożony,
     // a modal potrzebuje tylko liczby do pokazania „ile pozycji obejmie operacja".
     this.modalService.open<BatchCommandOfProductSetNameCommandAndSearchProductRequest, ErpBatchMetadata>(
-      SET_NAME_MODAL_ID,
+      PRODUCT_SET_NAME_MODAL_ID,
       erpBuildBatchTargets<SearchProductRequest>(this.store.scope()),
       { targetCount: this.selectionCount() },
     );

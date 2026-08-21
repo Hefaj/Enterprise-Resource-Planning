@@ -2,20 +2,20 @@ import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@a
 import { Validators } from '@angular/forms';
 import { ErpStepContentComponent, ErpStepContentBuilder, ErpStepContentConfig, ErpBatchStepBase, ErpBatchTargetItem } from '@erp/shared/ui';
 import { PermissionCatalogOrchestrator, RoleOrchestrator, BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest } from '@erp/identity/data-access';
-import { AddPermissionMetadata } from './add-permission.definition';
+import { RoleAddPermissionMetadata } from './role-add-permission.definition';
 import { ROLES_KEYS } from '../../translation';
 
 /** Krok modalu seryjnego dodania uprawnienia — picker kodu uprawnienia, wspólny dla WSZYSTKICH
  * zaznaczonych ról (tryb `templateCommand`). `excludeCodes` (z metadanych) filtruje picker
  * tylko w trybie jednego celu — w trybie wsadowym z listy jest pusty (patrz definicja). */
 @Component({
-  selector: 'erp-identity-add-permission-step',
+  selector: 'erp-identity-role-add-permission-step',
   standalone: true,
   imports: [ErpStepContentComponent],
   template: `<erp-step-content [contentConfig]="formContent" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddPermissionStepComponent extends ErpBatchStepBase<BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest, AddPermissionMetadata> {
+export class RoleAddPermissionStepComponent extends ErpBatchStepBase<BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest, RoleAddPermissionMetadata> {
   private readonly _roleOrchestrator: RoleOrchestrator;
 
   /** Zaznaczone role zmapowane na kontrakt podsumowania (`ErpBatchTargetItem`). */
@@ -24,7 +24,7 @@ export class AddPermissionStepComponent extends ErpBatchStepBase<BatchCommandOfR
   protected readonly formContent: ErpStepContentConfig;
 
   public constructor() {
-    // Patrz komentarz w `AssignRoleStepComponent` — zmienne lokalne zamiast `this.pole`, bo
+    // Patrz komentarz w `UserAssignRoleStepComponent` — zmienne lokalne zamiast `this.pole`, bo
     // `super()` jeszcze nie wystartował. `this.metadata()` WEWNĄTRZ ciała `computed(...)` jest
     // bezpieczne (domknięcie wykona się dopiero po konstrukcji) — niebezpieczny byłby tylko
     // odczyt `this._availablePermissions` jako gotowej wartości przekazanej wprost do `.setItems`.

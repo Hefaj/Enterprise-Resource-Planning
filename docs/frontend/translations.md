@@ -44,7 +44,7 @@ Transloco rozwiązuje tłumaczenia przez wstrzykiwacz (DI) — komponent pyta o 
 
 ## 3. Automatyczne wstrzykiwanie providerów w modalach
 
-Definicje modali (np. `SetPriceModalDefinition`, patrz [dokumentacja modali](./modals.md)) **nie wołają** `.setProviders(...)` w builderze — to by wymagało, żeby każdy modal ręcznie pamiętał o doładowaniu tłumaczeń, i łatwo by się to rozjechało między modułami.
+Definicje modali (np. `ProductSetPriceModalDefinition`, patrz [dokumentacja modali](./modals.md)) **nie wołają** `.setProviders(...)` w builderze — to by wymagało, żeby każdy modal ręcznie pamiętał o doładowaniu tłumaczeń, i łatwo by się to rozjechało między modułami.
 
 Zamiast tego `ErpModalService` sam pobiera i wstrzykuje odpowiednie providery przy leniwym ładowaniu modalu z remota — pod warunkiem, że kontrakt remota (`entry.modals.ts`) eksponuje funkcję `getModalProviders()`:
 

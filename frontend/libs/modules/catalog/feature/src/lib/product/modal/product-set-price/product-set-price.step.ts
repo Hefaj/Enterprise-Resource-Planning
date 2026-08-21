@@ -10,7 +10,7 @@ import {
 import { Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BatchCommandOfProductSetPriceCommandAndSearchProductRequest, CatalogProductOrchestrator } from '@erp/catalog/data-access';
-import { SetPriceMetadata } from './set-price.definition';
+import { ProductSetPriceMetadata } from './product-set-price.definition';
 import { PRODUCT_KEYS } from '../../translation';
 import {
   ErpStepContentComponent,
@@ -20,13 +20,13 @@ import {
   ErpModalStepBase,
   ErpModalService,
 } from '@erp/shared/ui';
-import { SET_PRICE_MODAL_ID } from '@erp/catalog/util';
+import { PRODUCT_SET_PRICE_MODAL_ID } from '@erp/catalog/util';
 
 /**
  * Step komponent do seryjnej edycji ceny produktów.
  */
 @Component({
-  selector: 'erp-catalog-set-price-step',
+  selector: 'erp-catalog-product-set-price-step',
   standalone: true,
   imports: [CommonModule, ErpStepContentComponent],
   template: `
@@ -60,11 +60,11 @@ import { SET_PRICE_MODAL_ID } from '@erp/catalog/util';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProductSetPriceCommandAndSearchProductRequest, SetPriceMetadata> {
+export class ProductSetPriceStepComponent extends ErpModalStepBase<BatchCommandOfProductSetPriceCommandAndSearchProductRequest, ProductSetPriceMetadata> {
   public readonly modalService = inject(ErpModalService);
 
   test() {
-    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(SET_PRICE_MODAL_ID, { products: [] })
+    this.modalService.open<BatchCommandOfProductSetPriceCommandAndSearchProductRequest>(PRODUCT_SET_PRICE_MODAL_ID, { products: [] })
       .then(ref => {
         console.log('[ProductTabComponent] Modal opened successfully!', ref);
       })

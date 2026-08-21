@@ -11,16 +11,16 @@
  */
 
 /** Modal: Nadanie roli użytkownikowi */
-export const ASSIGN_USER_ROLE_MODAL_ID = '04c82785e3f845a6d425d0e213aa3fdb';
+export const USER_ASSIGN_ROLE_MODAL_ID = '04c82785e3f845a6d425d0e213aa3fdb';
 
 /** Modal: Nadanie uprawnienia bezpośrednio użytkownikowi (z powodem) */
-export const GRANT_USER_PERMISSION_MODAL_ID = '8e8c17a15bca7d2a2da1e8a828f5cae8';
+export const USER_GRANT_PERMISSION_MODAL_ID = '8e8c17a15bca7d2a2da1e8a828f5cae8';
 
 /** Modal: Utworzenie nowej roli */
-export const CREATE_ROLE_MODAL_ID = '0f03163eb7847d231905445b740e3314';
+export const ROLE_CREATE_MODAL_ID = '0f03163eb7847d231905445b740e3314';
 
 /** Modal: Dodanie uprawnienia do roli */
-export const ADD_ROLE_PERMISSION_MODAL_ID = 'e9d1b09d124c99e3038f4905d7e4ad05';
+export const ROLE_ADD_PERMISSION_MODAL_ID = 'e9d1b09d124c99e3038f4905d7e4ad05';
 
 /** Modal: Dodanie roli składowej do roli-kontenera */
-export const ADD_ROLE_MEMBER_MODAL_ID = '1995b125f9a951f9ac2503211844677d';
+export const ROLE_ADD_MEMBER_MODAL_ID = '1995b125f9a951f9ac2503211844677d';

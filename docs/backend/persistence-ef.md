@@ -6,7 +6,8 @@
 
 ## 1. Topologia bazy
 
-Jeden Postgres, **schemat per moduł**: `catalog`, `notification`, `sales`. Każdy moduł ma własny
+Jeden Postgres, **schemat per moduł**: `catalog`, `identity`, `notification`, `sales` (+ `keycloak`
+dla samego IdP). Każdy moduł ma własny
 `DbContext`, własny łańcuch migracji i własną tabelę historii migracji **wewnątrz swojego schematu**.
 
 Domyślnie EF trzyma `__EFMigrationsHistory` w schemacie `public` — przy kilku modułach w jednej bazie

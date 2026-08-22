@@ -19,7 +19,7 @@ Zaznaczenie w tabeli serwerowej to nie jeden stan, tylko dwa różne byty o ró�
 | Rozmiar | znany, mały | nieznany do momentu wykonania |
 | Kiedy rozstrzygany | teraz, na froncie | **później, w backendzie**, przy tworzeniu zadania |
 
-System rozróżniał to już wcześniej w dwóch miejscach: `BatchEndpointBase.ResolveTargetsAsync` (patrz [operacje masowe](../backend/bulk-commands.md#3-endpoint--trzy-tryby-jednego-kontraktu)) oraz sama tabela — przy „Zaznacz wszystko" `ErpSelectionState.selectedItems` jest **puste** (zaznaczenie opisuje filtr), a checkboxy pojedynczych wierszy są blokowane.
+System rozróżniał to już wcześniej w dwóch miejscach: `BatchEndpointBase.ResolveTargetsAsync` (patrz [operacje masowe](../backend/bulk-commands.md#2-endpoint--trzy-tryby-jednego-kontraktu)) oraz sama tabela — przy „Zaznacz wszystko" `ErpSelectionState.selectedItems` jest **puste** (zaznaczenie opisuje filtr), a checkboxy pojedynczych wierszy są blokowane.
 
 Brakowało tego w panelach bocznych. Panel, który czyta `selection().selectedItems` wprost, przy zaznaczeniu 12 431 produktów pokazuje pusty ekran „zaznacz produkt" — technicznie zgodnie z odczytem, praktycznie odwrotnie do stanu faktycznego.
 

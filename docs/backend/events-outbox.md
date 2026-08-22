@@ -4,7 +4,7 @@
 i Notification. Notification dodatkowo **konsumuje** — `AggregateChangedRelayHandler` przekazuje
 `AggregateChanged` do `RealtimeBroadcaster` ([`realtime-signalr.md`](./realtime-signalr.md)),
 a `JobAcceptedHandler`/`JobProgressedHandler`/`JobCompletedHandler` utrzymują replikę
-`notification.job` — patrz [`bulk-commands.md`](./bulk-commands.md#4-replika-w-notification).
+`notification.job` — patrz [`bulk-commands.md`](./bulk-commands.md#5-replika-w-notification).
 
 ---
 

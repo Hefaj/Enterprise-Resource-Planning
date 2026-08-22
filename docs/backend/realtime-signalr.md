@@ -9,7 +9,7 @@
 
 Hub żyje **wyłącznie** w Notification —
 [`SyncHub`](../../backend/modules/Notification/Notification.Api/Hubs/SyncHub.cs),
-ścieżka `/hubs/sync`. Pozostałe serwisy (Catalog, Sales) nie wiedzą, że SignalR istnieje —
+ścieżka `/hubs/sync`. Pozostałe serwisy (Catalog, Sales, Identity) nie wiedzą, że SignalR istnieje —
 publikują tylko `AggregateChanged` do RabbitMQ ([`events-outbox.md`](./events-outbox.md)).
 Notification konsumuje i rozgłasza.
 
@@ -97,7 +97,7 @@ Dwa różne sygnały, celowo rozdzielone:
 | Adresat | grupa `agg:notification.job` | grupa `user:{userId}` |
 
 Oba sygnały biorą się **z tego samego zapisu** w `JobCompletedHandler`
-([`bulk-commands.md`](./bulk-commands.md#6-replika-w-notification)), ale mają różnych odbiorców
+([`bulk-commands.md`](./bulk-commands.md#5-replika-w-notification)), ale mają różnych odbiorców
 i różne przeznaczenie: jeden mówi „ta encja Job się zmieniła, odśwież ją, jeśli masz w cache”,
 drugi — „Twoje zadanie X się skończyło, oznacz jako przeczytane bez pytania API”.
 
@@ -142,7 +142,7 @@ identycznie jak na `ReceiveInvalidation(.., "all")`: `IdentityMapStore.clear()` 
 Nie ma tu odtwarzania luki (replay konkretnych zdarzeń) — **każda wykryta luka kończy się pełnym
 resync**, nie próbą częściowego dogonienia. Zbudowanie bufora historii zdarzeń to osobny, znacznie
 większy projekt (event log per sygnatura, retencja, porządkowanie). Degenerowany przypadek „luki
-nie da się odtworzyć” z pierwotnego planu jest tu **zawsze prawdziwy**, bo nie ma z czego odtwarzać
+nie da się odtworzyć” jest tu **zawsze prawdziwy**, bo nie ma z czego odtwarzać
 — zgodne w duchu z progiem inwalidacji `all` (świadoma utrata precyzji na rzecz prostoty).
 
 ### Dlaczego restart Notification nie psuje wykrywania

@@ -1,11 +1,11 @@
 # Walidacja wsadowa (batch validation)
 
-**Stan: ✅ działa.** Mechanizm wspólny (`Erp.BuildingBlocks.Validation`), podpięty w Catalog:
-`ProductMustExistRule` jako pre-check dla `product/batch-set-price` i `product/batch-set-name`,
-`ProductDuplicateRule` dla `product/batch-set-classification`. Zweryfikowane end-to-end na
-żywym Catalog.Api + Postgres: cel nieistniejący w bazie dostaje `job_item.status = Failed`,
-`error_code = aggregate_not_found`, `attempts = 1` **natychmiast po utworzeniu zadania**,
-zanim `BulkCommandRunner` w ogóle je zobaczy.
+**Stan: ✅ działa.** Mechanizm wspólny (`Erp.BuildingBlocks.Validation`). Podpięty w Catalog
+(`ProductMustExistRule` dla `product/batch-set-price`/`batch-set-name`, `ProductDuplicateRule`
+dla `product/batch-set-classification`) i w Identity (`RoleGraphCycleRule`, `RoleCodeUniqueRule`,
+reguły istnienia — patrz [`identity-authz.md` §7](./identity-authz.md#7-mapa-wdrożenia--gdzie-co-leży)).
+Cel odrzucony przez pre-check dostaje `job_item.status = Failed` i `error_code` **przy tworzeniu
+zadania**, zanim `BulkCommandRunner` w ogóle je zobaczy.
 
 ---
 
@@ -246,9 +246,9 @@ nigdy nie wygeneruje.
   `IBatchRule<T>` ma sens tam, gdzie odpowiedź zależy od STANU BAZY per element (istnienie,
   duplikat, status) — przy czym reguła może przy tym potrzebować payloadu, bo pyta o stan
   PO zmianie (`ProductDuplicateRule`), nie przed.
-- **Chain mode** nie ma dziś w Catalogu żywego konsumenta — brakuje naturalnej pary zależnych
-  reguł (`CategoryMustExistRule` → `CategoryMustBeActiveRule`). `ProductBatchValidator` woła
-  swoje reguły płasko, bo są niezależne i chcemy zebrać wszystkie naruszenia elementu naraz.
+- **Chain mode** nie ma dziś w repo żywego konsumenta — brakuje naturalnej pary zależnych
+  reguł (`CategoryMustExistRule` → `CategoryMustBeActiveRule`). `ProductBatchValidator` (tak samo
+  `RoleBatchValidator`/`UserBatchValidator` w Identity) woła swoje reguły płasko, bo są niezależne i chcemy zebrać wszystkie naruszenia elementu naraz.
   Klasa `ValidationChain<T>` jest gotowa, ale bez konsumenta poza building blockiem.
 - **Middleware komend** (FluentValidation, idempotencja) z [`cqrs.md#6`](./cqrs.md#6-czego-jeszcze-nie-ma)
   to osobny, wciąż niezaimplementowany temat — dotyczy pojedynczej komendy na wejściu HTTP,

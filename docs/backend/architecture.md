@@ -25,19 +25,18 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Struktura projektów, granice warstw | ✅ | Wymuszone testem `Erp.ArchitectureTests` (5/5) |
 | Persystencja EF + Postgres, migracje, seed | ✅ | [`persistence-ef.md`](./persistence-ef.md) |
 | Strona odczytu (CQRS queries) | ✅ | Catalog: produkty, kategorie, drzewo, modele, gwarancje, multimedia |
-| Strona zapisu (komendy, `IUnitOfWork`) | ✅ | `AddErpMessaging<TContext>()` wołane w `Program.cs` Catalogu, Sales i Notification — rejestruje `IUnitOfWork` |
+| Strona zapisu (komendy, `IUnitOfWork`) | ✅ | `AddErpMessaging<TContext>()` wołane w `Program.cs` każdego modułu — rejestruje `IUnitOfWork` |
 | Domain events → outbox → RabbitMQ | ✅ | [`events-outbox.md`](./events-outbox.md) |
-| Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — wykonują Catalog, Sales, Identity (`job/cancel`, `job/retry-failed` dodane w fazie 5) |
-| Walidacja wsadowa (pre-check reguł zbiorczych) | ✅ | [`batch-validation.md`](./batch-validation.md) — mechanizm wspólny, podpięty w Catalog (`ProductMustExistRule`) |
+| Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — wykonują Catalog, Sales i Identity (w Identity **każda** mutacja `role/*`/`user/*` jest zadaniem); sterowanie: `job/cancel`, `job/retry-failed` |
+| Walidacja wsadowa (pre-check reguł zbiorczych) | ✅ | [`batch-validation.md`](./batch-validation.md) — mechanizm wspólny, podpięty w Catalog (`ProductMustExistRule`, `ProductDuplicateRule`) i Identity (m.in. `RoleGraphCycleRule`) |
 | SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; skalowanie poziome wymaga zmian z [§7](#7-założenia-jednoinstancyjne) |
 | Middleware komend (walidacja, idempotencja, logowanie) | 📐 | Handler dziś sam woła `IUnitOfWork`; walidacja żyje wyłącznie w agregacie — patrz [`cqrs.md`](./cqrs.md#6-czego-jeszcze-nie-ma) |
-| Sales, Notification jako pełne moduły biznesowe | 🟡 | Struktura i szablon zweryfikowane (Sales/`Customer`); brak realnej logiki biznesowej poza sprawdzianem |
-| Uwierzytelnianie (Keycloak, JWT) | ✅ | [`identity-authz.md`](./identity-authz.md) §5-7 Faza 1 — zweryfikowane end-to-end w przeglądarce |
-| Autoryzacja — domena Identity (role, uprawnienia, katalog, JIT provisioning) | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 2 — zweryfikowane end-to-end przez API (hierarchia ról, wykrywanie cykli, efektywne uprawnienia, ścieżka dziedziczenia) |
-| Egzekwowanie uprawnień w Catalog/Sales/Notification | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 3 — zweryfikowane end-to-end (odebranie roli → 403 w ciągu SLA cache'u ≤60s). Notification świadomie bez bramkowania (własny feed, nie zasób uprzywilejowany) |
-| Bramkowanie UI (front) | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 5 — `PermissionStore`, guardy, `*erpHasPermission`, filtr menu, `/forbidden`, toast 403 |
-| Audyt nadań, wygasające nadania, wymuszone wylogowanie, bramkowanie własnych endpointów Identity | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 6 — `grant_audit` append-only, `ExpiredGrantCleanupService`, odwołanie sesji Keycloak przez Admin API, `role/*`/`user/*` w Identity za `Permissions(...)` |
-| Operacje masowe w Identity — wszystkie 10 komend `role/*`/`user/*` na `BatchEndpointBase` | ✅ | [`identity-authz.md`](./identity-authz.md) §7 Faza 7 i [`identity-bulk-migration.md`](./identity-bulk-migration.md) — `RoleGraphCycleRule` (cykl wewnątrz wsadu), `RoleCodeUniqueRule`, pełny `ErpSelectionScope` na `/identity/users`/`/identity/roles`, 76/76 testów backendowych |
+| Sales jako pełny moduł biznesowy | 🟡 | Struktura i szablon zweryfikowane na agregacie `Customer`; brak realnej logiki biznesowej poza sprawdzianem |
+| Uwierzytelnianie (Keycloak, JWT) | ✅ | [`identity-authz.md`](./identity-authz.md) §5 — Authorization Code + PKCE, fallback policy na każdym endpoincie |
+| Autoryzacja — domena Identity (role, uprawnienia, katalog, JIT provisioning) | ✅ | [`identity-authz.md`](./identity-authz.md) §2-3, §7 |
+| Egzekwowanie uprawnień w Catalog/Sales | ✅ | [`identity-authz.md`](./identity-authz.md) §4 — SLA odwołania ≤60s (TTL cache). Notification świadomie bez bramkowania (własny feed, nie zasób uprzywilejowany) |
+| Bramkowanie UI (front) | ✅ | [`identity-authz.md`](./identity-authz.md) §6 — `PermissionStore`, guardy, `*erpHasPermission`, filtr menu przeliczany na żywo, `/forbidden`, toast 403 |
+| Audyt nadań, wygasające nadania, wymuszone wylogowanie | ✅ | [`identity-authz.md`](./identity-authz.md) §7 — `grant_audit` append-only, `ExpiredGrantCleanupService`, odwołanie sesji przez Keycloak Admin API |
 
 ---
 
@@ -57,7 +56,8 @@ backend/
 │   ├── Erp.BuildingBlocks.Persistence/    # ErpDbContext, AggregateChangeScanner, ErpUnitOfWork
 │   ├── Erp.BuildingBlocks.Messaging/      # Wolverine: RabbitMQ + outbox na Postgresie
 │   ├── Erp.BuildingBlocks.Jobs/           # Job, JobItem, BulkCommandRunner
-│   └── Erp.BuildingBlocks.Api/            # bootstrap FastEndpoints/CORS + kontrakty żądań
+│   ├── Erp.BuildingBlocks.Validation/     # IBatchRule, ValidationChain (walidacja wsadowa)
+│   └── Erp.BuildingBlocks.Api/            # bootstrap FastEndpoints/CORS, auth, kontrakty żądań
 │
 ├── modules/
 │   ├── Catalog/                    # wzorcowy moduł — na nim modeluj kolejne
@@ -65,11 +65,16 @@ backend/
 │   │   ├── Catalog.Application/    # komendy, zapytania, DTO, abstrakcje repozytoriów
 │   │   ├── Catalog.Infrastructure/ # DbContext, konfiguracje EF, migracje, repozytoria, seed
 │   │   └── Catalog.Api/            # endpointy FastEndpoints, Program.cs
-│   ├── Notification/               # jeszcze na mockach
-│   └── Sales/                      # szkielet
+│   ├── Identity/                   # role, uprawnienia, audyt nadań (schemat `identity`)
+│   ├── Notification/               # replika zadań + hub SignalR (schemat `notification`)
+│   └── Sales/                      # szkielet — jeden agregat `Customer` jako sprawdzian szablonu
+│
+├── keycloak/                       # realm-erp.json (IdP, nie mikroserwis)
 │
 └── tests/
-    └── Erp.ArchitectureTests/      # granice warstw — odpowiednik ESLinta z frontendu
+    ├── Erp.ArchitectureTests/      # granice warstw — odpowiednik ESLinta z frontendu
+    ├── Catalog.Tests/
+    └── Identity.Tests/
 ```
 
 Nazewnictwo `backend/modules/<Moduł>/` mapuje się 1:1 na `frontend/libs/modules/<moduł>/`
@@ -194,8 +199,8 @@ jak gotowość, a zostawia trzy pozostałe punkty ciche i zepsute.
 | Licznik sekwencji | [`SignatureSequenceTracker`](../../backend/modules/Notification/Notification.Api/Realtime/SignatureSequenceTracker.cs) — `ConcurrentDictionary` w pamięci | Każda instancja liczy własną sekwencję. Reconnect na inną instancję daje rozjazd `lastSeenSequence` bez luki (resync fałszywie dodatni) albo zgodność mimo luki (resync pominięty — gorszy przypadek). |
 | Koalescencja i próg inwalidacji | [`RealtimeBroadcaster`](../../backend/modules/Notification/Notification.Api/Realtime/RealtimeBroadcaster.cs) — bufor per sygnatura w pamięci singletona | Patrz niżej — psuje się inaczej, niż podpowiada intuicja. |
 | Wybór zadania masowego | [`BulkCommandRunner.ProcessNextChunkAsync`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/BulkCommandRunner.cs) | Zapytanie o najstarsze `Pending`/`Running` nie zakłada żadnego lease'u ani locka: dwa runnery biorą **to samo** zadanie i **te same** `job_item`-y. |
-| Cache uprawnień (Faza 3) | [`HttpPermissionProvider`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs) — `IMemoryCache` per proces, TTL 60s, w KAŻDYM mikroserwisie-konsumencie (Catalog, Sales) | Każda instancja ma własny cache z własnym zegarem TTL — odebranie uprawnienia dogania się do 60s NIEZALEŻNIE na każdej instancji, nie synchronicznie. Przy N instancjach okno „stara instancja jeszcze przepuszcza" może się wydłużyć, jeśli TTL-y akurat się rozjadą (nigdy nie skróci się poniżej 60s, może się wydłużyć do niemal 2×60s w pesymistycznym przypadku). Backplane (Redis) ujednoliciłby to — patrz [`identity-authz.md`](./identity-authz.md) §9. |
-| Wymuszone wylogowanie (Faza 6) | [`IPermissionProvider.InvalidateAsync`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs) wołane z `UserForceLogoutCommandHandler` w Identity | Czyści cache TYLKO w procesie, który obsłużył żądanie odwołania sesji. Przy >1 instancji Catalogu/Sales inwalidacja nie dotrze do pozostałych — te nadal przepuszczają do naturalnego TTL=60s. Odwołanie sesji Keycloak (Admin API) działa niezależnie od liczby instancji (stan po stronie IdP), ale już wydany access token JWT pozostaje ważny do naturalnego wygaśnięcia — nie ma introspekcji tokenu. Backplane rozwiązałby cache tak samo jak wiersz wyżej. |
+| Cache uprawnień | [`HttpPermissionProvider`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs) — `IMemoryCache` per proces, TTL 60s, w KAŻDYM mikroserwisie-konsumencie (Catalog, Sales) | Każda instancja ma własny cache z własnym zegarem TTL — odebranie uprawnienia dogania się do 60s NIEZALEŻNIE na każdej instancji, nie synchronicznie. Przy N instancjach okno „stara instancja jeszcze przepuszcza" może się wydłużyć, jeśli TTL-y akurat się rozjadą (nigdy nie skróci się poniżej 60s, może się wydłużyć do niemal 2×60s w pesymistycznym przypadku). Backplane (Redis) ujednoliciłby to — patrz [`identity-authz.md`](./identity-authz.md) §9. |
+| Wymuszone wylogowanie | [`IPermissionProvider.InvalidateAsync`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs) wołane z `UserForceLogoutCommandHandler` w Identity | Czyści cache TYLKO w procesie, który obsłużył żądanie odwołania sesji. Przy >1 instancji Catalogu/Sales inwalidacja nie dotrze do pozostałych — te nadal przepuszczają do naturalnego TTL=60s. Odwołanie sesji Keycloak (Admin API) działa niezależnie od liczby instancji (stan po stronie IdP), ale już wydany access token JWT pozostaje ważny do naturalnego wygaśnięcia — nie ma introspekcji tokenu. Backplane rozwiązałby cache tak samo jak wiersz wyżej. |
 
 ### Dlaczego próg inwalidacji psuje się odwrotnie, niż się wydaje
 
@@ -230,7 +235,7 @@ jak licznik sekwencji.
 Dzisiejszy objaw kolizji runnerów warto znać, bo nie wygląda jak problem ze współbieżnością:
 `xmin` wyłapuje konflikt dopiero na `SaveChanges`, co unieważnia transakcję całego chunka
 i spycha go w ścieżkę izolacji „element po elemencie"
-([`bulk-commands.md`](./bulk-commands.md#4-wykonanie--bulkcommandrunner)). W logach wygląda to
+([`bulk-commands.md`](./bulk-commands.md#3-wykonanie--bulkcommandrunner)). W logach wygląda to
 jak seria `concurrency_conflict` i drastyczny spadek przepustowości — czyli jak awaria bazy,
 a nie jak dwa runnery robiące tę samą pracę.
 
@@ -255,7 +260,8 @@ w każdym z tych miejsc świadomie wybrano trwałość zamiast pamięci procesu:
 - [Persystencja — EF Core i Postgres](./persistence-ef.md)
 - [CQRS — komendy i zapytania](./cqrs.md)
 - [Zdarzenia domenowe, outbox i integracja](./events-outbox.md)
-- [Operacje masowe](./bulk-commands.md)
+- [Operacje masowe](./bulk-commands.md), [Walidacja wsadowa](./batch-validation.md)
 - [Synchronizacja w czasie rzeczywistym (SignalR)](./realtime-signalr.md)
+- [Tożsamość i uprawnienia](./identity-authz.md)
 - [Nowy mikroserwis — przepis](./new-microservice.md)
 - Frontend: [architektura](../frontend/architecture.md), [orkiestratory](../frontend/orchestrators.md)

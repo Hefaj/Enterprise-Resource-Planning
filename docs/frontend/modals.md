@@ -30,7 +30,7 @@ częścią nazwy komendy i to on odróżnia `RoleAddPermissionCommand` od `UserG
 Nazwa **nie niesie** też słowa `multiple`/`batch`, mimo że endpoint nazywa się
 `ProductSetPriceMultipleCommandEndpoint`, a metoda klienta `productSetPriceMultipleCommand`.
 Operacja masowa jest domyślnym trybem każdej komendy (pojedyncza edycja to ten sam
-`BatchCommand` z jednym uuidem w `targetUuids` — patrz [operacje masowe](../backend/bulk-commands.md#3-endpoint--trzy-tryby-jednego-kontraktu)),
+`BatchCommand` z jednym uuidem w `targetUuids` — patrz [operacje masowe](../backend/bulk-commands.md#2-endpoint--trzy-tryby-jednego-kontraktu)),
 więc wyróżnik w nazwie nic by nie odróżniał.
 
 Selektor kroku dokłada z przodu prefiks modułu: `erp-catalog-product-set-price-step`.
@@ -39,7 +39,7 @@ Selektor kroku dokłada z przodu prefiks modułu: `erp-catalog-product-set-price
 
 ## 1. Dlaczego modal jest rejestrowany, a nie importowany bezpośrednio
 
-Moduł `sales` może potrzebować otworzyć modal zdefiniowany w module `catalog` (np. "dodaj produkt do zamówienia") — ale `sales` **nie może** zaimportować kodu `catalog` bezpośrednio, bo to złamałoby granice `scope:X` wymuszone przez ESLint (patrz [architektura frontendu](./architecture.md#3-tagi-nx-i-eslint-boundaries)) i, w trybie MFE, oznaczałoby statyczną zależność między dwoma osobno budowanymi aplikacjami.
+Moduł `sales` może potrzebować otworzyć modal zdefiniowany w module `catalog` (np. "dodaj produkt do zamówienia") — ale `sales` **nie może** zaimportować kodu `catalog` bezpośrednio, bo to złamałoby granice `scope:X` wymuszone przez ESLint (patrz [architektura frontendu](./architecture.md#tagi-nx)) i, w trybie MFE, oznaczałoby statyczną zależność między dwoma osobno budowanymi aplikacjami.
 
 Rozwiązanie: każdy moduł rejestruje swoje modale pod globalnie unikalnym `MODAL_ID` w warstwie `contract` (jedyna warstwa eksponowana przez Native Federation). Wywołujący zna tylko `MODAL_ID` i typ komendy:
 
@@ -69,7 +69,7 @@ Przed utworzeniem definicji modalu upewnij się, że orkiestrator (np. `CatalogP
 
 ## 4. Krok 1.7 — Teksty (Tłumaczenia)
 
-Wszystkie stałe teksty widoczne dla użytkownika w modalu (tytuł, etykiety kroków, przycisk zapisu, placeholder, komunikaty błędów) idą przez klucze Transloco — zero hardcodowania. Procedura dodawania kluczy + `pnpm translate:keys`: [Tłumaczenia, sekcja 5](./translations.md#5-dodawanie-nowych-kluczy-do-istniejącego-scope-u). Zaimportuj wygenerowany obiekt kluczy (np. `PRODUCT_KEYS`) i używaj go bezpośrednio w definicji modalu i jego komponentach.
+Wszystkie stałe teksty widoczne dla użytkownika w modalu (tytuł, etykiety kroków, przycisk zapisu, placeholder, komunikaty błędów) idą przez klucze Transloco — zero hardcodowania. Procedura dodawania kluczy + `pnpm translate:keys`: [Tłumaczenia, sekcja 5](./translations.md#5-dodawanie-nowych-kluczy-do-istniejącego-scopeu). Zaimportuj wygenerowany obiekt kluczy (np. `PRODUCT_KEYS`) i używaj go bezpośrednio w definicji modalu i jego komponentach.
 
 > [!IMPORTANT]
 > Modal ma dostęp do swoich tłumaczeń niezależnie od tego, gdzie w aplikacji został otwarty, dzięki `getModalProviders()` — patrz [Tłumaczenia, sekcja 3](./translations.md#3-automatyczne-wstrzykiwanie-providerów-w-modalach). Definicja modalu **nigdy** nie woła `.setProviders(...)` w builderze.

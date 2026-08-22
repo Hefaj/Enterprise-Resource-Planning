@@ -370,7 +370,7 @@ Trzy reguły dla takich akcji:
 
 1. **`.setScopes(['explicit'])` + `.setUnavailableHint(...)`** — akcja na wskazanych wierszach wymaga zaznaczenia rozwiązanego do listy identyfikatorów; przy zaznaczeniu opisanym filtrem panel pokazuje tylko próbkę i wybór pojedynczych wierszy jest zablokowany (§6.3, [zasięg zaznaczenia](./selection-scope.md)).
 2. **Akcja „dodaj" adresuje CAŁY zasięg, nie próbkę** — modal dostaje `batchTargets()` ze store'a zakładki (`targetUuids`/`targetFilter` + `targetCount`), więc „nadaj rolę" z panelu obejmie wszystkich zaznaczonych użytkowników, także tych spoza widocznej próbki.
-3. **Toolbar dostaje dwie różne rodziny akcji, nie jedną.** Akcje nad zbiorem rodziców („nadaj rolę wszystkim zaznaczonym") współistnieją z akcjami nad zaznaczonymi wierszami panelu („odbierz te konkretne przypisania") — to dwie osobne ścieżki UI, każda do innego kontraktu backendu (wsad na zasięgu vs. `Commands: [command]` na znanych celach — patrz [operacje masowe (backend)](../backend/bulk-commands.md#3-endpoint--trzy-tryby-jednego-kontraktu)).
+3. **Toolbar dostaje dwie różne rodziny akcji, nie jedną.** Akcje nad zbiorem rodziców („nadaj rolę wszystkim zaznaczonym") współistnieją z akcjami nad zaznaczonymi wierszami panelu („odbierz te konkretne przypisania") — to dwie osobne ścieżki UI, każda do innego kontraktu backendu (wsad na zasięgu vs. `Commands: [command]` na znanych celach — patrz [operacje masowe (backend)](../backend/bulk-commands.md#2-endpoint--trzy-tryby-jednego-kontraktu)).
 
 ---
 

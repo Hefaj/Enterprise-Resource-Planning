@@ -1,9 +1,9 @@
 # Nowy mikroserwis — przepis
 
-Dodanie kolejnego mikroserwisu (obok Catalog, Notification, Sales) wymaga czterech projektów
+Dodanie kolejnego mikroserwisu (obok Catalog, Identity, Notification, Sales) wymaga czterech projektów
 w Clean Architecture, wpięcia do `.sln` i kilku rejestracji w `Program.cs`, które muszą się ze
-sobą zgadzać. Ten przepis jest zweryfikowany empirycznie — Sales powstał dokładnie w ten sposób
-jako sprawdzian szablonu (faza 5 planu backendu): **zero nowego kodu w `building-blocks/`**.
+sobą zgadzać. Ten przepis jest zweryfikowany empirycznie — Sales i Identity powstały dokładnie w ten sposób:
+**zero nowego kodu w `building-blocks/`**.
 Jeśli dodanie modułu wymaga zmiany w `building-blocks/`, to sygnał, że któryś krok tego przepisu
 nie został zachowany, nie że BuildingBlocks trzeba rozszerzyć.
 
@@ -237,7 +237,7 @@ samego `obj\Debug\net10.0` i blokują sobie pliki. `backend/Directory.Build.prop
 }
 ```
 
-`SLOT` — krótka, unikalna nazwa modułu (`catalog`, `notification`, `sales`). Nazwa projektu
+`SLOT` — krótka, unikalna nazwa modułu (`catalog`, `identity`, `notification`, `sales`). Nazwa projektu
 w `project.json` musi być identyczna z inferowaną przez plugin (`MODULE_NAME.Api`), inaczej NX
 zobaczy dwa projekty w jednym katalogu. Pozostałe targety (`build`, `run`, `restore`) zostają
 inferowane i używają domyślnych `bin`/`obj` — slot dotyczy wyłącznie watcha.

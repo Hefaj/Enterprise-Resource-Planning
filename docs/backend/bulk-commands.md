@@ -1,32 +1,16 @@
 # Operacje masowe
 
 **Stan: ✅ działa.** Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
-Zweryfikowane na 1500 produktach Catalogu (sprawdzian fazy 3): zadanie kończy się w sekundach,
-nie w ~75 minutach jak poprzednia implementacja (`Task.Delay(3000)` per element, sekwencyjnie).
+
+Zadanie masowe jest **wierszem w bazie** razem ze swoimi elementami — przeżywa restart procesu
+i wznawia się od pierwszego nieprzetworzonego elementu. Kolejka w pamięci procesu byłaby tu
+pozorną prostotą: gubi pracę przy każdym wdrożeniu, a wyjątek z komendy nie ma gdzie wylądować.
 
 ---
 
-## 1. Co się zmieniło względem pierwszej wersji
+## 1. Model danych
 
-Stara `BatchEndpointBase` wrzucała domknięcie do `Channel<T>` w pamięci procesu i zwracała
-wygenerowany w locie `jobUuid`, za którym nie stało nic:
-
-- restart procesu gubił całą kolejkę w toku;
-- wyjątki lądowały w `Console.WriteLine`, nigdy w bazie;
-- komendy wykonywały się poza scope'em DI — `Cannot resolve scoped service from root provider`,
-  cicho, bo nikt tego wyjątku nie czytał;
-- frontend rejestrował zadanie, o którym backend nigdy się nie dowiedział, i czekał na
-  zakończenie, które nie nadchodziło.
-
-Dziś zadanie jest wierszem w bazie razem ze swoimi elementami. **Kontrakt HTTP jest identyczny**
-— te same trzy tryby wskazywania celów, ten sam `BatchResult { JobUuid }`. To był twardy warunek
-brzegowy: klienty NSwag i orkiestratory frontendowe nie wymagały żadnej zmiany.
-
----
-
-## 2. Model danych
-
-Schemat modułu **wykonującego** zadanie (Catalog, Sales, Identity — nie Notification, patrz sekcja 4):
+Schemat modułu **wykonującego** zadanie (Catalog, Sales, Identity — nie Notification, patrz sekcja 5):
 
 ```
 job(uuid pk, command_type, command_json, queue_id, status,
@@ -45,19 +29,19 @@ Sukces częściowy ma **własny** status (`CompletedWithErrors`) — użytkownik
 „zrobione” od „zrobione, ale 1200 pozycji odpadło”, nie tylko `true`/`false`.
 
 `Draft` jest stanem **wewnętrznym, przejściowym i niewidocznym na zewnątrz** — zadanie ma go
-wyłącznie w trakcie zakładania, między wstawieniem nagłówka a przyjęciem (sekcja 3). Runner
+wyłącznie w trakcie zakładania, między wstawieniem nagłówka a przyjęciem (sekcja 2). Runner
 podejmuje tylko `Pending`/`Running`, klient nie dostaje wtedy jeszcze `jobUuid`, a Notification
 nie zna zadania, bo koperta `JobAccepted` jeszcze nie wyszła. Wartość dopisana na **końcu**
 wyliczenia `JobStatus`, żeby nie ruszyć liczb, którymi zapisane są pozostałe statusy.
 
-`job_item.command_json` bywa `null` — patrz tryby w sekcji 3.
+`job_item.command_json` bywa `null` — patrz tryby w sekcji 2.
 
 Definicje: [`Job.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/Job.cs),
 [`JobItem.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/JobItem.cs).
 
 ---
 
-## 3. Endpoint — trzy tryby jednego kontraktu
+## 2. Endpoint — trzy tryby jednego kontraktu
 
 [`BatchEndpointBase<TCommand, TFilter>`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/BatchEndpointBase.cs)
 przyjmuje `BatchCommand<TCommand, TFilter>` i sprowadza go do listy `JobTarget`:
@@ -130,7 +114,7 @@ wstawienia niekompletnego wiersza.
 
 ---
 
-## 4. Wykonanie — `BulkCommandRunner`
+## 3. Wykonanie — `BulkCommandRunner`
 
 [`BulkCommandRunner<TContext>`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/BulkCommandRunner.cs)
 to `BackgroundService` **czytający z bazy**, nie z kolejki w pamięci — restart w połowie zadania
@@ -275,7 +259,7 @@ przed każdym chunkiem — inaczej zdarzenia i powiadomienia SignalR nie miałyb
 
 ---
 
-## 5. Anulowanie i retry
+## 4. Anulowanie i retry
 
 [`JobControlEndpoints`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/JobControlEndpoints.cs)
 (dodane w fazie 5 — **zmiana kontraktu**, odłożona świadomie z faz 1–4):
@@ -296,7 +280,7 @@ ale nie wystawia jeszcze tych dwóch endpointów.
 
 ---
 
-## 6. Replika w Notification
+## 5. Replika w Notification
 
 Job **wykonuje i jest jego właścicielem** serwis wykonujący — Catalog ma własne `catalog.job`/
 `catalog.job_item`, potrzebne mu i tak do wznawiania i retry. Notification utrzymuje wyłącznie
@@ -312,7 +296,7 @@ z tego samego zapisu przez `AggregateChangeScanner`.
 
 ---
 
-## 7. Zobacz też
+## 6. Zobacz też
 
 - [Walidacja wsadowa](./batch-validation.md) — pre-check PRZED utworzeniem zadania, dla reguł
   zbiorczych (istnienie, duplikat), które kosztowałyby N zapytań przy walidacji per element

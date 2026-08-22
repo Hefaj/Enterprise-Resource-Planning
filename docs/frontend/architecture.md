@@ -17,8 +17,9 @@ Aplikacja składa się z jednego **hosta** i kilku **remote'ów**, każdy jako o
 | `dms` | Remote — zarządzanie dokumentami | 4204 |
 | `task-management` | Remote — zarządzanie zadaniami | 4205 |
 | `notification` | Remote — powiadomienia | 4206 |
+| `identity` | Remote — użytkownicy, role, uprawnienia | 4207 |
 
-Kolejny nowy moduł dostaje pierwszy wolny port od 4207 wzwyż.
+Kolejny nowy moduł dostaje pierwszy wolny port od 4208 wzwyż.
 
 Host **nie zna** remote'ów w czasie kompilacji — dowiaduje się o nich w runtime, z manifestu. Dzięki temu każdy moduł da się wdrożyć, przebudować i wersjonować niezależnie od reszty; host tylko je ładuje.
 
@@ -65,7 +66,7 @@ frontend/
 │   │   └── vite.config.mts
 │   │
 │   └── modules/
-│       ├── catalog/  inventory/  sales/  dms/  task-management/  notification/
+│       ├── catalog/  inventory/  sales/  dms/  task-management/  notification/  identity/
 │       │   └── (każdy: src/main.ts, main.mfe.ts, federation.config.mjs)
 │
 └── libs/
@@ -161,6 +162,9 @@ Konsekwencja praktyczna: jeśli edytujesz coś w `libs/shared/**` i zmiana się 
 
 ## 6. Powiązane dokumenty
 
-- [Orkiestratory (`data-access`)](./orchestrators.md) — jak moduły w warstwie `data-access` pobierają, cache'ują i wzbogacają dane agregatów.
-- [Nowy moduł](./new-module.md), [Modale](./modals.md), [Tłumaczenia](./translations.md), [Atomy UI](./atoms.md) — przepisy zadaniowe, zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md).
+- [Nowy moduł](./new-module.md) — jak powstaje moduł opisany wyżej, krok po kroku.
+- [Struktura `feature`](./feature-structure.md) → [Page dla agregatu](./pages.md) → [Smart tabele](./smart-tables.md) → [Zasięg zaznaczenia](./selection-scope.md) — ścieżka od katalogu do gotowego ekranu listy.
+- [Orkiestratory (`data-access`)](./orchestrators.md) — jak moduły pobierają, cache'ują i wzbogacają dane agregatów.
+- [Modale](./modals.md), [Atomy UI](./atoms.md), [Tłumaczenia](./translations.md) — pozostałe przepisy zadaniowe, zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md).
+- Backend: [architektura](../backend/architecture.md), [uprawnienia i bramkowanie UI](../backend/identity-authz.md).
 - Praca z komponentami TaigaUI: [`.agents/skills/taiga-ui/SKILL.md`](../../.agents/skills/taiga-ui/SKILL.md).

@@ -10,10 +10,18 @@ import {
   categorySelectionToUuids,
   categoryUuidsToSelection,
 } from '../../../category/components/pickers/catalog-category-tree-picker/catalog-category-tree-picker.component';
+import {
+  CatalogWarrantyPickerComponent,
+  CatalogWarrantyPickerConfig,
+} from '../../../warranty/components/pickers/catalog-warranty-picker/catalog-warranty-picker.component';
 
-/** Kształt wartości formularza filtrów — `category` trzyma natywny deskryptor zaznaczenia drzewa, nie sam uuid. */
+/**
+ * Kształt wartości formularza filtrów — `category` trzyma natywny deskryptor zaznaczenia drzewa,
+ * nie sam uuid, a `warrantyIds` listę uuidów wybranych gwarancji.
+ */
 type ProductFilterFormValue = Omit<Partial<SearchProductRequest>, 'category'> & {
   category?: ErpTreeSelectionValue | null;
+  warrantyIds?: string[] | null;
 };
 
 @Component({
@@ -33,6 +41,11 @@ export class ProductFilterComponent implements OnInit {
 
   private readonly categoryFieldConfig: CatalogCategoryTreePickerConfig = {
     label: 'Kategorie',
+  };
+
+  /** Etykiety pickera gwarancji biorą się z jego własnego scope'u (`WARRANTY_KEYS`) — tu tylko strategia. */
+  private readonly warrantyFieldConfig: CatalogWarrantyPickerConfig = {
+    strategy: 'multi',
   };
 
   private readonly initialValues = computed(() => ({
@@ -56,6 +69,7 @@ export class ProductFilterComponent implements OnInit {
     .addFormField('manufacturer', 'text', f => f.setLabel('Producent'))
     .addFormField('model', 'text', f => f.setLabel('Model'))
     .addCustomFormField('category', CatalogCategoryTreePickerComponent, this.categoryFieldConfig)
+    .addCustomFormField('warrantyIds', CatalogWarrantyPickerComponent, this.warrantyFieldConfig)
     .addFormField('attribute', 'text', f => f.setLabel('Atrybut'))
     .addFormField('productCode', 'text', f => f.setLabel('Kod produktu').setTooltip('test'))
     .addFormField('territoryCode', 'text', f => f.setLabel('Kod terytorium'))

@@ -1,0 +1,8 @@
+{
+  "picker": {
+    "label": "Warranties",
+    "placeholder": "Select a warranty...",
+    "searchPlaceholder": "Search warranties...",
+    "empty": "No warranties"
+  }
+}

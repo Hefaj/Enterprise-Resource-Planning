@@ -1,0 +1,8 @@
+{
+  "picker": {
+    "label": "Gwarancje",
+    "placeholder": "Wybierz gwarancję...",
+    "searchPlaceholder": "Szukaj gwarancji...",
+    "empty": "Brak gwarancji"
+  }
+}

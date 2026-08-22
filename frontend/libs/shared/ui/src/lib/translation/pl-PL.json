@@ -92,6 +92,7 @@
   },
   "inputPicker": {
     "empty": "Brak wyników",
+    "search": "Szukaj...",
     "selectedCount": "Zaznaczone ({{count}})",
     "loadingMore": "Ładowanie kolejnych pozycji..."
   },
@@ -102,7 +103,8 @@
     "loading": "Ładowanie...",
     "selectedCount": "Zaznaczone ({{count}})",
     "withSubcategories": "z podkategoriami",
-    "selectDescendantsOnly": "Zaznacz tylko podkategorie (bez tego elementu)",
+    "selectDescendants": "Zaznacz wszystkie podrzędne",
+    "deselectDescendants": "Odznacz wszystkie podrzędne",
     "clear": "Wyczyść zaznaczenie"
   },
   "bulkInput": {

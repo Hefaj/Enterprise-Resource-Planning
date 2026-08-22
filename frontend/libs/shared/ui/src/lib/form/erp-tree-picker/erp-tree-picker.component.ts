@@ -14,6 +14,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ReactiveFormsModu
 import { TranslocoService } from '@jsverse/transloco';
 import { TuiTextfield, TuiLabel, TuiErrorComponent, TuiDropdown, TuiIcon, TuiButtonX } from '@taiga-ui/core';
 import { TuiInputDirective } from '@taiga-ui/core/components/input';
+import { TuiChevron } from '@taiga-ui/kit/directives/chevron';
 import { TuiHintDirective } from '@taiga-ui/core/portals/hint';
 import { noop } from 'rxjs';
 
@@ -45,6 +46,7 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
     TuiHintDirective,
     TuiDropdown,
     TuiButtonX,
+    TuiChevron,
     ErpTranslatePipe,
     ErpTreeComponent,
     ErpDropdownMinWidthDirective,
@@ -66,6 +68,7 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
 
     <div class="erp-tree-picker-wrapper">
       <tui-textfield
+        tuiChevron
         erpDropdownMinWidth
         [tuiTextfieldSize]="_size()"
         [tuiTextfieldCleaner]="false"

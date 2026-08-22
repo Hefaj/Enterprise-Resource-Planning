@@ -76,9 +76,13 @@ export interface ErpTreeConfig<T = any> extends ErpInputBase {
   searchFn?: (query: ErpTreeSearchQuery) => any;
 
   selectionMode?: MaybeSignal<ErpTreeSelectionMode>;
-  /** 'subtree' = zaznaczenie rodzica kaskaduje na dzieci; 'none' = węzły niezależne. */
+  /**
+   * 'subtree' = zaznaczenie potomków jest wyrażalne jako pokrycie poddrzewa (deskryptor
+   * `subtreeRoots`/`excluded`, akcja przycisku obok checkboxa); 'none' = wyłącznie płaska lista
+   * `ids`. W obu trybach klik w checkbox zaznacza WYŁĄCZNIE ten węzeł — nigdy jego potomków.
+   */
   cascade?: MaybeSignal<ErpTreeCascadeMode>;
-  /** Multi + cascade='subtree': pozwala zaznaczyć dzieci węzła bez samego węzła. */
+  /** Multi + cascade='subtree': pokazuje przycisk zaznaczający/odznaczający całe poddrzewo węzła. */
   allowDescendantsOnly?: MaybeSignal<boolean>;
   value?: MaybeSignal<ErpTreeSelectionValue | undefined>;
 

@@ -65,7 +65,9 @@ export class ErpTreeBuilder<T = any> extends ErpInputBaseBuilder<ErpTreeConfig<T
   }
 
   /**
-   * Ustawia tryb kaskadowy w drzewie (np. strict, down).
+   * Sposób zapisu zaznaczenia potomków: 'subtree' — pokrycie poddrzewa (deskryptor
+   * `subtreeRoots`/`excluded`, skaluje się bez wypisywania potomków), 'none' — wyłącznie płaska
+   * lista `ids`. Klik w checkbox w OBU trybach zaznacza tylko sam węzeł, nigdy potomków.
    */
   public setCascade(cascade: MaybeSignal<ErpTreeCascadeMode>): this {
     this._data.cascade = cascade;
@@ -73,7 +75,8 @@ export class ErpTreeBuilder<T = any> extends ErpInputBaseBuilder<ErpTreeConfig<T
   }
 
   /**
-   * Ustawia, czy można zaznaczać tylko węzły na najniższym poziomie (liście).
+   * Multi + cascade='subtree': pokazuje przy checkboxie przycisk zaznaczający całe poddrzewo
+   * węzła (a gdy jest już w całości zaznaczone — odznaczający je), bez zmiany stanu samego węzła.
    */
   public setAllowDescendantsOnly(allow: MaybeSignal<boolean>): this {
     this._data.allowDescendantsOnly = allow;

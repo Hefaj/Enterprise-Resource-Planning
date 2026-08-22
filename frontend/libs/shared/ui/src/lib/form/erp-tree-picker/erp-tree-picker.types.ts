@@ -24,7 +24,9 @@ export interface ErpTreePickerConfig<T = any> extends ErpInputBase {
   searchFn?: (query: ErpTreeSearchQuery) => any;
 
   strategy?: MaybeSignal<ErpTreePickerStrategy>;
+  /** Zapis zaznaczenia potomków — patrz `ErpTreeConfig.cascade`. Klik w checkbox zaznacza sam węzeł. */
   cascade?: MaybeSignal<ErpTreeCascadeMode>;
+  /** Przycisk „zaznacz/odznacz całe poddrzewo" przy checkboxie — patrz `ErpTreeConfig.allowDescendantsOnly`. */
   allowDescendantsOnly?: MaybeSignal<boolean>;
 
   label?: MaybeSignal<Translatable | undefined>;

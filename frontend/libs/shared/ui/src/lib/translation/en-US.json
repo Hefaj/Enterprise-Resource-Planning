@@ -92,6 +92,7 @@
   },
   "inputPicker": {
     "empty": "No results",
+    "search": "Search...",
     "selectedCount": "Selected ({{count}})",
     "loadingMore": "Loading more items..."
   },
@@ -102,7 +103,8 @@
     "loading": "Loading...",
     "selectedCount": "Selected ({{count}})",
     "withSubcategories": "with subcategories",
-    "selectDescendantsOnly": "Select only subcategories (not this item)",
+    "selectDescendants": "Select all descendants",
+    "deselectDescendants": "Deselect all descendants",
     "clear": "Clear selection"
   },
   "bulkInput": {

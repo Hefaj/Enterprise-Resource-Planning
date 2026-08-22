@@ -5,11 +5,13 @@ import {
   Component,
   computed,
   effect,
+  ElementRef,
   forwardRef,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -19,7 +21,6 @@ import {
   TuiErrorComponent,
   TuiDropdown,
   TuiDataList,
-  TuiFilterByInputPipe,
   TuiLoader,
   type TuiItemsHandlers,
   TUI_ITEMS_HANDLERS,
@@ -56,7 +57,6 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
     TuiErrorComponent,
     TuiDropdown,
     TuiDataList,
-    TuiFilterByInputPipe,
     TuiLoader,
     TuiComboBoxDirective,
     TuiInputChipDirective,
@@ -94,9 +94,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
           [tuiTextfieldSize]="_size()"
           [tuiTextfieldCleaner]="hasMultiValue()"
           [class.erp-collapsed-multi]="isMultiCollapsed()"
+          [open]="isOpen()"
           (openChange)="onDropdownOpenChange($event)"
         >
-          @let filteredItems = isAsync() ? renderedItems() : (_items() | tuiFilterByInput);
+          @let filteredItems = displayedItems();
           @if (labelText) {
             <label tuiLabel>{{ labelText }}</label>
           }
@@ -115,7 +116,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
             [placeholder]="placeholderText"
             [invalid]="_invalid()"
             (blur)="onBlur()"
-            (input)="onSearchInput($event)"
+            (keydown)="onFieldKeydown($event)"
+            (paste)="blockFieldEdit($event)"
+            (drop)="blockFieldEdit($event)"
           />
           @if (_virtualScroll(); as itemSize) {
             <tui-data-list
@@ -126,6 +129,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
               [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
+              <ng-container *ngTemplateOutlet="searchTemplate" />
               @if (internalLoading() && filteredItems.length === 0) {
                 <div class="erp-picker-loader-container">
                   <tui-loader size="m" />
@@ -165,6 +169,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
               [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
+              <ng-container *ngTemplateOutlet="searchTemplate" />
               @if (internalLoading() && filteredItems.length === 0) {
                 <div class="erp-picker-loader-container">
                   <tui-loader size="m" />
@@ -197,9 +202,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
           erpDropdownMinWidth
           [tuiTextfieldSize]="_size()"
           [tuiTextfieldCleaner]="hasSingleValue()"
+          [open]="isOpen()"
           (openChange)="onDropdownOpenChange($event)"
         >
-          @let filteredItems = isAsync() ? renderedItems() : (_items() | tuiFilterByInput);
+          @let filteredItems = displayedItems();
           @if (labelText) {
             <label tuiLabel>{{ labelText }}</label>
           }
@@ -211,7 +217,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
             [invalid]="_invalid()"
             [strict]="_strict()"
             (blur)="onBlur()"
-            (input)="onSearchInput($event)"
+            (keydown)="onFieldKeydown($event)"
+            (paste)="blockFieldEdit($event)"
+            (drop)="blockFieldEdit($event)"
           />
           @if (_virtualScroll(); as itemSize) {
             <tui-data-list
@@ -221,6 +229,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
               [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
+              <ng-container *ngTemplateOutlet="searchTemplate" />
               @if (internalLoading() && filteredItems.length === 0) {
                 <div class="erp-picker-loader-container">
                   <tui-loader size="m" />
@@ -259,6 +268,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
               [emptyContent]="emptyTuiContent"
               (scroll)="onDataListScroll($event)"
             >
+              <ng-container *ngTemplateOutlet="searchTemplate" />
               @if (internalLoading() && filteredItems.length === 0) {
                 <div class="erp-picker-loader-container">
                   <tui-loader size="m" />
@@ -286,6 +296,22 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
           }
         </tui-textfield>
       }
+
+      <ng-template #searchTemplate>
+        <div class="erp-picker-search">
+          <input
+            #searchRef
+            type="text"
+            class="erp-picker-search-input"
+            [placeholder]="(_searchPlaceholder() | erpTranslate) || (SHARED_KEYS.inputPicker.search | erpTranslate) || ''"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+          />
+          @if (internalLoading()) {
+            <tui-loader size="xs" class="erp-picker-search-loader" />
+          }
+        </div>
+      </ng-template>
 
       <ng-template #itemContentTemplate let-item>
         <span class="erp-input-picker-item">{{ getDisplayString(item) }}</span>
@@ -327,6 +353,47 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+    }
+
+    /* Pole pokazuje zaznaczenie, ale nie przyjmuje tekstu (patrz \`onFieldKeydown\`) — kursor
+       tekstowy sugerowałby edycję, której nie ma. */
+    :host tui-textfield input {
+      caret-color: transparent;
+    }
+
+    /* Wyszukiwarka mieszka w środku tui-data-list (a nie w opakowującym divie), bo
+       \`tuiMultiSelectGroup\` wiąże się z listą tylko wtedy, gdy jest ona korzeniem treści
+       dropdownu. Dlatego przykleja się do góry — inaczej odjeżdżałaby razem z opcjami. */
+    .erp-picker-search {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      background: var(--tui-background-elevation-1, var(--tui-background-base));
+      border-bottom: 1px solid var(--tui-border-normal-subtle, rgba(0, 0, 0, 0.08));
+      flex-shrink: 0;
+    }
+
+    .erp-picker-search-input {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      font: var(--tui-typography-body-s);
+      color: var(--tui-text-primary);
+      background: var(--tui-background-neutral-1);
+      border: 1px solid var(--tui-border-normal-subtle, rgba(0, 0, 0, 0.08));
+      border-radius: var(--tui-radius-m);
+      outline: none;
+
+      &:focus {
+        border-color: var(--tui-background-accent-1);
+      }
+    }
+
+    .erp-picker-search-loader {
+      position: absolute;
+      right: 1rem;
     }
 
     /* Panel dropdownu: nigdy węższy niż input (wymusza to \`erpDropdownMinWidth\` na
@@ -425,6 +492,10 @@ export class ErpInputPickerComponent implements ControlValueAccessor, TuiItemsHa
   readonly disabledItemHandler = signal(TUI_FALSE_HANDLER);
 
   protected readonly shake = signal<boolean>(false);
+  protected readonly isOpen = signal<boolean>(false);
+  /** Treść wyszukiwarki w panelu — pole formularza jest tylko do odczytu, więc filtr żyje tutaj. */
+  protected readonly searchQuery = signal<string>('');
+  private readonly searchRef = viewChild<ElementRef<HTMLInputElement>>('searchRef');
   protected readonly internalLoading = signal<boolean>(false);
   protected readonly loadingMore = signal<boolean>(false);
   protected readonly asyncItems = signal<any[]>([]);
@@ -570,26 +641,37 @@ export class ErpInputPickerComponent implements ControlValueAccessor, TuiItemsHa
 
       if (isMulti) {
         const valArray = Array.isArray(activeVal) ? activeVal : (activeVal !== null && activeVal !== undefined ? [activeVal] : []);
-        const matched = currentItems.filter(item => {
-          const retVal = this.getReturnValue(item);
-          return valArray.some(v => v === retVal || (typeof v === 'object' && v !== null && typeof retVal === 'object' && retVal !== null && JSON.stringify(v) === JSON.stringify(retVal)));
-        });
+        const matched = valArray.map(v => this.resolveItem(v, currentItems)).filter(item => item !== null && item !== undefined);
         this.multiControl.setValue(matched, { emitEvent: false });
       } else {
         if (activeVal === null || activeVal === undefined || activeVal === '') {
           this.comboControl.setValue(null, { emitEvent: false });
         } else {
-          const matched = currentItems.find(item => {
-            const retVal = this.getReturnValue(item);
-            return activeVal === retVal || (typeof activeVal === 'object' && activeVal !== null && typeof retVal === 'object' && retVal !== null && JSON.stringify(activeVal) === JSON.stringify(retVal));
-          });
-          this.comboControl.setValue(matched ?? activeVal, { emitEvent: false });
+          this.comboControl.setValue(this.resolveItem(activeVal, currentItems), { emitEvent: false });
         }
       }
     } finally {
       this.isUpdatingFromModel = false;
       this.stateTrigger.update(v => v + 1);
     }
+  }
+
+  /**
+   * Zamienia wartość modelu na pozycję do wyświetlenia. Sama lista aktualnie wczytanych pozycji
+   * nie wystarczy: w trybie asynchronicznym wyszukiwanie w panelu podmienia ją na wyniki frazy,
+   * a zaznaczonej pozycji może w nich nie być — bez sięgnięcia do kesza pole pokazałoby wtedy
+   * surowe UUID zamiast nazwy. Gdy pozycji nie ma nigdzie, zwracamy samą wartość (Taiga wyświetli
+   * ją przez `stringifyHandler`).
+   */
+  private resolveItem(value: any, currentItems: readonly any[]): any {
+    const matched = currentItems.find(item => {
+      const retVal = this.getReturnValue(item);
+      return value === retVal
+        || (typeof value === 'object' && value !== null && typeof retVal === 'object' && retVal !== null
+          && JSON.stringify(value) === JSON.stringify(retVal));
+    });
+
+    return matched ?? this.itemCache.get(value) ?? value;
   }
 
   protected updateActiveValue(val: any): void {
@@ -662,6 +744,8 @@ export class ErpInputPickerComponent implements ControlValueAccessor, TuiItemsHa
   }
 
   protected onBlur(): void {
+    // Otwarcie panelu zabiera focus z pola — to nie jest opuszczenie kontrolki przez użytkownika.
+    if (this.isOpen()) return;
     this.onTouched();
     this.activeControl().markAsTouched();
     this.stateTrigger.update(v => v + 1);
@@ -673,6 +757,20 @@ export class ErpInputPickerComponent implements ControlValueAccessor, TuiItemsHa
   protected readonly _pageSize = computed(() => unwrapSignal(this.config().pageSize) ?? 50);
   protected readonly isAsync = computed(() => typeof this._searchFn() === 'function' && typeof this._getFn() === 'function');
   protected readonly renderedItems = computed(() => this.isAsync() ? this.asyncItems() : this._items());
+
+  /**
+   * Tryb client filtruje listę lokalnie po tekście z wyszukiwarki panelu — wcześniej robił to
+   * `| tuiFilterByInput` na podstawie treści pola formularza, które teraz jest tylko do odczytu.
+   */
+  protected readonly filteredSyncItems = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const items = this._items();
+    if (!query) return items;
+    return items.filter((item) => this.getDisplayString(item).toLowerCase().includes(query));
+  });
+
+  /** Pozycje faktycznie renderowane w panelu: serwer filtruje sam, klient przez `filteredSyncItems`. */
+  protected readonly displayedItems = computed(() => this.isAsync() ? this.asyncItems() : this.filteredSyncItems());
 
   protected readonly _strategy = computed(() => unwrapSignal(this.config().strategy) ?? 'single');
   protected readonly _isMulti = computed(() => this._strategy() === 'multi');
@@ -766,23 +864,60 @@ export class ErpInputPickerComponent implements ControlValueAccessor, TuiItemsHa
     this.stateTrigger.update(v => v + 1);
   }
 
+  /**
+   * Pole formularza jest wizytówką zaznaczenia, nie edytorem — wpisywanie i kasowanie idzie do
+   * wyszukiwarki w panelu. Nie da się tego zrobić przez \`readOnly\`: Taiga liczy z niego
+   * \`TuiControl.interactive\`, a to wyłącza \`tuiDropdownEnabled\` i panel przestaje się otwierać.
+   * Dlatego blokujemy same klawisze edycji, przepuszczając nawigację (Tab, strzałki, Enter, Escape)
+   * i skróty z modyfikatorem. \`stopImmediatePropagation\` zdejmuje też host-listenery Taigi
+   * (kasowanie chipa Backspace'em, wklejanie pozycji), które nie patrzą na \`defaultPrevented\`.
+   */
+  protected onFieldKeydown(event: KeyboardEvent): void {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const isEditingKey = event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete';
+    if (!isEditingKey) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+
+  protected blockFieldEdit(event: Event): void {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+
   protected onSearchInput(event: Event): void {
-    if (!this.isAsync()) return;
     const val = (event.target as HTMLInputElement)?.value ?? '';
-    this.searchSubject.next(val);
+    this.searchQuery.set(val);
+    if (this.isAsync()) {
+      this.searchSubject.next(val.trim());
+    }
   }
 
   protected onDropdownOpenChange(open: boolean): void {
+    this.isOpen.set(open);
+
     if (!open) {
       this.onTouched();
       this.activeControl().markAsTouched();
       this.stateTrigger.update(v => v + 1);
+      return;
     }
-    if (open && this.isAsync() && this.asyncItems().length === 0 && !this.internalLoading()) {
-      this.currentPage.set(0);
-      this.hasMorePages.set(true);
-      this.performSearch(this.currentSearchQuery(), 0, false);
-    }
+
+    // Panel (*tuiDropdown) montuje się dopiero po zakończeniu bieżącego cyklu detekcji zmian,
+    // więc `searchRef()` jest tu jeszcze pusty — focus ustawiamy w makrotasku, po renderze.
+    this.searchQuery.set('');
+    setTimeout(() => this.searchRef()?.nativeElement.focus());
+
+    if (!this.isAsync() || this.internalLoading()) return;
+
+    // Świeży panel = pusta wyszukiwarka, więc wyniki zawężone poprzednią frazą trzeba pobrać od nowa.
+    // Gdy poprzednia fraza była pusta, pierwsza strona jest już w `asyncItems` — nie odpytujemy API.
+    if (this.asyncItems().length > 0 && this.currentSearchQuery() === '') return;
+
+    this.currentSearchQuery.set('');
+    this.currentPage.set(0);
+    this.hasMorePages.set(true);
+    this.performSearch('', 0, false);
   }
 
   protected onVirtualScrollIndexChange(index: number, totalLength: number): void {

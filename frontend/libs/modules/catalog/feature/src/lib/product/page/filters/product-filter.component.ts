@@ -41,11 +41,14 @@ export class ProductFilterComponent implements OnInit {
 
   private readonly categoryFieldConfig: CatalogCategoryTreePickerConfig = {
     label: 'Kategorie',
+    strategy: 'multi',
+    maxCollapseCount: 1,
   };
 
   /** Etykiety pickera gwarancji biorą się z jego własnego scope'u (`WARRANTY_KEYS`) — tu tylko strategia. */
   private readonly warrantyFieldConfig: CatalogWarrantyPickerConfig = {
     strategy: 'multi',
+    maxCollapseCount: 1,
   };
 
   private readonly initialValues = computed(() => ({

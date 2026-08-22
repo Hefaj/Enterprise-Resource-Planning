@@ -1,30 +1,40 @@
 /**
  * Czysta logika selekcji drzewa — bez Angulara, bez wiedzy o strukturze komponentu.
  *
- * Selekcja NIE jest listą uuid (nie skaluje się do drzew z dziesiątkami tysięcy węzłów —
- * zaznaczenie korzenia nie może wymagać wypisania wszystkich potomków). Zamiast tego jest
- * deskryptorem: `ids` (dla trybu cascade='none', niezależne znaczniki per węzeł) albo
- * `subtreeRoots` + `excluded` (dla trybu cascade='subtree', poddrzewa z wyjątkami).
+ * **Kliknięcie checkboxa zaznacza WYŁĄCZNIE ten węzeł** — nigdy jego potomków. Zaznaczenie
+ * całego poddrzewa to osobna, jawna akcja (`setDescendantsSelected`, w UI przycisk obok
+ * checkboxa), która z kolei nie rusza własnego stanu węzła.
  *
- * Wzorzec `subtreeRoots: [X], excluded: [X]` to "zaznacz dzieci X bez samego X" —
- * węzeł jest jednocześnie korzeniem poddrzewa (pokrywa potomków) i wykluczony (siebie samego).
+ * Selekcja NIE jest listą uuid (nie skaluje się do drzew z dziesiątkami tysięcy węzłów —
+ * zaznaczenie poddrzewa nie może wymagać wypisania wszystkich potomków). Jest deskryptorem
+ * o dwóch rozłącznych warstwach:
+ *  - `ids` — węzły zaznaczone SAME, klikiem w checkbox; zawsze włączone, niezależnie od
+ *    pokrycia i wykluczeń (ta sama reguła co w backendowym `TreeSelectionResolver`),
+ *  - `subtreeRoots` + `excluded` — pokrycie poddrzew z akcji „zaznacz potomków", z carve-outami
+ *    po ręcznym odznaczeniu pojedynczych węzłów w środku.
+ *
+ * Korzeń pokrycia jest ZAWSZE zapisywany jako para `subtreeRoots: [X] + excluded: [X]`
+ * („poddrzewo X bez samego X"): pokrycie z definicji dotyczy potomków, a własny stan X żyje
+ * wyłącznie w `ids`. Dzięki temu obie warstwy nigdy nie walczą o ten sam węzeł.
+ *
+ * W trybie `cascade='none'` istnieje tylko `ids` — drzewo zachowuje się jak płaska lista.
  */
 
 export type ErpTreeCascadeMode = 'none' | 'subtree';
 /**
- * `'indeterminate'` — węzeł SAM nie jest zaznaczony, ale coś poniżej niego jest (klasyczny
- * częściowy stan). `'checked-partial'` — węzeł SAM JEST zaznaczony, ale nie wszystkie jego
- * bezpośrednie dzieci są (odróżnia to od zwykłego 'checked', bez mylenia z 'indeterminate',
- * gdzie to węzeł sam nie jest zaznaczony) — patrz `getNodeState`.
+ * `'indeterminate'` — węzeł SAM nie jest zaznaczony, ale coś w jego poddrzewie jest. Stanu
+ * „zaznaczony, ale nie wszystkie dzieci" nie ma: przy zaznaczaniu bez kaskady to normalny,
+ * oczekiwany układ, a nie sytuacja wymagająca osobnego ostrzeżenia — ilu potomków jest
+ * zaznaczonych, mówi licznik obok etykiety.
  */
-export type ErpTreeNodeCheckState = 'checked' | 'unchecked' | 'indeterminate' | 'checked-partial';
+export type ErpTreeNodeCheckState = 'checked' | 'unchecked' | 'indeterminate';
 
 export interface ErpTreeSelectionValue {
-  /** Niezależne znaczniki węzłów — używane wyłącznie w trybie cascade='none'. */
+  /** Węzły zaznaczone same z siebie (klik w checkbox) — zawsze włączone, bez wpływu na potomków. */
   readonly ids: readonly string[];
-  /** Korzenie zaznaczonych poddrzew — używane wyłącznie w trybie cascade='subtree'. */
+  /** Korzenie pokrytych poddrzew („zaznacz potomków") — używane wyłącznie w trybie cascade='subtree'. */
   readonly subtreeRoots: readonly string[];
-  /** Wykluczenia wewnątrz zaznaczonych poddrzew (carve-outs) — cascade='subtree'. */
+  /** Wykluczenia wewnątrz pokrytych poddrzew (carve-outs) — cascade='subtree'. */
   readonly excluded: readonly string[];
 }
 
@@ -92,6 +102,29 @@ function resolveAncestorCoverage(
 }
 
 /**
+ * Domyślny stan pokrycia, jaki DZIEDZICZĄ dzieci węzła — świadomie z pominięciem `ids`, bo
+ * własne zaznaczenie węzła nie kaskaduje w dół. Kolejność (`subtreeRoots` przed `excluded`)
+ * musi być identyczna jak w `resolveAncestorCoverage`: korzeń pokrycia jest dla SIEBIE
+ * wykluczony, ale dla swoich dzieci nadal pokrywający.
+ */
+export function resolveChildCoverage(
+  id: string,
+  value: ErpTreeSelectionValue,
+  cascade: ErpTreeCascadeMode,
+  getParentId: ErpTreeParentResolver,
+): boolean {
+  if (cascade === 'none') return false;
+
+  const roots = new Set(value.subtreeRoots);
+  if (roots.has(id)) return true;
+
+  const excluded = new Set(value.excluded);
+  if (excluded.has(id)) return false;
+
+  return resolveAncestorCoverage(id, roots, excluded, getParentId);
+}
+
+/**
  * Czy węzeł jest częścią zaznaczenia (niezależnie od tego, co dzieje się w jego poddrzewie).
  * To źródło prawdy przy materializacji konkretnych uuid (`resolveCheckedIds`) — w odróżnieniu
  * od `getNodeState`, które dodatkowo pokazuje 'indeterminate', gdy poniżej węzła są wyjątki.
@@ -106,6 +139,12 @@ export function isNodeIncluded(
     return value.ids.includes(id);
   }
 
+  // Własne zaznaczenie węzła rozstrzyga przed pokryciem i wykluczeniami — węzeł może być
+  // zaznaczony sam, mieszkając w środku wyciętego poddrzewa (i odwrotnie: korzeń pokrycia
+  // jest dla siebie wykluczony, dopóki nie trafi do `ids`). Ta sama kolejność co w
+  // `TreeSelectionResolver.IsIncluded` po stronie backendu.
+  if (value.ids.includes(id)) return true;
+
   const excluded = new Set(value.excluded);
   if (excluded.has(id)) return false;
 
@@ -116,7 +155,7 @@ export function isNodeIncluded(
 }
 
 /**
- * Mapa "liczba znaczników (subtreeRoots/excluded) w ścisłym poddrzewie węzła" — do wykrywania
+ * Mapa "liczba znaczników (ids/subtreeRoots/excluded) w ścisłym poddrzewie węzła" — do wykrywania
  * stanu 'indeterminate' bez znajomości pełnego poddrzewa. Koszt: O(liczba znaczników × głębokość),
  * niezależny od rozmiaru całego drzewa. Liczyć raz na zmianę `value`, nie per wiersz.
  */
@@ -128,7 +167,7 @@ export function buildMarksBelowIndex(
   const index = new Map<string, number>();
   if (cascade === 'none') return index;
 
-  const marks = new Set<string>([...value.subtreeRoots, ...value.excluded]);
+  const marks = new Set<string>([...value.ids, ...value.subtreeRoots, ...value.excluded]);
   for (const markId of marks) {
     for (const ancestorId of getAncestorChain(markId, getParentId)) {
       index.set(ancestorId, (index.get(ancestorId) ?? 0) + 1);
@@ -137,72 +176,51 @@ export function buildMarksBelowIndex(
   return index;
 }
 
-/** Stan checkboxa węzła do wyrenderowania. Wymaga `marksBelowIndex` z `buildMarksBelowIndex`.
+/**
+ * Stan checkboxa węzła do wyrenderowania. Wymaga `marksBelowIndex` z `buildMarksBelowIndex`.
  *
- * `getChildrenIds` (opcjonalny) rozstrzyga, czy zaznaczony węzeł ma WSZYSTKIE bezpośrednie
- * dzieci odznaczone (pełny carve-out — realnie nic w jego poddrzewie nie jest już zaznaczone,
- * więc to zwykłe 'checked' bez potomków), czy tylko CZĘŚĆ (`'checked-partial'`, patrz niżej).
- * Sprawdzamy tylko bezpośrednie dzieci (rekurencyjnie przez to samo `getNodeState`) — indeks/
- * resolver ograniczają koszt do okolic znaczników, nie całego poddrzewa. */
+ * Trzy stany wystarczają, bo klik nie kaskaduje: `'checked'` mówi wyłącznie o samym węźle,
+ * a to, ilu jego potomków jest zaznaczonych, pokazuje osobny licznik. `'indeterminate'`
+ * oznacza „sam niezaznaczony, ale coś pod nim jest" — łącznie z węzłem, którego potomkowie
+ * zostali zaznaczeni przyciskiem (`subtreeRoots ∧ excluded`, pokrycie bez samego węzła).
+ */
 export function getNodeState(
   id: string,
   value: ErpTreeSelectionValue,
   cascade: ErpTreeCascadeMode,
   getParentId: ErpTreeParentResolver,
   marksBelowIndex: ReadonlyMap<string, number>,
-  getChildrenIds?: ErpTreeChildrenResolver,
 ): ErpTreeNodeCheckState {
   if (cascade === 'none') {
     return value.ids.includes(id) ? 'checked' : 'unchecked';
   }
 
-  // Węzeł jednocześnie będący korzeniem poddrzewa i wykluczeniem — wzorzec „poddrzewo X bez
-  // samego X” (zaznacz dzieci X, zostawiając X odznaczonym). `buildMarksBelowIndex` nie widzi
-  // tego przypadku: liczy tylko znaczniki w ŚCISŁYM poddrzewie węzła (idąc od znacznika w górę
-  // do przodków), a własny znacznik węzła nigdy nie jest swoim własnym przodkiem. Bez tej reguły
-  // X wypadał jako 'unchecked' (bo `isNodeIncluded` rozstrzyga „wykluczony” dla samego siebie),
-  // mimo że realnie ma zaznaczone wszystkie dzieci.
-  if (value.subtreeRoots.includes(id) && value.excluded.includes(id)) return 'indeterminate';
+  if (isNodeIncluded(id, value, cascade, getParentId)) return 'checked';
 
-  const marksBelow = marksBelowIndex.get(id) ?? 0;
-  if (marksBelow === 0) {
-    return isNodeIncluded(id, value, cascade, getParentId) ? 'checked' : 'unchecked';
-  }
+  // Węzeł sam niezaznaczony: pokrycie jego potomków albo jakikolwiek znacznik niżej oznacza,
+  // że w poddrzewie coś jednak jest zaznaczone.
+  if (value.subtreeRoots.includes(id)) return 'indeterminate';
 
-  if (!isNodeIncluded(id, value, cascade, getParentId)) {
-    // Węzeł SAM nie jest zaznaczony, ale poniżej niego jest wyjątek (coś jest zaznaczone
-    // mimo braku pokrycia od tego węzła) — klasyczny stan pośredni.
-    return 'indeterminate';
-  }
-
-  // Węzeł SAM jest zaznaczony — sprawdzamy, czy pełny carve-out (wszystkie bezpośrednie
-  // dzieci 'unchecked') sprowadza go z powrotem do zwykłego 'checked' bez potomków.
-  if (getChildrenIds) {
-    const children = getChildrenIds(id);
-    if (
-      children &&
-      children.length > 0 &&
-      children.every(
-        (childId) => getNodeState(childId, value, cascade, getParentId, marksBelowIndex, getChildrenIds) === 'unchecked',
-      )
-    ) {
-      return 'checked';
-    }
-  }
-  // Węzeł zaznaczony, ale nie wszystkie dzieci są (albo nie da się tego jednoznacznie
-  // ustalić bez `getChildrenIds`, np. niedoładowana strona w trybie server) — w
-  // odróżnieniu od 'indeterminate' (węzeł SAM nie zaznaczony) UI musi to pokazać jako
-  // zaznaczony węzeł z dodatkowym ostrzeżeniem, nie jako myślnik zastępujący checkbox.
-  return 'checked-partial';
+  return (marksBelowIndex.get(id) ?? 0) > 0 ? 'indeterminate' : 'unchecked';
 }
 
-/** Zaznacza/odznacza pojedynczy węzeł, z kaskadą zgodną z `cascade`. */
+/**
+ * Zaznacza/odznacza POJEDYNCZY węzeł — nigdy jego potomków (patrz opis modułu).
+ *
+ * Odznaczenie węzła, który był zaznaczony nie własnym znacznikiem, tylko pokryciem poddrzewa
+ * z góry, zapisuje się jako wykluczenie. Samo wykluczenie ucięłoby jednak także jego potomków
+ * (pokrycie od przodka zatrzymuje się na pierwszym wykluczeniu), a odznaczenie ma dotyczyć
+ * wyłącznie tego węzła — dlatego dla węzła z dziećmi dokładamy jego własny wpis w
+ * `subtreeRoots`, czyli parę „poddrzewo X bez samego X". Dla liścia (`hasChildren: false`)
+ * ten wpis byłby pokryciem nad pustką i fałszywie robił z niego węzeł „częściowo zaznaczony".
+ */
 export function setNodeChecked(
   id: string,
   checked: boolean,
   value: ErpTreeSelectionValue,
   cascade: ErpTreeCascadeMode,
   getParentId: ErpTreeParentResolver,
+  options: { hasChildren?: boolean } = {},
 ): ErpTreeSelectionValue {
   if (cascade === 'none') {
     const ids = new Set(value.ids);
@@ -210,81 +228,87 @@ export function setNodeChecked(
     return { ids: [...ids], subtreeRoots: [], excluded: [] };
   }
 
+  const ids = new Set(value.ids);
   const roots = new Set(value.subtreeRoots);
   const excluded = new Set(value.excluded);
 
   if (checked) {
-    excluded.delete(id);
-    if (!roots.has(id) && !resolveAncestorCoverage(id, roots, excluded, getParentId)) {
-      roots.add(id);
-    }
+    ids.add(id);
   } else {
-    if (roots.has(id)) {
-      roots.delete(id);
-    } else if (resolveAncestorCoverage(id, roots, excluded, getParentId)) {
+    ids.delete(id);
+    const coveredFromAbove = !excluded.has(id) && resolveAncestorCoverage(id, roots, excluded, getParentId);
+    if (coveredFromAbove) {
       excluded.add(id);
+      if (options.hasChildren) roots.add(id);
     }
   }
 
-  return normalize({ ids: [], subtreeRoots: [...roots], excluded: [...excluded] }, cascade, getParentId);
+  return normalize({ ids: [...ids], subtreeRoots: [...roots], excluded: [...excluded] }, cascade, getParentId);
 }
 
 /**
- * Dopełnia zaznaczenie węzła w stanie 'indeterminate' do pełnego poddrzewa — czyści
- * wszystkie wyjątki (`excluded`) leżące w jego obrębie, zamiast tylko dodać sam węzeł
- * jako korzeń (którym w stanie 'indeterminate' już jest). Używane po kliknięciu wizualnego
- * wskaźnika stanu częściowego — konwencja "kliknięcie 'częściowo zaznaczone' zaznacza wszystko".
+ * Zaznacza albo odznacza CAŁE poddrzewo węzła (wszystkich potomków, dowolnie głęboko), nie
+ * ruszając własnego stanu węzła — akcja przycisku obok checkboxa. Pokrycie zapisuje się jako
+ * para `subtreeRoots: [id] + excluded: [id]`, więc działa bez znajomości listy dzieci (tryb
+ * server, niedoładowane strony). Wszystkie znaczniki wewnątrz poddrzewa znikają: operacja
+ * ustawia jednolity stan całej gałęzi, a nie nakłada się na wcześniejsze wyjątki.
+ *
+ * Dostępna wyłącznie w trybie cascade='subtree'.
  */
-export function selectFullSubtree(
+export function setDescendantsSelected(
   id: string,
-  value: ErpTreeSelectionValue,
-  cascade: ErpTreeCascadeMode,
-  getParentId: ErpTreeParentResolver,
-): ErpTreeSelectionValue {
-  if (cascade === 'none') {
-    return setNodeChecked(id, true, value, cascade, getParentId);
-  }
-
-  const roots = new Set(value.subtreeRoots);
-  const excluded = new Set(value.excluded);
-  excluded.delete(id);
-  if (!roots.has(id) && !resolveAncestorCoverage(id, roots, excluded, getParentId)) {
-    roots.add(id);
-  }
-  for (const e of [...excluded]) {
-    if (e === id || getAncestorChain(e, getParentId).includes(id)) {
-      excluded.delete(e);
-    }
-  }
-
-  return normalize({ ids: [], subtreeRoots: [...roots], excluded: [...excluded] }, cascade, getParentId);
-}
-
-/**
- * Zaznacza dzieci węzła, NIE zmieniając własnego stanu zaznaczenia węzła — jeśli węzeł nie był
- * zaznaczony, zostaje niezaznaczony (wzorzec `subtreeRoots: [id], excluded: [id]` — "tylko
- * dzieci"); jeśli już był zaznaczony (wprost albo przez pokrycie od przodka), zostaje zaznaczony
- * nadal — akcja wtedy sprowadza się do dociągnięcia pełnego pokrycia jego poddrzewa
- * (`selectFullSubtree`), bez wymuszania na nim wykluczenia. Dostępne wyłącznie w trybie
- * multi + cascade='subtree'.
- */
-export function setDescendantsOnly(
-  id: string,
+  selected: boolean,
   value: ErpTreeSelectionValue,
   cascade: ErpTreeCascadeMode,
   getParentId: ErpTreeParentResolver,
 ): ErpTreeSelectionValue {
   if (cascade !== 'subtree') return value;
 
-  if (isNodeIncluded(id, value, cascade, getParentId)) {
-    return selectFullSubtree(id, value, cascade, getParentId);
-  }
-
+  const ids = new Set(value.ids);
   const roots = new Set(value.subtreeRoots);
   const excluded = new Set(value.excluded);
-  roots.add(id);
-  excluded.add(id);
-  return normalize({ ids: [], subtreeRoots: [...roots], excluded: [...excluded] }, cascade, getParentId);
+
+  const isBelow = (markId: string) => markId !== id && getAncestorChain(markId, getParentId).includes(id);
+  for (const set of [ids, roots, excluded]) {
+    for (const markId of [...set]) {
+      if (isBelow(markId)) set.delete(markId);
+    }
+  }
+
+  // Obie gałęzie niżej mogą wykluczyć sam węzeł (pokrycie dotyczy potomków), więc jego własne
+  // zaznaczenie — jeśli było — materializujemy do `ids`, gdzie żyje niezależnie od pokrycia.
+  if (isNodeIncluded(id, value, cascade, getParentId)) ids.add(id);
+
+  if (selected) {
+    roots.add(id);
+    excluded.add(id);
+  } else {
+    roots.delete(id);
+    excluded.delete(id);
+    // Pokrycie od przodka nadal sięgałoby w dół — trzeba je odciąć na tym węźle.
+    if (resolveAncestorCoverage(id, roots, excluded, getParentId)) excluded.add(id);
+  }
+
+  return normalize({ ids: [...ids], subtreeRoots: [...roots], excluded: [...excluded] }, cascade, getParentId);
+}
+
+/**
+ * Czy WSZYSCY potomkowie węzła są zaznaczeni — pokrycie dociera do jego dzieci i nie ma pod nim
+ * ani jednego znacznika (wyjątku, własnego zaznaczenia, zagnieżdżonego pokrycia). Rozstrzyga,
+ * czy przycisk „potomkowie" ma teraz zaznaczać, czy odznaczać, i czy pokazać go jako aktywny.
+ */
+export function areAllDescendantsSelected(
+  id: string,
+  value: ErpTreeSelectionValue,
+  cascade: ErpTreeCascadeMode,
+  getParentId: ErpTreeParentResolver,
+  marksBelowIndex?: ReadonlyMap<string, number>,
+): boolean {
+  if (cascade !== 'subtree') return false;
+  if (!resolveChildCoverage(id, value, cascade, getParentId)) return false;
+
+  const index = marksBelowIndex ?? buildMarksBelowIndex(value, cascade, getParentId);
+  return (index.get(id) ?? 0) === 0;
 }
 
 /** Zwraca DIRECT dzieci węzła, albo `null` gdy nie wszystkie są jeszcze znane (np. stronicowanie
@@ -334,8 +358,10 @@ export function collapseCarvedOutAncestor(
 
 /**
  * Usuwa nadmiarowe znaczniki: zagnieżdżone korzenie poddrzew, wykluczenia niepokryte przez
- * żaden korzeń (poza wzorcem "tylko dzieci") i wykluczenia zagnieżdżone pod innym wykluczeniem.
- * Bez tego deskryptor rośnie bez ograniczeń przy powtarzalnym zaznaczaniu/odznaczaniu.
+ * żaden korzeń (poza wzorcem „poddrzewo X bez samego X"), wykluczenia zagnieżdżone pod innym
+ * wykluczeniem i własne zaznaczenia (`ids`) węzłów, które i tak są już pokryte poddrzewem
+ * z góry. Bez tego deskryptor rośnie bez ograniczeń przy powtarzalnym zaznaczaniu/odznaczaniu,
+ * a podwójnie policzone węzły zawyżają liczniki zaznaczenia.
  */
 export function normalize(
   value: ErpTreeSelectionValue,
@@ -377,7 +403,17 @@ export function normalize(
     }
   }
 
-  return { ids: [], subtreeRoots: [...roots], excluded: [...excluded] };
+  const ids = new Set(value.ids);
+  for (const i of [...ids]) {
+    // Własne zaznaczenie jest nadmiarowe tylko wtedy, gdy pokrycie z góry realnie do węzła
+    // dociera — jego własne wykluczenie (wzorzec „poddrzewo bez samego siebie") to pokrycie
+    // odcina, więc wtedy `ids` jest JEDYNYM nośnikiem zaznaczenia tego węzła.
+    if (!excluded.has(i) && resolveAncestorCoverage(i, roots, excluded, getParentId)) {
+      ids.delete(i);
+    }
+  }
+
+  return { ids: [...ids], subtreeRoots: [...roots], excluded: [...excluded] };
 }
 
 /**
@@ -394,9 +430,14 @@ export function resolveCheckedIds(
   return allIds.filter((id) => isNodeIncluded(id, value, cascade, getParentId));
 }
 
-/** Liczba "znaczników" w deskryptorze — do pokazania w UI (np. "Zaznaczono: 3 gałęzie"). */
+/**
+ * Liczba „znaczników" w deskryptorze — ile węzłów użytkownik dotknął (zaznaczył sam albo
+ * zaznaczył ich potomków), a NIE ile elementów realnie obejmuje zaznaczenie (od tego jest
+ * `resolveSelectedItemCount`). Węzeł zaznaczony sam i mający zaznaczonych potomków to jeden
+ * znacznik, nie dwa.
+ */
 export function countMarks(value: ErpTreeSelectionValue): number {
-  return value.ids.length + value.subtreeRoots.length;
+  return new Set([...value.ids, ...value.subtreeRoots]).size;
 }
 
 /** Zwraca `descendantCount` węzła (łączna, rekurencyjna liczba potomków), albo `undefined`
@@ -452,13 +493,15 @@ function buildMarkTree(
  */
 function computeMarkCount(
   m: string,
+  ids: ReadonlySet<string>,
   roots: ReadonlySet<string>,
   excluded: ReadonlySet<string>,
   childrenOfMark: ReadonlyMap<string, string[]>,
   getDescendantCount: ErpTreeDescendantCountResolver,
 ): number | null {
   const subtreeDefaultIncluded = roots.has(m);
-  const isExcluded = excluded.has(m);
+  // Ta sama kolejność co w `isNodeIncluded`: własne zaznaczenie przed wykluczeniem.
+  const selfIncluded = ids.has(m) || !excluded.has(m);
 
   let subtreeTotal = 0;
   if (subtreeDefaultIncluded) {
@@ -471,12 +514,12 @@ function computeMarkCount(
     const childDc = getDescendantCount(child);
     if (childDc === undefined) return null;
     const childDefaultCount = subtreeDefaultIncluded ? 1 + childDc : 0;
-    const childActual = computeMarkCount(child, roots, excluded, childrenOfMark, getDescendantCount);
+    const childActual = computeMarkCount(child, ids, roots, excluded, childrenOfMark, getDescendantCount);
     if (childActual === null) return null;
     subtreeTotal += childActual - childDefaultCount;
   }
 
-  return (isExcluded ? 0 : 1) + subtreeTotal;
+  return (selfIncluded ? 1 : 0) + subtreeTotal;
 }
 
 export function resolveSelectedItemCount(
@@ -487,16 +530,17 @@ export function resolveSelectedItemCount(
 ): number | null {
   if (cascade === 'none') return value.ids.length;
 
+  const ids = new Set(value.ids);
   const roots = new Set(value.subtreeRoots);
   const excluded = new Set(value.excluded);
-  const marks = new Set<string>([...roots, ...excluded]);
+  const marks = new Set<string>([...ids, ...roots, ...excluded]);
   if (marks.size === 0) return 0;
 
   const { childrenOfMark, topLevel } = buildMarkTree(marks, getParentId);
 
-  let total = value.ids.length;
+  let total = 0;
   for (const m of topLevel) {
-    const c = computeMarkCount(m, roots, excluded, childrenOfMark, getDescendantCount);
+    const c = computeMarkCount(m, ids, roots, excluded, childrenOfMark, getDescendantCount);
     if (c === null) return null;
     total += c;
   }
@@ -530,19 +574,14 @@ export function resolveSelectedDescendantCount(
     return count;
   }
 
+  const ids = new Set(value.ids);
   const roots = new Set(value.subtreeRoots);
   const excluded = new Set(value.excluded);
-  const allMarks = new Set<string>([...roots, ...excluded]);
+  const allMarks = new Set<string>([...ids, ...roots, ...excluded]);
 
-  // Domyślny stan pokrycia, jaki DZIEDZICZĄ dzieci `id` — to NIE to samo, co
-  // `isNodeIncluded(id, ...)` (własne zaznaczenie samego `id`). Rozjeżdżają się dla
-  // wzorca „tylko dzieci" (`setDescendantsOnly`, `id` jednocześnie w `roots` i
-  // `excluded`): `id` samo jest wykluczone (isNodeIncluded=false), ale jego dzieci SĄ
-  // domyślnie pokryte, bo `id` nadal pełni funkcję subtreeRoot dla nich. Kolejność
-  // sprawdzania musi być identyczna jak w `resolveAncestorCoverage` (pokrycie od roots
-  // rozstrzyga PRZED wykluczeniem) — inaczej wzorzec „tylko dzieci" fałszywie zwraca 0
-  // zaznaczonych potomków, mimo że w UI widać je jako w pełni zaznaczone.
-  const childDefaultIncluded = roots.has(id) ? true : excluded.has(id) ? false : isNodeIncluded(id, value, cascade, getParentId);
+  // Domyślny stan pokrycia, jaki DZIEDZICZĄ dzieci `id` — to NIE to samo, co własne
+  // zaznaczenie `id` (`isNodeIncluded`), bo klik w checkbox nie kaskaduje w dół.
+  const childDefaultIncluded = resolveChildCoverage(id, value, cascade, getParentId);
 
   const baselineDc = childDefaultIncluded ? getDescendantCount(id) : 0;
   if (baselineDc === undefined) return null;
@@ -559,7 +598,7 @@ export function resolveSelectedDescendantCount(
     const mDc = getDescendantCount(m);
     if (mDc === undefined) return null;
     const defaultForM = childDefaultIncluded ? 1 + mDc : 0;
-    const actualForM = computeMarkCount(m, roots, excluded, childrenOfMark, getDescendantCount);
+    const actualForM = computeMarkCount(m, ids, roots, excluded, childrenOfMark, getDescendantCount);
     if (actualForM === null) return null;
     total += actualForM - defaultForM;
   }

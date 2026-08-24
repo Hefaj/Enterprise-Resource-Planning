@@ -24,7 +24,7 @@ export class RoleAddPermissionStepComponent extends ErpBatchStepBase<BatchComman
   protected readonly formContent: ErpStepContentConfig;
 
   public constructor() {
-    // Patrz komentarz w `UserAssignRoleStepComponent` — zmienne lokalne zamiast `this.pole`, bo
+    // Patrz komentarz w `UserAddRoleStepComponent` — zmienne lokalne zamiast `this.pole`, bo
     // `super()` jeszcze nie wystartował. `this.metadata()` WEWNĄTRZ ciała `computed(...)` jest
     // bezpieczne (domknięcie wykona się dopiero po konstrukcji) — niebezpieczny byłby tylko
     // odczyt `this._availablePermissions` jako gotowej wartości przekazanej wprost do `.setItems`.

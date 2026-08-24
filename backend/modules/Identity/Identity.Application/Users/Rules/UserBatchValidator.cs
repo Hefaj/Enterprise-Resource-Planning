@@ -34,8 +34,8 @@ public sealed class UserBatchValidator : IBatchValidator
 
     /// <summary>Pre-check masowego nadania roli: użytkownik-cel i referencyjna rola muszą
     /// istnieć.</summary>
-    public async Task<ValidationTracker> ValidateAssignRoleAsync(
-        IReadOnlyList<BatchTarget<UserAssignRoleCommand>> targets,
+    public async Task<ValidationTracker> ValidateAddRoleAsync(
+        IReadOnlyList<BatchTarget<UserAddRoleCommand>> targets,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(targets);
@@ -55,17 +55,17 @@ public sealed class UserBatchValidator : IBatchValidator
     }
 
     /// <summary>Pre-check masowego odebrania roli. Rola sama w sobie nie musi istnieć —
-    /// <c>UserAccount.RevokeRole</c> jest bezpiecznym no-opem, gdy grant nie istnieje (patrz
+    /// <c>UserAccount.RemoveRole</c> jest bezpiecznym no-opem, gdy grant nie istnieje (patrz
     /// dzisiejszy handler synchroniczny), więc jedyną regułą wsadową jest istnienie użytkownika.</summary>
-    public Task<ValidationTracker> ValidateRevokeRoleAsync(
+    public Task<ValidationTracker> ValidateRemoveRoleAsync(
         IReadOnlyList<Guid> aggregateUuids,
         CancellationToken cancellationToken)
         => ValidateUserExistenceAsync(aggregateUuids, cancellationToken);
 
     /// <summary>Pre-check masowego nadania uprawnienia: użytkownik-cel musi istnieć, a kod
     /// uprawnienia musi być znanym, nie wycofanym wpisem katalogu.</summary>
-    public async Task<ValidationTracker> ValidateGrantPermissionAsync(
-        IReadOnlyList<BatchTarget<UserGrantPermissionCommand>> targets,
+    public async Task<ValidationTracker> ValidateAddPermissionAsync(
+        IReadOnlyList<BatchTarget<UserAddPermissionCommand>> targets,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(targets);
@@ -86,7 +86,7 @@ public sealed class UserBatchValidator : IBatchValidator
 
     /// <summary>Pre-check masowego odebrania uprawnienia. Jak przy odebraniu roli — odbieranie
     /// nieistniejącego grantu jest no-opem, więc tylko istnienie użytkownika.</summary>
-    public Task<ValidationTracker> ValidateRevokePermissionAsync(
+    public Task<ValidationTracker> ValidateRemovePermissionAsync(
         IReadOnlyList<Guid> aggregateUuids,
         CancellationToken cancellationToken)
         => ValidateUserExistenceAsync(aggregateUuids, cancellationToken);

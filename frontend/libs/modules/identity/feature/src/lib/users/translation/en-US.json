@@ -26,7 +26,7 @@
       "permissions": "Direct permissions",
       "effective": "Effective permissions"
     },
-    "forceLogout": {
+    "execForceLogout": {
       "label": "Force logout",
       "confirmTitle": "Force logout?",
       "confirmMessage": "The user's Keycloak session will be revoked immediately.",
@@ -79,7 +79,7 @@
     }
   },
   "commands": {
-    "assignRole": {
+    "addRole": {
       "label": "Assign role",
       "modalTitle": "Assign role",
       "roleLabel": "Role",
@@ -92,7 +92,7 @@
       "filterModeSuffix": "matching the current filters.",
       "filterModeHint": "All results are selected — the operation will cover every user matching the filters, including further pages."
     },
-    "grantPermission": {
+    "addPermission": {
       "label": "Grant permission",
       "modalTitle": "Grant permission directly",
       "permissionLabel": "Permission",

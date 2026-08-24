@@ -7,12 +7,12 @@ using P = Erp.BuildingBlocks.Contracts.Permissions;
 namespace Identity.Roles.Command;
 
 /// <summary>
-/// Seryjne zakładanie ról. Jedyny endpoint operacji masowej w Identity, dla którego tryb
-/// szablon+filtr i szablon+identyfikatory NIE mają zastosowania — cel jest agregatem, który
-/// jeszcze nie istnieje, więc nie ma czego wskazać. Sensowny jest wyłącznie tryb <c>Commands[]</c>
-/// (jawna lista nowych ról); filtr zawsze zwraca pusty zbiór.
+/// Seryjne zakładanie ról. Tryby szablon+filtr i szablon+identyfikatory nie mają tu zastosowania
+/// (cel jest agregatem, który jeszcze nie istnieje) — odrzuca je
+/// <see cref="CreateBatchEndpointBase{TCommand, TFilter}"/> błędem 400, wspólnie dla wszystkich
+/// operacji tworzących. Sensowny jest wyłącznie tryb <c>Commands[]</c>.
 /// </summary>
-public sealed class RoleCreateMultipleCommandEndpoint : BatchEndpointBase<RoleCreateCommand, SearchRoleRequest>
+public sealed class RoleCreateMultipleCommandEndpoint : CreateBatchEndpointBase<RoleCreateCommand, SearchRoleRequest>
 {
     private readonly RoleBatchValidator _validator;
 
@@ -33,10 +33,6 @@ public sealed class RoleCreateMultipleCommandEndpoint : BatchEndpointBase<RoleCr
                 + "Tryby filtra i identyfikatorów nie mają zastosowania — nowa rola nie ma "
                 + "jeszcze uuid, którym dałoby się ją wskazać."));
     }
-
-    /// <inheritdoc />
-    protected override Task<IEnumerable<Guid>> GetUuidsFromFilterAsync(SearchRoleRequest filter, CancellationToken ct)
-        => Task.FromResult(Enumerable.Empty<Guid>());
 
     /// <inheritdoc />
     protected override Task<ValidationTracker> ValidateTargetsAsync(

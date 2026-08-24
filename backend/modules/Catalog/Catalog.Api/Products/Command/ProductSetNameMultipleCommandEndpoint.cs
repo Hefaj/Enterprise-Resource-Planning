@@ -25,7 +25,7 @@ public sealed class ProductSetNameMultipleCommandEndpoint
 
     public override void Configure()
     {
-        Post("product/batch-set-name");
+        Post("batch-set-name");
         Group<ProductGroup>();
         Permissions(P.Catalog.ProductUpdate);
         Description(d => d

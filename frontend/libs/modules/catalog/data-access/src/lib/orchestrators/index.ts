@@ -25,3 +25,4 @@ export type { CodeTypeVM } from './code-type/code-type.view-model';
 
 export { CatalogAttributeOrchestrator } from './attribute/catalog-attribute.orchestrator';
 export type { AttributeVM } from './attribute/attribute.view-model';
+export * from './export-run/export-run-result.resolver';

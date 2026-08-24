@@ -11,7 +11,7 @@ namespace Identity.Tests;
 /// Walidator jest miejscem, w którym zapada decyzja „jakie reguły dla której operacji na
 /// użytkownikach”. Testy pilnują, że reguły są niezależne (element zbiera WSZYSTKIE naruszenia
 /// naraz) i że operacje „odbierz” nie wymagają istnienia referencji (patrz uzasadnienie w
-/// <c>UserBatchValidator.ValidateRevokeRoleAsync</c>).
+/// <c>UserBatchValidator.ValidateRemoveRoleAsync</c>).
 /// </summary>
 public class UserBatchValidatorTests
 {
@@ -31,8 +31,8 @@ public class UserBatchValidatorTests
         var role = Guid.NewGuid();
         var validator = Build(new FakeUserAccountQueries(), new FakeRoleQueries { ExistingUuids = { role } });
 
-        var tracker = await validator.ValidateAssignRoleAsync(
-            [new BatchTarget<UserAssignRoleCommand>(missing, new UserAssignRoleCommand { Uuid = missing, RoleUuid = role })],
+        var tracker = await validator.ValidateAddRoleAsync(
+            [new BatchTarget<UserAddRoleCommand>(missing, new UserAddRoleCommand { Uuid = missing, RoleUuid = role })],
             CancellationToken.None);
 
         tracker.Errors[missing][0].ErrorCode.ShouldBe("aggregate_not_found");
@@ -45,8 +45,8 @@ public class UserBatchValidatorTests
         var missingRole = Guid.NewGuid();
         var validator = Build(new FakeUserAccountQueries { ExistingUuids = { user } });
 
-        var tracker = await validator.ValidateAssignRoleAsync(
-            [new BatchTarget<UserAssignRoleCommand>(user, new UserAssignRoleCommand { Uuid = user, RoleUuid = missingRole })],
+        var tracker = await validator.ValidateAddRoleAsync(
+            [new BatchTarget<UserAddRoleCommand>(user, new UserAddRoleCommand { Uuid = user, RoleUuid = missingRole })],
             CancellationToken.None);
 
         tracker.Errors[user][0].ErrorCode.ShouldBe("aggregate_not_found");
@@ -61,22 +61,22 @@ public class UserBatchValidatorTests
             new FakeUserAccountQueries { ExistingUuids = { user } },
             new FakeRoleQueries { ExistingUuids = { role } });
 
-        var tracker = await validator.ValidateAssignRoleAsync(
-            [new BatchTarget<UserAssignRoleCommand>(user, new UserAssignRoleCommand { Uuid = user, RoleUuid = role })],
+        var tracker = await validator.ValidateAddRoleAsync(
+            [new BatchTarget<UserAddRoleCommand>(user, new UserAddRoleCommand { Uuid = user, RoleUuid = role })],
             CancellationToken.None);
 
         tracker.Errors.ShouldBeEmpty();
     }
 
     /// <summary>Odbieranie roli nie wymaga, żeby rola sama w sobie istniała —
-    /// <c>UserAccount.RevokeRole</c> jest bezpiecznym no-opem dla nieznanego grantu.</summary>
+    /// <c>UserAccount.RemoveRole</c> jest bezpiecznym no-opem dla nieznanego grantu.</summary>
     [Fact]
     public async Task Odebranie_roli_nieistniejacej_referencyjnie_wciaz_przechodzi_dla_istniejacego_uzytkownika()
     {
         var user = Guid.NewGuid();
         var validator = Build(new FakeUserAccountQueries { ExistingUuids = { user } });
 
-        var tracker = await validator.ValidateRevokeRoleAsync([user], CancellationToken.None);
+        var tracker = await validator.ValidateRemoveRoleAsync([user], CancellationToken.None);
 
         tracker.Errors.ShouldBeEmpty();
     }
@@ -87,9 +87,9 @@ public class UserBatchValidatorTests
         var user = Guid.NewGuid();
         var validator = Build(new FakeUserAccountQueries { ExistingUuids = { user } });
 
-        var tracker = await validator.ValidateGrantPermissionAsync(
-            [new BatchTarget<UserGrantPermissionCommand>(
-                user, new UserGrantPermissionCommand { Uuid = user, PermissionCode = "literowka.w.kodzie", Reason = "test" })],
+        var tracker = await validator.ValidateAddPermissionAsync(
+            [new BatchTarget<UserAddPermissionCommand>(
+                user, new UserAddPermissionCommand { Uuid = user, PermissionCode = "literowka.w.kodzie", Reason = "test" })],
             CancellationToken.None);
 
         tracker.Errors[user][0].ErrorCode.ShouldBe("permission_code_unknown");
@@ -104,9 +104,9 @@ public class UserBatchValidatorTests
             new FakeUserAccountQueries { ExistingUuids = { user } },
             permissions: new FakePermissionCatalogQueries { ExistingCodes = { code } });
 
-        var tracker = await validator.ValidateGrantPermissionAsync(
-            [new BatchTarget<UserGrantPermissionCommand>(
-                user, new UserGrantPermissionCommand { Uuid = user, PermissionCode = code, Reason = "test" })],
+        var tracker = await validator.ValidateAddPermissionAsync(
+            [new BatchTarget<UserAddPermissionCommand>(
+                user, new UserAddPermissionCommand { Uuid = user, PermissionCode = code, Reason = "test" })],
             CancellationToken.None);
 
         tracker.Errors.ShouldBeEmpty();
@@ -120,9 +120,9 @@ public class UserBatchValidatorTests
         var missing = Guid.NewGuid();
         var validator = Build(new FakeUserAccountQueries());
 
-        var tracker = await validator.ValidateGrantPermissionAsync(
-            [new BatchTarget<UserGrantPermissionCommand>(
-                missing, new UserGrantPermissionCommand { Uuid = missing, PermissionCode = "nieznany.kod", Reason = "test" })],
+        var tracker = await validator.ValidateAddPermissionAsync(
+            [new BatchTarget<UserAddPermissionCommand>(
+                missing, new UserAddPermissionCommand { Uuid = missing, PermissionCode = "nieznany.kod", Reason = "test" })],
             CancellationToken.None);
 
         var codes = tracker.Errors[missing].Select(e => e.ErrorCode).ToList();

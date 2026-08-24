@@ -16,7 +16,7 @@ builder.Services.AddSalesInfrastructure(builder.Configuration);
 // Skan zestawów modułu — handlery komend, reguły wsadowe, egzekutory, repozytoria i zapytania.
 // Ta sama linijka co w Catalogu i Identity; rośnie kod modułu, nie ten plik.
 builder.Services.AddErpModule(
-    typeof(SetCustomerNameCommand).Assembly,
+    typeof(CustomerSetNameCommand).Assembly,
     typeof(SalesDbContext).Assembly);
 
 // Wolverine: outbox spięty z transakcją EF Core — ta sama rejestracja co w Catalogu,

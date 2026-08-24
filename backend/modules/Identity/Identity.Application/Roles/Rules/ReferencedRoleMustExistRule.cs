@@ -4,7 +4,7 @@ namespace Identity.Application.Roles;
 
 /// <summary>Referencja do roli wewnątrz komendy wykonywanej na INNYM agregacie —
 /// błąd trafia do <see cref="AggregateUuid"/> (element zadania), rola jest tylko wartością
-/// w payloadzie. Współdzielony przez dwa przypadki użycia: <c>UserAssignRoleCommand.RoleUuid</c>
+/// w payloadzie. Współdzielony przez dwa przypadki użycia: <c>UserAddRoleCommand.RoleUuid</c>
 /// (agregat = użytkownik) i <c>RoleAddMemberCommand.MemberRoleUuid</c> (agregat = rola-kontener)
 /// — stąd generyczna nazwa pola, nie <c>UserUuid</c>.</summary>
 /// <param name="AggregateUuid">Element zadania, do którego trafi błąd.</param>
@@ -13,7 +13,7 @@ public sealed record RoleReferenceTarget(Guid AggregateUuid, Guid RoleUuid);
 
 /// <summary>
 /// Reguła wsadowa: rola wskazana w komendzie musi istnieć. Odpowiednik sprawdzenia, które
-/// dziś robią <c>UserAssignRoleCommandHandler</c> i <c>RoleAddMemberCommandHandler</c> przez
+/// dziś robią <c>UserAddRoleCommandHandler</c> i <c>RoleAddMemberCommandHandler</c> przez
 /// <c>IRoleRepository.FindAsync</c> per element — tutaj jedno zbiorcze zapytanie na cały wsad.
 /// </summary>
 public sealed class ReferencedRoleMustExistRule : IBatchRule<RoleReferenceTarget>

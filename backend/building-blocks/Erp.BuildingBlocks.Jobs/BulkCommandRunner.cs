@@ -103,7 +103,11 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
 
+        // Filtr po Kind jest konieczny, nie kosmetyczny: przebieg reduce (eksport) nie ma
+        // żadnego `job_item`, więc ten runner podjąłby go, nie znalazł pracy i uznał zadanie
+        // za puste — a właściwy runner nigdy by go nie zobaczył.
         var job = await db.Jobs
+            .Where(j => j.Kind == JobKind.Map)
             .Where(j => j.Status == JobStatus.Pending || j.Status == JobStatus.Running)
             .OrderBy(j => j.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken)

@@ -12,6 +12,7 @@ export * from './lib/sync/client-id.interceptor';
 export * from './lib/orchestrator';
 
 export * from './lib/widgets/erp-widget-registry.service';
+export * from './lib/jobs/erp-job-result-registry.service';
 
 export * from './lib/preferences/erp-user-preferences.service';
 export * from './lib/preferences/erp-theme.service';

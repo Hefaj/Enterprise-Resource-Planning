@@ -21,7 +21,7 @@ public sealed class ProductSetPriceMultipleCommandEndpoint
 
     public override void Configure()
     {
-        Post("product/batch-set-price");
+        Post("batch-set-price");
         Group<ProductGroup>();
         Permissions(P.Catalog.ProductUpdate);
         Description(d => d

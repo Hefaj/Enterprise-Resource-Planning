@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { TuiIcon } from '@taiga-ui/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { TuiButton, TuiIcon } from '@taiga-ui/core';
 import { TuiProgressBar } from '@taiga-ui/kit';
 import { ErpTranslatePipe } from '@erp/shared/ui';
 import { JobRecord, jobProgressPercent, jobStatusKind, JobStatusKind } from '@erp/notification/util';
@@ -16,7 +16,7 @@ import { JOB_KEYS } from '../translation';
 @Component({
   selector: 'erp-job-item',
   standalone: true,
-  imports: [TuiIcon, TuiProgressBar, ErpTranslatePipe],
+  imports: [TuiButton, TuiIcon, TuiProgressBar, ErpTranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex gap-3 px-3 py-2.5 w-full items-start">
@@ -60,12 +60,42 @@ import { JOB_KEYS } from '../translation';
             {{ { key: keys.errorsSummary, params: { summary } } | erpTranslate }}
           </span>
         }
+
+        <!-- Akcja pojawia się wyłącznie wtedy, gdy rodzic potwierdził, że ma czym ją obsłużyć
+             (wejście canDownload) — przycisk, który nie ma co zrobić, jest gorszy niż jego brak. -->
+        @if (canDownload()) {
+          <button
+            tuiButton
+            type="button"
+            appearance="flat"
+            size="xs"
+            class="self-start mt-1"
+            iconStart="@tui.download"
+            [disabled]="downloading()"
+            (click)="downloadRequested.emit(job())"
+          >
+            {{ keys.download | erpTranslate }}
+          </button>
+        }
       </div>
     </div>
   `,
 })
 export class ErpJobItemComponent {
   public readonly job = input.required<JobRecord>();
+
+  /**
+   * Czy pokazać akcję pobrania. Decyduje RODZIC, nie ten komponent: to on wie, czy
+   * `ErpJobResultRegistry` ma resolwer dla tego typu komendy i czy artefakt nie wygasł.
+   * Wiersz zadania zostaje w ten sposób nadal czysto prezentacyjny — używa go i popover
+   * pod dzwonkiem, i pełna historia.
+   */
+  public readonly canDownload = input(false);
+
+  /** Trwa pobieranie — blokuje przycisk, żeby jedno kliknięcie nie zamieniło się w pięć. */
+  public readonly downloading = input(false);
+
+  public readonly downloadRequested = output<JobRecord>();
 
   protected readonly keys = JOB_KEYS;
 

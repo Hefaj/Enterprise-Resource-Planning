@@ -17,13 +17,15 @@ public sealed class SearchJobRequest : PagedRequest
 
     public bool? IsComplete { get; set; }
 
-    public string? UserId { get; set; }
-
     /// <summary>
-    /// Karta przeglądarki, która zleciła zadanie. Dopóki nie ma uwierzytelniania, to po nim
-    /// feed powiadomień odsiewa „moje zadania” od cudzych — patrz udokumentowane ograniczenie
-    /// w <c>SyncHub</c>. Filtr dokładny, nie ILIKE: clientId jest GUID-em generowanym przez
-    /// klienta, więc wyszukiwanie częściowe nie miałoby tu sensu.
+    /// Karta przeglądarki, która zleciła zadanie — <b>opcjonalne zawężenie</b> w obrębie zadań
+    /// zalogowanego użytkownika, nie kontrola dostępu. Filtr dokładny, nie ILIKE: clientId jest
+    /// GUID-em generowanym przez klienta, więc wyszukiwanie częściowe nie miałoby tu sensu.
+    ///
+    /// <para>Właściciela feedu wyznacza <c>IExecutionContext.UserId</c> po stronie endpointu —
+    /// patrz <see cref="IJobQueries"/>. Pole <c>UserId</c> w tym żądaniu istniało, dopóki backend
+    /// nie miał uwierzytelniania; zostało usunięte, bo filtr sterowany przez klienta pozwalał
+    /// odczytać cudzy feed.</para>
     /// </summary>
     public string? ClientId { get; set; }
 }

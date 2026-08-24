@@ -191,12 +191,19 @@ export class JobService {
     });
   }
 
-  /** Czyści zakończone zadania z lokalnego feedu (nie usuwa ich z historii na serwerze). */
-  public clearFinished(): void {
+  /**
+   * Czyści zakończone zadania z lokalnego feedu (nie usuwa ich z historii na serwerze).
+   *
+   * @param keep Opcjonalny predykat chroniący wybrane zadania przed usunięciem z feedu.
+   * Istnieje dla zadań, które zostawiły po sobie artefakt: „Wyczyść" przy pozycji z przyciskiem
+   * „Pobierz" czyta się jak „skasuj plik", a nim nie jest — plik zostaje w magazynie do
+   * `expireOn` niezależnie od tego, co użytkownik zrobi z listą powiadomień.
+   */
+  public clearFinished(keep?: (job: JobRecord) => boolean): void {
     this._jobs.update(jobs => {
       const updated = new Map<string, JobRecord>();
       for (const [trackingID, job] of jobs) {
-        if (!job.isComplete) {
+        if (!job.isComplete || keep?.(job)) {
           updated.set(trackingID, job);
         }
       }

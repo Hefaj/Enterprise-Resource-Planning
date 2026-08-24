@@ -32,18 +32,24 @@ stubu `SignalrSyncService`.
 | Grupa | Kto dołącza | Do czego |
 |---|---|---|
 | `agg:{signature}` | jawnie, wywołaniem `Subscribe(signature, ...)` | `ReceiveUpdates`/`ReceiveDeletes`/`ReceiveInvalidation`/`ReceiveSequence`/`ReceiveResync` dla tej sygnatury |
-| `user:{userId}` | automatycznie w `OnConnectedAsync`, z query stringu połączenia | kanał `jobs` — powiadomienia trafiają wyłącznie do zleceniodawcy |
-| `client:{clientId}` | jw. | zarezerwowane, dziś bez konsumenta |
+| `user:{userId}` | automatycznie w `OnConnectedAsync`, z claimu `sub` tokenu | kanał `jobs` — powiadomienia trafiają wyłącznie do zleceniodawcy |
+| `client:{clientId}` | jw., ale z query stringu połączenia | zarezerwowane, dziś bez konsumenta |
 
 **`Subscribe` jest jawne, nie automatyczne przy połączeniu.** Klient dołącza do `agg:{signature}`
 dopiero, gdy faktycznie ma w cache agregaty tej sygnatury — bez tego każda otwarta karta
 przeglądarki dostawałaby ruch całego ERP, niezależnie od tego, co akurat wyświetla.
 
-> **Znany dług — brak autoryzacji.** Backend nie ma dziś warstwy uwierzytelniania (endpointy HTTP
-> są `AllowAnonymous`), więc `userId`/`clientId` są czytane wprost z query stringu połączenia, bez
-> weryfikacji tożsamości. Akceptowalne w fazie rozwoju — do podmiany na odczyt z `Context.User`,
-> gdy powstanie JWT. Dopóki go nie ma, dowolny klient może podać cudzy `userId` i podsłuchać jego
-> powiadomienia o zadaniach.
+> **Tożsamość pochodzi z tokenu, nie z query stringu.** Hub ma `[Authorize]`, a klient łączy się
+> przez `accessTokenFactory` — token jedzie w query stringu `access_token`, bo SignalR nie pozwala
+> na własne nagłówki przy negocjacji WebSocketu (obsługa w `ErpAuthExtensions.OnMessageReceived`).
+> Grupa `user:{userId}` bierze się z `Context.UserIdentifier`, którego wartość ustawia
+> [`SubjectUserIdProvider`](../../backend/modules/Notification/Notification.Api/Hubs/SubjectUserIdProvider.cs)
+> z claimu `sub` — domyślny provider ASP.NET Core czyta `ClaimTypes.NameIdentifier`, a
+> `MapInboundClaims = false` celowo wyłącza mapowanie nazw claimów, więc bez tego providera
+> `UserIdentifier` byłoby zawsze `null` i grupa nigdy by się nie wypełniła.
+>
+> `clientId` zostaje w query stringu — to nie jest tożsamość, tylko identyfikator karty
+> przeglądarki (patrz `ExecutionContextMiddleware`), więc nie ma czego weryfikować.
 
 ---
 

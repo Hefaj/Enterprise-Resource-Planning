@@ -11,10 +11,10 @@
  */
 
 /** Modal: Nadanie roli użytkownikowi */
-export const USER_ASSIGN_ROLE_MODAL_ID = '04c82785e3f845a6d425d0e213aa3fdb';
+export const USER_ADD_ROLE_MODAL_ID = '04c82785e3f845a6d425d0e213aa3fdb';
 
 /** Modal: Nadanie uprawnienia bezpośrednio użytkownikowi (z powodem) */
-export const USER_GRANT_PERMISSION_MODAL_ID = '8e8c17a15bca7d2a2da1e8a828f5cae8';
+export const USER_ADD_PERMISSION_MODAL_ID = '8e8c17a15bca7d2a2da1e8a828f5cae8';
 
 /** Modal: Utworzenie nowej roli */
 export const ROLE_CREATE_MODAL_ID = '0f03163eb7847d231905445b740e3314';

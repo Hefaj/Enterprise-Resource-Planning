@@ -2,7 +2,7 @@ namespace Erp.BuildingBlocks.Api.Auth;
 
 /// <summary>
 /// Wąski wycinek Admin API Keycloaka potrzebny Identity — dziś tylko wymuszone wylogowanie
-/// (patrz <c>docs/backend/identity-authz.md</c> Faza 6, <c>UserForceLogoutCommand</c>).
+/// (patrz <c>docs/backend/identity-authz.md</c> Faza 6, <c>UserExecForceLogoutCommand</c>).
 /// </summary>
 public interface IKeycloakAdminClient
 {

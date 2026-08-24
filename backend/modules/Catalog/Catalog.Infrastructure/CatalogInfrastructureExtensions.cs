@@ -1,6 +1,7 @@
 using Catalog.Domain.Attributes;
 using Catalog.Domain.Categories;
 using Catalog.Domain.Codes;
+using Catalog.Domain.ExportRuns;
 using Catalog.Domain.Models;
 using Catalog.Domain.Multimedia;
 using Catalog.Domain.Products;
@@ -101,5 +102,6 @@ public static class CatalogInfrastructureExtensions
             .Register<MultimediaAsset>(AggregateSignatures.CatalogMultimedia)
             .Register<Warranty>(AggregateSignatures.CatalogWarranty)
             .Register<CodeType>(AggregateSignatures.CatalogCodeType)
-            .Register<AttributeDefinition>(AggregateSignatures.CatalogAttribute);
+            .Register<AttributeDefinition>(AggregateSignatures.CatalogAttribute)
+            .Register<ExportRun>(AggregateSignatures.CatalogExportRun);
 }

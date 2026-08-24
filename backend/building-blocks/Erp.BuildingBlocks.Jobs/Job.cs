@@ -35,8 +35,10 @@ public class Job : AggregateRoot
         Guid correlationId,
         string? uiMetadata,
         DateTimeOffset createdAt,
-        DateTimeOffset? expireOn) : base(uuid)
+        DateTimeOffset? expireOn,
+        JobKind kind) : base(uuid)
     {
+        Kind = kind;
         CommandType = commandType;
         CommandJson = commandJson;
         QueueId = queueId;
@@ -51,6 +53,12 @@ public class Job : AggregateRoot
         // patrz uzasadnienie tam i przy JobStatus.Draft.
         Status = JobStatus.Draft;
     }
+
+    /// <summary>
+    /// Kształt wykonania — decyduje, który runner podejmie zadanie i czy ma ono elementy.
+    /// Patrz <see cref="JobKind"/> i <c>docs/backend/exports-artifacts.md</c> §3.
+    /// </summary>
+    public JobKind Kind { get; private set; }
 
     /// <summary>Nazwa typu komendy wykonywanej dla każdego elementu — po niej runner
     /// odnajduje właściwy <see cref="IBulkCommandExecutor"/>.</summary>
@@ -73,6 +81,18 @@ public class Job : AggregateRoot
 
     /// <summary>Nieprzezroczysty dla backendu blob z frontendu.</summary>
     public string? UiMetadata { get; private set; }
+
+    /// <summary>
+    /// Referencja do tego, co zadanie wyprodukowało — <b>identyfikator, nigdy payload</b>.
+    /// Dla eksportu jest to uuid agregatu przebiegu, po którym klient prosi o adres pobrania.
+    ///
+    /// <para>Pole jest celowo nieprzezroczyste dla warstwy zadań: interpretuje je moduł, który
+    /// zadanie wykonał, a klient rozpoznaje po <see cref="CommandType"/>, do kogo się z nim
+    /// zwrócić. Wpisanie tu samego artefaktu (albo jego adresu) byłoby powtórzeniem błędu,
+    /// przez który poprzednia wersja <c>JobDto</c> miała pola <c>ResultJson</c>/<c>ResultType</c>
+    /// zwracające stale <c>null</c>.</para>
+    /// </summary>
+    public string? ResultRef { get; private set; }
 
     public JobStatus Status { get; private set; }
 
@@ -145,7 +165,7 @@ public class Job : AggregateRoot
 
         var job = new Job(
             NewUuid(), commandType, commandJson, queueId, userId, clientId,
-            correlationId, uiMetadata, createdAt, expireOn);
+            correlationId, uiMetadata, createdAt, expireOn, JobKind.Map);
 
         var ordinal = 0;
         foreach (var target in targets)
@@ -165,6 +185,96 @@ public class Job : AggregateRoot
         job.TotalCount = job._items.Count;
         job.FailedCount = job._items.Count(i => i.Status == JobItemStatus.Failed);
         return job;
+    }
+
+    /// <summary>
+    /// Tworzy zadanie typu <see cref="JobKind.Reduce"/> — jeden artefakt z wielu rekordów
+    /// źródłowych (patrz <c>docs/backend/exports-artifacts.md</c>).
+    ///
+    /// <para><b>Nie ma elementów i to nie jest przeoczenie.</b> <see cref="JobItem"/> istnieje po
+    /// to, żeby dało się zaraportować sukces częściowy i ponowić pojedyncze niepowodzenia. Przy
+    /// jednym pliku wyjściowym nie ma czego raportować per rekord ani czego ponawiać — powtórzeniem
+    /// jest nowy przebieg. Liczniki są tu wyłącznie paskiem postępu.</para>
+    ///
+    /// <para><see cref="TotalCount"/> startuje na zero, bo liczba rekordów źródłowych bywa znana
+    /// dopiero po odpytaniu bazy — runner uzupełnia ją przez <see cref="SetTotalCount"/>.</para>
+    /// </summary>
+    public static Job CreateReduce(
+        string commandType,
+        string? commandJson,
+        string? queueId,
+        string? userId,
+        string? clientId,
+        Guid correlationId,
+        string? uiMetadata,
+        DateTimeOffset createdAt,
+        DateTimeOffset? expireOn = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandType);
+
+        return new Job(
+            NewUuid(), commandType, commandJson, queueId, userId, clientId,
+            correlationId, uiMetadata, createdAt, expireOn, JobKind.Reduce);
+    }
+
+    /// <summary>
+    /// Podaje liczbę rekordów źródłowych, gdy runner ją pozna. Tylko dla
+    /// <see cref="JobKind.Reduce"/> — przy <see cref="JobKind.Map"/> liczba elementów jest
+    /// znana w chwili zakładania i nie wolno jej ruszać.
+    /// </summary>
+    public void SetTotalCount(int totalCount)
+    {
+        RequireKind(JobKind.Reduce);
+        ArgumentOutOfRangeException.ThrowIfNegative(totalCount);
+
+        TotalCount = totalCount;
+    }
+
+    /// <summary>
+    /// Odnotowuje postęp przebiegu reduce — liczbę rekordów zapisanych do artefaktu.
+    ///
+    /// <para>Wartość jest <b>ustawiana</b>, a nie doliczana: runner zna licznik od początku
+    /// przebiegu, a przy wznowieniu po restarcie doliczanie podwoiłoby to, co już policzył
+    /// poprzedni przebieg.</para>
+    /// </summary>
+    public void RecordReduceProgress(int processedCount)
+    {
+        RequireKind(JobKind.Reduce);
+        ArgumentOutOfRangeException.ThrowIfNegative(processedCount);
+
+        SucceededCount = processedCount;
+    }
+
+    /// <summary>
+    /// Zapisuje referencję do wytworzonego artefaktu. Wołane PRZED <see cref="Complete"/>,
+    /// żeby nie istniał moment, w którym zadanie jest zakończone, a odnośnika do wyniku brak.
+    /// </summary>
+    public void SetResultRef(string? resultRef) => ResultRef = resultRef;
+
+    /// <summary>
+    /// Zamyka zadanie niepowodzeniem. Dla przebiegu reduce jest to jedyne wyjście awaryjne:
+    /// nie istnieje „plik udany w 96%", więc rekord, którego nie da się zserializować, przerywa
+    /// całość, a artefakt nie powstaje. Kod błędu żyje w agregacie przebiegu, nie tutaj.
+    /// </summary>
+    public void Fail(DateTimeOffset finishedAt)
+    {
+        if (Status is JobStatus.Completed or JobStatus.CompletedWithErrors or JobStatus.Cancelled or JobStatus.Failed)
+        {
+            return;
+        }
+
+        Status = JobStatus.Failed;
+        FinishedAt = finishedAt;
+    }
+
+    private void RequireKind(JobKind expected)
+    {
+        if (Kind != expected)
+        {
+            throw new DomainException(
+                "job_kind_mismatch",
+                $"Operacja jest dostępna wyłącznie dla zadań typu {expected}, a to zadanie jest typu {Kind}.");
+        }
     }
 
     /// <summary>
@@ -203,9 +313,11 @@ public class Job : AggregateRoot
         StartedAt = startedAt;
     }
 
-    /// <summary>Dolicza wynik zatwierdzonego chunka do liczników.</summary>
+    /// <summary>Dolicza wynik zatwierdzonego chunka do liczników. Tylko dla <see cref="JobKind.Map"/>
+    /// — przebieg reduce nie ma chunków ani sukcesu częściowego.</summary>
     public void RecordChunkResult(int succeeded, int failed)
     {
+        RequireKind(JobKind.Map);
         ArgumentOutOfRangeException.ThrowIfNegative(succeeded);
         ArgumentOutOfRangeException.ThrowIfNegative(failed);
 

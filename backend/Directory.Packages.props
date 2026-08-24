@@ -70,6 +70,12 @@
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.28.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Artefakty">
+    <!-- Klient S3 do MinIO — magazyn plików produkowanych przez eksporty i raporty.
+         Patrz docs/backend/exports-artifacts.md. -->
+    <PackageVersion Include="Minio" Version="7.0.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Realtime">
     <!-- Backplane włączany dopiero przy >1 instancji Notification (faza 6). -->
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.11" />

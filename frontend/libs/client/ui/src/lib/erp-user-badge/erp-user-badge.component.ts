@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
  * nazwisko, e-mail jako natywny `title` (nie `tuiHint` — komponenty z `@taiga-ui/core/portals`
  * wymagają `TuiPopupService`, dostarczanego tylko wewnątrz szablonu `TuiRoot`; zawartość
  * projektowana do `<tui-root>`, czyli m.in. cały `<router-outlet>`, tego injectora nie widzi
- * — patrz analogiczny problem z `TuiAlertService` w `erp-toast-bridge.component.ts`).
+ * — patrz analogiczny problem z `TuiAlertService` w `erp-toast.component.ts`).
  * Dane wstrzykuje `ShellLayoutComponent` (`ErpAuthService.$currentUser`, warstwa `feature`) —
  * ten komponent, jak reszta `client/ui`, nie zna `@erp/shared/auth`
  * (`type:ui` nie może zależeć od `type:auth`).

@@ -11,6 +11,7 @@
     <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Persistence/Erp.BuildingBlocks.Persistence.csproj" />
     <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Messaging/Erp.BuildingBlocks.Messaging.csproj" />
     <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Jobs/Erp.BuildingBlocks.Jobs.csproj" />
+    <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Artifacts/Erp.BuildingBlocks.Artifacts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

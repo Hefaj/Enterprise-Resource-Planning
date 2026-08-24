@@ -1,5 +1,4 @@
 import { Injectable, signal } from '@angular/core';
-import { getOrCreateClientId } from '@erp/shared/data-access';
 import { SearchJobRequest } from '@erp/notification/data-access';
 
 /**
@@ -14,14 +13,12 @@ export class JobStore {
   /**
    * Filtry zapytania `searchJob`.
    *
-   * `clientId` startuje na identyfikatorze tej karty przeglądarki, bo dopóki backend nie ma
-   * uwierzytelniania, to jedyny adresat, jakiego zadanie faktycznie ma (patrz `JobFeedService`).
-   * Pole jest jednak zwykłym filtrem — użytkownik może je w panelu podmienić i podejrzeć
-   * zadania zlecone z innej karty.
+   * Startują puste. Zawężenie do zalogowanego użytkownika robi serwer (patrz `JobFeedService`
+   * i `SearchJobEndpoint`), więc historia od razu pokazuje wszystkie własne zadania — także te
+   * zlecone z innej przeglądarki. `clientId` zostaje w panelu jako opcjonalne zawężenie do
+   * jednej karty, ale nie jest już wstępnie wypełniony.
    */
-  public readonly filters = signal<Partial<SearchJobRequest>>({
-    clientId: getOrCreateClientId(),
-  });
+  public readonly filters = signal<Partial<SearchJobRequest>>({});
 
   public setFilters(newFilters: Partial<SearchJobRequest>): void {
     this.filters.set(newFilters);

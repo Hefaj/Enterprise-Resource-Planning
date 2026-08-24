@@ -102,6 +102,13 @@ public class NotificationJob : AggregateRoot
 
     public DateTimeOffset? ExpireOn { get; private set; }
 
+    /// <summary>
+    /// Referencja do wytworzonego artefaktu — identyfikator, nigdy payload. Interpretuje ją
+    /// moduł, który zadanie wykonał; klient rozpoznaje po <see cref="CommandType"/>, do kogo
+    /// się z nią zwrócić po adres pobrania.
+    /// </summary>
+    public string? ResultRef { get; private set; }
+
     /// <summary>Materializuje wpis repliki z <c>JobAccepted</c>.</summary>
     public static NotificationJob CreateFromAccepted(
         Guid jobUuid,
@@ -132,11 +139,17 @@ public class NotificationJob : AggregateRoot
     }
 
     /// <summary>Zamyka replikę na podstawie <c>JobCompleted</c>.</summary>
-    public void ApplyCompletion(NotificationJobStatus status, int succeeded, int failed, string? errorsSummary)
+    public void ApplyCompletion(
+        NotificationJobStatus status,
+        int succeeded,
+        int failed,
+        string? errorsSummary,
+        string? resultRef)
     {
         SucceededCount = succeeded;
         FailedCount = failed;
         ErrorsSummary = errorsSummary;
+        ResultRef = resultRef;
         Status = status;
         IsComplete = true;
     }

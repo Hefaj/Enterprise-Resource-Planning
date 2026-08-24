@@ -56,7 +56,7 @@ public interface IPermissionProvider
 
     /// <summary>
     /// Usuwa uprawnienia użytkownika z cache'u — wołane po wymuszonym wylogowaniu
-    /// (<c>UserForceLogoutCommand</c>), żeby nie czekać na TTL. Implementacje, które nie
+    /// (<c>UserExecForceLogoutCommand</c>), żeby nie czekać na TTL. Implementacje, które nie
     /// cache'ują nic (np. <c>IdentityInProcessPermissionProvider</c>, zawsze czyta bazę wprost),
     /// mogą zaimplementować to jako no-op.
     /// </summary>

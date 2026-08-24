@@ -22,12 +22,12 @@ namespace Identity.Application.Users;
 /// idempotentne, więc ponowienie elementu jest bezpieczne. Mitygacja kosztu N wywołań HTTP
 /// w jednej transakcji: <c>BulkJobs:ChunkSize</c> obniżony w konfiguracji Identity.</para>
 /// </summary>
-public sealed class UserForceLogoutCommand : ICommand<Guid>, IAggregateCommand
+public sealed class UserExecForceLogoutCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
 }
 
-public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogoutCommand, Guid>
+public sealed class UserExecForceLogoutCommandHandler : CommandHandler<UserExecForceLogoutCommand, Guid>
 {
     private readonly IUserAccountRepository _repository;
     private readonly IKeycloakAdminClient _keycloakAdminClient;
@@ -36,7 +36,7 @@ public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogo
     private readonly IExecutionContext _executionContext;
     private readonly IGrantAuditWriter _auditWriter;
 
-    public UserForceLogoutCommandHandler(
+    public UserExecForceLogoutCommandHandler(
         IUserAccountRepository repository,
         IKeycloakAdminClient keycloakAdminClient,
         IPermissionProvider permissionProvider,
@@ -52,7 +52,7 @@ public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogo
         _auditWriter = auditWriter;
     }
 
-    public override async Task<Guid> ExecuteAsync(UserForceLogoutCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(UserExecForceLogoutCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
@@ -68,7 +68,7 @@ public sealed class UserForceLogoutCommandHandler : CommandHandler<UserForceLogo
 
         await _auditWriter.RecordAsync(
             GrantAuditEntry.Create(
-                _clock.UtcNow, UserAssignRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
+                _clock.UtcNow, UserAddRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
                 "user_forced_logout", userSub, reason: null, source: "identity.api"),
             ct).ConfigureAwait(false);
 

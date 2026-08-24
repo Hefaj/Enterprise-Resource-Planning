@@ -11,7 +11,7 @@ namespace Sales.Customers.Command;
 /// bez jednej linijki nowego kodu w BuildingBlocks. To jest właściwy sprawdzian tego modułu.
 /// </summary>
 public sealed class CustomerSetNameMultipleCommandEndpoint
-    : BatchEndpointBase<SetCustomerNameCommand, SearchCustomerRequest>
+    : BatchEndpointBase<CustomerSetNameCommand, SearchCustomerRequest>
 {
     private readonly ICustomerQueries _queries;
 
@@ -19,7 +19,7 @@ public sealed class CustomerSetNameMultipleCommandEndpoint
 
     public override void Configure()
     {
-        Post("customer/batch-set-name");
+        Post("batch-set-name");
         Group<CustomerGroup>();
         Permissions(P.Sales.CustomerUpdate);
         Description(d => d

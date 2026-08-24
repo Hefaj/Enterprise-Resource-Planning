@@ -44,6 +44,30 @@ public enum JobStatus
 }
 
 /// <summary>
+/// Kształt wykonania zadania — patrz <c>docs/backend/exports-artifacts.md</c> §3.
+///
+/// <para>Obie wartości dzielą tabelę <c>job</c>, bo dzielą wszystko, co czyni długą operację
+/// widoczną dla użytkownika: właściciela, status, liczniki postępu, wygasanie, replikę
+/// w Notification i kanał powiadomień <c>jobs</c>. Różni je to, KTO zadanie podejmuje i czy
+/// ma ono elementy.</para>
+/// </summary>
+public enum JobKind
+{
+    /// <summary>
+    /// N celów → N niezależnych wyników. Ma <c>job_item</c> na agregat, dopuszcza sukces
+    /// częściowy i ponawianie pojedynczych elementów. Podejmuje <c>BulkCommandRunner</c>.
+    /// </summary>
+    Map = 0,
+
+    /// <summary>
+    /// N rekordów źródłowych → jeden artefakt. Nie ma <c>job_item</c>: sukces częściowy nie
+    /// istnieje, bo plik albo jest kompletny, albo go nie ma. Liczniki służą wyłącznie
+    /// paskowi postępu. Podejmuje runner właściwy dla danego rodzaju przebiegu.
+    /// </summary>
+    Reduce = 1,
+}
+
+/// <summary>
 /// Zadanie masowe zostało przyjęte i utrwalone. Publikowane przez serwis wykonujący (np. Catalog)
 /// w tej samej transakcji, w której powstały wiersze <c>job</c>/<c>job_item</c>.
 ///
@@ -105,10 +129,19 @@ public sealed record JobProgressed(
 /// (np. <c>"price_negative: 1200; aggregate_not_found: 3"</c>) — celowo NIE lista 1203 komunikatów.
 /// Szczegóły per element zostają w <c>job_item</c> u właściciela zadania.</param>
 /// <param name="OccurredAt">Moment zakończenia (UTC).</param>
+/// <param name="ResultRef">
+/// Referencja do tego, co zadanie wyprodukowało — <b>identyfikator, nigdy payload ani adres</b>.
+/// Dla eksportu jest to uuid agregatu przebiegu, z którym klient idzie po krótko ważny link
+/// do pobrania. Pole jest nieprzezroczyste dla warstwy zadań: interpretuje je moduł, który
+/// zadanie wykonał, a klient rozpoznaje po <paramref name="Status"/> i typie komendy, do kogo
+/// się z nim zwrócić. Domyślne <c>null</c> czyni to dodatkiem zgodnym wstecz — kontrakty
+/// integracyjne wolno wyłącznie rozszerzać.
+/// </param>
 public sealed record JobCompleted(
     Guid JobUuid,
     JobStatus Status,
     int Succeeded,
     int Failed,
     string? ErrorsSummary,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    string? ResultRef = null);

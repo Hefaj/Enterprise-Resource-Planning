@@ -6,15 +6,15 @@ import { IDENTITY_JOB_COMMAND_KEYS } from '@erp/identity/util';
 import {
   IdentityClient,
   BatchResult,
-  BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest,
-  BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest,
-  BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest,
+  BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest,
+  BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest,
+  BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest,
   GetUserAccountRequest,
   SearchUserAccountRequest,
   SearchResponse,
   UserAccountDto,
-  UserRevokeRoleCommand,
-  UserRevokePermissionCommand,
+  UserRemoveRoleCommand,
+  UserRemovePermissionCommand,
 } from '../../api-client';
 import { RoleOrchestrator } from '../role/role.orchestrator';
 import { UserVM } from './user.view-model';
@@ -91,65 +91,65 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
   // ── Komendy — cele wsadu (§3 docs/frontend/selection-scope.md) ──
   //
   // Wszystkie idą przez odpowiednik `BatchEndpointBase` (patrz Faza 1+2 w
-  // docs/backend/identity-bulk-migration.md). `assignRoleMultipleAsync`/`grantPermissionMultipleAsync`/
-  // `forceLogoutMultipleAsync` obsługują OBA przypadki wywołania — panel szczegółów podaje
+  // docs/backend/identity-bulk-migration.md). `addRoleMultipleAsync`/`addPermissionMultipleAsync`/
+  // `execForceLogoutMultipleAsync` obsługują OBA przypadki wywołania — panel szczegółów podaje
   // `targetUuids: [uuid]` (jeden, konkretny użytkownik), lista `erpBuildBatchTargets(scope)`
   // (zaznaczenie wielokrotne albo filtr „Zaznacz wszystko"); backend nie rozróżnia tych dwóch
-  // ścieżek, więc frontend też nie musi. `revokeRoleAsync`/`revokePermissionAsync` zostają
+  // ścieżek, więc frontend też nie musi. `removeRoleAsync`/`removePermissionAsync` zostają
   // jako jedyne metody w trybie `Commands: [command]` — odbieranie KONKRETNEGO, znanego grantu
   // nie jest naturalną operacją nad zaznaczeniem wielu wierszy (patrz uzasadnienie przy
   // `RoleOrchestrator`).
 
-  public async revokeRoleAsync(command: UserRevokeRoleCommand, queueID?: string): Promise<string> {
+  public async removeRoleAsync(command: UserRemoveRoleCommand, queueID?: string): Promise<string> {
     return this._runSingleTargetCommand(
-      (payload) => this._api.userRevokeRoleMultipleCommand(payload),
+      (payload) => this._api.userRemoveRoleMultipleCommand(payload),
       command,
-      IDENTITY_JOB_COMMAND_KEYS.revokeRole,
+      IDENTITY_JOB_COMMAND_KEYS.removeRole,
       queueID,
     );
   }
 
-  public async revokePermissionAsync(command: UserRevokePermissionCommand, queueID?: string): Promise<string> {
+  public async removePermissionAsync(command: UserRemovePermissionCommand, queueID?: string): Promise<string> {
     return this._runSingleTargetCommand(
-      (payload) => this._api.userRevokePermissionMultipleCommand(payload),
+      (payload) => this._api.userRemovePermissionMultipleCommand(payload),
       command,
-      IDENTITY_JOB_COMMAND_KEYS.revokePermission,
+      IDENTITY_JOB_COMMAND_KEYS.removePermission,
       queueID,
     );
   }
 
-  public async assignRoleMultipleAsync(
-    payload: BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest,
+  public async addRoleMultipleAsync(
+    payload: BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest,
     queueID?: string,
   ): Promise<string> {
     return this._runBatchCommand(
-      (p) => this._api.userAssignRoleMultipleCommand(p),
+      (p) => this._api.userAddRoleMultipleCommand(p),
       payload,
-      IDENTITY_JOB_COMMAND_KEYS.assignRole,
+      IDENTITY_JOB_COMMAND_KEYS.addRole,
       queueID,
     );
   }
 
-  public async grantPermissionMultipleAsync(
-    payload: BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest,
+  public async addPermissionMultipleAsync(
+    payload: BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest,
     queueID?: string,
   ): Promise<string> {
     return this._runBatchCommand(
-      (p) => this._api.userGrantPermissionMultipleCommand(p),
+      (p) => this._api.userAddPermissionMultipleCommand(p),
       payload,
-      IDENTITY_JOB_COMMAND_KEYS.grantPermission,
+      IDENTITY_JOB_COMMAND_KEYS.addPermission,
       queueID,
     );
   }
 
-  public async forceLogoutMultipleAsync(
-    payload: BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest,
+  public async execForceLogoutMultipleAsync(
+    payload: BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest,
     queueID?: string,
   ): Promise<string> {
     return this._runBatchCommand(
-      (p) => this._api.userForceLogoutMultipleCommand(p),
+      (p) => this._api.userExecForceLogoutMultipleCommand(p),
       payload,
-      IDENTITY_JOB_COMMAND_KEYS.forceLogout,
+      IDENTITY_JOB_COMMAND_KEYS.execForceLogout,
       queueID,
     );
   }

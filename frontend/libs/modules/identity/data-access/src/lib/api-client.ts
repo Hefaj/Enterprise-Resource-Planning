@@ -24,30 +24,30 @@ export interface IIdentityClient {
      */
     searchUser(body: SearchUserAccountRequest): Observable<SearchResponse>;
     /**
+     * Seryjne bezpośrednie nadanie uprawnienia użytkownikom z obsługą błędów cząstkowych
+     * @return OK
+     */
+    userAddPermissionMultipleCommand(body: BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest): Observable<BatchResult>;
+    /**
      * Seryjne nadanie roli użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    userAssignRoleMultipleCommand(body: BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest): Observable<BatchResult>;
+    userAddRoleMultipleCommand(body: BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
      * Seryjne wymuszenie wylogowania z obsługą błędów cząstkowych
      * @return OK
      */
-    userForceLogoutMultipleCommand(body: BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest): Observable<BatchResult>;
-    /**
-     * Seryjne bezpośrednie nadanie uprawnienia użytkownikom z obsługą błędów cząstkowych
-     * @return OK
-     */
-    userGrantPermissionMultipleCommand(body: BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest): Observable<BatchResult>;
+    userExecForceLogoutMultipleCommand(body: BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
      * Seryjne odebranie bezpośrednio nadanego uprawnienia z obsługą błędów cząstkowych
      * @return OK
      */
-    userRevokePermissionMultipleCommand(body: BatchCommandOfUserRevokePermissionCommandAndSearchUserAccountRequest): Observable<BatchResult>;
+    userRemovePermissionMultipleCommand(body: BatchCommandOfUserRemovePermissionCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
      * Seryjne odebranie roli użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    userRevokeRoleMultipleCommand(body: BatchCommandOfUserRevokeRoleCommandAndSearchUserAccountRequest): Observable<BatchResult>;
+    userRemoveRoleMultipleCommand(body: BatchCommandOfUserRemoveRoleCommandAndSearchUserAccountRequest): Observable<BatchResult>;
     /**
      * @return OK
      */
@@ -245,11 +245,11 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
-     * Seryjne nadanie roli użytkownikom z obsługą błędów cząstkowych
+     * Seryjne bezpośrednie nadanie uprawnienia użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    userAssignRoleMultipleCommand(body: BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/user/batch-assign-role";
+    userAddPermissionMultipleCommand(body: BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-add-permission";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -265,11 +265,11 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUserAssignRoleMultipleCommand(response_);
+            return this.processUserAddPermissionMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processUserAssignRoleMultipleCommand(response_ as any);
+                    return this.processUserAddPermissionMultipleCommand(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<BatchResult>;
                 }
@@ -278,7 +278,70 @@ export class IdentityClient implements IIdentityClient {
         }));
     }
 
-    protected processUserAssignRoleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    protected processUserAddPermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Seryjne nadanie roli użytkownikom z obsługą błędów cząstkowych
+     * @return OK
+     */
+    userAddRoleMultipleCommand(body: BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-add-role";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUserAddRoleMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUserAddRoleMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processUserAddRoleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -311,8 +374,8 @@ export class IdentityClient implements IIdentityClient {
      * Seryjne wymuszenie wylogowania z obsługą błędów cząstkowych
      * @return OK
      */
-    userForceLogoutMultipleCommand(body: BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/user/batch-force-logout";
+    userExecForceLogoutMultipleCommand(body: BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-exec-force-logout";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -328,11 +391,11 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUserForceLogoutMultipleCommand(response_);
+            return this.processUserExecForceLogoutMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processUserForceLogoutMultipleCommand(response_ as any);
+                    return this.processUserExecForceLogoutMultipleCommand(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<BatchResult>;
                 }
@@ -341,70 +404,7 @@ export class IdentityClient implements IIdentityClient {
         }));
     }
 
-    protected processUserForceLogoutMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne bezpośrednie nadanie uprawnienia użytkownikom z obsługą błędów cząstkowych
-     * @return OK
-     */
-    userGrantPermissionMultipleCommand(body: BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/user/batch-grant-permission";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUserGrantPermissionMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processUserGrantPermissionMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processUserGrantPermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    protected processUserExecForceLogoutMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -437,8 +437,8 @@ export class IdentityClient implements IIdentityClient {
      * Seryjne odebranie bezpośrednio nadanego uprawnienia z obsługą błędów cząstkowych
      * @return OK
      */
-    userRevokePermissionMultipleCommand(body: BatchCommandOfUserRevokePermissionCommandAndSearchUserAccountRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/user/batch-revoke-permission";
+    userRemovePermissionMultipleCommand(body: BatchCommandOfUserRemovePermissionCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-remove-permission";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -454,11 +454,11 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUserRevokePermissionMultipleCommand(response_);
+            return this.processUserRemovePermissionMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processUserRevokePermissionMultipleCommand(response_ as any);
+                    return this.processUserRemovePermissionMultipleCommand(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<BatchResult>;
                 }
@@ -467,7 +467,7 @@ export class IdentityClient implements IIdentityClient {
         }));
     }
 
-    protected processUserRevokePermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    protected processUserRemovePermissionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -500,8 +500,8 @@ export class IdentityClient implements IIdentityClient {
      * Seryjne odebranie roli użytkownikom z obsługą błędów cząstkowych
      * @return OK
      */
-    userRevokeRoleMultipleCommand(body: BatchCommandOfUserRevokeRoleCommandAndSearchUserAccountRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/user/batch-revoke-role";
+    userRemoveRoleMultipleCommand(body: BatchCommandOfUserRemoveRoleCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/user/batch-remove-role";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -517,11 +517,11 @@ export class IdentityClient implements IIdentityClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUserRevokeRoleMultipleCommand(response_);
+            return this.processUserRemoveRoleMultipleCommand(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processUserRevokeRoleMultipleCommand(response_ as any);
+                    return this.processUserRemoveRoleMultipleCommand(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<BatchResult>;
                 }
@@ -530,7 +530,7 @@ export class IdentityClient implements IIdentityClient {
         }));
     }
 
-    protected processUserRevokeRoleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    protected processUserRemoveRoleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1571,9 +1571,9 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest {
-    commands?: UserAssignRoleCommand[] | undefined;
-    templateCommand?: UserAssignRoleCommand | undefined;
+export interface BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest {
+    commands?: UserAddPermissionCommand[] | undefined;
+    templateCommand?: UserAddPermissionCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchUserAccountRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -1595,9 +1595,9 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfUserForceLogoutCommandAndSearchUserAccountRequest {
-    commands?: UserForceLogoutCommand[] | undefined;
-    templateCommand?: UserForceLogoutCommand | undefined;
+export interface BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest {
+    commands?: UserAddRoleCommand[] | undefined;
+    templateCommand?: UserAddRoleCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchUserAccountRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -1619,9 +1619,9 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest {
-    commands?: UserGrantPermissionCommand[] | undefined;
-    templateCommand?: UserGrantPermissionCommand | undefined;
+export interface BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest {
+    commands?: UserExecForceLogoutCommand[] | undefined;
+    templateCommand?: UserExecForceLogoutCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchUserAccountRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -1643,9 +1643,9 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfUserRevokePermissionCommandAndSearchUserAccountRequest {
-    commands?: UserRevokePermissionCommand[] | undefined;
-    templateCommand?: UserRevokePermissionCommand | undefined;
+export interface BatchCommandOfUserRemovePermissionCommandAndSearchUserAccountRequest {
+    commands?: UserRemovePermissionCommand[] | undefined;
+    templateCommand?: UserRemovePermissionCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchUserAccountRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -1667,9 +1667,9 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfUserRevokeRoleCommandAndSearchUserAccountRequest {
-    commands?: UserRevokeRoleCommand[] | undefined;
-    templateCommand?: UserRevokeRoleCommand | undefined;
+export interface BatchCommandOfUserRemoveRoleCommandAndSearchUserAccountRequest {
+    commands?: UserRemoveRoleCommand[] | undefined;
+    templateCommand?: UserRemoveRoleCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchUserAccountRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -1875,7 +1875,15 @@ export interface UserAccountDto {
     [key: string]: any;
 }
 
-export interface UserAssignRoleCommand {
+export interface UserAddPermissionCommand {
+    uuid?: string;
+    permissionCode?: string;
+    reason?: string;
+
+    [key: string]: any;
+}
+
+export interface UserAddRoleCommand {
     uuid?: string;
     roleUuid?: string;
     expiresAt?: Date | undefined;
@@ -1883,16 +1891,8 @@ export interface UserAssignRoleCommand {
     [key: string]: any;
 }
 
-export interface UserForceLogoutCommand {
+export interface UserExecForceLogoutCommand {
     uuid?: string;
-
-    [key: string]: any;
-}
-
-export interface UserGrantPermissionCommand {
-    uuid?: string;
-    permissionCode?: string;
-    reason?: string;
 
     [key: string]: any;
 }
@@ -1906,14 +1906,14 @@ export interface UserPermissionGrantDto {
     [key: string]: any;
 }
 
-export interface UserRevokePermissionCommand {
+export interface UserRemovePermissionCommand {
     uuid?: string;
     permissionCode?: string;
 
     [key: string]: any;
 }
 
-export interface UserRevokeRoleCommand {
+export interface UserRemoveRoleCommand {
     uuid?: string;
     roleUuid?: string;
 

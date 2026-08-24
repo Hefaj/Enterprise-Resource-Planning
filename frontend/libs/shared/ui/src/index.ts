@@ -30,6 +30,7 @@ export * from './lib/atoms/erp-breadcrumb';
 export * from './lib/atoms/erp-drawer';
 export * from './lib/atoms/erp-menu-bar';
 export * from './lib/atoms/erp-tabs';
+export * from './lib/atoms/erp-toast';
 export * from './lib/atoms/erp-stepper';
 export * from './lib/atoms/erp-text';
 export * from './lib/atoms/erp-table';

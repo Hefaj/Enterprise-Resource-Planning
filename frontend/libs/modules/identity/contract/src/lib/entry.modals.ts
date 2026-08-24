@@ -1,6 +1,6 @@
 import {
-  USER_ASSIGN_ROLE_MODAL_ID,
-  USER_GRANT_PERMISSION_MODAL_ID,
+  USER_ADD_ROLE_MODAL_ID,
+  USER_ADD_PERMISSION_MODAL_ID,
   ROLE_CREATE_MODAL_ID,
   ROLE_ADD_PERMISSION_MODAL_ID,
   ROLE_ADD_MEMBER_MODAL_ID,
@@ -14,8 +14,8 @@ import {
  * w ErpModalService, aby wiedzieć skąd załadować modal na żądanie.
  */
 export const remoteModalIds: string[] = [
-  USER_ASSIGN_ROLE_MODAL_ID,
-  USER_GRANT_PERMISSION_MODAL_ID,
+  USER_ADD_ROLE_MODAL_ID,
+  USER_ADD_PERMISSION_MODAL_ID,
   ROLE_CREATE_MODAL_ID,
   ROLE_ADD_PERMISSION_MODAL_ID,
   ROLE_ADD_MEMBER_MODAL_ID,
@@ -31,15 +31,15 @@ export const remoteModalIds: string[] = [
  */
 export async function registerModals(): Promise<any[]> {
   const {
-    UserAssignRoleModalDefinition,
-    UserGrantPermissionModalDefinition,
+    UserAddRoleModalDefinition,
+    UserAddPermissionModalDefinition,
     RoleCreateModalDefinition,
     RoleAddPermissionModalDefinition,
     RoleAddMemberModalDefinition,
   } = await import('@erp/identity/feature');
   return [
-    UserAssignRoleModalDefinition,
-    UserGrantPermissionModalDefinition,
+    UserAddRoleModalDefinition,
+    UserAddPermissionModalDefinition,
     RoleCreateModalDefinition,
     RoleAddPermissionModalDefinition,
     RoleAddMemberModalDefinition,

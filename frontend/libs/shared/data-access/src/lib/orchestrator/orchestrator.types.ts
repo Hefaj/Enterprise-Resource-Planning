@@ -116,6 +116,19 @@ export interface JobMeta {
   readonly commandName: Translatable;
   readonly aggregateUuid?: string;
   readonly timestamp: Date;
+
+  /**
+   * Czy po zakończeniu zadania pokazać toast.
+   *
+   * **Opt-in, bo domyślne toastowanie wszystkiego byłoby spamem** — przy operacjach masowych
+   * użytkownik zleca ich kilka pod rząd i wystarczy mu dzwonek. Flagę warto ustawiać tam, gdzie
+   * zadanie trwa długo, a jego wynik jest po coś (eksport, raport).
+   *
+   * Przeżywa odświeżenie strony, bo backend trzyma całe `JobMeta` w `job.ui_metadata` i oddaje
+   * je w `JobDto`: jeśli użytkownik przeładuje kartę w trakcie generowania, toast po zakończeniu
+   * i tak się pojawi — intencja jest zapisana po stronie serwera, nie w pamięci karty.
+   */
+  readonly notifyOnComplete?: boolean;
 }
 
 /**
@@ -157,6 +170,17 @@ export interface JobRecord {
 
   readonly createdAt: Date;
   readonly expireOn?: Date | null;
+
+  /**
+   * Referencja do artefaktu wyprodukowanego przez zadanie — **identyfikator, nie adres**.
+   * Na link wymienia go `ErpJobResultRegistry` dopiero w momencie kliknięcia „Pobierz":
+   * adres jest bearer-owy i ważny minuty, więc trzymanie go w rekordzie oznaczałoby, że
+   * leży w pamięci długo po tym, jak przestał być komukolwiek potrzebny.
+   *
+   * To jest powrót usuniętych kiedyś `resultJson`/`resultType` — tym razem z pokryciem
+   * w backendzie (`JobDto.resultRef`) i jako referencja, a nie payload.
+   */
+  readonly resultRef?: string | null;
 
   /** Moment ostatniej zmiany rekordu — po nim liczy się licznik nieprzeczytanych. */
   readonly changedAt: number;

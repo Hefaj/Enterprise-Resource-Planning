@@ -15,7 +15,7 @@ namespace Identity.Application.Users;
 /// <para><c>Uuid</c> (nie <c>UserUuid</c>) — nazwa wymagana przez <see cref="IAggregateCommand"/>:
 /// <c>BulkCommandRunner</c> podstawia tu identyfikator elementu zadania. Patrz Faza 1
 /// w <c>docs/backend/identity-bulk-migration.md</c>.</para></summary>
-public sealed class UserAssignRoleCommand : ICommand<Guid>, IAggregateCommand
+public sealed class UserAddRoleCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
 
@@ -27,14 +27,14 @@ public sealed class UserAssignRoleCommand : ICommand<Guid>, IAggregateCommand
 /// <summary>Handler NIE woła <c>IUnitOfWork.SaveChangesAsync</c> — od Fazy 1/2 przejścia na
 /// operacje masowe granicę transakcji wyznacza <c>BulkCommandRunner</c> (jeden zapis na cały
 /// chunk), tak samo jak w Catalogu.</summary>
-public sealed class UserAssignRoleCommandHandler : CommandHandler<UserAssignRoleCommand, Guid>
+public sealed class UserAddRoleCommandHandler : CommandHandler<UserAddRoleCommand, Guid>
 {
     private readonly IUserAccountRepository _repository;
     private readonly IClock _clock;
     private readonly IExecutionContext _executionContext;
     private readonly IGrantAuditWriter _auditWriter;
 
-    public UserAssignRoleCommandHandler(
+    public UserAddRoleCommandHandler(
         IUserAccountRepository repository,
         IClock clock,
         IExecutionContext executionContext,
@@ -46,7 +46,7 @@ public sealed class UserAssignRoleCommandHandler : CommandHandler<UserAssignRole
         _auditWriter = auditWriter;
     }
 
-    public override async Task<Guid> ExecuteAsync(UserAssignRoleCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(UserAddRoleCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
@@ -54,7 +54,7 @@ public sealed class UserAssignRoleCommandHandler : CommandHandler<UserAssignRole
             ?? throw new AggregateNotFoundException(nameof(UserAccount), command.Uuid);
 
         var now = _clock.UtcNow;
-        user.AssignRole(command.RoleUuid, now, _executionContext.UserId, command.ExpiresAt);
+        user.AddRole(command.RoleUuid, now, _executionContext.UserId, command.ExpiresAt);
 
         await _auditWriter.RecordAsync(
             GrantAuditEntry.Create(
@@ -69,21 +69,21 @@ public sealed class UserAssignRoleCommandHandler : CommandHandler<UserAssignRole
         => Guid.TryParse(executionContext.UserId, out var actorUuid) ? actorUuid : Guid.Empty;
 }
 
-public sealed class UserRevokeRoleCommand : ICommand<Guid>, IAggregateCommand
+public sealed class UserRemoveRoleCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
 
     public Guid RoleUuid { get; set; }
 }
 
-public sealed class UserRevokeRoleCommandHandler : CommandHandler<UserRevokeRoleCommand, Guid>
+public sealed class UserRemoveRoleCommandHandler : CommandHandler<UserRemoveRoleCommand, Guid>
 {
     private readonly IUserAccountRepository _repository;
     private readonly IClock _clock;
     private readonly IExecutionContext _executionContext;
     private readonly IGrantAuditWriter _auditWriter;
 
-    public UserRevokeRoleCommandHandler(
+    public UserRemoveRoleCommandHandler(
         IUserAccountRepository repository,
         IClock clock,
         IExecutionContext executionContext,
@@ -95,18 +95,18 @@ public sealed class UserRevokeRoleCommandHandler : CommandHandler<UserRevokeRole
         _auditWriter = auditWriter;
     }
 
-    public override async Task<Guid> ExecuteAsync(UserRevokeRoleCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(UserRemoveRoleCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
         var user = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(UserAccount), command.Uuid);
 
-        user.RevokeRole(command.RoleUuid);
+        user.RemoveRole(command.RoleUuid);
 
         await _auditWriter.RecordAsync(
             GrantAuditEntry.Create(
-                _clock.UtcNow, UserAssignRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
+                _clock.UtcNow, UserAddRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
                 "role_revoked", command.RoleUuid.ToString(), reason: null, source: "identity.api"),
             ct).ConfigureAwait(false);
 
@@ -115,8 +115,8 @@ public sealed class UserRevokeRoleCommandHandler : CommandHandler<UserRevokeRole
 }
 
 /// <summary>Nadanie uprawnienia bezpośrednio użytkownikowi, z pominięciem ról —
-/// <see cref="Reason"/> wymagany (patrz <c>UserAccount.GrantPermission</c>).</summary>
-public sealed class UserGrantPermissionCommand : ICommand<Guid>, IAggregateCommand
+/// <see cref="Reason"/> wymagany (patrz <c>UserAccount.AddPermission</c>).</summary>
+public sealed class UserAddPermissionCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
 
@@ -125,14 +125,14 @@ public sealed class UserGrantPermissionCommand : ICommand<Guid>, IAggregateComma
     public string Reason { get; set; } = string.Empty;
 }
 
-public sealed class UserGrantPermissionCommandHandler : CommandHandler<UserGrantPermissionCommand, Guid>
+public sealed class UserAddPermissionCommandHandler : CommandHandler<UserAddPermissionCommand, Guid>
 {
     private readonly IUserAccountRepository _repository;
     private readonly IClock _clock;
     private readonly IExecutionContext _executionContext;
     private readonly IGrantAuditWriter _auditWriter;
 
-    public UserGrantPermissionCommandHandler(
+    public UserAddPermissionCommandHandler(
         IUserAccountRepository repository,
         IClock clock,
         IExecutionContext executionContext,
@@ -144,7 +144,7 @@ public sealed class UserGrantPermissionCommandHandler : CommandHandler<UserGrant
         _auditWriter = auditWriter;
     }
 
-    public override async Task<Guid> ExecuteAsync(UserGrantPermissionCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(UserAddPermissionCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
@@ -152,11 +152,11 @@ public sealed class UserGrantPermissionCommandHandler : CommandHandler<UserGrant
             ?? throw new AggregateNotFoundException(nameof(UserAccount), command.Uuid);
 
         var now = _clock.UtcNow;
-        user.GrantPermission(command.PermissionCode, now, _executionContext.UserId, command.Reason);
+        user.AddPermission(command.PermissionCode, now, _executionContext.UserId, command.Reason);
 
         await _auditWriter.RecordAsync(
             GrantAuditEntry.Create(
-                now, UserAssignRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
+                now, UserAddRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
                 "permission_granted", command.PermissionCode, command.Reason, source: "identity.api"),
             ct).ConfigureAwait(false);
 
@@ -164,21 +164,21 @@ public sealed class UserGrantPermissionCommandHandler : CommandHandler<UserGrant
     }
 }
 
-public sealed class UserRevokePermissionCommand : ICommand<Guid>, IAggregateCommand
+public sealed class UserRemovePermissionCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
 
     public string PermissionCode { get; set; } = string.Empty;
 }
 
-public sealed class UserRevokePermissionCommandHandler : CommandHandler<UserRevokePermissionCommand, Guid>
+public sealed class UserRemovePermissionCommandHandler : CommandHandler<UserRemovePermissionCommand, Guid>
 {
     private readonly IUserAccountRepository _repository;
     private readonly IClock _clock;
     private readonly IExecutionContext _executionContext;
     private readonly IGrantAuditWriter _auditWriter;
 
-    public UserRevokePermissionCommandHandler(
+    public UserRemovePermissionCommandHandler(
         IUserAccountRepository repository,
         IClock clock,
         IExecutionContext executionContext,
@@ -190,18 +190,18 @@ public sealed class UserRevokePermissionCommandHandler : CommandHandler<UserRevo
         _auditWriter = auditWriter;
     }
 
-    public override async Task<Guid> ExecuteAsync(UserRevokePermissionCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(UserRemovePermissionCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
         var user = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(UserAccount), command.Uuid);
 
-        user.RevokePermission(command.PermissionCode);
+        user.RemovePermission(command.PermissionCode);
 
         await _auditWriter.RecordAsync(
             GrantAuditEntry.Create(
-                _clock.UtcNow, UserAssignRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
+                _clock.UtcNow, UserAddRoleCommandHandler.ActorUuid(_executionContext), "user", user.Uuid,
                 "permission_revoked", command.PermissionCode, reason: null, source: "identity.api"),
             ct).ConfigureAwait(false);
 

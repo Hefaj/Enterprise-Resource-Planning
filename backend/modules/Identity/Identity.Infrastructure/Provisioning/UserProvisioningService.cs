@@ -61,7 +61,7 @@ public sealed class UserProvisioningService : IUserProvisioningService
 
             if (administratorRole is not null)
             {
-                user.AssignRole(administratorRole.Uuid, _clock.UtcNow, grantedBy: null, expiresAt: null);
+                user.AddRole(administratorRole.Uuid, _clock.UtcNow, grantedBy: null, expiresAt: null);
             }
         }
 

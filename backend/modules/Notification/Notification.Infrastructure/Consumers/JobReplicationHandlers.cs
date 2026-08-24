@@ -84,7 +84,12 @@ public sealed class JobCompletedHandler
             return;
         }
 
-        job.ApplyCompletion(MapStatus(message.Status), message.Succeeded, message.Failed, message.ErrorsSummary);
+        job.ApplyCompletion(
+            MapStatus(message.Status),
+            message.Succeeded,
+            message.Failed,
+            message.ErrorsSummary,
+            message.ResultRef);
 
         // Kanał `jobs` niesie trackingID zakończonych zadań — to na niego nasłuchuje
         // frontendowy JobService (onUpdate('jobs')), żeby oznaczyć zadanie jako zakończone

@@ -61,7 +61,7 @@ public class UserAccount : AggregateRoot
         SyncedAt = now;
     }
 
-    public void AssignRole(Guid roleUuid, DateTimeOffset now, string? grantedBy, DateTimeOffset? expiresAt)
+    public void AddRole(Guid roleUuid, DateTimeOffset now, string? grantedBy, DateTimeOffset? expiresAt)
     {
         if (_roleGrants.Any(g => g.RoleUuid == roleUuid))
         {
@@ -71,9 +71,9 @@ public class UserAccount : AggregateRoot
         _roleGrants.Add(UserRoleGrant.Create(roleUuid, now, grantedBy, expiresAt));
     }
 
-    public void RevokeRole(Guid roleUuid) => _roleGrants.RemoveAll(g => g.RoleUuid == roleUuid);
+    public void RemoveRole(Guid roleUuid) => _roleGrants.RemoveAll(g => g.RoleUuid == roleUuid);
 
-    public void GrantPermission(string permissionCode, DateTimeOffset now, string? grantedBy, string reason)
+    public void AddPermission(string permissionCode, DateTimeOffset now, string? grantedBy, string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -90,7 +90,7 @@ public class UserAccount : AggregateRoot
         _permissionGrants.Add(UserPermissionGrant.Create(permissionCode, now, grantedBy, reason));
     }
 
-    public void RevokePermission(string permissionCode)
+    public void RemovePermission(string permissionCode)
         => _permissionGrants.RemoveAll(g => string.Equals(g.PermissionCode, permissionCode, StringComparison.Ordinal));
 
     public void Deactivate() => IsActive = false;

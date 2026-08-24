@@ -5,11 +5,14 @@ import {
   ErpNavigationItem,
   ErpWidgetRegistryService,
   ErpWidgetDefinition,
+  ErpJobResultRegistry,
+  ErpJobResultResolver,
   JOB_LIST_WIDGET_ID,
   SignalrSyncService,
 } from '@erp/shared/data-access';
 import { ErpModalService } from '@erp/shared/ui';
 import { AppSettingsService } from '@erp/client/util';
+import { ErpJobToastBridge } from './erp-job-toast.bridge';
 import { ErpAuthService, PermissionStore } from '@erp/shared/auth';
 
 /** Sygnatura SignalR dla zmian uprawnień/ról użytkownika — `AggregateSignatures.IdentityUser`
@@ -20,6 +23,11 @@ export async function STARTUP(): Promise<void> {
   const menuRegistry = inject(ErpNavRegistryService);
   const modalService = inject(ErpModalService);
   const widgetRegistry = inject(ErpWidgetRegistryService);
+  const jobResultRegistry = inject(ErpJobResultRegistry);
+
+  // Samo wstrzyknięcie uruchamia most: jego konstruktor zakłada `effect` nad feedem zadań.
+  // Bez tej linijki serwis nigdy by nie powstał — nikt inny go nie wstrzykuje.
+  inject(ErpJobToastBridge);
   const permissionStore = inject(PermissionStore);
   const authService = inject(ErpAuthService);
   // Pobrany synchronicznie: kontekst wstrzykiwania nie przeżywa `await` niżej,
@@ -136,7 +144,14 @@ export async function STARTUP(): Promise<void> {
   });
 
   const loadPromises = REMOTE_MODULES_CONFIG.map((config) =>
-    loadContractDirect(config.routePrefix, config, modalService, permissionStore, unfilteredMenus),
+    loadContractDirect(
+      config.routePrefix,
+      config,
+      modalService,
+      permissionStore,
+      unfilteredMenus,
+      jobResultRegistry,
+    ),
   );
   const remoteMenus = await Promise.all(loadPromises);
 
@@ -172,6 +187,12 @@ interface EntryContractModule {
   remoteMenu?: ErpNavigationItem[];
   remoteModalIds?: string[];
   remoteRoutes?: unknown[];
+
+  /** Typy komend, których wyniki ten moduł potrafi zamienić na plik do pobrania. */
+  remoteJobResultCommandTypes?: readonly string[];
+
+  /** Leniwy loader resolwera — patrz `ErpJobResultRegistry`. */
+  loadJobResultResolver?: (injector: Injector) => Promise<ErpJobResultResolver>;
 }
 
 async function loadContractDirect(
@@ -180,6 +201,7 @@ async function loadContractDirect(
   modalService: ErpModalService,
   permissionStore: PermissionStore,
   unfilteredMenus: Map<string, ErpNavigationItem[]>,
+  jobResultRegistry: ErpJobResultRegistry,
 ): Promise<ErpNavigationItem | null> {
   try {
     const module = (await loadModuleContract(modulePrefix)) as EntryContractModule;
@@ -191,6 +213,17 @@ async function loadContractDirect(
     // Rejestruj mapowanie modalId → modulePrefix (lekkie, tylko stringi)
     if (module?.remoteModalIds) {
       modalService.registerModalIds(config.routePrefix, module.remoteModalIds);
+    }
+
+    // Kto potrafi zamienić `job.resultRef` na plik do pobrania. Rejestracja jest tu, a nie
+    // w module produkującym artefakt, z tego samego powodu co przy modalach i widżetach:
+    // feed powiadomień (`scope:notification`) nie może zależeć od `scope:catalog`, a host
+    // — jako jedyna warstwa znająca kontrakty remotów — może. Sam resolwer zostaje leniwy.
+    const resolverLoader = module?.loadJobResultResolver;
+    if (resolverLoader && module?.remoteJobResultCommandTypes) {
+      for (const commandType of module.remoteJobResultCommandTypes) {
+        jobResultRegistry.register(commandType, resolverLoader);
+      }
     }
 
     if (module?.remoteMenu) {

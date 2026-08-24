@@ -3,8 +3,8 @@ export * from './lib/grant-audit/page/grant-audit.component';
 export * from './lib/dashboard/translation';
 
 export * from './lib/users/page/users.component';
-export * from './lib/users/modal/user-assign-role';
-export * from './lib/users/modal/user-grant-permission';
+export * from './lib/users/modal/user-add-role';
+export * from './lib/users/modal/user-add-permission';
 
 export * from './lib/roles/page/roles.component';
 export * from './lib/roles/modal/role-create';

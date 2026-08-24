@@ -47,9 +47,12 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Nowy atom UI wg wzorca "Single Config Builder" (`*.types.ts`/`*.builder.ts`/`*.component.ts`) | [`docs/frontend/atoms.md`](docs/frontend/atoms.md) |
 | Zaznaczenie i akcje masowe w UI — „Zaznacz wszystko" jako filtr, `ErpSelectionScope`, próg materializacji, panel/zakładka zależna od zaznaczenia (`ProductScopeTabStore`, `erp-selection-scope-banner`), bramkowanie akcji toolbara | [`docs/frontend/selection-scope.md`](docs/frontend/selection-scope.md) |
 | Tłumaczenia — dodawanie kluczy, bootstrapping scope'u, DI shadowing | [`docs/frontend/translations.md`](docs/frontend/translations.md) |
+| Powiadomienia na froncie — toast (`ErpToastService`), dzwonek, historia zadań, gdzie użytkownik ponownie pobierze artefakt | [`docs/frontend/notifications.md`](docs/frontend/notifications.md) |
 | Praca z komponentami TaigaUI (API, migracja z PrimeNG, dialogi, selecty, textfields) | `.agents/skills/taiga-ui/SKILL.md` |
 | Nowy mikroserwis backendowy — 4 projekty Clean Architecture, `.sln`, `DbContext`, `Program.cs`, sygnatura SignalR | [`docs/backend/new-microservice.md`](docs/backend/new-microservice.md) |
 | Komenda/zapytanie CQRS w module backendowym (handler, `IUnitOfWork`, projekcje, sortowanie po whiteliście) | [`docs/backend/cqrs.md`](docs/backend/cqrs.md) |
+| Nazwanie nowej komendy/endpointu — pięć czasowników (`create`/`set`/`add`/`remove`/`exec`), człon = cel, trasy, co łamie kontrakt NSwag | [`docs/backend/endpoint-naming.md`](docs/backend/endpoint-naming.md) |
+| Operacja produkująca plik (eksport, raport, dokument) — agregat przebiegu, `job.kind`, MinIO, `IArtifactStore`, wygasanie | [`docs/backend/exports-artifacts.md`](docs/backend/exports-artifacts.md) |
 | Operacja masowa (bulk) — `BatchEndpointBase`, `job`/`job_item`, `BulkCommandRunner`, cancel/retry-failed | [`docs/backend/bulk-commands.md`](docs/backend/bulk-commands.md) |
 | Walidacja wsadowa — `IBatchRule`, `ValidationChain`, pre-check przed utworzeniem zadania masowego | [`docs/backend/batch-validation.md`](docs/backend/batch-validation.md) |
 | Zdarzenie domenowe / integracyjne, outbox, nowy konsument RabbitMQ | [`docs/backend/events-outbox.md`](docs/backend/events-outbox.md) |

@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
-import { JobService } from '@erp/shared/data-access';
+import { JobRecord, JobService } from '@erp/shared/data-access';
 import { ErpTranslatePipe } from '@erp/shared/ui';
 import { ErpJobItemComponent, JOB_KEYS } from '@erp/notification/ui';
 import { JobFeedService } from '@erp/notification/data-access';
+import { JobDownloadService } from '../job-download.service';
 import { JOBS_ROUTE, JOB_POPOVER_LIMIT } from '@erp/notification/util';
 
 /**
@@ -53,7 +54,12 @@ import { JOBS_ROUTE, JOB_POPOVER_LIMIT } from '@erp/notification/util';
       } @else {
         <div class="flex flex-col overflow-y-auto flex-shrink-0" style="max-height: 17rem;">
           @for (job of visibleJobs(); track job.trackingID) {
-            <erp-job-item [job]="job" />
+            <erp-job-item
+              [job]="job"
+              [canDownload]="downloads.canDownload(job)"
+              [downloading]="downloads.isDownloading(job)"
+              (downloadRequested)="download($event)"
+            />
           }
         </div>
       }
@@ -75,6 +81,8 @@ import { JOBS_ROUTE, JOB_POPOVER_LIMIT } from '@erp/notification/util';
 export class JobListComponent implements OnInit {
   private readonly _jobService = inject(JobService);
   private readonly _feed = inject(JobFeedService);
+
+  protected readonly downloads = inject(JobDownloadService);
 
   /**
    * Trasa pełnej historii. Domyślnie adres remota zamontowanego w hoście; aplikacja remota
@@ -103,7 +111,16 @@ export class JobListComponent implements OnInit {
     void this._feed.bootstrap();
   }
 
+  protected download(job: JobRecord): void {
+    void this.downloads.download(job);
+  }
+
+  /**
+   * Czyści WYŁĄCZNIE lokalny store — na serwerze zadania zostają i widać je w historii.
+   * Zadania z artefaktem są z tego wyłączone: „Wyczyść" przy pozycji z przyciskiem „Pobierz"
+   * czyta się jak „skasuj plik", a nim nie jest.
+   */
   protected clearFinished(): void {
-    this._jobService.clearFinished();
+    this._jobService.clearFinished(job => this.downloads.canDownload(job));
   }
 }

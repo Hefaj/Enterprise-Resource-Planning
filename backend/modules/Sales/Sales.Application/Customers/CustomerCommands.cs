@@ -9,7 +9,7 @@ namespace Sales.Application.Customers;
 /// <summary>Zmiana nazwy klienta — jedyna komenda modułu, wystarczająca do sprawdzenia
 /// całej ścieżki: pojedyncze wywołanie i operacja masowa przez tę samą infrastrukturę
 /// co w Catalogu (patrz <c>Catalog.Application.Products.ProductSetNameCommand</c>).</summary>
-public sealed class SetCustomerNameCommand : ICommand<Guid>, IAggregateCommand
+public sealed class CustomerSetNameCommand : ICommand<Guid>, IAggregateCommand
 {
     /// <inheritdoc />
     public Guid Uuid { get; set; }
@@ -19,13 +19,13 @@ public sealed class SetCustomerNameCommand : ICommand<Guid>, IAggregateCommand
 
 /// <summary>Handler nie zapisuje zmian — granicę transakcji wyznacza wywołujący
 /// (endpoint pojedynczej komendy albo <c>BulkCommandRunner</c> przy operacji masowej).</summary>
-public sealed class SetCustomerNameCommandHandler : CommandHandler<SetCustomerNameCommand, Guid>
+public sealed class CustomerSetNameCommandHandler : CommandHandler<CustomerSetNameCommand, Guid>
 {
     private readonly ICustomerRepository _repository;
 
-    public SetCustomerNameCommandHandler(ICustomerRepository repository) => _repository = repository;
+    public CustomerSetNameCommandHandler(ICustomerRepository repository) => _repository = repository;
 
-    public override async Task<Guid> ExecuteAsync(SetCustomerNameCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(CustomerSetNameCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 

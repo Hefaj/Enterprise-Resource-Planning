@@ -205,16 +205,22 @@
     "commands": {
       "catalogProductSetPrice": "Zmiana ceny produktów",
       "catalogProductSetName": "Zmiana nazwy produktów",
-      "identityUserAssignRole": "Nadanie roli użytkownikowi",
-      "identityUserRevokeRole": "Odebranie roli użytkownikowi",
-      "identityUserGrantPermission": "Nadanie uprawnienia użytkownikowi",
-      "identityUserRevokePermission": "Odebranie uprawnienia użytkownikowi",
-      "identityUserForceLogout": "Wymuszenie wylogowania",
+      "identityUserAddRole": "Nadanie roli użytkownikowi",
+      "identityUserRemoveRole": "Odebranie roli użytkownikowi",
+      "identityUserAddPermission": "Nadanie uprawnienia użytkownikowi",
+      "identityUserRemovePermission": "Odebranie uprawnienia użytkownikowi",
+      "identityUserExecForceLogout": "Wymuszenie wylogowania",
       "identityRoleCreate": "Utworzenie roli",
       "identityRoleAddPermission": "Dodanie uprawnienia do roli",
       "identityRoleRemovePermission": "Usunięcie uprawnienia z roli",
       "identityRoleAddMember": "Dodanie roli składowej",
       "identityRoleRemoveMember": "Usunięcie roli składowej"
+    },
+    "toast": {
+      "completed": "Zakończono: {{name}}",
+      "completedWithErrors": "Zakończono z błędami: {{name}}",
+      "failed": "Nie udało się: {{name}}",
+      "download": "Pobierz"
     }
   }
 }

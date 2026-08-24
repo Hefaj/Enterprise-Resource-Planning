@@ -50,9 +50,12 @@
         "succeeded": "Succeeded",
         "failed": "Failed",
         "createdAt": "Requested",
-        "errors": "Errors"
+        "errors": "Errors",
+        "result": "Result"
       },
       "emptyCell": "—"
     }
-  }
+  },
+  "download": "Download",
+  "downloadFailed": "Could not download the file — please try again."
 }

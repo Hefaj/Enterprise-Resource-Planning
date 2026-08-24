@@ -22,11 +22,17 @@ public sealed class JobQueries : IJobQueries
     }
 
     /// <inheritdoc />
-    public async Task<SearchResponse> SearchAsync(SearchJobRequest request, CancellationToken cancellationToken)
+    public async Task<SearchResponse> SearchAsync(
+        SearchJobRequest request,
+        string ownerUserId,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserId);
 
-        var query = _dbContext.NotificationJobs.AsNoTracking();
+        // Zawężenie do właściciela jest PIERWSZE i bezwarunkowe — nie da się go pominąć przez
+        // dobranie filtrów w żądaniu.
+        var query = _dbContext.NotificationJobs.AsNoTracking().Where(j => j.UserId == ownerUserId);
 
         if (!string.IsNullOrWhiteSpace(request.QueueId))
         {
@@ -43,12 +49,6 @@ public sealed class JobQueries : IJobQueries
         if (request.IsComplete.HasValue)
         {
             query = query.Where(j => j.IsComplete == request.IsComplete.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.UserId))
-        {
-            var term = request.UserId;
-            query = query.Where(j => j.UserId != null && EF.Functions.ILike(j.UserId, $"%{term}%"));
         }
 
         if (!string.IsNullOrWhiteSpace(request.ClientId))
@@ -70,9 +70,16 @@ public sealed class JobQueries : IJobQueries
     }
 
     /// <inheritdoc />
-    public async Task<List<JobDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken)
+    public async Task<List<JobDto>> GetAsync(
+        IReadOnlyCollection<Guid>? uuids,
+        string ownerUserId,
+        CancellationToken cancellationToken)
     {
-        var query = _dbContext.NotificationJobs.AsNoTracking();
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserId);
+
+        // Jak w SearchAsync — bez tego dowolne uuid zadania wystarczyłoby, żeby odczytać cudzy
+        // wiersz razem z jego `commandJson` i `uiMetadata`.
+        var query = _dbContext.NotificationJobs.AsNoTracking().Where(j => j.UserId == ownerUserId);
 
         if (uuids is { Count: > 0 })
         {
@@ -97,7 +104,8 @@ public sealed class JobQueries : IJobQueries
                 j.UserId,
                 j.ClientId,
                 j.CreatedAt,
-                j.ExpireOn))
+                j.ExpireOn,
+                j.ResultRef))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }

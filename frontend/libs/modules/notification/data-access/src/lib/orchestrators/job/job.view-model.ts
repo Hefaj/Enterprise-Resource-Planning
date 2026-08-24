@@ -36,6 +36,7 @@ export function mapJobDtoToRecord(dto: JobDto): JobVM {
     errorsSummary: dto.errorsSummary ?? null,
     createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
     expireOn: dto.expireOn ? new Date(dto.expireOn) : null,
+    resultRef: dto.resultRef ?? null,
     changedAt: Date.now(),
     optimistic: false,
   };

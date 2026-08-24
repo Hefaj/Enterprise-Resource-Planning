@@ -25,6 +25,17 @@
     <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Api/Erp.BuildingBlocks.Api.csproj" />
   </ItemGroup>
 
+  <!--
+    Moduły są tu po to, żeby CommandNamingTests miały co skanować. Testy warstwowe ich nie
+    potrzebują — reguła nazewnicza z definicji dotyczy kodu modułów, a nie fundamentu, więc
+    bez tych referencji sprawdzałaby pusty zbiór i zawsze przechodziła.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="../../modules/Catalog/Catalog.Api/Catalog.Api.csproj" />
+    <ProjectReference Include="../../modules/Identity/Identity.Api/Identity.Api.csproj" />
+    <ProjectReference Include="../../modules/Sales/Sales.Api/Sales.Api.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Shouldly" />

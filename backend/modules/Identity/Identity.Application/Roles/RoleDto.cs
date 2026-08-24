@@ -46,7 +46,7 @@ public interface IRoleQueries
     /// Spośród podanych identyfikatorów zwraca te, które faktycznie istnieją jako role.
     ///
     /// Jedno zbiorcze zapytanie zamiast N osobnych <c>FindAsync</c> — używane m.in. przez
-    /// <c>ReferencedRoleMustExistRule</c> (czy rola wskazana w <c>UserAssignRoleCommand</c>
+    /// <c>ReferencedRoleMustExistRule</c> (czy rola wskazana w <c>UserAddRoleCommand</c>
     /// istnieje), zanim <c>BulkCommandRunner</c> w ogóle zacznie przetwarzać element.
     /// </summary>
     Task<List<Guid>> GetExistingUuidsAsync(IReadOnlyCollection<Guid> uuids, CancellationToken cancellationToken);

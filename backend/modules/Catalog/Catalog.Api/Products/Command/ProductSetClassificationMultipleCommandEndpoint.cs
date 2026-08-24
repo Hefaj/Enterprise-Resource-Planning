@@ -29,7 +29,7 @@ public sealed class ProductSetClassificationMultipleCommandEndpoint
 
     public override void Configure()
     {
-        Post("product/batch-set-classification");
+        Post("batch-set-classification");
         Group<ProductGroup>();
         Permissions(P.Catalog.ProductUpdate);
         Description(d => d

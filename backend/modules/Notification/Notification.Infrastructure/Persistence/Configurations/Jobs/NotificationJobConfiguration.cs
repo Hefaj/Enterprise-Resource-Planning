@@ -12,6 +12,7 @@ public sealed class NotificationJobConfiguration : IEntityTypeConfiguration<Noti
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.ToTable("job");
+        builder.Property(j => j.ResultRef).HasMaxLength(256);
         builder.HasKey(j => j.Uuid);
 
         builder.Property(j => j.QueueId).HasMaxLength(128);

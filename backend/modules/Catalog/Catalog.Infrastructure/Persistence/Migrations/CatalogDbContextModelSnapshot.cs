@@ -228,6 +228,74 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.ToTable("code_type", "catalog");
                 });
 
+            modelBuilder.Entity("Catalog.Domain.ExportRuns.ExportRun", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<Guid?>("ArtifactUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artifact_uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("error_code");
+
+                    b.Property<DateTimeOffset?>("ExpireOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expire_on");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_at");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("format");
+
+                    b.Property<Guid>("JobUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_uuid");
+
+                    b.Property<string>("ParametersJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parameters_json");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("record_count");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_export_run");
+
+                    b.HasIndex("JobUuid")
+                        .HasDatabaseName("ix_export_run_job_uuid");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_export_run_status_created_at");
+
+                    b.ToTable("export_run", "catalog");
+                });
+
             modelBuilder.Entity("Catalog.Domain.Models.ProductModel", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -471,7 +539,7 @@ namespace Catalog.Infrastructure.Persistence.Migrations
 
                     b.ToTable("product_attribute_value", "catalog", t =>
                         {
-                            t.HasCheckConstraint("ck_product_attribute_value_payload", "(CASE WHEN option_uuid IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN multimedia_uuid IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_text IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_number IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_boolean IS NOT NULL THEN 1 ELSE 0 END\n+ CASE WHEN value_date IS NOT NULL THEN 1 ELSE 0 END) = 1");
+                            t.HasCheckConstraint("ck_product_attribute_value_payload", "(CASE WHEN option_uuid IS NOT NULL THEN 1 ELSE 0 END\r\n+ CASE WHEN multimedia_uuid IS NOT NULL THEN 1 ELSE 0 END\r\n+ CASE WHEN value_text IS NOT NULL THEN 1 ELSE 0 END\r\n+ CASE WHEN value_number IS NOT NULL THEN 1 ELSE 0 END\r\n+ CASE WHEN value_boolean IS NOT NULL THEN 1 ELSE 0 END\r\n+ CASE WHEN value_date IS NOT NULL THEN 1 ELSE 0 END) = 1");
                         });
                 });
 
@@ -694,10 +762,21 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("finished_at");
 
+                    b.Property<int>("Kind")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("kind");
+
                     b.Property<string>("QueueId")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("queue_id");
+
+                    b.Property<string>("ResultRef")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("result_ref");
 
                     b.Property<DateTimeOffset?>("StartedAt")
                         .HasColumnType("timestamp with time zone")
@@ -739,8 +818,8 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_job_user_id");
 
-                    b.HasIndex("Status", "CreatedAt")
-                        .HasDatabaseName("ix_job_status_created_at");
+                    b.HasIndex("Kind", "Status", "CreatedAt")
+                        .HasDatabaseName("ix_job_kind_status_created_at");
 
                     b.ToTable("job", "catalog");
                 });

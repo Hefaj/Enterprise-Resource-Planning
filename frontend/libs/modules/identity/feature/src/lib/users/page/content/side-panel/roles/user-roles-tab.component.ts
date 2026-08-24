@@ -19,7 +19,7 @@ import {
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
-import { USER_ASSIGN_ROLE_MODAL_ID } from '@erp/identity/util';
+import { USER_ADD_ROLE_MODAL_ID } from '@erp/identity/util';
 import { USERS_KEYS } from '../../../../translation';
 import { UserRoleGrantRow, UserRolesTabStore } from './user-roles-tab.store';
 
@@ -113,7 +113,7 @@ export class UserRolesTabComponent {
           .addAction((a) =>
             a
               .setId('assign-role')
-              .setLabel(USERS_KEYS.commands.assignRole.label)
+              .setLabel(USERS_KEYS.commands.addRole.label)
               .setIcon('@tui.plus')
               .setAppearance('success')
               .setHidden(computed(() => !this.canManage()))
@@ -206,7 +206,7 @@ export class UserRolesTabComponent {
   /** Modal nadania roli adresuje CAŁY zasięg — nie tylko widoczną próbkę. */
   private _openAssignModal(): void {
     const targets = this._tabStore.batchTargets();
-    this._modalService.open(USER_ASSIGN_ROLE_MODAL_ID, {
+    this._modalService.open(USER_ADD_ROLE_MODAL_ID, {
       targetUuids: targets.targetUuids,
       targetFilter: targets.targetFilter,
       targetCount: this._tabStore.scopeCount(),
@@ -229,7 +229,7 @@ export class UserRolesTabComponent {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         Promise.all(
-          pairs.map(({ userUuid, roleUuid }) => this._orchestrator.revokeRoleAsync({ uuid: userUuid, roleUuid })),
+          pairs.map(({ userUuid, roleUuid }) => this._orchestrator.removeRoleAsync({ uuid: userUuid, roleUuid })),
         )
           .then(() => this._tabStore.clearChildSelection())
           .catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));

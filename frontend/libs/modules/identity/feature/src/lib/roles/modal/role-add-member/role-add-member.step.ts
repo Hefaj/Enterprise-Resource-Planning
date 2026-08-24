@@ -24,7 +24,7 @@ export class RoleAddMemberStepComponent extends ErpBatchStepBase<BatchCommandOfR
   protected readonly formContent: ErpStepContentConfig;
 
   public constructor() {
-    // Patrz komentarz w `UserAssignRoleStepComponent` — zmienna lokalna zamiast `this.pole`, bo
+    // Patrz komentarz w `UserAddRoleStepComponent` — zmienna lokalna zamiast `this.pole`, bo
     // `super()` jeszcze nie wystartował.
     const roleOrchestrator = inject(RoleOrchestrator);
     const availableRoles = computed(() => {

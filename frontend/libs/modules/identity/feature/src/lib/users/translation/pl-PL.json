@@ -26,7 +26,7 @@
       "permissions": "Uprawnienia bezpośrednie",
       "effective": "Efektywne uprawnienia"
     },
-    "forceLogout": {
+    "execForceLogout": {
       "label": "Wymuś wylogowanie",
       "confirmTitle": "Wymusić wylogowanie?",
       "confirmMessage": "Sesja użytkownika w Keycloak zostanie natychmiast odwołana.",
@@ -79,7 +79,7 @@
     }
   },
   "commands": {
-    "assignRole": {
+    "addRole": {
       "label": "Nadaj rolę",
       "modalTitle": "Nadanie roli",
       "roleLabel": "Rola",
@@ -92,7 +92,7 @@
       "filterModeSuffix": "pasujących do bieżących filtrów.",
       "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdego użytkownika pasującego do filtrów, także z dalszych stron."
     },
-    "grantPermission": {
+    "addPermission": {
       "label": "Nadaj uprawnienie",
       "modalTitle": "Nadanie uprawnienia bezpośrednio",
       "permissionLabel": "Uprawnienie",

@@ -9,11 +9,11 @@
  * masowych), a ten nie może zależeć od `type:ui`.
  */
 export const IDENTITY_JOB_COMMAND_KEYS = {
-  assignRole: 'shared.jobs.commands.identityUserAssignRole',
-  revokeRole: 'shared.jobs.commands.identityUserRevokeRole',
-  grantPermission: 'shared.jobs.commands.identityUserGrantPermission',
-  revokePermission: 'shared.jobs.commands.identityUserRevokePermission',
-  forceLogout: 'shared.jobs.commands.identityUserForceLogout',
+  addRole: 'shared.jobs.commands.identityUserAddRole',
+  removeRole: 'shared.jobs.commands.identityUserRemoveRole',
+  addPermission: 'shared.jobs.commands.identityUserAddPermission',
+  removePermission: 'shared.jobs.commands.identityUserRemovePermission',
+  execForceLogout: 'shared.jobs.commands.identityUserExecForceLogout',
   createRole: 'shared.jobs.commands.identityRoleCreate',
   addRolePermission: 'shared.jobs.commands.identityRoleAddPermission',
   removeRolePermission: 'shared.jobs.commands.identityRoleRemovePermission',

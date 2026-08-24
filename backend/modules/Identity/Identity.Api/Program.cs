@@ -28,7 +28,7 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration);
 // 2 walidatory, repozytoria i zapytania — wszystko, co wcześniej stało tu wypisane z ręki.
 // Nowa komenda albo reguła nie dotyka już tego pliku.
 builder.Services.AddErpModule(
-    typeof(UserAssignRoleCommand).Assembly,
+    typeof(UserAddRoleCommand).Assembly,
     typeof(IdentityDbContext).Assembly);
 
 // Nadpisuje rejestrację z AddErpApi (HttpPermissionProvider) — Identity czyta swoją własną bazę

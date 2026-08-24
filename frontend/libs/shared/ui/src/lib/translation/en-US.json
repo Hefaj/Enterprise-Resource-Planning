@@ -205,16 +205,22 @@
     "commands": {
       "catalogProductSetPrice": "Product price change",
       "catalogProductSetName": "Product name change",
-      "identityUserAssignRole": "Role assigned to user",
-      "identityUserRevokeRole": "Role revoked from user",
-      "identityUserGrantPermission": "Permission granted to user",
-      "identityUserRevokePermission": "Permission revoked from user",
-      "identityUserForceLogout": "Forced logout",
+      "identityUserAddRole": "Role assigned to user",
+      "identityUserRemoveRole": "Role revoked from user",
+      "identityUserAddPermission": "Permission granted to user",
+      "identityUserRemovePermission": "Permission revoked from user",
+      "identityUserExecForceLogout": "Forced logout",
       "identityRoleCreate": "Role created",
       "identityRoleAddPermission": "Permission added to role",
       "identityRoleRemovePermission": "Permission removed from role",
       "identityRoleAddMember": "Member role added",
       "identityRoleRemoveMember": "Member role removed"
+    },
+    "toast": {
+      "completed": "Finished: {{name}}",
+      "completedWithErrors": "Finished with errors: {{name}}",
+      "failed": "Failed: {{name}}",
+      "download": "Download"
     }
   }
 }

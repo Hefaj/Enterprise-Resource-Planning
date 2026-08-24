@@ -56,8 +56,11 @@ export const JOB_KEYS = {
           failed: 'job.page.table.columns.failed',
           createdAt: 'job.page.table.columns.createdAt',
           errors: 'job.page.table.columns.errors',
+          result: 'job.page.table.columns.result',
         },
         emptyCell: 'job.page.table.emptyCell',
       },
     },
+    download: 'job.download',
+    downloadFailed: 'job.downloadFailed',
   } as const;

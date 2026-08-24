@@ -43,6 +43,10 @@ public static class Permissions
         public const string DictionaryRead = "catalog.dictionary.read";
 
         public const string JobControl = "catalog.job.control";
+
+        /// <summary>Zlecenie eksportu katalogu i pobranie gotowego artefaktu —
+        /// patrz <c>docs/backend/exports-artifacts.md</c>.</summary>
+        public const string ExportRunCreate = "catalog.export_run.create";
     }
 
     public static class Sales
@@ -83,6 +87,7 @@ public static class Permissions
         new(Catalog.CategoryUpdate, "catalog", "category", "update", "identity.permissions.catalog.category.update"),
         new(Catalog.DictionaryRead, "catalog", "dictionary", "read", "identity.permissions.catalog.dictionary.read"),
         new(Catalog.JobControl, "catalog", "job", "control", "identity.permissions.catalog.job.control"),
+        new(Catalog.ExportRunCreate, "catalog", "export_run", "create", "identity.permissions.catalog.exportRun.create"),
 
         new(Sales.CustomerRead, "sales", "customer", "read", "identity.permissions.sales.customer.read"),
         new(Sales.CustomerUpdate, "sales", "customer", "update", "identity.permissions.sales.customer.update"),

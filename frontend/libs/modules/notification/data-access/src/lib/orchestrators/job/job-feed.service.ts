@@ -1,7 +1,7 @@
 import { DestroyRef, Injectable, effect, inject, signal, Signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, filter } from 'rxjs/operators';
-import { JobService, SignalrSyncService, getOrCreateClientId } from '@erp/shared/data-access';
+import { JobService, SignalrSyncService } from '@erp/shared/data-access';
 import {
   JOB_FEED_PAGE_SIZE,
   JOB_HISTORY_PAGE_SIZE,
@@ -68,11 +68,11 @@ export class JobFeedService {
    * powiadomień to jednak za mało: NOWE zadanie z definicji nie jest w cache, więc bez tego
    * pojawiłoby się dopiero po przeładowaniu strony.
    *
-   * Reakcją na nieznany identyfikator jest ponowne `searchJob` z filtrem po `clientId`,
-   * a NIE pobranie tego konkretnego zadania. Kanał `notification.job` jest wspólny dla
-   * wszystkich klientów (grupa `agg:{sygnatura}`), więc lecą po nim także cudze zadania —
-   * pobieranie ich po uuid zaśmiecałoby cache danymi, których i tak nie wolno pokazać.
-   * Zapytanie z filtrem zwraca wyłącznie nasze.
+   * Reakcją na nieznany identyfikator jest ponowne `searchJob`, a NIE pobranie tego konkretnego
+   * zadania. Kanał `notification.job` jest wspólny dla wszystkich klientów (grupa
+   * `agg:{sygnatura}`), więc lecą po nim także cudze zadania — pobieranie ich po uuid byłoby
+   * pytaniem o cudze wiersze. `searchJob` zawęża wynik do zalogowanego użytkownika po stronie
+   * serwera (patrz `IJobQueries`), więc wraca wyłącznie to, co nasze.
    *
    * <b>„Nieznane" mierzy się cache'em ORKIESTRATORA, nie store'em feedu.</b> Zadanie zlecone
    * z tej karty trafia do `JobService` optymistycznie (`addJob`) w chwili odpowiedzi API —
@@ -127,7 +127,6 @@ export class JobFeedService {
 
     try {
       const response = await this._orchestrator.searchAsync({
-        clientId: getOrCreateClientId(),
         page: options.page ?? 1,
         pageSize: options.pageSize ?? JOB_HISTORY_PAGE_SIZE,
         isComplete: options.isComplete,
@@ -158,12 +157,12 @@ export class JobFeedService {
   }
 
   /**
-   * Pobiera stronę historii zadań tej karty.
+   * Pobiera stronę historii zadań zalogowanego użytkownika.
    *
-   * Filtrujemy po `clientId`, nie po użytkowniku: dopóki backend nie ma uwierzytelniania,
-   * identyfikator karty jest jedynym adresatem, jakiego zadanie faktycznie ma (patrz
-   * `getOrCreateClientId` i `ExecutionContextMiddleware`). Gdy pojawi się JWT, zmienia się
-   * tu jeden filtr, a nie kształt feedu.
+   * Żadnego filtra tożsamości nie wysyłamy: `searchJob` zawęża wynik do właściciela po stronie
+   * serwera, biorąc go z claimu `sub` tokenu (patrz `IJobQueries` i `SearchJobEndpoint`).
+   * Wcześniej front filtrował po `clientId`, czyli po karcie przeglądarki — feed gubił się
+   * między urządzeniami, a filtr sterowany przez klienta pozwalał podejrzeć cudze zadania.
    */
   public async reload(options?: {
     page?: number;
@@ -174,7 +173,6 @@ export class JobFeedService {
 
     try {
       const response = await this._orchestrator.searchAsync({
-        clientId: getOrCreateClientId(),
         page: options?.page ?? 1,
         pageSize: options?.pageSize ?? JOB_HISTORY_PAGE_SIZE,
         isComplete: options?.isComplete,

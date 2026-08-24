@@ -65,10 +65,21 @@ namespace Identity.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("finished_at");
 
+                    b.Property<int>("Kind")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("kind");
+
                     b.Property<string>("QueueId")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("queue_id");
+
+                    b.Property<string>("ResultRef")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("result_ref");
 
                     b.Property<DateTimeOffset?>("StartedAt")
                         .HasColumnType("timestamp with time zone")
@@ -110,8 +121,8 @@ namespace Identity.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_job_user_id");
 
-                    b.HasIndex("Status", "CreatedAt")
-                        .HasDatabaseName("ix_job_status_created_at");
+                    b.HasIndex("Kind", "Status", "CreatedAt")
+                        .HasDatabaseName("ix_job_kind_status_created_at");
 
                     b.ToTable("job", "identity");
                 });

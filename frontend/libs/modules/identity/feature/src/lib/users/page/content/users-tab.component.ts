@@ -10,9 +10,9 @@ import {
   erpSelectionScopeCount,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
-import { UserOrchestrator, SearchUserAccountRequest, BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest } from '@erp/identity/data-access';
+import { UserOrchestrator, SearchUserAccountRequest, BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest, BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest } from '@erp/identity/data-access';
 import { IdentityConfirmDialogService } from '@erp/identity/ui';
-import { USER_ASSIGN_ROLE_MODAL_ID, USER_GRANT_PERMISSION_MODAL_ID } from '@erp/identity/util';
+import { USER_ADD_ROLE_MODAL_ID, USER_ADD_PERMISSION_MODAL_ID } from '@erp/identity/util';
 
 import { UsersStore } from '../users.store';
 import { IdentityUsersTableComponent } from '../../components/tables/identity-users-table/identity-users-table.component';
@@ -71,7 +71,7 @@ export class UsersTabComponent {
           .addAction((a) =>
             a
               .setId('assign-role')
-              .setLabel(USERS_KEYS.commands.assignRole.label)
+              .setLabel(USERS_KEYS.commands.addRole.label)
               .setIcon('@tui.shield')
               .setAppearance('success')
               .setHidden(computed(() => !this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage)))
@@ -80,7 +80,7 @@ export class UsersTabComponent {
           .addAction((a) =>
             a
               .setId('grant-permission')
-              .setLabel(USERS_KEYS.commands.grantPermission.label)
+              .setLabel(USERS_KEYS.commands.addPermission.label)
               .setIcon('@tui.key')
               .setAppearance('success')
               .setHidden(computed(() => !this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage)))
@@ -89,7 +89,7 @@ export class UsersTabComponent {
           .addAction((a) =>
             a
               .setId('force-logout')
-              .setLabel(USERS_KEYS.detail.forceLogout.label)
+              .setLabel(USERS_KEYS.detail.execForceLogout.label)
               .setIcon('@tui.log-out')
               .setAppearance('warning')
               .setHidden(computed(() => !this._permissionStore.has(ERP_PERMISSIONS.Identity.UserManage)))
@@ -107,16 +107,16 @@ export class UsersTabComponent {
   );
 
   private _openAssignRoleModal(): void {
-    this._modalService.open<BatchCommandOfUserAssignRoleCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
-      USER_ASSIGN_ROLE_MODAL_ID,
+    this._modalService.open<BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
+      USER_ADD_ROLE_MODAL_ID,
       erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()),
       { targetCount: this.selectionCount() },
     );
   }
 
   private _openGrantPermissionModal(): void {
-    this._modalService.open<BatchCommandOfUserGrantPermissionCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
-      USER_GRANT_PERMISSION_MODAL_ID,
+    this._modalService.open<BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest, ErpBatchMetadata>(
+      USER_ADD_PERMISSION_MODAL_ID,
       erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()),
       { targetCount: this.selectionCount() },
     );
@@ -125,15 +125,15 @@ export class UsersTabComponent {
   private _onForceLogout(): void {
     this._confirm
       .confirm({
-        title: USERS_KEYS.detail.forceLogout.confirmTitle,
-        message: USERS_KEYS.detail.forceLogout.confirmMessage,
-        yes: USERS_KEYS.detail.forceLogout.confirmYes,
-        no: USERS_KEYS.detail.forceLogout.confirmNo,
+        title: USERS_KEYS.detail.execForceLogout.confirmTitle,
+        message: USERS_KEYS.detail.execForceLogout.confirmMessage,
+        yes: USERS_KEYS.detail.execForceLogout.confirmYes,
+        no: USERS_KEYS.detail.execForceLogout.confirmNo,
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this._orchestrator
-          .forceLogoutMultipleAsync({ ...erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()), templateCommand: {} })
+          .execForceLogoutMultipleAsync({ ...erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()), templateCommand: {} })
           .catch((err: unknown) => console.error('[UsersTabComponent] Nie udało się wymusić wylogowania.', err));
       });
   }

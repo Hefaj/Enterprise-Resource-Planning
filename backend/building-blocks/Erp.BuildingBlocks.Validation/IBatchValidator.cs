@@ -6,7 +6,7 @@ namespace Erp.BuildingBlocks.Validation;
 ///
 /// <para>Interfejs jest celowo pusty: walidatory nie mają wspólnego kontraktu, bo każdy wystawia
 /// metody nazwane po operacjach swojej domeny (<c>ValidateSetPriceAsync</c>,
-/// <c>ValidateAssignRoleAsync</c>), a endpointy wstrzykują je po typie konkretnym. Jedyne, co
+/// <c>ValidateAddRoleAsync</c>), a endpointy wstrzykują je po typie konkretnym. Jedyne, co
 /// jest wspólne, to fakt bycia walidatorem — i to wystarczy, żeby <c>AddErpModule</c>
 /// zarejestrował go automatycznie, zamiast czekać, aż ktoś dopisze linijkę w <c>Program.cs</c>.</para>
 ///

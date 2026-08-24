@@ -84,6 +84,10 @@ export class NotificationClient implements INotificationClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JobDto[];
             return _observableOf(result200);
             }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -138,6 +142,10 @@ export class NotificationClient implements INotificationClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
             return _observableOf(result200);
             }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -170,6 +178,7 @@ export interface JobDto {
     clientId: string | undefined;
     createdAt: Date;
     expireOn: Date | undefined;
+    resultRef: string | undefined;
 
     [key: string]: any;
 }
@@ -178,7 +187,6 @@ export interface SearchJobRequest {
     queueId?: string | undefined;
     trackingId?: string | undefined;
     isComplete?: boolean | undefined;
-    userId?: string | undefined;
     clientId?: string | undefined;
     page?: number;
     pageSize?: number;

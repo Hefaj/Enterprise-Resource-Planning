@@ -17,7 +17,7 @@ namespace Identity.Infrastructure.Jobs;
 /// <para><b>Jedna instancja procesu.</b> Zakłada brak współbieżnego drugiego tickera (patrz
 /// <c>docs/backend/architecture.md</c> §7 — założenia jednoinstancyjne) — przy skalowaniu
 /// poziomym dwie instancje próbowałyby odebrać te same nadania w tym samym oknie 5 minut, co
-/// jest nieszkodliwe (<c>RevokeRole</c> jest idempotentne), ale zdublowałoby wpisy audytowe.</para>
+/// jest nieszkodliwe (<c>RemoveRole</c> jest idempotentne), ale zdublowałoby wpisy audytowe.</para>
 /// </summary>
 public sealed partial class ExpiredGrantCleanupService : BackgroundService
 {
@@ -91,7 +91,7 @@ public sealed partial class ExpiredGrantCleanupService : BackgroundService
                         "role_grant_expired", roleUuid.ToString(), reason: null, source: "cleanup-job"),
                     ct).ConfigureAwait(false);
 
-                user.RevokeRole(roleUuid);
+                user.RemoveRole(roleUuid);
                 expiredCount++;
             }
         }

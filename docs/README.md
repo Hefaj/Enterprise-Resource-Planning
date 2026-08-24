@@ -15,6 +15,7 @@ Dokumenty opisują **stan bieżący**, nie historię zmian ani planów — od te
 | Smart tabele — lista serwerowa, wiersze z orkiestratora, paginacja i sortowanie | [frontend/smart-tables.md](./frontend/smart-tables.md) |
 | Zasięg zaznaczenia — „Zaznacz wszystko" jako filtr, próg materializacji, cele operacji masowych | [frontend/selection-scope.md](./frontend/selection-scope.md) |
 | Modale — lazy-loaded, rejestracja przez `ErpModalService` | [frontend/modals.md](./frontend/modals.md) |
+| Powiadomienia — toast, dzwonek, historia zadań, `ErpToastService` | [frontend/notifications.md](./frontend/notifications.md) |
 | Orkiestratory (`data-access`) — cache, wzbogacanie ViewModeli, dane hierarchiczne | [frontend/orchestrators.md](./frontend/orchestrators.md) |
 | Atomy UI — wzorzec „Single Config Builder" | [frontend/atoms.md](./frontend/atoms.md) |
 | Tłumaczenia (Transloco) — zero-hardcoded-strings, DI shadowing, generator `keys.ts` | [frontend/translations.md](./frontend/translations.md) |
@@ -27,7 +28,9 @@ Dokumenty opisują **stan bieżący**, nie historię zmian ani planów — od te
 | Architektura — Clean Architecture per moduł, decyzje technologiczne, założenia jednoinstancyjne | [backend/architecture.md](./backend/architecture.md) |
 | Nowy mikroserwis — 4 projekty, `.sln`, `DbContext`, `Program.cs` | [backend/new-microservice.md](./backend/new-microservice.md) |
 | CQRS — komendy, handlery, zapytania, kontrakt HTTP dla NSwag | [backend/cqrs.md](./backend/cqrs.md) |
+| Nazewnictwo komend i endpointów — pięć czasowników, trasy, test architektoniczny | [backend/endpoint-naming.md](./backend/endpoint-naming.md) |
 | Operacje masowe — `BatchEndpointBase`, `job`/`job_item`, `BulkCommandRunner` | [backend/bulk-commands.md](./backend/bulk-commands.md) |
+| Eksporty i artefakty — `job.kind`, agregat przebiegu, MinIO, `IArtifactStore` | [backend/exports-artifacts.md](./backend/exports-artifacts.md) |
 | Walidacja wsadowa — `IBatchRule`, `ValidationChain`, pre-check | [backend/batch-validation.md](./backend/batch-validation.md) |
 | Zdarzenia domenowe i integracyjne, outbox, konsumery RabbitMQ | [backend/events-outbox.md](./backend/events-outbox.md) |
 | Realtime SignalR — sygnatury, grupy, koalescencja, resync | [backend/realtime-signalr.md](./backend/realtime-signalr.md) |

@@ -1,7 +1,9 @@
 using Catalog.Application.Products;
 using Catalog.Infrastructure;
+using Catalog.Infrastructure.Jobs;
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api;
+using Erp.BuildingBlocks.Artifacts;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
 
@@ -28,6 +30,12 @@ builder.AddErpMessaging<CatalogDbContext>(typeof(CatalogDbContext).Assembly);
 
 // Silnik zadań masowych: trwałe zadania w schemacie `catalog`, wznawiane po restarcie.
 builder.Services.AddErpBulkJobs<CatalogDbContext>(builder.Configuration);
+
+// Magazyn artefaktów (MinIO) + założenie kubełka przy starcie, oraz runner przebiegów eksportu.
+// Rejestracje jawne, bo niosą decyzję: singleton z pulą połączeń i dwie usługi hostowane —
+// konwencja I{Nazwa} → {Nazwa} nie zna żadnego z tych cykli życia.
+builder.Services.AddErpArtifacts(builder.Configuration);
+builder.Services.AddHostedService<ExportRunner>();
 
 builder.Services.AddOpenApi();
 

@@ -31,6 +31,7 @@ import { JOB_KEYS } from '@erp/notification/ui';
 
 import { JobCommandCellComponent } from './job-command-cell.component';
 import { JobStatusCellComponent } from './job-status-cell.component';
+import { JobDownloadCellComponent } from './job-download-cell.component';
 
 /**
  * Tabela zadań masowych — serwerowa paginacja i sortowanie na replice z modułu Notification.
@@ -197,6 +198,14 @@ export class NotificationJobTableComponent {
           .setSize(280)
           // Surowy tekst z backendu (`"price_negative: 1200"`), nie klucz tłumaczenia.
           .setCellFormatter((value: string | null | undefined) => value ?? '—')
+        )
+        .addColumn(c => c
+          .setId('result')
+          .setHeader(JOB_KEYS.page.table.columns.result)
+          .setCell(JobDownloadCellComponent)
+          .setEnableSorting(false)
+          .setSize(140)
+          .setGrow(0)
         )
       );
 

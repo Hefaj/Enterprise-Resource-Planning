@@ -25,6 +25,16 @@ public static class AggregateSignatures
     /// <summary>Słownik definicji atrybutów produktu.</summary>
     public const string CatalogAttribute = "catalog.attribute";
 
+    /// <summary>
+    /// Przebiegi eksportu (patrz <c>docs/backend/exports-artifacts.md</c>).
+    ///
+    /// <para>Ten kanał służy synchronizacji cache — leci na niego zmiana statusu przebiegu
+    /// do WSZYSTKICH subskrybentów sygnatury. Powiadomieniem „twój eksport jest gotowy" jest
+    /// kanał <see cref="Jobs"/>, adresowany do grupy <c>user:{userId}</c>. Pomylenie tych dwóch
+    /// daje odświeżenie danych u wszystkich i powiadomienie u nikogo.</para>
+    /// </summary>
+    public const string CatalogExportRun = "catalog.export_run";
+
     public const string NotificationJob = "notification.job";
 
     /// <summary>Jedyny agregat modułu Sales, dodany jako sprawdzian szablonu (faza 5) —
@@ -61,6 +71,7 @@ public static class AggregateSignatures
         CatalogWarranty,
         CatalogCodeType,
         CatalogAttribute,
+        CatalogExportRun,
         NotificationJob,
         SalesCustomer,
         Jobs,

@@ -50,9 +50,12 @@
         "succeeded": "Udane",
         "failed": "Nieudane",
         "createdAt": "Zlecono",
-        "errors": "Błędy"
+        "errors": "Błędy",
+        "result": "Wynik"
       },
       "emptyCell": "—"
     }
-  }
+  },
+  "download": "Pobierz",
+  "downloadFailed": "Nie udało się pobrać pliku — spróbuj ponownie."
 }

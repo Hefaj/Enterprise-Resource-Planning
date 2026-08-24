@@ -1,0 +1,33 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "KubelkiModuluCatalog",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetLifecycleConfiguration",
+        "s3:PutLifecycleConfiguration"
+      ],
+      "Resource": [
+        "arn:aws:s3:::erp-catalog-artifacts",
+        "arn:aws:s3:::erp-catalog-media"
+      ]
+    },
+    {
+      "Sid": "ObiektyModuluCatalog",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::erp-catalog-artifacts/*",
+        "arn:aws:s3:::erp-catalog-media/*"
+      ]
+    }
+  ]
+}

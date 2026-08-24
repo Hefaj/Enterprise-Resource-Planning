@@ -6,6 +6,11 @@
 infrastrukturze. Frontendowa strona (akcja „Pobierz" w feedzie zadań) jeszcze nie istnieje —
 patrz [`docs/frontend/notifications.md`](../frontend/notifications.md).
 
+> **Zakres tego dokumentu to jeden producent plików: eksport.** Rozstrzygnięcia obejmujące
+> **wszystkie** pliki wszystkich modułów — układ kubełków, poświadczenia do magazynu, prefiksy
+> obiektów i sprzątanie — mieszkają w [`media-storage.md`](./media-storage.md) i mają
+> pierwszeństwo tam, gdzie §5, §7 i §9 poniżej opisują dzisiejszy, węższy stan.
+
 ---
 
 ## 1. Dlaczego eksport nie jest komendą `Exec`
@@ -135,13 +140,29 @@ Implementacja żyje w `Erp.BuildingBlocks.Artifacts`, a abstrakcja — jak każd
 ```csharp
 public interface IArtifactStore
 {
+    // Zapis przez producenta wewnątrz procesu — eksporty i raporty. Ląduje od razu w `assets/`.
     Task<Guid> WriteAsync(ArtifactDescriptor descriptor, Func<Stream, CancellationToken, Task> write, CancellationToken ct);
-    Task<Stream> OpenAsync(Guid artifactUuid, CancellationToken ct);
+
+    // Wgrywanie z przeglądarki: bilet → poczekalnia → walidacja → promocja. Patrz §9.
+    Task<ArtifactUploadTicket> CreateUploadTicketAsync(TimeSpan ttl, CancellationToken ct);
+    Task<ArtifactMetadata?> GetStagedMetadataAsync(Guid artifactUuid, CancellationToken ct);
+    Task PromoteAsync(Guid artifactUuid, CancellationToken ct);
+    Task DeleteStagedAsync(Guid artifactUuid, CancellationToken ct);
+
+    // Odczyt i cykl życia zawartości potwierdzonej.
+    Task<bool> ReadToAsync(Guid artifactUuid, Stream target, CancellationToken ct);
     Task<ArtifactMetadata?> GetMetadataAsync(Guid artifactUuid, CancellationToken ct);
     Task<Uri> GetDownloadUrlAsync(Guid artifactUuid, TimeSpan ttl, CancellationToken ct);
     Task DeleteAsync(Guid artifactUuid, CancellationToken ct);
+
+    // Wyłącznie dla audytora rozjazdu — ścieżka gorąca adresuje po identyfikatorze z rekordu.
+    IAsyncEnumerable<ArtifactListEntry> ListAsync(CancellationToken ct);
 }
 ```
+
+Odczyt idzie przez `ReadToAsync(… Stream target …)`, a nie przez zwrócenie `Stream`-a: klient S3
+oddaje zawartość callbackiem, więc oddanie strumienia wymagałoby przełożenia jej przez plik
+tymczasowy — pełny round-trip po dysku na każdą miniaturkę w galerii.
 
 Interfejs zapisuje **przez callback na strumieniu**, a nie przyjmuje `byte[]` ani gotowego
 `Stream`a — dzięki temu producent nie musi mieć całego artefaktu w pamięci, a implementacja
@@ -161,9 +182,15 @@ obiektu, a przy zapisie sterowanym callbackiem nie znamy go, dopóki producent n
 załatwiłby to samo kosztem trzymania całego eksportu na stercie — czyli dokładnie tego, czego ten
 interfejs ma unikać.
 
-> **Docelowo to jest zadanie modułu DMS.** Dziś DMS ma tylko frontend (port 4204, brak backendu),
-> więc `IArtifactStore` żyje w building blocks i jest implementowany per moduł. Kiedy DMS dostanie
-> backend, przejmie tę rolę bez ruszania kontraktu — o to chodzi w abstrakcji.
+> **To NIE jest tymczasowe rozwiązanie w oczekiwaniu na DMS.** Wcześniejsza wersja tego dokumentu
+> zapowiadała, że magazyn plików przejmie kiedyś moduł DMS. Ta zapowiedź jest **wycofana**:
+> centralny serwis plików nie umiałby odpowiedzieć na pytanie „czy ten plik jest jeszcze czyjś",
+> bo referencje żyją w schematach modułów biznesowych. `IArtifactStore` zostaje biblioteką,
+> a każdy moduł rozmawia z magazynem sam — pełne uzasadnienie w
+> [`media-storage.md` §1](./media-storage.md#1-biblioteka-nie-mikroserwis).
+>
+> DMS powstaje jako **moduł biznesowy** (faktury, umowy, obieg dokumentu) i trzyma swoje pliki
+> we własnych kubełkach, dokładnie tak jak Catalog trzyma swoje.
 
 ---
 
@@ -198,6 +225,13 @@ wartość ustawia `job.expire_on` przy zakładaniu przebiegu (`ExportJobFactory`
 w kubełku (`ArtifactBucketInitializer`, reguła `erp-artifact-retention`, zakładana przy każdym
 starcie modułu). Rozdzielenie ich na dwie niezależne konfiguracje było najprostszą drogą do
 rozjazdu, więc go nie ma.
+
+> **Gdzie ta opcja mieszka.** Po przejściu na słownik magazynów jest to
+> `Artifacts:Stores:transient:RetentionDays` ([`media-storage.md` §2.4](./media-storage.md#24-kształt-konfiguracji)).
+> Zasada „jedna liczba na retencję" została — zmieniło się tylko to, że jest jedna **na kubełek**,
+> a nie jedna na moduł. Reguła obejmująca cały kubełek zakłada się wyłącznie tam, gdzie
+> `RetentionDays` jest ustawione; kubełek `media` nie ma jej wcale, a próba jej tam ustawienia
+> jest odrzucana przy starcie.
 
 Reguła w magazynie jest przy tym **sprzątaczką, nie źródłem prawdy**: o tym, czy artefakt wolno
 jeszcze pobrać, decyduje `job.expire_on` sprawdzane przez `getExportRunDownloadUrl`. Gdyby
@@ -247,6 +281,12 @@ w katalogu. Dlatego kubełki są dwa:
 | Cykl życia pliku | własny (`expire_on` przebiegu) | tyle, co agregat, który go opisuje |
 | Jak po niego sięgnąć | `IArtifactStore` bez klucza | `[FromKeyedServices(ArtifactStoreKeys.Media)]` |
 
+> **Nazwy w nagłówku tabeli są nieaktualne — podział klas nie.** Kubełki są dziś per moduł
+> (`erp-catalog-artifacts`, `erp-catalog-media`), konfigurowane słownikiem `Artifacts:Stores`,
+> a każdy serwis chodzi na własnym koncie MinIO zamiast na roocie —
+> [`media-storage.md` §2](./media-storage.md#2-trzy-osie-separacji). Reszta tabeli, łącznie
+> z ostatnim wierszem (bezkluczowy = wygasający, trwały jawnie przez klucz), obowiązuje.
+
 Domyślna (bezkluczowa) rejestracja to magazyn **wygasający**, bo taki jest każdy plik
 produkowany przez system. Zawartość trwała musi poprosić o siebie jawnie — odwrotny domyślny
 kończyłby się cichym wydłużeniem życia eksportów zamiast głośnym błędem. Pilnuje tego test
@@ -261,9 +301,10 @@ bajtów przechodzący przez proces .NET bez żadnego pożytku. Dlatego doszło
 `CreateUploadTicketAsync`, a wgrywanie jest **dwukrokowe**:
 
 ```text
-1. getMultimediaUploadTickets  → N adresów PUT (bilety), po jednym na plik
+1. getMultimediaUploadTickets  → N adresów PUT (bilety) celujących w staging/{uuid}
 2. PUT prosto do magazynu       ← bajty NIE przechodzą przez serwis
-3. multimedia/create            → wpisy w katalogu (synchronicznie!), zwraca ich uuidy
+3. multimedia/create            → walidacja + promocja staging/ → assets/ + wpisy w katalogu
+                                  (synchronicznie!), zwraca ich uuidy
 4. product/batch-add-multimedia → dopięcie zasobów do produktów
 ```
 
@@ -280,9 +321,13 @@ się odrzuceniem podpisu przez magazyn.
 > co zostanie wgrane, ani czy cokolwiek. Rozmiar i typ MIME odczytujemy **po fakcie**, w kroku 3,
 > ze `StatObject` — i to one, a nie deklaracja klienta, trafiają do agregatu. Artefakt, którego
 > w magazynie nie ma, odrzuca komendę: wpis wskazujący na pustkę byłby w UI zepsutą miniaturką
-> bez wyjaśnienia. Obiekt wgrany, po którym nigdy nie przyszła komenda, zostaje w kubełku jako
-> niczyj śmieć — sprzątanie osieroconych obiektów nie jest jeszcze zaimplementowane
-> (indeks po `artifact_uuid` w tabeli `multimedia` jest pod nie założony).
+> bez wyjaśnienia.
+>
+> **Obiekt wgrany, po którym nigdy nie przyszła komenda, sprząta magazyn — nie worker.** Bilet
+> celuje w `staging/{uuid}`, komenda promuje obiekt do `assets/{uuid}` (`CopyObject` po stronie
+> magazynu), a reguła lifecycle założona na samym `staging/` kasuje to, co nigdy nie zostało
+> potwierdzone. Osierocony obiekt umiera więc z konfiguracji magazynu, a nie z kodu, który mógłby
+> się pomylić — [`media-storage.md` §3 i §4a](./media-storage.md#3-cykl-życia-obiektu-w-kubełku--staging-i-assets).
 
 ### Odczyt: proxy przez moduł, nie presigned
 
@@ -306,6 +351,8 @@ Konsekwencja dla frontendu: `<img src>` nie dołącza tokenu, więc obrazek pobi
 
 ## 10. Zobacz też
 
+- [Magazyn plików](./media-storage.md) — kubełki per moduł, poświadczenia, prefiksy, sprzątanie;
+  rozstrzygnięcia obejmujące wszystkie pliki, nie tylko eksporty
 - [Nazewnictwo komend i endpointów](./endpoint-naming.md) — dlaczego to `Create`, a nie `Exec`
 - [Operacje masowe](./bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, `retry-failed`
 - [Realtime SignalR](./realtime-signalr.md) — kanały `jobs` i `agg:`, grupy

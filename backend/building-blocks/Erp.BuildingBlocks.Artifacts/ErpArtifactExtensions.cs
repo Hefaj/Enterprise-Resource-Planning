@@ -12,22 +12,23 @@ namespace Erp.BuildingBlocks.Artifacts;
 /// <summary>
 /// Kubełek, na którym pracuje dana instancja <see cref="MinioArtifactStore"/>.
 ///
-/// <para>Osobny typ zamiast gołego stringa, bo to jedyny parametr odróżniający dwie
-/// rejestracje tego samego magazynu, a pomyłka między nimi kasuje dane po tygodniu
-/// (patrz <see cref="ErpArtifactOptions.MediaBucketName"/>).</para>
+/// <para>Osobny typ zamiast gołego stringa, bo to jedyny parametr odróżniający rejestracje
+/// tego samego magazynu, a pomyłka między nimi kasuje dane po tygodniu
+/// (patrz <see cref="ErpArtifactStoreOptions.RetentionDays"/>).</para>
 /// </summary>
 /// <param name="BucketName">Nazwa kubełka w magazynie.</param>
 public sealed record ArtifactStoreProfile(string BucketName);
 
-/// <summary>Rejestracja magazynu artefaktów w module.</summary>
+/// <summary>Rejestracja magazynów artefaktów w module.</summary>
 public static class ErpArtifactExtensions
 {
     /// <summary>
-    /// Podpina <see cref="IArtifactStore"/> na MinIO plus jednorazowe założenie kubełka przy starcie.
+    /// Podpina <see cref="IArtifactStore"/> na MinIO — po jednej rejestracji na wpis w sekcji
+    /// <c>Artifacts:Stores</c> — plus jednorazowe założenie kubełków przy starcie.
     ///
     /// <para>Rejestracja jest jawna, a nie przez skan zestawów (<c>AddErpModule</c>), bo niesie
     /// decyzję: klient MinIO jest singletonem trzymającym pulę połączeń HTTP, a inicjalizator
-    /// kubełka to hosted service. Konwencja <c>I{Nazwa}</c> → <c>{Nazwa}</c> nie zna ani jednego,
+    /// kubełków to hosted service. Konwencja <c>I{Nazwa}</c> → <c>{Nazwa}</c> nie zna ani jednego,
     /// ani drugiego cyklu życia.</para>
     /// </summary>
     public static IServiceCollection AddErpArtifacts(this IServiceCollection services, IConfiguration configuration)
@@ -37,9 +38,22 @@ public static class ErpArtifactExtensions
 
         services.Configure<ErpArtifactOptions>(configuration.GetSection(ErpArtifactOptions.SectionName));
 
+        // Walidacja przy starcie, a nie przy pierwszym zapisie: dwa magazyny wskazujące ten sam
+        // kubełek to reguła wygasania założona na cudzą zawartość, a objaw pojawia się dopiero
+        // po upływie retencji — wtedy, gdy pliki już nie istnieją.
+        services.AddOptions<ErpArtifactOptions>().Validate(
+            static options => Validate(options) is null,
+            "Nieprawidłowa sekcja `Artifacts` — patrz log startowy.");
+
         services.AddSingleton<IMinioClient>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<ErpArtifactOptions>>().Value;
+            var error = Validate(options);
+
+            if (error is not null)
+            {
+                throw new InvalidOperationException(error);
+            }
 
             return new MinioClient()
                 .WithEndpoint(options.Endpoint)
@@ -48,24 +62,73 @@ public static class ErpArtifactExtensions
                 .Build();
         });
 
-        // Dwa magazyny na jednym kliencie MinIO, różniące się wyłącznie kubełkiem — bo różnią
-        // się retencją, a ta jest w S3 własnością kubełka, nie pojedynczego obiektu.
-        services.AddSingleton<IArtifactStore>(sp => new MinioArtifactStore(
-            sp.GetRequiredService<IMinioClient>(),
-            new ArtifactStoreProfile(sp.GetRequiredService<IOptions<ErpArtifactOptions>>().Value.BucketName)));
+        // Magazyn wygasający jest rejestracją DOMYŚLNĄ (bezkluczową), bo taki jest każdy plik
+        // produkowany przez system. Zawartość trwała musi poprosić o siebie jawnie, przez klucz —
+        // odwrotny domyślny kończyłby się cichym wydłużeniem życia eksportów zamiast błędem.
+        services.AddSingleton<IArtifactStore>(sp => CreateStore(sp, ArtifactStoreKeys.Transient));
 
-        services.AddKeyedSingleton<IArtifactStore>(ArtifactStoreKeys.Media, (sp, _) => new MinioArtifactStore(
-            sp.GetRequiredService<IMinioClient>(),
-            new ArtifactStoreProfile(sp.GetRequiredService<IOptions<ErpArtifactOptions>>().Value.MediaBucketName)));
+        services.AddKeyedSingleton<IArtifactStore>(
+            ArtifactStoreKeys.Transient,
+            (sp, _) => CreateStore(sp, ArtifactStoreKeys.Transient));
+
+        services.AddKeyedSingleton<IArtifactStore>(
+            ArtifactStoreKeys.Media,
+            (sp, _) => CreateStore(sp, ArtifactStoreKeys.Media));
 
         services.AddHostedService<ArtifactBucketInitializer>();
 
         return services;
     }
+
+    private static MinioArtifactStore CreateStore(IServiceProvider sp, string storeKey)
+    {
+        var options = sp.GetRequiredService<IOptions<ErpArtifactOptions>>().Value;
+
+        return new MinioArtifactStore(
+            sp.GetRequiredService<IMinioClient>(),
+            new ArtifactStoreProfile(options.RequireStore(storeKey).BucketName));
+    }
+
+    /// <summary>Komunikat błędu albo <c>null</c>, gdy konfiguracja jest spójna.</summary>
+    private static string? Validate(ErpArtifactOptions options)
+    {
+        if (options.Stores.Count == 0)
+        {
+            return "Sekcja `Artifacts:Stores` jest pusta — moduł nie ma gdzie zapisywać plików.";
+        }
+
+        foreach (var (key, store) in options.Stores)
+        {
+            if (string.IsNullOrWhiteSpace(store.BucketName))
+            {
+                return $"Magazyn `{key}` nie ma nazwy kubełka (`Artifacts:Stores:{key}:BucketName`).";
+            }
+        }
+
+        var duplicate = options.Stores
+            .GroupBy(s => s.Value.BucketName, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(g => g.Count() > 1);
+
+        if (duplicate is not null)
+        {
+            return $"Magazyny {string.Join(", ", duplicate.Select(d => $"`{d.Key}`"))} wskazują ten sam "
+                + $"kubełek `{duplicate.Key}`. Reguła wygasania jest własnością kubełka, więc retencja "
+                + "jednego magazynu skasowałaby zawartość drugiego — bez błędu i bez wpisu w logu.";
+        }
+
+        if (options.Stores.TryGetValue(ArtifactStoreKeys.Media, out var media) && media.RetentionDays.HasValue)
+        {
+            return "Magazyn `media` ma ustawione `RetentionDays`. To zawartość trwała — żyje tak długo, "
+                + "jak agregat, który ją opisuje. Reguła wygasania skasowałaby zdjęcia i załączniki "
+                + "użytkowników, a objawiłoby się to dopiero pustymi miniaturkami po retencji.";
+        }
+
+        return null;
+    }
 }
 
 /// <summary>
-/// Zakłada kubełek przy starcie modułu, idempotentnie.
+/// Zakłada kubełki modułu przy starcie, idempotentnie, i uzgadnia ich reguły wygasania.
 ///
 /// <para>Świadomie w kodzie, a nie w <c>docker-compose.yml</c> ani w instrukcji dla developera:
 /// kubełek jest częścią kontraktu modułu z magazynem, więc moduł ma go zapewnić sam. Krok ręczny
@@ -78,6 +141,15 @@ public static class ErpArtifactExtensions
 /// </summary>
 internal sealed partial class ArtifactBucketInitializer : IHostedService
 {
+    /// <summary>Reguła obejmująca cały kubełek — tylko dla magazynów z ustawioną retencją.</summary>
+    private const string RetentionRuleId = "erp-artifact-retention";
+
+    /// <summary>
+    /// Reguła obejmująca wyłącznie poczekalnię. Jest w KAŻDYM kubełku, również wygasającym:
+    /// prefiks postojowy istnieje wszędzie, gdzie da się wydać bilet wgrywania.
+    /// </summary>
+    private const string StagingRuleId = "erp-staging-cleanup";
+
     private readonly IMinioClient _client;
     private readonly ErpArtifactOptions _options;
     private readonly ILogger<ArtifactBucketInitializer> _logger;
@@ -87,6 +159,8 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
         IOptions<ErpArtifactOptions> options,
         ILogger<ArtifactBucketInitializer> logger)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         _client = client;
         _options = options.Value;
         _logger = logger;
@@ -94,20 +168,19 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        try
+        foreach (var (key, store) in _options.AllStores)
         {
-            await EnsureBucketAsync(_options.BucketName, cancellationToken).ConfigureAwait(false);
-            await ApplyLifecycleAsync(cancellationToken).ConfigureAwait(false);
-
-            // Kubełek na zawartość trwałą powstaje tak samo, ale BEZ reguły wygasania —
-            // to jedyna różnica między nimi i cały powód, dla którego są dwa.
-            await EnsureBucketAsync(_options.MediaBucketName, cancellationToken).ConfigureAwait(false);
-        }
+            try
+            {
+                await EnsureBucketAsync(store.BucketName, cancellationToken).ConfigureAwait(false);
+                await ApplyLifecycleAsync(store, cancellationToken).ConfigureAwait(false);
+            }
 #pragma warning disable CA1031 // Niedostępny magazyn artefaktów nie może przewrócić startu modułu.
-        catch (Exception ex)
+            catch (Exception ex)
 #pragma warning restore CA1031
-        {
-            LogBucketSetupFailed(_logger, _options.BucketName, _options.Endpoint, ex);
+            {
+                LogBucketSetupFailed(_logger, key, store.BucketName, _options.Endpoint, ex);
+            }
         }
     }
 
@@ -136,38 +209,54 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
     }
 
     /// <summary>
-    /// Ustawia regułę wygasania obiektów spójną z <see cref="ErpArtifactOptions.RetentionDays"/>.
+    /// Ustawia reguły wygasania: poczekalnię sprząta zawsze, całość kubełka — tylko gdy magazyn
+    /// ma zadeklarowaną retencję.
     ///
     /// <para>Reguła w magazynie jest <b>sprzątaczką, nie źródłem prawdy</b> — o tym, czy artefakt
     /// wolno jeszcze pobrać, decyduje <c>job.expire_on</c> sprawdzane przez endpoint. Gdyby to
     /// magazyn rozstrzygał, użytkownik zamiast czytelnej odmowy dostawałby 404 z presigned URL-a,
-    /// czyli błąd wyglądający na awarię.</para>
+    /// czyli błąd wyglądający na awarię. Wyjątkiem jest poczekalnia: tam magazyn JEST jedynym
+    /// źródłem prawdy, bo obiekt bez wiersza w bazie nie ma innego mechanizmu, który by go
+    /// rozpoznał.</para>
     ///
-    /// <para>Ustawiana przy każdym starcie, bo zmiana <c>RetentionDays</c> w konfiguracji ma
-    /// dotrzeć do kubełka bez ręcznego kroku — dokładnie tak jak samo założenie kubełka.</para>
+    /// <para>Ustawiane przy każdym starcie, bo zmiana retencji w konfiguracji ma dotrzeć do
+    /// kubełka bez ręcznego kroku — dokładnie tak jak samo założenie kubełka.</para>
     /// </summary>
-    private async Task ApplyLifecycleAsync(CancellationToken cancellationToken)
+    private async Task ApplyLifecycleAsync(ErpArtifactStoreOptions store, CancellationToken cancellationToken)
     {
-        var configuration = new LifecycleConfiguration(
-        [
-            new LifecycleRule(
+        var rules = new List<LifecycleRule>
+        {
+            new(
                 abortIncompleteMultipartUpload: null,
-                id: "erp-artifact-retention",
-                expiration: new Expiration { Days = _options.RetentionDays },
+                id: StagingRuleId,
+                expiration: new Expiration { Days = _options.StagingRetentionDays },
                 transition: null,
-                // Pusty prefiks = cały kubełek. Kubełek jest dedykowany artefaktom jednego
-                // modułu (patrz ErpArtifactOptions.BucketName), więc nie ma czego wyłączać.
-                filter: new RuleFilter(null, string.Empty, null),
+                filter: new RuleFilter(null, MinioArtifactStore.StagingPrefix, null),
                 noncurrentVersionExpiration: null,
                 noncurrentVersionTransition: null,
                 status: LifecycleRule.LifecycleRuleStatusEnabled),
-        ]);
+        };
+
+        if (store.RetentionDays is { } retentionDays)
+        {
+            rules.Add(new LifecycleRule(
+                abortIncompleteMultipartUpload: null,
+                id: RetentionRuleId,
+                expiration: new Expiration { Days = retentionDays },
+                transition: null,
+                // Pusty prefiks = cały kubełek. Wolno tak tylko dlatego, że kubełek jest
+                // dedykowany jednej klasie plików jednego modułu (patrz ErpArtifactStoreOptions).
+                filter: new RuleFilter(null, string.Empty, null),
+                noncurrentVersionExpiration: null,
+                noncurrentVersionTransition: null,
+                status: LifecycleRule.LifecycleRuleStatusEnabled));
+        }
 
         await _client
             .SetBucketLifecycleAsync(
                 new Minio.DataModel.Args.SetBucketLifecycleArgs()
-                    .WithBucket(_options.BucketName)
-                    .WithLifecycleConfiguration(configuration),
+                    .WithBucket(store.BucketName)
+                    .WithLifecycleConfiguration(new LifecycleConfiguration(rules)),
                 cancellationToken)
             .ConfigureAwait(false);
     }
@@ -177,10 +266,11 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
     private static partial void LogBucketCreated(ILogger logger, string bucket);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Error,
-        Message = "Nie udało się przygotować kubełka {Bucket} pod adresem {Endpoint}. "
-            + "Eksporty będą kończyć się błędem do czasu naprawy.")]
+        Message = "Nie udało się przygotować magazynu {Store} (kubełek {Bucket}) pod adresem {Endpoint}. "
+            + "Operacje na plikach będą kończyć się błędem do czasu naprawy.")]
     private static partial void LogBucketSetupFailed(
         ILogger logger,
+        string store,
         string bucket,
         string endpoint,
         Exception exception);

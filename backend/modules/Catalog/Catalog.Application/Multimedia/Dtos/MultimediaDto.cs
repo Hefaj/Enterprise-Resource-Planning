@@ -14,6 +14,12 @@ namespace Catalog.Application.Multimedia;
 /// w ogóle nie wychodziła na zewnątrz. Wypełniony <see cref="OriginalUrl"/> oznacza zasób
 /// spoza systemu i wtedy to on jest adresem.</para>
 /// </summary>
+/// <param name="ReferenceCount">
+/// Ile produktów używa tego zasobu. Niezerowa wartość <b>blokuje</b> usunięcie — UI ma to
+/// pokazać przed kliknięciem, a nie dowiadywać się o tym z odrzuconej komendy. To nie jest
+/// licznik do automatycznego kasowania: zerowa wartość znaczy „nikt tego teraz nie używa",
+/// a nie „to śmieć" (<c>docs/backend/media-storage.md</c> §4c).
+/// </param>
 public sealed record MultimediaDto(
     Guid Uuid,
     string FileName,
@@ -23,4 +29,5 @@ public sealed record MultimediaDto(
     long FileSize,
     string MimeType,
     int SortOrder,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    int ReferenceCount);

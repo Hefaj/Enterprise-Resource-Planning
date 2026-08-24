@@ -71,6 +71,42 @@ services:
       retries: 10
       start_period: 10s
 
+  # Konta MinIO per mikroserwis — jedyna warstwa separacji plików, która trzyma przy POMYŁCE
+  # W KODZIE, a nie tylko przy poprawnym kodzie. Bez niej każdy serwis chodzi na koncie root
+  # i błędnie wstrzyknięty magazyn w Catalogu sięga po skany faktur z DMS-u.
+  # Patrz docs/backend/media-storage.md §2.3 oraz ./minio/policies/README.md.
+  #
+  # Kubełków ten kontener NIE zakłada — robi to moduł przy starcie (ArtifactBucketInitializer),
+  # bo kubełek jest częścią jego kontraktu z magazynem. Tutaj powstaje tylko konto i polityka.
+  minio-init:
+    # `latest`, a nie przypięty RELEASE jak przy serwerze: `mc` jest tu narzędziem jednorazowym,
+    # które nie trzyma stanu, a jego tagi wydań idą własnym rytmem względem serwera. Przypnij,
+    # gdy będzie powód — niezgodny tag jest gorszy niż brak przypięcia, bo kontener nie wstanie.
+    image: minio/mc:latest
+    container_name: erp-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./minio/policies:/policies:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        mc alias set local http://minio:9000 erp erp12345
+        # Kolejne moduły dopisuj tutaj i dokładaj plik polityki w ./minio/policies.
+        # Wszystkie kroki są idempotentne: `policy create` nadpisuje istniejącą politykę
+        # (dzięki temu edycja pliku dociera po zwykłym restarcie), a `user add`/`policy attach`
+        # na już istniejącym stanie kończą się błędem, który tu nic nie znaczy.
+        for M in catalog; do
+          mc admin policy create local "erp-$$M" "/policies/$$M.json" || true
+          mc admin user add local "$$M" "$${M}12345" >/dev/null 2>&1 || true
+          mc admin policy attach local "erp-$$M" --user "$$M" >/dev/null 2>&1 || true
+          echo "MinIO: konto $$M z polityka erp-$$M gotowe."
+        done
+    restart: "no"
+
   # Czysty IdP — uwierzytelnianie (hasła, MFA, sesje, SSO). Autoryzacja (role, uprawnienia)
   # żyje w mikroserwisie Identity, nie tutaj — patrz docs/backend/identity-authz.md.
   keycloak:

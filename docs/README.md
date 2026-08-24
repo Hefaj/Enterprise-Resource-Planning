@@ -31,6 +31,7 @@ Dokumenty opisują **stan bieżący**, nie historię zmian ani planów — od te
 | Nazewnictwo komend i endpointów — pięć czasowników, trasy, test architektoniczny | [backend/endpoint-naming.md](./backend/endpoint-naming.md) |
 | Operacje masowe — `BatchEndpointBase`, `job`/`job_item`, `BulkCommandRunner` | [backend/bulk-commands.md](./backend/bulk-commands.md) |
 | Eksporty i artefakty — `job.kind`, agregat przebiegu, MinIO, `IArtifactStore` | [backend/exports-artifacts.md](./backend/exports-artifacts.md) |
+| Magazyn plików — kubełki per moduł, separacja dostępu, sprzątanie osieroconych plików | [backend/media-storage.md](./backend/media-storage.md) |
 | Walidacja wsadowa — `IBatchRule`, `ValidationChain`, pre-check | [backend/batch-validation.md](./backend/batch-validation.md) |
 | Zdarzenia domenowe i integracyjne, outbox, konsumery RabbitMQ | [backend/events-outbox.md](./backend/events-outbox.md) |
 | Realtime SignalR — sygnatury, grupy, koalescencja, resync | [backend/realtime-signalr.md](./backend/realtime-signalr.md) |

@@ -58,36 +58,34 @@ public sealed class GetMultimediaContentEndpoint : Endpoint<GetMultimediaContent
     {
         ArgumentNullException.ThrowIfNull(req);
 
-        var artifactUuid = await _queries.GetArtifactUuidAsync(req.Uuid, ct);
+        var content = await _queries.GetContentRefAsync(req.Uuid, ct);
 
-        if (artifactUuid is null)
+        if (content is null)
         {
             await Send.NotFoundAsync(ct);
             return;
         }
 
-        var metadata = await _artifacts.GetMetadataAsync(artifactUuid.Value, ct);
-
-        if (metadata is null)
-        {
-            // Wpis w katalogu jest, pliku nie ma. To nie jest stan, który wolno przemilczeć
-            // pustą odpowiedzią — 404 mówi klientowi tyle samo, co o nieistniejącym zasobie,
-            // a różnicę widać w logach magazynu.
-            await Send.NotFoundAsync(ct);
-            return;
-        }
-
-        var content = await _artifacts.OpenAsync(artifactUuid.Value, ct);
-
+        // Nagłówki z katalogu, nie z magazynu — zawartość pod danym uuid jest niezmienna, więc
+        // baza wie o pliku dokładnie to samo, co `StatObject`, i wie to bez round-tripu.
         HttpContext.Response.Headers.CacheControl = CachePolicy;
+        HttpContext.Response.ContentType = content.MimeType;
+        HttpContext.Response.ContentLength = content.FileSize;
+        HttpContext.Response.Headers.ContentDisposition =
+            $"inline; filename*=UTF-8''{Uri.EscapeDataString(content.FileName)}";
 
-        // Strumień zamyka FastEndpoints po wysłaniu — magazyn oddaje go jako plik tymczasowy
-        // z `DeleteOnClose`, więc zamknięcie jest jednocześnie sprzątnięciem.
-        await Send.StreamAsync(
-            content,
-            metadata.FileName,
-            metadata.SizeBytes,
-            metadata.ContentType,
-            cancellation: ct);
+        // Bajty idą prosto z magazynu w ciało odpowiedzi — bez pliku tymczasowego po drodze.
+        var served = await _artifacts.ReadToAsync(content.ArtifactUuid, HttpContext.Response.Body, ct);
+
+        if (served || HttpContext.Response.HasStarted)
+        {
+            return;
+        }
+
+        // Wpis w katalogu jest, pliku nie ma. To nie jest stan, który wolno przemilczeć pustą
+        // odpowiedzią — 404 mówi klientowi tyle samo, co o nieistniejącym zasobie, a różnicę
+        // widać w logach magazynu. Deklarację długości trzeba wycofać, bo do 404 nie pasuje.
+        HttpContext.Response.ContentLength = null;
+        await Send.NotFoundAsync(ct);
     }
 }

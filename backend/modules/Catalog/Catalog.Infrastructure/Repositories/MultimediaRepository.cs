@@ -1,6 +1,7 @@
 using Catalog.Application.Abstractions;
 using Catalog.Domain.Multimedia;
 using Catalog.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Infrastructure.Repositories;
 
@@ -13,4 +14,13 @@ public sealed class MultimediaRepository : IMultimediaRepository
 
     /// <inheritdoc />
     public void Add(MultimediaAsset asset) => _dbContext.MultimediaAssets.Add(asset);
+
+    /// <inheritdoc />
+    public async Task<MultimediaAsset?> FindAsync(Guid uuid, CancellationToken cancellationToken)
+        => await _dbContext.MultimediaAssets
+            .FirstOrDefaultAsync(m => m.Uuid == uuid, cancellationToken)
+            .ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public void Remove(MultimediaAsset asset) => _dbContext.MultimediaAssets.Remove(asset);
 }

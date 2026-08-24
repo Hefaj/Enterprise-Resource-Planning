@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Catalog.Application.Multimedia;
+using Catalog.Domain.Products;
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -70,6 +71,9 @@ public sealed class MultimediaQueries : IMultimediaQueries
         // `CreatedAt` schodzi z bazy jako DateTimeOffset i dopiero w pamięci ląduje w DateTime
         // z kontraktu DTO: wywołanie `.UtcDateTime` wprost w projekcji EF wywraca shaper
         // („No coercion operator ... between DateTimeOffset and Nullable<DateTime>").
+        //
+        // Licznik referencji jedzie podzapytaniem w tej samej projekcji, a nie drugim round-tripem:
+        // idzie po indeksie `product_multimedia(multimedia_uuid)`, założonym właśnie pod to pytanie.
         var rows = await query
             .Select(m => new
             {
@@ -82,6 +86,7 @@ public sealed class MultimediaQueries : IMultimediaQueries
                 m.MimeType,
                 m.SortOrder,
                 m.CreatedAt,
+                ReferenceCount = _dbContext.Set<ProductMultimediaLink>().Count(l => l.MultimediaUuid == m.Uuid),
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -96,8 +101,55 @@ public sealed class MultimediaQueries : IMultimediaQueries
                 m.FileSize,
                 m.MimeType,
                 m.SortOrder,
-                m.CreatedAt.UtcDateTime))
+                m.CreatedAt.UtcDateTime,
+                m.ReferenceCount))
             .ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Guid>> GetMatchingUuidsAsync(
+        SearchMultimediaRequest filter,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+
+        var query = _dbContext.MultimediaAssets.AsNoTracking();
+
+        if (filter.Uuids is { Count: > 0 })
+        {
+            var uuidList = filter.Uuids;
+            query = query.Where(m => uuidList.Contains(m.Uuid));
+        }
+
+        return await query
+            .Select(m => m.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<Dictionary<Guid, int>> CountReferencesAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+
+        if (uuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = uuids as List<Guid> ?? uuids.ToList();
+
+        // Grupowanie zwraca wyłącznie zasoby z co najmniej jedną referencją — brak klucza
+        // w wyniku znaczy zero i wołający tak to czyta.
+        return await _dbContext.Set<ProductMultimediaLink>()
+            .AsNoTracking()
+            .Where(l => uuidList.Contains(l.MultimediaUuid))
+            .GroupBy(l => l.MultimediaUuid)
+            .Select(g => new { MultimediaUuid = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.MultimediaUuid, x => x.Count, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -123,11 +175,41 @@ public sealed class MultimediaQueries : IMultimediaQueries
     }
 
     /// <inheritdoc />
-    public async Task<Guid?> GetArtifactUuidAsync(Guid uuid, CancellationToken cancellationToken)
-        => await _dbContext.MultimediaAssets
+    public async Task<HashSet<Guid>> GetKnownArtifactUuidsAsync(
+        IReadOnlyCollection<Guid> artifactUuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(artifactUuids);
+
+        if (artifactUuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = artifactUuids as List<Guid> ?? artifactUuids.ToList();
+
+        var known = await _dbContext.MultimediaAssets
             .AsNoTracking()
-            .Where(m => m.Uuid == uuid)
-            .Select(m => m.ArtifactUuid)
+            .Where(m => m.ArtifactUuid != null && uuidList.Contains(m.ArtifactUuid.Value))
+            .Select(m => m.ArtifactUuid!.Value)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return [.. known];
+    }
+
+    /// <inheritdoc />
+    public async Task<MultimediaContentRef?> GetContentRefAsync(Guid uuid, CancellationToken cancellationToken)
+    {
+        var row = await _dbContext.MultimediaAssets
+            .AsNoTracking()
+            .Where(m => m.Uuid == uuid && m.ArtifactUuid != null)
+            .Select(m => new { m.ArtifactUuid, m.FileName, m.MimeType, m.FileSize })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        return row is null
+            ? null
+            : new MultimediaContentRef(row.ArtifactUuid!.Value, row.FileName, row.MimeType, row.FileSize);
+    }
 }

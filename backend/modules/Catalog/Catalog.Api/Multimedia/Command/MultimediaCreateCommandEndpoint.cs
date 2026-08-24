@@ -1,6 +1,7 @@
 using Catalog.Application.Multimedia;
 using Erp.BuildingBlocks.Application.Abstractions;
 using FastEndpoints;
+using Microsoft.Extensions.Options;
 using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Multimedia.Command;
@@ -26,12 +27,16 @@ namespace Catalog.Multimedia.Command;
 public sealed class MultimediaCreateCommandEndpoint
     : Endpoint<MultimediaCreateRequest, MultimediaCreateResponse>
 {
-    /// <summary>Tyle, ile biletów wydaje <see cref="Query.GetMultimediaUploadTicketsEndpoint"/>.</summary>
-    private const int MaxFilesPerRequest = 100;
-
     private readonly IUnitOfWork _unitOfWork;
+    private readonly MultimediaOptions _options;
 
-    public MultimediaCreateCommandEndpoint(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+    public MultimediaCreateCommandEndpoint(IUnitOfWork unitOfWork, IOptions<MultimediaOptions> options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        _unitOfWork = unitOfWork;
+        _options = options.Value;
+    }
 
     public override void Configure()
     {
@@ -50,9 +55,11 @@ public sealed class MultimediaCreateCommandEndpoint
     {
         ArgumentNullException.ThrowIfNull(req);
 
-        if (req.Commands.Count is 0 or > MaxFilesPerRequest)
+        // Tyle, ile biletów wydaje `GetMultimediaUploadTicketsEndpoint` — obie granice biorą się
+        // z jednej opcji, żeby nie dało się dostać większej paczki biletów, niż wolno zapisać.
+        if (req.Commands.Count == 0 || req.Commands.Count > _options.MaxFilesPerRequest)
         {
-            AddError(r => r.Commands, $"Liczba plików musi mieścić się w zakresie 1–{MaxFilesPerRequest}.");
+            AddError(r => r.Commands, $"Liczba plików musi mieścić się w zakresie 1–{_options.MaxFilesPerRequest}.");
             ThrowIfAnyErrors();
         }
 

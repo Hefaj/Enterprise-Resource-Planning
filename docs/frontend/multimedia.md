@@ -4,15 +4,16 @@
 [`docs/backend/exports-artifacts.md` §9](../backend/exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
 
 **Stan: ✅ w kodzie** — wgrywanie, rejestracja w katalogu i dopięcie do produktów działają
-end-to-end. Nie ma jeszcze: generowania miniatur, usuwania zasobów, podglądu pełnoekranowego
-i sprzątania plików wgranych do modalu zamkniętego bez zapisu.
+end-to-end. Nie ma jeszcze **po stronie frontu**: generowania miniatur, UI usuwania zasobów
+i podglądu pełnoekranowego. Backend usuwanie już ma (`multimedia/batch-remove`), więc brakuje
+tu wyłącznie ekranu i regeneracji klienta NSwag.
 
 ---
 
 ## 1. Trzy żądania, nie jedno
 
 ```text
-1. getMultimediaUploadTickets   → N adresów PUT, po jednym na plik
+1. getMultimediaUploadTickets   → N adresów PUT, po jednym na plik (celują w poczekalnię)
 2. PUT <adres magazynu>         ← bajty NIE przechodzą przez nasze API ani przez HttpClient
 3. multimedia/create            → wpisy w katalogu; zwraca uuidy SYNCHRONICZNIE
 4. product/batch-add-multimedia → dopięcie do produktów; zwykłe zadanie masowe
@@ -41,11 +42,20 @@ masowa.
 |---|---|---|
 | Co widzi użytkownik | postęp tam, gdzie patrzy | modal zawieszony na „Zapisz" |
 | Ile trwa zapis | tyle, co zlecenie zadania | tyle, co łącze użytkownika |
-| Anulowanie modalu | zostawia zasoby-sieroty | nie zostawia nic |
+| Anulowanie modalu | zostawia plik w poczekalni magazynu (sprząta go lifecycle) | nie zostawia nic |
 
-Cena jest realna: zamknięcie modalu po wgraniu, ale przed zapisem, zostawia zasoby nieprzypisane
-do żadnego produktu (i obiekty w magazynie). Sprzątanie takich sierot nie jest zaimplementowane —
-indeks po `artifact_uuid` w tabeli `multimedia` jest pod nie założony.
+Cena jest realna, ale **front nie musi z nią nic robić**. Zamknięcie modalu po wgraniu, a przed
+zapisem, zostawia obiekt w poczekalni magazynu (`staging/`), którą reguła lifecycle sprząta po
+dobie. Nie ma i nie będzie żadnego „posprzątaj po mnie" wysyłanego przy zamykaniu modalu — takie
+wywołanie i tak by nie doszło, gdy użytkownik zamyka kartę
+([`media-storage.md` §4a](../backend/media-storage.md#4a-obiekt-wgrany-po-którym-nie-przyszła-komenda)).
+
+> Zasoby, które **zostały** zarejestrowane, a nie trafiły do żadnego produktu, nie są sierotami
+> tylko dlatego, że nikt ich nie używa — to pozycje biblioteki mediów i usuwa je użytkownik
+> ([§4c](../backend/media-storage.md#4c-zasób-któremu-zniknęła-ostatnia-referencja)). Backend
+> ma na to `multimedia/batch-remove`; zasób używany przez produkt odpada z błędem
+> `multimedia_still_referenced`, a `MultimediaDto.referenceCount` pozwala pokazać to, zanim
+> użytkownik kliknie. **Wymaga regeneracji klienta NSwag** — obie rzeczy są nowe.
 
 ---
 
@@ -93,4 +103,5 @@ celu — uuid produktu dokłada backend przy materializacji szablonu.
 - [Modale](./modals.md) — rejestracja `PRODUCT_ADD_MULTIMEDIA_MODAL_ID` i cykl życia kroku
 - [Zasięg zaznaczenia](./selection-scope.md) — skąd biorą się cele operacji masowej
 - [Orkiestratory](./orchestrators.md) — gdzie mieszkają komendy i cache zasobów
-- [Eksporty i artefakty §9](../backend/exports-artifacts.md) — kubełki, bilety, endpoint zawartości
+- [Eksporty i artefakty §9](../backend/exports-artifacts.md) — bilety, endpoint zawartości
+- [Magazyn plików](../backend/media-storage.md) — kubełki, separacja dostępu, cykl życia pliku

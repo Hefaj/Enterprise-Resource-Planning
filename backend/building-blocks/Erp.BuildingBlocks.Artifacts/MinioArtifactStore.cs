@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Minio;
 using Minio.DataModel.Args;
@@ -12,12 +13,23 @@ namespace Erp.BuildingBlocks.Artifacts;
 /// <para><b>Metadanych nie duplikujemy w Postgresie.</b> Nazwa pliku, typ MIME, rozmiar i moment
 /// wygaśnięcia jadą jako metadane obiektu, bo magazyn i tak je przechowuje — osobna tabela byłaby
 /// drugim źródłem prawdy, które trzeba trzymać w zgodzie przy każdym zapisie i usunięciu.
-/// Rekordem, po którym artefakt się znajduje i autoryzuje, jest agregat przebiegu
-/// (<c>ExportRun.ArtifactUuid</c>). Gdyby kiedyś pojawił się producent artefaktów bez własnego
-/// agregatu, wtedy — i dopiero wtedy — potrzebna będzie tabela.</para>
+/// Rekordem, po którym artefakt się znajduje i autoryzuje, jest agregat modułu
+/// (<c>ExportRun.ArtifactUuid</c>, <c>MultimediaAsset.ArtifactUuid</c>).</para>
+///
+/// <para><b>Dwa prefiksy.</b> <see cref="StagingPrefix"/> to poczekalnia dla plików wgrywanych
+/// presigned <c>PUT</c>-em, <see cref="AssetPrefix"/> — miejsce dla zawartości potwierdzonej
+/// komendą. Reguła lifecycle założona wyłącznie na poczekalni sprząta obiekty, których nikt
+/// nigdy nie zarejestrował, i robi to bez ani jednej linijki kodu sprzątającego
+/// (<c>docs/backend/media-storage.md</c> §4a).</para>
 /// </summary>
 public sealed class MinioArtifactStore : IArtifactStore
 {
+    /// <summary>Prefiks zawartości potwierdzonej — jedyny, po którym adresują wszystkie odczyty.</summary>
+    public const string AssetPrefix = "assets/";
+
+    /// <summary>Prefiks poczekalni; obowiązuje na nim reguła wygasania z <c>StagingRetentionDays</c>.</summary>
+    public const string StagingPrefix = "staging/";
+
     /// <summary>Nazwa pliku bywa niełacińska, a nagłówki HTTP są ASCII — stąd kodowanie procentowe.</summary>
     private const string FileNameMetadataKey = "x-amz-meta-erp-filename";
 
@@ -27,9 +39,9 @@ public sealed class MinioArtifactStore : IArtifactStore
     private readonly string _bucketName;
 
     /// <summary>
-    /// Kubełek jest parametrem instancji, a nie odczytem z opcji, bo moduł ma ich dwa
-    /// o różnej retencji (patrz <see cref="ErpArtifactOptions.MediaBucketName"/>) i to
-    /// rejestracja w DI decyduje, który dostaje dany konsument.
+    /// Kubełek jest parametrem instancji, a nie odczytem z opcji, bo moduł ma ich kilka
+    /// o różnej retencji (patrz <see cref="ErpArtifactStoreOptions"/>) i to rejestracja
+    /// w DI decyduje, który dostaje dany konsument.
     /// </summary>
     public MinioArtifactStore(IMinioClient client, ArtifactStoreProfile profile)
     {
@@ -94,7 +106,7 @@ public sealed class MinioArtifactStore : IArtifactStore
                 await _client.PutObjectAsync(
                     new PutObjectArgs()
                         .WithBucket(_bucketName)
-                        .WithObject(ObjectName(artifactUuid))
+                        .WithObject(AssetName(artifactUuid))
                         .WithStreamData(upload)
                         .WithObjectSize(upload.Length)
                         .WithContentType(descriptor.ContentType)
@@ -128,7 +140,7 @@ public sealed class MinioArtifactStore : IArtifactStore
         var url = await _client.PresignedPutObjectAsync(
             new PresignedPutObjectArgs()
                 .WithBucket(_bucketName)
-                .WithObject(ObjectName(artifactUuid))
+                .WithObject(StagingName(artifactUuid))
                 .WithExpiry(seconds)).ConfigureAwait(false);
 
         return new ArtifactUploadTicket(
@@ -138,50 +150,136 @@ public sealed class MinioArtifactStore : IArtifactStore
     }
 
     /// <inheritdoc />
-    public async Task<Stream> OpenAsync(Guid artifactUuid, CancellationToken cancellationToken)
-    {
-        // GetObjectAsync oddaje zawartość przez callback, a nie jako Stream, więc trzeba ją
-        // gdzieś przełożyć. Plik tymczasowy z DeleteOnClose znika sam, gdy wołający zamknie
-        // strumień — nie ma tu miejsca, w którym dałoby się posprzątać za niego.
-        var stagingPath = Path.Combine(Path.GetTempPath(), $"erp-artifact-read-{Guid.CreateVersion7():N}.tmp");
+    public Task<ArtifactMetadata?> GetStagedMetadataAsync(Guid artifactUuid, CancellationToken cancellationToken)
+        => StatAsync(artifactUuid, StagingName(artifactUuid), cancellationToken);
 
-        var target = new FileStream(
-            stagingPath,
-            FileMode.CreateNew,
-            FileAccess.ReadWrite,
-            FileShare.None,
-            bufferSize: 81920,
-            FileOptions.Asynchronous | FileOptions.DeleteOnClose);
+    /// <inheritdoc />
+    public async Task PromoteAsync(Guid artifactUuid, CancellationToken cancellationToken)
+    {
+        var source = new CopySourceObjectArgs()
+            .WithBucket(_bucketName)
+            .WithObject(StagingName(artifactUuid));
+
+        // Kopia po stronie magazynu: bajty nie wracają do procesu .NET, a metadane obiektu
+        // (typ MIME wgrany przez przeglądarkę) przechodzą razem z zawartością.
+        await _client.CopyObjectAsync(
+            new CopyObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(AssetName(artifactUuid))
+                .WithCopyObjectSource(source),
+            cancellationToken).ConfigureAwait(false);
+
+        // Kolejność jest istotna: dopiero po udanej kopii. Odwrotna zostawiłaby okno, w którym
+        // plik nie istnieje pod żadnym z dwóch prefiksów.
+        await DeleteStagedAsync(artifactUuid, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteStagedAsync(Guid artifactUuid, CancellationToken cancellationToken)
+        => RemoveAsync(StagingName(artifactUuid), cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<bool> ReadToAsync(Guid artifactUuid, Stream target, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(target);
 
         try
         {
             await _client.GetObjectAsync(
                 new GetObjectArgs()
                     .WithBucket(_bucketName)
-                    .WithObject(ObjectName(artifactUuid))
+                    .WithObject(AssetName(artifactUuid))
                     .WithCallbackStream(async (source, ct) =>
                         await source.CopyToAsync(target, ct).ConfigureAwait(false)),
                 cancellationToken).ConfigureAwait(false);
 
-            target.Position = 0;
-            return target;
+            return true;
         }
-        catch
+        catch (ObjectNotFoundException)
         {
-            await target.DisposeAsync().ConfigureAwait(false);
-            throw;
+            return false;
+        }
+        catch (BucketNotFoundException)
+        {
+            return false;
         }
     }
 
     /// <inheritdoc />
-    public async Task<ArtifactMetadata?> GetMetadataAsync(Guid artifactUuid, CancellationToken cancellationToken)
+    public Task<ArtifactMetadata?> GetMetadataAsync(Guid artifactUuid, CancellationToken cancellationToken)
+        => StatAsync(artifactUuid, AssetName(artifactUuid), cancellationToken);
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<ArtifactListEntry> ListAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var items = _client.ListObjectsEnumAsync(
+            new ListObjectsArgs()
+                .WithBucket(_bucketName)
+                .WithPrefix(AssetPrefix)
+                .WithRecursive(true),
+            cancellationToken);
+
+        await foreach (var item in items.ConfigureAwait(false))
+        {
+            if (item.IsDir || !TryParseAssetKey(item.Key, out var uuid))
+            {
+                // Klucz spoza naszej konwencji nie jest artefaktem tego magazynu. Audytor ma
+                // takie obiekty przemilczeć, a nie zgłaszać do skasowania — mogą być czyjeś.
+                continue;
+            }
+
+            yield return new ArtifactListEntry(uuid, item.LastModifiedDateTime, (long)item.Size);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<Uri> GetDownloadUrlAsync(Guid artifactUuid, TimeSpan ttl, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var seconds = ClampTtl(ttl);
+
+        var url = await _client.PresignedGetObjectAsync(
+            new PresignedGetObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(AssetName(artifactUuid))
+                .WithExpiry(seconds)).ConfigureAwait(false);
+
+        return new Uri(url);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteAsync(Guid artifactUuid, CancellationToken cancellationToken)
+        => RemoveAsync(AssetName(artifactUuid), cancellationToken);
+
+    private async Task RemoveAsync(string objectName, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _client.RemoveObjectAsync(
+                new RemoveObjectArgs()
+                    .WithBucket(_bucketName)
+                    .WithObject(objectName),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (ObjectNotFoundException)
+        {
+            // Usunięcie nieistniejącego artefaktu jest tym, o co wołającemu chodziło.
+        }
+    }
+
+    private async Task<ArtifactMetadata?> StatAsync(
+        Guid artifactUuid,
+        string objectName,
+        CancellationToken cancellationToken)
     {
         try
         {
             var stat = await _client.StatObjectAsync(
                 new StatObjectArgs()
                     .WithBucket(_bucketName)
-                    .WithObject(ObjectName(artifactUuid)),
+                    .WithObject(objectName),
                 cancellationToken).ConfigureAwait(false);
 
             return new ArtifactMetadata(
@@ -201,40 +299,18 @@ public sealed class MinioArtifactStore : IArtifactStore
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Uri> GetDownloadUrlAsync(Guid artifactUuid, TimeSpan ttl, CancellationToken cancellationToken)
+    private static string AssetName(Guid artifactUuid) => AssetPrefix + artifactUuid.ToString("N");
+
+    private static string StagingName(Guid artifactUuid) => StagingPrefix + artifactUuid.ToString("N");
+
+    private static bool TryParseAssetKey(string? key, out Guid artifactUuid)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        artifactUuid = Guid.Empty;
 
-        var seconds = ClampTtl(ttl);
-
-        var url = await _client.PresignedGetObjectAsync(
-            new PresignedGetObjectArgs()
-                .WithBucket(_bucketName)
-                .WithObject(ObjectName(artifactUuid))
-                .WithExpiry(seconds)).ConfigureAwait(false);
-
-        return new Uri(url);
+        return key is not null
+            && key.StartsWith(AssetPrefix, StringComparison.Ordinal)
+            && Guid.TryParseExact(key[AssetPrefix.Length..], "N", out artifactUuid);
     }
-
-    /// <inheritdoc />
-    public async Task DeleteAsync(Guid artifactUuid, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _client.RemoveObjectAsync(
-                new RemoveObjectArgs()
-                    .WithBucket(_bucketName)
-                    .WithObject(ObjectName(artifactUuid)),
-                cancellationToken).ConfigureAwait(false);
-        }
-        catch (ObjectNotFoundException)
-        {
-            // Usunięcie nieistniejącego artefaktu jest tym, o co wołającemu chodziło.
-        }
-    }
-
-    private static string ObjectName(Guid artifactUuid) => artifactUuid.ToString("N");
 
     /// <summary>Górna granica to twardy limit S3 na ważność podpisu — siedem dni.</summary>
     private static int ClampTtl(TimeSpan ttl) => (int)Math.Clamp(ttl.TotalSeconds, 1, 7 * 24 * 3600);

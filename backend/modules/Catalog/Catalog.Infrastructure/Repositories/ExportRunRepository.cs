@@ -50,6 +50,7 @@ public sealed class ExportJobFactory : IExportJobFactory
     /// Retencja pochodzi z tej samej opcji, którą inicjalizator kubełka wpisuje w regułę
     /// lifecycle MinIO — dzięki temu <c>job.expire_on</c> i wygasanie obiektu w magazynie
     /// nie mogą się rozjechać (patrz <c>docs/backend/exports-artifacts.md</c> §7).
+    /// Konkretnie: z magazynu <c>transient</c>, bo to w nim żyją eksporty.
     /// </summary>
     private readonly ErpArtifactOptions _artifactOptions;
 
@@ -77,7 +78,14 @@ public sealed class ExportJobFactory : IExportJobFactory
         CancellationToken cancellationToken)
     {
         var now = _clock.UtcNow;
-        var expireOn = now.AddDays(_artifactOptions.RetentionDays);
+        // Retencja magazynu WYGASAJĄCEGO — tam lądują eksporty. Sięgnięcie po magazyn trwały
+        // dałoby przebieg, który nigdy nie wygasa, przy pliku kasowanym regułą lifecycle.
+        var retentionDays = _artifactOptions.RequireStore(ArtifactStoreKeys.Transient).RetentionDays
+            ?? throw new InvalidOperationException(
+                "Magazyn `transient` nie ma ustawionego `RetentionDays`, a `job.expire_on` musi się "
+                + "zgadzać z regułą wygasania kubełka (docs/backend/exports-artifacts.md §7).");
+
+        var expireOn = now.AddDays(retentionDays);
 
         var job = Job.CreateReduce(
             commandType,

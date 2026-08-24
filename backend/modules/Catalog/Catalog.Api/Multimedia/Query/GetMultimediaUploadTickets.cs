@@ -1,7 +1,9 @@
 using Catalog.Application.Multimedia;
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Artifacts;
 using FastEndpoints;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace Catalog.Multimedia.Query;
@@ -22,21 +24,23 @@ namespace Catalog.Multimedia.Query;
 public sealed class GetMultimediaUploadTicketsEndpoint
     : Endpoint<GetMultimediaUploadTicketsRequest, List<MultimediaUploadTicketDto>>
 {
-    /// <summary>
-    /// Górna granica jednej paczki. Nie chroni przed niczym groźnym — chroni przed wybiciem
-    /// tysiąca podpisów jednym żądaniem, gdyby po drugiej stronie coś się zapętliło.
-    /// </summary>
-    private const int MaxTicketsPerRequest = 100;
-
     private readonly IArtifactStore _artifacts;
+    private readonly MultimediaOptions _options;
+    private readonly ErpArtifactOptions _artifactOptions;
 
     public GetMultimediaUploadTicketsEndpoint(
         // Magazyn trwały: zdjęcia produktów mają przeżyć retencję eksportów.
-        [FromKeyedServices(ArtifactStoreKeys.Media)] IArtifactStore artifacts)
-        => _artifacts = artifacts;
+        [FromKeyedServices(ArtifactStoreKeys.Media)] IArtifactStore artifacts,
+        IOptions<MultimediaOptions> options,
+        IOptions<ErpArtifactOptions> artifactOptions)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(artifactOptions);
 
-    /// <summary>Tyle, ile trzeba na wgranie dużego pliku przez łącze użytkownika.</summary>
-    private static readonly TimeSpan TicketTtl = TimeSpan.FromMinutes(30);
+        _artifacts = artifacts;
+        _options = options.Value;
+        _artifactOptions = artifactOptions.Value;
+    }
 
     public override void Configure()
     {
@@ -55,9 +59,11 @@ public sealed class GetMultimediaUploadTicketsEndpoint
     {
         ArgumentNullException.ThrowIfNull(req);
 
-        if (req.Count is < 1 or > MaxTicketsPerRequest)
+        // Górna granica jednej paczki nie chroni przed niczym groźnym — chroni przed wybiciem
+        // tysiąca podpisów jednym żądaniem, gdyby po drugiej stronie coś się zapętliło.
+        if (req.Count < 1 || req.Count > _options.MaxFilesPerRequest)
         {
-            AddError(r => r.Count, $"Liczba plików musi mieścić się w zakresie 1–{MaxTicketsPerRequest}.");
+            AddError(r => r.Count, $"Liczba plików musi mieścić się w zakresie 1–{_options.MaxFilesPerRequest}.");
             ThrowIfAnyErrors();
         }
 
@@ -65,7 +71,8 @@ public sealed class GetMultimediaUploadTicketsEndpoint
 
         for (var i = 0; i < req.Count; i++)
         {
-            var ticket = await _artifacts.CreateUploadTicketAsync(TicketTtl, ct);
+            // TTL biletu: tyle, ile trzeba na wgranie dużego pliku przez łącze użytkownika.
+            var ticket = await _artifacts.CreateUploadTicketAsync(_artifactOptions.UploadUrlTtl, ct);
 
             tickets.Add(new MultimediaUploadTicketDto(
                 ticket.Uuid,

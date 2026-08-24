@@ -23,6 +23,13 @@ public sealed class MultimediaAssetConfiguration : IEntityTypeConfiguration<Mult
         // go `ArtifactUuid`. Dokładnie jedno z dwóch pól jest wypełnione (patrz MultimediaAsset).
         builder.Property(m => m.OriginalUrl).HasMaxLength(2048);
 
+        // Domyślna w bazie, nie tylko w kodzie: wiersze sprzed tej kolumny opisują pliki wgrane
+        // przez galerię produktu, a te są pozycjami biblioteki (patrz MultimediaOwnership).
+        builder.Property(m => m.Ownership)
+            .HasConversion<int>()
+            .HasDefaultValue(MultimediaOwnership.Library)
+            .IsRequired();
+
         builder.HasIndex(m => m.FileName);
         builder.HasIndex(m => m.CreatedAt);
 

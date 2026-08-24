@@ -1,0 +1,426 @@
+# Magazyn plików — gdzie żyją, kto ma do nich dostęp, kto po nich sprząta
+
+**Stan: 🟡 kod jest i się kompiluje, nie zweryfikowany na żywej infrastrukturze.** Legenda
+znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia). Wdrożone są wszystkie
+pozycje z [§6](#6-kolejność-wdrożenia); testy jednostkowe i architektoniczne przechodzą (99/99),
+ale przebiegu end-to-end na MinIO **jeszcze nie było** — patrz [§7](#7-co-zostało-do-weryfikacji).
+Ten dokument **zastępuje** rozstrzygnięcia z [`exports-artifacts.md`](./exports-artifacts.md)
+§5 i §9 w tych punktach, w których się z nimi rozjeżdża (układ kubełków, poświadczenia,
+sprzątanie, rola DMS).
+
+Podział zakresów między tymi dwoma dokumentami:
+
+| | [`exports-artifacts.md`](./exports-artifacts.md) | ten dokument |
+|---|---|---|
+| Odpowiada na | jak powstaje plik produkowany przez system i jak użytkownik się o nim dowiaduje | gdzie pliki leżą, kto je widzi, kiedy znikają |
+| Zakres | jeden producent (`ExportRun`, `job.kind = Reduce`) | wszystkie pliki wszystkich modułów |
+
+---
+
+## 1. Biblioteka, nie mikroserwis
+
+**Decyzja: nie powstaje mikroserwis do zarządzania multimediami. Każdy moduł rozmawia z MinIO sam,
+przez wspólną bibliotekę `Erp.BuildingBlocks.Artifacts`.**
+
+Argument rozstrzygający jest jeden i dotyczy sprzątania: **centralny serwis plików nie umie
+posprzątać po sobie.**
+
+Żeby usunąć plik, trzeba wiedzieć, czy ktoś go jeszcze używa. Referencja — `product_multimedia`
+dziś, `invoice_attachment` jutro — żyje w schemacie modułu biznesowego, bo jest częścią jego
+modelu. Centralny serwis musiałby trzymać rozproszony licznik referencji utrzymywany zdarzeniami,
+a licznik *eventually consistent* to licznik, który w oknie opóźnienia kasuje żywe dane. Nie ma
+tu bezpiecznego wariantu: albo nie kasuje nigdy, albo czasem kasuje za wcześnie.
+
+Wniosek działa w obie strony i dlatego jest projektowy, a nie preferencyjny: **jeżeli plik ma być
+usuwany na podstawie referencji, rekord pliku musi leżeć w tej samej granicy transakcyjnej co
+referencja.** To wymusza „moduł biznesowy jest właścicielem pliku" i zamyka sprawę.
+
+Reszta argumentów prowadzi tam samo:
+
+| | Osobny mikroserwis | Biblioteka (wybrane) |
+|---|---|---|
+| Sprzątanie | rozproszony licznik referencji, kasujący w oknie opóźnienia | referencja i rekord w jednej transakcji |
+| Autoryzacja | musiałby replikować ACL domenową albo odpytywać moduł zwrotnie | moduł już wie, kto może zobaczyć fakturę |
+| Bajty | dodatkowy hop, albo i tak presigned — czyli serwis niepotrzebny na ścieżce gorącej | prosto do MinIO |
+| Spójność z resztą | wyłamuje się: jednostką współdzielenia jest tu `building-blocks`, nie serwis | jak `Erp.BuildingBlocks.{Jobs,Messaging,Validation}` |
+
+### DMS to moduł biznesowy, nie magazyn plików
+
+`IArtifactStore` nosi dziś komentarz „docelowo to jest zadanie modułu DMS". **To zdanie jest do
+wykreślenia** — miesza dwie rzeczy, które muszą zostać rozdzielone:
+
+| | Co to jest | Czy powstaje |
+|---|---|---|
+| **DMS jako moduł biznesowy** | faktury, umowy, obieg dokumentu, wersjonowanie, retencja księgowa | **tak** — z własnym schematem, agregatami i uprawnieniami, jak każdy moduł |
+| **DMS jako magazyn plików dla innych modułów** | „wszystkie pliki systemu trzyma DMS, reszta go odpytuje" | **nie** — to jest centralny serwis z akapitu wyżej |
+
+Faktura należy do DMS-u dlatego, że *faktura* jest pojęciem DMS-u — nie dlatego, że DMS jest
+„od plików". Zdjęcia produktów zostają w Catalogu na zawsze, również po tym, jak DMS dostanie
+backend.
+
+### Współdzielenie plików między modułami
+
+Marketing chce użyć zdjęcia produktu. To się robi **w przeglądarce, nie na backendzie**: front
+i tak woła każdy mikroserwis bezpośrednio (brak BFF — [`architecture.md`](./architecture.md)),
+więc Marketing trzyma u siebie `uuid` zasobu z Catalogu, a `<img>` bierze zawartość z
+`GET catalog/multimedia/content/{uuid}`, za uprawnieniem Catalogu. Zero sprzężenia backendów,
+zero kopii bajtów, uprawnienie sprawdzane tam, gdzie mieszka model.
+
+Czego **nie** robić: kopiowania obiektu do kubełka Marketingu (druga kopia bajtów i drugie źródło
+prawdy o tym samym pliku) ani czytania cudzego kubełka wprost (patrz §2.3 — po wdrożeniu polityk
+to i tak przestanie być możliwe).
+
+---
+
+## 2. Trzy osie separacji
+
+Dziś całą separację niesie jedna oś — retencja, przez dwa kubełki `erp-artifacts` / `erp-media`.
+To za mało i nie ta oś. Osie są trzy, **niezależne**, i mylenie ich ze sobą jest głównym źródłem
+błędów w tym obszarze.
+
+| Oś | Odpowiada na pytanie | Mechanizm |
+|---|---|---|
+| A | Czy **ten użytkownik** może zobaczyć **ten plik**? | uprawnienie na endpointcie modułu |
+| B | Jak długo plik żyje i jakie ma gwarancje? | kubełek per moduł i klasa cyklu życia |
+| C | Czy **ten serwis** może w ogóle dosięgnąć tych bajtów? | klucz MinIO per serwis + polityka |
+
+### 2.1 Oś A — uprawnienie na endpointcie
+
+Poza serwisem-właścicielem **nikt nigdy nie czyta z MinIO**. Przeglądarka nie dostaje poświadczeń
+do kubełka, a `artifactUuid` nie opuszcza backendu — zasób jest adresowany uuid-em agregatu, nie
+obiektu w magazynie. To już jest zrobione dobrze w `GetMultimediaContentEndpoint` i zostaje bez
+zmian.
+
+Separacja uprawnień sprowadza się więc do zwykłej konwencji `{moduł}.{zasób}.{akcja}`:
+
+```
+GET catalog/multimedia/content/{uuid}  → catalog.dictionary.read
+GET dms/invoice/content/{uuid}         → dms.invoice.read   + wpis audytowy pobrania
+```
+
+Inny serwis, inny kod w [`Permissions`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/Permissions.cs),
+inna trasa. Faktury dostają dodatkowo audyt każdego pobrania — i **to** jest realna różnica między
+fakturą a zdjęciem produktu. Z magazynem nie ma ona nic wspólnego.
+
+> **Nigdy nie próbuj robić separacji uprawnień politykami kubełka.** Polityka S3 odpowiada na
+> pytanie „czy ten *serwis* może czytać ten kubełek", a nie „czy ten *użytkownik* może zobaczyć
+> tę fakturę". To dwa różne pytania i tylko drugie interesuje użytkownika. Polityka jest osią C
+> i robi coś innego.
+
+### 2.2 Oś B — kubełek per moduł i klasa cyklu życia
+
+```
+erp-catalog-artifacts     eksporty, raporty      lifecycle: RetentionDays
+erp-catalog-media         zdjęcia produktów      bez lifecycle
+erp-dms-artifacts         raporty DMS            lifecycle: RetentionDays
+erp-dms-media             faktury, umowy         bez lifecycle + versioning + object-lock
+erp-marketing-artifacts   …
+erp-marketing-media       …
+```
+
+Nazwa: `erp-{moduł}-{klasa}`, klasa ∈ `artifacts` (wygasające, produkowane przez system) |
+`media` (trwałe, wgrywane przez użytkownika). Podział na te dwie klasy zostaje bez zmian — jest
+dobry i uzasadniony w [`exports-artifacts.md` §9](./exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
+Zmienia się to, że **kubełek jest per moduł, a nie wspólny**.
+
+Cztery powody, każdy wystarczający sam z siebie:
+
+1. **Reguła lifecycle jest własnością kubełka i ma pusty prefiks**, a `ArtifactBucketInitializer`
+   zakłada ją **przy każdym starcie modułu**. Dwa moduły z różnym `RetentionDays` na jednym
+   kubełku nadpisują sobie regułę nawzajem przy każdym restarcie — cicho, bez błędu, z objawem
+   widocznym dopiero po upływie czyjejś retencji.
+2. **Object-lock, versioning i quota to ustawienia kubełka, nie obiektu.** Faktury prawdopodobnie
+   potrzebują WORM i retencji księgowej liczonej w latach; zdjęcia produktów nie. Nie da się tego
+   ustawić per plik.
+3. **Promień rażenia** — osobny kubełek jest warunkiem koniecznym osi C. Bez niego polityka nie ma
+   czego rozdzielić.
+4. **Ops** — metryki, backup i limity per moduł, zamiast jednego worka.
+
+> **Stan faktyczny do naprawy.** `ErpArtifactOptions.MediaBucketName` ma default `erp-media`,
+> a [`Catalog.Api/appsettings.Development.json`](../../backend/modules/Catalog/Catalog.Api/appsettings.Development.json)
+> nadpisuje wyłącznie `BucketName` (`catalog-artifacts`). Multimedia Catalogu lądują więc
+> w generycznym `erp-media` — pierwszy kolejny moduł z plikami wejdzie tam obok nich.
+> To jest pozycja blokująca dla Marketingu i DMS-u.
+
+### 2.3 Oś C — klucz MinIO per serwis
+
+**Tego nie ma dziś wcale.** Wszystkie serwisy chodzą na koncie root (`erp`/`erp12345`),
+a katalog [`backend/minio/policies/`](../../backend/minio/policies/) istnieje i jest pusty —
+kierunek był w planie, tylko nie został wykonany.
+
+Każdy serwis dostaje własnego użytkownika MinIO z polityką zawężoną do swoich kubełków:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
+    "Resource": [
+      "arn:aws:s3:::erp-catalog-artifacts", "arn:aws:s3:::erp-catalog-artifacts/*",
+      "arn:aws:s3:::erp-catalog-media",     "arn:aws:s3:::erp-catalog-media/*"
+    ]
+  }]
+}
+```
+
+Zakładane jednorazowym kontenerem `minio-init` w
+[`docker-compose.yml`](../../backend/docker-compose.yml) (`mc admin user add` + `mc admin policy
+attach`), obok samego MinIO — tak samo jak kubełek zakłada się kodem, a nie instrukcją dla
+developera.
+
+Co to kupuje: **nawet błąd w Catalogu — pomylone `artifactUuid`, wstrzyknięty nie ten magazyn,
+literówka w konfiguracji — nie może przeczytać faktury z DMS-u.** Dziś może, bo ma roota. To
+jedyna warstwa separacji, która trzyma przy pomyłce programisty, a nie tylko przy poprawnym
+kodzie; pozostałe dwie zakładają, że kod robi to, co miał robić.
+
+### 2.4 Kształt konfiguracji
+
+Obecna para `BucketName` + `MediaBucketName` z jednym `RetentionDays` nie rozciąga się na moduł
+z trzecią klasą plików ani na różne retencje. Zamiast dokładać kolejne pola — słownik magazynów
+po kluczu, tym samym, którym konsument je wstrzykuje:
+
+```json
+"Artifacts": {
+  "Endpoint": "localhost:9100",
+  "AccessKey": "catalog",
+  "SecretKey": "…",
+  "UseSsl": false,
+  "Stores": {
+    "transient": { "BucketName": "erp-catalog-artifacts", "RetentionDays": 7 },
+    "media":     { "BucketName": "erp-catalog-media" }
+  }
+}
+```
+
+Rejestracja w `AddErpArtifacts` leci pętlą po `Stores`; `RetentionDays` obecny → zakładamy regułę
+lifecycle, nieobecny → nie zakładamy. Dzisiejsza zasada zostaje nietknięta i jest dobra:
+**rejestracja bezkluczowa to magazyn wygasający, zawartość trwała prosi o siebie jawnie**
+(`[FromKeyedServices(ArtifactStoreKeys.Media)]`). Odwrotny domyślny kończyłby się cichym
+wydłużeniem życia eksportów zamiast głośnym błędem, a testu
+`Magazyn_artefaktow_wstrzykiwany_jest_zawsze_pod_kluczem_trwalym` nie ruszamy.
+
+---
+
+## 3. Cykl życia obiektu w kubełku — `staging/` i `assets/`
+
+Klucz obiektu jest dziś płaski (`ObjectName(uuid) => uuid.ToString("N")`). Wprowadzamy prefiks,
+bo on jest mechanizmem sprzątania z §4a:
+
+```
+staging/{uuid}    ← tu celuje presigned PUT           lifecycle: expire after 1 day
+assets/{uuid}     ← tu ląduje potwierdzony plik       bez lifecycle (kubełek media)
+```
+
+Przebieg wgrywania zyskuje jeden krok, niewidoczny dla klienta:
+
+```text
+1. getMultimediaUploadTickets  → N adresów PUT celujących w staging/{uuid}
+2. PUT prosto do magazynu       ← bajty NIE przechodzą przez serwis
+3. multimedia/create            → StatObject (rozmiar, typ) + PROMOCJA staging/ → assets/
+                                  + wpisy w katalogu, synchronicznie, jedna transakcja
+4. product/batch-add-multimedia → dopięcie zasobów do produktów (zwykłe zadanie masowe)
+```
+
+Promocja to server-side `CopyObject` + `RemoveObject` na źródle — **bajty nie przechodzą przez
+proces .NET**. W `IArtifactStore` dochodzi jedna metoda:
+
+```csharp
+/// <summary>Przenosi potwierdzony obiekt z prefiksu postojowego do docelowego.</summary>
+Task PromoteAsync(Guid artifactUuid, CancellationToken cancellationToken);
+```
+
+Reguła lifecycle na kubełku `media` przestaje mieć pusty prefiks — obejmuje wyłącznie `staging/`.
+Kubełek `artifacts` zostaje jak jest: cały jest wygasający, bo cały jest z definicji tymczasowy.
+
+---
+
+## 4. Cztery wycieki, cztery różne mechanizmy
+
+„Worker chodzący w tle i kasujący multimedia bez referencji" to jedno narzędzie na cztery różne
+problemy — i akurat najbardziej ryzykowne z możliwych, bo nieodwracalne i działające na
+heurystyce. Rozbite na przypadki, trzy z czterech nie potrzebują workera w ogóle.
+
+| # | Co wycieka | Mechanizm | Worker? |
+|---|---|---|---|
+| a | obiekt wgrany, po którym nie przyszła komenda | lifecycle na prefiksie `staging/` | nie |
+| b | agregat skasowany, obiekt został | outbox + konsument z ponowieniami | nie |
+| c | zasób, któremu zniknęła ostatnia referencja | jawna własność + kaskada w transakcji | nie |
+| d | rozjazd baza ↔ kubełek po nietypowej awarii | audytor, rzadko, dry-run | **tak, jeden** |
+
+### 4a. Obiekt wgrany, po którym nie przyszła komenda
+
+Bilet wydany, przeglądarka zrobiła `PUT`, użytkownik zamknął modal przed krokiem 3. Obiekt jest
+w kubełku, w bazie nie ma o nim ani jednego wiersza — więc **nic w systemie nie wie, że istnieje**.
+Dziś to jedyny wyciek jawnie przyznany jako nieobsłużony (patrz też
+[`docs/frontend/multimedia.md` §2](../frontend/multimedia.md)).
+
+**Rozwiązanie: prefiks postojowy z §3, czyli zero kodu sprzątającego.** Osierocony obiekt nigdy
+nie opuszcza `staging/` i umiera z reguły kubełka. Mechanizm, który nie ma jak mieć buga i nie ma
+jak skasować czegokolwiek żywego, bo o istnieniu żywych plików w ogóle nie wie — patrzy wyłącznie
+na prefiks i wiek.
+
+Odrzucona alternatywa: tabela `pending_upload` zapisywana przy wydaniu biletu i worker kasujący
+niepotwierdzone wpisy po TTL. Robi to samo, kosztem tabeli, workera i trzeciego stanu do
+utrzymania w zgodzie. Magazyn potrafi to sam.
+
+### 4b. Agregat skasowany, obiekt został
+
+Baza i MinIO nie są w jednej transakcji, więc zawsze istnieje moment, w którym wiersz zniknął,
+a `DeleteObject` padł albo się nie wykonał.
+
+**Rozwiązanie: transactional outbox, nie worker** — machineria już jest
+([`events-outbox.md`](./events-outbox.md)). Ta sama transakcja, która usuwa `MultimediaAsset`,
+zapisuje kopertę `MultimediaAssetDeleted { ArtifactUuid }`; konsument woła `DeleteAsync`
+z ponowieniami. Semantyka at-least-once jest tu dokładnie właściwa, bo usunięcie jest idempotentne:
+`MinioArtifactStore.DeleteAsync` świadomie łyka `ObjectNotFoundException`.
+
+> **Dziś ten wyciek nie istnieje, bo nie ma czym go wywołać:** w module nie ma ani jednej komendy
+> usuwającej multimedia. To nie jest zaleta — oznacza, że wgranego pliku nie da się usunąć wcale.
+> Komenda usuwająca i ten outbox powstają razem, inaczej pierwszy `Remove` od razu zaczyna
+> zostawiać śmieci.
+
+### 4c. Zasób, któremu zniknęła ostatnia referencja
+
+Tu jest właściwe pytanie projektowe i tu domyślna odpowiedź („skasuj, jak nikt nie wskazuje")
+jest zła.
+
+Kod już tę sprawę rozstrzygnął, tylko nie wprost: `MultimediaAsset` jest `AggregateRoot` z własnym
+uuid, własnymi endpointami, własną sygnaturą SignalR i własnym orkiestratorem na froncie. To nie
+jest pole produktu — to jest **biblioteka mediów**. A w bibliotece „nikt tego teraz nie używa"
+nie znaczy „to śmieć": użytkownik, który odpina zdjęcie od produktu, żeby przepiąć je do innego,
+nie prosi o skasowanie pliku.
+
+Worker kasujący po zerowej referencji **cicho usuwa dane użytkownika na podstawie heurystyki,
+w oknie między dwoma jego kliknięciami**. Nieodwracalnie i niewidocznie — najgorszy możliwy tryb
+awarii.
+
+**Rozwiązanie: zamodelować własność jawnie, zamiast zgadywać ją z licznika.** Na `MultimediaAsset`
+dochodzi `Ownership`:
+
+| `Ownership` | Znaczenie | Kiedy znika |
+|---|---|---|
+| `Owned` | plik wgrany w kontekście jednego właściciela, nie do ponownego użycia | **kaskadą w tej samej transakcji**, która usuwa ostatnią referencję |
+| `Library` | pozycja biblioteki mediów, wielokrotnego użytku | wyłącznie jawną komendą użytkownika |
+
+Dla `Owned` usunięcie jest **kaskadą w transakcji, nie zamiataniem**: deterministyczne,
+natychmiastowe, bez okna wyścigu, i wpada w mechanizm 4b razem z outboxem. Dla `Library` licznik
+referencji służy do **zablokowania** usunięcia („używane przez 12 produktów — odepnij najpierw"),
+a nie do jego wywołania; licznik jedzie w `MultimediaDto`, żeby UI mógł to pokazać przed
+kliknięciem, a nie po.
+
+Ta sama zasada dotyczy faktur w DMS: faktura jest agregatem z własnym cyklem życia i retencją
+prawną. Nie kasuje się jej dlatego, że w danej chwili nikt na nią nie wskazuje.
+
+### 4d. Rozjazd baza ↔ kubełek
+
+Po domknięciu 4a–4c zostaje wąski margines: obiekt w kubełku, którego nie tłumaczy żaden
+z powyższych mechanizmów, bo coś się wywróciło w nietypowym momencie. **To jedyne miejsce na
+workera — i jest to audytor, nie garbage collector.**
+
+Zasady, wszystkie konieczne:
+
+- **rzadko** — raz na tydzień, poza godzinami szczytu; nie co minutę i nie w pętli;
+- **próg wieku** — dotyka wyłącznie obiektów starszych niż np. 7 dni, żeby nie wejść w wyścig
+  z trwającym uploadem ani z niezatwierdzoną jeszcze transakcją;
+- **kierunek: od magazynu do bazy** — listuje `assets/`, sprawdza każdy klucz po indeksie
+  `multimedia.artifact_uuid`, który **jest już założony** dokładnie pod to
+  ([`MultimediaAssetConfiguration`](../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/Configurations/Multimedia/MultimediaAssetConfiguration.cs));
+- **domyślnie dry-run** — raportuje do logu i metryki; kasowanie włącza się jawnie i dopiero po
+  tym, jak przez kilka przebiegów raport jest pusty albo w całości zrozumiały;
+- **w serwisie-właścicielu** — tylko Catalog wie, co jest referencją w Catalogu. To ta sama
+  racja, która w §1 zabija centralny serwis plików;
+- **dopisany do [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne)** razem
+  z `BulkCommandRunner` i `ExportRunner` — dwie instancje bez lease'u listowałyby ten sam kubełek
+  i kasowały te same obiekty.
+
+> **Jak czytać jego wynik.** Jeżeli 4a–4c działają, audytor przez większość życia systemu nie
+> znajduje niczego — i o to chodzi. Worker, który regularnie coś kasuje, jest **objawem**, że
+> któryś z pozostałych trzech mechanizmów jest zepsuty, a nie dowodem, że sprzątanie działa.
+
+---
+
+## 5. Dziury, które ten projekt zostawia otwarte
+
+Trzy pozycje niezależne od powyższych rozstrzygnięć, warte zapisania, żeby nie zostały przeoczone:
+
+1. **Brak limitu rozmiaru na presigned PUT.** Kto ma `catalog.multimedia.update`, może wgrać plik
+   dowolnej wielkości. Presigned `PUT` nie da się ograniczyć nagłówkiem `content-length-range` —
+   to potrafi wyłącznie presigned `POST` z polityką. Najtańsze domknięcie: w kroku 3 sprawdzić
+   `StatObject().Size` i odrzucić żądanie, kasując obiekt ze `staging/`, jeżeli przekracza limit.
+   Bajty są wtedy już na dysku magazynu, ale nigdy nie zostają promowane. Docelowo — presigned `POST`.
+2. **Brak skanowania antywirusowego** treści wgrywanej przez użytkownika. W systemie, który ma
+   trzymać faktury i załączniki od kontrahentów, to jest pozycja do świadomej decyzji, a nie do
+   przeoczenia. Naturalne miejsce: konsument zdarzenia w kroku 3, **przed** promocją ze `staging/`
+   do `assets/` — plik odrzucony nigdy nie staje się zasobem, a `staging/` i tak go po dobie skasuje.
+3. **`OpenAsync` przepisuje każdy obiekt przez plik tymczasowy** — bo sygnatura zwraca `Stream`,
+   a `GetObjectAsync` oddaje zawartość callbackiem. Dla galerii to pełny round-trip po dysku na
+   każdą miniaturkę. Domknięcie: `Task ReadToAsync(Guid, Stream target, CancellationToken)`
+   w `IArtifactStore`, wpinane wprost w `HttpContext.Response.Body`. Plik tymczasowy zostaje
+   wyłącznie po stronie **zapisu**, gdzie ma powód (`PutObject` potrzebuje rozmiaru z góry).
+
+---
+
+## 6. Stan wdrożenia
+
+| # | Zmiana | Stan | Gdzie |
+|---|---|---|---|
+| 1 | Kubełki per moduł; `Stores` jako słownik (§2.2, §2.4) | ✅ | [`ErpArtifactOptions`](../../backend/building-blocks/Erp.BuildingBlocks.Artifacts/ErpArtifactOptions.cs), [`ErpArtifactExtensions`](../../backend/building-blocks/Erp.BuildingBlocks.Artifacts/ErpArtifactExtensions.cs) |
+| 2 | Klucz MinIO per serwis, polityki, `minio-init` (§2.3) | ✅ | [`minio/policies/`](../../backend/minio/policies/), [`docker-compose.yml`](../../backend/docker-compose.yml) |
+| 3 | Prefiksy `staging/`/`assets/`, `PromoteAsync`, lifecycle (§3, §4a) | ✅ | [`MinioArtifactStore`](../../backend/building-blocks/Erp.BuildingBlocks.Artifacts/MinioArtifactStore.cs) |
+| 4 | Komenda usuwająca + outbox `ArtifactDeletionRequested` (§4b) | ✅ | `MultimediaRemoveCommand*`, [`ArtifactDeletionRequestedHandler`](../../backend/modules/Catalog/Catalog.Infrastructure/Consumers/ArtifactDeletionRequestedHandler.cs) |
+| 5 | `Ownership` + licznik referencji w `MultimediaDto` (§4c) | 🟡 | [`MultimediaAsset`](../../backend/modules/Catalog/Catalog.Domain/Aggregates/Multimedia/MultimediaAsset.cs) — **kaskady dla `Owned` nie ma**, patrz niżej |
+| 6 | Audytor rozjazdu, dry-run (§4d) | ✅ | [`MediaReconciliationService`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/MediaReconciliationService.cs) |
+| 7 | Limit rozmiaru, `ReadToAsync` (§5) | ✅ | `MultimediaOptions`, `GetMultimediaContent` |
+| 7 | Skan antywirusowy (§5) | 📐 | decyzja nie zapadła |
+
+### Czego świadomie nie ma w pozycji 5
+
+Model własności jest w domenie i jest wymuszony testem, ale **kaskada usuwająca zasób `Owned`
+razem z ostatnią referencją nie ma dziś wyzwalacza**: w module nie istnieje komenda odpinająca
+multimedium od produktu (`ProductRemoveMultimediaCommand`). Dopóki jej nie ma, referencji nie da
+się usunąć pojedynczo, więc nie ma momentu, w którym kaskada miałaby zadziałać.
+
+Wszystkie zasoby zakładane dziś przez galerię produktu są `Library`, a `EnsureCanRemove` blokuje
+usunięcie przy żywych referencjach — więc brak kaskady nie zostawia niczego zepsutego, tylko
+niewykorzystaną gałąź. Kaskadę dopina się razem z tamtą komendą, w tej samej transakcji, w której
+znika ostatni wiersz `product_multimedia`.
+
+---
+
+## 7. Co zostało do weryfikacji
+
+Kod nie był jeszcze uruchomiony na żywym MinIO. Do sprawdzenia przy pierwszym przebiegu:
+
+- **`minio-init` faktycznie zakłada konto i politykę**, a Catalog na koncie `catalog` (nie root)
+  potrafi założyć kubełek i ustawić lifecycle. To najbardziej prawdopodobne miejsce na braki
+  w polityce — objawią się jako `AccessDenied` w logu startowym modułu, bez przewracania hosta
+  (`ArtifactBucketInitializer` łapie wyjątek świadomie).
+- **`CopyObject` przy promocji** — API Minio 7.0.0 zweryfikowane wyłącznie kompilatorem.
+- **Reguła lifecycle z dwoma wpisami naraz** (`erp-staging-cleanup` + `erp-artifact-retention`
+  na kubełku `transient`).
+- **Migracja danych deweloperskich**: istniejące obiekty leżą pod płaskim kluczem `{uuid:N}`,
+  a kod adresuje `assets/{uuid:N}`. Dotychczasowe miniaturki przestaną się wyświetlać. Kubełki
+  zmieniły też nazwy (`erp-catalog-media` zamiast `erp-media`), więc najprościej jest wyczyścić
+  wolumen MinIO i wgrać multimedia od nowa — dane są deweloperskie.
+
+### Frontend: kontrakt NSwag się zmienił
+
+Wymaga regeneracji klienta w `frontend/libs/modules/catalog/data-access`:
+
+- `MultimediaDto` ma nowe pole `referenceCount`,
+- doszedł endpoint `multimedia/batch-remove` (`MultimediaRemoveCommand`).
+
+Obie zmiany są **addytywne** — istniejący front działa bez zmian do czasu regeneracji.
+
+---
+
+## 8. Zobacz też
+
+- [Eksporty i artefakty](./exports-artifacts.md) — jak powstaje plik produkowany przez system,
+  `job.kind`, agregat przebiegu, wygasanie razem z wierszem `job`
+- [Zdarzenia domenowe i outbox](./events-outbox.md) — mechanizm z §4b
+- [Tożsamość i uprawnienia](./identity-authz.md) — katalog uprawnień z §2.1
+- [Architektura backendu §7](./architecture.md#7-założenia-jednoinstancyjne) — gdzie trafia
+  audytor z §4d
+- [Multimedia na froncie](../frontend/multimedia.md) — bilety, `blob:`-URL-e, galeria

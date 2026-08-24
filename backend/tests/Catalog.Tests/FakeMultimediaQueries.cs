@@ -32,6 +32,21 @@ internal sealed class FakeMultimediaQueries : IMultimediaQueries
         CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public Task<Guid?> GetArtifactUuidAsync(Guid uuid, CancellationToken cancellationToken)
+    public Task<MultimediaContentRef?> GetContentRefAsync(Guid uuid, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
+    public Task<List<Guid>> GetMatchingUuidsAsync(
+        SearchMultimediaRequest filter,
+        CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
+    public Task<Dictionary<Guid, int>> CountReferencesAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
+    public Task<HashSet<Guid>> GetKnownArtifactUuidsAsync(
+        IReadOnlyCollection<Guid> artifactUuids,
+        CancellationToken cancellationToken)
         => throw new NotSupportedException();
 }

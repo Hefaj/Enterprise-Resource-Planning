@@ -37,6 +37,12 @@ builder.Services.AddErpBulkJobs<CatalogDbContext>(builder.Configuration);
 builder.Services.AddErpArtifacts(builder.Configuration);
 builder.Services.AddHostedService<ExportRunner>();
 
+// Audytor rozjazdu magazyn ↔ katalog. Domyślnie WYŁĄCZONY i w trybie raportowania — to
+// narzędzie diagnostyczne, a nie element normalnej pracy modułu (docs/backend/media-storage.md §4d).
+builder.Services.Configure<MediaReconciliationOptions>(
+    builder.Configuration.GetSection(MediaReconciliationOptions.SectionName));
+builder.Services.AddHostedService<MediaReconciliationService>();
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

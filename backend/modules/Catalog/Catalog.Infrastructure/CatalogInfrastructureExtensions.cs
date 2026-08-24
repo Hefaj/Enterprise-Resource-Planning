@@ -51,6 +51,9 @@ public static class CatalogInfrastructureExtensions
         services.AddScoped<CategoryClosureMaintainer>();
         services.AddScoped<CatalogSeeder>();
 
+        // Polityka modułu wobec plików użytkownika (limit rozmiaru, wielkość paczki).
+        services.Configure<MultimediaOptions>(configuration.GetSection(MultimediaOptions.SectionName));
+
         // Repozytoria i zapytania (IProductQueries → ProductQueries itd.) rejestruje
         // `AddErpModule` z Program.cs po konwencji nazewniczej — jedna klasa, zero linijek tutaj.
         // Zostają wyłącznie wpisy, w których jest decyzja: cykl życia inny niż scoped, gotowa

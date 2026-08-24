@@ -3,6 +3,33 @@ using Erp.BuildingBlocks.Domain;
 namespace Catalog.Domain.Multimedia;
 
 /// <summary>
+/// Czyj jest plik — i przez to, kiedy wolno go skasować.
+///
+/// <para>To rozróżnienie istnieje po to, żeby <b>nie zgadywać własności z licznika referencji</b>.
+/// „Nikt tego teraz nie używa" nie znaczy „to śmieć": użytkownik, który odpina zdjęcie od
+/// produktu, żeby przepiąć je do innego, nie prosi o skasowanie pliku. Kasowanie po zerowej
+/// referencji usuwałoby jego dane w oknie między dwoma kliknięciami — nieodwracalnie
+/// i niewidocznie (<c>docs/backend/media-storage.md</c> §4c).</para>
+/// </summary>
+public enum MultimediaOwnership
+{
+    /// <summary>
+    /// Pozycja biblioteki mediów — wielokrotnego użytku, usuwana wyłącznie jawną komendą
+    /// użytkownika. Licznik referencji służy tu do <b>zablokowania</b> usunięcia, a nie do
+    /// jego wywołania. Domyślna, bo taki jest każdy plik wgrany przez galerię produktu:
+    /// jedna paczka zdjęć trafia do wielu produktów naraz.
+    /// </summary>
+    Library = 0,
+
+    /// <summary>
+    /// Plik wgrany w kontekście jednego właściciela, nie do ponownego użycia — znika kaskadą
+    /// w tej samej transakcji, która usuwa ostatnią referencję. Deterministycznie, bez okna
+    /// wyścigu i bez zamiatania w tle.
+    /// </summary>
+    Owned = 1,
+}
+
+/// <summary>
 /// Zasób multimedialny (zdjęcie, wideo) — osobny agregat, nie pole produktu.
 ///
 /// Uzasadnienie granicy, wg kryteriów z sekcji 9 <c>docs/frontend/orchestrators.md</c>:
@@ -27,7 +54,8 @@ public class MultimediaAsset : AggregateRoot
         long fileSize,
         string mimeType,
         int sortOrder,
-        DateTimeOffset createdAt) : base(uuid)
+        DateTimeOffset createdAt,
+        MultimediaOwnership ownership) : base(uuid)
     {
         FileName = fileName;
         MediaType = mediaType;
@@ -38,6 +66,7 @@ public class MultimediaAsset : AggregateRoot
         MimeType = mimeType;
         SortOrder = sortOrder;
         CreatedAt = createdAt;
+        Ownership = ownership;
     }
 
     public string FileName { get; private set; } = string.Empty;
@@ -73,6 +102,13 @@ public class MultimediaAsset : AggregateRoot
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>
+    /// Czy plik jest pozycją biblioteki, czy własnością jednego agregatu — patrz
+    /// <see cref="MultimediaOwnership"/>. Rozstrzyga, czy zerowa liczba referencji jest powodem
+    /// do usunięcia, czy tylko zdjęciem blokady.
+    /// </summary>
+    public MultimediaOwnership Ownership { get; private set; }
+
     /// <summary>Zasób wskazany adresem zewnętrznym — bajty leżą poza systemem.</summary>
     public static MultimediaAsset Create(
         string fileName,
@@ -84,7 +120,7 @@ public class MultimediaAsset : AggregateRoot
         int sortOrder,
         DateTimeOffset createdAt)
         => new(NewUuid(), Validate(fileName), mediaType, thumbnailUrl, originalUrl, null,
-               ValidateSize(fileSize), mimeType, sortOrder, createdAt);
+               ValidateSize(fileSize), mimeType, sortOrder, createdAt, MultimediaOwnership.Library);
 
     /// <summary>
     /// Zasób wgrany przez użytkownika — bajty leżą już w magazynie artefaktów pod
@@ -106,7 +142,8 @@ public class MultimediaAsset : AggregateRoot
         string mimeType,
         long fileSize,
         int sortOrder,
-        DateTimeOffset createdAt)
+        DateTimeOffset createdAt,
+        MultimediaOwnership ownership = MultimediaOwnership.Library)
     {
         if (artifactUuid == Guid.Empty)
         {
@@ -125,7 +162,38 @@ public class MultimediaAsset : AggregateRoot
             ValidateSize(fileSize),
             NormalizeMimeType(mimeType),
             sortOrder,
-            createdAt);
+            createdAt,
+            ownership);
+    }
+
+    /// <summary>
+    /// Czy zasób wolno usunąć, wiedząc, ile agregatów jeszcze na niego wskazuje.
+    ///
+    /// <para>Reguła siedzi w agregacie, a nie w handlerze, bo to reguła biznesowa, a nie
+    /// szczegół zapytania — liczbę referencji handler tylko dostarcza (agregat nie sięga do
+    /// bazy, tak samo jak przy wykrywaniu cykli w rolach).</para>
+    /// </summary>
+    public void EnsureCanRemove(int referenceCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(referenceCount);
+
+        if (referenceCount == 0)
+        {
+            return;
+        }
+
+        // Blokują oba rodzaje własności, ale z różnych powodów — i użytkownik ma usłyszeć ten
+        // właściwy. Przy `Library` odpięcie jest normalnym krokiem, który ma wykonać sam.
+        // Przy `Owned` plik nie jest jego do usunięcia: zniknie kaskadą razem z agregatem,
+        // który go trzyma, więc rada „odepnij" prowadziłaby donikąd.
+        throw Ownership == MultimediaOwnership.Owned
+            ? new DomainException(
+                "multimedia_owned_by_aggregate",
+                $"Zasób należy do {referenceCount} agregatu(ów) i zniknie razem z nim — "
+                + "nie usuwa się go osobno.")
+            : new DomainException(
+                "multimedia_still_referenced",
+                $"Zasób jest używany przez {referenceCount} produkt(ów) — odepnij go najpierw.");
     }
 
     /// <inheritdoc cref="Categories.Category.CreateWithUuid"/>
@@ -140,7 +208,7 @@ public class MultimediaAsset : AggregateRoot
         int sortOrder,
         DateTimeOffset createdAt)
         => new(uuid, Validate(fileName), mediaType, thumbnailUrl, originalUrl, null,
-               ValidateSize(fileSize), mimeType, sortOrder, createdAt);
+               ValidateSize(fileSize), mimeType, sortOrder, createdAt, MultimediaOwnership.Library);
 
     /// <summary>Zmienia pozycję zasobu w galerii.</summary>
     public void Reorder(int sortOrder)

@@ -33,6 +33,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Eksporty i artefakty (`job.kind`, `ExportRun`, `ExportRunner`, MinIO) | ✅ | [`exports-artifacts.md`](./exports-artifacts.md) — zweryfikowane end-to-end w Catalogu |
 | Multimedia wgrywane przez użytkownika (bilety, presigned PUT, endpoint zawartości) | ✅ | [`exports-artifacts.md` §9](./exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga) — działa w Catalogu |
 | Magazyn plików dla wielu modułów — kubełki per moduł, klucze MinIO per serwis, prefiks postojowy, usuwanie przez outbox, audytor rozjazdu | 🟡 | [`media-storage.md`](./media-storage.md) — kod kompletny, testy przechodzą, **brak przebiegu na żywym MinIO** ([§7](./media-storage.md#7-co-zostało-do-weryfikacji)) |
+| Miniaturki i podglądy obrazów (SkiaSharp, generowanie przez outbox, endpoint wariantu) | 🟡 | [`media-storage.md` §8](./media-storage.md#8-warianty-pochodne--miniaturki) — bez nich galeria pobiera oryginały (~6 MB na komórkę 40×40) |
 | Middleware komend (walidacja, idempotencja, logowanie) | 📐 | Handler dziś sam woła `IUnitOfWork`; walidacja żyje wyłącznie w agregacie — patrz [`cqrs.md`](./cqrs.md#6-czego-jeszcze-nie-ma) |
 | Sales jako pełny moduł biznesowy | 🟡 | Struktura i szablon zweryfikowane na agregacie `Customer`; brak realnej logiki biznesowej poza sprawdzianem |
 | Uwierzytelnianie (Keycloak, JWT) | ✅ | [`identity-authz.md`](./identity-authz.md) §5 — Authorization Code + PKCE, fallback policy na każdym endpoincie |

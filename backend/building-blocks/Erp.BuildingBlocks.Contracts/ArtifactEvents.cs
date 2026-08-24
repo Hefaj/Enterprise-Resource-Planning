@@ -25,3 +25,31 @@ namespace Erp.BuildingBlocks.Contracts;
 /// ma ich kilka i obiekt trzeba skasować w tym właściwym.</param>
 /// <param name="ArtifactUuid">Obiekt do skasowania.</param>
 public sealed record ArtifactDeletionRequested(string Module, string StoreKey, Guid ArtifactUuid);
+
+/// <summary>
+/// Prośba o wygenerowanie wariantów pochodnych (miniaturka, podgląd) dla świeżo zarejestrowanego
+/// pliku.
+///
+/// <para><b>Dlaczego przez outbox, a nie w handlerze komendy.</b> Skalowanie obrazu 4K to setki
+/// milisekund pracy procesora. Wykonane w komendzie rejestrującej przedłużyłoby o tyle każde
+/// żądanie wgrania paczki zdjęć — czyli dokładnie ten moment, w którym użytkownik patrzy na modal
+/// i czeka. Przez outbox miniaturka powstaje po zatwierdzeniu transakcji, a UI pokazuje ikonę
+/// zastępczą przez te kilka sekund.</para>
+///
+/// <para><b>Dostarczenie jest <i>at-least-once</i>, więc generowanie musi być idempotentne</b> —
+/// i jest: wariant zapisuje się pod deterministycznym kluczem, powtórzenie nadpisuje ten sam plik
+/// tą samą zawartością.</para>
+///
+/// <para>Pole <see cref="Module"/> jest obowiązkowe z tego samego powodu, co w
+/// <see cref="ArtifactDeletionRequested"/> — wymiana jest fanoutowa.</para>
+/// </summary>
+/// <param name="Module">Moduł-właściciel magazynu, zgodny z <c>Messaging:ServiceName</c>.</param>
+/// <param name="StoreKey">Klucz magazynu w obrębie modułu (<c>ArtifactStoreKeys</c>).</param>
+/// <param name="ArtifactUuid">Obiekt, z którego powstają warianty.</param>
+/// <param name="OwnerUuid">Rekord modułu opisujący ten plik — konsument oznacza go po
+/// zakończeniu, żeby UI wiedział, że wolno już prosić o wariant.</param>
+public sealed record ArtifactDerivativesRequested(
+    string Module,
+    string StoreKey,
+    Guid ArtifactUuid,
+    Guid OwnerUuid);

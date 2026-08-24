@@ -74,6 +74,9 @@ public class MultimediaAsset : AggregateRoot
     /// <summary>Rodzaj zasobu w ujęciu ogólnym (<c>image</c>, <c>video</c>).</summary>
     public string MediaType { get; private set; } = string.Empty;
 
+    /// <summary>Jedyny rodzaj, dla którego umiemy dziś zrobić wariant pochodny.</summary>
+    public const string ImageMediaType = "image";
+
     public string? ThumbnailUrl { get; private set; }
 
     /// <summary>
@@ -108,6 +111,27 @@ public class MultimediaAsset : AggregateRoot
     /// do usunięcia, czy tylko zdjęciem blokady.
     /// </summary>
     public MultimediaOwnership Ownership { get; private set; }
+
+    /// <summary>
+    /// Kiedy powstały warianty pochodne (miniaturka, podgląd); <c>null</c> = jeszcze ich nie ma.
+    ///
+    /// <para><b>Po co to w ogóle wiedzieć.</b> Warianty powstają asynchronicznie, po zatwierdzeniu
+    /// transakcji. Bez tej flagi UI musiałby albo pytać o wariant i obsługiwać 404 jako stan
+    /// normalny, albo cicho spadać na oryginał — czyli pobierać 6 MB do kwadratu 40×40, dokładnie
+    /// to, przed czym warianty mają chronić. Znacznik czasu zamiast <c>bool</c>, bo przy zmianie
+    /// zestawu rozmiarów pozwala odróżnić pliki wymagające ponownego przetworzenia.</para>
+    /// </summary>
+    public DateTimeOffset? DerivativesGeneratedAt { get; private set; }
+
+    /// <summary>
+    /// Czy dla tego zasobu w ogóle warto generować warianty. Adres zewnętrzny odpada, bo bajty
+    /// nie są nasze; nie-obrazy odpadają, bo miniaturka wideo czy PDF-u wymaga innych narzędzi
+    /// niż skalowanie bitmapy (patrz <c>docs/backend/media-storage.md</c> §9).
+    /// </summary>
+    public bool SupportsDerivatives => ArtifactUuid is not null && MediaType == ImageMediaType;
+
+    /// <summary>Oznacza, że warianty pochodne są już w magazynie.</summary>
+    public void MarkDerivativesGenerated(DateTimeOffset generatedAt) => DerivativesGeneratedAt = generatedAt;
 
     /// <summary>Zasób wskazany adresem zewnętrznym — bajty leżą poza systemem.</summary>
     public static MultimediaAsset Create(
@@ -237,7 +261,7 @@ public class MultimediaAsset : AggregateRoot
     {
         var mime = NormalizeMimeType(mimeType);
 
-        if (mime.StartsWith("image/", StringComparison.Ordinal)) return "image";
+        if (mime.StartsWith("image/", StringComparison.Ordinal)) return ImageMediaType;
         if (mime.StartsWith("video/", StringComparison.Ordinal)) return "video";
         if (mime.StartsWith("audio/", StringComparison.Ordinal)) return "audio";
         if (mime.StartsWith("model/", StringComparison.Ordinal)) return "3d-model";

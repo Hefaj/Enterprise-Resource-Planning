@@ -2,6 +2,7 @@ using System.Globalization;
 using Catalog.Application.Abstractions;
 using Catalog.Domain.Multimedia;
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +36,7 @@ public sealed class MultimediaCreateCommandHandler : CommandHandler<MultimediaCr
     private readonly IArtifactStore _artifacts;
     private readonly IClock _clock;
     private readonly MultimediaOptions _options;
+    private readonly IIntegrationEventPublisher _publisher;
 
     public MultimediaCreateCommandHandler(
         IMultimediaRepository repository,
@@ -42,7 +44,8 @@ public sealed class MultimediaCreateCommandHandler : CommandHandler<MultimediaCr
         // zdjęcia produktów po kilku dniach (patrz ErpArtifactStoreOptions.RetentionDays).
         [FromKeyedServices(ArtifactStoreKeys.Media)] IArtifactStore artifacts,
         IClock clock,
-        IOptions<MultimediaOptions> options)
+        IOptions<MultimediaOptions> options,
+        IIntegrationEventPublisher publisher)
     {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -50,6 +53,7 @@ public sealed class MultimediaCreateCommandHandler : CommandHandler<MultimediaCr
         _artifacts = artifacts;
         _clock = clock;
         _options = options.Value;
+        _publisher = publisher;
     }
 
     public override async Task<Guid> ExecuteAsync(MultimediaCreateCommand command, CancellationToken ct = default)
@@ -87,6 +91,24 @@ public sealed class MultimediaCreateCommandHandler : CommandHandler<MultimediaCr
         _repository.Add(asset);
 
         await _artifacts.PromoteAsync(command.ArtifactUuid, ct).ConfigureAwait(false);
+
+        // Warianty pochodne powstają PO zatwierdzeniu transakcji, przez outbox. Skalowanie
+        // obrazu 4K to setki milisekund procesora — wykonane tutaj przedłużyłoby o tyle
+        // wgranie każdej paczki zdjęć, czyli moment, w którym użytkownik czeka przy modalu.
+        //
+        // Plik zbyt duży, żeby bezpiecznie go zdekodować, nie dostaje zlecenia w ogóle:
+        // rozpakowana bitmapa jest wielokrotnie większa niż plik, więc próba i tak skończyłaby
+        // się wyjątkiem — tyle że dopiero w konsumencie i po ponowieniach.
+        if (asset.SupportsDerivatives && metadata.SizeBytes <= _options.MaxDerivativeSourceBytes)
+        {
+            await _publisher.PublishAsync(
+                new ArtifactDerivativesRequested(
+                    CatalogModule.Name,
+                    ArtifactStoreKeys.Media,
+                    command.ArtifactUuid,
+                    asset.Uuid),
+                ct).ConfigureAwait(false);
+        }
 
         return asset.Uuid;
     }

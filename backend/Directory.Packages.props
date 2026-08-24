@@ -74,6 +74,17 @@
     <!-- Klient S3 do MinIO — magazyn plików produkowanych przez eksporty i raporty.
          Patrz docs/backend/exports-artifacts.md. -->
     <PackageVersion Include="Minio" Version="7.0.0" />
+
+    <!-- Generowanie miniaturek. SkiaSharp (MIT nad Skia na BSD-3), NIE ImageSharp: ten od v3
+         chodzi na Six Labors Split License z progiem przychodowym, czyli dokładnie ta klasa
+         zależności, którą ten projekt już raz odrzucił przy MassTransit v9 i MediatR v13.
+         Patrz docs/backend/media-storage.md §5. -->
+    <PackageVersion Include="SkiaSharp" Version="4.151.1" />
+
+    <!-- Natywne libSkiaSharp.so dla obrazów kontenerowych. Wariant `NoDependencies` świadomie:
+         wersja pełna ciągnie fontconfig, a my nie rysujemy tekstu — tylko dekodujemy i skalujemy.
+         Na obrazie bez fontconfiga pełna wersja wywraca się przy pierwszym użyciu, nie przy starcie. -->
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.151.1" />
   </ItemGroup>
 
   <ItemGroup Label="Realtime">

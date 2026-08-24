@@ -14,6 +14,12 @@ namespace Catalog.Application.Multimedia;
 /// w ogóle nie wychodziła na zewnątrz. Wypełniony <see cref="OriginalUrl"/> oznacza zasób
 /// spoza systemu i wtedy to on jest adresem.</para>
 /// </summary>
+/// <param name="HasDerivatives">
+/// Czy istnieją już warianty pochodne (miniaturka, podgląd). Powstają asynchronicznie, po
+/// zatwierdzeniu transakcji, więc przez kilka sekund po wgraniu jest tu <c>false</c> — i wtedy
+/// UI ma pokazać ikonę zastępczą, a <b>nie</b> sięgać po oryginał. Pobranie zdjęcia 4K do
+/// komórki 40×40 jest dokładnie tym, czemu warianty zapobiegają.
+/// </param>
 /// <param name="ReferenceCount">
 /// Ile produktów używa tego zasobu. Niezerowa wartość <b>blokuje</b> usunięcie — UI ma to
 /// pokazać przed kliknięciem, a nie dowiadywać się o tym z odrzuconej komendy. To nie jest
@@ -30,4 +36,5 @@ public sealed record MultimediaDto(
     string MimeType,
     int SortOrder,
     DateTime CreatedAt,
-    int ReferenceCount);
+    int ReferenceCount,
+    bool HasDerivatives);

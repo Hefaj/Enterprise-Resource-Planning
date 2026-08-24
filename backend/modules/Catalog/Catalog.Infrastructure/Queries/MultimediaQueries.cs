@@ -86,6 +86,7 @@ public sealed class MultimediaQueries : IMultimediaQueries
                 m.MimeType,
                 m.SortOrder,
                 m.CreatedAt,
+                m.DerivativesGeneratedAt,
                 ReferenceCount = _dbContext.Set<ProductMultimediaLink>().Count(l => l.MultimediaUuid == m.Uuid),
             })
             .ToListAsync(cancellationToken)
@@ -102,7 +103,8 @@ public sealed class MultimediaQueries : IMultimediaQueries
                 m.MimeType,
                 m.SortOrder,
                 m.CreatedAt.UtcDateTime,
-                m.ReferenceCount))
+                m.ReferenceCount,
+                m.DerivativesGeneratedAt is not null))
             .ToList();
     }
 

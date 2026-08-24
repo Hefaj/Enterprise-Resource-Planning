@@ -36,3 +36,13 @@ public sealed class GetMultimediaContentRequest
     /// <summary>Zasób w katalogu — NIE identyfikator artefaktu w magazynie.</summary>
     public Guid Uuid { get; set; }
 }
+
+/// <summary>Pobranie wariantu pochodnego zasobu.</summary>
+public sealed class GetMultimediaVariantRequest
+{
+    /// <summary>Zasób w katalogu — NIE identyfikator artefaktu w magazynie.</summary>
+    public Guid Uuid { get; set; }
+
+    /// <summary>Nazwa wariantu z <c>MultimediaVariants</c> (<c>thumb</c>, <c>preview</c>).</summary>
+    public string Variant { get; set; } = string.Empty;
+}

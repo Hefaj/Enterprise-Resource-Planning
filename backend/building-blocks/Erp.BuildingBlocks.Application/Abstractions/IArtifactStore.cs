@@ -159,6 +159,40 @@ public interface IArtifactStore
     Task<ArtifactMetadata?> GetMetadataAsync(Guid artifactUuid, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Zapisuje wariant pochodny artefaktu — miniaturkę, podgląd, klatkę z wideo.
+    ///
+    /// <para><b>Wariant nie ma własnego identyfikatora</b>, tylko klucz wyprowadzony z rodzica
+    /// (<c>derivatives/{uuid}/{variant}</c>). Osobny uuid wymagałby tabeli wiążącej go z
+    /// oryginałem — drugiego źródła prawdy o tym samym pliku, utrzymywanego w zgodzie przy
+    /// każdym zapisie i usunięciu. Tak wariant znika razem z rodzicem, bez ani jednego wiersza.</para>
+    ///
+    /// <para>Nadpisanie istniejącego wariantu jest poprawne i zamierzone: generowanie jest
+    /// <i>at-least-once</i> (idzie przez outbox), więc musi być idempotentne.</para>
+    /// </summary>
+    /// <param name="artifactUuid">Artefakt-rodzic.</param>
+    /// <param name="variant">Nazwa wariantu, np. <c>thumb</c>. Bez ukośników.</param>
+    /// <param name="content">Gotowa zawartość — warianty są małe i powstają w pamięci, więc
+    /// nie ma tu powodu na callback jak w <see cref="WriteAsync"/>.</param>
+    /// <param name="contentType">Typ MIME wariantu; bywa inny niż oryginału (WebP z JPEG-a).</param>
+    /// <param name="cancellationToken">Token anulowania.</param>
+    Task WriteVariantAsync(
+        Guid artifactUuid,
+        string variant,
+        Stream content,
+        string contentType,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Przepisuje wariant wprost do <paramref name="target"/>; <c>false</c>, gdy go nie ma —
+    /// wtedy wołający decyduje, czy podać oryginał, czy odmówić.
+    /// </summary>
+    Task<bool> ReadVariantToAsync(
+        Guid artifactUuid,
+        string variant,
+        Stream target,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Wylicza artefakty leżące pod <c>assets/</c>. Wyłącznie na potrzeby audytora rozjazdu —
     /// ścieżka gorąca adresuje artefakty po identyfikatorze z rekordu, nigdy przez listowanie.
     /// </summary>
@@ -174,6 +208,14 @@ public interface IArtifactStore
     /// </summary>
     Task<Uri> GetDownloadUrlAsync(Guid artifactUuid, TimeSpan ttl, CancellationToken cancellationToken);
 
-    /// <summary>Usuwa artefakt. Nie jest błędem, gdy artefaktu już nie ma.</summary>
+    /// <summary>
+    /// Usuwa artefakt <b>wraz ze wszystkimi jego wariantami</b>. Nie jest błędem, gdy artefaktu
+    /// już nie ma.
+    ///
+    /// <para>Warianty kasują się <b>przed</b> oryginałem. Kolejność ma znaczenie przy awarii
+    /// w połowie: zostaje wtedy oryginał, którego audytor rozjazdu nadal widzi jako sierotę
+    /// i zgłosi ponownie — a powtórzone usunięcie zabierze resztę. Odwrotna kolejność zostawiałaby
+    /// warianty pod prefiksem, którego audytor nie listuje, czyli wyciek niewidoczny dla nikogo.</para>
+    /// </summary>
     Task DeleteAsync(Guid artifactUuid, CancellationToken cancellationToken);
 }

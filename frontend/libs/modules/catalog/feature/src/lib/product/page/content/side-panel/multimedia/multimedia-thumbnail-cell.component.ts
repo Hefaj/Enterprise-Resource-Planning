@@ -82,12 +82,15 @@ export class MultimediaThumbnailCellComponent {
 
   /**
    * Adres miniaturki, w trzech wariantach — w tej kolejności:
-   * 1. gotowa miniaturka (dziś nikt jej nie produkuje, ale kolumna istnieje),
+   * 1. gotowa miniaturka zewnętrzna (kolumna dotyczy zasobów spoza systemu),
    * 2. adres zewnętrzny, gdy zasób leży poza systemem,
-   * 3. zawartość z naszego magazynu, pobrana `HttpClient`-em i podana jako `blob:`.
+   * 3. wariant `thumb` z naszego magazynu, pobrany `HttpClient`-em i podany jako `blob:`.
    *
-   * Wariant 3 dotyczy WYŁĄCZNIE obrazów: dla wideo czy dokumentu ściąganie całego pliku po to,
-   * żeby pokazać kwadrat 40×40, byłoby marnotrawstwem — te dostają ikonę typu.
+   * <b>Wariant 3 NIE spada na oryginał, gdy miniaturki jeszcze nie ma.</b> Warianty powstają
+   * asynchronicznie, kilka sekund po wgraniu; przez ten czas `hasDerivatives` jest `false`
+   * i komórka pokazuje ikonę typu. Pobranie oryginału „żeby coś było" oznaczałoby ~6 MB na
+   * zdjęcie 4K w kwadracie 40×40 — dokładnie to, czemu warianty zapobiegają. Gotowość dociera
+   * zwykłym odświeżeniem agregatu, więc miniaturka pojawia się sama.
    *
    * <b>Dlaczego nie da się po prostu wstawić adresu endpointu w `src`.</b> Zawartość jest za
    * uprawnieniem, a `<img>` nie dokłada nagłówka `Authorization` — patrz
@@ -108,7 +111,7 @@ export class MultimediaThumbnailCellComponent {
       return vm.originalUrl;
     }
 
-    return vm.mediaType === 'image' ? this.contentService.contentUrl(vm.uuid)() : undefined;
+    return vm.hasDerivatives ? this.contentService.variantUrl(vm.uuid, 'thumb')() : undefined;
   });
 
   protected readonly _icon = computed(() => MEDIA_TYPE_ICONS[this._vm()?.mediaType ?? ''] ?? '@tui.file');

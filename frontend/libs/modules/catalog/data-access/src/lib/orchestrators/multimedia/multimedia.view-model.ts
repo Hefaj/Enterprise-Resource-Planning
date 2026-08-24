@@ -3,11 +3,26 @@ import { MultimediaDto } from '../../api-client';
 /**
  * ViewModel zasobu multimedialnego.
  *
- * Dziś jest to DTO jeden do jednego — zasób nie ma pól wymagających rozwiązania po uuid,
- * w odróżnieniu od produktu (kategorie, model, gwarancje). Alias, a nie puste `interface
- * extends`: to drugie znaczy dokładnie to samo, a lint słusznie każe je zwinąć.
+ * Wyrósł z aliasu na DTO w momencie, w którym backend zaczął zwracać pola sterujące
+ * zachowaniem widoku, a nie tylko opisujące plik. Dwa takie pola są poniżej.
  *
- * Nazwa zostaje, bo tego typu używają komponenty — gdy dojdzie pole wyliczane
- * (np. adres miniaturki), rozwinie się z powrotem w pełny interfejs.
+ * `MultimediaDto` niesie sygnaturę indeksową (`[key: string]: any`), więc te pola dają się
+ * odczytać z odpowiedzi jeszcze przed regeneracją klienta NSwag — patrz
+ * `catalog-multimedia.orchestrator.ts`. Po regeneracji będą typowane u źródła i te dwa wpisy
+ * staną się zwykłym powtórzeniem, do skasowania.
  */
-export type MultimediaVM = MultimediaDto;
+export interface MultimediaVM extends MultimediaDto {
+  /**
+   * Czy w magazynie są już warianty pochodne (miniaturka, podgląd).
+   *
+   * Powstają asynchronicznie, po zatwierdzeniu transakcji, więc przez kilka sekund po wgraniu
+   * jest tu `false`. **Wtedy komórka pokazuje ikonę typu, a nie sięga po oryginał** — pobranie
+   * zdjęcia 4K (~6 MB) do kwadratu 40×40 jest dokładnie tym, czemu warianty zapobiegają.
+   * Gotowość dociera zwykłym `AggregateChanged` na sygnaturze `catalog.multimedia`, więc widok
+   * odświeża się sam, bez odpytywania w pętli.
+   */
+  hasDerivatives: boolean;
+
+  /** Ile produktów używa tego zasobu. Niezerowa wartość blokuje usunięcie. */
+  referenceCount: number;
+}

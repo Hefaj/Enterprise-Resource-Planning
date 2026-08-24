@@ -4,9 +4,10 @@
 [`docs/backend/exports-artifacts.md` §9](../backend/exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
 
 **Stan: ✅ w kodzie** — wgrywanie, rejestracja w katalogu i dopięcie do produktów działają
-end-to-end. Nie ma jeszcze **po stronie frontu**: generowania miniatur, UI usuwania zasobów
-i podglądu pełnoekranowego. Backend usuwanie już ma (`multimedia/batch-remove`), więc brakuje
-tu wyłącznie ekranu i regeneracji klienta NSwag.
+end-to-end; miniaturki są podpięte do wariantu `thumb`. Nie ma jeszcze **po stronie frontu**:
+UI usuwania zasobów i podglądu pełnoekranowego (backend ma pod nie `multimedia/batch-remove`
+i wariant `preview`), więc brakuje tam wyłącznie ekranów. Klient NSwag czeka na regenerację —
+nowe pola czytane są tymczasowo przez sygnaturę indeksową DTO.
 
 ---
 
@@ -68,12 +69,19 @@ dokłada token), a do `src` trafia dopiero `blob:`-URL.
 
 `MultimediaThumbnailCellComponent` wybiera źródło w trzech krokach:
 
-1. `thumbnailUrl` — gotowa miniaturka (kolumna istnieje, nikt jej dziś nie produkuje),
+1. `thumbnailUrl` — gotowa miniaturka zewnętrzna (kolumna dotyczy zasobów spoza systemu),
 2. `originalUrl` — zasób leży poza systemem, adres jest publiczny,
-3. zawartość z magazynu przez serwis — **tylko dla `mediaType === 'image'`**.
+3. wariant `thumb` z magazynu — **tylko gdy `hasDerivatives`**.
 
-Ograniczenie w punkcie 3 jest istotne: bez niego wideo o wadze 300 MB pobierałoby się w całości,
-żeby narysować kwadrat 40×40. Nieobrazy dostają ikonę typu pliku.
+> **Punkt 3 nigdy nie spada na oryginał.** Miniaturki generuje backend asynchronicznie, kilka
+> sekund po wgraniu (`docs/backend/media-storage.md` §8); do tego czasu `hasDerivatives` jest
+> `false` i komórka pokazuje ikonę typu. Pobranie oryginału „żeby coś było" to ~6 MB na zdjęcie 4K
+> w kwadracie 40×40 — a `blob:`-cache trzymałby 300 takich plików w pamięci karty. Gotowość
+> przychodzi zwykłym `AggregateChanged` na `catalog.multimedia`, więc miniaturka pojawia się sama,
+> bez odpytywania w pętli.
+
+Nieobrazy i pliki powyżej progu dekodowania nie dostają wariantów w ogóle — zostają przy ikonie
+typu pliku.
 
 > **Dlaczego nie presigned URL, skoro eksporty go używają.** Presigned żyje minuty i jest
 > bearer-owy. Dla pliku pobieranego raz, po kliknięciu, to zaleta. Dla galerii — wada podwójna:
@@ -104,4 +112,4 @@ celu — uuid produktu dokłada backend przy materializacji szablonu.
 - [Zasięg zaznaczenia](./selection-scope.md) — skąd biorą się cele operacji masowej
 - [Orkiestratory](./orchestrators.md) — gdzie mieszkają komendy i cache zasobów
 - [Eksporty i artefakty §9](../backend/exports-artifacts.md) — bilety, endpoint zawartości
-- [Magazyn plików](../backend/media-storage.md) — kubełki, separacja dostępu, cykl życia pliku
+- [Magazyn plików](../backend/media-storage.md) — kubełki, separacja dostępu, cykl życia pliku, miniaturki (§8)

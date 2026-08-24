@@ -20,6 +20,8 @@
     <ProjectReference Include="../../modules/Catalog/Catalog.Application/Catalog.Application.csproj" />
     <!-- Translator naruszeń unikalności — druga warstwa reguły duplikatu, obok pre-checku. -->
     <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Persistence/Erp.BuildingBlocks.Persistence.csproj" />
+    <!-- Generator miniaturek: test sprawdza przy okazji, czy natywna Skia w ogóle się ładuje. -->
+    <ProjectReference Include="../../modules/Catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

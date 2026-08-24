@@ -30,6 +30,17 @@ public sealed class MinioArtifactStore : IArtifactStore
     /// <summary>Prefiks poczekalni; obowiązuje na nim reguła wygasania z <c>StagingRetentionDays</c>.</summary>
     public const string StagingPrefix = "staging/";
 
+    /// <summary>
+    /// Prefiks wariantów pochodnych. Klucz to <c>derivatives/{uuid:N}/{variant}</c>, więc
+    /// wszystkie warianty jednego artefaktu leżą pod wspólnym prefiksem i kasują się jednym
+    /// listowaniem — bez tabeli wiążącej je z rodzicem.
+    ///
+    /// <para>Audytor rozjazdu listuje wyłącznie <see cref="AssetPrefix"/>: wariant bez rodzica
+    /// nie jest osobnym przypadkiem do wykrywania, bo powstaje tylko przy nieudanym kasowaniu,
+    /// a to zostawia również oryginał — i jego audytor już widzi.</para>
+    /// </summary>
+    public const string DerivativePrefix = "derivatives/";
+
     /// <summary>Nazwa pliku bywa niełacińska, a nagłówki HTTP są ASCII — stąd kodowanie procentowe.</summary>
     private const string FileNameMetadataKey = "x-amz-meta-erp-filename";
 
@@ -183,12 +194,17 @@ public sealed class MinioArtifactStore : IArtifactStore
     {
         ArgumentNullException.ThrowIfNull(target);
 
+        return await CopyObjectToAsync(AssetName(artifactUuid), target, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> CopyObjectToAsync(string objectName, Stream target, CancellationToken cancellationToken)
+    {
         try
         {
             await _client.GetObjectAsync(
                 new GetObjectArgs()
                     .WithBucket(_bucketName)
-                    .WithObject(AssetName(artifactUuid))
+                    .WithObject(objectName)
                     .WithCallbackStream(async (source, ct) =>
                         await source.CopyToAsync(target, ct).ConfigureAwait(false)),
                 cancellationToken).ConfigureAwait(false);
@@ -234,6 +250,39 @@ public sealed class MinioArtifactStore : IArtifactStore
     }
 
     /// <inheritdoc />
+    public async Task WriteVariantAsync(
+        Guid artifactUuid,
+        string variant,
+        Stream content,
+        string contentType,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        await _client.PutObjectAsync(
+            new PutObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(VariantName(artifactUuid, variant))
+                .WithStreamData(content)
+                .WithObjectSize(content.Length - content.Position)
+                .WithContentType(contentType),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ReadVariantToAsync(
+        Guid artifactUuid,
+        string variant,
+        Stream target,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        return await CopyObjectToAsync(VariantName(artifactUuid, variant), target, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<Uri> GetDownloadUrlAsync(Guid artifactUuid, TimeSpan ttl, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -250,8 +299,26 @@ public sealed class MinioArtifactStore : IArtifactStore
     }
 
     /// <inheritdoc />
-    public Task DeleteAsync(Guid artifactUuid, CancellationToken cancellationToken)
-        => RemoveAsync(AssetName(artifactUuid), cancellationToken);
+    public async Task DeleteAsync(Guid artifactUuid, CancellationToken cancellationToken)
+    {
+        // Najpierw warianty, potem oryginał — patrz uzasadnienie kolejności w IArtifactStore.
+        var variants = _client.ListObjectsEnumAsync(
+            new ListObjectsArgs()
+                .WithBucket(_bucketName)
+                .WithPrefix(DerivativePrefix + artifactUuid.ToString("N") + "/")
+                .WithRecursive(true),
+            cancellationToken);
+
+        await foreach (var variant in variants.ConfigureAwait(false))
+        {
+            if (!variant.IsDir)
+            {
+                await RemoveAsync(variant.Key, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        await RemoveAsync(AssetName(artifactUuid), cancellationToken).ConfigureAwait(false);
+    }
 
     private async Task RemoveAsync(string objectName, CancellationToken cancellationToken)
     {
@@ -302,6 +369,22 @@ public sealed class MinioArtifactStore : IArtifactStore
     private static string AssetName(Guid artifactUuid) => AssetPrefix + artifactUuid.ToString("N");
 
     private static string StagingName(Guid artifactUuid) => StagingPrefix + artifactUuid.ToString("N");
+
+    /// <summary>
+    /// Nazwa wariantu jest częścią klucza obiektu, więc ukośnik w niej rozjechałby strukturę
+    /// prefiksów — i to cicho, bo S3 traktuje klucze jako płaskie napisy.
+    /// </summary>
+    private static string VariantName(Guid artifactUuid, string variant)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(variant);
+
+        if (variant.Contains('/', StringComparison.Ordinal))
+        {
+            throw new ArgumentException("Nazwa wariantu nie może zawierać ukośnika.", nameof(variant));
+        }
+
+        return $"{DerivativePrefix}{artifactUuid:N}/{variant}";
+    }
 
     private static bool TryParseAssetKey(string? key, out Guid artifactUuid)
     {

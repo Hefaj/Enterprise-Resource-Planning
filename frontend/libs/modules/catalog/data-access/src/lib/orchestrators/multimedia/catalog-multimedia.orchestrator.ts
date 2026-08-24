@@ -127,6 +127,11 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
       mimeType: dto.mimeType,
       sortOrder: dto.sortOrder,
       createdAt: new Date(dto.createdAt),
+      // Czytane przez sygnaturę indeksową `MultimediaDto`, bo klient NSwag nie był jeszcze
+      // regenerowany po dołożeniu tych pól na backendzie. Domyślne wartości pilnują, żeby stary
+      // klient nie zaczął pytać o nieistniejące miniaturki ani nie odblokował usuwania.
+      hasDerivatives: dto['hasDerivatives'] === true,
+      referenceCount: dto['referenceCount'] ?? 0,
     };
   }
 

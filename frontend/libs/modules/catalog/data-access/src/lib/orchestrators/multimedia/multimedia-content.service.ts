@@ -12,6 +12,12 @@ import { API_BASE_URL } from '../../api-client';
 const MAX_CACHED_OBJECT_URLS = 300;
 
 /**
+ * Warianty pochodne wydawane przez backend. Nazwa wchodzi do ścieżki endpointu i do klucza
+ * obiektu w magazynie, więc jest kontraktem — patrz `MultimediaVariants` po stronie serwera.
+ */
+export type MultimediaVariant = 'thumb' | 'preview';
+
+/**
  * Wydaje adresy, pod którymi da się wyświetlić zawartość zasobu multimedialnego.
  *
  * <b>Dlaczego to w ogóle musi być serwis, a nie pole w ViewModelu.</b> Zawartość serwuje
@@ -45,25 +51,47 @@ export class CatalogMultimediaContentService {
    * pokazać ikonę typu pliku, a nie zepsuty obrazek.
    */
   public contentUrl(uuid: string): Signal<string | undefined> {
-    const cached = this.urls.get(uuid);
+    return this.fetch(uuid, `${this.baseUrl}/multimedia/content/${uuid}`);
+  }
+
+  /**
+   * Adres wariantu pochodnego — miniaturki albo podglądu.
+   *
+   * **To jest domyślna droga dla galerii, a nie optymalizacja.** `contentUrl` pobiera oryginał:
+   * przy zdjęciu 4K to ok. 6 MB na komórkę 40×40, a `blob:`-cache trzyma do
+   * {@link MAX_CACHED_OBJECT_URLS} takich plików w pamięci karty. Miniaturka waży kilkanaście
+   * kilobajtów, więc ten sam limit przestaje być problemem.
+   *
+   * Wołać dopiero, gdy `MultimediaVM.hasDerivatives` jest `true` — wcześniej wariantu nie ma
+   * i endpoint odpowie 404 (świadomie, zamiast po cichu podać oryginał).
+   */
+  public variantUrl(uuid: string, variant: MultimediaVariant): Signal<string | undefined> {
+    return this.fetch(`${uuid}:${variant}`, `${this.baseUrl}/multimedia/content/${uuid}/${variant}`);
+  }
+
+  /**
+   * Wspólna ścieżka dla oryginału i wariantów. Klucz cache zawiera wariant, więc miniaturka
+   * i podgląd tego samego zasobu nie nadpisują się nawzajem.
+   */
+  private fetch(cacheKey: string, requestUrl: string): Signal<string | undefined> {
+    const cached = this.urls.get(cacheKey);
 
     if (cached) {
       return cached.asReadonly();
     }
 
     const url = signal<string | undefined>(undefined);
-    this.urls.set(uuid, url);
-    this.order.push(uuid);
+    this.urls.set(cacheKey, url);
+    this.order.push(cacheKey);
     this.evictIfNeeded();
 
-    this.http
-      .get(`${this.baseUrl}/multimedia/content/${uuid}`, { responseType: 'blob' })
-      .subscribe({
-        next: blob => url.set(URL.createObjectURL(blob)),
-        // Brak zawartości nie jest awarią widoku: zasób może być opisany adresem zewnętrznym
-        // albo plik mógł zniknąć z magazynu. W obu przypadkach komórka pokaże ikonę.
-        error: () => url.set(undefined),
-      });
+    this.http.get(requestUrl, { responseType: 'blob' }).subscribe({
+      next: blob => url.set(URL.createObjectURL(blob)),
+      // Brak zawartości nie jest awarią widoku: zasób może być opisany adresem zewnętrznym,
+      // plik mógł zniknąć z magazynu, a wariant — jeszcze nie powstać. We wszystkich
+      // przypadkach komórka pokaże ikonę.
+      error: () => url.set(undefined),
+    });
 
     return url.asReadonly();
   }

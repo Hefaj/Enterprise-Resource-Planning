@@ -26,4 +26,43 @@ public sealed class MultimediaOptions
 
     /// <summary>Górna granica jednej paczki biletów wgrywania i jednej paczki rejestracji.</summary>
     public int MaxFilesPerRequest { get; set; } = 100;
+
+    /// <summary>Dłuższa krawędź miniaturki — rozmiar komórki tabeli z zapasem na ekrany HiDPI.</summary>
+    public int ThumbnailMaxEdge { get; set; } = 256;
+
+    /// <summary>Dłuższa krawędź podglądu — tyle, ile potrzebuje modal z powiększeniem.</summary>
+    public int PreviewMaxEdge { get; set; } = 1024;
+
+    /// <summary>Jakość kompresji wariantów (WebP), 1–100.</summary>
+    public int DerivativeQuality { get; set; } = 80;
+
+    /// <summary>
+    /// Powyżej jakiego rozmiaru oryginału odpuszczamy generowanie wariantów.
+    ///
+    /// <para>Dekoder musi mieć cały obraz w pamięci, a rozpakowana bitmapa jest **wielokrotnie
+    /// większa niż plik** — 100 MB skompresowanego TIFF-a to kilka gigabajtów pikseli. Bez tego
+    /// progu jeden nietypowy plik potrafi wywrócić proces API, w którym akurat leci generowanie.
+    /// Zasób ponad próg dostaje w UI ikonę typu zamiast miniaturki, tak jak wideo.</para>
+    /// </summary>
+    public long MaxDerivativeSourceBytes { get; set; } = 48L * 1024 * 1024;
+}
+
+/// <summary>
+/// Nazwy wariantów pochodnych. Wchodzą do klucza obiektu w magazynie i do trasy endpointu,
+/// więc są <b>kontraktem</b> — zmiana nazwy osierociłaby wszystkie dotychczas wygenerowane pliki.
+/// </summary>
+public static class MultimediaVariants
+{
+    /// <summary>Miniaturka do komórki tabeli i kafelka galerii.</summary>
+    public const string Thumb = "thumb";
+
+    /// <summary>Podgląd do modalu — większy niż miniaturka, mniejszy niż oryginał.</summary>
+    public const string Preview = "preview";
+
+    /// <summary>Warianty dopuszczone przez endpoint zawartości.</summary>
+    public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
+    {
+        Thumb,
+        Preview,
+    };
 }

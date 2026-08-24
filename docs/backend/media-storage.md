@@ -2,8 +2,9 @@
 
 **Stan: 🟡 kod jest i się kompiluje, nie zweryfikowany na żywej infrastrukturze.** Legenda
 znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia). Wdrożone są wszystkie
-pozycje z [§6](#6-kolejność-wdrożenia); testy jednostkowe i architektoniczne przechodzą (99/99),
-ale przebiegu end-to-end na MinIO **jeszcze nie było** — patrz [§7](#7-co-zostało-do-weryfikacji).
+pozycje z [§6](#6-stan-wdrożenia) plus miniaturki z [§8](#8-warianty-pochodne--miniaturki);
+testy jednostkowe i architektoniczne przechodzą (105/105), ale przebiegu end-to-end na MinIO
+**jeszcze nie było** — patrz [§7](#7-co-zostało-do-weryfikacji).
 Ten dokument **zastępuje** rozstrzygnięcia z [`exports-artifacts.md`](./exports-artifacts.md)
 §5 i §9 w tych punktach, w których się z nimi rozjeżdża (układ kubełków, poświadczenia,
 sprzątanie, rola DMS).
@@ -373,6 +374,7 @@ Trzy pozycje niezależne od powyższych rozstrzygnięć, warte zapisania, żeby 
 | 6 | Audytor rozjazdu, dry-run (§4d) | ✅ | [`MediaReconciliationService`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/MediaReconciliationService.cs) |
 | 7 | Limit rozmiaru, `ReadToAsync` (§5) | ✅ | `MultimediaOptions`, `GetMultimediaContent` |
 | 7 | Skan antywirusowy (§5) | 📐 | decyzja nie zapadła |
+| 8 | Miniaturki i podglądy (SkiaSharp, outbox, endpoint wariantu) — §8 | 🟡 | `ImageDerivativeGenerator`, `ArtifactDerivativesRequestedHandler`, `GetMultimediaVariantEndpoint`; 6 testów generatora przechodzi |
 
 ### Czego świadomie nie ma w pozycji 5
 
@@ -399,6 +401,10 @@ Kod nie był jeszcze uruchomiony na żywym MinIO. Do sprawdzenia przy pierwszym 
 - **`CopyObject` przy promocji** — API Minio 7.0.0 zweryfikowane wyłącznie kompilatorem.
 - **Reguła lifecycle z dwoma wpisami naraz** (`erp-staging-cleanup` + `erp-artifact-retention`
   na kubełku `transient`).
+- **Natywna Skia w obrazie kontenerowym.** Lokalnie ładuje się poprawnie (dowodzą tego testy
+  `ImageDerivativeGeneratorTests`), ale `SkiaSharp.NativeAssets.Linux.NoDependencies` musi
+  jeszcze trafić do obrazu wdrożeniowego. Brak `libSkiaSharp.so` nie objawia się przy starcie —
+  dopiero przy pierwszym wgranym zdjęciu, w konsumencie działającym w tle.
 - **Migracja danych deweloperskich**: istniejące obiekty leżą pod płaskim kluczem `{uuid:N}`,
   a kod adresuje `assets/{uuid:N}`. Dotychczasowe miniaturki przestaną się wyświetlać. Kubełki
   zmieniły też nazwy (`erp-catalog-media` zamiast `erp-media`), więc najprościej jest wyczyścić
@@ -408,14 +414,84 @@ Kod nie był jeszcze uruchomiony na żywym MinIO. Do sprawdzenia przy pierwszym 
 
 Wymaga regeneracji klienta w `frontend/libs/modules/catalog/data-access`:
 
-- `MultimediaDto` ma nowe pole `referenceCount`,
-- doszedł endpoint `multimedia/batch-remove` (`MultimediaRemoveCommand`).
+- `MultimediaDto` ma nowe pola `referenceCount` i `hasDerivatives`,
+- doszedł endpoint `multimedia/batch-remove` (`MultimediaRemoveCommand`),
+- doszedł endpoint `multimedia/content/{uuid}/{variant}`.
 
-Obie zmiany są **addytywne** — istniejący front działa bez zmian do czasu regeneracji.
+Wszystkie zmiany są **addytywne**. Front czyta na razie nowe pola przez sygnaturę indeksową
+`MultimediaDto` (`[key: string]: any`) z bezpiecznymi domyślnymi, więc działa przed regeneracją —
+patrz `catalog-multimedia.orchestrator.ts`. Po regeneracji te dwa rzutowania stają się zbędne.
 
 ---
 
-## 8. Zobacz też
+## 8. Warianty pochodne — miniaturki
+
+**MinIO nie transformuje obrazów.** To czyste object storage zgodne z S3: przechowuje bajty
+i oddaje je w całości. Miniaturki trzeba wyprodukować samemu.
+
+Bez nich komórka tabeli 40×40 pobiera oryginał — zdjęcie 4K to ok. 6 MB, więc lista pięćdziesięciu
+wierszy ściąga ~300 MB, a `blob:`-cache przeglądarki (300 pozycji) trzyma to w pamięci karty.
+Drugi z tych kosztów jest gorszy i mniej oczywisty.
+
+### Kiedy powstają
+
+```text
+multimedia/create → promocja staging/ → assets/ → outbox: ArtifactDerivativesRequested
+                                                     ↓ (po zatwierdzeniu transakcji)
+                                          ArtifactDerivativesRequestedHandler
+                                          → thumb 256 px, preview 1024 px, WebP
+                                          → MarkDerivativesGenerated → AggregateChanged
+```
+
+**Przez outbox, nie w komendzie.** Skalowanie obrazu 4K to setki milisekund procesora; wykonane
+w komendzie rejestrującej przedłużyłoby o tyle wgranie każdej paczki zdjęć — czyli moment, w którym
+użytkownik patrzy na modal i czeka. Ten sam mechanizm daje ponowienia i przeżycie restartu.
+
+Oznaczenie rekordu idzie przez `IUnitOfWork`, więc skan ChangeTrackera wypuszcza `AggregateChanged`
+na sygnaturze `catalog.multimedia` — **otwarta galeria odświeża się sama** i sięga po miniaturkę,
+bez odpytywania w pętli.
+
+### Gdzie leżą
+
+```
+assets/{uuid}                 oryginał
+derivatives/{uuid}/thumb      256 px, WebP    ~15 KB
+derivatives/{uuid}/preview    1024 px, WebP   ~120 KB
+```
+
+Klucz jest wyprowadzony z rodzica, więc **wariant nie ma własnego identyfikatora ani wiersza
+w bazie**. Osobny uuid wymagałby tabeli wiążącej go z oryginałem — drugiego źródła prawdy
+o tym samym pliku. `DeleteAsync` kasuje warianty jednym listowaniem prefiksu, przed oryginałem
+(kolejność uzasadniona w `IArtifactStore`).
+
+Jedyne, co trafia do bazy, to `MultimediaAsset.DerivativesGeneratedAt` → `MultimediaDto.hasDerivatives`.
+Bez tej flagi UI musiałby traktować 404 jako stan normalny albo cicho spadać na oryginał — czyli
+robić dokładnie to, czemu warianty zapobiegają.
+
+### Decyzje, które warto znać
+
+| Co | Dlaczego tak |
+|---|---|
+| **SkiaSharp**, nie ImageSharp | ImageSharp od v3 ma Six Labors Split License z progiem przychodowym — ta sama klasa zależności, którą projekt odrzucił przy MassTransit v9 i MediatR v13 ([`architecture.md` §4](./architecture.md#4-decyzje-technologiczne-i-ich-powody)). SkiaSharp to MIT nad Skia na BSD-3. |
+| **WebP** | ~30% mniejszy plik przy tej samej jakości; wariantu nie pobiera nikt poza naszym UI, więc zgodność ze starymi przeglądarkami nie jest argumentem. |
+| Wariant w **ścieżce**, nie w query | Odpowiedź niesie `immutable`, więc każdy wariant musi mieć własny trwały adres. Query string zachęcałby do dowolnych rozmiarów, a zestaw jest zamknięty — pliki powstają z góry. |
+| **404 zamiast oryginału**, gdy wariantu brak | Podstawienie oryginału „żeby coś było" byłoby cichym powrotem do problemu. Klient wie z `hasDerivatives`, kiedy pytać. |
+| Orientacja z **EXIF-a przez `SKCodec`** | `SKBitmap.Decode` nie stosuje obrotu z EXIF-a. Bez tego kroku każde zdjęcie z telefonu trzymanego pionowo daje miniaturkę na boku, przy oryginale wyświetlanym poprawnie — objaw wygląda na błąd skalowania, a jest błędem odczytu. |
+| Próg `MaxDerivativeSourceBytes` (48 MB) | Rozpakowana bitmapa jest wielokrotnie większa niż plik. Bez progu jeden nietypowy TIFF potrafi wywrócić proces API. Zasób ponad próg dostaje ikonę typu, jak wideo. |
+
+### Czego to nie obejmuje
+
+Pierwsza strona PDF-u i klatka z wideo wymagają innych narzędzi (PDFium, ffmpeg) i są osobną
+decyzją. `variant` jest stringiem właśnie po to, żeby `poster` dało się dołożyć bez zmiany
+kontraktu. Dziś nie-obrazy dostają w UI ikonę typu pliku.
+
+Zmiana zestawu rozmiarów nie przelicza plików wstecz — `DerivativesGeneratedAt` jest znacznikiem
+czasu (a nie flagą) właśnie po to, żeby dało się wtedy wybrać rekordy do ponownego przetworzenia.
+Samego backfillu nie ma.
+
+---
+
+## 9. Zobacz też
 
 - [Eksporty i artefakty](./exports-artifacts.md) — jak powstaje plik produkowany przez system,
   `job.kind`, agregat przebiegu, wygasanie razem z wierszem `job`
@@ -423,4 +499,4 @@ Obie zmiany są **addytywne** — istniejący front działa bez zmian do czasu r
 - [Tożsamość i uprawnienia](./identity-authz.md) — katalog uprawnień z §2.1
 - [Architektura backendu §7](./architecture.md#7-założenia-jednoinstancyjne) — gdzie trafia
   audytor z §4d
-- [Multimedia na froncie](../frontend/multimedia.md) — bilety, `blob:`-URL-e, galeria
+- [Multimedia na froncie](../frontend/multimedia.md) — bilety, `blob:`-URL-e, galeria, miniaturki

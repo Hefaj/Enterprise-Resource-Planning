@@ -1,6 +1,5 @@
 using System.Globalization;
 using Erp.BuildingBlocks.Application.Abstractions;
-using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
 using Minio.Exceptions;
@@ -25,14 +24,19 @@ public sealed class MinioArtifactStore : IArtifactStore
     private const string ExpireOnMetadataKey = "x-amz-meta-erp-expireon";
 
     private readonly IMinioClient _client;
-    private readonly ErpArtifactOptions _options;
+    private readonly string _bucketName;
 
-    public MinioArtifactStore(IMinioClient client, IOptions<ErpArtifactOptions> options)
+    /// <summary>
+    /// Kubełek jest parametrem instancji, a nie odczytem z opcji, bo moduł ma ich dwa
+    /// o różnej retencji (patrz <see cref="ErpArtifactOptions.MediaBucketName"/>) i to
+    /// rejestracja w DI decyduje, który dostaje dany konsument.
+    /// </summary>
+    public MinioArtifactStore(IMinioClient client, ArtifactStoreProfile profile)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(profile);
 
         _client = client;
-        _options = options.Value;
+        _bucketName = profile.BucketName;
     }
 
     /// <inheritdoc />
@@ -89,7 +93,7 @@ public sealed class MinioArtifactStore : IArtifactStore
             {
                 await _client.PutObjectAsync(
                     new PutObjectArgs()
-                        .WithBucket(_options.BucketName)
+                        .WithBucket(_bucketName)
                         .WithObject(ObjectName(artifactUuid))
                         .WithStreamData(upload)
                         .WithObjectSize(upload.Length)
@@ -107,6 +111,30 @@ public sealed class MinioArtifactStore : IArtifactStore
                 File.Delete(stagingPath);
             }
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<ArtifactUploadTicket> CreateUploadTicketAsync(TimeSpan ttl, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var artifactUuid = Guid.CreateVersion7();
+        var seconds = ClampTtl(ttl);
+
+        // Nagłówków NIE podpisujemy. Podpisany `Content-Type` musiałby przyjechać z przeglądarki
+        // co do znaku, a ta dokłada do `PUT`-a własne nagłówki i potrafi doprecyzować typ pliku —
+        // każda rozbieżność kończy się odrzuceniem podpisu przez magazyn. Typ i nazwa pliku
+        // i tak nie są tu źródłem prawdy: opisuje je agregat, który powstaje po wgraniu.
+        var url = await _client.PresignedPutObjectAsync(
+            new PresignedPutObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(ObjectName(artifactUuid))
+                .WithExpiry(seconds)).ConfigureAwait(false);
+
+        return new ArtifactUploadTicket(
+            artifactUuid,
+            new Uri(url),
+            DateTimeOffset.UtcNow.AddSeconds(seconds));
     }
 
     /// <inheritdoc />
@@ -129,7 +157,7 @@ public sealed class MinioArtifactStore : IArtifactStore
         {
             await _client.GetObjectAsync(
                 new GetObjectArgs()
-                    .WithBucket(_options.BucketName)
+                    .WithBucket(_bucketName)
                     .WithObject(ObjectName(artifactUuid))
                     .WithCallbackStream(async (source, ct) =>
                         await source.CopyToAsync(target, ct).ConfigureAwait(false)),
@@ -152,7 +180,7 @@ public sealed class MinioArtifactStore : IArtifactStore
         {
             var stat = await _client.StatObjectAsync(
                 new StatObjectArgs()
-                    .WithBucket(_options.BucketName)
+                    .WithBucket(_bucketName)
                     .WithObject(ObjectName(artifactUuid)),
                 cancellationToken).ConfigureAwait(false);
 
@@ -178,11 +206,11 @@ public sealed class MinioArtifactStore : IArtifactStore
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var seconds = (int)Math.Clamp(ttl.TotalSeconds, 1, 7 * 24 * 3600);
+        var seconds = ClampTtl(ttl);
 
         var url = await _client.PresignedGetObjectAsync(
             new PresignedGetObjectArgs()
-                .WithBucket(_options.BucketName)
+                .WithBucket(_bucketName)
                 .WithObject(ObjectName(artifactUuid))
                 .WithExpiry(seconds)).ConfigureAwait(false);
 
@@ -196,7 +224,7 @@ public sealed class MinioArtifactStore : IArtifactStore
         {
             await _client.RemoveObjectAsync(
                 new RemoveObjectArgs()
-                    .WithBucket(_options.BucketName)
+                    .WithBucket(_bucketName)
                     .WithObject(ObjectName(artifactUuid)),
                 cancellationToken).ConfigureAwait(false);
         }
@@ -207,6 +235,9 @@ public sealed class MinioArtifactStore : IArtifactStore
     }
 
     private static string ObjectName(Guid artifactUuid) => artifactUuid.ToString("N");
+
+    /// <summary>Górna granica to twardy limit S3 na ważność podpisu — siedem dni.</summary>
+    private static int ClampTtl(TimeSpan ttl) => (int)Math.Clamp(ttl.TotalSeconds, 1, 7 * 24 * 3600);
 
     private static string ReadFileName(IDictionary<string, string>? metadata, Guid artifactUuid)
     {

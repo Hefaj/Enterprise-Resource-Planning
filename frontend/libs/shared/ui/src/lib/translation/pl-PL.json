@@ -214,7 +214,8 @@
       "identityRoleAddPermission": "Dodanie uprawnienia do roli",
       "identityRoleRemovePermission": "Usunięcie uprawnienia z roli",
       "identityRoleAddMember": "Dodanie roli składowej",
-      "identityRoleRemoveMember": "Usunięcie roli składowej"
+      "identityRoleRemoveMember": "Usunięcie roli składowej",
+      "catalogProductAddMultimedia": "Dodanie multimediów"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

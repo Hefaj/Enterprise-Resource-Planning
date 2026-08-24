@@ -73,6 +73,22 @@
         "bulkAdd": "Dodaj multimedia masowo",
         "bulkDelete": "Usuń wszystkie multimedia",
         "scopeFileSelectionUnavailable": "Wybór pojedynczych plików wymaga zaznaczenia konkretnych produktów"
+      },
+      "toolbar": {
+        "massGroup": "Masowe zarządzanie",
+        "toolsGroup": "Narzędzia",
+        "selectionGroup": "Wybrane operacje",
+        "scan": "Skanuj foldery",
+        "thumbnails": "Generuj miniatury",
+        "deleteSelected": "Usuń zaznaczone",
+        "download": "Pobierz oryginały",
+        "optimize": "Optymalizuj wybrane"
+      },
+      "columns": {
+        "thumbnail": "Miniatura",
+        "fileName": "Nazwa pliku",
+        "mediaType": "Typ",
+        "fileSize": "Rozmiar"
       }
     },
     "delivery": {
@@ -155,6 +171,20 @@
       "emptySelection": "Nie wybrano żadnych produktów — zamknij okno i zaznacz produkty na liście.",
       "filterModeSuffix": "pasujących do bieżących filtrów.",
       "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdy produkt pasujący do filtrów, także z dalszych stron."
+    },
+    "addMultimedia": {
+      "label": "Wybierz pliki",
+      "modalTitle": "Dodaj multimedia do produktów",
+      "submitButton": "Dopnij do produktów",
+      "cancelButton": "Anuluj",
+      "dropHint": "Przeciągnij pliki tutaj albo kliknij, aby wybrać",
+      "uploading": "Wgrywanie plików…",
+      "uploadProgress": "Wgrano {{ uploaded }} z {{ total }}",
+      "uploadFailed": "Nie udało się wgrać plików. Spróbuj ponownie.",
+      "readyHint": "Pliki są już w magazynie. Zapis dopnie je do wskazanych produktów.",
+      "emptyFiles": "Wybierz przynajmniej jeden plik.",
+      "targetSummary": "Operacja obejmie {{ count }} produktów.",
+      "filterModeHint": "Zaznaczono wszystkie wyniki — pliki trafią do każdego produktu pasującego do filtrów, także z dalszych stron."
     }
   },
   "validations": {

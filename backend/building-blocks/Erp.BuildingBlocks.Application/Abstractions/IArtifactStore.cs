@@ -27,6 +27,29 @@ public sealed record ArtifactMetadata(
     DateTimeOffset? ExpireOn);
 
 /// <summary>
+/// Klucze, po których konsument wybiera magazyn.
+///
+/// <para>Rejestracja bez klucza to magazyn artefaktów wygasających — domyślny, bo taki jest
+/// każdy plik produkowany przez system. Zawartość trwała musi o siebie poprosić jawnie,
+/// przez <see cref="Media"/>; odwrotny domyślny doprowadziłby do cichego wydłużenia życia
+/// eksportów, zamiast do głośnego błędu kompilacji.</para>
+/// </summary>
+public static class ArtifactStoreKeys
+{
+    /// <summary>Magazyn zawartości trwałej — plików wgranych przez użytkownika.</summary>
+    public const string Media = "media";
+}
+
+/// <summary>
+/// Zgoda na jednorazowy zapis pliku prosto do magazynu, z pominięciem serwisu.
+/// </summary>
+/// <param name="Uuid">Identyfikator, pod którym artefakt powstanie — nadany z góry, bo klient
+/// musi go odesłać w komendzie opisującej plik, zanim serwis zobaczy jakiekolwiek bajty.</param>
+/// <param name="Url">Adres, pod który idzie <c>PUT</c> z zawartością.</param>
+/// <param name="ExpiresOn">Moment, po którym adres przestaje działać.</param>
+public sealed record ArtifactUploadTicket(Guid Uuid, Uri Url, DateTimeOffset ExpiresOn);
+
+/// <summary>
 /// Magazyn plików produkowanych przez system (eksporty, raporty, dokumenty) — patrz
 /// <c>docs/backend/exports-artifacts.md</c>.
 ///
@@ -49,6 +72,23 @@ public interface IArtifactStore
         ArtifactDescriptor descriptor,
         Func<Stream, CancellationToken, Task> write,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Wydaje krótko ważną zgodę na zapis pliku <b>bezpośrednio do magazynu</b>, z pominięciem
+    /// serwisu.
+    ///
+    /// <para><b>Dlaczego nie przez endpoint modułu.</b> Zawartość wgrywana przez użytkownika —
+    /// w odróżnieniu od artefaktu produkowanego przez <see cref="WriteAsync"/> — przychodzi
+    /// z zewnątrz i bywa liczona w setkach megabajtów. Przepuszczenie jej przez proces .NET
+    /// oznaczałoby żądanie HTTP trzymane otwarte na czas transferu i drugi komplet bajtów
+    /// przechodzący przez serwis bez żadnego pożytku.</para>
+    ///
+    /// <para><b>Czego ten adres NIE gwarantuje.</b> Serwis nie widzi zawartości, więc w chwili
+    /// wydania biletu nie wie ani co zostanie wgrane, ani czy cokolwiek. Typ i rozmiar
+    /// deklaruje klient w komendzie opisującej plik, a zweryfikować je można dopiero po fakcie,
+    /// przez <see cref="GetMetadataAsync"/> — i to jest cena tej drogi, świadomie zapłacona.</para>
+    /// </summary>
+    Task<ArtifactUploadTicket> CreateUploadTicketAsync(TimeSpan ttl, CancellationToken cancellationToken);
 
     /// <summary>Otwiera artefakt do odczytu. Wołający zamyka strumień.</summary>
     Task<Stream> OpenAsync(Guid artifactUuid, CancellationToken cancellationToken);

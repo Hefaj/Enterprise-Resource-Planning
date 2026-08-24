@@ -307,6 +307,33 @@ public class Product : AggregateRoot
         }
     }
 
+    /// <summary>
+    /// Dopina multimedia do produktu, zachowując te już przypisane.
+    ///
+    /// <para>Powtórzenia są pomijane po cichu, a nie odrzucane błędem: dopięcie pliku, który
+    /// już przy produkcie wisi, kończy się dokładnie tym stanem, o który wołającemu chodziło.
+    /// Przy operacji masowej na tysiącach produktów alternatywą byłoby wywracanie całych paczek
+    /// przez pojedyncze przypisanie zrobione wcześniej ręcznie.</para>
+    ///
+    /// <para>Wymaga agregatu wczytanego w zakresie <c>Full</c> — na niewczytanej kolekcji
+    /// sprawdzenie powtórzeń zobaczyłoby pustkę i dopisało drugi wiersz, a ten wywróciłby się
+    /// dopiero na unikalnym indeksie <c>(product_uuid, multimedia_uuid)</c>.</para>
+    /// </summary>
+    public void AddMultimedia(IEnumerable<Guid> multimediaUuids)
+    {
+        ArgumentNullException.ThrowIfNull(multimediaUuids);
+
+        var existing = new HashSet<Guid>(_multimedia.Select(m => m.MultimediaUuid));
+
+        foreach (var multimediaUuid in multimediaUuids.Distinct())
+        {
+            if (existing.Add(multimediaUuid))
+            {
+                _multimedia.Add(new ProductMultimediaLink(Uuid, multimediaUuid));
+            }
+        }
+    }
+
     /// <summary>Podmienia komplet gwarancji produktu.</summary>
     public void SetWarranties(IEnumerable<(Guid WarrantyUuid, int DurationMonths)> warranties)
     {

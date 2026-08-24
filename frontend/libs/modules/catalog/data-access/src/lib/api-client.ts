@@ -32,6 +32,11 @@ export interface ICatalogClient {
      */
     searchProduct(body: SearchProductRequest): Observable<SearchResponse>;
     /**
+     * Seryjne dopięcie multimediów do produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productAddMultimediaMultipleCommand(body: BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest): Observable<BatchResult>;
+    /**
      * Seryjna zmiana modelu i kategorii produktów z obsługą błędów cząstkowych
      * @return OK
      */
@@ -51,9 +56,24 @@ export interface ICatalogClient {
      */
     getMultimedia(body: GetMultimediaRequest): Observable<MultimediaDto[]>;
     /**
+     * Zawartość zasobu multimedialnego
+     * @return No Content
+     */
+    getMultimediaContent(body: GetMultimediaContentRequest): Observable<void>;
+    /**
+     * Adresy do wgrania plików prosto do magazynu
+     * @return OK
+     */
+    getMultimediaUploadTickets(body: GetMultimediaUploadTicketsRequest): Observable<MultimediaUploadTicketDto[]>;
+    /**
      * @return OK
      */
     searchMultimedia(body: SearchMultimediaRequest): Observable<SearchResponse>;
+    /**
+     * Rejestracja wgranych plików w katalogu
+     * @return OK
+     */
+    multimediaCreateCommand(body: MultimediaCreateRequest): Observable<MultimediaCreateResponse>;
     /**
      * @return OK
      */
@@ -131,7 +151,7 @@ export class CatalogClient implements ICatalogClient {
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
-        this.baseUrl = baseUrl ?? "http://localhost:5149/";
+        this.baseUrl = baseUrl ?? "http://localhost:5199/";
     }
 
     /**
@@ -364,6 +384,69 @@ export class CatalogClient implements ICatalogClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Seryjne dopięcie multimediów do produktów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    productAddMultimediaMultipleCommand(body: BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/product/batch-add-multimedia";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProductAddMultimediaMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProductAddMultimediaMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processProductAddMultimediaMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -634,6 +717,129 @@ export class CatalogClient implements ICatalogClient {
     }
 
     /**
+     * Zawartość zasobu multimedialnego
+     * @return No Content
+     */
+    getMultimediaContent(body: GetMultimediaContentRequest): Observable<void> {
+        let url_ = this.baseUrl + "/multimedia/content/{uuid}";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "*/*",
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMultimediaContent(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMultimediaContent(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processGetMultimediaContent(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Adresy do wgrania plików prosto do magazynu
+     * @return OK
+     */
+    getMultimediaUploadTickets(body: GetMultimediaUploadTicketsRequest): Observable<MultimediaUploadTicketDto[]> {
+        let url_ = this.baseUrl + "/multimedia/getMultimediaUploadTickets";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMultimediaUploadTickets(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMultimediaUploadTickets(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MultimediaUploadTicketDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MultimediaUploadTicketDto[]>;
+        }));
+    }
+
+    protected processGetMultimediaUploadTickets(response: HttpResponseBase): Observable<MultimediaUploadTicketDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MultimediaUploadTicketDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * @return OK
      */
     searchMultimedia(body: SearchMultimediaRequest): Observable<SearchResponse> {
@@ -677,6 +883,69 @@ export class CatalogClient implements ICatalogClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Rejestracja wgranych plików w katalogu
+     * @return OK
+     */
+    multimediaCreateCommand(body: MultimediaCreateRequest): Observable<MultimediaCreateResponse> {
+        let url_ = this.baseUrl + "/multimedia/create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMultimediaCreateCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMultimediaCreateCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MultimediaCreateResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MultimediaCreateResponse>;
+        }));
+    }
+
+    protected processMultimediaCreateCommand(response: HttpResponseBase): Observable<MultimediaCreateResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MultimediaCreateResponse;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -1712,6 +1981,30 @@ export interface AttributeOptionDto {
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest {
+    commands?: ProductAddMultimediaCommand[] | undefined;
+    templateCommand?: ProductAddMultimediaCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProductRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProductSetClassificationCommandAndSearchProductRequest {
     commands?: ProductSetClassificationCommand[] | undefined;
     templateCommand?: ProductSetClassificationCommand | undefined;
@@ -1901,8 +2194,20 @@ export interface GetModelRequest {
     [key: string]: any;
 }
 
+export interface GetMultimediaContentRequest {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
 export interface GetMultimediaRequest {
     uuids?: string[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface GetMultimediaUploadTicketsRequest {
+    count?: number;
 
     [key: string]: any;
 }
@@ -1948,16 +2253,52 @@ export interface ModelDto {
     [key: string]: any;
 }
 
+export interface MultimediaCreateCommand {
+    uuid?: string;
+    artifactUuid?: string;
+    fileName?: string;
+    sortOrder?: number;
+
+    [key: string]: any;
+}
+
+export interface MultimediaCreateRequest {
+    commands?: MultimediaCreateCommand[];
+
+    [key: string]: any;
+}
+
+export interface MultimediaCreateResponse {
+    uuids: string[];
+
+    [key: string]: any;
+}
+
 export interface MultimediaDto {
     uuid: string;
     fileName: string;
     mediaType: string;
     thumbnailUrl: string | undefined;
-    originalUrl: string;
+    originalUrl: string | undefined;
     fileSize: number;
     mimeType: string;
     sortOrder: number;
     createdAt: Date;
+
+    [key: string]: any;
+}
+
+export interface MultimediaUploadTicketDto {
+    artifactUuid: string;
+    uploadUrl: string;
+    expiresOn: Date;
+
+    [key: string]: any;
+}
+
+export interface ProductAddMultimediaCommand {
+    uuid?: string;
+    multimediaUuids?: string[];
 
     [key: string]: any;
 }

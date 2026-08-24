@@ -99,4 +99,35 @@ public sealed class MultimediaQueries : IMultimediaQueries
                 m.CreatedAt.UtcDateTime))
             .ToList();
     }
+
+    /// <inheritdoc />
+    public async Task<List<Guid>> GetExistingUuidsAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+
+        if (uuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = uuids as List<Guid> ?? uuids.ToList();
+
+        return await _dbContext.MultimediaAssets
+            .AsNoTracking()
+            .Where(m => uuidList.Contains(m.Uuid))
+            .Select(m => m.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<Guid?> GetArtifactUuidAsync(Guid uuid, CancellationToken cancellationToken)
+        => await _dbContext.MultimediaAssets
+            .AsNoTracking()
+            .Where(m => m.Uuid == uuid)
+            .Select(m => m.ArtifactUuid)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

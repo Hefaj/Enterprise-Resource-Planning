@@ -9,6 +9,16 @@ using Minio.DataModel.ILM;
 
 namespace Erp.BuildingBlocks.Artifacts;
 
+/// <summary>
+/// Kubełek, na którym pracuje dana instancja <see cref="MinioArtifactStore"/>.
+///
+/// <para>Osobny typ zamiast gołego stringa, bo to jedyny parametr odróżniający dwie
+/// rejestracje tego samego magazynu, a pomyłka między nimi kasuje dane po tygodniu
+/// (patrz <see cref="ErpArtifactOptions.MediaBucketName"/>).</para>
+/// </summary>
+/// <param name="BucketName">Nazwa kubełka w magazynie.</param>
+public sealed record ArtifactStoreProfile(string BucketName);
+
 /// <summary>Rejestracja magazynu artefaktów w module.</summary>
 public static class ErpArtifactExtensions
 {
@@ -38,7 +48,16 @@ public static class ErpArtifactExtensions
                 .Build();
         });
 
-        services.AddSingleton<IArtifactStore, MinioArtifactStore>();
+        // Dwa magazyny na jednym kliencie MinIO, różniące się wyłącznie kubełkiem — bo różnią
+        // się retencją, a ta jest w S3 własnością kubełka, nie pojedynczego obiektu.
+        services.AddSingleton<IArtifactStore>(sp => new MinioArtifactStore(
+            sp.GetRequiredService<IMinioClient>(),
+            new ArtifactStoreProfile(sp.GetRequiredService<IOptions<ErpArtifactOptions>>().Value.BucketName)));
+
+        services.AddKeyedSingleton<IArtifactStore>(ArtifactStoreKeys.Media, (sp, _) => new MinioArtifactStore(
+            sp.GetRequiredService<IMinioClient>(),
+            new ArtifactStoreProfile(sp.GetRequiredService<IOptions<ErpArtifactOptions>>().Value.MediaBucketName)));
+
         services.AddHostedService<ArtifactBucketInitializer>();
 
         return services;
@@ -77,24 +96,12 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
     {
         try
         {
-            var exists = await _client
-                .BucketExistsAsync(
-                    new Minio.DataModel.Args.BucketExistsArgs().WithBucket(_options.BucketName),
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            if (!exists)
-            {
-                await _client
-                    .MakeBucketAsync(
-                        new Minio.DataModel.Args.MakeBucketArgs().WithBucket(_options.BucketName),
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-                LogBucketCreated(_logger, _options.BucketName);
-            }
-
+            await EnsureBucketAsync(_options.BucketName, cancellationToken).ConfigureAwait(false);
             await ApplyLifecycleAsync(cancellationToken).ConfigureAwait(false);
+
+            // Kubełek na zawartość trwałą powstaje tak samo, ale BEZ reguły wygasania —
+            // to jedyna różnica między nimi i cały powód, dla którego są dwa.
+            await EnsureBucketAsync(_options.MediaBucketName, cancellationToken).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // Niedostępny magazyn artefaktów nie może przewrócić startu modułu.
         catch (Exception ex)
@@ -105,6 +112,28 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private async Task EnsureBucketAsync(string bucketName, CancellationToken cancellationToken)
+    {
+        var exists = await _client
+            .BucketExistsAsync(
+                new Minio.DataModel.Args.BucketExistsArgs().WithBucket(bucketName),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (exists)
+        {
+            return;
+        }
+
+        await _client
+            .MakeBucketAsync(
+                new Minio.DataModel.Args.MakeBucketArgs().WithBucket(bucketName),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        LogBucketCreated(_logger, bucketName);
+    }
 
     /// <summary>
     /// Ustawia regułę wygasania obiektów spójną z <see cref="ErpArtifactOptions.RetentionDays"/>.

@@ -21,4 +21,22 @@ public interface IMultimediaQueries
     Task<SearchResponse> SearchAsync(SearchMultimediaRequest request, CancellationToken cancellationToken);
 
     Task<List<MultimediaDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Które z podanych identyfikatorów wskazują istniejący zasób.
+    ///
+    /// <para>Jedno zapytanie na cały wsad — używa tego reguła sprawdzająca, czy dopinane pliki
+    /// w ogóle są w katalogu. Pytanie per plik przy operacji na tysiącach produktów kosztowałoby
+    /// tyle zapytań, ile wynosi iloczyn obu list.</para>
+    /// </summary>
+    Task<List<Guid>> GetExistingUuidsAsync(IReadOnlyCollection<Guid> uuids, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Artefakt, pod którym leży zawartość zasobu; <c>null</c>, gdy zasób nie istnieje albo
+    /// jest wskazany adresem zewnętrznym (patrz <c>MultimediaAsset.OriginalUrl</c>).
+    ///
+    /// <para>Osobne, wąskie zapytanie zamiast pełnego DTO, bo woła je endpoint serwujący
+    /// zawartość — przy każdej miniaturce w galerii.</para>
+    /// </summary>
+    Task<Guid?> GetArtifactUuidAsync(Guid uuid, CancellationToken cancellationToken);
 }

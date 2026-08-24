@@ -79,6 +79,22 @@ export const PRODUCT_KEYS = {
           bulkDelete: 'product.base.multimedia.panel.bulkDelete',
           scopeFileSelectionUnavailable: 'product.base.multimedia.panel.scopeFileSelectionUnavailable',
         },
+        toolbar: {
+          massGroup: 'product.base.multimedia.toolbar.massGroup',
+          toolsGroup: 'product.base.multimedia.toolbar.toolsGroup',
+          selectionGroup: 'product.base.multimedia.toolbar.selectionGroup',
+          scan: 'product.base.multimedia.toolbar.scan',
+          thumbnails: 'product.base.multimedia.toolbar.thumbnails',
+          deleteSelected: 'product.base.multimedia.toolbar.deleteSelected',
+          download: 'product.base.multimedia.toolbar.download',
+          optimize: 'product.base.multimedia.toolbar.optimize',
+        },
+        columns: {
+          thumbnail: 'product.base.multimedia.columns.thumbnail',
+          fileName: 'product.base.multimedia.columns.fileName',
+          mediaType: 'product.base.multimedia.columns.mediaType',
+          fileSize: 'product.base.multimedia.columns.fileSize',
+        },
       },
       delivery: {
         shipping: {
@@ -160,6 +176,20 @@ export const PRODUCT_KEYS = {
         emptySelection: 'product.commands.setName.emptySelection',
         filterModeSuffix: 'product.commands.setName.filterModeSuffix',
         filterModeHint: 'product.commands.setName.filterModeHint',
+      },
+      addMultimedia: {
+        label: 'product.commands.addMultimedia.label',
+        modalTitle: 'product.commands.addMultimedia.modalTitle',
+        submitButton: 'product.commands.addMultimedia.submitButton',
+        cancelButton: 'product.commands.addMultimedia.cancelButton',
+        dropHint: 'product.commands.addMultimedia.dropHint',
+        uploading: 'product.commands.addMultimedia.uploading',
+        uploadProgress: 'product.commands.addMultimedia.uploadProgress',
+        uploadFailed: 'product.commands.addMultimedia.uploadFailed',
+        readyHint: 'product.commands.addMultimedia.readyHint',
+        emptyFiles: 'product.commands.addMultimedia.emptyFiles',
+        targetSummary: 'product.commands.addMultimedia.targetSummary',
+        filterModeHint: 'product.commands.addMultimedia.filterModeHint',
       },
     },
     validations: {

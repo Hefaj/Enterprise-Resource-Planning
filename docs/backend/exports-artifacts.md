@@ -227,7 +227,84 @@ pisania jednej linijki kodu powiadomień. Strona frontendowa —
 
 ---
 
-## 9. Zobacz też
+## 9. Zawartość wgrywana przez użytkownika — drugi kubełek, druga droga
+
+**Stan: ✅ działa w Catalogu** (multimedia produktów). Wszystko powyżej opisuje pliki, które
+**produkuje system** i które mają wygasnąć. Plik wgrany przez użytkownika jest odwrotnością
+obu tych założeń, więc różni się w dwóch miejscach — i tylko w dwóch.
+
+### Kubełek
+
+Reguła lifecycle jest w S3 własnością **kubełka**, a ta z sekcji 7 ma pusty prefiks, czyli
+obejmuje wszystko, co w kubełku leży. Zdjęcie produktu zapisane obok eksportów zniknęłoby po
+`RetentionDays` dniach — bez błędu, bez wpisu w logu, widoczne dopiero jako puste miniaturki
+w katalogu. Dlatego kubełki są dwa:
+
+| | `Artifacts:BucketName` (`erp-artifacts`) | `Artifacts:MediaBucketName` (`erp-media`) |
+|---|---|---|
+| Zawartość | eksporty, raporty, dokumenty | pliki wgrane przez użytkownika |
+| Lifecycle | `erp-artifact-retention`, `RetentionDays` | **brak** |
+| Cykl życia pliku | własny (`expire_on` przebiegu) | tyle, co agregat, który go opisuje |
+| Jak po niego sięgnąć | `IArtifactStore` bez klucza | `[FromKeyedServices(ArtifactStoreKeys.Media)]` |
+
+Domyślna (bezkluczowa) rejestracja to magazyn **wygasający**, bo taki jest każdy plik
+produkowany przez system. Zawartość trwała musi poprosić o siebie jawnie — odwrotny domyślny
+kończyłby się cichym wydłużeniem życia eksportów zamiast głośnym błędem. Pilnuje tego test
+`Magazyn_artefaktow_wstrzykiwany_jest_zawsze_pod_kluczem_trwalym`, bo pominięty atrybut nie psuje
+niczego, co widać — aż do upływu retencji.
+
+### Zapis: presigned PUT, nie endpoint modułu
+
+`WriteAsync` przyjmuje zawartość **od producenta wewnątrz procesu**. Dla pliku przychodzącego
+z przeglądarki to zły kształt: żądanie HTTP trzymane otwarte na czas transferu i drugi komplet
+bajtów przechodzący przez proces .NET bez żadnego pożytku. Dlatego doszło
+`CreateUploadTicketAsync`, a wgrywanie jest **dwukrokowe**:
+
+```text
+1. getMultimediaUploadTickets  → N adresów PUT (bilety), po jednym na plik
+2. PUT prosto do magazynu       ← bajty NIE przechodzą przez serwis
+3. multimedia/create            → wpisy w katalogu (synchronicznie!), zwraca ich uuidy
+4. product/batch-add-multimedia → dopięcie zasobów do produktów
+```
+
+Krok 3 jest **jedynym poza eksportem zapisem, który nie idzie przez zadanie masowe**, i decyduje
+o tym krok 4: dopięcie waliduje istnienie zasobów, więc klient musi znać ich uuidy natychmiast.
+Gdyby rejestracja zwracała `jobUuid`, trzeba by czekać na zakończenie tamtego zadania, zanim
+w ogóle da się zlecić dopięcie. Pełne uzasadnienie siedzi w `MultimediaCreateCommandEndpoint`.
+
+Podpisujemy **sam adres, bez nagłówków**. Podpisany `Content-Type` musiałby przyjechać
+z przeglądarki co do znaku, a ta dokłada do `PUT`-a własne nagłówki — każda rozbieżność kończy
+się odrzuceniem podpisu przez magazyn.
+
+> **Czego ta droga nie daje.** Serwis nie widzi bajtów, więc w chwili wydania biletu nie wie ani
+> co zostanie wgrane, ani czy cokolwiek. Rozmiar i typ MIME odczytujemy **po fakcie**, w kroku 3,
+> ze `StatObject` — i to one, a nie deklaracja klienta, trafiają do agregatu. Artefakt, którego
+> w magazynie nie ma, odrzuca komendę: wpis wskazujący na pustkę byłby w UI zepsutą miniaturką
+> bez wyjaśnienia. Obiekt wgrany, po którym nigdy nie przyszła komenda, zostaje w kubełku jako
+> niczyj śmieć — sprzątanie osieroconych obiektów nie jest jeszcze zaimplementowane
+> (indeks po `artifact_uuid` w tabeli `multimedia` jest pod nie założony).
+
+### Odczyt: proxy przez moduł, nie presigned
+
+Tabela z sekcji 6 rozstrzyga to inaczej niż przy eksportach, i celowo. Presigned URL żyje minuty
+i jest bearer-owy — dla pliku pobieranego raz, po kliknięciu, to zaleta; dla zdjęcia
+renderowanego w galerii wada podwójna: adres wygasa w trakcie przeglądania listy, a każda
+miniaturka wymaga wcześniejszej wymiany identyfikatora na link. Dlatego zawartość wydaje
+`GET multimedia/content/{uuid}` — adres trwały, uprawnienie sprawdzane przy każdym żądaniu,
+odwołanie dostępu działa natychmiast.
+
+Adresowany jest **uuid zasobu, nie artefaktu**: tożsamość obiektu w magazynie nie wychodzi poza
+backend, a `MultimediaDto` nie niesie ani jej, ani żadnego adresu. Odpowiedź ma
+`Cache-Control: private, max-age=86400, immutable`, bo zawartość pod danym uuid nigdy się nie
+zmienia — podmiana pliku jest nowym zasobem, nie edycją istniejącego.
+
+Konsekwencja dla frontendu: `<img src>` nie dołącza tokenu, więc obrazek pobiera się przez
+`HttpClient` i ląduje w `blob:`-URL-u — patrz
+[`docs/frontend/multimedia.md`](../frontend/multimedia.md).
+
+---
+
+## 10. Zobacz też
 
 - [Nazewnictwo komend i endpointów](./endpoint-naming.md) — dlaczego to `Create`, a nie `Exec`
 - [Operacje masowe](./bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, `retry-failed`

@@ -73,6 +73,22 @@
         "bulkAdd": "Add multimedia in bulk",
         "bulkDelete": "Remove all multimedia",
         "scopeFileSelectionUnavailable": "Picking individual files requires selecting specific products"
+      },
+      "toolbar": {
+        "massGroup": "Bulk management",
+        "toolsGroup": "Tools",
+        "selectionGroup": "Selected operations",
+        "scan": "Scan folders",
+        "thumbnails": "Generate thumbnails",
+        "deleteSelected": "Delete selected",
+        "download": "Download originals",
+        "optimize": "Optimise selected"
+      },
+      "columns": {
+        "thumbnail": "Thumbnail",
+        "fileName": "File name",
+        "mediaType": "Type",
+        "fileSize": "Size"
       }
     },
     "delivery": {
@@ -155,6 +171,20 @@
       "emptySelection": "No products selected — close this window and select products in the list.",
       "filterModeSuffix": "matching the current filters.",
       "filterModeHint": "All results are selected — the operation will cover every product matching the filters, including those on other pages."
+    },
+    "addMultimedia": {
+      "label": "Select files",
+      "modalTitle": "Add multimedia to products",
+      "submitButton": "Attach to products",
+      "cancelButton": "Cancel",
+      "dropHint": "Drop files here or click to browse",
+      "uploading": "Uploading files…",
+      "uploadProgress": "Uploaded {{ uploaded }} of {{ total }}",
+      "uploadFailed": "Upload failed. Please try again.",
+      "readyHint": "Files are already in storage. Saving attaches them to the selected products.",
+      "emptyFiles": "Select at least one file.",
+      "targetSummary": "This will affect {{ count }} products.",
+      "filterModeHint": "All results are selected — files will be attached to every product matching the filters, including further pages."
     }
   },
   "validations": {

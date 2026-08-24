@@ -21,11 +21,16 @@ public sealed class ProductBatchValidator : IBatchValidator
 {
     private readonly ProductMustExistRule _mustExist;
     private readonly ProductDuplicateRule _duplicate;
+    private readonly ProductMultimediaMustExistRule _multimediaMustExist;
 
-    public ProductBatchValidator(ProductMustExistRule mustExist, ProductDuplicateRule duplicate)
+    public ProductBatchValidator(
+        ProductMustExistRule mustExist,
+        ProductDuplicateRule duplicate,
+        ProductMultimediaMustExistRule multimediaMustExist)
     {
         _mustExist = mustExist;
         _duplicate = duplicate;
+        _multimediaMustExist = multimediaMustExist;
     }
 
     /// <summary>Pre-check masowej zmiany nazw. Nazwa nie zależy od stanu bazy, więc jedyną
@@ -56,6 +61,28 @@ public sealed class ProductBatchValidator : IBatchValidator
         await _mustExist.ExecuteAsync(uuids, uuid => uuid, tracker, cancellationToken).ConfigureAwait(false);
 
         await _duplicate.ExecuteAsync(targets, t => t.Uuid, tracker, cancellationToken).ConfigureAwait(false);
+
+        return tracker;
+    }
+
+    /// <summary>
+    /// Pre-check masowego dopięcia multimediów: musi istnieć i produkt, i każdy z dopinanych
+    /// plików. Obie reguły lecą na tej samej liście celów, bo są niezależne — chcemy zobaczyć
+    /// komplet naruszeń celu naraz, a nie pierwsze z nich.
+    /// </summary>
+    public async Task<ValidationTracker> ValidateAddMultimediaAsync(
+        IReadOnlyList<ProductMultimediaTarget> targets,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+
+        var tracker = new ValidationTracker();
+
+        var uuids = targets.Select(t => t.Uuid).Distinct().ToList();
+        await _mustExist.ExecuteAsync(uuids, uuid => uuid, tracker, cancellationToken).ConfigureAwait(false);
+
+        await _multimediaMustExist.ExecuteAsync(targets, t => t.Uuid, tracker, cancellationToken)
+            .ConfigureAwait(false);
 
         return tracker;
     }

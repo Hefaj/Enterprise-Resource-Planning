@@ -11,4 +11,5 @@
 export const CATALOG_JOB_COMMAND_KEYS = {
   setPrice: 'shared.jobs.commands.catalogProductSetPrice',
   setName: 'shared.jobs.commands.catalogProductSetName',
+  addMultimedia: 'shared.jobs.commands.catalogProductAddMultimedia',
 } as const;

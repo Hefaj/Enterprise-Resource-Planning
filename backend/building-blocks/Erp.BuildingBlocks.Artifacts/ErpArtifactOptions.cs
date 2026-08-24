@@ -23,10 +23,33 @@ public sealed class ErpArtifactOptions
     public bool UseSsl { get; set; }
 
     /// <summary>
-    /// Kubełek na artefakty. Jeden na moduł — nazwa idzie z konfiguracji, a nie z kodu, żeby
-    /// dwa mikroserwisy na tym samym MinIO nie mieszały sobie plików.
+    /// Kubełek na artefakty <b>wygasające</b> — eksporty, raporty, dokumenty produkowane przez
+    /// system. Jeden na moduł — nazwa idzie z konfiguracji, a nie z kodu, żeby dwa mikroserwisy
+    /// na tym samym MinIO nie mieszały sobie plików.
+    ///
+    /// <para>Obowiązuje w nim reguła lifecycle z <see cref="RetentionDays"/>, założona
+    /// na CAŁY kubełek. Nic, co ma przeżyć dłużej niż retencja, nie może tu trafić.</para>
     /// </summary>
     public string BucketName { get; set; } = "erp-artifacts";
+
+    /// <summary>
+    /// Kubełek na zawartość <b>trwałą</b> — pliki wgrane przez użytkownika, żyjące tak długo,
+    /// jak agregat, który je opisuje (zdjęcia produktów, załączniki).
+    ///
+    /// <para><b>Musi być inny niż <see cref="BucketName"/></b>, i to nie kosmetycznie: reguła
+    /// wygasania jest w S3 własnością kubełka, a ta, którą zakłada moduł, ma pusty prefiks —
+    /// obejmuje więc wszystko, co w kubełku leży. Zdjęcie produktu zapisane obok eksportów
+    /// zniknęłoby po <see cref="RetentionDays"/> dniach, bez śladu w logu i bez błędu:
+    /// widoczne dopiero jako puste miniaturki w katalogu.</para>
+    /// </summary>
+    public string MediaBucketName { get; set; } = "erp-media";
+
+    /// <summary>
+    /// Czas życia adresu wgrywania (presigned <c>PUT</c>). Dłuższy niż
+    /// <see cref="DownloadUrlTtl"/>, bo po drugiej stronie jest transfer pliku przez łącze
+    /// użytkownika, a nie samo kliknięcie.
+    /// </summary>
+    public TimeSpan UploadUrlTtl { get; set; } = TimeSpan.FromMinutes(30);
 
     /// <summary>
     /// Domyślny czas życia adresu pobrania. Minuty, nie dni: link jest bearer-owy, więc jego

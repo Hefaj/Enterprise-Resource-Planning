@@ -22,7 +22,8 @@ public class MultimediaAsset : AggregateRoot
         string fileName,
         string mediaType,
         string? thumbnailUrl,
-        string originalUrl,
+        string? originalUrl,
+        Guid? artifactUuid,
         long fileSize,
         string mimeType,
         int sortOrder,
@@ -32,6 +33,7 @@ public class MultimediaAsset : AggregateRoot
         MediaType = mediaType;
         ThumbnailUrl = thumbnailUrl;
         OriginalUrl = originalUrl;
+        ArtifactUuid = artifactUuid;
         FileSize = fileSize;
         MimeType = mimeType;
         SortOrder = sortOrder;
@@ -45,7 +47,22 @@ public class MultimediaAsset : AggregateRoot
 
     public string? ThumbnailUrl { get; private set; }
 
-    public string OriginalUrl { get; private set; } = string.Empty;
+    /// <summary>
+    /// Adres zasobu trzymanego POZA systemem. Wyklucza się z <see cref="ArtifactUuid"/>:
+    /// zasób jest albo cudzy i wskazany adresem, albo nasz i wskazany identyfikatorem
+    /// artefaktu. Dokładnie jedno z dwóch jest wypełnione.
+    /// </summary>
+    public string? OriginalUrl { get; private set; }
+
+    /// <summary>
+    /// Plik w magazynie artefaktów — wypełniony dla zawartości wgranej przez użytkownika.
+    ///
+    /// <para>Świadomie identyfikator, a nie gotowy adres: adres do magazynu jest podpisany
+    /// i krótko ważny, więc zapisany w bazie zestarzałby się w kilka minut. Zawartość wydaje
+    /// endpoint modułu, który ten identyfikator wymienia na strumień — patrz
+    /// <c>docs/backend/exports-artifacts.md</c> §6.</para>
+    /// </summary>
+    public Guid? ArtifactUuid { get; private set; }
 
     public long FileSize { get; private set; }
 
@@ -56,6 +73,7 @@ public class MultimediaAsset : AggregateRoot
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>Zasób wskazany adresem zewnętrznym — bajty leżą poza systemem.</summary>
     public static MultimediaAsset Create(
         string fileName,
         string mediaType,
@@ -65,8 +83,50 @@ public class MultimediaAsset : AggregateRoot
         string mimeType,
         int sortOrder,
         DateTimeOffset createdAt)
-        => new(NewUuid(), Validate(fileName), mediaType, thumbnailUrl, originalUrl,
+        => new(NewUuid(), Validate(fileName), mediaType, thumbnailUrl, originalUrl, null,
                ValidateSize(fileSize), mimeType, sortOrder, createdAt);
+
+    /// <summary>
+    /// Zasób wgrany przez użytkownika — bajty leżą już w magazynie artefaktów pod
+    /// <paramref name="artifactUuid"/>.
+    ///
+    /// <para><b>Rozmiar i typ pochodzą z magazynu, nie z deklaracji klienta.</b> Przy wgrywaniu
+    /// prosto do magazynu (presigned PUT) serwis nie widzi bajtów, więc jedyną wiarygodną
+    /// informacją o tym, co faktycznie wylądowało, jest odczyt metadanych obiektu. Zaufanie
+    /// liczbie z żądania dałoby katalog, w którym rozmiary są tym, co klient chciał wgrać,
+    /// a nie tym, co wgrał.</para>
+    ///
+    /// <para><see cref="MediaType"/> wyprowadzamy z typu MIME, zamiast przyjmować osobno —
+    /// dwa niezależne pola opisujące to samo rozjeżdżają się przy pierwszym nietypowym pliku.</para>
+    /// </summary>
+    public static MultimediaAsset CreateUploaded(
+        Guid uuid,
+        Guid artifactUuid,
+        string fileName,
+        string mimeType,
+        long fileSize,
+        int sortOrder,
+        DateTimeOffset createdAt)
+    {
+        if (artifactUuid == Guid.Empty)
+        {
+            throw new DomainException(
+                "multimedia_artifact_missing",
+                "Zasób wgrany musi wskazywać artefakt w magazynie.");
+        }
+
+        return new(
+            uuid,
+            Validate(fileName),
+            MediaTypeFor(mimeType),
+            thumbnailUrl: null,
+            originalUrl: null,
+            artifactUuid,
+            ValidateSize(fileSize),
+            NormalizeMimeType(mimeType),
+            sortOrder,
+            createdAt);
+    }
 
     /// <inheritdoc cref="Categories.Category.CreateWithUuid"/>
     public static MultimediaAsset CreateWithUuid(
@@ -79,7 +139,7 @@ public class MultimediaAsset : AggregateRoot
         string mimeType,
         int sortOrder,
         DateTimeOffset createdAt)
-        => new(uuid, Validate(fileName), mediaType, thumbnailUrl, originalUrl,
+        => new(uuid, Validate(fileName), mediaType, thumbnailUrl, originalUrl, null,
                ValidateSize(fileSize), mimeType, sortOrder, createdAt);
 
     /// <summary>Zmienia pozycję zasobu w galerii.</summary>
@@ -97,6 +157,43 @@ public class MultimediaAsset : AggregateRoot
         }
 
         return fileName.Trim();
+    }
+
+    /// <summary>
+    /// Rodzaj zasobu w ujęciu ogólnym, wyprowadzony z typu MIME. Wartości pokrywają się
+    /// z ikonami po stronie UI (<c>multimedia-thumbnail-cell.component.ts</c>); nierozpoznany
+    /// typ zostaje <c>file</c>, bo UI ma dla niego ikonę domyślną i nie ma powodu odrzucać
+    /// pliku tylko dlatego, że nie mieści się w naszej klasyfikacji.
+    /// </summary>
+    private static string MediaTypeFor(string mimeType)
+    {
+        var mime = NormalizeMimeType(mimeType);
+
+        if (mime.StartsWith("image/", StringComparison.Ordinal)) return "image";
+        if (mime.StartsWith("video/", StringComparison.Ordinal)) return "video";
+        if (mime.StartsWith("audio/", StringComparison.Ordinal)) return "audio";
+        if (mime.StartsWith("model/", StringComparison.Ordinal)) return "3d-model";
+
+        return mime is "application/pdf" or "application/msword"
+            || mime.StartsWith("text/", StringComparison.Ordinal)
+            || mime.StartsWith("application/vnd.openxmlformats-officedocument.", StringComparison.Ordinal)
+                ? "document"
+                : "file";
+    }
+
+    private static string NormalizeMimeType(string mimeType)
+    {
+        if (string.IsNullOrWhiteSpace(mimeType))
+        {
+            return "application/octet-stream";
+        }
+
+        // Przeglądarka dokłada do typu parametry (`text/plain; charset=utf-8`) — do klasyfikacji
+        // i do nagłówka odpowiedzi liczy się sam typ.
+        var mime = mimeType.Trim().ToLowerInvariant();
+        var separator = mime.IndexOf(';', StringComparison.Ordinal);
+
+        return separator < 0 ? mime : mime[..separator].TrimEnd();
     }
 
     private static long ValidateSize(long fileSize)

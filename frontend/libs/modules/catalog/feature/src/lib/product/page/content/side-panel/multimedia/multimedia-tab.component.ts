@@ -13,8 +13,16 @@ import {
   ErpTableBuilder,
   ErpTableComponent,
   ErpTableConfig,
+  ErpBatchMetadata,
+  ErpModalService,
 } from '@erp/shared/ui';
-import { CatalogMultimediaOrchestrator, CatalogProductOrchestrator, ProductVM } from '@erp/catalog/data-access';
+import {
+  BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest,
+  CatalogMultimediaOrchestrator,
+  CatalogProductOrchestrator,
+  ProductVM,
+} from '@erp/catalog/data-access';
+import { PRODUCT_ADD_MULTIMEDIA_MODAL_ID } from '@erp/catalog/util';
 import { PRODUCT_KEYS } from '../../../../translation/keys';
 import { MultimediaRow } from './multimedia-row.model';
 import { MultimediaThumbnailCellComponent } from './multimedia-thumbnail-cell.component';
@@ -81,6 +89,7 @@ export class MultimediaTabComponent {
   private readonly tabStore = inject(MultimediaTabStore);
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
+  private readonly modalService = inject(ErpModalService);
 
   protected readonly _scopeKind = this.tabStore.scopeKind;
   protected readonly _resolving = this.tabStore.resolving;
@@ -135,17 +144,17 @@ export class MultimediaTabComponent {
     .setOnClearSelection(() => this.onClearMediaSelection())
     .addDefaultGroup(g => g
       .setId('mass-actions')
-      .setLabel('Masowe zarządzanie')
+      .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.massGroup)
       .addAction(a => a
         .setId('mass-add')
-        .setLabel('Dodaj multimedia masowo')
+        .setLabel(PRODUCT_KEYS.base.multimedia.panel.bulkAdd)
         .setIcon('@tui.plus')
         .setAppearance('success')
         .setFn(() => this.onAddMass())
       )
       .addAction(a => a
         .setId('mass-delete')
-        .setLabel('Usuń wszystkie multimedia')
+        .setLabel(PRODUCT_KEYS.base.multimedia.panel.bulkDelete)
         .setIcon('@tui.trash')
         .setAppearance('warning')
         .setFn(() => this.onDeleteMass())
@@ -153,16 +162,16 @@ export class MultimediaTabComponent {
     )
     .addDefaultGroup(g => g
       .setId('tools')
-      .setLabel('Narzędzia')
+      .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.toolsGroup)
       .addAction(a => a
         .setId('scan')
-        .setLabel('Skanuj foldery')
+        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.scan)
         .setIcon('@tui.scan')
         .setFn(() => console.log('Skanuj'))
       )
       .addAction(a => a
         .setId('thumbnails')
-        .setLabel('Generuj miniatury')
+        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.thumbnails)
         .setIcon('@tui.image')
         .setFn(() => console.log('Miniatury'))
       )
@@ -172,10 +181,10 @@ export class MultimediaTabComponent {
     // wynikał ubocznie z tego, że w trybie filtra i tak nie da się nic zaznaczyć.
     .addSelectionGroup(g => g
       .setId('selection-actions')
-      .setLabel('Wybrane operacje')
+      .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.selectionGroup)
       .addAction(a => a
         .setId('delete-selected')
-        .setLabel('Usuń zaznaczone')
+        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.deleteSelected)
         .setIcon('@tui.trash')
         .setAppearance('warning')
         .setScopes(['explicit'])
@@ -184,7 +193,7 @@ export class MultimediaTabComponent {
       )
       .addAction(a => a
         .setId('download')
-        .setLabel('Pobierz oryginały')
+        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.download)
         .setIcon('@tui.download')
         .setScopes(['explicit'])
         .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
@@ -192,7 +201,7 @@ export class MultimediaTabComponent {
       )
       .addAction(a => a
         .setId('optimize')
-        .setLabel('Optymalizuj wybrane')
+        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.optimize)
         .setIcon('@tui.wand')
         .setScopes(['explicit'])
         .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
@@ -220,7 +229,7 @@ export class MultimediaTabComponent {
         .setOnSelectionChange(state => this.onSelectionChange(state))
         .addColumn(c => c
           .setId('thumbnail')
-          .setHeader('Miniatura')
+          .setHeader(PRODUCT_KEYS.base.multimedia.columns.thumbnail)
           .setCell(MultimediaThumbnailCellComponent)
           .setEnableSorting(false)
           .setSize(100)
@@ -228,20 +237,20 @@ export class MultimediaTabComponent {
         )
         .addColumn(c => c
           .setId('fileName')
-          .setHeader('Nazwa pliku')
+          .setHeader(PRODUCT_KEYS.base.multimedia.columns.fileName)
           .setCell(MultimediaInfoCellComponent, { field: 'fileName' })
           .setSize(320)
         )
         .addColumn(c => c
           .setId('mediaType')
-          .setHeader('Typ')
+          .setHeader(PRODUCT_KEYS.base.multimedia.columns.mediaType)
           .setCell(MultimediaInfoCellComponent, { field: 'mediaType' })
           .setSize(140)
           .setGrow(0)
         )
         .addColumn(c => c
           .setId('fileSize')
-          .setHeader('Rozmiar')
+          .setHeader(PRODUCT_KEYS.base.multimedia.columns.fileSize)
           .setCell(MultimediaInfoCellComponent, { field: 'fileSize' })
           .setCellClass('text-right')
           .setSize(120)
@@ -316,10 +325,14 @@ export class MultimediaTabComponent {
    * nie decydował o tym po swojemu.
    */
   protected onAddMass(): void {
-    console.log('Masowe dodawanie multimediów', {
-      targets: this.tabStore.batchTargets(),
-      count: this.tabStore.scopeCount(),
-    });
+    // Cele to ZASIĘG zaznaczenia produktów, nie wiersze widoczne w panelu: przy zaznaczeniu
+    // opisanym filtrem panel pokazuje próbkę kilku produktów, a operacja obejmie wszystkie
+    // pasujące. Składa je `batchTargets()`, żeby żaden komponent nie decydował o tym po swojemu.
+    this.modalService.open<BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest, ErpBatchMetadata>(
+      PRODUCT_ADD_MULTIMEDIA_MODAL_ID,
+      this.tabStore.batchTargets(),
+      { targetCount: this.tabStore.scopeCount() },
+    );
   }
 
   protected onDeleteMass(): void {

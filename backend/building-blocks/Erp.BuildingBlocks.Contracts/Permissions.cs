@@ -37,10 +37,19 @@ public static class Permissions
         public const string CategoryRead = "catalog.category.read";
         public const string CategoryUpdate = "catalog.category.update";
 
-        /// <summary>Odczyt słowników pomocniczych (modele, multimedia, gwarancje, typy kodów,
-        /// atrybuty) — wszystkie dziś tylko-do-odczytu, więc jedno uprawnienie zamiast pięciu
-        /// prawie identycznych kodów. Rozbić na osobne, gdy któryś dostanie własną mutację.</summary>
+        /// <summary>Odczyt słowników pomocniczych (modele, gwarancje, typy kodów, atrybuty)
+        /// oraz zawartości multimediów — jedno uprawnienie zamiast czterech prawie identycznych
+        /// kodów. Rozbić na osobne, gdy któryś dostanie własną mutację.</summary>
         public const string DictionaryRead = "catalog.dictionary.read";
+
+        /// <summary>
+        /// Wgrywanie plików do katalogu i dopinanie ich do produktów.
+        ///
+        /// <para>Wydzielone z <see cref="DictionaryRead"/>, bo multimedia są pierwszym słownikiem
+        /// z własną mutacją — dokładnie ten przypadek, który komentarz przy tamtym kodzie
+        /// przewidywał. Odczyt zostaje w słownikowym: kto widzi produkt, widzi jego zdjęcia.</para>
+        /// </summary>
+        public const string MultimediaUpdate = "catalog.multimedia.update";
 
         public const string JobControl = "catalog.job.control";
 
@@ -86,6 +95,7 @@ public static class Permissions
         new(Catalog.CategoryRead, "catalog", "category", "read", "identity.permissions.catalog.category.read"),
         new(Catalog.CategoryUpdate, "catalog", "category", "update", "identity.permissions.catalog.category.update"),
         new(Catalog.DictionaryRead, "catalog", "dictionary", "read", "identity.permissions.catalog.dictionary.read"),
+        new(Catalog.MultimediaUpdate, "catalog", "multimedia", "update", "identity.permissions.catalog.multimedia.update"),
         new(Catalog.JobControl, "catalog", "job", "control", "identity.permissions.catalog.job.control"),
         new(Catalog.ExportRunCreate, "catalog", "export_run", "create", "identity.permissions.catalog.exportRun.create"),
 

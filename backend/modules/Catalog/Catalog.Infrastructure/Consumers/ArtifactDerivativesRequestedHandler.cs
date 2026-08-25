@@ -5,7 +5,6 @@ using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -33,7 +32,7 @@ public static partial class ArtifactDerivativesRequestedHandler
 {
     public static async Task HandleAsync(
         ArtifactDerivativesRequested message,
-        IServiceProvider services,
+        IArtifactStoreResolver stores,
         CatalogDbContext dbContext,
         IUnitOfWork unitOfWork,
         IImageDerivativeGenerator generator,
@@ -43,7 +42,7 @@ public static partial class ArtifactDerivativesRequestedHandler
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(stores);
         ArgumentNullException.ThrowIfNull(options);
 
         if (!string.Equals(message.Module, CatalogModule.Name, StringComparison.Ordinal))
@@ -52,7 +51,7 @@ public static partial class ArtifactDerivativesRequestedHandler
         }
 
         var settings = options.Value;
-        var store = services.GetRequiredKeyedService<IArtifactStore>(message.StoreKey);
+        var store = stores.Resolve(message.StoreKey);
 
         using var original = new MemoryStream();
 

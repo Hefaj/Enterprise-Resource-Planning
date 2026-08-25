@@ -22,5 +22,25 @@ public sealed class MultimediaRepository : IMultimediaRepository
             .ConfigureAwait(false);
 
     /// <inheritdoc />
+    public async Task<List<MultimediaAsset>> FindManyAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+
+        if (uuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = uuids as List<Guid> ?? [.. uuids];
+
+        return await _dbContext.MultimediaAssets
+            .Where(m => uuidList.Contains(m.Uuid))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public void Remove(MultimediaAsset asset) => _dbContext.MultimediaAssets.Remove(asset);
 }

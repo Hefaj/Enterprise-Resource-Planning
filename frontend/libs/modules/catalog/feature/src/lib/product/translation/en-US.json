@@ -89,6 +89,20 @@
         "fileName": "File name",
         "mediaType": "Type",
         "fileSize": "Size"
+      },
+      "confirm": {
+        "removeSelected": {
+          "title": "Detach selected multimedia?",
+          "message": "The selected files ({{count}}) will be detached from their products. The files themselves stay in the media library — they are deleted separately.",
+          "yes": "Detach",
+          "no": "Cancel"
+        },
+        "clearAll": {
+          "title": "Remove all multimedia?",
+          "message": "Galleries of {{count}} products will be cleared. The files themselves stay in the media library — they are deleted separately.",
+          "yes": "Remove all",
+          "no": "Cancel"
+        }
       }
     },
     "delivery": {

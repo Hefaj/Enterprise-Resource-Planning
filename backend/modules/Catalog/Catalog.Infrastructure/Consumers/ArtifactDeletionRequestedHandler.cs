@@ -1,7 +1,6 @@
 using Catalog.Application;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Catalog.Infrastructure.Consumers;
 
@@ -20,24 +19,25 @@ namespace Catalog.Infrastructure.Consumers;
 /// sąsiada.</para>
 ///
 /// <para>Magazyn wybieramy <b>po kluczu z koperty</b>, a nie na sztywno: moduł ma ich kilka
-/// i plik trzeba skasować w tym, w którym leży.</para>
+/// i plik trzeba skasować w tym, w którym leży. Przez <see cref="IArtifactStoreResolver"/>,
+/// nie przez wstrzyknięty kontener — uzasadnienie przy samej abstrakcji.</para>
 /// </summary>
 public static class ArtifactDeletionRequestedHandler
 {
     public static async Task HandleAsync(
         ArtifactDeletionRequested message,
-        IServiceProvider services,
+        IArtifactStoreResolver stores,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(message);
-        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(stores);
 
         if (!string.Equals(message.Module, CatalogModule.Name, StringComparison.Ordinal))
         {
             return;
         }
 
-        var store = services.GetRequiredKeyedService<IArtifactStore>(message.StoreKey);
+        var store = stores.Resolve(message.StoreKey);
 
         await store.DeleteAsync(message.ArtifactUuid, cancellationToken).ConfigureAwait(false);
     }

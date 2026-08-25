@@ -215,7 +215,9 @@
       "identityRoleRemovePermission": "Permission removed from role",
       "identityRoleAddMember": "Member role added",
       "identityRoleRemoveMember": "Member role removed",
-      "catalogProductAddMultimedia": "Add multimedia"
+      "catalogProductAddMultimedia": "Add multimedia",
+      "catalogProductRemoveMultimedia": "Detach multimedia",
+      "catalogProductSetMultimedia": "Gallery replaced"
     },
     "toast": {
       "completed": "Finished: {{name}}",

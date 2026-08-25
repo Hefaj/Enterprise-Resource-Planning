@@ -3,11 +3,14 @@
 Ścieżka pliku od okna wyboru w przeglądarce do miniaturki w galerii. Strona backendowa —
 [`docs/backend/exports-artifacts.md` §9](../backend/exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
 
-**Stan: ✅ w kodzie** — wgrywanie, rejestracja w katalogu i dopięcie do produktów działają
-end-to-end; miniaturki są podpięte do wariantu `thumb`. Nie ma jeszcze **po stronie frontu**:
-UI usuwania zasobów i podglądu pełnoekranowego (backend ma pod nie `multimedia/batch-remove`
-i wariant `preview`), więc brakuje tam wyłącznie ekranów. Klient NSwag czeka na regenerację —
-nowe pola czytane są tymczasowo przez sygnaturę indeksową DTO.
+**Stan: ✅ w kodzie** — wgrywanie, rejestracja w katalogu, dopięcie do produktów i **zdejmowanie
+multimediów z produktów** ([§5](#5-zdejmowanie-multimediów-z-produktów)) działają end-to-end;
+miniaturki są podpięte do wariantu `thumb`. Nie ma jeszcze **po stronie frontu**: UI usuwania
+zasobów z samej biblioteki mediów (backend ma pod nie `multimedia/batch-remove`) i podglądu
+pełnoekranowego (wariant `preview`), więc brakuje tam wyłącznie ekranów. Klient NSwag czeka
+na regenerację — nowe pola czytane są tymczasowo przez sygnaturę indeksową DTO, a metody
+`productRemoveMultimediaMultipleCommand` / `productSetMultimediaMultipleCommand` są w
+`api-client.ts` dopisane ręcznie w kształcie, który wygeneruje NSwag.
 
 ---
 
@@ -73,9 +76,13 @@ dokłada token), a do `src` trafia dopiero `blob:`-URL.
 2. `originalUrl` — zasób leży poza systemem, adres jest publiczny,
 3. wariant `thumb` z magazynu — **tylko gdy `hasDerivatives`**.
 
-> **Punkt 3 nigdy nie spada na oryginał.** Miniaturki generuje backend asynchronicznie, kilka
-> sekund po wgraniu (`docs/backend/media-storage.md` §8); do tego czasu `hasDerivatives` jest
-> `false` i komórka pokazuje ikonę typu. Pobranie oryginału „żeby coś było" to ~6 MB na zdjęcie 4K
+> **Punkt 3 nigdy nie spada na oryginał.** Miniaturki generuje backend asynchronicznie, po
+> zatwierdzeniu transakcji rejestrującej (`docs/backend/media-storage.md` §8); dopóki nie są
+> gotowe, `hasDerivatives` jest `false` i komórka pokazuje ikonę typu. W praktyce trwa to
+> ułamek sekundy — pomiary z przebiegu kontrolnego: 0,25 s dla zdjęcia 12 Mpx, 1,6 s dla 90 Mpx,
+> czyli szybciej, niż użytkownik zamknie modal. Zaślepka jest więc ścieżką dla plików wielkich
+> i dla przypadku, w którym konsument akurat zalega — nie normalnym etapem, który zawsze mignie.
+> Pobranie oryginału „żeby coś było" to ~6 MB na zdjęcie 4K
 > w kwadracie 40×40 — a `blob:`-cache trzymałby 300 takich plików w pamięci karty. Gotowość
 > przychodzi zwykłym `AggregateChanged` na `catalog.multimedia`, więc miniaturka pojawia się sama,
 > bez odpytywania w pętli.
@@ -106,7 +113,37 @@ celu — uuid produktu dokłada backend przy materializacji szablonu.
 
 ---
 
-## 5. Zobacz też
+## 5. Zdejmowanie multimediów z produktów
+
+Panel ma dwie akcje usuwania i **żadna z nich nie kasuje pliku**. Zasób jest osobnym agregatem
+i pozycją biblioteki mediów; zdjęcie go z produktu to odpięcie referencji, nie usunięcie danych
+([`media-storage.md` §4c](../backend/media-storage.md#4c-zasób-któremu-zniknęła-ostatnia-referencja)).
+Plik znika sam tylko wtedy, gdy jest `Owned` — wtedy zabiera go kaskada, w tej samej transakcji.
+Zdanie potwierdzenia mówi to użytkownikowi wprost, zanim kliknie.
+
+| Akcja toolbara | Komenda | Cele |
+|---|---|---|
+| „Usuń zaznaczone" (grupa `selection-actions`) | `product/batch-remove-multimedia` | jawna lista komend, po jednej na produkt |
+| „Usuń wszystkie multimedia" (grupa `mass-actions`) | `product/batch-set-multimedia` z pustą listą | zasięg zaznaczenia (`batchTargets()`) |
+
+**Dlaczego masowe zdejmowanie idzie podmianą galerii, a nie listą plików.** Przy zaznaczeniu
+opisanym filtrem panel widzi próbkę kilku produktów, więc list plików pozostałych celów po prostu
+nie zna — zebranie ich oznaczałoby pobranie galerii wszystkich pasujących produktów tylko po to,
+żeby odesłać je z powrotem. `SetMultimedia` z pustą listą adresuje **stan docelowy**, nie
+zawartość: jest idempotentne i niezależne od tego, co front zdążył wczytać.
+
+**Dlaczego zdejmowanie zaznaczonych idzie listą komend, a nie szablonem.** Wiersz panelu to para
+(produkt, plik). Ten sam plik wisiący pod dwoma produktami daje dwa wiersze i użytkownik może
+zaznaczyć tylko jeden z nich — każdy produkt zdejmuje więc własny podzbiór, czego szablon
+(jedna komenda na wszystkie cele) nie wyraża. Akcja jest przy tym bramkowana zasięgiem `explicit`
+(`setScopes(['explicit'])`), więc lista zaznaczonych wierszy jest kompletna, a nie próbką.
+
+Obie akcje wracają natychmiast — to zwykłe zadania masowe z paskiem postępu, oznaczone
+`queueId = 'catalog-product-multimedia-tab'`, żeby powiadomienia z panelu grupowały się razem.
+
+---
+
+## 6. Zobacz też
 
 - [Modale](./modals.md) — rejestracja `PRODUCT_ADD_MULTIMEDIA_MODAL_ID` i cykl życia kroku
 - [Zasięg zaznaczenia](./selection-scope.md) — skąd biorą się cele operacji masowej

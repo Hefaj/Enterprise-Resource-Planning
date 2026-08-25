@@ -45,6 +45,20 @@ public interface IMultimediaQueries
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Ile agregatów wskazuje na każdy z zasobów, <b>z pominięciem jednego produktu</b>.
+    ///
+    /// <para>Po co pominięcie: kaskada pyta o to w środku transakcji, w której odpięte przed
+    /// chwilą wiersze <c>product_multimedia</c> jeszcze w bazie są. Zwykły licznik pokazałby
+    /// stan sprzed odpięcia i kaskada nigdy by nie zadziałała. Wykluczenie produktu daje
+    /// dokładnie stan po zapisie — bez zaglądania w ChangeTracker z warstwy, która o EF nie wie
+    /// (<c>docs/backend/media-storage.md</c> §4c).</para>
+    /// </summary>
+    Task<Dictionary<Guid, int>> CountReferencesExceptAsync(
+        IReadOnlyCollection<Guid> uuids,
+        Guid excludedProductUuid,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Które z podanych artefaktów magazynu są opisane wpisem w katalogu.
     ///
     /// <para>Pyta audytor rozjazdu, idąc od magazynu do bazy — dlatego adresuje po

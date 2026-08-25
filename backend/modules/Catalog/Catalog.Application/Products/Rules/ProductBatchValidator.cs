@@ -87,6 +87,49 @@ public sealed class ProductBatchValidator : IBatchValidator
         return tracker;
     }
 
+    /// <summary>
+    /// Pre-check masowego odpięcia multimediów: sprawdzamy wyłącznie istnienie produktu.
+    ///
+    /// <para>Odpinany zasób celowo NIE musi istnieć. Przy dopinaniu nieistniejący uuid jest
+    /// błędem, bo powstałaby referencja donikąd; przy odpinaniu jest opisem stanu, który już
+    /// obowiązuje — odrzucanie takiego żądania wywracałoby paczkę przez odpięcie zrobione
+    /// wcześniej ręcznie.</para>
+    /// </summary>
+    public Task<ValidationTracker> ValidateRemoveMultimediaAsync(
+        IReadOnlyList<Guid> aggregateUuids,
+        CancellationToken cancellationToken)
+        => ValidateExistenceAsync(aggregateUuids, cancellationToken);
+
+    /// <summary>
+    /// Pre-check masowej podmiany galerii: cel musi istnieć, a każdy zasób z listy docelowej
+    /// musi być w katalogu — bo po podmianie ma na niego wskazywać referencja.
+    ///
+    /// <para>Różnica wobec dopinania jest jedna, ale istotna: <b>pusta lista jest poprawna</b>
+    /// i znaczy „wyczyść galerię". Dlatego do reguły istnienia zasobów idą wyłącznie cele
+    /// z niepustą listą — inaczej wyczyszczenie odpadłoby z błędem <c>multimedia_empty</c>,
+    /// czyli dokładnie na tym, o co użytkownik prosił.</para>
+    /// </summary>
+    public async Task<ValidationTracker> ValidateSetMultimediaAsync(
+        IReadOnlyList<ProductMultimediaTarget> targets,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+
+        var tracker = new ValidationTracker();
+
+        var uuids = targets.Select(t => t.Uuid).Distinct().ToList();
+        await _mustExist.ExecuteAsync(uuids, uuid => uuid, tracker, cancellationToken).ConfigureAwait(false);
+
+        var withAssets = targets.Where(t => t.MultimediaUuids.Count > 0).ToList();
+        if (withAssets.Count > 0)
+        {
+            await _multimediaMustExist.ExecuteAsync(withAssets, t => t.Uuid, tracker, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        return tracker;
+    }
+
     private async Task<ValidationTracker> ValidateExistenceAsync(
         IReadOnlyList<Guid> aggregateUuids,
         CancellationToken cancellationToken)

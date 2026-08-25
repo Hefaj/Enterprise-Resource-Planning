@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 
 import { BaseOrchestrator, JobMeta, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
-import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest, BatchResult } from '../../api-client';
+import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest, BatchCommandOfProductRemoveMultimediaCommandAndSearchProductRequest, BatchCommandOfProductSetMultimediaCommandAndSearchProductRequest, BatchResult } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM, ProductCodeVM, ProductAttributeVM } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
@@ -396,6 +396,84 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     try {
       const result = await firstValueFrom(
         this._api.productAddMultimediaMultipleCommand({
+          ...command,
+          queueId: queueID,
+          uiMetadata: JSON.stringify(meta),
+        })
+      );
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, meta);
+
+      return jobUuid;
+    } catch (err) {
+      this.addError({
+        operation: 'command',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+      throw err;
+    }
+  }
+
+  /**
+   * Odpina wskazane zasoby od wskazanych produktów.
+   *
+   * <b>To nie kasuje plików.</b> Zasób jest osobnym agregatem i pozycją biblioteki mediów —
+   * znika z katalogu wyłącznie jawną komendą (`multimedia/batch-remove`) albo kaskadą, gdy jego
+   * właściciel zadeklarował go jako `Owned` (`docs/backend/media-storage.md` §4c).
+   */
+  public async removeMultimediaMultiple(
+    command: BatchCommandOfProductRemoveMultimediaCommandAndSearchProductRequest,
+    queueID?: string,
+  ): Promise<string> {
+    const meta: JobMeta = {
+      commandName: CATALOG_JOB_COMMAND_KEYS.removeMultimedia,
+      timestamp: new Date(),
+    };
+
+    try {
+      const result = await firstValueFrom(
+        this._api.productRemoveMultimediaMultipleCommand({
+          ...command,
+          queueId: queueID,
+          uiMetadata: JSON.stringify(meta),
+        })
+      );
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, meta);
+
+      return jobUuid;
+    } catch (err) {
+      this.addError({
+        operation: 'command',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+      throw err;
+    }
+  }
+
+  /**
+   * Podmienia CAŁĄ galerię wskazanych produktów; pusta lista czyści ją do zera.
+   *
+   * Tędy idzie „zdejmij wszystkie multimedia" z zaznaczenia opisanego filtrem: front nie zna
+   * zawartości galerii produktów, których nie wczytał, więc adresuje stan docelowy, a nie listę
+   * plików do zdjęcia (patrz `ProductSetMultimediaCommand` po stronie backendu).
+   */
+  public async setMultimediaMultiple(
+    command: BatchCommandOfProductSetMultimediaCommandAndSearchProductRequest,
+    queueID?: string,
+  ): Promise<string> {
+    const meta: JobMeta = {
+      commandName: CATALOG_JOB_COMMAND_KEYS.setMultimedia,
+      timestamp: new Date(),
+    };
+
+    try {
+      const result = await firstValueFrom(
+        this._api.productSetMultimediaMultipleCommand({
           ...command,
           queueId: queueID,
           uiMetadata: JSON.stringify(meta),

@@ -35,9 +35,16 @@ public sealed class ErpMessagingOptions
     /// producentem. Każdy konsument ma WŁASNĄ kolejkę (fanout kopiuje wiadomość do każdej
     /// związanej kolejki), więc kilku konsumentów nigdy nie rywalizuje o tę samą wiadomość.
     ///
-    /// <c>null</c> (domyślnie) — serwis wyłącznie publikuje, tak jak dziś Catalog.
+    /// <c>null</c> (domyślnie) — serwis wyłącznie publikuje, tak jak dziś Identity i Sales.
     /// Ustawione — jak w Notification, które musi odebrać <c>AggregateChanged</c>/<c>Job*</c>,
-    /// żeby zasilić replikę i rozgłosić je dalej przez SignalR.
+    /// żeby zasilić replikę i rozgłosić ją dalej przez SignalR, oraz w Catalogu, który odbiera
+    /// <b>własne</b> koperty <c>Artifact*Requested</c> (miniaturki, kasowanie plików w magazynie).
+    ///
+    /// <para><b>Serwis publikujący zdarzenie do samego siebie MUSI mieć tę kolejkę.</b> Fanout
+    /// kopiuje kopertę wyłącznie do kolejek związanych z wymianą, więc bez własnej kolejki serwis
+    /// nie dostaje nawet tego, co sam wypuścił — a konsument leżący w jego kodzie nigdy się nie
+    /// uruchamia. Objaw jest niemy: publikacja się udaje, outbox pustoszeje, dead letters są puste,
+    /// tylko robota nie zostaje wykonana.</para>
     /// </summary>
     public string? ListenQueueName { get; set; }
 }

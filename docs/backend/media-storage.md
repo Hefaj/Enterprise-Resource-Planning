@@ -3,7 +3,7 @@
 **Stan: 🟡 kod jest i się kompiluje, nie zweryfikowany na żywej infrastrukturze.** Legenda
 znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia). Wdrożone są wszystkie
 pozycje z [§6](#6-stan-wdrożenia) plus miniaturki z [§8](#8-warianty-pochodne--miniaturki);
-testy jednostkowe i architektoniczne przechodzą (105/105), ale przebiegu end-to-end na MinIO
+testy jednostkowe i architektoniczne przechodzą, ale przebiegu end-to-end na MinIO
 **jeszcze nie było** — patrz [§7](#7-co-zostało-do-weryfikacji).
 Ten dokument **zastępuje** rozstrzygnięcia z [`exports-artifacts.md`](./exports-artifacts.md)
 §5 i §9 w tych punktach, w których się z nimi rozjeżdża (układ kubełków, poświadczenia,
@@ -370,45 +370,85 @@ Trzy pozycje niezależne od powyższych rozstrzygnięć, warte zapisania, żeby 
 | 2 | Klucz MinIO per serwis, polityki, `minio-init` (§2.3) | ✅ | [`minio/policies/`](../../backend/minio/policies/), [`docker-compose.yml`](../../backend/docker-compose.yml) |
 | 3 | Prefiksy `staging/`/`assets/`, `PromoteAsync`, lifecycle (§3, §4a) | ✅ | [`MinioArtifactStore`](../../backend/building-blocks/Erp.BuildingBlocks.Artifacts/MinioArtifactStore.cs) |
 | 4 | Komenda usuwająca + outbox `ArtifactDeletionRequested` (§4b) | ✅ | `MultimediaRemoveCommand*`, [`ArtifactDeletionRequestedHandler`](../../backend/modules/Catalog/Catalog.Infrastructure/Consumers/ArtifactDeletionRequestedHandler.cs) |
-| 5 | `Ownership` + licznik referencji w `MultimediaDto` (§4c) | 🟡 | [`MultimediaAsset`](../../backend/modules/Catalog/Catalog.Domain/Aggregates/Multimedia/MultimediaAsset.cs) — **kaskady dla `Owned` nie ma**, patrz niżej |
+| 5 | `Ownership` + licznik referencji w `MultimediaDto` + kaskada dla `Owned` (§4c) | ✅ | [`MultimediaAsset`](../../backend/modules/Catalog/Catalog.Domain/Aggregates/Multimedia/MultimediaAsset.cs), `MultimediaCascade`, `ProductRemoveMultimediaCommand*`, `ProductSetMultimediaCommand*` |
 | 6 | Audytor rozjazdu, dry-run (§4d) | ✅ | [`MediaReconciliationService`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/MediaReconciliationService.cs) |
 | 7 | Limit rozmiaru, `ReadToAsync` (§5) | ✅ | `MultimediaOptions`, `GetMultimediaContent` |
 | 7 | Skan antywirusowy (§5) | 📐 | decyzja nie zapadła |
-| 8 | Miniaturki i podglądy (SkiaSharp, outbox, endpoint wariantu) — §8 | 🟡 | `ImageDerivativeGenerator`, `ArtifactDerivativesRequestedHandler`, `GetMultimediaVariantEndpoint`; 6 testów generatora przechodzi |
+| 8 | Miniaturki i podglądy (SkiaSharp, outbox, endpoint wariantu) — §8 | ✅ | `ImageDerivativeGenerator`, `ArtifactDerivativesRequestedHandler`, `GetMultimediaVariantEndpoint`; przebieg end-to-end na żywym MinIO potwierdzony — patrz niżej |
 
-### Czego świadomie nie ma w pozycji 5
+### Dwie rzeczy, które trzymały pozycję 8 martwą
 
-Model własności jest w domenie i jest wymuszony testem, ale **kaskada usuwająca zasób `Owned`
-razem z ostatnią referencją nie ma dziś wyzwalacza**: w module nie istnieje komenda odpinająca
-multimedium od produktu (`ProductRemoveMultimediaCommand`). Dopóki jej nie ma, referencji nie da
-się usunąć pojedynczo, więc nie ma momentu, w którym kaskada miałaby zadziałać.
+Generator był poprawny od początku (testy przechodziły), ale **kod nigdy się nie wykonywał**.
+Blokowały go dwa niezależne braki w podpięciu — oba nieme, żaden nie dawał błędu:
 
-Wszystkie zasoby zakładane dziś przez galerię produktu są `Library`, a `EnsureCanRemove` blokuje
-usunięcie przy żywych referencjach — więc brak kaskady nie zostawia niczego zepsutego, tylko
-niewykorzystaną gałąź. Kaskadę dopina się razem z tamtą komendą, w tej samej transakcji, w której
-znika ostatni wiersz `product_multimedia`.
+1. **Catalog nie miał `Messaging:ListenQueueName`**, więc nie był związany z wymianą `erp.events`.
+   Fanout kopiuje kopertę wyłącznie do związanych kolejek — moduł nie dostawał nawet tego, co sam
+   opublikował. Publikacja się udawała, outbox pustoszał, dead letters były puste.
+2. **Konsumenci przyjmowali `IServiceProvider`** w sygnaturze, żeby sięgnąć po kluczowany
+   `IArtifactStore`. Wolverine 6 odrzuca takie sygnatury (`ServiceLocationPolicy.NotAllowed`) —
+   handler nie powstawał, a koperta lądowała jako „No known handler". Dotyczyło to tak samo
+   `ArtifactDerivativesRequestedHandler`, jak i `ArtifactDeletionRequestedHandler`, czyli
+   **pozycja 4 tej tabeli też nigdy nie zadziałała**. Rozwiązanie: `IArtifactStoreResolver`.
+
+Pomiary z przebiegu potwierdzającego: wariant gotowy **0,25 s** po rejestracji dla zdjęcia
+12 Mpx i **1,6 s** dla 90 Mpx. To szybciej, niż użytkownik zdąży zatwierdzić modal — kafelek
+pojawia się od razu z miniaturką, a zaślepka typu pliku jest w praktyce ścieżką awaryjną,
+nie normalnym etapem. Podmiana przez `AggregateChanged` → SignalR działa i została sprawdzona
+na biernej karcie przeglądarki: jedno odpytanie po pchnięciu, bez pętli odpytującej.
+
+### Jak domknięta jest kaskada z pozycji 5
+
+Wyzwalaczem jest odpięcie referencji, którego wcześniej w module nie było: komendy
+`ProductRemoveMultimediaCommand` (zdejmuje wskazane pliki) i `ProductSetMultimediaCommand`
+(podmienia całą galerię; pusta lista ją czyści). Obie metody agregatu zwracają **zasoby faktycznie
+odpięte**, a handler przekazuje tę listę do `IMultimediaCascade` — jeszcze przed commitem, w tej
+samej transakcji.
+
+Kaskada usuwa wyłącznie zasoby `Owned`, którym po tej operacji nie zostaje żadna referencja,
+i wypuszcza dla nich `ArtifactDeletionRequested` przez outbox — tak samo jak jawne
+`MultimediaRemoveCommand` (§4b). Pozycje `Library` zostają nietknięte, także przy zerowym liczniku:
+to jest dokładnie ten wariant, który §4c odrzuca.
+
+Jedna rzecz jest tu nieoczywista i dlatego ma własną metodę zapytania. Licznik referencji jedzie
+z bazy, w której odpięte przed chwilą wiersze `product_multimedia` **jeszcze są** — transakcja nie
+jest zatwierdzona. Zwykłe `CountReferencesAsync` pokazałoby stan sprzed odpięcia i kaskada nigdy
+by nie zadziałała, więc kaskada pyta `CountReferencesExceptAsync(uuids, productUuid)`: referencje
+z pominięciem produktu, który je właśnie stracił. To jest stan po zapisie, bez zaglądania
+w ChangeTracker z warstwy, która o EF nie wie. Zasób `Owned` z definicji ma jednego właściciela,
+więc wykluczenie jednego produktu wystarcza także wtedy, gdy w tym samym chunku odpina się
+kilka celów.
+
+Granice kaskady są przypięte testami (`MultimediaCascadeTests`, `ProductMultimediaLinkTests`) —
+to jedyne miejsce, w którym plik użytkownika znika bez jawnej komendy „usuń zasób”.
 
 ---
 
 ## 7. Co zostało do weryfikacji
 
-Kod nie był jeszcze uruchomiony na żywym MinIO. Do sprawdzenia przy pierwszym przebiegu:
+Ścieżka wgrywania i miniaturek przeszła już na żywym MinIO (konto `catalog`, nie root):
+bilet → `PUT` do magazynu → rejestracja → promocja do `assets/` → warianty pod
+`derivatives/{uuid:N}/{thumb|preview}` → endpoint wariantu → miniaturka w tabeli. Zamknięte tym
+samym przebiegiem: **`minio-init` zakłada konto i politykę**, **`CopyObject` przy promocji** oraz
+**Skia na maszynie deweloperskiej**.
 
-- **`minio-init` faktycznie zakłada konto i politykę**, a Catalog na koncie `catalog` (nie root)
-  potrafi założyć kubełek i ustawić lifecycle. To najbardziej prawdopodobne miejsce na braki
-  w polityce — objawią się jako `AccessDenied` w logu startowym modułu, bez przewracania hosta
-  (`ArtifactBucketInitializer` łapie wyjątek świadomie).
-- **`CopyObject` przy promocji** — API Minio 7.0.0 zweryfikowane wyłącznie kompilatorem.
+Nadal do sprawdzenia:
+
 - **Reguła lifecycle z dwoma wpisami naraz** (`erp-staging-cleanup` + `erp-artifact-retention`
-  na kubełku `transient`).
-- **Natywna Skia w obrazie kontenerowym.** Lokalnie ładuje się poprawnie (dowodzą tego testy
-  `ImageDerivativeGeneratorTests`), ale `SkiaSharp.NativeAssets.Linux.NoDependencies` musi
-  jeszcze trafić do obrazu wdrożeniowego. Brak `libSkiaSharp.so` nie objawia się przy starcie —
-  dopiero przy pierwszym wgranym zdjęciu, w konsumencie działającym w tle.
-- **Migracja danych deweloperskich**: istniejące obiekty leżą pod płaskim kluczem `{uuid:N}`,
-  a kod adresuje `assets/{uuid:N}`. Dotychczasowe miniaturki przestaną się wyświetlać. Kubełki
-  zmieniły też nazwy (`erp-catalog-media` zamiast `erp-media`), więc najprościej jest wyczyścić
-  wolumen MinIO i wgrać multimedia od nowa — dane są deweloperskie.
+  na kubełku `transient`) — kubełek `media` nie ma retencji, więc przebieg z multimediami tego
+  nie dotknął.
+- **Natywna Skia w obrazie kontenerowym.** Lokalnie ładuje się poprawnie, ale
+  `SkiaSharp.NativeAssets.Linux.NoDependencies` musi jeszcze trafić do obrazu wdrożeniowego.
+  Brak `libSkiaSharp.so` nie objawia się przy starcie — dopiero przy pierwszym wgranym zdjęciu,
+  w konsumencie działającym w tle.
+- **Kasowanie plików (pozycja 4 tabeli wyżej)** — konsument był martwy z tych samych dwóch
+  powodów co miniaturki i po naprawie nie był jeszcze wywołany na żywym magazynie.
+- **Zasoby wgrane, zanim miniaturki zaczęły działać**, nie mają wariantów: zdarzenie leci raz,
+  przy rejestracji. Akcja „Generuj miniatury" w panelu multimediów jest dziś zaślepką
+  (`console.log`), więc nie ma czym ich nadrobić poza ponownym wgraniem.
+- **Migracja danych deweloperskich**: obiekty sprzed zmiany kluczy leżą pod płaskim `{uuid:N}`,
+  a kod adresuje `assets/{uuid:N}`. Kubełki zmieniły też nazwy (`erp-catalog-media` zamiast
+  `erp-media`), więc najprościej jest wyczyścić wolumen MinIO i wgrać multimedia od nowa —
+  dane są deweloperskie.
 
 ### Frontend: kontrakt NSwag się zmienił
 
@@ -416,7 +456,12 @@ Wymaga regeneracji klienta w `frontend/libs/modules/catalog/data-access`:
 
 - `MultimediaDto` ma nowe pola `referenceCount` i `hasDerivatives`,
 - doszedł endpoint `multimedia/batch-remove` (`MultimediaRemoveCommand`),
-- doszedł endpoint `multimedia/content/{uuid}/{variant}`.
+- doszedł endpoint `multimedia/content/{uuid}/{variant}`,
+- doszły endpointy `product/batch-remove-multimedia` i `product/batch-set-multimedia`.
+
+Dwa ostatnie są już w `api-client.ts` **dopisane ręcznie**, w kształcie, który wygeneruje NSwag
+(sygnatury metod, nazwy typów i trasy zgadzają się z endpointami) — panel usuwania multimediów
+inaczej nie miałby czego wołać. Regeneracja ma je zastąpić bez różnicy w treści.
 
 Wszystkie zmiany są **addytywne**. Front czyta na razie nowe pola przez sygnaturę indeksową
 `MultimediaDto` (`[key: string]: any`) z bezpiecznymi domyślnymi, więc działa przed regeneracją —

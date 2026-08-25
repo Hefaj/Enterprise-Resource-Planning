@@ -295,16 +295,37 @@ public class Product : AggregateRoot
             Uuid, oldModelUuid, modelUuid, oldCategories, CategoryUuids, occurredAt));
     }
 
-    /// <summary>Podmienia komplet powiązanych multimediów.</summary>
-    public void SetMultimedia(IEnumerable<Guid> multimediaUuids)
+    /// <summary>
+    /// Podmienia komplet powiązanych multimediów; pusta kolekcja czyści galerię
+    /// (<c>docs/backend/endpoint-naming.md</c> §2).
+    ///
+    /// <para>Zwraca zasoby, które przy tej podmianie <b>straciły referencję z tego produktu</b> —
+    /// woła o nie handler, żeby dopiąć kaskadę dla plików <c>Owned</c>
+    /// (<c>docs/backend/media-storage.md</c> §4c). Agregat sam nic nie kasuje: o cudzym cyklu
+    /// życia nie wie i wiedzieć nie ma.</para>
+    ///
+    /// <para>Wymaga agregatu wczytanego w zakresie <c>Full</c> — tak samo jak
+    /// <see cref="AddMultimedia"/>. Na niewczytanej kolekcji wyczyszczenie zobaczyłoby pustkę
+    /// i nie usunęło z bazy niczego, milcząc przy tym o powodzeniu.</para>
+    /// </summary>
+    public IReadOnlyList<Guid> SetMultimedia(IEnumerable<Guid> multimediaUuids)
     {
         ArgumentNullException.ThrowIfNull(multimediaUuids);
 
+        var target = multimediaUuids.Distinct().ToList();
+        var detached = _multimedia
+            .Select(m => m.MultimediaUuid)
+            .Where(uuid => !target.Contains(uuid))
+            .Distinct()
+            .ToList();
+
         _multimedia.Clear();
-        foreach (var multimediaUuid in multimediaUuids.Distinct())
+        foreach (var multimediaUuid in target)
         {
             _multimedia.Add(new ProductMultimediaLink(Uuid, multimediaUuid));
         }
+
+        return detached;
     }
 
     /// <summary>
@@ -332,6 +353,40 @@ public class Product : AggregateRoot
                 _multimedia.Add(new ProductMultimediaLink(Uuid, multimediaUuid));
             }
         }
+    }
+
+    /// <summary>
+    /// Odpina wskazane multimedia od produktu, zostawiając pozostałe.
+    ///
+    /// <para>Zasób, którego przy produkcie nie ma, jest pomijany po cichu — dokładnie z tego
+    /// samego powodu, dla którego <see cref="AddMultimedia"/> po cichu pomija powtórzenia:
+    /// operacja kończy się stanem, o który wołającemu chodziło, a przy operacji masowej na
+    /// tysiącach produktów odmowa wywracałaby całe paczki przez jedno odpięcie zrobione
+    /// wcześniej ręcznie.</para>
+    ///
+    /// <para>Zwraca zasoby faktycznie odpięte — to na ich podstawie handler rozstrzyga kaskadę
+    /// dla plików <c>Owned</c> (<c>docs/backend/media-storage.md</c> §4c).</para>
+    ///
+    /// <para>Wymaga agregatu wczytanego w zakresie <c>Full</c>: na niewczytanej kolekcji nie
+    /// byłoby czego odpiąć, a komenda zameldowałaby sukces.</para>
+    /// </summary>
+    public IReadOnlyList<Guid> RemoveMultimedia(IEnumerable<Guid> multimediaUuids)
+    {
+        ArgumentNullException.ThrowIfNull(multimediaUuids);
+
+        var requested = new HashSet<Guid>(multimediaUuids);
+        if (requested.Count == 0)
+        {
+            return [];
+        }
+
+        var links = _multimedia.Where(m => requested.Contains(m.MultimediaUuid)).ToList();
+        foreach (var link in links)
+        {
+            _multimedia.Remove(link);
+        }
+
+        return [.. links.Select(l => l.MultimediaUuid).Distinct()];
     }
 
     /// <summary>Podmienia komplet gwarancji produktu.</summary>

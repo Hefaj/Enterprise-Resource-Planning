@@ -89,6 +89,20 @@
         "fileName": "Nazwa pliku",
         "mediaType": "Typ",
         "fileSize": "Rozmiar"
+      },
+      "confirm": {
+        "removeSelected": {
+          "title": "Odpiąć zaznaczone multimedia?",
+          "message": "Zaznaczone pliki ({{count}}) zostaną odpięte od swoich produktów. Same pliki zostają w bibliotece mediów — usuwa się je osobno.",
+          "yes": "Odepnij",
+          "no": "Anuluj"
+        },
+        "clearAll": {
+          "title": "Zdjąć wszystkie multimedia?",
+          "message": "Galerie {{count}} produktów zostaną wyczyszczone. Same pliki zostają w bibliotece mediów — usuwa się je osobno.",
+          "yes": "Zdejmij wszystkie",
+          "no": "Anuluj"
+        }
       }
     },
     "delivery": {

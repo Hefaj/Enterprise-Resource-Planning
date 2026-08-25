@@ -77,6 +77,11 @@ public static class ErpArtifactExtensions
             ArtifactStoreKeys.Media,
             (sp, _) => CreateStore(sp, ArtifactStoreKeys.Media));
 
+        // Wybór magazynu po kluczu przyjeżdżającym w kopercie komunikatu — patrz
+        // IArtifactStoreResolver. Rejestracja jawna, bo skan `AddErpModule` nie zna tego
+        // cyklu życia (singleton) i nie sięga do zestawów building blocks.
+        services.AddSingleton<IArtifactStoreResolver, KeyedArtifactStoreResolver>();
+
         services.AddHostedService<ArtifactBucketInitializer>();
 
         return services;

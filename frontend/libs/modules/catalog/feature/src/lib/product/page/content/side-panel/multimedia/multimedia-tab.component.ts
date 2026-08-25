@@ -20,8 +20,10 @@ import {
   BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest,
   CatalogMultimediaOrchestrator,
   CatalogProductOrchestrator,
+  ProductRemoveMultimediaCommand,
   ProductVM,
 } from '@erp/catalog/data-access';
+import { CatalogConfirmDialogService } from '@erp/catalog/ui';
 import { PRODUCT_ADD_MULTIMEDIA_MODAL_ID } from '@erp/catalog/util';
 import { PRODUCT_KEYS } from '../../../../translation/keys';
 import { MultimediaRow } from './multimedia-row.model';
@@ -34,6 +36,13 @@ import { MultimediaInfoCellComponent } from './multimedia-info-cell.component';
  * paczki i pobieramy ją w całości (jednym żądaniem, zbatchowanym dodatkowo przez DataLoader).
  */
 const MULTIMEDIA_CHUNK_SIZE = 30;
+
+/**
+ * Etykieta wywołującego dla zadań zlecanych z tej zakładki. Wraca w `JobDto.queueId` i grupuje
+ * powiadomienia („3 zadania z panelu multimediów") — modal ma tu własny identyfikator, bo tam
+ * jest do czego wrócić przy ponowieniu; te akcje idą wprost z toolbara.
+ */
+const MULTIMEDIA_TAB_QUEUE_ID = 'catalog-product-multimedia-tab';
 
 /**
  * Panel multimediów zaznaczonych produktów — referencyjny konsument zasięgu zaznaczenia
@@ -90,6 +99,7 @@ export class MultimediaTabComponent {
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
   private readonly modalService = inject(ErpModalService);
+  private readonly confirmDialog = inject(CatalogConfirmDialogService);
 
   protected readonly _scopeKind = this.tabStore.scopeKind;
   protected readonly _resolving = this.tabStore.resolving;
@@ -335,15 +345,68 @@ export class MultimediaTabComponent {
     );
   }
 
+  /**
+   * „Zdejmij wszystkie multimedia" z produktów objętych zasięgiem.
+   *
+   * <b>Idzie podmianą galerii na pustą, a nie listą plików do odpięcia</b> — i to jest tu jedyna
+   * nieoczywista decyzja. Przy zaznaczeniu opisanym filtrem panel widzi próbkę kilku produktów,
+   * więc listy plików pozostałych celów po prostu nie zna; zebranie jej wymagałoby pobrania
+   * galerii wszystkich pasujących produktów tylko po to, żeby odesłać ją z powrotem. Komenda
+   * `SetMultimedia` z pustą listą adresuje stan docelowy, jest idempotentna i nie zależy od tego,
+   * co front zdążył wczytać (`docs/backend/endpoint-naming.md` §2).
+   */
   protected onDeleteMass(): void {
-    console.log('Masowe usuwanie multimediów', {
-      targets: this.tabStore.batchTargets(),
-      count: this.tabStore.scopeCount(),
-    });
+    const targets = this.tabStore.batchTargets();
+    const count = this.tabStore.scopeCount();
+
+    this.confirmDialog
+      .confirm(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+
+        void this.productOrchestrator.setMultimediaMultiple(
+          { ...targets, templateCommand: { multimediaUuids: [] } },
+          MULTIMEDIA_TAB_QUEUE_ID,
+        );
+      });
   }
 
+  /**
+   * Odpięcie WSKAZANYCH plików od produktów, przy których wiszą.
+   *
+   * Wiersz panelu to para (produkt, plik), więc jeden zaznaczony plik widoczny pod dwoma
+   * produktami daje dwa wiersze i ma zniknąć spod obu. Dlatego cele składamy jawną listą komend
+   * — po jednej na produkt — zamiast szablonu: każdy produkt zdejmuje własny podzbiór plików.
+   *
+   * Akcja jest bramkowana zasięgiem `explicit` (patrz `setScopes` w toolbarze), więc lista
+   * zaznaczonych wierszy jest tu pełna, a nie próbką.
+   */
   protected onDeleteSelectedMedia(): void {
-    console.log('Usuwanie zaznaczonych multimediów:', this.tabStore.selectedMultimedia());
+    const byProduct = new Map<string, string[]>();
+    for (const row of this.tabStore.selectedChildren()) {
+      const uuids = byProduct.get(row.productUuid) ?? [];
+      uuids.push(row.uuid);
+      byProduct.set(row.productUuid, uuids);
+    }
+
+    if (byProduct.size === 0) return;
+
+    const commands: ProductRemoveMultimediaCommand[] = [...byProduct].map(([uuid, multimediaUuids]) => ({
+      uuid,
+      multimediaUuids,
+    }));
+
+    this.confirmDialog
+      .confirm(PRODUCT_KEYS.base.multimedia.confirm.removeSelected, {
+        count: this.tabStore.selectedMultimedia().size,
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+
+        void this.productOrchestrator
+          .removeMultimediaMultiple({ commands }, MULTIMEDIA_TAB_QUEUE_ID)
+          .then(() => this.tabStore.clearChildSelection());
+      });
   }
 
   protected onClearMediaSelection(): void {

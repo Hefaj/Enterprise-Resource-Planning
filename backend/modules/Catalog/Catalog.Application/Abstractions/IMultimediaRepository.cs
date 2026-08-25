@@ -23,6 +23,17 @@ public interface IMultimediaRepository
     /// <summary>Wczytuje zasób ze śledzeniem zmian; <c>null</c>, gdy nie istnieje.</summary>
     Task<MultimediaAsset?> FindAsync(Guid uuid, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Wczytuje ze śledzeniem zmian te z podanych zasobów, które istnieją.
+    ///
+    /// <para>Jedno zapytanie na wsad, bo woła to kaskada domykająca odpięcie multimediów —
+    /// przy podmianie galerii produktu kandydatów bywa kilkanaście, a pytanie per zasób dałoby
+    /// tyle round-tripów, ile plików.</para>
+    /// </summary>
+    Task<List<MultimediaAsset>> FindManyAsync(
+        IReadOnlyCollection<Guid> uuids,
+        CancellationToken cancellationToken);
+
     /// <summary>Oznacza zasób do usunięcia w bieżącej jednostce pracy.</summary>
     void Remove(MultimediaAsset asset);
 }

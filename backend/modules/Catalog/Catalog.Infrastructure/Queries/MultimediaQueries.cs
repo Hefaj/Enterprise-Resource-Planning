@@ -155,6 +155,30 @@ public sealed class MultimediaQueries : IMultimediaQueries
     }
 
     /// <inheritdoc />
+    public async Task<Dictionary<Guid, int>> CountReferencesExceptAsync(
+        IReadOnlyCollection<Guid> uuids,
+        Guid excludedProductUuid,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+
+        if (uuids.Count == 0)
+        {
+            return [];
+        }
+
+        var uuidList = uuids as List<Guid> ?? uuids.ToList();
+
+        return await _dbContext.Set<ProductMultimediaLink>()
+            .AsNoTracking()
+            .Where(l => uuidList.Contains(l.MultimediaUuid) && l.ProductUuid != excludedProductUuid)
+            .GroupBy(l => l.MultimediaUuid)
+            .Select(g => new { MultimediaUuid = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.MultimediaUuid, x => x.Count, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<List<Guid>> GetExistingUuidsAsync(
         IReadOnlyCollection<Guid> uuids,
         CancellationToken cancellationToken)

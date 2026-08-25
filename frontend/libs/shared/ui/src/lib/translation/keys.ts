@@ -221,6 +221,8 @@ export const SHARED_KEYS = {
         identityRoleAddMember: 'shared.jobs.commands.identityRoleAddMember',
         identityRoleRemoveMember: 'shared.jobs.commands.identityRoleRemoveMember',
         catalogProductAddMultimedia: 'shared.jobs.commands.catalogProductAddMultimedia',
+        catalogProductRemoveMultimedia: 'shared.jobs.commands.catalogProductRemoveMultimedia',
+        catalogProductSetMultimedia: 'shared.jobs.commands.catalogProductSetMultimedia',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',

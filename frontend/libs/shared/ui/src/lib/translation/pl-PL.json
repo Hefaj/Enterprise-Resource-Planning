@@ -215,7 +215,9 @@
       "identityRoleRemovePermission": "Usunięcie uprawnienia z roli",
       "identityRoleAddMember": "Dodanie roli składowej",
       "identityRoleRemoveMember": "Usunięcie roli składowej",
-      "catalogProductAddMultimedia": "Dodanie multimediów"
+      "catalogProductAddMultimedia": "Dodanie multimediów",
+      "catalogProductRemoveMultimedia": "Odpięcie multimediów",
+      "catalogProductSetMultimedia": "Podmiana galerii"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

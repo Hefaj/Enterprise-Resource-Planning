@@ -95,6 +95,20 @@ export const PRODUCT_KEYS = {
           mediaType: 'product.base.multimedia.columns.mediaType',
           fileSize: 'product.base.multimedia.columns.fileSize',
         },
+        confirm: {
+          removeSelected: {
+            title: 'product.base.multimedia.confirm.removeSelected.title',
+            message: 'product.base.multimedia.confirm.removeSelected.message',
+            yes: 'product.base.multimedia.confirm.removeSelected.yes',
+            no: 'product.base.multimedia.confirm.removeSelected.no',
+          },
+          clearAll: {
+            title: 'product.base.multimedia.confirm.clearAll.title',
+            message: 'product.base.multimedia.confirm.clearAll.message',
+            yes: 'product.base.multimedia.confirm.clearAll.yes',
+            no: 'product.base.multimedia.confirm.clearAll.no',
+          },
+        },
       },
       delivery: {
         shipping: {

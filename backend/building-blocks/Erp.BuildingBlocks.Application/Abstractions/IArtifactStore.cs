@@ -219,3 +219,28 @@ public interface IArtifactStore
     /// </summary>
     Task DeleteAsync(Guid artifactUuid, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Wybór magazynu po kluczu z <see cref="ArtifactStoreKeys"/>, znanym dopiero w czasie działania.
+///
+/// <para><b>Po co osobna abstrakcja, skoro kontener już to potrafi.</b> Konsument komunikatu
+/// dostaje klucz magazynu w kopercie, więc nie da się go wstrzyknąć atrybutem
+/// <c>[FromKeyedServices]</c> — trzeba zapytać w trakcie obsługi. Naturalnym odruchem jest
+/// przyjęcie <see cref="IServiceProvider"/> w sygnaturze handlera i wywołanie
+/// <c>GetRequiredKeyedService</c>, ale Wolverine generuje kod handlerów z góry i od wersji 6
+/// odrzuca takie sygnatury (<c>ServiceLocationPolicy.NotAllowed</c>) — handler nie powstaje,
+/// a komunikat ląduje jako „No known handler”. Objaw jest cichy: nic nie wybucha, po prostu
+/// nic się nie dzieje.</para>
+///
+/// <para>Ta abstrakcja przenosi więc service location tam, gdzie jest legalne — do adaptera
+/// w warstwie infrastruktury — a handler dostaje zwykłą, jawną zależność.</para>
+/// </summary>
+public interface IArtifactStoreResolver
+{
+    /// <summary>
+    /// Zwraca magazyn zarejestrowany pod <paramref name="storeKey"/>. Rzuca, gdy klucz jest
+    /// nieznany — koperta wskazująca nieistniejący magazyn to błąd konfiguracji modułu,
+    /// nie sytuacja do cichego pominięcia.
+    /// </summary>
+    IArtifactStore Resolve(string storeKey);
+}

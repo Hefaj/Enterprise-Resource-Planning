@@ -40,10 +40,21 @@ internal sealed class FakeMultimediaQueries : IMultimediaQueries
         CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
+    /// <summary>Ile referencji ma zasób POZA produktem, od którego go właśnie odpięto.</summary>
+    public Dictionary<Guid, int> ReferencesExcludingOwner { get; init; } = [];
+
     public Task<Dictionary<Guid, int>> CountReferencesAsync(
         IReadOnlyCollection<Guid> uuids,
         CancellationToken cancellationToken)
         => throw new NotSupportedException();
+
+    public Task<Dictionary<Guid, int>> CountReferencesExceptAsync(
+        IReadOnlyCollection<Guid> uuids,
+        Guid excludedProductUuid,
+        CancellationToken cancellationToken)
+        => Task.FromResult(uuids
+            .Where(uuid => ReferencesExcludingOwner.GetValueOrDefault(uuid) > 0)
+            .ToDictionary(uuid => uuid, uuid => ReferencesExcludingOwner[uuid]));
 
     public Task<HashSet<Guid>> GetKnownArtifactUuidsAsync(
         IReadOnlyCollection<Guid> artifactUuids,

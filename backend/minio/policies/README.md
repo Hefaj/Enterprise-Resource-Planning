@@ -24,7 +24,7 @@ do kubełka, a polityka S3 nie zna pojęcia „użytkownik ERP".
 ## Dodanie modułu
 
 1. Skopiuj [`catalog.json`](./catalog.json), podmień nazwy kubełków na `erp-{moduł}-*`.
-2. Dopisz moduł do pętli `MODULES` w usłudze `minio-init` w `docker-compose.yml`.
+2. Dopisz moduł do pętli `for M in catalog ...` w usłudze `minio-init` w `docker-compose.yml`.
 3. W `appsettings.Development.json` modułu ustaw `Artifacts:AccessKey` = nazwa modułu,
    `Artifacts:SecretKey` = `{moduł}12345` (dev) i kubełki w `Artifacts:Stores`.
 

@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.ILM;
+using Minio.Exceptions;
+using System.Net.Sockets;
 
 namespace Erp.BuildingBlocks.Artifacts;
 
@@ -179,12 +181,55 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
             catch (Exception ex)
 #pragma warning restore CA1031
             {
-                LogBucketSetupFailed(_logger, key, store.BucketName, _options.Endpoint, ex);
+                LogBucketSetupFailed(_logger, key, store.BucketName, _options.Endpoint, Diagnose(ex, _options), ex);
             }
         }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    /// <summary>
+    /// Kody, którymi S3 odpowiada na problem z <b>tożsamością</b>, a nie z żądaniem. Sprawdzane
+    /// w treści wyjątku, bo SDK mapuje je niejednolicie: część trafia na własne typy
+    /// (<see cref="AccessDeniedException"/>), część zostaje surowym <c>ErrorResponseException</c>
+    /// z kodem wyłącznie w komunikacie.
+    /// </summary>
+    private static readonly string[] AuthErrorCodes =
+        ["InvalidAccessKeyId", "SignatureDoesNotMatch", "AccessDenied"];
+
+    /// <summary>
+    /// Zamienia wyjątek z magazynu na wskazówkę, od czego zacząć naprawę.
+    ///
+    /// <para>Bez tego rozróżnienia log mówi tylko „nie udało się", a trzy zupełnie różne przyczyny
+    /// — martwy adres, nieistniejące konto, za wąska polityka — wyglądają identycznie. W dev
+    /// dominuje środkowa: konto zakłada <c>minio-init</c> z docker-compose i wystarczy postawić
+    /// stack usługa po usłudze, żeby zostało pominięte. Moduł startuje wtedy normalnie
+    /// (patrz komentarz klasy), więc objaw wychodzi dopiero przy pierwszym wgrywanym pliku —
+    /// daleko od przyczyny.</para>
+    /// </summary>
+    private static string Diagnose(Exception exception, ErpArtifactOptions options)
+    {
+        for (var ex = exception; ex is not null; ex = ex.InnerException)
+        {
+            if (ex is ConnectionException or HttpRequestException or SocketException)
+            {
+                return $"Magazyn nie odpowiada pod `{options.Endpoint}` — sprawdź, czy kontener MinIO stoi "
+                    + "i czy port zgadza się z `Artifacts:Endpoint`.";
+            }
+
+            if (ex is AccessDeniedException or AuthorizationException or ForbiddenException
+                || Array.Exists(AuthErrorCodes, code => ex.Message.Contains(code, StringComparison.OrdinalIgnoreCase)))
+            {
+                return $"Magazyn odrzucił konto `{options.AccessKey}`. W dev prawie zawsze znaczy to, że konto "
+                    + "nie istnieje, bo nie wstał kontener `minio-init` — postaw go przez "
+                    + "`podman compose -f backend/docker-compose.yml up minio-init`. Jeśli konto istnieje, "
+                    + "to jego polityka nie daje `s3:CreateBucket` ani `s3:PutLifecycleConfiguration` "
+                    + "na tym kubełku (patrz backend/minio/policies/README.md).";
+            }
+        }
+
+        return "Przyczyna nie jest typowa — szczegóły w wyjątku poniżej.";
+    }
 
     private async Task EnsureBucketAsync(string bucketName, CancellationToken cancellationToken)
     {
@@ -267,11 +312,12 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Error,
         Message = "Nie udało się przygotować magazynu {Store} (kubełek {Bucket}) pod adresem {Endpoint}. "
-            + "Operacje na plikach będą kończyć się błędem do czasu naprawy.")]
+            + "{Hint} Operacje na plikach będą kończyć się błędem do czasu naprawy.")]
     private static partial void LogBucketSetupFailed(
         ILogger logger,
         string store,
         string bucket,
         string endpoint,
+        string hint,
         Exception exception);
 }

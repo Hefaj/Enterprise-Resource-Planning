@@ -1,7 +1,7 @@
 using Catalog.Application.Abstractions;
 using Catalog.Application.ExportRuns;
+using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Api.Contracts;
-using Erp.BuildingBlocks.Application.Abstractions;
 using FastEndpoints;
 using P = Erp.BuildingBlocks.Contracts.Permissions;
 
@@ -26,12 +26,12 @@ namespace Catalog.ExportRuns.Command;
 public sealed class ExportRunCreateCommandEndpoint : Endpoint<ExportRunCreateCommand, BatchResult>
 {
     private readonly IExportRunRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICommandDispatcher _dispatcher;
 
-    public ExportRunCreateCommandEndpoint(IExportRunRepository repository, IUnitOfWork unitOfWork)
+    public ExportRunCreateCommandEndpoint(IExportRunRepository repository, ICommandDispatcher dispatcher)
     {
         _repository = repository;
-        _unitOfWork = unitOfWork;
+        _dispatcher = dispatcher;
     }
 
     public override void Configure()
@@ -52,10 +52,10 @@ public sealed class ExportRunCreateCommandEndpoint : Endpoint<ExportRunCreateCom
     {
         ArgumentNullException.ThrowIfNull(req);
 
-        // Endpoint pojedynczej komendy sam wyznacza granicę transakcji — handler świadomie
-        // nie woła IUnitOfWork (patrz docs/backend/cqrs.md §3).
-        var runUuid = await req.ExecuteAsync(ct);
-        await _unitOfWork.SaveChangesAsync(ct);
+        // Granicę transakcji wyznacza pipeline komend — handler świadomie nie woła IUnitOfWork
+        // (patrz docs/backend/cqrs.md §3). Powtórzone żądanie z tym samym `X-Request-Id` nie
+        // zleci drugiego eksportu, tylko odda identyfikator pierwszego przebiegu.
+        var runUuid = await _dispatcher.SendAsync<ExportRunCreateCommand, Guid>(req, ct);
 
         var run = await _repository.FindAsync(runUuid, ct)
             ?? throw new InvalidOperationException($"Przebieg eksportu {runUuid} zniknął zaraz po utworzeniu.");

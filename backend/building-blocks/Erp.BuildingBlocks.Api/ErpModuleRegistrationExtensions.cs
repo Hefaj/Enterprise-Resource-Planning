@@ -3,6 +3,7 @@ using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -44,6 +45,7 @@ public static class ErpModuleRegistrationExtensions
     private static readonly Type CommandHandlerWithResult = typeof(ICommandHandler<,>);
     private static readonly Type CommandHandlerWithoutResult = typeof(ICommandHandler<>);
     private static readonly Type BatchRuleDefinition = typeof(IBatchRule<>);
+    private static readonly Type ValidatorDefinition = typeof(IValidator<>);
 
     /// <summary>
     /// Skanuje zestawy modułu i rejestruje wykryte usługi jako <c>Scoped</c>.
@@ -79,6 +81,7 @@ public static class ErpModuleRegistrationExtensions
         {
             RegisterCommandHandlers(services, type, handledCommands);
             RegisterBatchValidation(services, type);
+            RegisterCommandValidators(services, type);
             RegisterMatchingInterface(services, type);
         }
 
@@ -139,6 +142,30 @@ public static class ErpModuleRegistrationExtensions
         if (isRule || typeof(IBatchValidator).IsAssignableFrom(type))
         {
             services.TryAddScoped(type);
+        }
+    }
+
+    /// <summary>
+    /// Walidatory wejścia komend (FluentValidation) pod ZAMKNIĘTYM <c>IValidator&lt;TCommand&gt;</c> —
+    /// stąd bierze je <c>ValidationCommandMiddleware</c>.
+    ///
+    /// <para><c>TryAddEnumerable</c>, a nie <c>TryAddScoped</c>: dla jednej komendy może istnieć
+    /// kilka walidatorów (np. reguły wspólne dla rodziny komend obok reguł tej jednej), a każdy
+    /// z nich ma się wykonać. Wariant <c>TryAdd</c> zostawiłby po cichu pierwszy z brzegu —
+    /// i nikt by nie zauważył, że druga połowa reguł nie działa.</para>
+    ///
+    /// <para>Walidator <b>abstrakcyjnej klasy bazowej</b> komend nie zostanie tu wykryty dla jej
+    /// potomków: rozstrzyga zamknięty typ generyczny, a nie hierarchia. To jest świadome —
+    /// middleware szuka dokładnie <c>IValidator&lt;TCommand&gt;</c> dla wysłanego typu.</para>
+    /// </summary>
+    private static void RegisterCommandValidators(IServiceCollection services, Type type)
+    {
+        foreach (var contract in type.GetInterfaces())
+        {
+            if (contract.IsGenericType && contract.GetGenericTypeDefinition() == ValidatorDefinition)
+            {
+                services.TryAddEnumerable(ServiceDescriptor.Scoped(contract, type));
+            }
         }
     }
 

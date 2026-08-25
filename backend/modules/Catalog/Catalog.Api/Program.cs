@@ -3,6 +3,7 @@ using Catalog.Infrastructure;
 using Catalog.Infrastructure.Jobs;
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api;
+using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Artifacts;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
@@ -29,6 +30,11 @@ builder.Services.AddErpModule(
 builder.AddErpMessaging<CatalogDbContext>(typeof(CatalogDbContext).Assembly);
 
 // Silnik zadań masowych: trwałe zadania w schemacie `catalog`, wznawiane po restarcie.
+// Pipeline komend: logowanie → walidacja wejścia → jednostka pracy → idempotencja.
+// Parametr typowy wskazuje, w czyim schemacie leżą klucze idempotencji — muszą być
+// w tej samej bazie co dane, żeby klucz i skutek komendy były jednym commitem.
+builder.Services.AddErpCommands<CatalogDbContext>(builder.Configuration);
+
 builder.Services.AddErpBulkJobs<CatalogDbContext>(builder.Configuration);
 
 // Magazyn artefaktów (MinIO) + założenie kubełka przy starcie, oraz runner przebiegów eksportu.

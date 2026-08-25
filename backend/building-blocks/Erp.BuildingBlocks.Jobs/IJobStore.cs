@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Application.Commands;
 using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +46,7 @@ public sealed class JobStore<TContext> : IJobStore
     private readonly IIntegrationEventPublisher _publisher;
     private readonly IExecutionContext _executionContext;
     private readonly IJobItemBulkWriter _itemWriter;
+    private readonly IIdempotencyStore _idempotency;
     private readonly IClock _clock;
 
     public JobStore(
@@ -51,12 +54,14 @@ public sealed class JobStore<TContext> : IJobStore
         IIntegrationEventPublisher publisher,
         IExecutionContext executionContext,
         IJobItemBulkWriter itemWriter,
+        IIdempotencyStore idempotency,
         IClock clock)
     {
         _dbContext = dbContext;
         _publisher = publisher;
         _executionContext = executionContext;
         _itemWriter = itemWriter;
+        _idempotency = idempotency;
         _clock = clock;
     }
 
@@ -71,6 +76,27 @@ public sealed class JobStore<TContext> : IJobStore
         CancellationToken cancellationToken)
     {
         var now = _clock.UtcNow;
+
+        // ── Krok 0: czy tego zadania już nie zlecono ────────────────────────────────────────
+        //
+        // Zlecenie operacji masowej jest z definicji nieidempotentne: powtórzone żądanie tworzy
+        // DRUGIE zadanie na tych samych 50 tys. produktów. Dla `set-*` skończy się to podwójną
+        // pracą, dla operacji dokładających (dodanie multimediów, nadanie roli) — podwójnym
+        // skutkiem. Klucz z nagłówka `X-Request-Id` zamyka to okno; bez nagłówka wszystko
+        // działa jak przedtem.
+        var idempotencyKey = _executionContext.RequestId is { Length: > 0 } requestId
+            ? IdempotencyCommandMiddleware.BuildKey(requestId, commandType)
+            : null;
+
+        if (idempotencyKey is not null)
+        {
+            var recorded = await _idempotency.FindAsync(idempotencyKey, cancellationToken).ConfigureAwait(false);
+
+            if (recorded?.ResultJson is not null)
+            {
+                return JsonSerializer.Deserialize<Guid>(recorded.ResultJson);
+            }
+        }
 
         var job = Job.Create(
             commandType,
@@ -111,6 +137,18 @@ public sealed class JobStore<TContext> : IJobStore
         // na nieszkodliwy: awaria przed krokiem 3 zostawia szkic, którego nikt nie widzi
         // i nikt nie wykona.
         job.MarkAccepted();
+
+        // Klucz idempotencji wchodzi do TEJ transakcji — tej samej, która czyni zadanie faktem.
+        // Zapisany wcześniej blokowałby zlecenie, które ostatecznie nie powstało; zapisany
+        // później zostawiałby okno na drugie zadanie.
+        if (idempotencyKey is not null)
+        {
+            _idempotency.Stage(
+                idempotencyKey,
+                commandType,
+                _executionContext.UserId,
+                JsonSerializer.Serialize(job.Uuid));
+        }
 
         await _publisher.PublishAsync(
             new JobAccepted(

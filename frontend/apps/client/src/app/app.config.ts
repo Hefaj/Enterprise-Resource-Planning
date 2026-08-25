@@ -11,7 +11,7 @@ import { remoteApiProviders } from './remote-api.providers';
 import { erpPermissionErrorInterceptor } from './erp-permission-error.interceptor';
 import { provideTaiga } from '@taiga-ui/core';
 import { TUI_LANGUAGE } from '@taiga-ui/i18n';
-import { ErpLanguageService, AppLanguage, erpClientIdInterceptor, SIGNALR_ACCESS_TOKEN_FACTORY, ERP_LOGOUT_HANDLER } from '@erp/shared/data-access';
+import { ErpLanguageService, AppLanguage, erpClientIdInterceptor, erpRequestIdInterceptor, SIGNALR_ACCESS_TOKEN_FACTORY, ERP_LOGOUT_HANDLER } from '@erp/shared/data-access';
 import { erpAuthInterceptor, ErpAuthService } from '@erp/shared/auth';
 import { provideAuth } from 'angular-auth-oidc-client';
 
@@ -33,7 +33,17 @@ export const appConfig: ApplicationConfig = {
     // i powiadomienie o ich zakończeniu nie ma dokąd trafić (patrz erpClientIdInterceptor).
     // erpAuthInterceptor dokłada `Authorization: Bearer` wyłącznie do żądań pasujących do
     // `secureRoutes` niżej — bez tokenu backend odrzuca każde wywołanie (patrz ErpAuthExtensions).
-    provideHttpClient(withInterceptors([erpAuthInterceptor, erpClientIdInterceptor, erpPermissionErrorInterceptor])),
+    // erpRequestIdInterceptor dokłada X-Request-Id wyłącznie żądaniom wysłanym wewnątrz
+    // `withRequestId(...)` — to klucz idempotencji, po którym backend rozpoznaje ponowienie
+    // tej samej operacji zapisu i nie wykonuje jej drugi raz.
+    provideHttpClient(
+      withInterceptors([
+        erpAuthInterceptor,
+        erpClientIdInterceptor,
+        erpRequestIdInterceptor,
+        erpPermissionErrorInterceptor,
+      ]),
+    ),
     // Authorization Code + PKCE przeciw Keycloakowi — patrz docs/backend/identity-authz.md §5-6.
     provideAuth({
       config: {

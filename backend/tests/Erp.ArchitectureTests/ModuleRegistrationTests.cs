@@ -3,6 +3,7 @@ using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
@@ -81,6 +82,24 @@ public class ModuleRegistrationTests
         services.ShouldContain(d => d.ServiceType == typeof(SampleBatchValidator));
     }
 
+    /// <summary>
+    /// Walidator wejścia komendy musi wisieć pod zamkniętym <c>IValidator&lt;TCommand&gt;</c> —
+    /// pod tym typem szuka go <c>ValidationCommandMiddleware</c>. Rejestracja pod własnym typem
+    /// (jak reguły wsadowe) sprawiłaby, że walidator istnieje, a pipeline go nie widzi.
+    /// </summary>
+    [Fact]
+    public void Walidator_komendy_rejestruje_sie_pod_zamknietym_interfejsem()
+    {
+        var services = Scan();
+
+        var descriptor = services.SingleOrDefault(d =>
+            d.ServiceType == typeof(IValidator<SampleAggregateCommand>));
+
+        descriptor.ShouldNotBeNull();
+        descriptor.ImplementationType.ShouldBe(typeof(SampleAggregateCommandValidator));
+        descriptor.Lifetime.ShouldBe(ServiceLifetime.Scoped);
+    }
+
     [Fact]
     public void Implementacja_nazwana_po_interfejsie_rejestruje_sie_pod_nim()
     {
@@ -134,6 +153,11 @@ internal sealed class SampleAggregateCommandHandler : ICommandHandler<SampleAggr
 {
     public Task<Guid> ExecuteAsync(SampleAggregateCommand command, CancellationToken ct = default)
         => Task.FromResult(command.Uuid);
+}
+
+internal sealed class SampleAggregateCommandValidator : AbstractValidator<SampleAggregateCommand>
+{
+    public SampleAggregateCommandValidator() => RuleFor(c => c.Uuid).NotEmpty();
 }
 
 internal sealed class SamplePlainCommand : ICommand<Guid>;

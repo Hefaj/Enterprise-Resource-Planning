@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Domain;
+using Erp.BuildingBlocks.Persistence.Idempotency;
 using Microsoft.EntityFrameworkCore;
 
 namespace Erp.BuildingBlocks.Persistence;
@@ -37,6 +38,13 @@ public abstract class ErpDbContext : DbContext
         modelBuilder.HasDefaultSchema(Schema);
 
         base.OnModelCreating(modelBuilder);
+
+        // Rejestr idempotencji dostaje KAŻDY moduł, bez opt-inu — inaczej klucz musiałby
+        // mieszkać poza schematem modułu, a wtedy nie dałoby się go zatwierdzić w jednej
+        // transakcji ze skutkiem komendy, o co w całym mechanizmie chodzi (patrz
+        // Erp.BuildingBlocks.Application/Abstractions/IIdempotencyStore.cs). Moduł, który
+        // nie ma endpointów zapisu, płaci za to pustą tabelą.
+        modelBuilder.ApplyConfiguration(new IdempotencyRecordConfiguration());
 
         ApplyAggregateConventions(modelBuilder);
     }

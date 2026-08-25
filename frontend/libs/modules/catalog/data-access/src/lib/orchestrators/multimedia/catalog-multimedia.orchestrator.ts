@@ -1,5 +1,5 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
-import { BaseOrchestrator, JobMeta, OrchestratorConfig } from '@erp/shared/data-access';
+import { BaseOrchestrator, JobMeta, OrchestratorConfig, withRequestId } from '@erp/shared/data-access';
 import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
 import { MultimediaVM } from './multimedia.view-model';
 import { firstValueFrom, Observable } from 'rxjs';
@@ -104,7 +104,9 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
         sortOrder: index,
       }));
 
-      const result = await firstValueFrom(this.apiClient.multimediaCreateCommand({ commands }));
+      const result = await withRequestId(() =>
+        firstValueFrom(this.apiClient.multimediaCreateCommand({ commands })),
+      );
 
       return result.uuids;
     } catch (err) {
@@ -180,7 +182,7 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
     const meta: JobMeta = { commandName, timestamp: new Date() };
 
     try {
-      const result = await firstValueFrom(send(JSON.stringify(meta)));
+      const result = await withRequestId(() => firstValueFrom(send(JSON.stringify(meta))));
       const jobUuid = result.jobUuid || '';
 
       this.jobService.addJob(jobUuid, queueID, meta);

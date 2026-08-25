@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Application.Commands;
 using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Domain;
 using Erp.BuildingBlocks.Persistence;
@@ -211,6 +212,12 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         {
             executionContext.Set(job.UserId, job.ClientId, job.CorrelationId);
         }
+
+        // Granica transakcji należy do runnera, nie do komendy: chunk to JEDEN commit.
+        // Bez tego przejęcia pipeline komend zatwierdzałby po każdym elemencie — liczniki
+        // zadania i stan danych rozjechałyby się bez żadnego objawu, a wznawianie po restarcie
+        // przestałoby mieć spójny punkt odniesienia.
+        using var transaction = services.GetRequiredService<CommandTransactionScope>().Claim();
 
         var executor = ResolveExecutor(services, job.CommandType);
 

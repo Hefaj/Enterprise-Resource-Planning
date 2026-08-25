@@ -29,6 +29,19 @@ public sealed class ExecutionContextMiddleware
     /// <summary>Nagłówek korelacji; nierozpoznawalna wartość jest ignorowana.</summary>
     public const string CorrelationIdHeader = "X-Correlation-Id";
 
+    /// <summary>
+    /// Nagłówek klucza idempotencji — po nim pipeline komend rozpoznaje ponowienie tego samego
+    /// żądania i oddaje zapamiętany wynik zamiast wykonywać operację drugi raz.
+    ///
+    /// <para>Wartość dłuższa niż <see cref="MaxRequestIdLength"/> jest ODRZUCANA, a nie
+    /// przycinana: klucz idzie wprost do klucza głównego tabeli, a przycięcie skleiłoby dwa
+    /// różne identyfikatory w jeden — czyli oddałoby klientowi cudzy wynik.</para>
+    /// </summary>
+    public const string RequestIdHeader = "X-Request-Id";
+
+    /// <summary>Maksymalna długość klucza idempotencji; z zapasem mieści uuid.</summary>
+    public const int MaxRequestIdLength = 200;
+
     private readonly RequestDelegate _next;
 
     public ExecutionContextMiddleware(RequestDelegate next) => _next = next;
@@ -48,7 +61,13 @@ public sealed class ExecutionContextMiddleware
                 ? parsed
                 : (Guid?)null;
 
-            mutable.Set(userId, clientId, correlationId);
+            var requestId = Trimmed(context.Request.Headers[RequestIdHeader].ToString());
+
+            mutable.Set(
+                userId,
+                clientId,
+                correlationId,
+                requestId?.Length <= MaxRequestIdLength ? requestId : null);
         }
 
         await _next(context).ConfigureAwait(false);

@@ -1,4 +1,5 @@
 using Catalog.Application.Multimedia;
+using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Application.Abstractions;
 using FastEndpoints;
 using Microsoft.Extensions.Options;
@@ -27,13 +28,18 @@ namespace Catalog.Multimedia.Command;
 public sealed class MultimediaCreateCommandEndpoint
     : Endpoint<MultimediaCreateRequest, MultimediaCreateResponse>
 {
+    private readonly ICommandDispatcher _dispatcher;
     private readonly IUnitOfWork _unitOfWork;
     private readonly MultimediaOptions _options;
 
-    public MultimediaCreateCommandEndpoint(IUnitOfWork unitOfWork, IOptions<MultimediaOptions> options)
+    public MultimediaCreateCommandEndpoint(
+        ICommandDispatcher dispatcher,
+        IUnitOfWork unitOfWork,
+        IOptions<MultimediaOptions> options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
+        _dispatcher = dispatcher;
         _unitOfWork = unitOfWork;
         _options = options.Value;
     }
@@ -65,15 +71,18 @@ public sealed class MultimediaCreateCommandEndpoint
 
         var uuids = new List<Guid>(req.Commands.Count);
 
-        foreach (var command in req.Commands)
+        // Jedna transakcja na całą paczkę: granicę przejmuje endpoint, więc pipeline komend
+        // nie zatwierdza po każdym pliku (patrz docs/backend/cqrs.md §3). Katalog, w którym
+        // wylądowała połowa wgranej galerii, byłby gorszy niż odrzucenie całości.
+        using (_dispatcher.OwnTransaction())
         {
-            uuids.Add(await command.ExecuteAsync(ct));
-        }
+            foreach (var command in req.Commands)
+            {
+                uuids.Add(await _dispatcher.SendAsync<MultimediaCreateCommand, Guid>(command, ct));
+            }
 
-        // Jedna transakcja na całą paczkę: handlery świadomie nie wołają SaveChanges, granicę
-        // wyznacza wywołujący (patrz docs/backend/cqrs.md §3). Katalog, w którym wylądowała
-        // połowa wgranej galerii, byłby gorszy niż odrzucenie całości.
-        await _unitOfWork.SaveChangesAsync(ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+        }
 
         await Send.OkAsync(new MultimediaCreateResponse(uuids), ct);
     }

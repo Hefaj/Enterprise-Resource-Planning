@@ -2,7 +2,7 @@ import { Injectable, inject, Injector } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { BaseOrchestrator, JobMeta, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
+import { BaseOrchestrator, JobMeta, OrchestratorConfig, ResolvedDeps, withRequestId } from '@erp/shared/data-access';
 import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
 import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest, BatchCommandOfProductRemoveMultimediaCommandAndSearchProductRequest, BatchCommandOfProductSetMultimediaCommandAndSearchProductRequest, BatchResult } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM, ProductCodeVM, ProductAttributeVM } from './product.view-model';
@@ -317,15 +317,17 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     };
 
     try {
-      const result = await firstValueFrom(
-        // Metadane jadą RAZEM z komendą, nie tylko do lokalnego JobService: backend
-        // przechowuje je przy zadaniu i oddaje w `JobDto.uiMetadata`, dzięki czemu opis
-        // („Zmiana ceny”) przeżywa odświeżenie strony i jest widoczny na innej karcie.
-        this._api.productSetPriceMultipleCommand({
-          ...command,
-          queueId: queueID,
-          uiMetadata: JSON.stringify(meta),
-        })
+      const result = await withRequestId(() =>
+        firstValueFrom(
+          // Metadane jadą RAZEM z komendą, nie tylko do lokalnego JobService: backend
+          // przechowuje je przy zadaniu i oddaje w `JobDto.uiMetadata`, dzięki czemu opis
+          // („Zmiana ceny”) przeżywa odświeżenie strony i jest widoczny na innej karcie.
+          this._api.productSetPriceMultipleCommand({
+            ...command,
+            queueId: queueID,
+            uiMetadata: JSON.stringify(meta),
+          })
+        ),
       );
       const jobUuid = result.jobUuid || '';
 
@@ -355,12 +357,14 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     };
 
     try {
-      const result = await firstValueFrom(
-        this._api.productSetNameMultipleCommand({
-          ...command,
-          queueId: queueID,
-          uiMetadata: JSON.stringify(meta),
-        })
+      const result = await withRequestId(() =>
+        firstValueFrom(
+          this._api.productSetNameMultipleCommand({
+            ...command,
+            queueId: queueID,
+            uiMetadata: JSON.stringify(meta),
+          })
+        ),
       );
       const jobUuid = result.jobUuid || '';
 
@@ -394,12 +398,14 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     };
 
     try {
-      const result = await firstValueFrom(
-        this._api.productAddMultimediaMultipleCommand({
-          ...command,
-          queueId: queueID,
-          uiMetadata: JSON.stringify(meta),
-        })
+      const result = await withRequestId(() =>
+        firstValueFrom(
+          this._api.productAddMultimediaMultipleCommand({
+            ...command,
+            queueId: queueID,
+            uiMetadata: JSON.stringify(meta),
+          })
+        ),
       );
       const jobUuid = result.jobUuid || '';
 
@@ -433,12 +439,14 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     };
 
     try {
-      const result = await firstValueFrom(
-        this._api.productRemoveMultimediaMultipleCommand({
-          ...command,
-          queueId: queueID,
-          uiMetadata: JSON.stringify(meta),
-        })
+      const result = await withRequestId(() =>
+        firstValueFrom(
+          this._api.productRemoveMultimediaMultipleCommand({
+            ...command,
+            queueId: queueID,
+            uiMetadata: JSON.stringify(meta),
+          })
+        ),
       );
       const jobUuid = result.jobUuid || '';
 
@@ -472,12 +480,14 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     };
 
     try {
-      const result = await firstValueFrom(
-        this._api.productSetMultimediaMultipleCommand({
-          ...command,
-          queueId: queueID,
-          uiMetadata: JSON.stringify(meta),
-        })
+      const result = await withRequestId(() =>
+        firstValueFrom(
+          this._api.productSetMultimediaMultipleCommand({
+            ...command,
+            queueId: queueID,
+            uiMetadata: JSON.stringify(meta),
+          })
+        ),
       );
       const jobUuid = result.jobUuid || '';
 

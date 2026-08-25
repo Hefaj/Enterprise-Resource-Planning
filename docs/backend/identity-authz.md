@@ -290,7 +290,7 @@ obiekcie to zadanie z jednym elementem (~1-2 s: `EffectiveChunkSize` = 1, `IdleP
 Trzy konsekwencje przyjęte świadomie:
 
 - odpowiedź to `BatchResult { JobUuid }`, nie wynik operacji;
-- błąd domenowy (`role_cycle_detected`, `role_code_duplicate`) przychodzi w raporcie zadania przez dzwonek powiadomień, nie jako 4xx — dlatego brak middleware mapującego `DomainException` na 422 ([`cqrs.md` §6](./cqrs.md#6-czego-jeszcze-nie-ma)) nie dotyczy już Identity: droga synchroniczna, na której 422 miałoby sens, przestała istnieć;
+- błąd domenowy (`role_cycle_detected`, `role_code_duplicate`) przychodzi w raporcie zadania przez dzwonek powiadomień, nie jako 4xx — mapowanie `DomainException` na 422 ([`cqrs.md` §6](./cqrs.md#6-pipeline-komend)) istnieje, ale Identity go nie używa: droga synchroniczna, na której 422 miałoby sens, przestała istnieć;
 - wiersz w tabeli odświeża się po `AggregateChanged` po commicie chunka, nie po odpowiedzi HTTP.
 
 **Oś „wielu" dla ról to tryb `Commands[]`.** Naturalny przypadek to „dodaj 5 uprawnień do 1 roli",

@@ -322,7 +322,10 @@ public async setPriceMultiple(
   queueID?: string,
 ): Promise<string> {
   try {
-    const result = await firstValueFrom(this._api.productSetPriceMultipleCommand(command));
+    // withRequestId → nagłówek X-Request-Id, czyli klucz idempotencji operacji zapisu.
+    const result = await withRequestId(() =>
+      firstValueFrom(this._api.productSetPriceMultipleCommand(command)),
+    );
     const jobUuid = result.jobUuid || '';
     this.jobService.addJob(jobUuid, queueID, {
       commandName: 'catalog.product.commands.setPrice',
@@ -339,6 +342,23 @@ public async setPriceMultiple(
   }
 }
 ```
+
+### `withRequestId` — każda ścieżka zapisu
+
+**Owijaj nim wywołanie API, nie całą metodę.** `withRequestId` generuje identyfikator operacji
+i trzyma go przez SYNCHRONICZNE wykonanie przekazanej funkcji — tyle, ile trzeba, żeby
+interceptor zdążył dokleić nagłówek `X-Request-Id` przy budowaniu żądania. Backend traktuje ten
+nagłówek jako klucz idempotencji: ponowienie tego samego żądania nie wykonuje operacji drugi raz,
+tylko oddaje wynik pierwszego wykonania — dla zadania masowego oznacza to ten sam `jobUuid`
+zamiast drugiego zadania na tych samych 50 tys. pozycji
+([`cqrs.md` §6](../backend/cqrs.md#6-pipeline-komend)).
+
+Zakres jest zagnieżdżalny: operacja złożona z kilku żądań (wgranie plików → dopięcie ich do
+produktów) może iść pod jednym identyfikatorem, bo backend dokłada do klucza nazwę operacji
+i uuid agregatu. Poza zakresem nagłówek nie leci wcale — identyfikator inny przy każdej próbie
+nie chroniłby przed niczym, a rejestr kluczy rósłby o wiersz na każdy zapis w systemie.
+
+Odczyt (`search`, `get`) nie potrzebuje niczego takiego — jest idempotentny z natury.
 
 ---
 

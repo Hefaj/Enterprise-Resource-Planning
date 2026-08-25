@@ -1,3 +1,4 @@
+using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Jobs;
 using FastEndpoints;
@@ -19,17 +20,29 @@ namespace Erp.BuildingBlocks.Api.Contracts;
 ///
 /// <para><b>Nie zapisuje zmian.</b> <c>SaveChanges</c> woła runner raz na chunk — to właśnie
 /// czyni chunk jedną transakcją. Handlery komend też nie zapisują: zapis należy do tego,
-/// kto wyznacza granicę transakcji.</para>
+/// kto wyznacza granicę transakcji. Od czasu wprowadzenia pipeline'u komend runner deklaruje
+/// to jawnie (<c>ICommandDispatcher.OwnTransaction</c>), zamiast polegać na tym, że nikt
+/// po drodze nie zawoła zapisu.</para>
+///
+/// <para><b>Wykonanie idzie przez pipeline komend</b>, a nie wprost do handlera: element zadania
+/// masowego ma przechodzić przez tę samą walidację wejścia i trafiać do tego samego logu,
+/// co ta sama komenda wysłana żądaniem HTTP. Idempotencja jest tu bezczynna — <c>RequestId</c>
+/// przy wykonaniu w tle jest pusty, a przed powtórzeniem elementu chroni <c>job_item.status</c>.</para>
 /// </summary>
 /// <typeparam name="TCommand">Typ komendy obsługiwanej przez tego egzekutora.</typeparam>
 public sealed class BulkCommandExecutor<TCommand> : IBulkCommandExecutor
     where TCommand : class, IAggregateCommand, ICommand<Guid>, new()
 {
     private readonly ICommandHandler<TCommand, Guid> _handler;
+    private readonly ICommandDispatcher _dispatcher;
 
-    public BulkCommandExecutor(ICommandHandler<TCommand, Guid> handler)
+    /// <param name="handler">Handler komendy — wstrzykiwany mimo dyspozytora, bo to na NIM
+    /// (a nie na komendzie) wisi zdolność do wczytywania wsadowego, patrz <see cref="PreloadAsync"/>.</param>
+    /// <param name="dispatcher">Pipeline komend.</param>
+    public BulkCommandExecutor(ICommandHandler<TCommand, Guid> handler, ICommandDispatcher dispatcher)
     {
         _handler = handler;
+        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
@@ -56,6 +69,6 @@ public sealed class BulkCommandExecutor<TCommand> : IBulkCommandExecutor
         var command = BatchCommandPayload.Materialize<TCommand>(
             commandJson, templateJson: null, aggregateUuid);
 
-        await _handler.ExecuteAsync(command, cancellationToken).ConfigureAwait(false);
+        await _dispatcher.SendAsync<TCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -1,7 +1,7 @@
 # CQRS — komendy i zapytania
 
-**Stan: ✅ obie strony działają.** Middleware komend (walidacja, idempotencja, logowanie) —
-patrz sekcja 6 — jest jedynym elementem, który wciąż nie istnieje.
+**Stan: ✅ obie strony działają**, razem z pipeline'em komend (logowanie, walidacja wejścia,
+jednostka pracy, idempotencja) — patrz sekcja 6.
 
 Odczyt i zapis mają w tym systemie **osobne ścieżki, osobne modele i osobne zasady**. To nie jest
 podział dla samego podziału — obie strony mają sprzeczne wymagania i próba obsłużenia ich jednym
@@ -108,10 +108,11 @@ public override async Task<Guid> ExecuteAsync(ProductSetPriceCommand command, Ca
 
 Dwie rzeczy, które łatwo przeoczyć w tym przykładzie:
 
-- **Handler NIE woła `SaveChangesAsync`.** Granicę transakcji wyznacza wywołujący:
-  `BulkCommandRunner` zatwierdza cały chunk jednym commitem, co jest jedynym sposobem, żeby
-  operacja na 50 tys. produktów nie oznaczała 50 tys. transakcji. Endpoint pojedynczej komendy
-  musi po dyspozycji sam wywołać `IUnitOfWork.SaveChangesAsync()`.
+- **Handler NIE woła `SaveChangesAsync`.** Granicę transakcji wyznacza pipeline komend (§6):
+  komenda wysłana pojedynczo zatwierdza się sama, a wywołujący, który chce jednej transakcji dla
+  paczki komend (`BulkCommandRunner` dla chunka, `MultimediaCreateCommandEndpoint` dla wgranych
+  plików), przejmuje granicę przez `ICommandDispatcher.OwnTransaction()` i zapisuje sam. To jedyny
+  sposób, żeby operacja na 50 tys. produktów nie oznaczała 50 tys. transakcji.
 - **`ProductLoadScope.Root`** mówi, ile agregatu wczytać — `SetPrice` dotyka jednej kolumny,
   więc pełny produkt z pięcioma kolekcjami byłby pięcioma zbędnymi zapytaniami. Handler
   deklaruje ten sam zakres w `PreloadAsync` (z `IBulkPreloadingHandler`), dzięki czemu cały
@@ -245,12 +246,111 @@ To samo dotyczy **nazw klas komend** — `ProductSetPriceCommand` generuje typ
 
 ---
 
-## 6. Czego jeszcze nie ma
+## 6. Pipeline komend
 
-Plan przewiduje middleware komend (`ICommandMiddleware`) w kolejności: logowanie → walidacja
-(FluentValidation) → idempotencja (`X-Request-Id`) → jednostka pracy → mapowanie wyjątków
-na `ProblemDetails`. **Nie jest zaimplementowane.** Dziś handler sam woła `IUnitOfWork`,
-a walidacja żyje wyłącznie w agregacie.
+Każda komenda — wysłana żądaniem HTTP i wykonana jako element zadania masowego — przechodzi
+przez ten sam łańcuch. Dyspozytorem jest `ICommandDispatcher`, a nie `command.ExecuteAsync(ct)`
+z FastEndpoints: tamta szyna rozwiązuje handler z *root* providera (poza żądaniem HTTP nie ma
+z czego wstrzyknąć niczego scoped) i nie ma w niej miejsca, w które dałoby się wpiąć cokolwiek.
+
+```csharp
+var uuid = await _dispatcher.SendAsync<ProductSetPriceCommand, Guid>(command, ct);
+```
+
+Ogniwa, w kolejności od zewnętrznego (kolejność = kolejność rejestracji w `AddErpCommands`):
+
+| # | Ogniwo | Co robi | Dlaczego tu, a nie gdzie indziej |
+|---|---|---|---|
+| 1 | `LoggingCommandMiddleware` | Co, kto, korelacja, czas, skutek | Musi objąć też komendy odrzucone przez walidację i powtórki oddane z rejestru — czyli dokładnie te przypadki, dla których zagląda się do logu |
+| 2 | `ValidationCommandMiddleware` | `IValidator<TCommand>` (FluentValidation), komplet naruszeń naraz | Przed czymkolwiek, co dotyka bazy: komenda z ujemną ceną nie ma po co otwierać transakcji |
+| 3 | `UnitOfWorkCommandMiddleware` | `SaveChangesAsync` po komendzie, która jest właścicielem transakcji | Wyznacza granicę, w której musi się zmieścić ogniwo 4 |
+| 4 | `IdempotencyCommandMiddleware` | `X-Request-Id` → wynik pierwszego wykonania | **Wewnątrz** jednostki pracy — patrz niżej |
+| — | handler komendy | Reguła w agregacie | |
+
+Mapowanie wyjątku na `ProblemDetails` **nie jest ogniwem pipeline'u**, tylko
+`IExceptionHandler` na granicy HTTP (`ErpProblemDetailsHandler`, podpięty w `UseErpApi`).
+Wyjątek z komendy jedzie dwiema drogami — do odpowiedzi HTTP i do `job_item.error_code` —
+a tłumaczenie na status HTTP ma sens tylko na pierwszej z nich.
+
+| Wyjątek | Status | `type` / `errorCode` |
+|---|---|---|
+| `CommandValidationException` | 400 | `command_invalid` + `errors` per pole |
+| `AggregateNotFoundException` | 404 | `aggregate_not_found` |
+| `DomainException` | 422 | kod reguły (`price_negative`…) |
+| `DbUpdateConcurrencyException` | 409 | `concurrency_conflict` |
+| naruszenie klucza idempotencji | 409 | `request_duplicate` |
+| `DbUpdateException` rozpoznany przez `IPersistenceExceptionTranslator` | 422 | kod reguły |
+| reszta | 500 | `internal_error` (bez treści wyjątku poza Development) |
+
+To ten sam słownik kodów, którym opisane są elementy zadań masowych, więc frontend tłumaczy
+obie drogi jednym rejestrem (`shared.errors.codes`).
+
+### Granica transakcji: kto zatwierdza
+
+Domyślnie zatwierdza sama komenda. Wywołujący, który potrzebuje jednej transakcji dla paczki
+komend, deklaruje to jawnie:
+
+```csharp
+using (_dispatcher.OwnTransaction())
+{
+    foreach (var command in req.Commands)
+    {
+        uuids.Add(await _dispatcher.SendAsync<MultimediaCreateCommand, Guid>(command, ct));
+    }
+
+    await _unitOfWork.SaveChangesAsync(ct);   // wszystko albo nic
+}
+```
+
+Robią to dziś dwa miejsca i oba mają na to twardy powód: `MultimediaCreateCommandEndpoint`
+(katalog z połową wgranej galerii jest gorszy niż odrzucenie całości) i `BulkCommandRunner`
+(chunk to jeden commit — na tym stoi wznawianie zadania po restarcie).
+
+### Idempotencja — dlaczego wewnątrz jednostki pracy
+
+Szkic tej sekcji stawiał idempotencję **przed** jednostką pracy. Jest odwrotnie i to jest jedyne
+odstępstwo od pierwotnego planu: klucz musi zostać zatwierdzony **tym samym commitem** co skutek
+komendy. Zapisany osobno wcześniej blokowałby operację, która ostatecznie się nie wykonała;
+zapisany osobno później zostawiałby okno, w którym powtórka wykonuje wszystko drugi raz.
+
+- **Klucz podaje klient** nagłówkiem `X-Request-Id`; bez nagłówka mechanizm jest bezczynny.
+  Serwer nie ma jak odróżnić świadomego powtórzenia operacji od ponowienia po zerwanym
+  połączeniu — z treści żądania to nie wynika, więc zgadywanie blokowałoby to pierwsze.
+- **Postać klucza**: `{requestId}:{nazwa operacji}[:{uuid agregatu}]`. Nazwa operacji rozdziela
+  żądania jednej operacji złożonej (rejestracja plików → dopięcie ich do produktów idą pod tym
+  samym identyfikatorem z frontu), uuid agregatu rozdziela komendy jednej paczki.
+- **Trwałość**: tabela `idempotency_key` w schemacie modułu, wpis wygasa po dobie
+  (`Commands:IdempotencyRetention`), sprząta `IdempotencyCleanupService`. Rejestr w pamięci
+  procesu znikałby przy restarcie i przy drugiej instancji — czyli dokładnie wtedy, kiedy
+  klient ponawia.
+- **Obejmuje też zlecanie operacji masowych** (`JobStore.CreateAsync`): powtórzone żądanie
+  oddaje `jobUuid` pierwszego zadania zamiast tworzyć drugie na tych samych 50 tys. pozycji.
+- **Czego nie łapie**: dwóch RÓWNOLEGŁYCH żądań z tym samym kluczem. Żadne nie widzi jeszcze
+  cudzego wpisu, więc oba wykonają komendę, a przegrany rozbije się o klucz główny i dostanie
+  `409 request_duplicate`. Sekwencyjne ponowienie — czyli przypadek, dla którego to powstało —
+  obsłużone jest w pełni.
+
+Front wysyła nagłówek wyłącznie wewnątrz `withRequestId(...)` (`@erp/shared/data-access`),
+którym owinięte są ścieżki zapisu w orkiestratorach. Poza tym zakresem identyfikator byłby inny
+przy każdej próbie, więc nie chroniłby przed niczym, a rejestr rósłby o wiersz na każdy zapis
+w systemie.
+
+### Walidacja wejścia nie zastępuje reguł w agregacie
+
+`IValidator<TCommand>` sprawdza **kształt komendy** (wymagalność, zakresy, długości) — to, co da
+się rozstrzygnąć bez sięgania do bazy. Reguła zależna od stanu modelu zostaje w agregacie, bo
+tylko tam da się ją wymusić bez wyścigu; reguła zbiorcza zostaje w pre-checku wsadowym
+([`batch-validation.md`](./batch-validation.md)). Komenda bez walidatora przechodzi bez kosztu —
+walidator jest dokładany tam, gdzie ma sens, a nie obowiązkiem przy każdej komendzie.
+
+Kod błędu podany przez `WithErrorCode("amount_negative")` jest kontraktem z frontendem; domyślne
+kody FluentValidation (`NotEmptyValidator`) nim nie są i celowo nie wychodzą na zewnątrz —
+zamiast nich klient dostaje `command_invalid`.
+
+`CommandValidationException` **dziedziczy po `DomainException`** i to jest decyzja, nie skrót:
+ta sama komenda bywa elementem zadania masowego, gdzie odrzucenie ma zachować się jak każde inne
+naruszenie reguły (element odpada, chunk idzie dalej). Wyjątek spoza tej gałęzi wywracałby
+transakcję całego chunka z powodu jednego źle wypełnionego pola.
 
 ---
 

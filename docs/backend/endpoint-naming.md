@@ -127,9 +127,11 @@ Zostaje dokładnie to, czym `Exec` ma być: operacja procesowa, po jednym agrega
 **`Exec` bywa nieidempotentny i to jest jego jedyna cecha wyróżniająca w kontrakcie.**
 `job/retry-failed` ponawia nieudane elementy bez pytania. Ponowienie `SetPrice` jest nieszkodliwe;
 ponowienie „wyślij powiadomienie" albo „zarezerwuj numer" już nie. Komenda `Exec`, która nie jest
-bezpieczna do ponowienia, **musi** to zaznaczyć — dopóki nie ma middleware idempotencji
-([`cqrs.md` §6](./cqrs.md#6-czego-jeszcze-nie-ma)), jedynym mechanizmem jest świadome wyłączenie
-takiego zadania z `retry-failed`.
+bezpieczna do ponowienia, **musi** to zaznaczyć: idempotencja z pipeline'u komend
+([`cqrs.md` §6](./cqrs.md#6-pipeline-komend)) tutaj nie pomaga — chroni przed ponowieniem
+ŻĄDANIA HTTP przez klienta, a `retry-failed` ponawia element zadania po stronie serwera,
+gdzie żadnego `X-Request-Id` nie ma. Jedynym mechanizmem zostaje świadome wyłączenie takiego
+zadania z `retry-failed`.
 
 Druga rzecz, o której łatwo zapomnieć: `Exec`, który nie zmienia żadnej encji, **nie wygeneruje
 `AggregateChanged`**, bo to zdarzenie powstaje ze skanu ChangeTrackera

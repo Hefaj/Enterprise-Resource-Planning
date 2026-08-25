@@ -1,7 +1,7 @@
 import { Injectable, Injector, Signal, WritableSignal, inject, signal } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 
-import { BaseOrchestrator, JobMeta, LoadOptions, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
+import { BaseOrchestrator, JobMeta, LoadOptions, OrchestratorConfig, ResolvedDeps, withRequestId } from '@erp/shared/data-access';
 import { IDENTITY_JOB_COMMAND_KEYS } from '@erp/identity/util';
 import {
   IdentityClient,
@@ -163,7 +163,9 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
     const meta: JobMeta = { commandName: commandNameKey, timestamp: new Date() };
 
     try {
-      const result = await firstValueFrom(call({ ...payload, queueId: queueID, uiMetadata: JSON.stringify(meta) }));
+      const result = await withRequestId(() =>
+        firstValueFrom(call({ ...payload, queueId: queueID, uiMetadata: JSON.stringify(meta) })),
+      );
       const jobUuid = result.jobUuid || '';
 
       this.jobService.addJob(jobUuid, queueID, meta);
@@ -191,8 +193,8 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
     const meta: JobMeta = { commandName: commandNameKey, aggregateUuid: command.uuid, timestamp: new Date() };
 
     try {
-      const result = await firstValueFrom(
-        call({ commands: [command], queueId: queueID, uiMetadata: JSON.stringify(meta) }),
+      const result = await withRequestId(() =>
+        firstValueFrom(call({ commands: [command], queueId: queueID, uiMetadata: JSON.stringify(meta) })),
       );
       const jobUuid = result.jobUuid || '';
 

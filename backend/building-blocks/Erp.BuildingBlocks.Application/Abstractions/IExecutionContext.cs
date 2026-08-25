@@ -21,6 +21,21 @@ public interface IExecutionContext
     /// <summary>Korelacja przenoszona do zdarzeń integracyjnych; pozwala klientowi
     /// rozpoznać echo własnej komendy i pozwala połączyć logi z kilku serwisów w jeden ślad.</summary>
     Guid CorrelationId { get; }
+
+    /// <summary>
+    /// Klucz idempotencji podany przez klienta w nagłówku <c>X-Request-Id</c>, jeśli podał.
+    ///
+    /// <para>Świadomie ODRĘBNY od <see cref="CorrelationId"/>, choć oba przychodzą nagłówkiem
+    /// i oba identyfikują żądanie. Korelacja jest etykietą śladu — ma być inna przy każdej
+    /// próbie, żeby dało się odróżnić powtórzenie od oryginału w logach. Klucz idempotencji
+    /// jest odwrotnością: ma być TEN SAM przy ponowieniu, bo po nim serwer rozpoznaje,
+    /// że tej operacji już nie należy wykonywać drugi raz. Jedno pole nie może mieć obu
+    /// własności naraz.</para>
+    ///
+    /// <para>Puste przy wykonaniu w tle: zadanie masowe nie jest ponawiane przez klienta,
+    /// a jego elementy mają własną ochronę przed powtórzeniem w <c>job_item.status</c>.</para>
+    /// </summary>
+    string? RequestId { get; }
 }
 
 /// <summary>
@@ -39,11 +54,15 @@ public sealed class MutableExecutionContext : IExecutionContext
     /// <inheritdoc />
     public Guid CorrelationId { get; private set; } = Guid.CreateVersion7();
 
+    /// <inheritdoc />
+    public string? RequestId { get; private set; }
+
     /// <summary>Ustawia kontekst wykonania dla bieżącego scope'u.</summary>
-    public void Set(string? userId, string? clientId, Guid? correlationId = null)
+    public void Set(string? userId, string? clientId, Guid? correlationId = null, string? requestId = null)
     {
         UserId = userId;
         ClientId = clientId;
         CorrelationId = correlationId ?? Guid.CreateVersion7();
+        RequestId = requestId;
     }
 }

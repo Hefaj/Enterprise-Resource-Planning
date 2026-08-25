@@ -8,6 +8,8 @@ export * from './lib/session/erp-logout-handler';
 export * from './lib/sync/signalr-sync.service';
 export * from './lib/sync/client-id';
 export * from './lib/sync/client-id.interceptor';
+export * from './lib/sync/request-id';
+export * from './lib/sync/request-id.interceptor';
 
 export * from './lib/orchestrator';
 

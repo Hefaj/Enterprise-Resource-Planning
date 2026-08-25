@@ -69,6 +69,13 @@ public static class ErpApiExtensions
 
         services.AddSingleton<IClock, SystemClock>();
 
+        // Mapowanie wyjątków na ProblemDetails ze stabilnym kodem błędu — ten sam kod, który
+        // operacje masowe zapisują w `job_item.error_code`, więc frontend tłumaczy oba źródła
+        // jednym słownikiem (`shared.errors.codes`). Bez tego naruszenie reguły biznesowej
+        // wracało do klienta jako 500 nieodróżnialne od awarii bazy.
+        services.AddProblemDetails();
+        services.AddExceptionHandler<ErpProblemDetailsHandler>();
+
         services.AddErpAuth(configuration, enablePermissionClaims);
 
         // Kontekst wykonania jest scoped i mutowalny: wypełnia go middleware HTTP,
@@ -129,6 +136,12 @@ public static class ErpApiExtensions
         // jako pierwsze mapowanie endpointów — a UseFastEndpoints() (wołane niżej) nie zawsze
         // jest rozpoznawane przez tę heurystykę tak samo jak MapGet/MapControllers. Jawne
         // wywołanie usuwa tę niepewność raz na zawsze.
+        // Na samym początku pipeline'u: ma objąć wszystko, co niżej. Jest jednocześnie BARDZIEJ
+        // WEWNĘTRZNE niż strona diagnostyczna ASP.NET dokładana automatycznie w Development,
+        // więc to ono odpowiada na wyjątek — stąd treść wyjątku dokładana do odpowiedzi
+        // w Development (patrz ErpProblemDetailsHandler).
+        app.UseExceptionHandler();
+
         app.UseRouting();
 
         app.UseCors(CorsPolicyName);

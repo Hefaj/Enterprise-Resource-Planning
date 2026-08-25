@@ -250,11 +250,14 @@ nigdy nie wygeneruje.
   reguł (`CategoryMustExistRule` → `CategoryMustBeActiveRule`). `ProductBatchValidator` (tak samo
   `RoleBatchValidator`/`UserBatchValidator` w Identity) woła swoje reguły płasko, bo są niezależne i chcemy zebrać wszystkie naruszenia elementu naraz.
   Klasa `ValidationChain<T>` jest gotowa, ale bez konsumenta poza building blockiem.
-- **Middleware komend** (FluentValidation, idempotencja) z [`cqrs.md#6`](./cqrs.md#6-czego-jeszcze-nie-ma)
-  to osobny, wciąż niezaimplementowany temat — dotyczy pojedynczej komendy na wejściu HTTP,
-  nie wsadu.
-- **Mapowanie `DomainException` → `ProblemDetails`** na ścieżce HTTP: `Erp.BuildingBlocks.Api`
-  nie ma globalnego handlera wyjątków, a Catalog nie ma endpointów pojedynczych komend.
+- **Walidacja wejścia z pipeline'u komend** (`IValidator<TCommand>`, [`cqrs.md` §6](./cqrs.md#6-pipeline-komend))
+  to osobna warstwa: sprawdza kształt POJEDYNCZEJ komendy bez sięgania do bazy i biegnie przy
+  każdym jej wykonaniu — również dla elementu zadania masowego. Pre-check wsadowy odpowiada na
+  pytania, których nie da się rozstrzygnąć bez zbiorczego zapytania, i biegnie RAZ, przed
+  utworzeniem zadania. Odrzucenie przez walidator elementu wsadu zachowuje się jak każde inne
+  naruszenie reguły (`CommandValidationException` dziedziczy po `DomainException`).
+- **Mapowanie `DomainException` → `ProblemDetails`** na ścieżce HTTP zapewnia
+  `ErpProblemDetailsHandler` — te same kody błędów co w `job_item.error_code`.
 
 ---
 

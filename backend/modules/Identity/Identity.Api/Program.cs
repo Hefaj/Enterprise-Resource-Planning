@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Api;
+using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Api.Auth;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
@@ -43,6 +44,11 @@ builder.Services.AddHostedService<ExpiredGrantCleanupService>();
 builder.AddErpMessaging<IdentityDbContext>(typeof(IdentityDbContext).Assembly);
 
 // Silnik zadań masowych: trwałe zadania w schemacie `identity`, wznawiane po restarcie.
+// Pipeline komend: logowanie → walidacja wejścia → jednostka pracy → idempotencja.
+// Parametr typowy wskazuje, w czyim schemacie leżą klucze idempotencji — muszą być
+// w tej samej bazie co dane, żeby klucz i skutek komendy były jednym commitem.
+builder.Services.AddErpCommands<IdentityDbContext>(builder.Configuration);
+
 builder.Services.AddErpBulkJobs<IdentityDbContext>(builder.Configuration);
 
 builder.Services.AddOpenApi();

@@ -4,6 +4,8 @@ import {
   ErpActionToolbarComponent,
   ErpActionToolbarContextDirective,
   ErpActionToolbarZoneDirective,
+  ErpConfirmDialogBuilder,
+  ErpConfirmDialogService,
   ErpModalService,
   ErpBatchMetadata,
   erpBuildBatchTargets,
@@ -11,7 +13,6 @@ import {
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, SearchUserAccountRequest, BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest, BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest } from '@erp/identity/data-access';
-import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { USER_ADD_ROLE_MODAL_ID, USER_ADD_PERMISSION_MODAL_ID } from '@erp/identity/util';
 
 import { UsersStore } from '../users.store';
@@ -53,7 +54,7 @@ export class UsersTabComponent {
 
   private readonly _orchestrator = inject(UserOrchestrator);
   private readonly _modalService = inject(ErpModalService);
-  private readonly _confirm = inject(IdentityConfirmDialogService);
+  private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _permissionStore = inject(PermissionStore);
 
   private readonly _table = viewChild(IdentityUsersTableComponent);
@@ -124,12 +125,16 @@ export class UsersTabComponent {
 
   private _onForceLogout(): void {
     this._confirm
-      .confirm({
-        title: USERS_KEYS.detail.execForceLogout.confirmTitle,
-        message: USERS_KEYS.detail.execForceLogout.confirmMessage,
-        yes: USERS_KEYS.detail.execForceLogout.confirmYes,
-        no: USERS_KEYS.detail.execForceLogout.confirmNo,
-      })
+      .confirm(
+        ErpConfirmDialogBuilder.create((b) =>
+          b
+            .setTitle(USERS_KEYS.detail.execForceLogout.confirmTitle)
+            .setMessage(USERS_KEYS.detail.execForceLogout.confirmMessage)
+            .setConfirmLabel(USERS_KEYS.detail.execForceLogout.confirmYes)
+            .setCancelLabel(USERS_KEYS.detail.execForceLogout.confirmNo)
+            .setAppearance('warning'),
+        ),
+      )
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this._orchestrator

@@ -225,5 +225,9 @@
       "failed": "Failed: {{name}}",
       "download": "Download"
     }
+  },
+  "confirm": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   }
 }

@@ -225,5 +225,9 @@
       "failed": "Nie udało się: {{name}}",
       "download": "Pobierz"
     }
+  },
+  "confirm": {
+    "confirm": "Potwierdź",
+    "cancel": "Anuluj"
   }
 }

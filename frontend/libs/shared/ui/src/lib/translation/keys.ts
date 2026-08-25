@@ -231,4 +231,8 @@ export const SHARED_KEYS = {
         download: 'shared.jobs.toast.download',
       },
     },
+    confirm: {
+      confirm: 'shared.confirm.confirm',
+      cancel: 'shared.confirm.cancel',
+    },
   } as const;

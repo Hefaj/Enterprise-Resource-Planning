@@ -61,6 +61,39 @@ Backend to .NET 10 — Minimal APIs, silne typowanie DTO. DTO ma odpowiadać con
 
 ---
 
+## 5. Potwierdzanie akcji — jeden atom dla wszystkich modułów
+
+Pytanie „czy na pewno" jest elementem języka UI, nie domeny — nie pisz modułowego serwisu
+potwierdzeń (były dwa, `CatalogConfirmDialogService` i `IdentityConfirmDialogService`, i były
+tym samym kodem). Moduł wnosi wyłącznie klucze tłumaczeń:
+
+```typescript
+private readonly _confirm = inject(ErpConfirmDialogService);
+
+this._confirm
+  .confirm(
+    ErpConfirmDialogBuilder.create(b =>
+      b.setKeys(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count }).setDestructive(),
+    ),
+  )
+  .subscribe(confirmed => { if (confirmed) { /* ... */ } });
+```
+
+- `setKeys({ title, message, yes, no }, params)` bierze całą gałąź słownika naraz — to konwencja
+  słowników modułowych. Klucze rozsypane po innych nazwach składasz `setTitle`/`setMessage`/
+  `setConfirmLabel`/`setCancelLabel`.
+- Do dialogu idzie **klucz**, nie gotowy tekst — treść rozwiązuje pipe `erpTranslate` w szablonie
+  atomu, więc przełączenie języka przerysowuje otwarte okno. Liczby (`{ count }`) przechodzą jako
+  parametry interpolacji: potwierdzenie bez liczby nie mówi, jaki jest promień rażenia.
+- `setDestructive()` / `setAppearance('warning')` ustawia ikonę i kolor przycisku — użytkownik ma
+  poznać po samym oknie, czy klika „zapisz", czy „skasuj".
+- Strumień emituje **dokładnie jedną** wartość: `false` obejmuje też zamknięcie backdropem, więc
+  nie ma trzeciego stanu do obsłużenia. Dla `async/await` jest `confirmAsync(...)`.
+- `setOnConfirm(fn)` wykonuje akcję **wewnątrz** okna ze spinnerem na przycisku — używaj, gdy
+  operacja jest krótka i użytkownik ma zobaczyć jej koniec tam, gdzie kliknął.
+
+---
+
 ## Zobacz też
 
 - [Architektura frontendu](./architecture.md) — gdzie w drzewie zależności żyje `ui` względem `feature`/`data-access`

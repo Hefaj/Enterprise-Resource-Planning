@@ -15,6 +15,8 @@ import {
   ErpTableConfig,
   ErpBatchMetadata,
   ErpModalService,
+  ErpConfirmDialogBuilder,
+  ErpConfirmDialogService,
 } from '@erp/shared/ui';
 import {
   BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest,
@@ -23,7 +25,6 @@ import {
   ProductRemoveMultimediaCommand,
   ProductVM,
 } from '@erp/catalog/data-access';
-import { CatalogConfirmDialogService } from '@erp/catalog/ui';
 import { PRODUCT_ADD_MULTIMEDIA_MODAL_ID } from '@erp/catalog/util';
 import { PRODUCT_KEYS } from '../../../../translation/keys';
 import { MultimediaRow } from './multimedia-row.model';
@@ -99,7 +100,7 @@ export class MultimediaTabComponent {
   private readonly productOrchestrator = inject(CatalogProductOrchestrator);
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
   private readonly modalService = inject(ErpModalService);
-  private readonly confirmDialog = inject(CatalogConfirmDialogService);
+  private readonly confirmDialog = inject(ErpConfirmDialogService);
 
   protected readonly _scopeKind = this.tabStore.scopeKind;
   protected readonly _resolving = this.tabStore.resolving;
@@ -360,7 +361,11 @@ export class MultimediaTabComponent {
     const count = this.tabStore.scopeCount();
 
     this.confirmDialog
-      .confirm(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count })
+      .confirm(
+        ErpConfirmDialogBuilder.create(b =>
+          b.setKeys(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count }).setDestructive(),
+        ),
+      )
       .subscribe(confirmed => {
         if (!confirmed) return;
 
@@ -397,9 +402,15 @@ export class MultimediaTabComponent {
     }));
 
     this.confirmDialog
-      .confirm(PRODUCT_KEYS.base.multimedia.confirm.removeSelected, {
-        count: this.tabStore.selectedMultimedia().size,
-      })
+      .confirm(
+        ErpConfirmDialogBuilder.create(b =>
+          b
+            .setKeys(PRODUCT_KEYS.base.multimedia.confirm.removeSelected, {
+              count: this.tabStore.selectedMultimedia().size,
+            })
+            .setDestructive(),
+        ),
+      )
       .subscribe(confirmed => {
         if (!confirmed) return;
 

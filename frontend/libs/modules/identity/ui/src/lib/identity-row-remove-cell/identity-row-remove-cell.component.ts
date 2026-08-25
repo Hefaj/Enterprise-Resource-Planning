@@ -4,7 +4,7 @@ import { ErpButtonComponent, ErpButtonBuilder } from '@erp/shared/ui';
 /**
  * Generyczna komórka tabeli z pojedynczym przyciskiem "usuń" (odbierz rolę/uprawnienie,
  * usuń rolę składową...). Sama nie potwierdza ani nie woła API — `onRemove` dostaje cały
- * wiersz i to WYWOŁUJĄCY (komponent zakładki) decyduje, czy pokazać `TUI_CONFIRM` przed
+ * wiersz i to WYWOŁUJĄCY (komponent zakładki) decyduje, czy pokazać `ErpConfirmDialogService` przed
  * wykonaniem komendy. Reużywana we wszystkich tabelach stron Users/Roles zamiast pisania
  * osobnej komórki akcji dla każdej tabeli.
  */

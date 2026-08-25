@@ -6,6 +6,8 @@ import {
   ErpActionToolbarComponent,
   ErpActionToolbarContextDirective,
   ErpActionToolbarZoneDirective,
+  ErpConfirmDialogBuilder,
+  ErpConfirmDialogService,
   ErpEmptyStateComponent,
   ErpEmptyStateConfig,
   ErpModalService,
@@ -16,7 +18,6 @@ import {
   ErpTableComponent,
   ErpTableConfig,
 } from '@erp/shared/ui';
-import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
 import { USER_ADD_PERMISSION_MODAL_ID } from '@erp/identity/util';
@@ -68,7 +69,7 @@ export class UserPermissionsTabComponent {
   private readonly _tabStore = inject(UserPermissionsTabStore);
   private readonly _orchestrator = inject(UserOrchestrator);
   private readonly _modalService = inject(ErpModalService);
-  private readonly _confirm = inject(IdentityConfirmDialogService);
+  private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _permissionStore = inject(PermissionStore);
 
   protected readonly scopeKind = this._tabStore.scopeKind;
@@ -212,12 +213,16 @@ export class UserPermissionsTabComponent {
     if (pairs.length === 0) return;
 
     this._confirm
-      .confirm({
-        title: USERS_KEYS.detail.permissions.revokeConfirmTitle,
-        message: USERS_KEYS.detail.permissions.revokeConfirmMessage,
-        yes: USERS_KEYS.detail.permissions.revokeConfirmYes,
-        no: USERS_KEYS.detail.permissions.revokeConfirmNo,
-      })
+      .confirm(
+        ErpConfirmDialogBuilder.create((b) =>
+          b
+            .setTitle(USERS_KEYS.detail.permissions.revokeConfirmTitle)
+            .setMessage(USERS_KEYS.detail.permissions.revokeConfirmMessage)
+            .setConfirmLabel(USERS_KEYS.detail.permissions.revokeConfirmYes)
+            .setCancelLabel(USERS_KEYS.detail.permissions.revokeConfirmNo)
+            .setDestructive(),
+        ),
+      )
       .subscribe((confirmed) => {
         if (!confirmed) return;
         Promise.all(

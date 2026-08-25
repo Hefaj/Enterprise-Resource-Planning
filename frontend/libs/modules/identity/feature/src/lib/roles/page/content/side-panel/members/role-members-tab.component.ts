@@ -5,6 +5,8 @@ import {
   ErpActionToolbarComponent,
   ErpActionToolbarContextDirective,
   ErpActionToolbarZoneDirective,
+  ErpConfirmDialogBuilder,
+  ErpConfirmDialogService,
   ErpEmptyStateComponent,
   ErpEmptyStateConfig,
   ErpModalService,
@@ -13,7 +15,6 @@ import {
   ErpTableComponent,
   ErpTableConfig,
 } from '@erp/shared/ui';
-import { IdentityConfirmDialogService } from '@erp/identity/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { RoleOrchestrator, RoleVM } from '@erp/identity/data-access';
 import { ROLE_ADD_MEMBER_MODAL_ID } from '@erp/identity/util';
@@ -56,7 +57,7 @@ export class RoleMembersTabComponent {
   private readonly _tabStore = inject(RoleMembersTabStore);
   private readonly _orchestrator = inject(RoleOrchestrator);
   private readonly _modalService = inject(ErpModalService);
-  private readonly _confirm = inject(IdentityConfirmDialogService);
+  private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _permissionStore = inject(PermissionStore);
 
   protected readonly scopeKind = this._tabStore.scopeKind;
@@ -187,12 +188,16 @@ export class RoleMembersTabComponent {
     if (pairs.length === 0) return;
 
     this._confirm
-      .confirm({
-        title: ROLES_KEYS.detail.members.revokeConfirmTitle,
-        message: ROLES_KEYS.detail.members.revokeConfirmMessage,
-        yes: ROLES_KEYS.detail.members.revokeConfirmYes,
-        no: ROLES_KEYS.detail.members.revokeConfirmNo,
-      })
+      .confirm(
+        ErpConfirmDialogBuilder.create((b) =>
+          b
+            .setTitle(ROLES_KEYS.detail.members.revokeConfirmTitle)
+            .setMessage(ROLES_KEYS.detail.members.revokeConfirmMessage)
+            .setConfirmLabel(ROLES_KEYS.detail.members.revokeConfirmYes)
+            .setCancelLabel(ROLES_KEYS.detail.members.revokeConfirmNo)
+            .setDestructive(),
+        ),
+      )
       .subscribe((confirmed) => {
         if (!confirmed) return;
         Promise.all(

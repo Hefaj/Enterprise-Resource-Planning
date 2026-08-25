@@ -40,6 +40,7 @@ export * from './lib/atoms/erp-group-card';
 export * from './lib/atoms/erp-empty-state';
 export * from './lib/atoms/erp-selection-scope-banner';
 export * from './lib/atoms/erp-batch-targets-summary';
+export * from './lib/atoms/erp-confirm-dialog';
 
 // // Molecules
 export * from './lib/molecules/erp-filter';

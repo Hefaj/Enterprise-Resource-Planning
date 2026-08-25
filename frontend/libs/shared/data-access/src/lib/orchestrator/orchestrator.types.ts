@@ -210,3 +210,40 @@ export interface HasUuid {
  * rozwiązanych zależności za pomocą generycznego parametru.
  */
 export type ResolvedDeps = Record<string, unknown>;
+
+// ────────────────────────────────────────────────────────────────
+// Komendy (mutacje) — wspólny kontrakt wywołania
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * Pola, które KAŻDY endpoint operacji masowej przyjmuje niezależnie od modułu i trybu
+ * (`Commands[]` vs `templateCommand` + zasięg). Wypełnia je `BaseOrchestrator.runBatchCommandAsync` —
+ * wywołujący ich nie dokleja.
+ */
+export interface ErpBatchPayload {
+  queueId?: string;
+  uiMetadata?: string;
+}
+
+/** Odpowiedź endpointu operacji masowej — strukturalnie, bo każdy moduł ma własny `BatchResult` z NSwag. */
+export interface ErpBatchResult {
+  jobUuid?: string;
+}
+
+/**
+ * Kontekst zlecenia komendy: co pokazać w feedzie powiadomień i do której kolejki (modalu)
+ * przypiąć zadanie.
+ */
+export interface CommandOptions {
+  /** Klucz tłumaczenia opisujący komendę, np. `CATALOG_JOB_COMMAND_KEYS.setPrice`. */
+  readonly commandName: Translatable;
+
+  /** Identyfikator modalu/zakładki, z której poszła operacja — grupuje zadania w feedzie. */
+  readonly queueId?: string;
+
+  /** UUID agregatu, gdy operacja dotyczy jednego znanego celu (tryb single-target). */
+  readonly aggregateUuid?: string;
+
+  /** Czy po zakończeniu zadania pokazać toast — patrz `JobMeta.notifyOnComplete`. */
+  readonly notifyOnComplete?: boolean;
+}

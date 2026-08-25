@@ -44,7 +44,7 @@ export class ProductAddMultimediaModalDefinition
         .addStep(PRODUCT_KEYS.commands.addMultimedia.label, ProductAddMultimediaStepComponent)
         .setSaveLabel(PRODUCT_KEYS.commands.addMultimedia.submitButton)
         .setOnSave(async (cmd) => {
-          return await this._orchestrator.addMultimediaMultiple(cmd, PRODUCT_ADD_MULTIMEDIA_MODAL_ID);
+          return await this._orchestrator.addMultimediaMultipleAsync(cmd, PRODUCT_ADD_MULTIMEDIA_MODAL_ID);
         });
     });
   }

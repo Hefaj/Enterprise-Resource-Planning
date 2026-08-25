@@ -1,11 +1,10 @@
 import { Injectable, Injector, Signal, WritableSignal, inject, signal } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 
-import { BaseOrchestrator, JobMeta, LoadOptions, OrchestratorConfig, ResolvedDeps, withRequestId } from '@erp/shared/data-access';
+import { BaseOrchestrator, LoadOptions, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { IDENTITY_JOB_COMMAND_KEYS } from '@erp/identity/util';
 import {
   IdentityClient,
-  BatchResult,
   BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest,
   BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest,
   BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest,
@@ -98,113 +97,53 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
   // ścieżek, więc frontend też nie musi. `removeRoleAsync`/`removePermissionAsync` zostają
   // jako jedyne metody w trybie `Commands: [command]` — odbieranie KONKRETNEGO, znanego grantu
   // nie jest naturalną operacją nad zaznaczeniem wielu wierszy (patrz uzasadnienie przy
-  // `RoleOrchestrator`).
+  // `RoleOrchestrator`). Tryb jednego celu to `runSingleCommandAsync` z `BaseOrchestrator` —
+  // ten sam obrys co wsad, tylko z komendą opakowaną w `{ commands: [command] }` i `aggregateUuid`
+  // w metadanych. Wynik zadania (sukces, `aggregate_not_found` itp.) przychodzi asynchronicznie
+  // przez dzwonek powiadomień, nie przez zwróconą wartość.
 
-  public async removeRoleAsync(command: UserRemoveRoleCommand, queueID?: string): Promise<string> {
-    return this._runSingleTargetCommand(
-      (payload) => this._api.userRemoveRoleMultipleCommand(payload),
-      command,
-      IDENTITY_JOB_COMMAND_KEYS.removeRole,
-      queueID,
-    );
+  public removeRoleAsync(command: UserRemoveRoleCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync(p => this._api.userRemoveRoleMultipleCommand(p), command, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.removeRole,
+      queueId,
+    });
   }
 
-  public async removePermissionAsync(command: UserRemovePermissionCommand, queueID?: string): Promise<string> {
-    return this._runSingleTargetCommand(
-      (payload) => this._api.userRemovePermissionMultipleCommand(payload),
-      command,
-      IDENTITY_JOB_COMMAND_KEYS.removePermission,
-      queueID,
-    );
+  public removePermissionAsync(command: UserRemovePermissionCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync(p => this._api.userRemovePermissionMultipleCommand(p), command, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.removePermission,
+      queueId,
+    });
   }
 
-  public async addRoleMultipleAsync(
+  public addRoleMultipleAsync(
     payload: BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    return this._runBatchCommand(
-      (p) => this._api.userAddRoleMultipleCommand(p),
-      payload,
-      IDENTITY_JOB_COMMAND_KEYS.addRole,
-      queueID,
-    );
+    return this.runBatchCommandAsync(p => this._api.userAddRoleMultipleCommand(p), payload, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.addRole,
+      queueId,
+    });
   }
 
-  public async addPermissionMultipleAsync(
+  public addPermissionMultipleAsync(
     payload: BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    return this._runBatchCommand(
-      (p) => this._api.userAddPermissionMultipleCommand(p),
-      payload,
-      IDENTITY_JOB_COMMAND_KEYS.addPermission,
-      queueID,
-    );
+    return this.runBatchCommandAsync(p => this._api.userAddPermissionMultipleCommand(p), payload, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.addPermission,
+      queueId,
+    });
   }
 
-  public async execForceLogoutMultipleAsync(
+  public execForceLogoutMultipleAsync(
     payload: BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    return this._runBatchCommand(
-      (p) => this._api.userExecForceLogoutMultipleCommand(p),
-      payload,
-      IDENTITY_JOB_COMMAND_KEYS.execForceLogout,
-      queueID,
-    );
-  }
-
-  private async _runBatchCommand<TPayload extends { queueId?: string; uiMetadata?: string }>(
-    call: (payload: TPayload) => Observable<BatchResult>,
-    payload: TPayload,
-    commandNameKey: string,
-    queueID?: string,
-  ): Promise<string> {
-    const meta: JobMeta = { commandName: commandNameKey, timestamp: new Date() };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(call({ ...payload, queueId: queueID, uiMetadata: JSON.stringify(meta) })),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({ operation: 'command', message: err instanceof Error ? err.message : String(err), timestamp: new Date() });
-      throw err;
-    }
-  }
-
-  /**
-   * Wysyła komendę jako zadanie z JEDNYM elementem (tryb `Commands: [command]` kontraktu
-   * `BatchCommand`) i rejestruje je w {@link JobService} — dokładnie tak samo jak wsad na wielu
-   * celach, bo backend nie rozróżnia tych dwóch przypadków (patrz Faza 1+2 przejścia opisanego
-   * w docs/backend/identity-bulk-migration.md). Wynik zadania (sukces, `aggregate_not_found`
-   * itp.) przychodzi asynchronicznie przez dzwonek powiadomień, nie przez zwróconą wartość.
-   */
-  private async _runSingleTargetCommand<TCommand extends { uuid?: string }>(
-    call: (payload: { commands: TCommand[]; queueId?: string; uiMetadata?: string }) => Observable<BatchResult>,
-    command: TCommand,
-    commandNameKey: string,
-    queueID?: string,
-  ): Promise<string> {
-    const meta: JobMeta = { commandName: commandNameKey, aggregateUuid: command.uuid, timestamp: new Date() };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(call({ commands: [command], queueId: queueID, uiMetadata: JSON.stringify(meta) })),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({ operation: 'command', message: err instanceof Error ? err.message : String(err), timestamp: new Date() });
-      throw err;
-    }
+    return this.runBatchCommandAsync(p => this._api.userExecForceLogoutMultipleCommand(p), payload, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.execForceLogout,
+      queueId,
+    });
   }
 
   // ── Efektywne uprawnienia — side-channel poza identity-mapą, patrz plan §2.1 ──

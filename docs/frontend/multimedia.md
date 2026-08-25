@@ -24,8 +24,8 @@ i „Optymalizuj wybrane" — obie czekają na decyzję, co właściwie mają ro
 4. product/batch-add-multimedia → dopięcie do produktów; zwykłe zadanie masowe
 ```
 
-Kroki 1–3 wykonuje `CatalogMultimediaOrchestrator.uploadFiles()`, krok 4 —
-`CatalogProductOrchestrator.addMultimediaMultiple()`. Podział jest celowy: plików są dziesiątki
+Kroki 1–3 wykonuje `CatalogMultimediaOrchestrator.uploadFilesAsync()`, krok 4 —
+`CatalogProductOrchestrator.addMultimediaMultipleAsync()`. Podział jest celowy: plików są dziesiątki
 i użytkownik czeka na nie w modalu, produktów mogą być tysiące i te idą przez zadanie z paskiem
 postępu.
 
@@ -170,7 +170,7 @@ usunąć, a `onlyWithoutDerivatives` te, dla których warto zlecić generowanie.
 wszystko" nad filtrem „tylko nieużywane" znaczy dokładnie „posprzątaj wszystkie osierocone
 pliki", a nie „tę stronę wyników".
 
-**Pusty szablon jest wymagany przy trybie „cele + szablon".** `removeMultiple` wysyła
+**Pusty szablon jest wymagany przy trybie „cele + szablon".** `removeMultipleAsync` wysyła
 `templateCommand: {}`, mimo że `MultimediaRemoveCommand` nie niesie nic poza `uuid`:
 `BatchEndpointBase` rozpoznaje ten tryb po samej obecności `templateCommand` i bez niego odrzuca
 żądanie błędem „Brak komend do wykonania" — nawet gdy `targetUuids` jest pełne.

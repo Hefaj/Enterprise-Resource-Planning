@@ -220,8 +220,8 @@ export class UserRolesTabComponent {
     );
     if (pairs.length === 0) return;
 
-    this._confirm
-      .confirm(
+    void this._confirm
+      .confirmThenAsync(
         ErpConfirmDialogBuilder.create((b) =>
           b
             .setTitle(USERS_KEYS.detail.roles.revokeConfirmTitle)
@@ -230,14 +230,13 @@ export class UserRolesTabComponent {
             .setCancelLabel(USERS_KEYS.detail.roles.revokeConfirmNo)
             .setDestructive(),
         ),
+        async () => {
+          await Promise.all(
+            pairs.map(({ userUuid, roleUuid }) => this._orchestrator.removeRoleAsync({ uuid: userUuid, roleUuid })),
+          );
+          this._tabStore.clearChildSelection();
+        },
       )
-      .subscribe((confirmed) => {
-        if (!confirmed) return;
-        Promise.all(
-          pairs.map(({ userUuid, roleUuid }) => this._orchestrator.removeRoleAsync({ uuid: userUuid, roleUuid })),
-        )
-          .then(() => this._tabStore.clearChildSelection())
-          .catch((err) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
-      });
+      .catch((err: unknown) => console.error('[UserRolesTabComponent] Nie udało się odebrać roli.', err));
   }
 }

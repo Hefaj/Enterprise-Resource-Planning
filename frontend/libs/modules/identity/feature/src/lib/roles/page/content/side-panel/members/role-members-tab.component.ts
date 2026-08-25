@@ -187,8 +187,8 @@ export class RoleMembersTabComponent {
     );
     if (pairs.length === 0) return;
 
-    this._confirm
-      .confirm(
+    void this._confirm
+      .confirmThenAsync(
         ErpConfirmDialogBuilder.create((b) =>
           b
             .setTitle(ROLES_KEYS.detail.members.revokeConfirmTitle)
@@ -197,16 +197,15 @@ export class RoleMembersTabComponent {
             .setCancelLabel(ROLES_KEYS.detail.members.revokeConfirmNo)
             .setDestructive(),
         ),
+        async () => {
+          await Promise.all(
+            pairs.map(({ containerRoleUuid, memberRoleUuid }) =>
+              this._orchestrator.removeMemberAsync({ uuid: containerRoleUuid, memberRoleUuid }),
+            ),
+          );
+          this._tabStore.clearChildSelection();
+        },
       )
-      .subscribe((confirmed) => {
-        if (!confirmed) return;
-        Promise.all(
-          pairs.map(({ containerRoleUuid, memberRoleUuid }) =>
-            this._orchestrator.removeMemberAsync({ uuid: containerRoleUuid, memberRoleUuid }),
-          ),
-        )
-          .then(() => this._tabStore.clearChildSelection())
-          .catch((err) => console.error('[RoleMembersTabComponent] Nie udało się usunąć roli składowej.', err));
-      });
+      .catch((err: unknown) => console.error('[RoleMembersTabComponent] Nie udało się usunąć roli składowej.', err));
   }
 }

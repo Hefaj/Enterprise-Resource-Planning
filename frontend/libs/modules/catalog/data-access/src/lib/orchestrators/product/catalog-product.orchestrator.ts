@@ -1,10 +1,10 @@
 import { Injectable, inject, Injector } from '@angular/core';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { BaseOrchestrator, JobMeta, OrchestratorConfig, ResolvedDeps, withRequestId } from '@erp/shared/data-access';
+import { BaseOrchestrator, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
-import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest, BatchCommandOfProductRemoveMultimediaCommandAndSearchProductRequest, BatchCommandOfProductSetMultimediaCommandAndSearchProductRequest, BatchResult } from '../../api-client';
+import { CatalogClient, ProductDto, SearchProductRequest, SearchResponse, BatchCommandOfProductSetPriceCommandAndSearchProductRequest, BatchCommandOfProductSetNameCommandAndSearchProductRequest, BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest, BatchCommandOfProductRemoveMultimediaCommandAndSearchProductRequest, BatchCommandOfProductSetMultimediaCommandAndSearchProductRequest } from '../../api-client';
 import { ProductVM, CatalogProductLoadOptions, ProductWarrantyVM, ProductCodeVM, ProductAttributeVM } from './product.view-model';
 import { CategoryVM } from '../category/category.view-model';
 import { ModelVM } from '../model/model.view-model';
@@ -304,122 +304,49 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
     return { categories, model, multimedia, warranties, codes, attributes };
   }
 
-  /**
-   * Wykonaj seryjne polecenie aktualizacji ceny dla wybranych produktów.
-   */
-  public async setPriceMultiple(
+  // ── Komendy ──
+  //
+  // Obrys wykonania (X-Request-Id, uiMetadata, rejestracja zadania, mapowanie błędu) siedzi
+  // w `BaseOrchestrator.runBatchCommandAsync` — tutaj zostaje wyłącznie to, co dla danej
+  // komendy naprawdę specyficzne: endpoint i klucz opisu w feedzie powiadomień.
+
+  /** Ustawia cenę produktów objętych zasięgiem. */
+  public setPriceMultipleAsync(
     command: BatchCommandOfProductSetPriceCommandAndSearchProductRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    const meta: JobMeta = {
+    return this.runBatchCommandAsync(p => this._api.productSetPriceMultipleCommand(p), command, {
       commandName: CATALOG_JOB_COMMAND_KEYS.setPrice,
-      timestamp: new Date(),
-    };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(
-          // Metadane jadą RAZEM z komendą, nie tylko do lokalnego JobService: backend
-          // przechowuje je przy zadaniu i oddaje w `JobDto.uiMetadata`, dzięki czemu opis
-          // („Zmiana ceny”) przeżywa odświeżenie strony i jest widoczny na innej karcie.
-          this._api.productSetPriceMultipleCommand({
-            ...command,
-            queueId: queueID,
-            uiMetadata: JSON.stringify(meta),
-          })
-        ),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({
-        operation: 'command',
-        message: err instanceof Error ? err.message : String(err),
-        timestamp: new Date(),
-      });
-      throw err;
-    }
+      queueId,
+    });
   }
 
-  /**
-   * Wykonaj seryjne polecenie aktualizacji nazwy dla wybranych produktów.
-   */
-  public async setNameMultiple(
+  /** Ustawia nazwę produktów objętych zasięgiem. */
+  public setNameMultipleAsync(
     command: BatchCommandOfProductSetNameCommandAndSearchProductRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    const meta: JobMeta = {
+    return this.runBatchCommandAsync(p => this._api.productSetNameMultipleCommand(p), command, {
       commandName: CATALOG_JOB_COMMAND_KEYS.setName,
-      timestamp: new Date(),
-    };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(
-          this._api.productSetNameMultipleCommand({
-            ...command,
-            queueId: queueID,
-            uiMetadata: JSON.stringify(meta),
-          })
-        ),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({
-        operation: 'command',
-        message: err instanceof Error ? err.message : String(err),
-        timestamp: new Date(),
-      });
-      throw err;
-    }
+      queueId,
+    });
   }
 
   /**
    * Dopina wgrane wcześniej zasoby multimedialne do wskazanych produktów.
    *
    * Zasoby muszą już istnieć w katalogu — wgrywa je i rejestruje
-   * `CatalogMultimediaOrchestrator.uploadFiles`, a backend odrzuci całe żądanie, jeśli
+   * `CatalogMultimediaOrchestrator.uploadFilesAsync`, a backend odrzuci całe żądanie, jeśli
    * którykolwiek uuid nie wskazuje istniejącego zasobu.
    */
-  public async addMultimediaMultiple(
+  public addMultimediaMultipleAsync(
     command: BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    const meta: JobMeta = {
+    return this.runBatchCommandAsync(p => this._api.productAddMultimediaMultipleCommand(p), command, {
       commandName: CATALOG_JOB_COMMAND_KEYS.addMultimedia,
-      timestamp: new Date(),
-    };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(
-          this._api.productAddMultimediaMultipleCommand({
-            ...command,
-            queueId: queueID,
-            uiMetadata: JSON.stringify(meta),
-          })
-        ),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({
-        operation: 'command',
-        message: err instanceof Error ? err.message : String(err),
-        timestamp: new Date(),
-      });
-      throw err;
-    }
+      queueId,
+    });
   }
 
   /**
@@ -429,38 +356,14 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
    * znika z katalogu wyłącznie jawną komendą (`multimedia/batch-remove`) albo kaskadą, gdy jego
    * właściciel zadeklarował go jako `Owned` (`docs/backend/media-storage.md` §4c).
    */
-  public async removeMultimediaMultiple(
+  public removeMultimediaMultipleAsync(
     command: BatchCommandOfProductRemoveMultimediaCommandAndSearchProductRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    const meta: JobMeta = {
+    return this.runBatchCommandAsync(p => this._api.productRemoveMultimediaMultipleCommand(p), command, {
       commandName: CATALOG_JOB_COMMAND_KEYS.removeMultimedia,
-      timestamp: new Date(),
-    };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(
-          this._api.productRemoveMultimediaMultipleCommand({
-            ...command,
-            queueId: queueID,
-            uiMetadata: JSON.stringify(meta),
-          })
-        ),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({
-        operation: 'command',
-        message: err instanceof Error ? err.message : String(err),
-        timestamp: new Date(),
-      });
-      throw err;
-    }
+      queueId,
+    });
   }
 
   /**
@@ -470,37 +373,13 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
    * zawartości galerii produktów, których nie wczytał, więc adresuje stan docelowy, a nie listę
    * plików do zdjęcia (patrz `ProductSetMultimediaCommand` po stronie backendu).
    */
-  public async setMultimediaMultiple(
+  public setMultimediaMultipleAsync(
     command: BatchCommandOfProductSetMultimediaCommandAndSearchProductRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    const meta: JobMeta = {
+    return this.runBatchCommandAsync(p => this._api.productSetMultimediaMultipleCommand(p), command, {
       commandName: CATALOG_JOB_COMMAND_KEYS.setMultimedia,
-      timestamp: new Date(),
-    };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(
-          this._api.productSetMultimediaMultipleCommand({
-            ...command,
-            queueId: queueID,
-            uiMetadata: JSON.stringify(meta),
-          })
-        ),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({
-        operation: 'command',
-        message: err instanceof Error ? err.message : String(err),
-        timestamp: new Date(),
-      });
-      throw err;
-    }
+      queueId,
+    });
   }
 }

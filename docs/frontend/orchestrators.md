@@ -314,53 +314,101 @@ Kiedy sięgać po ten wzorzec: gdy widok (np. `erp-tree` / `erp-tree-picker`) po
 
 ## 6. Komendy (mutacje)
 
-Masowe operacje/komendy implementuje się jako publiczne metody `async` na orkiestratorze. Wzorzec: wywołanie API → rejestracja zadania w `JobService` → obsługa błędu przez `addError()`:
+Komendy to publiczne metody `async` na orkiestratorze. **Obrys wykonania jest jeden dla całego
+systemu i mieszka w `BaseOrchestrator`** — orkiestrator modułu podaje wyłącznie endpoint i klucz
+opisu w feedzie powiadomień. Nie pisz własnego `try/catch` z `withRequestId`, `jobService.addJob`
+i `addError`: to dokładnie ten kod, który wcześniej stał zduplikowany w czterech dialektach.
+
+Obrys (identyczny w każdym wariancie):
+
+```
+X-Request-Id (klucz idempotencji) → uiMetadata doklejone do żądania
+→ jobService.addJob(jobUuid, queueId, meta) → błąd HTTP → addError({operation:'command'}) → rzuć dalej
+```
+
+### Trzy warianty — który wybrać
+
+| Metoda `BaseOrchestrator` | Kiedy | Zwraca |
+|---|---|---|
+| `runBatchCommandAsync(call, payload, options)` | operacja masowa: `{ templateCommand, targetUuids \| targetFilter }` albo jawne `{ commands: [...] }` | `jobUuid` |
+| `runSingleCommandAsync(call, command, options)` | jeden znany cel — cukier pakujący komendę w `{ commands: [command] }` i dokładający `aggregateUuid` do metadanych | `jobUuid` |
+| `runDirectCommandAsync(call)` | komenda BEZ zadania masowego, której wynik jest potrzebny od razu (np. rejestracja wgranych plików oddająca uuidy) | wynik API |
+
+`options` to `CommandOptions`: `{ commandName, queueId?, aggregateUuid?, notifyOnComplete? }`.
+`queueId` i `uiMetadata` dokleja helper — payload przekazujesz w kształcie, jakiego oczekuje endpoint.
 
 ```typescript
-public async setPriceMultiple(
+/** Ustawia cenę produktów objętych zasięgiem. */
+public setPriceMultipleAsync(
   command: BatchCommandOfProductSetPriceCommandAndSearchProductRequest,
-  queueID?: string,
+  queueId?: string,
 ): Promise<string> {
-  try {
-    // withRequestId → nagłówek X-Request-Id, czyli klucz idempotencji operacji zapisu.
-    const result = await withRequestId(() =>
-      firstValueFrom(this._api.productSetPriceMultipleCommand(command)),
-    );
-    const jobUuid = result.jobUuid || '';
-    this.jobService.addJob(jobUuid, queueID, {
-      commandName: 'catalog.product.commands.setPrice',
-      timestamp: new Date(),
-    });
-    return jobUuid;
-  } catch (err) {
-    this.addError({
-      operation: 'command',
-      message: err instanceof Error ? err.message : String(err),
-      timestamp: new Date(),
-    });
-    throw err;
-  }
+  return this.runBatchCommandAsync(p => this._api.productSetPriceMultipleCommand(p), command, {
+    commandName: CATALOG_JOB_COMMAND_KEYS.setPrice,
+    queueId,
+  });
 }
 ```
 
-### `withRequestId` — każda ścieżka zapisu
+Metadane (`uiMetadata`) jadą RAZEM z komendą, nie tylko do lokalnego `JobService`: backend
+przechowuje je przy zadaniu i oddaje w `JobDto.uiMetadata`, dzięki czemu opis („Zmiana ceny")
+przeżywa odświeżenie strony i jest widoczny na innej karcie.
 
-**Owijaj nim wywołanie API, nie całą metodę.** `withRequestId` generuje identyfikator operacji
-i trzyma go przez SYNCHRONICZNE wykonanie przekazanej funkcji — tyle, ile trzeba, żeby
-interceptor zdążył dokleić nagłówek `X-Request-Id` przy budowaniu żądania. Backend traktuje ten
-nagłówek jako klucz idempotencji: ponowienie tego samego żądania nie wykonuje operacji drugi raz,
-tylko oddaje wynik pierwszego wykonania — dla zadania masowego oznacza to ten sam `jobUuid`
-zamiast drugiego zadania na tych samych 50 tys. pozycji
-([`cqrs.md` §6](../backend/cqrs.md#6-pipeline-komend)).
+### Konwencje nazewnicze
 
-Zakres jest zagnieżdżalny: operacja złożona z kilku żądań (wgranie plików → dopięcie ich do
-produktów) może iść pod jednym identyfikatorem, bo backend dokłada do klucza nazwę operacji
-i uuid agregatu. Poza zakresem nagłówek nie leci wcale — identyfikator inny przy każdej próbie
-nie chroniłby przed niczym, a rejestr kluczy rósłby o wiersz na każdy zapis w systemie.
+- Metoda `async` kończy się na `…Async` — bez wyjątków (`setPriceMultipleAsync`, `removeMemberAsync`).
+- Sufiks `…MultipleAsync` dla komend adresujących zasięg, bez niego dla jednego znanego celu.
+- Parametr kolejki nazywa się `queueId` — tak samo jak pole w DTO (nie `queueID`).
+- Człon czasownikowy zgadza się z nazwą komendy backendu (`set`/`add`/`remove`/`exec`) —
+  patrz [`endpoint-naming.md`](../backend/endpoint-naming.md).
+
+### `withRequestId` — dlaczego nie wołasz go sam
+
+`withRequestId` generuje identyfikator operacji i trzyma go przez SYNCHRONICZNE wykonanie
+przekazanej funkcji — tyle, ile trzeba, żeby interceptor zdążył dokleić nagłówek `X-Request-Id`
+przy budowaniu żądania. Backend traktuje ten nagłówek jako klucz idempotencji: ponowienie tego
+samego żądania nie wykonuje operacji drugi raz, tylko oddaje wynik pierwszego wykonania — dla
+zadania masowego oznacza to ten sam `jobUuid` zamiast drugiego zadania na tych samych 50 tys.
+pozycji ([`cqrs.md` §6](../backend/cqrs.md#6-pipeline-komend)).
+
+**Wołają go za ciebie trzy metody wyżej** — wprost sięgasz po niego tylko wtedy, gdy operacja
+składa się z kilku żądań, które mają iść pod jednym identyfikatorem (zakres jest zagnieżdżalny,
+a backend dokłada do klucza nazwę operacji i uuid agregatu). Poza zakresem nagłówek nie leci
+wcale — identyfikator inny przy każdej próbie nie chroniłby przed niczym, a rejestr kluczy
+rósłby o wiersz na każdy zapis w systemie.
 
 Odczyt (`search`, `get`) nie potrzebuje niczego takiego — jest idempotentny z natury.
 
----
+### Potwierdzenie użytkownika NIE jest częścią komendy
+
+Orkiestrator nigdy nie pyta użytkownika, czy na pewno. Dialog otwiera smart component z `feature`
+i dopiero potwierdzoną decyzję zamienia na wywołanie komendy
+([`ErpConfirmDialogService.confirmThenAsync`](../../frontend/libs/shared/ui/src/lib/atoms/erp-confirm-dialog/erp-confirm-dialog.service.ts),
+patrz [`atoms.md`](./atoms.md)):
+
+```typescript
+void this.confirmDialog
+  .confirmThenAsync(
+    ErpConfirmDialogBuilder.create(b => b.setKeys(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count }).setDestructive()),
+    () => this.productOrchestrator.setMultimediaMultipleAsync({ ...targets, templateCommand: { multimediaUuids: [] } }, QUEUE_ID),
+  )
+  .catch((err: unknown) => console.error('…', err));
+```
+
+Cztery powody, dla których ta granica jest tam, gdzie jest:
+
+1. **Warstwy.** `ErpConfirmDialogService` mieszka w `shared/ui`, a `data-access` może zależeć
+   tylko od `data-access` i `util` (ESLint `@nx/enforce-module-boundaries`). Orkiestrator jest
+   testowalny bez DOM-u i bez Transloco dokładnie dlatego, że nie dotyka UI.
+2. **Treść pytania zależy od kontekstu, nie od komendy.** Ta sama `removeMultimediaMultipleAsync`
+   pyta inaczej w panelu produktu, a inaczej w bibliotece mediów; `setMultimediaMultipleAsync`
+   raz pyta („wyczyścić galerię?"), a raz nie pyta wcale. Orkiestrator jest singletonem
+   `providedIn: 'root'` — nie wie, z którego ekranu przyszło wywołanie, a to ekran zna `count`,
+   `scopeCount()` i klucze tłumaczeń swojego scope'u.
+3. **Wycofanie się użytkownika to nie błąd.** Komenda w orkiestratorze musiałaby zwracać
+   `string | null` albo rzucać, a każdy wywołujący rozróżniać „anulowano" od „padło HTTP".
+4. **Orkiestrator bywa wołany nie z UI** (ponowienie zadania, wywołanie z innego orkiestratora) —
+   modal w środku metody `data-access` byłby wtedy zwieszką bez użytkownika.
 
 ## 7. Checklist tworzenia nowego orkiestratora
 
@@ -373,7 +421,9 @@ Odczyt (`search`, `get`) nie potrzebuje niczego takiego — jest idempotentny z 
 6. `mapToViewModel(dto, resolvedDeps)` — czysta funkcja, zero efektów ubocznych.
 7. Jeśli są powiązania: `resolveEagerDependencies` (async, zbiera UUID-y i woła `loadAsync` sąsiadów) + `_resolveCurrentDeps` (sync, czyta z cache sąsiadów). Jeśli brak powiązań: użyj `LoadOptions`, pomiń obie metody.
 8. Zależności do sąsiednich orkiestratorów wstrzykuj leniwie przez `Injector` (sekcja 2, "Cykliczne zależności").
-9. Komendy jako publiczne `async` metody wg wzorca z sekcji 6.
+9. Komendy jako publiczne metody `…Async` delegujące do `runBatchCommandAsync` /
+   `runSingleCommandAsync` / `runDirectCommandAsync` — bez własnego `try/catch`, `withRequestId`
+   i `addJob` (sekcja 6).
 
 ## 8. Częste błędy do unikania
 
@@ -384,6 +434,9 @@ Odczyt (`search`, `get`) nie potrzebuje niczego takiego — jest idempotentny z 
 - Tworzenie dedykowanego, pustego `XLoadOptions`, gdy wystarczy `LoadOptions`.
 - Bezpośrednie wstrzyknięcie sąsiedniego orkiestratora w konstruktorze zamiast leniwie przez `Injector` (ryzyko cyklu DI).
 - Tworzenie osobnego serwisu obok orkiestratora dla wyspecjalizowanych odczytów (np. drzew) zamiast dodania metod na tym samym orkiestratorze (sekcja 5).
+- Własny obrys komendy (`try/catch` + `withRequestId` + `addJob` + `addError`) zamiast helperów
+  z `BaseOrchestrator` — to była najczęściej kopiowana pięćdziesiątka linii w repo (sekcja 6).
+- Pytanie użytkownika o potwierdzenie wewnątrz orkiestratora zamiast w smart komponencie (sekcja 6).
 - Tworzenie orkiestratora dla bytu, który nigdy nie jest ładowany/wyszukiwany niezależnie od rodzica i nie ma własnego endpointu — sztuczny podział wzdłuż schematu bazy zamiast granicy kontraktu API (patrz sekcja 9).
 
 ---

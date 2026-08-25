@@ -16,6 +16,7 @@ import { IdentityMapStore } from './identity-map.store';
 import { DataLoader } from './data-loader';
 import { JobService } from './job.service';
 import { SignalrSyncService } from '../sync/signalr-sync.service';
+import { withRequestId } from '../sync/request-id';
 import {
   HasUuid,
   OrchestratorConfig,
@@ -24,6 +25,10 @@ import {
   DEFAULT_ORCHESTRATOR_CONFIG,
   ResolvedDeps,
   SharedSearchResponse,
+  CommandOptions,
+  ErpBatchPayload,
+  ErpBatchResult,
+  JobMeta,
 } from './orchestrator.types';
 
 /**
@@ -404,6 +409,92 @@ export abstract class BaseOrchestrator<
         message: err instanceof Error ? err.message : String(err),
         timestamp: new Date(),
       });
+    }
+  }
+
+
+  // ────────────────────────────────────────────────────────────────
+  // Komendy (mutacje)
+  // ────────────────────────────────────────────────────────────────
+  //
+  // Każda ścieżka zapisu w systemie ma ten sam obrys: identyfikator operacji (`X-Request-Id`,
+  // czyli klucz idempotencji backendu) → metadane dla feedu powiadomień doklejone do żądania →
+  // rejestracja zadania w `JobService` → zamiana błędu HTTP na wpis w stanie orkiestratora.
+  // Różni się wyłącznie payload, dlatego obrys mieszka tutaj, a nie w każdym orkiestratorze
+  // z osobna. Metody są `protected`: publiczne API komend to nazwane metody agregatu
+  // (`setPriceMultipleAsync`), nie generyczny „wyślij cokolwiek”.
+
+  /**
+   * Zleca operację masową i zwraca `jobUuid`.
+   *
+   * Payload przekazujesz w kształcie, jakiego oczekuje endpoint (`{ commands: [...] }` albo
+   * `{ templateCommand, targetUuids | targetFilter }`) — `queueId` i `uiMetadata` dokłada
+   * ta metoda, żeby żaden orkiestrator nie musiał pamiętać o serializacji metadanych.
+   *
+   * Metadane jadą RAZEM z komendą, nie tylko do lokalnego `JobService`: backend przechowuje je
+   * przy zadaniu i oddaje w `JobDto.uiMetadata`, dzięki czemu opis („Zmiana ceny”) przeżywa
+   * odświeżenie strony i jest widoczny na innej karcie.
+   */
+  protected async runBatchCommandAsync<TPayload extends ErpBatchPayload>(
+    call: (payload: TPayload) => Observable<ErpBatchResult>,
+    payload: TPayload,
+    options: CommandOptions,
+  ): Promise<string> {
+    const meta: JobMeta = {
+      commandName: options.commandName,
+      aggregateUuid: options.aggregateUuid,
+      notifyOnComplete: options.notifyOnComplete,
+      timestamp: new Date(),
+    };
+
+    const result = await this.runDirectCommandAsync(() =>
+      call({ ...payload, queueId: options.queueId, uiMetadata: JSON.stringify(meta) }),
+    );
+    const jobUuid = result.jobUuid || '';
+
+    this.jobService.addJob(jobUuid, options.queueId, meta);
+
+    return jobUuid;
+  }
+
+  /**
+   * Zleca operację masową na JEDNYM znanym celu — cukier na {@link runBatchCommandAsync}.
+   *
+   * Nawet wywołanie na jednym agregacie jest zadaniem z jednym elementem: endpointy zapisu
+   * idą przez `BatchEndpointBase` i innego trybu nie mają. `aggregateUuid` do metadanych
+   * bierzemy z `command.uuid`, chyba że wywołujący poda go jawnie w `options`.
+   */
+  protected runSingleCommandAsync<TCommand extends { uuid?: string }>(
+    call: (payload: { commands: TCommand[] } & ErpBatchPayload) => Observable<ErpBatchResult>,
+    command: TCommand,
+    options: CommandOptions,
+  ): Promise<string> {
+    return this.runBatchCommandAsync(call, { commands: [command] }, {
+      ...options,
+      aggregateUuid: options.aggregateUuid ?? command.uuid,
+    });
+  }
+
+  /**
+   * Komenda, która NIE tworzy zadania masowego — zwraca swój wynik od razu (np. rejestracja
+   * wgranych plików oddająca uuidy zasobów).
+   *
+   * Daje to samo, co dwie metody wyżej, minus `JobService`: zakres `X-Request-Id` i zamianę
+   * błędu HTTP na wpis w `errors`. Błąd zawsze leci dalej — o tym, czy pokazać go użytkownikowi,
+   * decyduje wywołujący w `feature`, nie orkiestrator.
+   */
+  protected async runDirectCommandAsync<TResult>(call: () => Observable<TResult>): Promise<TResult> {
+    try {
+      // withRequestId owija SAMO wywołanie API: zakres trzyma identyfikator przez synchroniczne
+      // wykonanie, czyli dokładnie tyle, ile trzeba, by interceptor dokleił nagłówek.
+      return await withRequestId(() => firstValueFrom(call()));
+    } catch (err) {
+      this.addError({
+        operation: 'command',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+      throw err;
     }
   }
 

@@ -171,17 +171,13 @@ export class MultimediaLibraryTabComponent {
       return;
     }
 
-    this.confirmDialog
-      .confirm(
+    void this.confirmDialog
+      .confirmThenAsync(
         ErpConfirmDialogBuilder.create(b =>
           b.setKeys(MULTIMEDIA_KEYS.base.confirm.remove, { count }).setDestructive(),
         ),
-      )
-      .subscribe(confirmed => {
-        if (!confirmed) return;
-
-        void this.orchestrator
-          .removeMultiple(
+        async () => {
+          await this.orchestrator.removeMultipleAsync(
             {
               ...erpBuildBatchTargets<SearchMultimediaRequest>(this.store.scope()),
               // Pusty szablon jest tu WYMAGANY, mimo że komenda nie ma czego nieść poza uuid:
@@ -191,12 +187,12 @@ export class MultimediaLibraryTabComponent {
               templateCommand: {},
             },
             MULTIMEDIA_LIBRARY_QUEUE_ID,
-          )
-          .then(() => {
-            this.store.clearSelection();
-            this.table()?.clearSelection();
-          });
-      });
+          );
+          this.store.clearSelection();
+          this.table()?.clearSelection();
+        },
+      )
+      .catch((err: unknown) => console.error('[MultimediaLibraryTabComponent] Nie udało się usunąć zasobów.', err));
   }
 
   /**
@@ -224,7 +220,7 @@ export class MultimediaLibraryTabComponent {
 
     const commands: MultimediaExecGenerateDerivativesCommand[] = targets.map(vm => ({ uuid: vm.uuid }));
 
-    await this.orchestrator.generateDerivativesMultiple({ commands }, MULTIMEDIA_LIBRARY_QUEUE_ID);
+    await this.orchestrator.generateDerivativesMultipleAsync({ commands }, MULTIMEDIA_LIBRARY_QUEUE_ID);
 
     // Zadanie kończy się na przyjęciu zleceń, nie na gotowych plikach — miniaturka wskoczy
     // do tabeli sama, zdarzeniem `AggregateChanged`. Bez tego zdania użytkownik patrzy na

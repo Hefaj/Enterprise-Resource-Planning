@@ -394,20 +394,18 @@ export class MultimediaTabComponent {
     const targets = this.tabStore.batchTargets();
     const count = this.tabStore.scopeCount();
 
-    this.confirmDialog
-      .confirm(
+    void this.confirmDialog
+      .confirmThenAsync(
         ErpConfirmDialogBuilder.create(b =>
           b.setKeys(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count }).setDestructive(),
         ),
+        () =>
+          this.productOrchestrator.setMultimediaMultipleAsync(
+            { ...targets, templateCommand: { multimediaUuids: [] } },
+            MULTIMEDIA_TAB_QUEUE_ID,
+          ),
       )
-      .subscribe(confirmed => {
-        if (!confirmed) return;
-
-        void this.productOrchestrator.setMultimediaMultiple(
-          { ...targets, templateCommand: { multimediaUuids: [] } },
-          MULTIMEDIA_TAB_QUEUE_ID,
-        );
-      });
+      .catch((err: unknown) => console.error('[MultimediaTabComponent] Nie udało się wyczyścić galerii.', err));
   }
 
   /**
@@ -435,8 +433,8 @@ export class MultimediaTabComponent {
       multimediaUuids,
     }));
 
-    this.confirmDialog
-      .confirm(
+    void this.confirmDialog
+      .confirmThenAsync(
         ErpConfirmDialogBuilder.create(b =>
           b
             .setKeys(PRODUCT_KEYS.base.multimedia.confirm.removeSelected, {
@@ -444,14 +442,12 @@ export class MultimediaTabComponent {
             })
             .setDestructive(),
         ),
+        async () => {
+          await this.productOrchestrator.removeMultimediaMultipleAsync({ commands }, MULTIMEDIA_TAB_QUEUE_ID);
+          this.tabStore.clearChildSelection();
+        },
       )
-      .subscribe(confirmed => {
-        if (!confirmed) return;
-
-        void this.productOrchestrator
-          .removeMultimediaMultiple({ commands }, MULTIMEDIA_TAB_QUEUE_ID)
-          .then(() => this.tabStore.clearChildSelection());
-      });
+      .catch((err: unknown) => console.error('[MultimediaTabComponent] Nie udało się odpiąć plików.', err));
   }
 
   /**
@@ -494,7 +490,7 @@ export class MultimediaTabComponent {
 
     const commands: MultimediaExecGenerateDerivativesCommand[] = targets.map(uuid => ({ uuid }));
 
-    await this.multimediaOrchestrator.generateDerivativesMultiple({ commands }, MULTIMEDIA_TAB_QUEUE_ID);
+    await this.multimediaOrchestrator.generateDerivativesMultipleAsync({ commands }, MULTIMEDIA_TAB_QUEUE_ID);
 
     // Zadanie kończy się na przyjęciu zleceń, nie na gotowych plikach — a miniaturka wskoczy
     // do tabeli sama, zdarzeniem `AggregateChanged`. Bez tego zdania użytkownik patrzy na

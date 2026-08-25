@@ -41,6 +41,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Nowy modal (lazy-loaded, przez `ErpModalService`) | [`docs/frontend/modals.md`](docs/frontend/modals.md) |
 | Nowy moduł — generacja NX, `project.json` hybrydowy (monolit/MFE), `federation.config.mjs`, rejestracja w Client, tłumaczenia, weryfikacja | [`docs/frontend/new-module.md`](docs/frontend/new-module.md) |
 | Orkiestrator w `data-access` (`BaseOrchestrator`, cache `IdentityMapStore`, SignalR, mapowanie DTO→ViewModel, wzorce dla drzew) | [`docs/frontend/orchestrators.md`](docs/frontend/orchestrators.md) |
+| Komenda (mutacja) na orkiestratorze — helpery `runBatchCommandAsync`/`runSingleCommandAsync`/`runDirectCommandAsync`, `X-Request-Id`, rejestracja zadania, nazewnictwo `…Async`, gdzie NIE robić potwierdzenia | [`docs/frontend/orchestrators.md` §6](docs/frontend/orchestrators.md#6-komendy-mutacje) |
 | Smart tabela dla agregatu (lista serwerowa `ErpTableBuilder`, wiersze z orkiestratora po UUID, paginacja/sortowanie) | [`docs/frontend/smart-tables.md`](docs/frontend/smart-tables.md) |
 | Gdzie położyć plik w `feature` — struktura katalogów agregatu (`components`/`modal`/`page`/`translation`) | [`docs/frontend/feature-structure.md`](docs/frontend/feature-structure.md) |
 | Nowy page dla agregatu (`erp-grid-layout`, filtr, smart tabela + action toolbar, zakładki i prawy panel zależny od zaznaczenia, store strony) | [`docs/frontend/pages.md`](docs/frontend/pages.md) |

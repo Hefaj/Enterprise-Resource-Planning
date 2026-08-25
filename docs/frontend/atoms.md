@@ -70,14 +70,21 @@ tym samym kodem). Moduł wnosi wyłącznie klucze tłumaczeń:
 ```typescript
 private readonly _confirm = inject(ErpConfirmDialogService);
 
-this._confirm
-  .confirm(
+// Domyślna forma: „zapytaj i zleć". Akcja idzie WEWNĄTRZ okna — przycisk pokazuje spinner
+// do jej końca, drugie kliknięcie jest zablokowane, a wycofanie się użytkownika po prostu
+// zwraca `false` (nie jest błędem).
+void this._confirm
+  .confirmThenAsync(
     ErpConfirmDialogBuilder.create(b =>
       b.setKeys(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count }).setDestructive(),
     ),
+    () => this._orchestrator.setMultimediaMultipleAsync(payload, QUEUE_ID),
   )
-  .subscribe(confirmed => { if (confirmed) { /* ... */ } });
+  .catch((err: unknown) => console.error('[MultimediaTabComponent] …', err));
 ```
+
+Gołe `confirm(...)` / `confirmAsync(...)` zostaje dla przypadków, w których po potwierdzeniu nie
+ma jednej akcji do wykonania (rozgałęzienie, zmiana stanu lokalnego, kilka niezależnych ścieżek).
 
 - `setKeys({ title, message, yes, no }, params)` bierze całą gałąź słownika naraz — to konwencja
   słowników modułowych. Klucze rozsypane po innych nazwach składasz `setTitle`/`setMessage`/
@@ -89,8 +96,13 @@ this._confirm
   poznać po samym oknie, czy klika „zapisz", czy „skasuj".
 - Strumień emituje **dokładnie jedną** wartość: `false` obejmuje też zamknięcie backdropem, więc
   nie ma trzeciego stanu do obsłużenia. Dla `async/await` jest `confirmAsync(...)`.
-- `setOnConfirm(fn)` wykonuje akcję **wewnątrz** okna ze spinnerem na przycisku — używaj, gdy
-  operacja jest krótka i użytkownik ma zobaczyć jej koniec tam, gdzie kliknął.
+- `confirmThenAsync(config, action)` to `confirmAsync` + `setOnConfirm(action)` w jednym: zwraca
+  `true`, gdy akcja poszła, `false`, gdy użytkownik się wycofał; błąd akcji zamyka okno i leci
+  do wywołującego. `setOnConfirm(fn)` wprost przydaje się, gdy konfigurację składasz gdzie indziej
+  niż wywołujesz dialog.
+- **Potwierdzenie zawsze zostaje w `feature`/`ui` — nigdy nie wędruje do orkiestratora.**
+  Uzasadnienie (granice warstw, kontekst treści, „anulowano" ≠ błąd) →
+  [`orchestrators.md` §6](./orchestrators.md#6-komendy-mutacje).
 
 ---
 

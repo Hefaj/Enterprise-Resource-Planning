@@ -169,8 +169,8 @@ export class RolePermissionsTabComponent {
     );
     if (pairs.length === 0) return;
 
-    this._confirm
-      .confirm(
+    void this._confirm
+      .confirmThenAsync(
         ErpConfirmDialogBuilder.create((b) =>
           b
             .setTitle(ROLES_KEYS.detail.permissions.revokeConfirmTitle)
@@ -179,16 +179,15 @@ export class RolePermissionsTabComponent {
             .setCancelLabel(ROLES_KEYS.detail.permissions.revokeConfirmNo)
             .setDestructive(),
         ),
+        async () => {
+          await Promise.all(
+            pairs.map(({ roleUuid, permissionCode }) =>
+              this._orchestrator.removePermissionAsync({ uuid: roleUuid, permissionCode }),
+            ),
+          );
+          this._tabStore.clearChildSelection();
+        },
       )
-      .subscribe((confirmed) => {
-        if (!confirmed) return;
-        Promise.all(
-          pairs.map(({ roleUuid, permissionCode }) =>
-            this._orchestrator.removePermissionAsync({ uuid: roleUuid, permissionCode }),
-          ),
-        )
-          .then(() => this._tabStore.clearChildSelection())
-          .catch((err) => console.error('[RolePermissionsTabComponent] Nie udało się odebrać uprawnienia.', err));
-      });
+      .catch((err: unknown) => console.error('[RolePermissionsTabComponent] Nie udało się odebrać uprawnienia.', err));
   }
 }

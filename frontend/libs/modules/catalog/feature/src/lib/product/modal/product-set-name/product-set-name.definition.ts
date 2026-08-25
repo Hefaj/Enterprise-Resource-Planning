@@ -55,7 +55,7 @@ export class ProductSetNameModalDefinition implements ErpModalDefinition<BatchCo
           targetFilter: cmd.targetFilter,
         };
 
-        return await this._orchestrator.setNameMultiple(payload, PRODUCT_SET_NAME_MODAL_ID);
+        return await this._orchestrator.setNameMultipleAsync(payload, PRODUCT_SET_NAME_MODAL_ID);
       })
     );
   }

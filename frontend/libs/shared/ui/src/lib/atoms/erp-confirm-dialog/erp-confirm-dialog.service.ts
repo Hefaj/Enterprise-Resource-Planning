@@ -50,4 +50,31 @@ export class ErpConfirmDialogService {
   public confirmAsync(config: ErpConfirmDialogConfig): Promise<boolean> {
     return firstValueFrom(this.confirm(config));
   }
+
+  /**
+   * Zapytaj i — jeśli użytkownik potwierdzi — wykonaj akcję **wewnątrz dialogu**.
+   * Zwraca `true`, gdy akcja poszła; `false`, gdy użytkownik się wycofał.
+   *
+   * <b>To jest domyślna forma dla „potwierdź i zleć komendę".</b> Bez niej każde wywołanie
+   * powtarza ten sam obrys (`.subscribe(confirmed => { if (!confirmed) return; ... })`),
+   * a akcja startuje dopiero po zamknięciu okna — użytkownik dostaje wtedy błysk zamknięcia
+   * i nic więcej, choć żądanie jeszcze leci. Tutaj przycisk pokazuje spinner na czas akcji
+   * i blokuje drugie kliknięcie (patrz `onConfirm` w `ErpConfirmDialogConfig`).
+   *
+   * Błąd akcji zamyka okno i leci dalej — obsługa należy do wywołującego, nie do dialogu.
+   *
+   * @example
+   * ```ts
+   * await this._confirm.confirmThenAsync(
+   *   ErpConfirmDialogBuilder.create(b => b.setKeys(PRODUCT_KEYS.base.multimedia.confirm.clearAll, { count }).setDestructive()),
+   *   () => this._orchestrator.setMultimediaMultipleAsync(payload, QUEUE_ID),
+   * );
+   * ```
+   */
+  public confirmThenAsync(
+    config: ErpConfirmDialogConfig,
+    action: () => void | Promise<unknown>,
+  ): Promise<boolean> {
+    return this.confirmAsync({ ...config, onConfirm: async () => void (await action()) });
+  }
 }

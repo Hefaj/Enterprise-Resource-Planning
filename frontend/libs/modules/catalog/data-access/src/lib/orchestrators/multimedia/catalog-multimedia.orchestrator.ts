@@ -1,5 +1,5 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
-import { BaseOrchestrator, JobMeta, OrchestratorConfig, withRequestId } from '@erp/shared/data-access';
+import { BaseOrchestrator, OrchestratorConfig } from '@erp/shared/data-access';
 import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
 import { MultimediaVM } from './multimedia.view-model';
 import { firstValueFrom, Observable } from 'rxjs';
@@ -51,7 +51,7 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
 
   /**
    * Wgrywa pliki i rejestruje je w katalogu. Zwraca uuidy zasobów, gotowe do dopięcia
-   * do produktów (`CatalogProductOrchestrator.addMultimediaMultiple`).
+   * do produktów (`CatalogProductOrchestrator.addMultimediaMultipleAsync`).
    *
    * Trzy kroki, w tej kolejności:
    * 1. bilety — po jednym adresie `PUT` na plik,
@@ -66,7 +66,7 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
    * @param files Pliki wybrane przez użytkownika.
    * @param onProgress Wołane po każdym wgranym pliku — do paska postępu w modalu.
    */
-  public async uploadFiles(
+  public async uploadFilesAsync(
     files: readonly File[],
     onProgress?: (uploaded: number, total: number) => void,
   ): Promise<string[]> {
@@ -74,6 +74,10 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
       return [];
     }
 
+    // Bilety i transfer NIE idą przez `runDirectCommandAsync`: pierwszy jest odczytem podpisów,
+    // drugi w ogóle nie jest żądaniem do naszego API (patrz akapit o `fetch` wyżej), więc nie ma
+    // tu czego uczynić idempotentnym. Wspólny jest wyłącznie los błędu — wpis w stanie
+    // orkiestratora i wyjątek dalej, dokładnie jak przy komendach.
     try {
       const tickets = await firstValueFrom(
         this.apiClient.getMultimediaUploadTickets({ count: files.length }),
@@ -104,8 +108,11 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
         sortOrder: index,
       }));
 
-      const result = await withRequestId(() =>
-        firstValueFrom(this.apiClient.multimediaCreateCommand({ commands })),
+      // Rejestracja jest już komendą — i jedyną tutaj, która tworzy stan po stronie serwera.
+      // Zadania masowego nie zakłada (uuidy są potrzebne od razu, synchronicznie), więc idzie
+      // wariantem „direct”: zakres `X-Request-Id` bez wpisu w feedzie powiadomień.
+      const result = await this.runDirectCommandAsync(() =>
+        this.apiClient.multimediaCreateCommand({ commands }),
       );
 
       return result.uuids;
@@ -123,7 +130,7 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
    * Usuwa zasoby z biblioteki mediów — <b>razem z plikami w magazynie</b>.
    *
    * To jest operacja inna niż odpięcie zdjęcia od produktu
-   * (`CatalogProductOrchestrator.removeMultimediaMultiple`): tamta zostawia zasób w katalogu,
+   * (`CatalogProductOrchestrator.removeMultimediaMultipleAsync`): tamta zostawia zasób w katalogu,
    * ta go z niego wymazuje. Backend odmawia usunięcia zasobu, na który wskazuje choćby jeden
    * produkt (`multimedia_still_referenced`) — element odpada pojedynczo, reszta paczki
    * przechodzi (`docs/backend/media-storage.md` §4c).
@@ -132,15 +139,14 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
    * zadania oznacza „wiersz zniknął i zlecenie skasowania pliku jest utrwalone", a nie
    * „bajtów już nie ma".
    */
-  public async removeMultiple(
+  public removeMultipleAsync(
     command: BatchCommandOfMultimediaRemoveCommandAndSearchMultimediaRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    return this.runBatch(
-      CATALOG_JOB_COMMAND_KEYS.removeAsset,
-      queueID,
-      meta => this.apiClient.multimediaRemoveCommand({ ...command, queueId: queueID, uiMetadata: meta }),
-    );
+    return this.runBatchCommandAsync(p => this.apiClient.multimediaRemoveCommand(p), command, {
+      commandName: CATALOG_JOB_COMMAND_KEYS.removeAsset,
+      queueId,
+    });
   }
 
   /**
@@ -154,48 +160,15 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
    * asynchronicznie i zgłaszają się osobno, przez `AggregateChanged` — galeria podmieni wtedy
    * zaślepkę na miniaturkę sama, bez odpytywania w pętli.
    */
-  public async generateDerivativesMultiple(
+  public generateDerivativesMultipleAsync(
     command: BatchCommandOfMultimediaExecGenerateDerivativesCommandAndSearchMultimediaRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    return this.runBatch(
-      CATALOG_JOB_COMMAND_KEYS.generateDerivatives,
-      queueID,
-      meta =>
-        this.apiClient.multimediaExecGenerateDerivativesMultipleCommand({
-          ...command,
-          queueId: queueID,
-          uiMetadata: meta,
-        }),
+    return this.runBatchCommandAsync(
+      p => this.apiClient.multimediaExecGenerateDerivativesMultipleCommand(p),
+      command,
+      { commandName: CATALOG_JOB_COMMAND_KEYS.generateDerivatives, queueId },
     );
-  }
-
-  /**
-   * Wspólny obrys zlecenia operacji masowej: metadane do feedu powiadomień, rejestracja zadania
-   * w `jobService` i zamiana błędu HTTP na wpis w stanie orkiestratora.
-   */
-  private async runBatch(
-    commandName: string,
-    queueID: string | undefined,
-    send: (uiMetadata: string) => Observable<{ jobUuid?: string }>,
-  ): Promise<string> {
-    const meta: JobMeta = { commandName, timestamp: new Date() };
-
-    try {
-      const result = await withRequestId(() => firstValueFrom(send(JSON.stringify(meta))));
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({
-        operation: 'command',
-        message: err instanceof Error ? err.message : String(err),
-        timestamp: new Date(),
-      });
-      throw err;
-    }
   }
 
   protected fetchByUuids(uuids: string[]): Observable<MultimediaDto[]> {

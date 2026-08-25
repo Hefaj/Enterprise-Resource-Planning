@@ -1,11 +1,10 @@
 import { Injectable, Injector, inject } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import { BaseOrchestrator, JobMeta, LoadOptions, OrchestratorConfig, ResolvedDeps, withRequestId } from '@erp/shared/data-access';
+import { BaseOrchestrator, LoadOptions, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
 import { IDENTITY_JOB_COMMAND_KEYS } from '@erp/identity/util';
 import {
   IdentityClient,
-  BatchResult,
   BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest,
   BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest,
   GetRoleRequest,
@@ -83,7 +82,8 @@ export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRo
   // ── Komendy — patrz uzasadnienie podziału single-target/wsadowe w `UserOrchestrator` ──
   //
   // Wszystkie idą przez odpowiednik `BatchEndpointBase` — nawet wywołanie na jednej roli jest
-  // zadaniem z jednym elementem (patrz Faza 1+3 w docs/backend/identity-bulk-migration.md).
+  // zadaniem z jednym elementem (patrz Faza 1+3 w docs/backend/identity-bulk-migration.md);
+  // obrys wykonania daje `runBatchCommandAsync`/`runSingleCommandAsync` z `BaseOrchestrator`.
   // Metody zwracają `jobUuid`, nie wynik operacji. `addPermissionMultipleAsync`/
   // `addMemberMultipleAsync` niżej obsługują OBA wywołania (panel szczegółów z `targetUuids:
   // [uuid]`, lista z `erpBuildBatchTargets(scope)`); `removePermissionAsync`/`removeMemberAsync`
@@ -95,13 +95,12 @@ export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRo
    * bo tworzenie roli idzie przez tryb `Commands[]`, dla którego uuid celu jest częścią
    * payloadu, nie wynikiem odpowiedzi (patrz `RoleCreateCommand.Uuid` w
    * `Identity.Application.Roles.RoleCommands`). */
-  public async createRoleAsync(command: RoleCreateCommand, queueID?: string): Promise<string> {
+  public async createRoleAsync(command: RoleCreateCommand, queueId?: string): Promise<string> {
     const uuid = crypto.randomUUID();
-    const jobUuid = await this._runSingleTargetCommand(
-      (payload) => this._api.roleCreateMultipleCommand(payload),
+    const jobUuid = await this.runSingleCommandAsync(
+      p => this._api.roleCreateMultipleCommand(p),
       { ...command, uuid } as RoleCreateCommand,
-      IDENTITY_JOB_COMMAND_KEYS.createRole,
-      queueID,
+      { commandName: IDENTITY_JOB_COMMAND_KEYS.createRole, queueId },
     );
     // `loadAsync` (nie `dataLoader.reloadAsync`) — to nowy uuid, jeszcze nieobecny w
     // `_loadedUuids`. Zadanie kończy się asynchronicznie (patrz Faza 1), ale UUID jest znany
@@ -111,22 +110,18 @@ export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRo
     return jobUuid;
   }
 
-  public async removeMemberAsync(command: RoleRemoveMemberCommand, queueID?: string): Promise<string> {
-    return this._runSingleTargetCommand(
-      (payload) => this._api.roleRemoveMemberMultipleCommand(payload),
-      command,
-      IDENTITY_JOB_COMMAND_KEYS.removeRoleMember,
-      queueID,
-    );
+  public removeMemberAsync(command: RoleRemoveMemberCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync(p => this._api.roleRemoveMemberMultipleCommand(p), command, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.removeRoleMember,
+      queueId,
+    });
   }
 
-  public async removePermissionAsync(command: RoleRemovePermissionCommand, queueID?: string): Promise<string> {
-    return this._runSingleTargetCommand(
-      (payload) => this._api.roleRemovePermissionMultipleCommand(payload),
-      command,
-      IDENTITY_JOB_COMMAND_KEYS.removeRolePermission,
-      queueID,
-    );
+  public removePermissionAsync(command: RoleRemovePermissionCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync(p => this._api.roleRemovePermissionMultipleCommand(p), command, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.removeRolePermission,
+      queueId,
+    });
   }
 
   // ── Komendy wsadowe na zaznaczeniu z listy ──
@@ -136,77 +131,23 @@ export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRo
   // zostaje jako akcja jednego wiersza w panelu szczegółów (usuwanie konkretnego, znanego
   // grantu nie jest naturalną operacją „to samo dla wielu zaznaczonych").
 
-  public async addPermissionMultipleAsync(
+  public addPermissionMultipleAsync(
     payload: BatchCommandOfRoleAddPermissionCommandAndSearchRoleRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    return this._runBatchCommand(
-      (p) => this._api.roleAddPermissionMultipleCommand(p),
-      payload,
-      IDENTITY_JOB_COMMAND_KEYS.addRolePermission,
-      queueID,
-    );
+    return this.runBatchCommandAsync(p => this._api.roleAddPermissionMultipleCommand(p), payload, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.addRolePermission,
+      queueId,
+    });
   }
 
-  public async addMemberMultipleAsync(
+  public addMemberMultipleAsync(
     payload: BatchCommandOfRoleAddMemberCommandAndSearchRoleRequest,
-    queueID?: string,
+    queueId?: string,
   ): Promise<string> {
-    return this._runBatchCommand(
-      (p) => this._api.roleAddMemberMultipleCommand(p),
-      payload,
-      IDENTITY_JOB_COMMAND_KEYS.addRoleMember,
-      queueID,
-    );
-  }
-
-  private async _runBatchCommand<TPayload extends { queueId?: string; uiMetadata?: string }>(
-    call: (payload: TPayload) => Observable<BatchResult>,
-    payload: TPayload,
-    commandNameKey: string,
-    queueID?: string,
-  ): Promise<string> {
-    const meta: JobMeta = { commandName: commandNameKey, timestamp: new Date() };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(call({ ...payload, queueId: queueID, uiMetadata: JSON.stringify(meta) })),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({ operation: 'command', message: err instanceof Error ? err.message : String(err), timestamp: new Date() });
-      throw err;
-    }
-  }
-
-  /** Patrz bliźniacza metoda w `UserOrchestrator._runSingleTargetCommand` — ten sam wzorzec,
-   * zduplikowany celowo (dwie różne rodziny komend, dwa różne API klienty), nie wydzielony do
-   * `BaseOrchestrator`, żeby nie tworzyć zależności między orkiestratorami bulk a tymi, które
-   * jeszcze nie mają operacji masowych (Catalog nie potrzebuje trybu "jeden cel"). */
-  private async _runSingleTargetCommand<TCommand extends { uuid?: string }>(
-    call: (payload: { commands: TCommand[]; queueId?: string; uiMetadata?: string }) => Observable<BatchResult>,
-    command: TCommand,
-    commandNameKey: string,
-    queueID?: string,
-  ): Promise<string> {
-    const meta: JobMeta = { commandName: commandNameKey, aggregateUuid: command.uuid, timestamp: new Date() };
-
-    try {
-      const result = await withRequestId(() =>
-        firstValueFrom(call({ commands: [command], queueId: queueID, uiMetadata: JSON.stringify(meta) })),
-      );
-      const jobUuid = result.jobUuid || '';
-
-      this.jobService.addJob(jobUuid, queueID, meta);
-
-      return jobUuid;
-    } catch (err) {
-      this.addError({ operation: 'command', message: err instanceof Error ? err.message : String(err), timestamp: new Date() });
-      throw err;
-    }
+    return this.runBatchCommandAsync(p => this._api.roleAddMemberMultipleCommand(p), payload, {
+      commandName: IDENTITY_JOB_COMMAND_KEYS.addRoleMember,
+      queueId,
+    });
   }
 }

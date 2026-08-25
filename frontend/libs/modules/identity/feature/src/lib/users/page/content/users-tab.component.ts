@@ -124,8 +124,8 @@ export class UsersTabComponent {
   }
 
   private _onForceLogout(): void {
-    this._confirm
-      .confirm(
+    void this._confirm
+      .confirmThenAsync(
         ErpConfirmDialogBuilder.create((b) =>
           b
             .setTitle(USERS_KEYS.detail.execForceLogout.confirmTitle)
@@ -134,12 +134,12 @@ export class UsersTabComponent {
             .setCancelLabel(USERS_KEYS.detail.execForceLogout.confirmNo)
             .setAppearance('warning'),
         ),
+        () =>
+          this._orchestrator.execForceLogoutMultipleAsync({
+            ...erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()),
+            templateCommand: {},
+          }),
       )
-      .subscribe((confirmed) => {
-        if (!confirmed) return;
-        this._orchestrator
-          .execForceLogoutMultipleAsync({ ...erpBuildBatchTargets<SearchUserAccountRequest>(this.store.scope()), templateCommand: {} })
-          .catch((err: unknown) => console.error('[UsersTabComponent] Nie udało się wymusić wylogowania.', err));
-      });
+      .catch((err: unknown) => console.error('[UsersTabComponent] Nie udało się wymusić wylogowania.', err));
   }
 }

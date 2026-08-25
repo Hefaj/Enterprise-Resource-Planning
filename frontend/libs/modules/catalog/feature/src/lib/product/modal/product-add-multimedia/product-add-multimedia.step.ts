@@ -127,7 +127,7 @@ export class ProductAddMultimediaStepComponent
     this._uploading.set(true);
 
     try {
-      const uuids = await this.multimediaOrchestrator.uploadFiles(
+      const uuids = await this.multimediaOrchestrator.uploadFilesAsync(
         files,
         uploaded => this._uploaded.set(uploaded),
       );

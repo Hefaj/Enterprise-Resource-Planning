@@ -63,7 +63,7 @@ node -e "console.log(require('crypto').createHash('md5').update('MODULE_NAME.ent
 
 ## 3. Krok 1.5 — Orkiestrator gotowy do zapisu (`data-access`)
 
-Przed utworzeniem definicji modalu upewnij się, że orkiestrator (np. `CatalogProductOrchestrator`) ma metodę do wykonania komendy (np. `setPriceMultiple`). Jeśli nie — zaimplementuj ją najpierw, wg wzorca komend w [orkiestratorach, sekcja 6](./orchestrators.md#6-komendy-mutacje), i zaimportuj typ komendy z wygenerowanego klienta API.
+Przed utworzeniem definicji modalu upewnij się, że orkiestrator (np. `CatalogProductOrchestrator`) ma metodę do wykonania komendy (np. `setPriceMultipleAsync`). Jeśli nie — zaimplementuj ją najpierw, wg wzorca komend w [orkiestratorach, sekcja 6](./orchestrators.md#6-komendy-mutacje), i zaimportuj typ komendy z wygenerowanego klienta API.
 
 ---
 

@@ -1,9 +1,18 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
-import { BaseOrchestrator, OrchestratorConfig } from '@erp/shared/data-access';
+import { BaseOrchestrator, JobMeta, OrchestratorConfig } from '@erp/shared/data-access';
+import { CATALOG_JOB_COMMAND_KEYS } from '@erp/catalog/util';
 import { MultimediaVM } from './multimedia.view-model';
 import { firstValueFrom, Observable } from 'rxjs';
 
-import { CatalogClient, SearchResponse, MultimediaDto, SearchMultimediaRequest, MultimediaCreateCommand } from '../../api-client';
+import {
+  BatchCommandOfMultimediaExecGenerateDerivativesCommandAndSearchMultimediaRequest,
+  BatchCommandOfMultimediaRemoveCommandAndSearchMultimediaRequest,
+  CatalogClient,
+  SearchResponse,
+  MultimediaDto,
+  SearchMultimediaRequest,
+  MultimediaCreateCommand,
+} from '../../api-client';
 
 @Injectable({
   providedIn: 'root'
@@ -108,6 +117,85 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
     }
   }
 
+  /**
+   * Usuwa zasoby z biblioteki mediów — <b>razem z plikami w magazynie</b>.
+   *
+   * To jest operacja inna niż odpięcie zdjęcia od produktu
+   * (`CatalogProductOrchestrator.removeMultimediaMultiple`): tamta zostawia zasób w katalogu,
+   * ta go z niego wymazuje. Backend odmawia usunięcia zasobu, na który wskazuje choćby jeden
+   * produkt (`multimedia_still_referenced`) — element odpada pojedynczo, reszta paczki
+   * przechodzi (`docs/backend/media-storage.md` §4c).
+   *
+   * Plik w magazynie kasuje osobny konsument, po zatwierdzeniu transakcji, więc powodzenie
+   * zadania oznacza „wiersz zniknął i zlecenie skasowania pliku jest utrwalone", a nie
+   * „bajtów już nie ma".
+   */
+  public async removeMultiple(
+    command: BatchCommandOfMultimediaRemoveCommandAndSearchMultimediaRequest,
+    queueID?: string,
+  ): Promise<string> {
+    return this.runBatch(
+      CATALOG_JOB_COMMAND_KEYS.removeAsset,
+      queueID,
+      meta => this.apiClient.multimediaRemoveCommand({ ...command, queueId: queueID, uiMetadata: meta }),
+    );
+  }
+
+  /**
+   * Zleca ponowne wygenerowanie miniaturki i podglądu dla wskazanych zasobów.
+   *
+   * Potrzebne dla zasobów wgranych, zanim generator zaczął działać: zlecenie wychodzi normalnie
+   * raz, przy rejestracji pliku, i nigdy się nie powtarza, więc bez tej akcji jedynym sposobem
+   * nadrobienia byłoby wgranie plików od nowa.
+   *
+   * <b>Zadanie kończy się na przyjęciu zleceń, nie na gotowych plikach.</b> Warianty powstają
+   * asynchronicznie i zgłaszają się osobno, przez `AggregateChanged` — galeria podmieni wtedy
+   * zaślepkę na miniaturkę sama, bez odpytywania w pętli.
+   */
+  public async generateDerivativesMultiple(
+    command: BatchCommandOfMultimediaExecGenerateDerivativesCommandAndSearchMultimediaRequest,
+    queueID?: string,
+  ): Promise<string> {
+    return this.runBatch(
+      CATALOG_JOB_COMMAND_KEYS.generateDerivatives,
+      queueID,
+      meta =>
+        this.apiClient.multimediaExecGenerateDerivativesMultipleCommand({
+          ...command,
+          queueId: queueID,
+          uiMetadata: meta,
+        }),
+    );
+  }
+
+  /**
+   * Wspólny obrys zlecenia operacji masowej: metadane do feedu powiadomień, rejestracja zadania
+   * w `jobService` i zamiana błędu HTTP na wpis w stanie orkiestratora.
+   */
+  private async runBatch(
+    commandName: string,
+    queueID: string | undefined,
+    send: (uiMetadata: string) => Observable<{ jobUuid?: string }>,
+  ): Promise<string> {
+    const meta: JobMeta = { commandName, timestamp: new Date() };
+
+    try {
+      const result = await firstValueFrom(send(JSON.stringify(meta)));
+      const jobUuid = result.jobUuid || '';
+
+      this.jobService.addJob(jobUuid, queueID, meta);
+
+      return jobUuid;
+    } catch (err) {
+      this.addError({
+        operation: 'command',
+        message: err instanceof Error ? err.message : String(err),
+        timestamp: new Date(),
+      });
+      throw err;
+    }
+  }
+
   protected fetchByUuids(uuids: string[]): Observable<MultimediaDto[]> {
     return this.apiClient.getMultimedia({ uuids } as any);
   }
@@ -127,11 +215,8 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
       mimeType: dto.mimeType,
       sortOrder: dto.sortOrder,
       createdAt: new Date(dto.createdAt),
-      // Czytane przez sygnaturę indeksową `MultimediaDto`, bo klient NSwag nie był jeszcze
-      // regenerowany po dołożeniu tych pól na backendzie. Domyślne wartości pilnują, żeby stary
-      // klient nie zaczął pytać o nieistniejące miniaturki ani nie odblokował usuwania.
-      hasDerivatives: dto['hasDerivatives'] === true,
-      referenceCount: dto['referenceCount'] ?? 0,
+      hasDerivatives: dto.hasDerivatives,
+      referenceCount: dto.referenceCount,
     };
   }
 

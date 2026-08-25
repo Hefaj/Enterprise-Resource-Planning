@@ -212,7 +212,53 @@ TaigaUI i jest właściwą decyzją. Przenosząc kod do `shared/ui`, zachowaj to
 
 ---
 
-## 9. Zobacz też
+## 9. Kody błędów zadań — z `multimedia_still_referenced` na zdanie
+
+Backend zwraca w `job.errorsSummary` **zagregowane kody maszynowe**, nie tekst dla użytkownika:
+`BulkCommandRunner.BuildErrorsSummaryAsync` grupuje `job_item.error_code` i skleja
+`"multimedia_still_referenced: 1; product_price_negative: 12"`. Ten string przechodzi bez zmian
+przez `JobCompleted`, replikę w module Notification i `JobDto`.
+
+**Tłumaczenie należy do frontu i nie zmieni się to.** Backend nie zna języka użytkownika (nie ma
+go w tokenie), a `ValidationError.ErrorMessage` jest jawnie komunikatem dla developera. Gdyby
+tłumaczyć po tamtej stronie, zasoby językowe żyłyby w dwóch stackach naraz.
+
+Prezentacja idzie przez dwa elementy:
+
+```typescript
+parseJobErrorsSummary(summary)   // @erp/notification/util → { code, count }[]
+resolveErrorCodeKey(code)        // @erp/shared/ui → klucz tłumaczenia albo null
+```
+
+Trzy rzeczy, które warto rozumieć, zanim się to ruszy:
+
+1. **Klucze leżą w scope'ie `shared`, nie w scope'ie modułu, który zgłosił błąd.** Powiadomienie
+   renderuje moduł `notification`, który nigdy nie ma załadowanego scope'u Catalogu czy Identity —
+   `shared` jest jedynym widocznym dla wszystkich naraz. To ta sama decyzja, co przy nazwach
+   operacji masowych (`shared.jobs.commands.*`, patrz `CATALOG_JOB_COMMAND_KEYS`).
+
+2. **Nie ma drugiego rejestru kodów.** `SHARED_KEYS` jest generowany z `pl-PL.json`, więc gałąź
+   `shared.errors.codes` **jest** listą znanych kodów. Obsługa nowego kodu to wpis w dwóch
+   plikach JSON pod nazwą w `camelCase` (`multimedia_still_referenced` →
+   `multimediaStillReferenced`) i `pnpm translate:keys`. Nic więcej nie utrzymujesz ręcznie.
+
+3. **Nieznany kod pokazuje się dosłownie.** `resolveErrorCodeKey` zwraca `null`, a widok wypisuje
+   surowy kod. Nowa reguła domenowa trafia do backendu wcześniej niż jej opis i wtedy
+   `multimedia_still_referenced` jest lepsze niż `Missing translation for ...`. Surowy kod zostaje
+   też w `title` wiersza feedu — użytkownik czyta zdanie, support ma czego szukać w logach.
+
+Ten sam słownik obsługuje `DomainException.ErrorCode` z komend synchronicznych i
+`ExportRunDto.errorCode` — kody pochodzą z jednej rodziny `snake_case` po stronie backendu, więc
+nie zakładaj osobnego mapowania per powierzchnia.
+
+**Czego tu nie robić.** Nie zamieniaj `ErrorsSummary` na strukturę „przy okazji" — to kontrakt
+integration eventu, kolumna `varchar(2048)` z migracją i typ w kliencie NSwag naraz. Ta zmiana ma
+sens dopiero wtedy, gdy kody zaczną nieść parametry (np. nazwy kolidujących produktów), i wtedy
+robi się ją świadomie, a nie rozbudowuje parser.
+
+---
+
+## 10. Zobacz też
 
 - [Atomy UI](./atoms.md) — wzorzec Single Config Builder
 - [Orkiestratory](./orchestrators.md) — skąd biorą się wpisy optymistyczne w feedzie

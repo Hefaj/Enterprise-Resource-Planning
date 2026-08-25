@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Catalog.Application.Multimedia;
+using Catalog.Domain.Multimedia;
 using Catalog.Domain.Products;
 using Catalog.Infrastructure.Persistence;
 using Erp.BuildingBlocks.Api.Contracts;
@@ -22,13 +23,15 @@ public sealed class MultimediaQueries : IMultimediaQueries
 
     public MultimediaQueries(CatalogDbContext dbContext) => _dbContext = dbContext;
 
-    /// <inheritdoc />
-    public async Task<SearchResponse> SearchAsync(
-        SearchMultimediaRequest request,
-        CancellationToken cancellationToken)
+    /// <summary>
+    /// Jeden zestaw warunków dla wyszukiwania i dla rozwiązywania celów operacji masowej.
+    ///
+    /// <para><b>Wspólny, a nie skopiowany</b>, bo te dwie drogi muszą dawać identyczny zbiór.
+    /// Rozjazd między nimi znaczy, że użytkownik widzi na liście co innego, niż obejmie akcja
+    /// „zaznacz wszystko" — a to jest błąd, którego nie widać, dopóki ktoś nie policzy wyników.</para>
+    /// </summary>
+    private IQueryable<MultimediaAsset> Filtered(SearchMultimediaRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-
         var query = _dbContext.MultimediaAssets.AsNoTracking();
 
         if (request.Uuids is { Count: > 0 })
@@ -36,6 +39,42 @@ public sealed class MultimediaQueries : IMultimediaQueries
             var uuidList = request.Uuids;
             query = query.Where(m => uuidList.Contains(m.Uuid));
         }
+
+        if (!string.IsNullOrWhiteSpace(request.FileName))
+        {
+            var pattern = $"%{request.FileName.Trim()}%";
+            query = query.Where(m => EF.Functions.ILike(m.FileName, pattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.MediaType))
+        {
+            var mediaType = request.MediaType.Trim();
+            query = query.Where(m => m.MediaType == mediaType);
+        }
+
+        if (request.OnlyUnreferenced == true)
+        {
+            // Podzapytanie po indeksie `product_multimedia(multimedia_uuid)` — tym samym, z którego
+            // korzysta licznik referencji w projekcji DTO.
+            query = query.Where(m => !_dbContext.Set<ProductMultimediaLink>().Any(l => l.MultimediaUuid == m.Uuid));
+        }
+
+        if (request.OnlyWithoutDerivatives == true)
+        {
+            query = query.Where(m => m.DerivativesGeneratedAt == null);
+        }
+
+        return query;
+    }
+
+    /// <inheritdoc />
+    public async Task<SearchResponse> SearchAsync(
+        SearchMultimediaRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var query = Filtered(request);
 
         var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
@@ -115,15 +154,7 @@ public sealed class MultimediaQueries : IMultimediaQueries
     {
         ArgumentNullException.ThrowIfNull(filter);
 
-        var query = _dbContext.MultimediaAssets.AsNoTracking();
-
-        if (filter.Uuids is { Count: > 0 })
-        {
-            var uuidList = filter.Uuids;
-            query = query.Where(m => uuidList.Contains(m.Uuid));
-        }
-
-        return await query
+        return await Filtered(filter)
             .Select(m => m.Uuid)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);

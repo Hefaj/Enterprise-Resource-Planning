@@ -1,0 +1,47 @@
+{
+  "base": {
+    "table": {
+      "emptyMessage": "No files match the criteria.",
+      "columns": {
+        "thumbnail": "Thumbnail",
+        "fileName": "File name",
+        "mediaType": "Type",
+        "fileSize": "Size",
+        "references": "Usage",
+        "derivatives": "Thumbnails",
+        "createdAt": "Added"
+      }
+    },
+    "filters": {
+      "fileName": "File name",
+      "mediaType": "Kind",
+      "onlyUnreferenced": "Unused only",
+      "onlyWithoutDerivatives": "Without thumbnails only"
+    },
+    "toolbar": {
+      "libraryGroup": "Library",
+      "selectionGroup": "Selected operations",
+      "refresh": "Refresh",
+      "remove": "Delete from library",
+      "generateDerivatives": "Generate thumbnails",
+      "download": "Download originals",
+      "scopeUnavailable": "This action needs specific files selected"
+    },
+    "confirm": {
+      "remove": {
+        "title": "Delete files from the media library?",
+        "message": "The selected files ({{count}}) will disappear from the catalogue together with their stored content. A file used by at least one product is skipped — detach it first. This cannot be undone.",
+        "yes": "Delete permanently",
+        "no": "Cancel"
+      }
+    },
+    "toast": {
+      "derivativesRequested": "Thumbnail generation requested for {{count}} files. They will show up on their own once ready.",
+      "derivativesNothingToDo": "The selected files already have thumbnails or are not images.",
+      "nothingSelected": "Select the files the action should apply to.",
+      "downloadStarted": "Downloading {{count}} files — the browser may ask for permission to download multiple files.",
+      "downloadPartial": "Downloaded {{succeeded}} files, {{failed}} failed.",
+      "downloadSkippedExternal": "Skipped {{count}} files described by an external address — they are not in the system storage."
+    }
+  }
+}

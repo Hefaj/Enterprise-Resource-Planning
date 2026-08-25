@@ -3,14 +3,15 @@
 Ścieżka pliku od okna wyboru w przeglądarce do miniaturki w galerii. Strona backendowa —
 [`docs/backend/exports-artifacts.md` §9](../backend/exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
 
-**Stan: ✅ w kodzie** — wgrywanie, rejestracja w katalogu, dopięcie do produktów i **zdejmowanie
-multimediów z produktów** ([§5](#5-zdejmowanie-multimediów-z-produktów)) działają end-to-end;
-miniaturki są podpięte do wariantu `thumb`. Nie ma jeszcze **po stronie frontu**: UI usuwania
-zasobów z samej biblioteki mediów (backend ma pod nie `multimedia/batch-remove`) i podglądu
-pełnoekranowego (wariant `preview`), więc brakuje tam wyłącznie ekranów. Klient NSwag czeka
-na regenerację — nowe pola czytane są tymczasowo przez sygnaturę indeksową DTO, a metody
-`productRemoveMultimediaMultipleCommand` / `productSetMultimediaMultipleCommand` są w
-`api-client.ts` dopisane ręcznie w kształcie, który wygeneruje NSwag.
+**Stan: ✅ w kodzie** — wgrywanie, rejestracja w katalogu, dopięcie do produktów, zdejmowanie
+z produktów ([§5](#5-zdejmowanie-multimediów-z-produktów)), usuwanie z biblioteki mediów
+i nadrabianie miniaturek ([§6](#6-biblioteka-mediów--osobna-strona-nie-akcja-w-panelu-produktu)),
+pobieranie oryginałów oraz podgląd pełnoekranowy na wariancie `preview` (atom
+`erp-media-preview`). Klient NSwag jest zregenerowany z żywego Catalogu, więc nowe pola DTO
+(`hasDerivatives`, `referenceCount`) są czytane wprost, bez obejść.
+
+Zaślepkami (`console.log`) zostają w toolbarze panelu wyłącznie „Skanuj foldery"
+i „Optymalizuj wybrane" — obie czekają na decyzję, co właściwie mają robić.
 
 ---
 
@@ -143,7 +144,60 @@ Obie akcje wracają natychmiast — to zwykłe zadania masowe z paskiem postępu
 
 ---
 
-## 6. Zobacz też
+## 6. Biblioteka mediów — osobna strona, nie akcja w panelu produktu
+
+`/catalog/multimedia` ([`multimedia.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/multimedia/page/multimedia.component.ts))
+listuje **zasoby**, a nie galerie produktów. Strona bez zakładek i bez prawego panelu: filtr
+plus lista z toolbarem ([`pages.md` §3](./pages.md#3-zakładki-albo-ich-brak)).
+
+**Dlaczego to musi być osobny ekran — i dlaczego pierwsze podejście było błędne.** Naturalny
+odruch to dołożyć „Usuń z biblioteki" do toolbara panelu multimediów przy produktach. Taki
+przycisk **nigdy nie zadziała**: panel pokazuje wyłącznie pliki DOPIĘTE do zaznaczonych
+produktów, więc każdy widoczny w nim zasób ma co najmniej jedną referencję, a backend odmawia
+usunięcia takiego zasobu (`multimedia_still_referenced`). Plik nadaje się do skasowania dopiero
+po odpięciu od wszystkich produktów — czyli dokładnie wtedy, gdy **znika z panelu**. Akcja
+i jej jedyny sensowny cel wykluczały się nawzajem.
+
+| Akcja toolbara | Komenda | Zasięg |
+|---|---|---|
+| „Usuń z biblioteki" | `multimedia/batch-remove` | także `query` — „usuń wszystkie nieużywane" jest sensownym żądaniem, cele rozwiąże backend z `targetFilter` |
+| „Generuj miniatury" | `multimedia/batch-exec-generate-derivatives` | tylko `explicit` — front odsiewa cele, więc musi je znać |
+| „Pobierz oryginały" | — (pobranie po stronie klienta) | tylko `explicit` |
+
+**Filtr niesie tu cały sens strony.** `onlyUnreferenced` pokazuje pliki, które w ogóle da się
+usunąć, a `onlyWithoutDerivatives` te, dla których warto zlecić generowanie. Oba są polami
+`SearchMultimediaRequest`, czyli **jednocześnie filtrem celu operacji masowej** — „zaznacz
+wszystko" nad filtrem „tylko nieużywane" znaczy dokładnie „posprzątaj wszystkie osierocone
+pliki", a nie „tę stronę wyników".
+
+**Pusty szablon jest wymagany przy trybie „cele + szablon".** `removeMultiple` wysyła
+`templateCommand: {}`, mimo że `MultimediaRemoveCommand` nie niesie nic poza `uuid`:
+`BatchEndpointBase` rozpoznaje ten tryb po samej obecności `templateCommand` i bez niego odrzuca
+żądanie błędem „Brak komend do wykonania" — nawet gdy `targetUuids` jest pełne.
+
+**Kolumna „Użycie" to licznik referencji, a zero jest w niej jedyną wartością, która pozwala
+usunąć plik.** Renderuje się jako goła liczba, bo `ErpCellLine.text` trafia do szablonu
+dosłownie (`{{ line.text }}`, bez pipe'a tłumaczeń) — klucz tłumaczenia pokazałby się tam jako
+klucz, a tekst z parametrem (`{{count}} produktów`) nie ma jak się rozwiązać.
+
+### „Generuj miniatury" — również w panelu produktu
+
+To jedyna z tych trzech akcji, która ma sens w obu miejscach: zasób dopięty do produktu bywa
+bez wariantów (wgrany, zanim generator zaczął działać), a generowanie nie ma nic wspólnego
+z referencjami. W panelu produktu leży w grupie **zaznaczeniowej**, nie w „Narzędziach" —
+toolbar w trybie zaznaczenia pokazuje wyłącznie grupy zaznaczeniowe (`selectionCount > 0`),
+więc akcja działająca na wskazanych plikach umieszczona w grupie domyślnej byłaby widoczna
+dokładnie wtedy, kiedy nie ma czego generować.
+
+Obie drogi odsiewają cele przed wysłaniem (zasoby z wariantami i nie-obrazy) i obie pokazują
+toast: **zadanie kończy się na przyjęciu zleceń, nie na gotowych plikach**. Warianty powstają
+w konsumencie i wskakują do tabeli same, zdarzeniem `AggregateChanged` na sygnaturze
+`catalog.multimedia` — bez tego zdania użytkownik patrzy przez chwilę na niezmienioną tabelę
+i uznaje, że akcja nic nie zrobiła.
+
+---
+
+## 7. Zobacz też
 
 - [Modale](./modals.md) — rejestracja `PRODUCT_ADD_MULTIMEDIA_MODAL_ID` i cykl życia kroku
 - [Zasięg zaznaczenia](./selection-scope.md) — skąd biorą się cele operacji masowej

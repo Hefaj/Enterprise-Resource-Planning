@@ -11,7 +11,10 @@
     "src/**/*.ts",
     "../../../libs/shared/data-access/src/index.ts",
     "../../../libs/shared/auth/src/index.ts",
-    "../../../libs/modules/notification/data-access/src/index.ts"
+    "../../../libs/modules/notification/data-access/src/index.ts",
+    "../../../libs/shared/ui/src/index.ts",
+    "../../../libs/shared/ui/src/lib/atoms/erp-button/index.ts",
+    "../../../libs/shared/ui/src/lib/form/erp-input/index.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts",

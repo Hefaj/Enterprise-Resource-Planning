@@ -12,6 +12,7 @@ export const ERP_PERMISSIONS = {
     CategoryRead: 'catalog.category.read',
     CategoryUpdate: 'catalog.category.update',
     DictionaryRead: 'catalog.dictionary.read',
+    MultimediaUpdate: 'catalog.multimedia.update',
     JobControl: 'catalog.job.control',
   },
   Sales: {

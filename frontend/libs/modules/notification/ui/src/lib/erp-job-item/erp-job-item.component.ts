@@ -1,8 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { TuiButton, TuiIcon } from '@taiga-ui/core';
 import { TuiProgressBar } from '@taiga-ui/kit';
-import { ErpTranslatePipe } from '@erp/shared/ui';
-import { JobRecord, jobProgressPercent, jobStatusKind, JobStatusKind } from '@erp/notification/util';
+import { ErpTranslatePipe, translatableErrorCode } from '@erp/shared/ui';
+import {
+  JobRecord,
+  jobProgressPercent,
+  jobStatusKind,
+  JobStatusKind,
+  parseJobErrorsSummary,
+} from '@erp/notification/util';
 import { JOB_KEYS } from '../translation';
 
 /**
@@ -55,10 +61,21 @@ import { JOB_KEYS } from '../translation';
           ></progress>
         }
 
-        @if (job().errorsSummary; as summary) {
-          <span class="text-xs break-words" [style.color]="'var(--tui-status-negative)'">
-            {{ { key: keys.errorsSummary, params: { summary } } | erpTranslate }}
-          </span>
+        @if (errors().length > 0) {
+          <ul class="flex flex-col gap-0.5 mt-0.5" [style.color]="'var(--tui-status-negative)'">
+            @for (error of errors(); track error.code) {
+              <!-- Surowy kod zostaje w tooltipie: użytkownik czyta zdanie, a support ma po czym
+                   szukać w logach, nawet gdy tłumaczenie zostanie później przeredagowane. -->
+              <li class="text-xs break-words" [attr.title]="error.code">
+                {{ error.label | erpTranslate }}
+                @if (error.count > 1) {
+                  <span [style.color]="'var(--tui-text-tertiary)'">
+                    {{ { key: keys.errorCount, params: { count: error.count } } | erpTranslate }}
+                  </span>
+                }
+              </li>
+            }
+          </ul>
         }
 
         <!-- Akcja pojawia się wyłącznie wtedy, gdy rodzic potwierdził, że ma czym ją obsłużyć
@@ -113,6 +130,21 @@ export class ErpJobItemComponent {
     const job = this.job();
     return job.meta?.commandName ?? job.commandType ?? JOB_KEYS.unknownCommand;
   });
+
+  /**
+   * Podsumowanie błędów rozłożone na czytelne zdania.
+   *
+   * Backend przysyła zagregowane kody (`"multimedia_still_referenced: 1"`), bo nie zna języka
+   * użytkownika — zamiana kodu na tekst należy do frontu i idzie przez scope `shared`, jedyny
+   * widoczny zarówno tutaj, jak i w module, który zlecił zadanie. Kod bez tłumaczenia zostaje
+   * pokazany dosłownie: nowa reguła domenowa trafia do backendu wcześniej niż jej opis.
+   */
+  protected readonly errors = computed(() =>
+    parseJobErrorsSummary(this.job().errorsSummary).map(entry => ({
+      ...entry,
+      label: translatableErrorCode(entry.code),
+    }))
+  );
 
   protected readonly statusKey = computed(() => {
     const job = this.job();

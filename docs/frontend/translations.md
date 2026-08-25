@@ -107,6 +107,14 @@ To jest czynność, którą robisz **za każdym razem**, gdy dodajesz nowy tekst
    Skrypt skanuje repozytorium, odczytuje zadeklarowane scope'y z plików `index.ts` i (re)generuje `keys.ts` z pełnym typowaniem `as const`.
 4. Importuj wygenerowany obiekt (np. `PRODUCT_KEYS`) i używaj go bezpośrednio — nigdy string literal.
 
+### Kody błędów z backendu
+
+Kody `snake_case` (`multimedia_still_referenced`) nie są tekstem dla użytkownika — backend nie zna
+jego języka. Tłumaczenia trzymamy w gałęzi `shared.errors.codes` scope'u `shared`, pod nazwą
+w `camelCase`, a zamianę robi `resolveErrorCodeKey` z `@erp/shared/ui`. Scope MUSI być `shared`:
+błąd zgłoszony przez Catalog wyświetla moduł `notification`, który nie ma scope'u Catalogu.
+Szczegóły → [Powiadomienia §9](./notifications.md#9-kody-błędów-zadań--z-multimedia_still_referenced-na-zdanie).
+
 **Nigdy nie edytuj `keys.ts` ręcznie** — kolejne uruchomienie generatora nadpisze ręczne zmiany bez ostrzeżenia, a rozjazd między `keys.ts` a `pl-PL.json`/`en-US.json` prowadzi do kluczy, które istnieją w typach, ale nie mają tłumaczenia w runtime (albo odwrotnie).
 
 ---

@@ -110,7 +110,10 @@
         "downloadStarted": "Downloading {{count}} files — your browser may ask permission to download multiple files.",
         "downloadPartial": "Downloaded {{succeeded}} files, {{failed}} failed.",
         "downloadFailed": "Could not download the file.",
-        "downloadSkippedExternal": "Skipped {{count}} files stored outside the system."
+        "downloadSkippedExternal": "Skipped {{count}} files stored outside the system.",
+        "derivativesRequested": "Thumbnail generation requested for {{count}} files. They will show up on their own once ready.",
+        "derivativesNothingToDo": "The selected files already have thumbnails or are not images.",
+        "nothingSelected": "Select the files the action should apply to."
       }
     },
     "delivery": {

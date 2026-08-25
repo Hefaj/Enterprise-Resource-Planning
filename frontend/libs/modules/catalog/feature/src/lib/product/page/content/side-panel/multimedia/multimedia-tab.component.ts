@@ -28,6 +28,7 @@ import {
   CatalogMultimediaDownloadService,
   CatalogMultimediaOrchestrator,
   CatalogProductOrchestrator,
+  MultimediaExecGenerateDerivativesCommand,
   MultimediaVM,
   ProductRemoveMultimediaCommand,
   ProductVM,
@@ -203,12 +204,6 @@ export class MultimediaTabComponent {
         .setIcon('@tui.scan')
         .setFn(() => console.log('Skanuj'))
       )
-      .addAction(a => a
-        .setId('thumbnails')
-        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.thumbnails)
-        .setIcon('@tui.image')
-        .setFn(() => console.log('Miniatury'))
-      )
     )
     // Operacje na WSKAZANYCH plikach — wymagają zaznaczenia rozwiązanego do listy pozycji.
     // Deklaracja jest tu po to, żeby niezmiennik był zapisany w konfiguracji akcji, a nie
@@ -224,6 +219,17 @@ export class MultimediaTabComponent {
         .setScopes(['explicit'])
         .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
         .setFn(() => this.onDeleteSelectedMedia())
+      )
+      // Grupa zaznaczenia, nie „Narzędzia": akcja działa na WSKAZANYCH plikach, a toolbar
+      // w trybie zaznaczenia pokazuje wyłącznie grupy zaznaczeniowe (`selectionCount > 0`).
+      // W grupie domyślnej byłaby widoczna dokładnie wtedy, kiedy nie ma czego generować.
+      .addAction(a => a
+        .setId('thumbnails')
+        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.thumbnails)
+        .setIcon('@tui.image')
+        .setScopes(['explicit'])
+        .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
+        .setFn(() => this.onGenerateDerivatives())
       )
       .addAction(a => a
         .setId('download')
@@ -446,6 +452,57 @@ export class MultimediaTabComponent {
           .removeMultimediaMultiple({ commands }, MULTIMEDIA_TAB_QUEUE_ID)
           .then(() => this.tabStore.clearChildSelection());
       });
+  }
+
+  /**
+   * Ponowne zlecenie miniaturek dla wskazanych plików.
+   *
+   * <b>Odsiewamy tu zasoby, które wariantów nie potrzebują</b> — mają je już albo nie są
+   * obrazami z naszego magazynu. Backend odrzuciłby je i tak, ale osobnym `job_item` z błędem:
+   * użytkownik zobaczyłby w raporcie zadania kilkanaście „porażek", z których żadna nie jest
+   * jego problemem. Szczegóły zaznaczonych plików bywają jeszcze niewczytane (doładowują się
+   * ze scrollem), więc najpierw je zamawiamy — inaczej filtr odsiałby wszystko poza tym,
+   * do czego użytkownik akurat doscrollował.
+   */
+  protected async onGenerateDerivatives(): Promise<void> {
+    const uuids = [...this.tabStore.selectedMultimedia()];
+
+    if (uuids.length === 0) {
+      this.toast.show({
+        message: PRODUCT_KEYS.base.multimedia.toast.nothingSelected,
+        appearance: 'info',
+      });
+      return;
+    }
+
+    this.ensureMultimediaLoaded(uuids);
+    await this.multimediaOrchestrator.loadAsync(uuids);
+
+    const targets = uuids.filter(uuid => {
+      const vm = this.multimediaOrchestrator.getOne(uuid)();
+
+      return !!vm && vm.mediaType === 'image' && !vm.originalUrl && !vm.hasDerivatives;
+    });
+
+    if (targets.length === 0) {
+      this.toast.show({
+        message: PRODUCT_KEYS.base.multimedia.toast.derivativesNothingToDo,
+        appearance: 'info',
+      });
+      return;
+    }
+
+    const commands: MultimediaExecGenerateDerivativesCommand[] = targets.map(uuid => ({ uuid }));
+
+    await this.multimediaOrchestrator.generateDerivativesMultiple({ commands }, MULTIMEDIA_TAB_QUEUE_ID);
+
+    // Zadanie kończy się na przyjęciu zleceń, nie na gotowych plikach — a miniaturka wskoczy
+    // do tabeli sama, zdarzeniem `AggregateChanged`. Bez tego zdania użytkownik patrzy na
+    // niezmienioną tabelę i uznaje, że akcja nic nie zrobiła.
+    this.toast.show({
+      message: { key: PRODUCT_KEYS.base.multimedia.toast.derivativesRequested, params: { count: targets.length } },
+      appearance: 'info',
+    });
   }
 
   protected onClearMediaSelection(): void {

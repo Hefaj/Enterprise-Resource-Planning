@@ -1,0 +1,47 @@
+{
+  "base": {
+    "table": {
+      "emptyMessage": "Brak plików spełniających kryteria.",
+      "columns": {
+        "thumbnail": "Miniatura",
+        "fileName": "Nazwa pliku",
+        "mediaType": "Typ",
+        "fileSize": "Rozmiar",
+        "references": "Użycie",
+        "derivatives": "Miniatury",
+        "createdAt": "Dodano"
+      }
+    },
+    "filters": {
+      "fileName": "Nazwa pliku",
+      "mediaType": "Rodzaj",
+      "onlyUnreferenced": "Tylko nieużywane",
+      "onlyWithoutDerivatives": "Tylko bez miniatur"
+    },
+    "toolbar": {
+      "libraryGroup": "Biblioteka",
+      "selectionGroup": "Wybrane operacje",
+      "refresh": "Odśwież",
+      "remove": "Usuń z biblioteki",
+      "generateDerivatives": "Generuj miniatury",
+      "download": "Pobierz oryginały",
+      "scopeUnavailable": "Ta akcja wymaga zaznaczenia konkretnych plików"
+    },
+    "confirm": {
+      "remove": {
+        "title": "Usunąć pliki z biblioteki mediów?",
+        "message": "Zaznaczone pliki ({{count}}) znikną z katalogu razem z zawartością w magazynie. Plik używany przez choćby jeden produkt zostanie pominięty — odepnij go najpierw. Tej operacji nie da się cofnąć.",
+        "yes": "Usuń trwale",
+        "no": "Anuluj"
+      }
+    },
+    "toast": {
+      "derivativesRequested": "Zlecono wygenerowanie miniaturek dla {{count}} plików. Pojawią się same, gdy będą gotowe.",
+      "derivativesNothingToDo": "Zaznaczone pliki mają już miniaturki albo nie są obrazami.",
+      "nothingSelected": "Zaznacz najpierw pliki, których ma dotyczyć akcja.",
+      "downloadStarted": "Pobieranie {{count}} plików — przeglądarka może zapytać o zgodę na pobranie wielu plików naraz.",
+      "downloadPartial": "Pobrano {{succeeded}} plików, {{failed}} nie udało się pobrać.",
+      "downloadSkippedExternal": "Pominięto {{count}} plików opisanych adresem zewnętrznym — nie ma ich w magazynie systemu."
+    }
+  }
+}

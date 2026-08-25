@@ -10,6 +10,14 @@ export const remoteMenu: ErpNavigationItem[] = [
     requiredPermission: ERP_PERMISSIONS.Catalog.ProductRead,
   },
   {
+    // Wszystkie pliki katalogu jako własne zasoby — jedyne miejsce, w którym widać (i da się
+    // usunąć) plik nieużywany przez żaden produkt.
+    label: 'Biblioteka mediów',
+    iconId: 'image',
+    route: 'multimedia',
+    requiredPermission: ERP_PERMISSIONS.Catalog.DictionaryRead,
+  },
+  {
     // (PIM): Zaawansowany grid (PrimeNG Table) z filtrowaniem, pozwalający na edycję parametrów technicznych i marketingowych.
     label: 'Manager Produktów',
     iconId: 'box',

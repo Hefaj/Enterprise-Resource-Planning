@@ -375,10 +375,11 @@ Trzy pozycje niezależne od powyższych rozstrzygnięć, warte zapisania, żeby 
 | 5 | `Ownership` + licznik referencji w `MultimediaDto` + kaskada dla `Owned` (§4c) | ✅ | [`MultimediaAsset`](../../backend/modules/Catalog/Catalog.Domain/Aggregates/Multimedia/MultimediaAsset.cs), `MultimediaCascade`, `ProductRemoveMultimediaCommand*`, `ProductSetMultimediaCommand*` |
 | 6 | Audytor rozjazdu, dry-run (§4d) | ✅ | [`MediaReconciliationService`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/MediaReconciliationService.cs) |
 | 7 | Limit rozmiaru, `ReadToAsync` (§5) | ✅ | `MultimediaOptions`, `GetMultimediaContent` |
-| 7 | Skan antywirusowy (§5) | 📐 | decyzja nie zapadła |
-| 8 | Miniaturki i podglądy (SkiaSharp, outbox, endpoint wariantu) — §8 | ✅ | `ImageDerivativeGenerator`, `ArtifactDerivativesRequestedHandler`, `GetMultimediaVariantEndpoint`; przebieg end-to-end na żywym MinIO potwierdzony — patrz niżej |
+| 8 | Skan antywirusowy (§5) | 📐 | decyzja nie zapadła |
+| 9 | Miniaturki i podglądy (SkiaSharp, outbox, endpoint wariantu) — §8 | ✅ | `ImageDerivativeGenerator`, `ArtifactDerivativesRequestedHandler`, `GetMultimediaVariantEndpoint`; przebieg end-to-end na żywym MinIO potwierdzony — patrz niżej |
+| 10 | Ponowne zlecenie wariantów (`multimedia/batch-exec-generate-derivatives`) — §8 | ✅ | `MultimediaExecGenerateDerivativesCommand*`, akcja „Generuj miniatury" w panelu multimediów |
 
-### Dwie rzeczy, które trzymały pozycję 8 martwą
+### Dwie rzeczy, które trzymały pozycję 9 martwą
 
 Generator był poprawny od początku (testy przechodziły), ale **kod nigdy się nie wykonywał**.
 Blokowały go dwa niezależne braki w podpięciu — oba nieme, żaden nie dawał błędu:
@@ -391,6 +392,11 @@ Blokowały go dwa niezależne braki w podpięciu — oba nieme, żaden nie dawa�
    handler nie powstawał, a koperta lądowała jako „No known handler". Dotyczyło to tak samo
    `ArtifactDerivativesRequestedHandler`, jak i `ArtifactDeletionRequestedHandler`, czyli
    **pozycja 4 tej tabeli też nigdy nie zadziałała**. Rozwiązanie: `IArtifactStoreResolver`.
+
+To zostawiło osobny dług, który zamyka dopiero pozycja 10: zlecenie generowania wychodzi
+**raz**, przy rejestracji pliku, więc zasoby wgrane w czasie, gdy konsument był martwy, nie
+miały jak wariantów dostać. Stąd komenda `Exec` ponawiająca zlecenie dla wskazanych zasobów —
+bez niej jedynym sposobem nadrobienia byłoby wgranie plików od nowa.
 
 Pomiary z przebiegu potwierdzającego: wariant gotowy **0,25 s** po rejestracji dla zdjęcia
 12 Mpx i **1,6 s** dla 90 Mpx. To szybciej, niż użytkownik zdąży zatwierdzić modal — kafelek
@@ -442,32 +448,58 @@ Nadal do sprawdzenia:
   `SkiaSharp.NativeAssets.Linux.NoDependencies` musi jeszcze trafić do obrazu wdrożeniowego.
   Brak `libSkiaSharp.so` nie objawia się przy starcie — dopiero przy pierwszym wgranym zdjęciu,
   w konsumencie działającym w tle.
-- **Kasowanie plików (pozycja 4 tabeli wyżej)** — konsument był martwy z tych samych dwóch
-  powodów co miniaturki i po naprawie nie był jeszcze wywołany na żywym magazynie.
-- **Zasoby wgrane, zanim miniaturki zaczęły działać**, nie mają wariantów: zdarzenie leci raz,
-  przy rejestracji. Akcja „Generuj miniatury" w panelu multimediów jest dziś zaślepką
-  (`console.log`), więc nie ma czym ich nadrobić poza ponownym wgraniem.
+- ~~**Kasowanie plików**~~ — **zweryfikowane end-to-end** (25.08.2026): „Usuń z biblioteki"
+  na stronie `/catalog/multimedia` → `multimedia/batch-remove` → zadanie `Completed` 1/1 →
+  wiersz zniknął z `catalog.multimedia`, a konsument `ArtifactDeletionRequested` usunął
+  z kubełka obiekt `assets/{uuid:N}` (18 MB). Sprawdzona jest też odmowa: ten sam zasób,
+  póki wskazywał na niego produkt, odpadł jako `job_item` z `multimedia_still_referenced`,
+  nie wywracając zadania.
+- ~~**Nadrabianie wariantów dla starych zasobów**~~ — **zweryfikowane end-to-end**: „Generuj
+  miniatury" → `multimedia/batch-exec-generate-derivatives` → `derivatives/{uuid:N}/{thumb,preview}`
+  w kubełku, `derivatives_generated_at` ustawione, a miniaturka pojawiła się w otwartej tabeli
+  sama, przez `AggregateChanged` — bez odświeżania strony.
 - **Migracja danych deweloperskich**: obiekty sprzed zmiany kluczy leżą pod płaskim `{uuid:N}`,
   a kod adresuje `assets/{uuid:N}`. Kubełki zmieniły też nazwy (`erp-catalog-media` zamiast
   `erp-media`), więc najprościej jest wyczyścić wolumen MinIO i wgrać multimedia od nowa —
   dane są deweloperskie.
 
-### Frontend: kontrakt NSwag się zmienił
+### Pułapka środowiskowa: polityka konta MinIO sprzed zmiany nazw kubełków
 
-Wymaga regeneracji klienta w `frontend/libs/modules/catalog/data-access`:
+Na wolumenie założonym przed ujednoliceniem nazw (`erp-catalog-*` zamiast `catalog-*`) konto
+`catalog` potrafi mieć **ręcznie dorobioną politykę spoza repozytorium** — u nas była to polityka
+`catalog` na `arn:aws:s3:::catalog-*`. Objaw: konsumenci padają na
+`AccessDenied ... /erp-catalog-media/`, a serwis nie może nawet założyć kubełka, choć plik
+`minio/policies/catalog.json` daje mu na to prawo.
 
-- `MultimediaDto` ma nowe pola `referenceCount` i `hasDerivatives`,
-- doszedł endpoint `multimedia/batch-remove` (`MultimediaRemoveCommand`),
-- doszedł endpoint `multimedia/content/{uuid}/{variant}`,
-- doszły endpointy `product/batch-remove-multimedia` i `product/batch-set-multimedia`.
+**`minio-init` tego nie naprawi**, i to jest tu rzecz nieoczywista: `mc admin policy attach`
+jest w nim celowo osłonięty `|| true` (żeby ponowny start nie wywracał się na już istniejącym
+stanie), więc nieudane podpięcie przechodzi bez śladu, a stara polityka zostaje. Naprawa jest
+ręczna i jednorazowa:
 
-Dwa ostatnie są już w `api-client.ts` **dopisane ręcznie**, w kształcie, który wygeneruje NSwag
-(sygnatury metod, nazwy typów i trasy zgadzają się z endpointami) — panel usuwania multimediów
-inaczej nie miałby czego wołać. Regeneracja ma je zastąpić bez różnicy w treści.
+```bash
+mc admin policy create local erp-catalog /policies/catalog.json
+mc admin policy detach local catalog --user catalog
+mc admin policy attach  local erp-catalog --user catalog
+```
 
-Wszystkie zmiany są **addytywne**. Front czyta na razie nowe pola przez sygnaturę indeksową
-`MultimediaDto` (`[key: string]: any`) z bezpiecznymi domyślnymi, więc działa przed regeneracją —
-patrz `catalog-multimedia.orchestrator.ts`. Po regeneracji te dwa rzutowania stają się zbędne.
+Obiekty sprzed zmiany leżą wtedy pod płaskim `{uuid:N}` w starym kubełku i trzeba je przenieść
+pod `assets/{uuid:N}` w nowym (albo wyczyścić wolumen — to dane deweloperskie).
+
+### Frontend: kontrakt NSwag jest zregenerowany
+
+Klient w `frontend/libs/modules/catalog/data-access/src/lib/api-client.ts` został wygenerowany
+z żywego Catalogu i ma komplet: pola `referenceCount`/`hasDerivatives` w `MultimediaDto`,
+`multimedia/batch-remove`, `multimedia/content/{uuid}/{variant}`,
+`multimedia/batch-exec-generate-derivatives` oraz `product/batch-remove-multimedia`
+i `product/batch-set-multimedia`. `SearchMultimediaRequest` ma też filtry biblioteki mediów
+(`fileName`, `mediaType`, `onlyUnreferenced`, `onlyWithoutDerivatives`) — a że ten sam typ jest
+filtrem CELU operacji masowej, „usuń wszystkie nieużywane" jest jednym żądaniem, a nie listą
+uuidów wyklikaną ręcznie.
+
+**Ręczne dopiski z okresu przejściowego okazały się co do znaku poprawne** — generator zastąpił
+je bez różnicy w treści, a cały diff poza dwoma nowymi operacjami to przesortowanie metod.
+Obejście po stronie orkiestratora (czytanie nowych pól przez sygnaturę indeksową DTO) zostało
+usunięte: `catalog-multimedia.orchestrator.ts` czyta je wprost.
 
 ---
 
@@ -497,6 +529,32 @@ użytkownik patrzy na modal i czeka. Ten sam mechanizm daje ponowienia i przeży
 Oznaczenie rekordu idzie przez `IUnitOfWork`, więc skan ChangeTrackera wypuszcza `AggregateChanged`
 na sygnaturze `catalog.multimedia` — **otwarta galeria odświeża się sama** i sięga po miniaturkę,
 bez odpytywania w pętli.
+
+### Nadrabianie zaległości
+
+Zlecenie generowania wychodzi **raz** — z komendy rejestrującej plik. Zasób, który to zdarzenie
+ominęło (bo konsument był wtedy martwy, bo Skia nie zdekodowała pliku przy pierwszym podejściu,
+bo generator jeszcze nie istniał), nie dostanie go już nigdy sam z siebie.
+
+Stąd `multimedia/batch-exec-generate-derivatives` — zwykłe zadanie masowe, które wypuszcza
+`ArtifactDerivativesRequested` dla wskazanych zasobów, dokładnie takie samo jak przy rejestracji.
+Dalej idzie ta sama ścieżka, więc nie ma tu drugiej implementacji generowania: komenda tylko
+ponawia zlecenie.
+
+**Czasownik to `Exec`, nie `Set`** — komenda nie zmienia żadnego plastra stanu agregatu; sam
+zasób po jej wykonaniu wygląda tak samo, a różnica pojawia się dopiero w magazynie i dopiero
+po zatwierdzeniu transakcji ([`endpoint-naming.md` §5](./endpoint-naming.md#5-exec-i-jego-granica)).
+Ma to widoczną konsekwencję w raporcie zadania: **sukces oznacza przyjęcie zlecenia, nie gotową
+miniaturkę**. Plik, którego Skia nie zdekoduje, zostawia `succeeded` i ląduje wyłącznie w logu
+konsumenta. Gotowe warianty zgłaszają się osobno, przez `AggregateChanged`.
+
+Odmowy są dwie i obie dotyczą pojedynczego elementu paczki: `multimedia_derivatives_unsupported`
+(zasób nie jest obrazem z naszego magazynu) i `multimedia_derivative_source_too_large` (oryginał
+ponad `MaxDerivativeSourceBytes` — ten sam próg, co przy rejestracji).
+
+Front dodatkowo **odsiewa cele przed wysłaniem**: zasoby, które mają już warianty albo nie są
+obrazami, nie trafiają do paczki. Backend odrzuciłby je i tak, ale osobnym `job_item` z błędem —
+użytkownik zobaczyłby w raporcie kilkanaście „porażek", z których żadna nie jest jego problemem.
 
 ### Gdzie leżą
 

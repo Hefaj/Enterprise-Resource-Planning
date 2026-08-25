@@ -116,6 +116,9 @@ export const PRODUCT_KEYS = {
           downloadPartial: 'product.base.multimedia.toast.downloadPartial',
           downloadFailed: 'product.base.multimedia.toast.downloadFailed',
           downloadSkippedExternal: 'product.base.multimedia.toast.downloadSkippedExternal',
+          derivativesRequested: 'product.base.multimedia.toast.derivativesRequested',
+          derivativesNothingToDo: 'product.base.multimedia.toast.derivativesNothingToDo',
+          nothingSelected: 'product.base.multimedia.toast.nothingSelected',
         },
       },
       delivery: {

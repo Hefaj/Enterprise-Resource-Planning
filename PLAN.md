@@ -22,11 +22,13 @@ przemianowania. Reszta już spełniała konwencję.
 
 Etap 5.1 wyszedł **szerszy**, niż zakładał plan — patrz opis w sekcji 5.1.
 
-> **Wszystkie pięć etapów wdrożone.** Jedyne, czego nie udało się sprawdzić, to **autoryzowana
-> ścieżka HTTP eksportu** — szczegóły i powód w sekcji „Weryfikacja". Wymaga zalogowania z frontu;
-> reszta łańcucha (runner → artefakt → zadanie → replika → feed → toast) jest zweryfikowana.
+> **Wszystkie pięć etapów wdrożone, cała weryfikacja domknięta** (25.08.2026) — łącznie
+> z autoryzowaną ścieżką HTTP eksportu i ręcznym przebiegiem operacji masowej w Identity;
+> szczegóły w sekcji „Weryfikacja".
 >
-> Plik można usunąć po tym jednym sprawdzeniu.
+> **Ten plik nie ma już nic otwartego — można go usunąć.** Wiedza, która ma zostać, mieszka
+> w `docs/backend/endpoint-naming.md`, `docs/backend/exports-artifacts.md`
+> i `docs/frontend/notifications.md`.
 
 ---
 
@@ -308,8 +310,11 @@ funkcjonalnością. Wspólny commit uniemożliwia rozdzielenie ich przy ewentual
       w miejscu (jeden wpis, nowa treść), `update` na zamkniętym toaście go nie wskrzesza,
       kliknięcie akcji wywołuje callback, stos przycięty do 4 przy ośmiu wystrzeleniach,
       `dismissAll` czyści. W konsoli tylko oczekiwane 401 SignalR na stronie logowania.
-- [ ] Ręcznie: zlecenie operacji masowej w Identity → dzwonek pokazuje postęp → historia zadań
-      pokazuje wynik po odświeżeniu strony
+- [x] **Ręcznie: operacja masowa w Identity → dzwonek → historia zadań.** Nadanie roli
+      „Odczyt magazynu" użytkownikowi `testuser@erp.local` z toolbara listy użytkowników:
+      `identity.job` = `UserAddRoleCommand` `Completed` 1/1, replika w `notification.job`
+      w tej samej sekundzie, dzwonek pokazał „Nadanie roli użytkownikowi — Zakończone 1 z 1",
+      a `/notification/jobs` pokazuje wpis również po twardym odświeżeniu strony.
 - [x] **Etap 2 na żywej infrastrukturze** (podman: postgres, rabbitmq, keycloak, minio):
       - `IArtifactStore` — zapis strumieniowy 342 KB, nazwa pliku z polskimi znakami w obie
         strony, odczyt, presigned GET → 200 z poprawną treścią, usunięcie, usunięcie
@@ -322,11 +327,23 @@ funkcjonalnością. Wspólny commit uniemożliwia rozdzielenie ich przy ewentual
       - reguła lifecycle `erp-artifact-retention` = 7 dni w kubełku
       - uprawnienie `catalog.export_run.create` w katalogu i nadane roli `administrator`
       - endpointy w OpenAPI pod właściwymi ścieżkami; bez tokenu 401, z tokenem bez uprawnienia 403
-- [ ] **Autoryzowana ścieżka HTTP eksportu — NIEZWERYFIKOWANA.** `POST /exportRun/create`
-      i `getExportRunDownloadUrl` nie zostały wywołane z ważnym tokenem użytkownika: realm ma
-      wyłączone `directAccessGrants` na `erp-client`, a token service-accountu nie przechodzi
-      JIT provisioningu (brak claimu e-mail). Włączanie password grant to zmiana ustawienia
-      bezpieczeństwa, więc jej nie zrobiłem. Do sprawdzenia z frontu po zalogowaniu.
-- [ ] Ręcznie: eksport w Catalogu → toast z akcją → zamknięcie toasta → pobranie z dzwonka →
-      pobranie z historii → po `expire_on` akcja znika
-- [ ] Ręcznie: zalogowanie w drugiej przeglądarce pokazuje te same zadania (weryfikacja 5.1)
+- [x] **Autoryzowana ścieżka HTTP eksportu — ZWERYFIKOWANA** (tokenem zalogowanego użytkownika,
+      z poziomu aplikacji; `directAccessGrants` pozostaje wyłączone i nie było ruszane).
+      `POST /exportRun/create` → 200 z `jobUuid`, `ExportRunner` → zadanie `Completed`
+      z `succeeded=1502` i `result_ref` wskazującym przebieg, `POST getExportRunDownloadUrl`
+      → 200 z presigned URL do `erp-catalog-artifacts/assets/…`, pobranie spod tego adresu
+      → 200 i 152 806 bajtów XML-a zaczynającego się od `<products>`.
+
+> **Front nie ma dziś przycisku eksportu** — akcje „Eksport CSV/XML" w toolbarze produktów są
+> zaślepkami (`console.log`), więc ścieżkę wywołano żądaniem HTTP z sesji zalogowanego
+> użytkownika. Zweryfikowane jest to, co miało być zweryfikowane (autoryzacja + cały łańcuch),
+> ale przycisk pozostaje do zrobienia.
+- [~] Ręcznie: eksport w Catalogu → toast z akcją → zamknięcie toasta → pobranie z dzwonka →
+      pobranie z historii → po `expire_on` akcja znika.
+      **Częściowo:** zadanie eksportu pojawia się w dzwonku z akcją „Pobierz" i w historii zadań
+      (również po odświeżeniu strony), a `getExportRunDownloadUrl` oddaje działający presigned URL
+      (sprawdzone żądaniem). **Zostaje do sprawdzenia przez człowieka:** samo kliknięcie „Pobierz"
+      (zapis pliku na dysk), droga przez toast — dziś nieosiągalna, bo front nie ma przycisku
+      eksportu — oraz zniknięcie akcji po `expire_on` (7 dni; wymaga cofnięcia daty w bazie).
+- [ ] Ręcznie: zalogowanie w drugiej przeglądarce pokazuje te same zadania (weryfikacja 5.1).
+      Wymaga drugiego logowania (hasło), więc nie zostało wykonane automatycznie.

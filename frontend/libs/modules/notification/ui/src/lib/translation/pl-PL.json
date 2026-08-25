@@ -5,7 +5,7 @@
   "clearFinished": "Wyczyść zakończone",
   "unknownCommand": "Operacja masowa",
   "progress": "{{done}} z {{total}}",
-  "errorsSummary": "Błędy: {{summary}}",
+  "errorCount": "× {{count}}",
   "status": {
     "pending": "Oczekuje",
     "running": "W toku",

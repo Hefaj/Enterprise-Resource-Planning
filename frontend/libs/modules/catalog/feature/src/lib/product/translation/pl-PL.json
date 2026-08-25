@@ -110,7 +110,10 @@
         "downloadStarted": "Pobieranie {{count}} plików — przeglądarka może zapytać o zgodę na pobranie wielu plików naraz.",
         "downloadPartial": "Pobrano {{succeeded}} plików, {{failed}} nie udało się pobrać.",
         "downloadFailed": "Nie udało się pobrać pliku.",
-        "downloadSkippedExternal": "Pominięto {{count}} plików opisanych adresem zewnętrznym — nie ma ich w magazynie systemu."
+        "downloadSkippedExternal": "Pominięto {{count}} plików opisanych adresem zewnętrznym — nie ma ich w magazynie systemu.",
+        "derivativesRequested": "Zlecono wygenerowanie miniaturek dla {{count}} plików. Pojawią się same, gdy będą gotowe.",
+        "derivativesNothingToDo": "Zaznaczone pliki mają już miniaturki albo nie są obrazami.",
+        "nothingSelected": "Zaznacz najpierw pliki, których ma dotyczyć akcja."
       }
     },
     "delivery": {

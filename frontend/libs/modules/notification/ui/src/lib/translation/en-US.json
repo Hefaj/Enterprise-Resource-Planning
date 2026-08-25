@@ -5,7 +5,7 @@
   "clearFinished": "Clear finished",
   "unknownCommand": "Bulk operation",
   "progress": "{{done}} of {{total}}",
-  "errorsSummary": "Errors: {{summary}}",
+  "errorCount": "× {{count}}",
   "status": {
     "pending": "Pending",
     "running": "Running",

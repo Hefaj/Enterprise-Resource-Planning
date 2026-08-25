@@ -10,7 +10,7 @@ export const JOB_KEYS = {
     clearFinished: 'job.clearFinished',
     unknownCommand: 'job.unknownCommand',
     progress: 'job.progress',
-    errorsSummary: 'job.errorsSummary',
+    errorCount: 'job.errorCount',
     status: {
       pending: 'job.status.pending',
       running: 'job.status.running',

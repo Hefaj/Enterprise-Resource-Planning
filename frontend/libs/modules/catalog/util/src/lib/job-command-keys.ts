@@ -14,4 +14,7 @@ export const CATALOG_JOB_COMMAND_KEYS = {
   addMultimedia: 'shared.jobs.commands.catalogProductAddMultimedia',
   removeMultimedia: 'shared.jobs.commands.catalogProductRemoveMultimedia',
   setMultimedia: 'shared.jobs.commands.catalogProductSetMultimedia',
+  // Operacje na samej bibliotece mediów, nie na galerii produktu — stąd inny agregat w nazwie.
+  removeAsset: 'shared.jobs.commands.catalogMultimediaRemove',
+  generateDerivatives: 'shared.jobs.commands.catalogMultimediaGenerateDerivatives',
 } as const;

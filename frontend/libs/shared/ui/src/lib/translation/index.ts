@@ -7,6 +7,7 @@ import { erpClientIdInterceptor } from '@erp/shared/data-access';
 import { ErpModalService } from '../atoms/erp-modal/erp-modal.service';
 
 export { SHARED_KEYS } from './keys';
+export * from './error-codes';
 
 @Injectable({ providedIn: 'root' })
 export class TranslocoInlineLoader implements TranslocoLoader {

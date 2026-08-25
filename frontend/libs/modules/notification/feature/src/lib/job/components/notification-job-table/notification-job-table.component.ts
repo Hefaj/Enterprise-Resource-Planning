@@ -15,10 +15,13 @@ import {
   ErpTableComponent,
   ErpTableConfig,
   ErpTableState,
+  resolveErrorCodeKey,
 } from '@erp/shared/ui';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, filter } from 'rxjs/operators';
+
+import { TranslocoService } from '@jsverse/transloco';
 
 import { SignalrSyncService } from '@erp/shared/data-access';
 import {
@@ -26,7 +29,11 @@ import {
   NotificationJobOrchestrator,
   SearchJobRequest,
 } from '@erp/notification/data-access';
-import { JOB_ARRIVAL_DEBOUNCE_MS, NOTIFICATION_JOB_SIGNATURE } from '@erp/notification/util';
+import {
+  JOB_ARRIVAL_DEBOUNCE_MS,
+  NOTIFICATION_JOB_SIGNATURE,
+  parseJobErrorsSummary,
+} from '@erp/notification/util';
 import { JOB_KEYS } from '@erp/notification/ui';
 
 import { JobCommandCellComponent } from './job-command-cell.component';
@@ -55,6 +62,7 @@ import { JobDownloadCellComponent } from './job-download-cell.component';
 export class NotificationJobTableComponent {
   private readonly _orchestrator = inject(NotificationJobOrchestrator);
   private readonly _signalrSync = inject(SignalrSyncService);
+  private readonly _transloco = inject(TranslocoService);
 
   /** Filtry przekazywane ze strony (panel filtrów + zakładka statusu). */
   public readonly filters = input<Partial<SearchJobRequest>>({});
@@ -196,8 +204,10 @@ export class NotificationJobTableComponent {
           .setHeader(JOB_KEYS.page.table.columns.errors)
           .setEnableSorting(false)
           .setSize(280)
-          // Surowy tekst z backendu (`"price_negative: 1200"`), nie klucz tłumaczenia.
-          .setCellFormatter((value: string | null | undefined) => value ?? '—')
+          // Backend przysyła zagregowane kody (`"price_negative: 1200"`) — tłumaczenie na
+          // zdanie dla użytkownika robi front, patrz `resolveErrorCodeKey`.
+          .setCellFormatter((value: string | null | undefined) =>
+            this._formatErrors(value) ?? this._transloco.translate(JOB_KEYS.page.table.emptyCell))
         )
         .addColumn(c => c
           .setId('result')
@@ -261,5 +271,30 @@ export class NotificationJobTableComponent {
       this._loading.set(false);
       this.loadingChange.emit(false);
     }
+  }
+
+  /**
+   * Zamienia podsumowanie błędów z backendu na tekst dla użytkownika.
+   *
+   * Kolumna jest jednowierszowa, więc kody idą po przecinku, a nie listą jak w feedzie
+   * powiadomień. Kod bez tłumaczenia zostaje pokazany dosłownie — lepszy surowy
+   * `multimedia_still_referenced` niż pusta komórka, gdy reguła wyprzedzi tłumaczenie.
+   */
+  private _formatErrors(summary: string | null | undefined): string | null {
+    const entries = parseJobErrorsSummary(summary);
+    if (entries.length === 0) {
+      return null;
+    }
+
+    return entries
+      .map(entry => {
+        const key = resolveErrorCodeKey(entry.code);
+        const label = key ? this._transloco.translate(key) : entry.code;
+
+        return entry.count > 1
+          ? `${label} ${this._transloco.translate(JOB_KEYS.errorCount, { count: entry.count })}`
+          : label;
+      })
+      .join(', ');
   }
 }

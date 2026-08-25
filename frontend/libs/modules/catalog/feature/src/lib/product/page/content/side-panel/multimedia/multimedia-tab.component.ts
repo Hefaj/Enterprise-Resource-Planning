@@ -17,11 +17,18 @@ import {
   ErpModalService,
   ErpConfirmDialogBuilder,
   ErpConfirmDialogService,
+  ErpMediaPreviewBuilder,
+  ErpMediaPreviewItem,
+  ErpMediaPreviewService,
+  ErpToastService,
 } from '@erp/shared/ui';
 import {
   BatchCommandOfProductAddMultimediaCommandAndSearchProductRequest,
+  CatalogMultimediaContentService,
+  CatalogMultimediaDownloadService,
   CatalogMultimediaOrchestrator,
   CatalogProductOrchestrator,
+  MultimediaVM,
   ProductRemoveMultimediaCommand,
   ProductVM,
 } from '@erp/catalog/data-access';
@@ -101,6 +108,10 @@ export class MultimediaTabComponent {
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
   private readonly modalService = inject(ErpModalService);
   private readonly confirmDialog = inject(ErpConfirmDialogService);
+  private readonly contentService = inject(CatalogMultimediaContentService);
+  private readonly downloadService = inject(CatalogMultimediaDownloadService);
+  private readonly mediaPreview = inject(ErpMediaPreviewService);
+  private readonly toast = inject(ErpToastService);
 
   protected readonly _scopeKind = this.tabStore.scopeKind;
   protected readonly _resolving = this.tabStore.resolving;
@@ -170,6 +181,18 @@ export class MultimediaTabComponent {
         .setAppearance('warning')
         .setFn(() => this.onDeleteMass())
       )
+      // Bramkowane zasięgiem, mimo że leży w grupie masowej: „wszystkie" musi znaczyć
+      // wszystkie, a przy zaznaczeniu opisanym filtrem panel zna wyłącznie próbkę produktów.
+      // Pobranie próbki pod etykietą „pobierz wszystkie" byłoby cichym okłamaniem użytkownika
+      // co do tego, co właśnie dostał.
+      .addAction(a => a
+        .setId('download-all')
+        .setLabel(PRODUCT_KEYS.base.multimedia.toolbar.downloadAll)
+        .setIcon('@tui.hard-drive-download')
+        .setScopes(['explicit'])
+        .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeDownloadAllUnavailable)
+        .setFn(() => this.onDownloadAll())
+      )
     )
     .addDefaultGroup(g => g
       .setId('tools')
@@ -208,7 +231,7 @@ export class MultimediaTabComponent {
         .setIcon('@tui.download')
         .setScopes(['explicit'])
         .setUnavailableHint(PRODUCT_KEYS.base.multimedia.panel.scopeFileSelectionUnavailable)
-        .setFn(() => console.log('Pobierz'))
+        .setFn(() => this.onDownloadSelected())
       )
       .addAction(a => a
         .setId('optimize')
@@ -238,10 +261,15 @@ export class MultimediaTabComponent {
         .setEstimatedRowHeight(56)
         .setEmptyMessage(PRODUCT_KEYS.base.multimedia.panel.emptySelection)
         .setOnSelectionChange(state => this.onSelectionChange(state))
+        .setOnRowDoubleClick(row => this.onPreview(row))
         .addColumn(c => c
           .setId('thumbnail')
           .setHeader(PRODUCT_KEYS.base.multimedia.columns.thumbnail)
-          .setCell(MultimediaThumbnailCellComponent)
+          // Kliknięcie w samą miniaturkę też otwiera podgląd — to jest miejsce, w które
+          // użytkownik celuje najpierw, i wymaganie od niego dwukliku akurat tam byłoby
+          // uporem. Reszta wiersza zostaje przy dwukliku, żeby pojedyncze kliknięcie
+          // nadal służyło zaznaczaniu.
+          .setCell(MultimediaThumbnailCellComponent, { onPreview: (row: MultimediaRow) => this.onPreview(row) })
           .setEnableSorting(false)
           .setSize(100)
           .setGrow(0)
@@ -423,4 +451,203 @@ export class MultimediaTabComponent {
   protected onClearMediaSelection(): void {
     this.tabStore.clearChildSelection();
   }
+
+  /**
+   * Otwiera podgląd pliku, po którym użytkownik kliknął dwukrotnie.
+   *
+   * <b>Galeria obejmuje pliki JEDNEGO produktu</b>, a nie całą zawartość panelu. Panel jest
+   * płaską listą par (produkt, plik) z kilku produktów naraz — przewijanie strzałkami przez
+   * granicę produktu wyglądałoby jak zgubienie kontekstu, a przy okazji kazałoby doładować
+   * szczegóły wszystkich wierszy panelu tylko dlatego, że ktoś otworzył jeden obrazek.
+   */
+  protected onPreview(row: MultimediaRow): void {
+    const groupRows = this._rows().filter(r => r.productUuid === row.productUuid);
+
+    if (groupRows.length === 0) {
+      return;
+    }
+
+    // Sąsiadów w galerii trzeba doładować jawnie: `onVisibleRowsChange` zamawia szczegóły
+    // tylko dla wierszy widocznych w wirtualizerze, a strzałka w podglądzie sięga dalej niż
+    // to, co akurat mieści się na ekranie panelu.
+    this.ensureMultimediaLoaded(groupRows.map(r => r.uuid));
+
+    this.mediaPreview
+      .open(
+        ErpMediaPreviewBuilder.create(b => b
+          .setItems(computed(() => groupRows.map(r => this.toPreviewItem(r))))
+          .setStartId(previewItemId(row))
+          .setOnDownload(item => this.downloadByRowId(item.id)),
+        ),
+      )
+      .subscribe();
+  }
+
+  /**
+   * Zamienia wiersz panelu na pozycję podglądu.
+   *
+   * Adres jest `computed`, a nie gotowym stringiem, i to jest tu rzecz nieoczywista: `computed`
+   * liczy się **leniwie**, przy pierwszym odczycie. Podgląd czyta wyłącznie adres oglądanej
+   * pozycji, więc otwarcie galerii dwustu zdjęć nie zamawia dwustu plików — pobiera się ten
+   * jeden, na który użytkownik patrzy, i kolejne dopiero pod strzałką.
+   */
+  private toPreviewItem(row: MultimediaRow): ErpMediaPreviewItem {
+    const vm = this.multimediaOrchestrator.getOne(row.uuid)();
+
+    return {
+      id: previewItemId(row),
+      fileName: vm?.fileName ?? '',
+      caption: vm ? formatPreviewCaption(vm) : undefined,
+      renderable: vm ? vm.mediaType === 'image' : true,
+      icon: '@tui.file',
+      url: computed(() => {
+        const current = this.multimediaOrchestrator.getOne(row.uuid)();
+
+        if (!current) {
+          return undefined;
+        }
+
+        if (current.originalUrl) {
+          return current.originalUrl;
+        }
+
+        // Wariant `preview` (1024 px) zamiast oryginału — okno ma najwyżej kilkaset pikselów
+        // wysokości, więc zdjęcie 4K nie wniosłoby tu nic poza sześcioma megabajtami transferu.
+        // Bez wariantów schodzimy na oryginał: to świadomy koszt jednego pliku, na żądanie,
+        // zamiast pokazania użytkownikowi pustego okna.
+        return current.hasDerivatives
+          ? this.contentService.variantUrl(current.uuid, 'preview')()
+          : this.contentService.contentUrl(current.uuid)();
+      }),
+    };
+  }
+
+  /** Pobranie oryginału z poziomu okna podglądu — po identyfikatorze pozycji, czyli wiersza. */
+  private async downloadByRowId(itemId: string): Promise<void> {
+    const uuid = itemId.split(':')[1];
+    const vm = uuid ? this.multimediaOrchestrator.getOne(uuid)() : undefined;
+
+    if (!vm) {
+      return;
+    }
+
+    if (!(await this.downloadService.download(vm))) {
+      this.toast.show({
+        message: PRODUCT_KEYS.base.multimedia.toast.downloadFailed,
+        appearance: 'negative',
+      });
+    }
+  }
+
+  /**
+   * Pobranie WSKAZANYCH plików. Akcja jest bramkowana zasięgiem `explicit`, więc lista
+   * zaznaczonych wierszy jest tu pełna, a nie próbką.
+   *
+   * Ten sam plik wiszący pod dwoma produktami daje dwa wiersze, ale ma się pobrać raz —
+   * odsiewamy po uuid zasobu, nie po identyfikatorze wiersza.
+   */
+  protected onDownloadSelected(): Promise<void> {
+    const uuids = [...this.tabStore.selectedMultimedia()];
+    return this.downloadResolved(uuids);
+  }
+
+  /**
+   * Pobranie wszystkich plików produktów objętych panelem — również bramkowane zasięgiem
+   * (patrz komentarz przy akcji toolbara).
+   */
+  protected onDownloadAll(): Promise<void> {
+    const uuids = [...new Set(this._rows().map(row => row.uuid))];
+    return this.downloadResolved(uuids);
+  }
+
+  /**
+   * Wspólna droga obu pobrań paczkowych.
+   *
+   * Szczegóły plików (nazwa, na którą zapisze je przeglądarka) doładowują się leniwie razem
+   * ze scrollem, więc przed pobraniem trzeba się upewnić, że są — inaczej „pobierz wszystkie"
+   * wydałoby pliki bez nazw albo pominęło te, do których użytkownik nie doscrollował.
+   */
+  private async downloadResolved(uuids: readonly string[]): Promise<void> {
+    if (uuids.length === 0) {
+      return;
+    }
+
+    this.ensureMultimediaLoaded(uuids);
+    await this.multimediaOrchestrator.loadAsync([...uuids]);
+
+    const items = uuids
+      .map(uuid => this.multimediaOrchestrator.getOne(uuid)())
+      .filter((vm): vm is MultimediaVM => !!vm);
+
+    if (items.length === 0) {
+      this.toast.show({ message: PRODUCT_KEYS.base.multimedia.toast.downloadFailed, appearance: 'negative' });
+      return;
+    }
+
+    // Zapowiedź przed pierwszym plikiem: pobranie paczki to N osobnych pobrań przeglądarki,
+    // a nie jedno archiwum — użytkownik ma wiedzieć, na co patrzy, zanim posypią się pytania
+    // o zgodę na pobieranie wielu plików.
+    this.toast.show({
+      message: { key: PRODUCT_KEYS.base.multimedia.toast.downloadStarted, params: { count: items.length } },
+      appearance: 'info',
+    });
+
+    const result = await this.downloadService.downloadMany(items);
+
+    if (result.failed > 0) {
+      this.toast.show({
+        message: { key: PRODUCT_KEYS.base.multimedia.toast.downloadPartial, params: result },
+        appearance: 'warning',
+      });
+    }
+
+    // Osobny komunikat, bo to nie jest porażka: te zasoby nigdy nie leżały w naszym magazynie
+    // i pobrać ich stąd nie sposób. Milczenie zostawiłoby użytkownika z paczką krótszą, niż
+    // się spodziewał, bez wyjaśnienia dlaczego.
+    if (result.skippedExternal > 0) {
+      this.toast.show({
+        message: {
+          key: PRODUCT_KEYS.base.multimedia.toast.downloadSkippedExternal,
+          params: { count: result.skippedExternal },
+        },
+        appearance: 'info',
+      });
+    }
+  }
+
+  /** Zamawia szczegóły tych zasobów, o które jeszcze nie prosiliśmy (wspólna dedupikacja ze scrollem). */
+  private ensureMultimediaLoaded(uuids: readonly string[]): void {
+    const missing = uuids.filter(uuid => !this.requestedMultimediaUuids.has(uuid));
+
+    if (missing.length === 0) {
+      return;
+    }
+
+    for (const uuid of missing) {
+      this.requestedMultimediaUuids.add(uuid);
+    }
+
+    this.multimediaOrchestrator.loadAsync(missing);
+  }
+}
+
+/** Identyfikator pozycji podglądu = identyfikator wiersza tabeli (para produkt+plik). */
+function previewItemId(row: MultimediaRow): string {
+  return `${row.productUuid}:${row.uuid}`;
+}
+
+/** Podpis pod nazwą pliku: typ i rozmiar — dane, nie klucze tłumaczeń. */
+function formatPreviewCaption(vm: MultimediaVM): string {
+  return [vm.mimeType, formatBytes(vm.fileSize)].filter(Boolean).join(' · ');
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes) {
+    return '0 B';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const exponent = Math.floor(Math.log(bytes) / Math.log(1024));
+
+  return `${parseFloat((bytes / Math.pow(1024, exponent)).toFixed(1))} ${units[exponent]}`;
 }

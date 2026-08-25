@@ -229,5 +229,13 @@
   "confirm": {
     "confirm": "Confirm",
     "cancel": "Cancel"
+  },
+  "mediaPreview": {
+    "counter": "{{current}} of {{total}}",
+    "previous": "Previous file",
+    "next": "Next file",
+    "download": "Download original",
+    "close": "Close",
+    "unavailable": "This file cannot be previewed."
   }
 }

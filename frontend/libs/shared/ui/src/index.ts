@@ -41,6 +41,7 @@ export * from './lib/atoms/erp-empty-state';
 export * from './lib/atoms/erp-selection-scope-banner';
 export * from './lib/atoms/erp-batch-targets-summary';
 export * from './lib/atoms/erp-confirm-dialog';
+export * from './lib/atoms/erp-media-preview';
 
 // // Molecules
 export * from './lib/molecules/erp-filter';

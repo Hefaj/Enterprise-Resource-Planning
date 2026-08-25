@@ -229,5 +229,13 @@
   "confirm": {
     "confirm": "Potwierdź",
     "cancel": "Anuluj"
+  },
+  "mediaPreview": {
+    "counter": "{{current}} z {{total}}",
+    "previous": "Poprzedni plik",
+    "next": "Następny plik",
+    "download": "Pobierz oryginał",
+    "close": "Zamknij",
+    "unavailable": "Tego pliku nie da się pokazać w podglądzie."
   }
 }

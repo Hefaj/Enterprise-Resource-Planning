@@ -3,6 +3,9 @@
 export { CatalogProductOrchestrator } from './product/catalog-product.orchestrator';
 export { CatalogMultimediaOrchestrator } from './multimedia/catalog-multimedia.orchestrator';
 export { CatalogMultimediaContentService } from './multimedia/multimedia-content.service';
+export type { MultimediaVariant } from './multimedia/multimedia-content.service';
+export { CatalogMultimediaDownloadService } from './multimedia/multimedia-download.service';
+export type { MultimediaDownloadResult } from './multimedia/multimedia-download.service';
 export type { MultimediaVM } from './multimedia/multimedia.view-model';
 export type {
   ProductVM,

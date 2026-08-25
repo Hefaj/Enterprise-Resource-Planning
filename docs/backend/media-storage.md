@@ -1,10 +1,12 @@
 # Magazyn plików — gdzie żyją, kto ma do nich dostęp, kto po nich sprząta
 
-**Stan: 🟡 kod jest i się kompiluje, nie zweryfikowany na żywej infrastrukturze.** Legenda
-znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia). Wdrożone są wszystkie
-pozycje z [§6](#6-stan-wdrożenia) plus miniaturki z [§8](#8-warianty-pochodne--miniaturki);
-testy jednostkowe i architektoniczne przechodzą, ale przebiegu end-to-end na MinIO
-**jeszcze nie było** — patrz [§7](#7-co-zostało-do-weryfikacji).
+**Stan: 🟡 wgrywanie i miniaturki potwierdzone na żywym MinIO, reszta nie.** Legenda znaczników —
+[`architecture.md`](./architecture.md#1-stan-wdrożenia). Wdrożone są wszystkie pozycje
+z [§6](#6-stan-wdrożenia) plus miniaturki z [§8](#8-warianty-pochodne--miniaturki); testy
+jednostkowe i architektoniczne przechodzą. Przebieg end-to-end na MinIO **odbył się dla ścieżki
+wgrywania i wariantów pochodnych** (i wywrócił dwa nieme braki w podpięciu — patrz
+[§6](#6-stan-wdrożenia)); co nadal czeka na pierwsze uruchomienie, wylicza
+[§7](#7-co-zostało-do-weryfikacji).
 Ten dokument **zastępuje** rozstrzygnięcia z [`exports-artifacts.md`](./exports-artifacts.md)
 §5 i §9 w tych punktach, w których się z nimi rozjeżdża (układ kubełków, poświadczenia,
 sprzątanie, rola DMS).

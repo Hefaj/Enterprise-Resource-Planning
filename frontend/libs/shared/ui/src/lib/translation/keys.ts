@@ -235,4 +235,12 @@ export const SHARED_KEYS = {
       confirm: 'shared.confirm.confirm',
       cancel: 'shared.confirm.cancel',
     },
+    mediaPreview: {
+      counter: 'shared.mediaPreview.counter',
+      previous: 'shared.mediaPreview.previous',
+      next: 'shared.mediaPreview.next',
+      download: 'shared.mediaPreview.download',
+      close: 'shared.mediaPreview.close',
+      unavailable: 'shared.mediaPreview.unavailable',
+    },
   } as const;

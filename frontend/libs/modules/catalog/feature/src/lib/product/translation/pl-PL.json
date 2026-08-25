@@ -72,7 +72,8 @@
         "bulkDescription": "Zaznaczono zbyt wiele produktów, aby wyświetlić ich szczegóły jednocześnie. Możesz wykonać akcje masowe na wszystkich zaznaczonych produktach.",
         "bulkAdd": "Dodaj multimedia masowo",
         "bulkDelete": "Usuń wszystkie multimedia",
-        "scopeFileSelectionUnavailable": "Wybór pojedynczych plików wymaga zaznaczenia konkretnych produktów"
+        "scopeFileSelectionUnavailable": "Wybór pojedynczych plików wymaga zaznaczenia konkretnych produktów",
+        "scopeDownloadAllUnavailable": "Pobranie wszystkich plików wymaga zaznaczenia konkretnych produktów"
       },
       "toolbar": {
         "massGroup": "Masowe zarządzanie",
@@ -82,7 +83,8 @@
         "thumbnails": "Generuj miniatury",
         "deleteSelected": "Usuń zaznaczone",
         "download": "Pobierz oryginały",
-        "optimize": "Optymalizuj wybrane"
+        "optimize": "Optymalizuj wybrane",
+        "downloadAll": "Pobierz wszystkie"
       },
       "columns": {
         "thumbnail": "Miniatura",
@@ -103,6 +105,12 @@
           "yes": "Zdejmij wszystkie",
           "no": "Anuluj"
         }
+      },
+      "toast": {
+        "downloadStarted": "Pobieranie {{count}} plików — przeglądarka może zapytać o zgodę na pobranie wielu plików naraz.",
+        "downloadPartial": "Pobrano {{succeeded}} plików, {{failed}} nie udało się pobrać.",
+        "downloadFailed": "Nie udało się pobrać pliku.",
+        "downloadSkippedExternal": "Pominięto {{count}} plików opisanych adresem zewnętrznym — nie ma ich w magazynie systemu."
       }
     },
     "delivery": {

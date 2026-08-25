@@ -73,6 +73,13 @@ const MEDIA_TYPE_ICONS: Record<string, string> = {
 export class MultimediaThumbnailCellComponent {
   public readonly row = input.required<MultimediaRow>();
 
+  /**
+   * Otwarcie podglądu. Wstrzykiwane przez `setCell(..., { onPreview })`, a nie przez `output()`,
+   * bo komórki tabeli powstają dynamicznie (`flexRenderComponent`) i nikt nie subskrybuje ich
+   * zdarzeń — konfiguracja kolumny jest tu jedyną drogą, którą da się przekazać zachowanie.
+   */
+  public readonly onPreview = input<((row: MultimediaRow) => void) | undefined>(undefined);
+
   private readonly multimediaOrchestrator = inject(CatalogMultimediaOrchestrator);
   private readonly contentService = inject(CatalogMultimediaContentService);
 
@@ -116,8 +123,15 @@ export class MultimediaThumbnailCellComponent {
 
   protected readonly _icon = computed(() => MEDIA_TYPE_ICONS[this._vm()?.mediaType ?? ''] ?? '@tui.file');
 
+  /**
+   * Dopóki `MultimediaVM` się nie doładował, kliknięcie nic nie robi — podgląd nie miałby
+   * czym się opisać ani czego pokazać, a otwarte puste okno wygląda jak awaria.
+   */
   protected onPreviewClick(): void {
-    if (!this._vm()) return;
-    console.log('Preview', this.row().uuid);
+    if (!this._vm()) {
+      return;
+    }
+
+    this.onPreview()?.(this.row());
   }
 }

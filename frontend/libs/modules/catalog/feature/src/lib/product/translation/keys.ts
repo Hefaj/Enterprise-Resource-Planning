@@ -78,6 +78,7 @@ export const PRODUCT_KEYS = {
           bulkAdd: 'product.base.multimedia.panel.bulkAdd',
           bulkDelete: 'product.base.multimedia.panel.bulkDelete',
           scopeFileSelectionUnavailable: 'product.base.multimedia.panel.scopeFileSelectionUnavailable',
+          scopeDownloadAllUnavailable: 'product.base.multimedia.panel.scopeDownloadAllUnavailable',
         },
         toolbar: {
           massGroup: 'product.base.multimedia.toolbar.massGroup',
@@ -88,6 +89,7 @@ export const PRODUCT_KEYS = {
           deleteSelected: 'product.base.multimedia.toolbar.deleteSelected',
           download: 'product.base.multimedia.toolbar.download',
           optimize: 'product.base.multimedia.toolbar.optimize',
+          downloadAll: 'product.base.multimedia.toolbar.downloadAll',
         },
         columns: {
           thumbnail: 'product.base.multimedia.columns.thumbnail',
@@ -108,6 +110,12 @@ export const PRODUCT_KEYS = {
             yes: 'product.base.multimedia.confirm.clearAll.yes',
             no: 'product.base.multimedia.confirm.clearAll.no',
           },
+        },
+        toast: {
+          downloadStarted: 'product.base.multimedia.toast.downloadStarted',
+          downloadPartial: 'product.base.multimedia.toast.downloadPartial',
+          downloadFailed: 'product.base.multimedia.toast.downloadFailed',
+          downloadSkippedExternal: 'product.base.multimedia.toast.downloadSkippedExternal',
         },
       },
       delivery: {

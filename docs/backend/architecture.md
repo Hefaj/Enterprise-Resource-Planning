@@ -42,6 +42,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Egzekwowanie uprawnień w Catalog/Sales | ✅ | [`identity-authz.md`](./identity-authz.md) §4 — SLA odwołania ≤60s (TTL cache). Notification świadomie bez bramkowania uprawnieniem (własny feed, nie zasób uprzywilejowany), ale **zawężony do właściciela**: `searchJob`/`getJob` filtrują po `IExecutionContext.UserId` z claimu `sub`, nie po filtrze z żądania |
 | Bramkowanie UI (front) | ✅ | [`identity-authz.md`](./identity-authz.md) §6 — `PermissionStore`, guardy, `*erpHasPermission`, filtr menu przeliczany na żywo, `/forbidden`, toast 403 |
 | Audyt nadań, wygasające nadania, wymuszone wylogowanie | ✅ | [`identity-authz.md`](./identity-authz.md) §7 — `grant_audit` append-only, `ExpiredGrantCleanupService`, odwołanie sesji przez Keycloak Admin API |
+| DMS — dokumenty i obiegi (silnik na tokenach, ACL per dokument, ingest, archiwizacja) | 📐 | [`dms-workflow.md`](./dms-workflow.md) + [`dms-pages.md`](../frontend/dms-pages.md) — projekt; front DMS to dziś atrapa, mikroserwisu `Dms` nie ma |
 
 ---
 

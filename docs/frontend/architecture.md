@@ -166,5 +166,6 @@ Konsekwencja praktyczna: jeśli edytujesz coś w `libs/shared/**` i zmiana się 
 - [Struktura `feature`](./feature-structure.md) → [Page dla agregatu](./pages.md) → [Smart tabele](./smart-tables.md) → [Zasięg zaznaczenia](./selection-scope.md) — ścieżka od katalogu do gotowego ekranu listy.
 - [Orkiestratory (`data-access`)](./orchestrators.md) — jak moduły pobierają, cache'ują i wzbogacają dane agregatów.
 - [Modale](./modals.md), [Atomy UI](./atoms.md), [Tłumaczenia](./translations.md) — pozostałe przepisy zadaniowe, zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md).
+- [Podział na strony w DMS](./dms-pages.md) — 📐 projekt; przykład rozpisania całego modułu na ekrany, razem z modelem domenowym w [`dms-workflow.md`](../backend/dms-workflow.md).
 - Backend: [architektura](../backend/architecture.md), [uprawnienia i bramkowanie UI](../backend/identity-authz.md).
 - Praca z komponentami TaigaUI: [`.agents/skills/taiga-ui/SKILL.md`](../../.agents/skills/taiga-ui/SKILL.md).

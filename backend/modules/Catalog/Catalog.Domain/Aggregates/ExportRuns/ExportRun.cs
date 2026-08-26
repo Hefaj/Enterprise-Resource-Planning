@@ -76,6 +76,22 @@ public class ExportRun : AggregateRoot
 
     public DateTimeOffset? FinishedAt { get; private set; }
 
+    /// <summary>
+    /// Ostatni znak życia runnera wykonującego ten przebieg.
+    ///
+    /// <para><b>Dlaczego akurat tu bicie serca, a nie blokada wiersza jak przy zadaniach masowych.</b>
+    /// Przebieg eksportu strumieniuje dziesiątki tysięcy rekordów do magazynu artefaktów. Trzymanie
+    /// transakcji Postgresa przez cały ten czas oznaczałoby długowieczny snapshot blokujący
+    /// <c>VACUUM</c> — lekarstwo gorsze od choroby. Wyłączność jest więc dwuczęściowa: krótka
+    /// transakcja przejęcia (<see cref="MarkStarted"/>) i znacznik czasu odświeżany w trakcie pracy.</para>
+    ///
+    /// <para>Przebieg w stanie <see cref="ExportRunStatus.Running"/> ze starym znacznikiem to
+    /// przebieg po martwym runnerze — wraca do <see cref="ExportRunStatus.Pending"/> przez
+    /// <see cref="ReturnToPending"/>. Bez tego padnięcie runnera w połowie eksportu zostawiało
+    /// przebieg w stanie „w toku" na zawsze; było to prawdą także przy jednej instancji.</para>
+    /// </summary>
+    public DateTimeOffset? HeartbeatAt { get; private set; }
+
     /// <summary>Kiedy artefakt przestaje być dostępny — spójne z <c>job.expire_on</c>.</summary>
     public DateTimeOffset? ExpireOn { get; private set; }
 
@@ -98,8 +114,8 @@ public class ExportRun : AggregateRoot
         ExpireOn = expireOn;
     }
 
-    /// <summary>Oznacza podjęcie przez runnera.</summary>
-    public void MarkStarted()
+    /// <summary>Oznacza podjęcie przez runnera i zapala pierwszy znak życia.</summary>
+    public void MarkStarted(DateTimeOffset now)
     {
         if (Status != ExportRunStatus.Pending)
         {
@@ -107,6 +123,38 @@ public class ExportRun : AggregateRoot
         }
 
         Status = ExportRunStatus.Running;
+        HeartbeatAt = now;
+    }
+
+    /// <summary>
+    /// Odświeża znak życia. Wołane przy okazji zapisu postępu, więc <b>nie dokłada ruchu
+    /// do bazy</b> — dopisuje pole do <c>UPDATE</c>, który i tak leci co porcję rekordów.
+    /// </summary>
+    public void Heartbeat(DateTimeOffset now)
+    {
+        if (Status != ExportRunStatus.Running)
+        {
+            return;
+        }
+
+        HeartbeatAt = now;
+    }
+
+    /// <summary>
+    /// Oddaje przebieg do puli po runnerze, który przestał dawać znaki życia.
+    ///
+    /// <para>Przebieg zakończony (powodzeniem albo błędem) jest nietykalny — odzysk dotyczy
+    /// wyłącznie pracy porzuconej w trakcie.</para>
+    /// </summary>
+    public void ReturnToPending()
+    {
+        if (Status != ExportRunStatus.Running)
+        {
+            return;
+        }
+
+        Status = ExportRunStatus.Pending;
+        HeartbeatAt = null;
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using Catalog.Application.Multimedia;
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -69,10 +70,14 @@ public sealed class MediaReconciliationOptions
 /// znajduje, to jest objaw, że któryś z trzech mechanizmów wyżej jest zepsuty</b>, a nie dowód,
 /// że sprzątanie działa.</para>
 ///
-/// <para>Zakłada <b>jedną instancję serwisu</b>, tak samo jak <c>BulkCommandRunner</c>
-/// i <c>ExportRunner</c> — dwie listowałyby ten sam kubełek i kasowały te same obiekty
-/// (<c>docs/backend/architecture.md</c> §7).</para>
+/// <para><b>Wiele instancji.</b> Przebieg bierze dzierżawę <c>catalog:media-reconciliation</c>
+/// (<see cref="IExclusiveLease"/>); instancja, która jej nie dostanie, <b>pomija ten przebieg</b>
+/// i czeka na następny. Pominięcie jest tu bez znaczenia — cykl liczy się w godzinach, a robota
+/// i tak sprowadza się do „sprawdź, czy nie ma śmieci". Bez dzierżawy dwie instancje listowałyby
+/// ten sam kubełek i kasowały te same obiekty.</para>
 /// </summary>
+[ClusterSafe("Dzierżawa catalog:media-reconciliation na advisory locku Postgresa; instancja bez "
+    + "dzierżawy pomija przebieg, a cykl godzinowy sprawia, że pominięcie nic nie kosztuje.")]
 public sealed partial class MediaReconciliationService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -132,6 +137,18 @@ public sealed partial class MediaReconciliationService : BackgroundService
     private async Task ReconcileAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
+
+        // Wyłączność bierzemy PRZED jakąkolwiek pracą, ale wewnątrz scope'u — dzierżawa jest
+        // zasobem scope'u tak samo jak DbContext, a trzymanie jej dłużej niż przebieg nie ma sensu.
+        var lease = scope.ServiceProvider.GetRequiredService<IExclusiveLease>();
+        await using var held = await lease
+            .TryAcquireAsync("catalog:media-reconciliation", cancellationToken)
+            .ConfigureAwait(false);
+
+        if (held is null)
+        {
+            return;
+        }
 
         var artifacts = scope.ServiceProvider.GetRequiredKeyedService<IArtifactStore>(ArtifactStoreKeys.Media);
         var queries = scope.ServiceProvider.GetRequiredService<IMultimediaQueries>();

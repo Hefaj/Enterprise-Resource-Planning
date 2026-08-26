@@ -157,14 +157,17 @@ Keycloak ──JWT(sub)──► Catalog.Api
   }
   ```
 
-- **Unieważnienie idzie samym TTL.** Nie ma `perm_ver` w tokenie ani zdarzenia `UserPermissionsChanged` — obie rzeczy były w pierwotnym projekcie i obie zostały świadomie pominięte (§9). `IPermissionProvider.InvalidateAsync` istnieje i czyści cache natychmiast, ale woła go dziś wyłącznie wymuszone wylogowanie w Identity, w procesie, który obsłużył żądanie.
+- **TTL jest gwarancją, broadcast — czasem reakcji.** Nie ma `perm_ver` w tokenie (§9), ale każda zmiana efektywnych uprawnień rozsyła `PermissionsInvalidated` do **wszystkich** instancji **wszystkich** serwisów, więc cache czyści się w sekundę, a nie w minutę. Sygnał wychodzi z jednego miejsca — zapisu do `grant_audit` — bo obowiązuje niezmiennik „każda zmiana tego, kto co może, zostawia wpis w audycie", i idzie przez outbox, w tej samej transakcji co zmiana. Zepsuta kolejka unieważnień cofa system do samego TTL, czyli do zachowania sprzed tej zmiany: to optymalizacja, nie warunek poprawności.
 - **SLA odwołania uprawnień: ≤ 60 s** (TTL cache). Zapisane, bo bez zapisanej liczby nikt tego nie przetestuje — i faktycznie tyle trwa: odebranie roli daje 403 dopiero po wygaśnięciu wpisu, nie natychmiast.
 - **Identity nie woła samego siebie po HTTP.** W Identity `IPermissionProvider` jest nadpisany na [`IdentityInProcessPermissionProvider`](../../backend/modules/Identity/Identity.Api/Auth/IdentityInProcessPermissionProvider.cs), który liczy efektywne uprawnienia wprost przez `IUserAccountQueries` i wykonuje JIT provisioning **przed** ich policzeniem — patrz §8.
 - **Niedostępne Identity = pusty zbiór uprawnień**, czyli 403, nie ciche przepuszczenie. Fail-closed jest tu decyzją, nie skutkiem ubocznym.
 
-> ⚠️ Cache uprawnień to **stan w pamięci procesu** — jest na liście w
-> [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne). Przy skalowaniu poziomym
-> unieważnienie musi dojść do każdej instancji (fanout, nie kolejka robocza).
+> Cache uprawnień zostaje **stanem w pamięci procesu** i to jest decyzja, nie zaległość. Wspólny
+> cache w Redisie wkładałby go na ścieżkę każdego żądania każdego serwisu, w warstwie autoryzacji —
+> awaria Redisa kładłaby wtedy cały ERP. Propagacja idzie więc komunikatem: osobna wymiana
+> `erp.broadcast` i kolejka **per instancja**, bo `erp.events` wiąże jedną kolejkę per serwis
+> i unieważnienie dotarłoby do jednej instancji zamiast do wszystkich. Patrz
+> [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
 
 ### Zadania masowe
 
@@ -312,8 +315,9 @@ agregacie, a wszystkie elementy chunka dzielą jeden scope DI i jedną transakcj
 zacommitowany — para `A→B` i `B→A` w jednym zadaniu przeszłaby oba sprawdzenia i zamknęła cykl
 w bazie. Reguła ładuje cały graf ról jednym zapytaniem i symuluje wstawienia w kolejności
 `Ordinal`; sprawdzenie w handlerze zostaje jako druga linia obrony na stanie zacommitowanym.
-Runner jest jednowątkowy i bierze jedno zadanie naraz, więc te dwie warstwy pokrywają całość —
-patrz [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne).
+Runner bierze jedno zadanie naraz i trzyma na nim `FOR UPDATE SKIP LOCKED`, więc również przy
+wielu instancjach nad jednym zadaniem pracuje dokładnie jeden proces — te dwie warstwy pokrywają
+całość. Patrz [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
 
 > Komentarze w kodzie odsyłają miejscami do numerów faz wdrożenia. Odpowiadają obszarom wyżej:
 > **1** AuthN, **2** domena Identity, **3** egzekwowanie w Catalog/Sales, **4** moduł frontendowy,
@@ -344,8 +348,8 @@ Każda z nich jest do powtórzenia przy następnej zmianie w tym obszarze — dl
 | Tabela domknięcia ról | Gdy CTE zacznie być wąskim gardłem | Wzorzec gotowy w `CategoryClosureMaintainer`, ale uwaga: DAG wymaga `MIN(depth)` na parze (przodek, potomek) |
 | Wielofirmowość / tenant | Poza zakresem | Dotknie tokenu, schematów i każdego zapytania — osobny projekt |
 | `perm_ver` w JWT | Prawdopodobnie nigdy | Wymagałoby niestandardowego mappera Keycloaka odpytującego Identity przy KAŻDYM wystawieniu tokenu (SPI, osobny projekt). Sam TTL=60s spełnia SLA z §4, a wymuszone wylogowanie rozwiązuje pilny przypadek przez odwołanie sesji. Konsekwencja: już wydany access token żyje do naturalnego wygaśnięcia — nie ma introspekcji |
-| Aktywne unieważnianie cache'u uprawnień w Catalog/Sales (zdarzenie zamiast TTL) | Gdy TTL=60s przestanie wystarczać | `IPermissionProvider.InvalidateAsync` już istnieje; brakuje fanoutu (`AggregateChanged` na `identity.user`/`identity.role`) — konsument mieszkałby w `Erp.BuildingBlocks.Messaging` i **nie wymaga nowego kontraktu** |
+| ~~Aktywne unieważnianie cache'u uprawnień w Catalog/Sales~~ | **Zrobione** | `PermissionsInvalidated` na wymianie `erp.broadcast`, kolejka per instancja, handler w `Erp.BuildingBlocks.Messaging`; publikuje `GrantAuditWriter` przez outbox |
 | `UserChanged` do denormalizacji nazw użytkowników w innych modułach | Gdy jakiś moduł zacznie wyświetlać nazwiska zamiast `userId` | Kontrakt nie istnieje; dziś nikt poza Identity nie pokazuje danych użytkownika |
 | Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś **dowolny ważny token wystarcza**, żeby odpytać o cudze uprawnienia; docelowo client credentials Keycloaka albo izolacja sieciowa |
-| Backplane Redis (cache uprawnień + wymuszone wylogowanie) | Razem z drugą instancją któregokolwiek serwisu | Patrz [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne) |
+| ~~Backplane Redis dla cache'u uprawnień~~ | **Odrzucone świadomie** | Redis na ścieżce autoryzacji każdego żądania wymagałby zaprojektowanej degradacji; propagacja idzie broadcastem RabbitMQ. Redis zostaje wyłącznie backplanem SignalR — [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) |
 | Rozszerzenie `GET /me/permissions/sources` na dowolnego użytkownika | Gdy panel „skąd" ma działać dla cudzego konta | Backend eksponuje ścieżkę dziedziczenia tylko dla `/me`; UI panelu efektywnych uprawnień już ma na to miejsce |

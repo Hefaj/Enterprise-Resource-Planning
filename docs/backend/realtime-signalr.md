@@ -118,9 +118,17 @@ nieaktualnym cache.
 
 ### Mechanizm
 
-[`SignatureSequenceTracker`](../../backend/modules/Notification/Notification.Api/Realtime/SignatureSequenceTracker.cs)
-— monotoniczny licznik **w pamięci procesu**, per sygnatura, zwiększany raz na flush (upsert
-i delete tej samej koalescencji dzielą jeden numer — to jeden „moment” z punktu widzenia klienta).
+[`SignatureSequence`](../../backend/modules/Notification/Notification.Infrastructure/Realtime/SignatureSequence.cs)
+— monotoniczny licznik **w bazie** (`notification.signature_sequence`), per sygnatura, zwiększany
+raz na flush atomowym `INSERT … ON CONFLICT DO UPDATE … RETURNING` (upsert i delete tej samej
+koalescencji dzielą jeden numer — to jeden „moment” z punktu widzenia klienta).
+
+Trwałość nie jest tu ostrożnością. Dopóki licznik i połączenia **ginęły razem** (jeden proces),
+ulotny licznik był poprawny: restart zerował go, ale zrywał też wszystkie połączenia, więc każdy
+klient wracał przez `Subscribe`, widział zero i wykrywał lukę. Po rozdzieleniu ról restart
+przekaźnika **nie zrywa** połączeń — te wiszą na hubach — więc wyzerowany licznik zacząłby wydawać
+numery `1, 2, 3`, które klient z `lastSeenSequence = 850` już widział, a bez ponownej subskrypcji
+luka nie zostałaby zauważona w ogóle.
 
 Klient zapamiętuje ostatni widziany numer (`ReceiveSequence`) i przekazuje go jako drugi,
 opcjonalny argument przy każdym `Subscribe` — zarówno pierwszym, jak i po `onreconnected`:
@@ -172,16 +180,31 @@ Notification jako centralny hub to pojedynczy punkt awarii realtime, ale **nie z
 przez outbox ([`events-outbox.md`](./events-outbox.md)) i doczekają brokera. Awaria hubu degraduje
 UI do „odśwież ręcznie”, nie gubi danych.
 
-Przy >1 instancji Notification (skalowanie poziome) SignalR wymaga backplane'u (Redis) — bez niego
-klient podłączony do instancji A nie dostanie wiadomości rozgłoszonej przez instancję B, a
-`SignatureSequenceTracker` w obecnej, in-memory postaci liczyłby niezależnie na każdej instancji.
-Konfiguracja pod backplane nie jest dziś napisana — nieużywana lokalnie, jedna instancja
-Notification wystarcza na obecnym etapie.
+Skalowanie poziome Notification jest wdrożone i steruje nim **jedno** ustawienie — `Realtime:Role`:
 
-**Sam backplane nie wystarczy.** Bufor koalescencji i `InvalidationThreshold` (sekcja 3) też żyją
-w pamięci instancji, a instancje Notification są competing consumers na jednej kolejce, więc każda
-widzi ułamek strumienia i próg przestaje trafiać. Pełna lista tego, co trzeba ruszyć razem —
-[`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne).
+| Rola | Co robi | Ile instancji |
+|---|---|---|
+| `Both` | Jedno i drugie — **wartość domyślna**, dev i każde wdrożenie bez skalowania realtime | 1 |
+| `Relay` | Konsumuje `AggregateChanged`, koalescuje, liczy sekwencję, rozstrzyga próg, wysyła przez `IHubContext` → backplane | **dokładnie 1** |
+| `Hub` | Wystawia `/hubs/sync`, obsługuje `Subscribe`/`Unsubscribe`, **nie konsumuje z brokera** | N |
+
+**Sam backplane by nie wystarczył** i to jest sedno tego podziału. Bufor koalescencji
+i `InvalidationThreshold` (sekcja 3) żyją w pamięci instancji, a instancje Notification są
+*competing consumers* na jednej kolejce — każda widziałaby ułamek strumienia i próg przestałby
+trafiać dokładnie przy operacji masowej, dla której powstał. Rozdział ról zamyka to inaczej niż
+przez współdzielenie stanu: skoro huby nie słuchają kolejki, decyzję podejmuje jeden przekaźnik
+i próg znów widzi cały strumień.
+
+Dwie rzeczy idą z tym w parze:
+
+- **Licznik sekwencji jest trwały** (`notification.signature_sequence`), a nie w pamięci — po
+  rozdzieleniu ról restart przekaźnika **nie zrywa** połączeń, więc wyzerowany licznik zaczynałby
+  wydawać numery, które klienci już widzieli. Szerzej: [`multi-instance.md` §7.2](./multi-instance.md).
+- **Front łączy się z `skipNegotiation: true`**, więc load balancer nie potrzebuje powinowactwa
+  sesji. Cena: znika fallback na SSE i long-polling.
+
+Redis wchodzi wyłącznie jako backplane (`Realtime:Redis`) i wyłącznie tutaj — patrz
+[`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
 
 ---
 

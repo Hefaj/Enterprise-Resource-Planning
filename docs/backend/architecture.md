@@ -29,7 +29,7 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Domain events → outbox → RabbitMQ | ✅ | [`events-outbox.md`](./events-outbox.md) |
 | Operacje masowe (`job`/`job_item`, runner) | ✅ | [`bulk-commands.md`](./bulk-commands.md) — wykonują Catalog, Sales i Identity (w Identity **każda** mutacja `role/*`/`user/*` jest zadaniem); sterowanie: `job/cancel`, `job/retry-failed` |
 | Walidacja wsadowa (pre-check reguł zbiorczych) | ✅ | [`batch-validation.md`](./batch-validation.md) — mechanizm wspólny, podpięty w Catalog (`ProductMustExistRule`, `ProductDuplicateRule`) i Identity (m.in. `RoleGraphCycleRule`) |
-| SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — jedna instancja Notification; skalowanie poziome wymaga zmian z [§7](#7-założenia-jednoinstancyjne) |
+| SignalR (hub, grupy, reconnect, resync) | ✅ | [`realtime-signalr.md`](./realtime-signalr.md) — skalowanie poziome przez rozdział ról `Realtime:Role` i backplane Redis, patrz [§7](#7-wieloinstancyjność--założenia-zdjęte) |
 | Eksporty i artefakty (`job.kind`, `ExportRun`, `ExportRunner`, MinIO) | ✅ | [`exports-artifacts.md`](./exports-artifacts.md) — zweryfikowane end-to-end w Catalogu |
 | Multimedia wgrywane przez użytkownika (bilety, presigned PUT, endpoint zawartości) | ✅ | [`exports-artifacts.md` §9](./exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga) — działa w Catalogu |
 | Magazyn plików dla wielu modułów — kubełki per moduł, klucze MinIO per serwis, prefiks postojowy, usuwanie przez outbox, audytor rozjazdu | 🟡 | [`media-storage.md`](./media-storage.md) — wgrywanie, miniaturki i kasowanie plików potwierdzone na żywym MinIO; **bez przebiegu zostaje reguła lifecycle z dwoma wpisami na kubełku `transient`** ([§7](./media-storage.md#7-co-zostało-do-weryfikacji)) |
@@ -187,82 +187,83 @@ to porównanie (29 typów, 14 ścieżek) wychwyciło rozjazd, którego testy jed
 
 ---
 
-## 7. Założenia jednoinstancyjne
+## 7. Wieloinstancyjność — założenia zdjęte
 
-Backend zakłada dziś **jedną instancję każdego serwisu**. Nie jest to przeoczenie: trwałość jest
-w tych miejscach, gdzie utrata danych bolałaby (outbox, `job`/`job_item`), a stan czysto
-efemeryczny świadomie został w pamięci procesu, bo w jednej instancji nic nie kupuje za to
-dodatkowa infrastruktura.
-
-Lista jest w jednym miejscu, a nie rozsiana po dokumentach, z jednego powodu: przy skalowaniu
-poziomym te mechanizmy trzeba ruszyć **razem**. Włączenie samego backplane'u SignalR wygląda
-jak gotowość, a zostawia trzy pozostałe punkty ciche i zepsute.
-
-| Mechanizm | Gdzie | Co się psuje przy >1 instancji |
-|---|---|---|
-| Rozgłaszanie SignalR | [`SyncHub`](../../backend/modules/Notification/Notification.Api/Hubs/SyncHub.cs), grupy `agg:`/`user:` | Klient podłączony do instancji A nie dostaje wiadomości rozgłoszonej przez B. Cichy, nieaktualny UI — bez błędu i bez logu. |
-| Licznik sekwencji | [`SignatureSequenceTracker`](../../backend/modules/Notification/Notification.Api/Realtime/SignatureSequenceTracker.cs) — `ConcurrentDictionary` w pamięci | Każda instancja liczy własną sekwencję. Reconnect na inną instancję daje rozjazd `lastSeenSequence` bez luki (resync fałszywie dodatni) albo zgodność mimo luki (resync pominięty — gorszy przypadek). |
-| Koalescencja i próg inwalidacji | [`RealtimeBroadcaster`](../../backend/modules/Notification/Notification.Api/Realtime/RealtimeBroadcaster.cs) — bufor per sygnatura w pamięci singletona | Patrz niżej — psuje się inaczej, niż podpowiada intuicja. |
-| Wybór zadania masowego | [`BulkCommandRunner.ProcessNextChunkAsync`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/BulkCommandRunner.cs) | Zapytanie o najstarsze `Pending`/`Running` nie zakłada żadnego lease'u ani locka: dwa runnery biorą **to samo** zadanie i **te same** `job_item`-y. |
-| Wybór przebiegu eksportu | [`ExportRunner.ProcessNextRunAsync`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/ExportRunner.cs) | Ten sam brak lease'u co wyżej, ale skutek jest gorszy: dwa runnery wygenerowałyby **dwa artefakty** dla jednego przebiegu, z których jeden zostałby osierocony w magazynie — bez wiersza, który by o nim wiedział, więc i bez szans na posprzątanie inaczej niż regułą lifecycle. |
-| Audytor rozjazdu magazynu | [`MediaReconciliationService`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/MediaReconciliationService.cs) — [`media-storage.md` §4d](./media-storage.md#4d-rozjazd-baza--kubełek) | Ten sam brak lease'u co u runnerów: dwie instancje wylistowałyby ten sam kubełek i **skasowały te same obiekty**. Skutek jest łagodzony domyślną konfiguracją (`Enabled=false`, `DeleteOrphans=false`), ale po włączeniu kasowania to jest zwykły wyścig o usunięcie danych. |
-| Cache uprawnień | [`HttpPermissionProvider`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs) — `IMemoryCache` per proces, TTL 60s, w KAŻDYM mikroserwisie-konsumencie (Catalog, Sales) | Każda instancja ma własny cache z własnym zegarem TTL — odebranie uprawnienia dogania się do 60s NIEZALEŻNIE na każdej instancji, nie synchronicznie. Przy N instancjach okno „stara instancja jeszcze przepuszcza" może się wydłużyć, jeśli TTL-y akurat się rozjadą (nigdy nie skróci się poniżej 60s, może się wydłużyć do niemal 2×60s w pesymistycznym przypadku). Backplane (Redis) ujednoliciłby to — patrz [`identity-authz.md`](./identity-authz.md) §9. |
-| Wymuszone wylogowanie | [`IPermissionProvider.InvalidateAsync`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Auth/PermissionProvider.cs) wołane z `UserForceLogoutCommandHandler` w Identity | Czyści cache TYLKO w procesie, który obsłużył żądanie odwołania sesji. Przy >1 instancji Catalogu/Sales inwalidacja nie dotrze do pozostałych — te nadal przepuszczają do naturalnego TTL=60s. Odwołanie sesji Keycloak (Admin API) działa niezależnie od liczby instancji (stan po stronie IdP), ale już wydany access token JWT pozostaje ważny do naturalnego wygaśnięcia — nie ma introspekcji tokenu. Backplane rozwiązałby cache tak samo jak wiersz wyżej. |
-
-### Dlaczego próg inwalidacji psuje się odwrotnie, niż się wydaje
-
-Wymiana `erp.events` jest typu **fanout**, ale wiąże **jedną nazwaną kolejkę per serwis**
-(`Messaging:ListenQueueName`, np. `notification.events` — patrz
-[`events-outbox.md`](./events-outbox.md)). Dwie instancje Notification z tą samą konfiguracją
-są więc **competing consumers na jednej kolejce**, a nie dwoma niezależnymi odbiorcami: każda
-widzi ułamek strumienia `AggregateChanged`.
-
-Skutki są dwa i tylko pierwszy jest oczywisty:
-
-1. Klient dostaje do N wiadomości na okno koalescencji zamiast jednej. Nieprzyjemne, ale
-   nieszkodliwe — front traktuje aktualizacje idempotentnie.
-2. **`InvalidationThreshold` przestaje trafiać.** Próg liczy identyfikatory zebrane w oknie przez
-   *jedną* instancję. Bulk na 50 tys. produktów rozłożony na cztery instancje to cztery bufory
-   po ~12,5 tys. — każdy poniżej progu, więc zamiast jednego `ReceiveInvalidation(.., "all")`
-   przez WebSocket idzie komplet uuid-ów. Zabezpieczenie znika dokładnie w tym scenariuszu,
-   dla którego powstało.
-
-To jest powód, dla którego backplane sam z siebie nie wystarcza: rozwiąże punkt 1, a punkt 2
-zostawi nietknięty. Próg i koalescencja muszą stać się wspólne dla wszystkich instancji, tak samo
-jak licznik sekwencji.
-
-### Kierunki naprawy
-
-Poniższa tabela to skrót. Pełny plan zdjęcia tych założeń — fazy, kolejność, kryteria
-akceptacji i rewizja decyzji o liczniku sekwencji — leży w
+Backend **nie zakłada już jednej instancji serwisu**. Ten rozdział był wcześniej listą miejsc,
+które to założenie niosły; teraz opisuje, czym każde z nich zostało zastąpione. Pełny plan —
+kolejność faz, odrzucone warianty i kryteria akceptacji — leży w
 [`multi-instance.md`](./multi-instance.md).
 
-| Obszar | Kierunek | Uwaga |
+Zasada, która przeszła przez całość: **Redis został w dokładnie jednym miejscu.** Backplane
+SignalR jest jedyną rzeczą, której Postgres nie potrafi zrobić. Wszystko inne — dzierżawy,
+licznik sekwencji, wybór zadania, koordynacja startu — idzie przez Postgresa, który już jest
+transakcyjnym źródłem prawdy; zewnętrzny lock obok `job.status` byłby drugim źródłem prawdy,
+zdolnym się z nim rozjechać.
+
+| Mechanizm | Czym rozwiązany | Gdzie |
 |---|---|---|
-| Rozgłaszanie + licznik sekwencji | Backplane Redis + atomowy licznik (`INCR` per sygnatura) | **Jedyne miejsce w systemie, gdzie Redis jest właściwą odpowiedzią, a nie wygodą** — SignalR nie ma backplane'u na Postgresie. Jedno wdrożenie zamyka oba punkty. |
-| Koalescencja i próg | Do rozstrzygnięcia razem z backplane'em | Albo wspólny bufor, albo pojedynczy dedykowany konsument `AggregateChanged`, który rozgłasza przez backplane. Druga opcja zachowuje dzisiejszą semantykę progu bez współdzielenia stanu. |
-| Wybór zadania | `SELECT … FOR UPDATE SKIP LOCKED` przy pobieraniu `job_item`-ów | **Nie lock w Redisie** — dane zadania są już transakcyjne w Postgresie, a zewnętrzny lock byłby drugim źródłem prawdy obok `job.status`, zdolnym się z nim rozjechać. |
+| Rozgłaszanie SignalR | Backplane Redis, włączany warunkowo przez `Realtime:Redis` | [`Program.cs`](../../backend/modules/Notification/Notification.Api/Program.cs) |
+| Koalescencja, próg inwalidacji, sekwencja | Rozdział ról `Realtime:Role` = `Hub` \| `Relay` \| `Both` — decyduje **jeden** przekaźnik, wysyła N hubów | [`RealtimeBroadcastOptions`](../../backend/modules/Notification/Notification.Api/Realtime/RealtimeBroadcastOptions.cs) |
+| Licznik sekwencji | Tabela `notification.signature_sequence`, atomowy `INSERT … ON CONFLICT DO UPDATE … RETURNING` | [`SignatureSequence`](../../backend/modules/Notification/Notification.Infrastructure/Realtime/SignatureSequence.cs) |
+| Wybór zadania masowego | `FOR UPDATE SKIP LOCKED` na wierszu `job`, w **tej samej transakcji** co wykonanie chunka | [`JobQueueLock`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/JobQueueLock.cs) |
+| Wybór przebiegu eksportu | Krótka transakcja przejęcia + `export_run.heartbeat_at` i reguła odzysku | [`ExportRunner`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/ExportRunner.cs) |
+| Usługi cykliczne (audyt mediów, wygasłe nadania) | Dzierżawa na advisory locku Postgresa — brak dzierżawy oznacza pominięty przebieg | [`IExclusiveLease`](../../backend/building-blocks/Erp.BuildingBlocks.Persistence/Concurrency/IExclusiveLease.cs) |
+| Start procesu (migracje, seedy, katalog uprawnień) | Ta sama dzierżawa w wariancie **blokującym** — instancja B czeka i zastaje bazę gotową | [`ErpDatabaseMigrator`](../../backend/building-blocks/Erp.BuildingBlocks.Persistence/ErpDatabaseMigrator.cs) |
+| Cache uprawnień i wymuszone wylogowanie | Broadcast `PermissionsInvalidated` osobną wymianą `erp.broadcast`, kolejka **per instancja** | [`PermissionsInvalidated`](../../backend/building-blocks/Erp.BuildingBlocks.Application/Messaging/PermissionsInvalidated.cs) |
 
-Dzisiejszy objaw kolizji runnerów warto znać, bo nie wygląda jak problem ze współbieżnością:
-`xmin` wyłapuje konflikt dopiero na `SaveChanges`, co unieważnia transakcję całego chunka
-i spycha go w ścieżkę izolacji „element po elemencie"
-([`bulk-commands.md`](./bulk-commands.md#3-wykonanie--bulkcommandrunner)). W logach wygląda to
-jak seria `concurrency_conflict` i drastyczny spadek przepustowości — czyli jak awaria bazy,
-a nie jak dwa runnery robiące tę samą pracę.
+### Trzy rzeczy, które warto z tego zapamiętać
 
-### Czego ruszać nie trzeba
+**Fanout ≠ broadcast.** Wymiana `erp.events` jest fanoutowa, ale wiąże **jedną nazwaną kolejkę
+per serwis** (`Messaging:ListenQueueName`), więc N instancji tego samego serwisu to *competing
+consumers*: komunikat dostaje jedna z nich. To jest właściwe dla pracy do wykonania i błędne dla
+unieważnienia cache'u, które musi dotrzeć do wszystkich. Stąd osobna wymiana `erp.broadcast`
+i nietrwała, auto-delete kolejka per instancja — jedyne miejsce w systemie, gdzie chcemy
+prawdziwego rozgłoszenia zamiast rozdziału pracy.
 
-Zapisy i komunikacja między serwisami są na wiele instancji gotowe i to nie jest przypadek —
-w każdym z tych miejsc świadomie wybrano trwałość zamiast pamięci procesu:
+**Próg inwalidacji psuł się odwrotnie, niż podpowiada intuicja.** `InvalidationThreshold` liczy
+identyfikatory zebrane w oknie przez *jedną* instancję. Bulk na 50 tys. produktów rozłożony na
+cztery instancje to cztery bufory po ~12,5 tys. — każdy poniżej progu, więc zamiast jednego
+`ReceiveInvalidation(.., "all")` przez WebSocket poszedłby komplet uuid-ów: zabezpieczenie
+znikałoby dokładnie w scenariuszu, dla którego powstało. Backplane sam z siebie by tego nie
+naprawił. Naprawia to rozdział ról: decyzję podejmuje jeden przekaźnik, więc próg znów widzi
+cały strumień.
 
-- **Outbox i RabbitMQ** — koperta zapisuje się w transakcji danych, kolejka rozdziela pracę
-  między konsumentów ([`events-outbox.md`](./events-outbox.md)).
-- **`job`/`job_item` w bazie** — zadanie przeżywa restart i wznawia się od pierwszego
-  nieprzetworzonego elementu; brakuje wyłącznie lease'u przy **wyborze**, nie trwałości.
+**Kolizja runnerów nie wyglądała jak problem ze współbieżnością.** `xmin` wyłapywał konflikt
+dopiero na `SaveChanges`, co unieważniało transakcję całego chunka i spychało go w ścieżkę
+izolacji „element po elemencie"
+([`bulk-commands.md`](./bulk-commands.md#3-wykonanie--bulkcommandrunner)) — w logach seria
+`concurrency_conflict` i drastyczny spadek przepustowości, czyli obraz awarii bazy, a nie dwóch
+runnerów robiących tę samą pracę.
+
+### Reguła na przyszłość
+
+Każda nowa usługa tła musi zadeklarować, co robi przy wielu instancjach — atrybutem
+[`[ClusterSafe(powód)]`](../../backend/building-blocks/Erp.BuildingBlocks.Application/Abstractions/ClusterSafeAttribute.cs).
+Wymusza to test architektoniczny `BackgroundServiceTests`, więc pominięcie deklaracji wywala
+build, a nie wychodzi po wdrożeniu drugiej instancji. Odpowiedź „nic złego się nie stanie" jest
+w porządku; nieodpowiedzenie nie jest.
+
+### Co było gotowe od początku
+
+Te miejsca nie wymagały zmiany i to nie przypadek — w każdym świadomie wybrano trwałość zamiast
+pamięci procesu:
+
+- **Outbox i RabbitMQ** — koperta zapisuje się w transakcji danych ([`events-outbox.md`](./events-outbox.md)).
+- **`job`/`job_item` w bazie** — zadanie przeżywa restart; brakowało wyłącznie wyłączności przy
+  *wyborze*, nie trwałości.
+- **Klucze idempotencji** — `EfIdempotencyStore` trzyma je w tabeli schematu modułu i zatwierdza
+  w jednej transakcji ze skutkiem komendy.
 - **Strona odczytu** — bezstanowa, `AsNoTracking`, projekcja wprost do DTO.
-- **Cache frontendowy** — `IdentityMapStore` żyje w przeglądarce i jest inwalidowany zdarzeniami,
-  więc nie zależy od tego, ile instancji stoi po drugiej stronie
+- **Cache frontendowy** — `IdentityMapStore` żyje w przeglądarce i jest inwalidowany zdarzeniami
   ([`orchestrators.md`](../frontend/orchestrators.md)).
+
+### Co zostaje otwarte
+
+- **Wolverine w trybie wielowęzłowym** — outbox na Postgresie ma własną rejestrację węzłów
+  i elekcję dla agentów trwałości. Powinno działać z pudełka, ale nie jest to zweryfikowane;
+  zadanie i jego kształt opisuje [`multi-instance.md` §8.1](./multi-instance.md#81-wolverine-w-trybie-wielowęzłowym--do-zweryfikowania-nie-do-założenia).
+- **`TypeLoadMode.Static` + `codegen write`** — wskazane jako docelowe dla produkcji, wymaga
+  zatwierdzenia wygenerowanego kodu w repozytorium.
 
 ---
 

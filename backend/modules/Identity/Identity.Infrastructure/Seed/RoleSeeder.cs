@@ -1,4 +1,6 @@
+using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Identity.Domain.Roles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,8 +85,16 @@ public sealed partial class RoleSeeder
     private static partial void LogSeedCompleted(ILogger logger, int missingPermissionsAdded);
 }
 
-/// <summary>Uruchamia <see cref="RoleSeeder"/> po migracji — bezwarunkowo, patrz uzasadnienie
-/// w komentarzu klasy.</summary>
+/// <summary>
+/// Uruchamia <see cref="RoleSeeder"/> po migracji — bezwarunkowo, patrz uzasadnienie
+/// w komentarzu klasy.
+///
+/// <para>Pod blokującą dzierżawą <c>identity:role-seed</c>: seed wstawia rolę o unikalnej nazwie,
+/// więc dwie instancje robiące to równolegle kończą naruszeniem unikalności. Blokująca,
+/// nie próbująca — instancja B ma zastać rolę administratora gotową, a nie pominąć krok.</para>
+/// </summary>
+[ClusterSafe("Blokująca dzierżawa identity:role-seed — równoległy seed roli o unikalnej nazwie "
+    + "kończyłby się naruszeniem unikalności, a pominięcie zostawiłoby instancję bez roli.")]
 public sealed class RoleSeedInitializer : IHostedService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -94,6 +104,11 @@ public sealed class RoleSeedInitializer : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
+
+        var lease = scope.ServiceProvider.GetRequiredService<IExclusiveLease>();
+        await using var held = await lease.AcquireAsync("identity:role-seed", cancellationToken)
+            .ConfigureAwait(false);
+
         var seeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
         await seeder.SeedAsync(cancellationToken).ConfigureAwait(false);
     }

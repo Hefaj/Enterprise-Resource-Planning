@@ -88,7 +88,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Realtime">
-    <!-- Backplane włączany dopiero przy >1 instancji Notification (faza 6). -->
+    <!-- Backplane SignalR: jedyne miejsce w systemie, gdzie potrzebny jest Redis.
+         Włączany warunkowo przez `Realtime:Redis` — patrz docs/backend/multi-instance.md §7.3. -->
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.11" />
   </ItemGroup>
 

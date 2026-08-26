@@ -1,5 +1,6 @@
 using System.Reflection;
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Application.Messaging;
 using Erp.BuildingBlocks.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,13 @@ namespace Erp.BuildingBlocks.Messaging;
 /// </summary>
 public static class ErpMessagingExtensions
 {
+    /// <summary>Wymiana dla komunikatów, które mają dotrzeć do KAŻDEJ instancji KAŻDEGO serwisu.</summary>
+    /// <remarks>Osobna od <c>erp.events</c>, a nie ta sama z innym powiązaniem — patrz
+    /// <see cref="PermissionsInvalidated"/>. Wpięcie kolejki per instancja do <c>erp.events</c>
+    /// dałoby każdej instancji komplet zdarzeń domenowych, czyli handlery odpalane dwukrotnie:
+    /// raz z kolejki serwisu, raz z kolejki instancji.</remarks>
+    public const string BroadcastExchange = "erp.broadcast";
+
     /// <summary>
     /// Konfiguruje Wolverine'a: transport RabbitMQ, trwałość outbox/inbox na Postgresie
     /// i integrację transakcji z EF Core.
@@ -66,6 +74,9 @@ public static class ErpMessagingExtensions
             // Pozwala Wolverine'owi dopisać koperty do transakcji EF Core tego samego DbContextu.
             wolverine.UseEntityFrameworkCoreTransactions();
 
+            // Handlery fundamentu (broadcast unieważnień) — moduł nie musi o nich pamiętać.
+            wolverine.Discovery.IncludeAssembly(typeof(ErpMessagingExtensions).Assembly);
+
             var rabbit = wolverine.UseRabbitMq(new Uri(options.RabbitMqConnectionString));
 
             if (options.AutoProvision)
@@ -96,6 +107,8 @@ public static class ErpMessagingExtensions
 
                 wolverine.ListenToRabbitQueue(options.ListenQueueName);
             }
+
+            ConfigureBroadcast(wolverine, rabbit, options);
         });
 
         // Outbox jest per DbContext — publisher musi trzymać ten sam kontekst co jednostka pracy.
@@ -103,6 +116,46 @@ public static class ErpMessagingExtensions
         builder.Services.AddScoped<IUnitOfWork, ErpUnitOfWork<TContext>>();
 
         return builder;
+    }
+
+    /// <summary>
+    /// Podpina kanał broadcastu: publikację na <see cref="BroadcastExchange"/> i <b>własną kolejkę
+    /// tej instancji</b> związaną z tą wymianą.
+    ///
+    /// <para><b>Kolejka per instancja, nie per serwis</b> — to jest cała różnica względem
+    /// <c>options.ListenQueueName</c>. Nazwana kolejka serwisu robi z instancji <i>competing
+    /// consumers</i>: komunikat dostaje jedna z nich. Unieważnienie cache'u musi dotrzeć do
+    /// wszystkich, więc każda instancja deklaruje swoją.</para>
+    ///
+    /// <para><b>Kolejka jest nietrwała i auto-delete</b>, więc znika razem z instancją i nie
+    /// zostawia śmieci w brokerze. Trwałość byłaby tu wręcz szkodliwa: komunikat czekający na
+    /// nieistniejącą już instancję unieważniałby cache, którego nie ma, a kolejka rosłaby bez
+    /// konsumenta. Świadomie <b>nie</b> ustawiamy <c>exclusive</c> — auto-delete załatwia
+    /// sprzątanie, a wyłączność wiąże kolejkę z konkretnym połączeniem AMQP i potrafi się wywrócić
+    /// na <c>RESOURCE_LOCKED</c>, gdy Wolverine deklaruje topologię innym połączeniem niż nasłuch.</para>
+    ///
+    /// <para><b>Utrata komunikatu nie jest awarią.</b> Sygnał skraca czas reakcji z 60 s (TTL)
+    /// do sekundy; jego zgubienie cofa system do TTL, czyli do zachowania sprzed tej zmiany.</para>
+    /// </summary>
+    private static void ConfigureBroadcast(
+        WolverineOptions wolverine,
+        Wolverine.RabbitMQ.Internal.RabbitMqTransportExpression rabbit,
+        ErpMessagingOptions options)
+    {
+        wolverine.PublishMessage<PermissionsInvalidated>().ToRabbitExchange(BroadcastExchange);
+
+        // Identyfikator instancji, nie nazwa hosta: dwa procesy tego samego serwisu na jednej
+        // maszynie (a tak wygląda dev z profilem wieloinstancyjnym) muszą dostać różne kolejki.
+        var queueName = $"{options.ServiceName.ToLowerInvariant()}.broadcast.{Guid.NewGuid():N}";
+
+        rabbit.BindExchange(BroadcastExchange, Wolverine.RabbitMQ.ExchangeType.Fanout)
+            .ToQueue(queueName, queue =>
+            {
+                queue.IsDurable = false;
+                queue.AutoDelete = true;
+            });
+
+        wolverine.ListenToRabbitQueue(queueName);
     }
 
     private static void Validate(ErpMessagingOptions options)

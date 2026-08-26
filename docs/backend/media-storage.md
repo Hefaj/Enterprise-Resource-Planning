@@ -333,9 +333,10 @@ Zasady, wszystkie konieczne:
   tym, jak przez kilka przebiegów raport jest pusty albo w całości zrozumiały;
 - **w serwisie-właścicielu** — tylko Catalog wie, co jest referencją w Catalogu. To ta sama
   racja, która w §1 zabija centralny serwis plików;
-- **dopisany do [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne)** razem
-  z `BulkCommandRunner` i `ExportRunner` — dwie instancje bez lease'u listowałyby ten sam kubełek
-  i kasowały te same obiekty.
+- **pod dzierżawą `catalog:media-reconciliation`** (advisory lock Postgresa) — instancja, która
+  jej nie dostanie, pomija przebieg i czeka na następny cykl. Pominięcie nic tu nie kosztuje, bo
+  cykl liczy się w godzinach; bez dzierżawy dwie instancje listowałyby ten sam kubełek i kasowały
+  te same obiekty. Patrz [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
 
 > **Jak czytać jego wynik.** Jeżeli 4a–4c działają, audytor przez większość życia systemu nie
 > znajduje niczego — i o to chodzi. Worker, który regularnie coś kasuje, jest **objawem**, że
@@ -602,6 +603,6 @@ Samego backfillu nie ma.
   `job.kind`, agregat przebiegu, wygasanie razem z wierszem `job`
 - [Zdarzenia domenowe i outbox](./events-outbox.md) — mechanizm z §4b
 - [Tożsamość i uprawnienia](./identity-authz.md) — katalog uprawnień z §2.1
-- [Architektura backendu §7](./architecture.md#7-założenia-jednoinstancyjne) — gdzie trafia
+- [Architektura backendu §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) — gdzie trafia
   audytor z §4d
 - [Multimedia na froncie](../frontend/multimedia.md) — bilety, `blob:`-URL-e, galeria, miniaturki

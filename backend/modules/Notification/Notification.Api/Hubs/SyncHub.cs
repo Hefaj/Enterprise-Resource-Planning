@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Notification.Api.Realtime;
+using Notification.Infrastructure.Realtime;
 
 namespace Notification.Api.Hubs;
 
@@ -42,11 +43,11 @@ public sealed class SyncHub : Hub
     /// <summary>Ścieżka, pod którą hub jest mapowany — patrz <c>Program.cs</c>.</summary>
     public const string Path = "/hubs/sync";
 
-    private readonly SignatureSequenceTracker _sequenceTracker;
+    private readonly ISignatureSequenceStore _sequences;
 
-    public SyncHub(SignatureSequenceTracker sequenceTracker)
+    public SyncHub(ISignatureSequenceStore sequences)
     {
-        _sequenceTracker = sequenceTracker;
+        _sequences = sequences;
     }
 
     public override async Task OnConnectedAsync()
@@ -76,7 +77,7 @@ public sealed class SyncHub : Hub
     /// każdym ponownym połączeniu (<c>onreconnected</c> po stronie klienta).
     ///
     /// <para><b>Resync po luce.</b> <paramref name="lastSeenSequence"/> to ostatni numer
-    /// sekwencji tej sygnatury, jaki klient widział (patrz <see cref="SignatureSequenceTracker"/>
+    /// sekwencji tej sygnatury, jaki klient widział (patrz <see cref="SignatureSequence"/>
     /// i <c>RealtimeBroadcaster.FlushAsync</c>). Jeśli różni się od aktualnego — klient
     /// przegapił zdarzenia w trakcie rozłączenia. Nie ma tu bufora historii do odtworzenia
     /// luki, więc jedyna uczciwa odpowiedź to <c>ReceiveResync</c>: każda wykryta luka
@@ -96,7 +97,7 @@ public sealed class SyncHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForAggregate(signature), Context.ConnectionAborted)
             .ConfigureAwait(false);
 
-        var current = _sequenceTracker.Current(signature);
+        var current = await _sequences.CurrentAsync(signature, Context.ConnectionAborted).ConfigureAwait(false);
 
         if (lastSeenSequence.HasValue && lastSeenSequence.Value != current)
         {

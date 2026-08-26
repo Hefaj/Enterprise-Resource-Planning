@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notification.Api.Hubs;
 using Notification.Infrastructure.Persistence;
+using Notification.Infrastructure.Realtime;
 
 namespace Notification.Api.Realtime;
 
@@ -41,20 +42,17 @@ public sealed partial class RealtimeBroadcaster : IDisposable
     private readonly IHubContext<SyncHub> _hub;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly RealtimeBroadcastOptions _options;
-    private readonly SignatureSequenceTracker _sequenceTracker;
     private readonly ILogger<RealtimeBroadcaster> _logger;
 
     public RealtimeBroadcaster(
         IHubContext<SyncHub> hub,
         IServiceScopeFactory scopeFactory,
         IOptions<RealtimeBroadcastOptions> options,
-        SignatureSequenceTracker sequenceTracker,
         ILogger<RealtimeBroadcaster> logger)
     {
         _hub = hub;
         _scopeFactory = scopeFactory;
         _options = options.Value;
-        _sequenceTracker = sequenceTracker;
         _logger = logger;
     }
 
@@ -122,7 +120,15 @@ public sealed partial class RealtimeBroadcaster : IDisposable
             // "moment" z punktu widzenia klienta, niezależnie od tego, ile odrębnych wiadomości
             // faktycznie wysłano. Osobna metoda (nie parametr ReceiveUpdates/ReceiveDeletes),
             // żeby nie zmieniać istniejących sygnatur wołanych już przez SignalrSyncService.
-            var sequence = _sequenceTracker.Next(signature);
+            // Licznik jest trwały (tabela `notification.signature_sequence`), więc sięgamy po niego
+            // przez scope — przekaźnik jest singletonem, a magazyn chodzi po DbContekście.
+            long sequence;
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var sequences = scope.ServiceProvider.GetRequiredService<ISignatureSequenceStore>();
+                sequence = await sequences.NextAsync(signature, CancellationToken.None).ConfigureAwait(false);
+            }
+
             await _hub.Clients.Group(GroupNames.ForAggregate(signature))
                 .SendAsync("ReceiveSequence", signature, sequence)
                 .ConfigureAwait(false);

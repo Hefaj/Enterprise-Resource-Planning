@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Persistence;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +40,11 @@ public static class SalesInfrastructureExtensions
             connectionString,
             SalesDbContext.SchemaName,
             typeof(SalesDbContext).Assembly.GetName().Name));
+
+        // Dzierżawa wyłączności idzie razem z kontekstem, bo z niego bierze łańcuch
+        // połączenia. Korzystają z niej usługi tła i praca startowa modułu —
+        // patrz docs/backend/multi-instance.md §3.1.
+        services.AddErpExclusiveLease<SalesDbContext>();
 
         // Repozytoria i zapytania (ICustomerQueries → CustomerQueries) rejestruje `AddErpModule`
         // z Program.cs po konwencji nazewniczej — patrz ErpModuleRegistrationExtensions.

@@ -16,9 +16,16 @@ namespace Erp.BuildingBlocks.Jobs;
 /// dzięki temu restart procesu w połowie operacji na 50 tys. produktów wznawia pracę
 /// od pierwszego nieprzetworzonego elementu, zamiast gubić całość.
 ///
-/// <para><b>Granica transakcji.</b> Jeden chunk to jeden commit: statusy elementów, liczniki
-/// zadania i zdarzenia w outboxie zapisują się razem. Nie da się więc doprowadzić do stanu,
-/// w którym produkt jest zmieniony, ale zadanie o tym nie wie (albo odwrotnie).</para>
+/// <para><b>Granica transakcji.</b> Jeden chunk to jeden commit: <b>wybór zadania</b>, statusy
+/// elementów, liczniki zadania i zdarzenia w outboxie zapisują się razem. Nie da się więc
+/// doprowadzić do stanu, w którym produkt jest zmieniony, ale zadanie o tym nie wie (albo
+/// odwrotnie).</para>
+///
+/// <para><b>Wiele instancji.</b> Wybór zadania idzie przez <see cref="JobQueueLock{TContext}"/>
+/// (<c>FOR UPDATE SKIP LOCKED</c>) i dzieje się w TEJ SAMEJ transakcji co wykonanie chunka.
+/// Dwa runnery nie wezmą więc tego samego zadania: jeden runner na zadanie, N runnerów nad
+/// N zadaniami. Blokada puszcza commit, a przy awarii procesu — zerwana sesja Postgresa, więc
+/// nie ma osieroconych dzierżaw ani reguły ich odzysku.</para>
 ///
 /// <para><b>Jeden chunk to też jedno wczytanie.</b> Przed pętlą runner woła
 /// <see cref="IBulkCommandExecutor.PreloadAsync"/>, które wciąga agregaty całego chunka do
@@ -42,6 +49,8 @@ namespace Erp.BuildingBlocks.Jobs;
 /// w nieskończonej pętli ponowień.</para>
 /// </summary>
 /// <typeparam name="TContext">Kontekst modułu z tabelami zadań.</typeparam>
+[ClusterSafe("FOR UPDATE SKIP LOCKED na wierszu job w tej samej transakcji co wykonanie chunka — "
+    + "jedno zadanie obsługuje dokładnie jeden runner, a blokada puszcza commit albo zerwana sesja.")]
 public sealed partial class BulkCommandRunner<TContext> : BackgroundService
     where TContext : ErpDbContext, IJobDbContext
 {
@@ -97,56 +106,121 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         }
     }
 
-    /// <summary>Przetwarza jeden chunk najstarszego niezakończonego zadania.</summary>
+    /// <summary>
+    /// Przetwarza jeden chunk najstarszego niezakończonego zadania, którego nie trzyma inny runner.
+    /// </summary>
     /// <returns><c>true</c>, jeśli coś zrobiono (warto od razu iterować dalej).</returns>
     private async Task<bool> ProcessNextChunkAsync(CancellationToken cancellationToken)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<TContext>();
+        Guid jobUuid;
+        List<Guid> itemUuids;
 
-        // Filtr po Kind jest konieczny, nie kosmetyczny: przebieg reduce (eksport) nie ma
-        // żadnego `job_item`, więc ten runner podjąłby go, nie znalazł pracy i uznał zadanie
-        // za puste — a właściwy runner nigdy by go nie zobaczył.
-        var job = await db.Jobs
-            .Where(j => j.Kind == JobKind.Map)
-            .Where(j => j.Status == JobStatus.Pending || j.Status == JobStatus.Running)
-            .OrderBy(j => j.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (job is null)
+        // ── Transakcja chunka ────────────────────────────────────────────────────────────────
+        // Obejmuje WYBÓR zadania i jego WYKONANIE. Rozdzielenie tych dwóch rzeczy na osobne
+        // scope'y (tak było, zanim runnerów zrobiło się więcej niż jeden) jest nie do pogodzenia
+        // z trzymaniem blokady: `FOR UPDATE` żyje tylko do końca swojej transakcji.
         {
-            return false;
-        }
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TContext>();
 
-        var itemUuids = await db.JobItems
-            .Where(i => i.JobUuid == job.Uuid && i.Status == JobItemStatus.Pending)
-            .OrderBy(i => i.Ordinal)
-            .Take(EffectiveChunkSize(job.TotalCount))
-            .Select(i => i.Uuid)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
+            await using var transaction = await db.Database
+                .BeginTransactionAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-        if (itemUuids.Count == 0)
-        {
-            await FinishJobAsync(scope, db, job, cancellationToken).ConfigureAwait(false);
-            return true;
-        }
+            var queueLock = scope.ServiceProvider.GetRequiredService<JobQueueLock<TContext>>();
+            var locked = await queueLock.TryLockNextAsync(db, JobKind.Map, cancellationToken).ConfigureAwait(false);
 
-        var succeeded = await TryProcessAsync(job.Uuid, itemUuids, cancellationToken).ConfigureAwait(false);
-
-        if (!succeeded)
-        {
-            LogIsolatingChunk(_logger, job.Uuid, itemUuids.Count);
-
-            // Zapis chunka padł — powtarzamy element po elemencie, żeby odizolować winowajcę.
-            foreach (var itemUuid in itemUuids)
+            if (locked is null)
             {
-                await TryProcessAsync(job.Uuid, [itemUuid], cancellationToken).ConfigureAwait(false);
+                return false;
+            }
+
+            jobUuid = locked.Value;
+
+            var job = await db.Jobs.FirstAsync(j => j.Uuid == jobUuid, cancellationToken).ConfigureAwait(false);
+
+            if (job.Status == JobStatus.Cancelled)
+            {
+                return true;
+            }
+
+            itemUuids = await db.JobItems
+                .Where(i => i.JobUuid == jobUuid && i.Status == JobItemStatus.Pending)
+                .OrderBy(i => i.Ordinal)
+                .Take(EffectiveChunkSize(job.TotalCount))
+                .Select(i => i.Uuid)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (itemUuids.Count == 0)
+            {
+                await FinishJobAsync(scope, db, job, cancellationToken).ConfigureAwait(false);
+                await CommitAsync(db, cancellationToken).ConfigureAwait(false);
+                return true;
+            }
+
+            var failure = await ProcessChunkAsync(scope, db, job, itemUuids, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (failure is null)
+            {
+                return true;
             }
         }
 
+        // Zapis chunka padł — transakcja poszła do rollbacku razem z blokadą zadania, a kontekst
+        // po nieudanym `SaveChanges` jest nieużywalny. Powtarzamy element po elemencie,
+        // w świeżych scope'ach, żeby odizolować winowajcę.
+        LogIsolatingChunk(_logger, jobUuid, itemUuids.Count);
+        await IsolateAsync(jobUuid, itemUuids, cancellationToken).ConfigureAwait(false);
+
         return true;
+    }
+
+    /// <summary>
+    /// Powtarza elementy pojedynczo, każdy we własnej transakcji i własnym scope.
+    /// </summary>
+    private async Task IsolateAsync(Guid jobUuid, List<Guid> itemUuids, CancellationToken cancellationToken)
+    {
+        foreach (var itemUuid in itemUuids)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TContext>();
+
+            await using var transaction = await db.Database
+                .BeginTransactionAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var queueLock = scope.ServiceProvider.GetRequiredService<JobQueueLock<TContext>>();
+
+            // Bez SKIP LOCKED: chodzi o TO zadanie, a nie o „jakieś wolne". Jeśli w międzyczasie
+            // podjął je inny runner, czekamy na jego commit i dopiero wtedy dokładamy swój wynik.
+            if (await queueLock.LockAsync(db, jobUuid, cancellationToken).ConfigureAwait(false) is null)
+            {
+                return;
+            }
+
+            var job = await db.Jobs.FirstOrDefaultAsync(j => j.Uuid == jobUuid, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (job is null || job.Status == JobStatus.Cancelled)
+            {
+                return;
+            }
+
+            var failure = await ProcessChunkAsync(scope, db, job, [itemUuid], cancellationToken)
+                .ConfigureAwait(false);
+
+            if (failure is not null)
+            {
+                // Pojedynczy element już w izolacji — dalsze dzielenie nic nie da. Trwałą porażkę
+                // odnotowujemy osobnym, czystym kontekstem i pod własną blokadą zadania.
+                await RecordIsolatedFailureAsync(jobUuid, itemUuid, failure, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
     }
 
     /// <summary>
@@ -180,31 +254,20 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
     }
 
     /// <summary>
-    /// Wykonuje wskazane elementy w jednym scope DI i jednej transakcji.
+    /// Wykonuje wskazane elementy zablokowanego zadania i zatwierdza transakcję wołającego.
     /// </summary>
-    /// <returns><c>false</c>, jeśli zapis się nie powiódł i trzeba wejść w tryb izolacji.</returns>
+    /// <returns><c>null</c> po udanym commicie; wyjątek zapisu, gdy trzeba wejść w tryb izolacji.</returns>
     // List<Guid> zamiast IReadOnlyList<Guid> nie jest przypadkiem: tłumaczenie `Contains`
     // na SQL przez EF Core działa wydajniej na konkretnym typie kolekcji.
-    private async Task<bool> TryProcessAsync(
-        Guid jobUuid,
+    private async Task<DbUpdateException?> ProcessChunkAsync(
+        IServiceScope scope,
+        TContext db,
+        Job job,
         List<Guid> itemUuids,
         CancellationToken cancellationToken)
     {
-        using var scope = _scopeFactory.CreateScope();
         var services = scope.ServiceProvider;
-        var db = services.GetRequiredService<TContext>();
         var clock = services.GetRequiredService<IClock>();
-
-        var job = await db.Jobs.FirstOrDefaultAsync(j => j.Uuid == jobUuid, cancellationToken).ConfigureAwait(false);
-        if (job is null)
-        {
-            return true;
-        }
-
-        if (job.Status == JobStatus.Cancelled)
-        {
-            return true;
-        }
 
         // Zadanie żyje dłużej niż żądanie HTTP, które je zleciło — odtwarzamy kontekst
         // zleceniodawcy, żeby zdarzenia i powiadomienia trafiły do właściwego użytkownika.
@@ -217,7 +280,7 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         // Bez tego przejęcia pipeline komend zatwierdzałby po każdym elemencie — liczniki
         // zadania i stan danych rozjechałyby się bez żadnego objawu, a wznawianie po restarcie
         // przestałoby mieć spójny punkt odniesienia.
-        using var transaction = services.GetRequiredService<CommandTransactionScope>().Claim();
+        using var claim = services.GetRequiredService<CommandTransactionScope>().Claim();
 
         var executor = ResolveExecutor(services, job.CommandType);
 
@@ -288,29 +351,44 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         try
         {
             await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return true;
+            await CommitAsync(db, cancellationToken).ConfigureAwait(false);
+            return null;
         }
         catch (DbUpdateException ex)
         {
-            LogSaveFailed(_logger, jobUuid, items.Count, ex);
-
-            // Pojedynczy element już w trybie izolacji — dalsze dzielenie nic nie da,
-            // więc odnotowujemy trwałą porażkę osobnym, czystym kontekstem.
-            if (itemUuids.Count == 1)
-            {
-                await RecordIsolatedFailureAsync(itemUuids[0], ex, cancellationToken).ConfigureAwait(false);
-                return true;
-            }
-
-            return false;
+            LogSaveFailed(_logger, job.Uuid, items.Count, ex);
+            return ex;
         }
     }
 
     /// <summary>
-    /// Zapisuje porażkę elementu, którego nie dało się zapisać razem z chunkiem.
+    /// Domyka transakcję chunka, jeśli nie zrobił tego już outbox.
+    ///
+    /// <para><b>Dlaczego to nie jest zwykłe <c>transaction.CommitAsync()</c>.</b> Jednostka pracy
+    /// deleguje zapis do <c>IIntegrationEventPublisher.SaveChangesAndFlushAsync</c>, czyli do
+    /// outboxu Wolverine'a — a ten po zapisaniu kopert <b>sam zatwierdza bieżącą transakcję</b>
+    /// kontekstu, bo dopiero po commicie wolno mu wypchnąć komunikaty na brokera. Jawny commit
+    /// po nim trafiłby więc w transakcję, której już nie ma. Sprawdzenie
+    /// <c>CurrentTransaction</c> zamiast zakładania jednego z dwóch zachowań trzyma ten kod
+    /// poprawnym niezależnie od tego, po której stronie leży commit — a przy okazji obsługuje
+    /// domknięcie chunka, w którym nie było nic do zapisania (zamknięcie pustego zadania).</para>
+    /// </summary>
+    private static async Task CommitAsync(TContext db, CancellationToken cancellationToken)
+    {
+        var transaction = db.Database.CurrentTransaction;
+
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Zapisuje porażkę elementu, którego nie dało się zapisać nawet w izolacji.
     /// Wymaga świeżego scope'u — kontekst po nieudanym <c>SaveChanges</c> jest nieużywalny.
     /// </summary>
     private async Task RecordIsolatedFailureAsync(
+        Guid jobUuid,
         Guid itemUuid,
         DbUpdateException exception,
         CancellationToken cancellationToken)
@@ -318,6 +396,19 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
+
+        await using var transaction = await db.Database
+            .BeginTransactionAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        // Licznik porażek niżej to `UPDATE` na wierszu zadania — bez blokady dwa runnery
+        // odnotowujące porażki w tym samym zadaniu wpadłyby na konflikt `xmin`, czyli na
+        // dokładnie ten wyjątek, który tu obsługujemy.
+        var queueLock = scope.ServiceProvider.GetRequiredService<JobQueueLock<TContext>>();
+        if (await queueLock.LockAsync(db, jobUuid, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return;
+        }
 
         var item = await db.JobItems.FirstOrDefaultAsync(i => i.Uuid == itemUuid, cancellationToken)
             .ConfigureAwait(false);
@@ -351,6 +442,7 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         }
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Zamyka zadanie i publikuje podsumowanie.</summary>

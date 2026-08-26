@@ -66,6 +66,21 @@ export class SignalrSyncService {
     this._connection = new signalR.HubConnectionBuilder()
       .withUrl(`${this._hubUrl}?clientId=${encodeURIComponent(clientId)}`, {
         accessTokenFactory: () => this._accessTokenFactory() ?? '',
+
+        // Bez negocjacji — wymóg pracy za load balancerem bez powinowactwa sesji.
+        //
+        // Uzgadnianie SignalR (`negotiate`) zwraca token połączenia związany z INSTANCJĄ, która
+        // je obsłużyła. Przy kilku instancjach Notification kolejne żądanie trafia round-robinem
+        // gdzie indziej, ta instancja nic o tym tokenie nie wie i połączenie nie wstaje. Zamiast
+        // wymagać sticky sessions na LB, usuwamy stan, który trzeba by przykleić: bez negocjacji
+        // klient od razu otwiera WebSocket.
+        //
+        // Cena, przyjęta świadomie: znika fallback na SSE i long-polling, więc WebSockety muszą
+        // działać na CAŁEJ drodze sieciowej (proxy, LB, firmowy firewall). Uwierzytelnianie
+        // działa bez zmian — przy transporcie WebSocket token i tak idzie w query stringu
+        // `access_token`, a `ErpAuthExtensions.OnMessageReceived` już go stamtąd czyta.
+        skipNegotiation: true,
+        transport: signalR.HttpTransportType.WebSockets,
       })
       .withAutomaticReconnect()
       .build();

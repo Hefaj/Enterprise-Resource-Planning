@@ -1,11 +1,11 @@
 # Wieloinstancyjność — plan wdrożenia
 
-Backend zakłada dziś **jedną instancję każdego serwisu**. Lista miejsc, które to założenie
-niosą, jest w [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne) — ten
-dokument jest planem jej zdjęcia: co zmienić, w jakiej kolejności i **jak udowodnić**, że
-zadziałało.
+Backend **nie zakłada już jednej instancji serwisu**. Ten dokument jest planem, według którego
+założenie zostało zdjęte: co zmienić, w jakiej kolejności i **jak udowodnić**, że zadziałało.
+Stan po zmianie opisuje [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
 
-Stan: 📐 — projekt, brak kodu. Legenda znaczników jak w
+Stan: ✅ fazy 0–4 wdrożone, 📐 faza 5 otwarta. Rozjazdy między planem a kodem — świadome, z
+uzasadnieniem — zebrane w [§11](#11-odstępstwa-od-planu). Legenda znaczników jak w
 [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
 
 ---
@@ -33,7 +33,7 @@ zdolnym się z nim rozjechać.
 
 ## 2. Kolejność i dlaczego właśnie taka
 
-Kluczowa obserwacja, której [§7](./architecture.md#7-założenia-jednoinstancyjne) nie mówi wprost:
+Kluczowa obserwacja, której [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nie mówi wprost:
 **„razem" dotyczy wnętrza realtime, nie całego backendu.** Cztery punkty SignalR (rozgłaszanie,
 licznik, koalescencja, próg) trzeba wdrożyć jednym ruchem, bo częściowe wdrożenie wygląda jak
 gotowość, a nią nie jest. Ale runnery, start procesu i cache uprawnień są od nich niezależne.
@@ -44,14 +44,18 @@ Z tego wynika stan pośredni, który jest sam w sobie użyteczny:
 > na jednej instancji. To serwisy niosące ruch żądań; Notification jest w istocie fan-outem
 > WebSocketów i skaluje się jako ostatni, bo jest najtrudniejszy i najmniej pilny.
 
-| Faza | Zakres | Odblokowuje | Nowa infrastruktura |
-|---|---|---|---|
-| 0 | Fundament: dzierżawa, test architektoniczny, profil compose | — | brak |
-| 1 | Runnery zadań i eksportów | wiele instancji Catalogu *w tle* | brak |
-| 2 | Start procesu: migracje, seedy, reconciler | bezpieczny równoległy start | brak |
-| 3 | Cache uprawnień i wymuszone wylogowanie | Catalog/Sales/Identity ×N | brak (RabbitMQ już jest) |
-| 4 | Realtime: rola Hub/Relay, licznik, backplane, front | Notification ×N | **Redis** |
-| 5 | Wolverine multi-node, load balancer, dokumentacja | wdrożenie | LB |
+| Faza | Zakres | Odblokowuje | Nowa infrastruktura | Stan |
+|---|---|---|---|---|
+| 0 | Fundament: dzierżawa, test architektoniczny, profil compose | — | brak | ✅ |
+| 1 | Runnery zadań i eksportów | wiele instancji Catalogu *w tle* | brak | ✅ |
+| 2 | Start procesu: migracje, seedy, reconciler | bezpieczny równoległy start | brak | ✅ |
+| 3 | Cache uprawnień i wymuszone wylogowanie | Catalog/Sales/Identity ×N | brak (RabbitMQ już jest) | ✅ |
+| 4 | Realtime: rola Hub/Relay, licznik, backplane, front | Notification ×N | **Redis** | ✅ |
+| 5 | Wolverine multi-node, load balancer, dokumentacja | wdrożenie | LB | 📐 |
+
+Fazy 0–4 są wdrożone i kompilują się z zielonymi testami architektonicznymi. Dowody z
+[§10](#10-kryteria-akceptacji) wymagają żywej infrastruktury (Testcontainers, MinIO, RabbitMQ)
+i **nie zostały jeszcze uruchomione** — to jest otwarta praca, nie założenie.
 
 ---
 
@@ -139,7 +143,7 @@ Cztery konsekwencje, każda warta odnotowania:
    blokując elementy (`FOR UPDATE SKIP LOCKED` na `job_item`) zamiast zadania — ale wtedy dwa
    runnery aktualizują liczniki tego samego wiersza `job`, `xmin` wyłapuje konflikt na
    `SaveChanges`, chunk wpada w ścieżkę izolacji „element po elemencie" i przepustowość leci
-   na łeb. To dokładnie ta patologia, którą [§7](./architecture.md#7-założenia-jednoinstancyjne)
+   na łeb. To dokładnie ta patologia, którą [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte)
    opisuje jako „wygląda jak awaria bazy". Alternatywa — liczniki przez `UPDATE … SET
    succeeded_count = succeeded_count + @n`, poza `xmin` i poza metodą agregatu — jest możliwa,
    ale to ustępstwo w modelu domenowym i wchodzi dopiero wtedy, gdy pojedyncze wielkie zadanie
@@ -148,11 +152,13 @@ Cztery konsekwencje, każda warta odnotowania:
    `TryProcessAsync` — dzisiejszy podział (wybór w jednym scope, wykonanie w drugim) jest
    niekompatybilny z trzymaniem locka.
 
-**Ryzyko implementacyjne do sprawdzenia jako pierwsze.** `IUnitOfWork` deleguje zapis do
-`IIntegrationEventPublisher.SaveChangesAndFlushAsync`, czyli do Wolverine'a. Trzeba potwierdzić,
-że jawna transakcja otwarta przez runnera jest tą samą, w której Wolverine zapisuje koperty
-outboxu — inaczej rozjedzie się gwarancja „chunk to jeden commit", która jest fundamentem
-wznawiania po restarcie. To zadanie na pierwszy dzień fazy, nie na przegląd końcowy.
+**Ryzyko implementacyjne — rozstrzygnięte.** `IUnitOfWork` deleguje zapis do
+`IIntegrationEventPublisher.SaveChangesAndFlushAsync`, czyli do Wolverine'a, a ten po zapisaniu
+kopert **sam zatwierdza bieżącą transakcję** kontekstu (musi, bo dopiero po commicie wolno mu
+wypchnąć komunikaty na brokera). Jawny commit runnera trafiłby więc w transakcję, której już nie
+ma. Runner sprawdza zamiast tego `Database.CurrentTransaction` i domyka ją tylko wtedy, gdy nadal
+istnieje — co jest poprawne niezależnie od tego, po której stronie leży commit, i przy okazji
+obsługuje chunk, w którym nie było nic do zapisania (zamknięcie pustego zadania).
 
 **Schemat w SQL-u.** `BulkCommandRunner<TContext>` jest generyczny po module, więc nazwa schematu
 nie może być wpisana na sztywno. Precedens jest w repo —
@@ -166,7 +172,7 @@ tego, co się wydaje. Zapytanie musi wyjść z bazy gotowe.
 ### 4.2 `ExportRunner` — krótkie przejęcie i heartbeat
 
 Tu ten sam wzorzec **nie zadziała**, i to jest różnica, której
-[§7](./architecture.md#7-założenia-jednoinstancyjne) nie rozdziela: przebieg eksportu strumieniuje
+[§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nie rozdziela: przebieg eksportu strumieniuje
 50 tys. rekordów do MinIO. Trzymanie transakcji Postgresa przez cały ten czas oznacza
 długowieczny snapshot blokujący `VACUUM` — lekarstwo gorsze od choroby.
 
@@ -198,7 +204,7 @@ który by o nim wiedział, więc i bez szans na posprzątanie inaczej niż regu�
 
 ## 5. Faza 2 — start procesu
 
-**Ta kategoria nie figuruje dziś w [§7](./architecture.md#7-założenia-jednoinstancyjne) w ogóle**,
+**Ta kategoria nie figuruje dziś w [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) w ogóle**,
 a niesie najostrzejsze ryzyko z całej listy — nie nieaktualny UI, tylko potencjalnie uszkodzony
 schemat bazy.
 
@@ -272,7 +278,7 @@ stronie IdP niezależnie od fleety.
 ## 7. Faza 4 — realtime (jedna niepodzielna zmiana)
 
 Cztery punkty naraz. Wdrożenie częściowe wygląda jak gotowość i nią nie jest — to jest ostrzeżenie
-z [§7](./architecture.md#7-założenia-jednoinstancyjne) i tutaj obowiązuje dosłownie.
+z [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) i tutaj obowiązuje dosłownie.
 
 ### 7.1 Rozdzielenie ról: Hub i Relay
 
@@ -311,11 +317,11 @@ wariantem podstawowym.
 
 ### 7.2 Licznik sekwencji → Postgres (rewizja wcześniejszej decyzji)
 
-[`architecture.md` §7 „Kierunki naprawy"](./architecture.md#7-założenia-jednoinstancyjne)
+[`architecture.md` §7 „Kierunki naprawy"](./architecture.md#7-wieloinstancyjność--założenia-zdjęte)
 wskazuje na `INCR` w Redisie. **Ten plan tę decyzję zmienia** i powód jest konkretny.
 
 Dzisiejsze uzasadnienie, dlaczego licznik może być ulotny
-([`SignatureSequenceTracker`](../../backend/modules/Notification/Notification.Api/Realtime/SignatureSequenceTracker.cs)),
+(licznik w pamięci procesu, `SignatureSequenceTracker` — klasa usunięta razem z tą zmianą),
 brzmi: restart zeruje licznik, ale zrywa też **wszystkie** połączenia SignalR, więc każdy klient
 wraca przez `Subscribe` z zapamiętanym `lastSeenSequence`, serwer pokazuje `0`, rozjazd zostaje
 wykryty jako luka i wymusza resync. Rozumowanie jest poprawne i opiera się na tym, że licznik
@@ -401,12 +407,12 @@ trwałości. Powinno to działać wielowęzłowo z pudełka, ale **plan nie moż
 
 ### 8.2 Domknięcie dokumentacji
 
-[`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne) przestaje opisywać stan
+[`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) przestaje opisywać stan
 faktyczny i zmienia się w opis **zdjętych** założeń, z odesłaniem tutaj. Adnotacje w kodzie
-(`SignatureSequenceTracker`, `ExportRunner`, `MediaReconciliationService`,
-`ExpiredGrantCleanupService`, `HttpPermissionProvider`) mówiące „zakłada jedną instancję" trzeba
-zdjąć **razem ze zmianą**, nie później — komentarz kłamiący o współbieżności jest gorszy niż
-brak komentarza.
+(`ExportRunner`, `MediaReconciliationService`, `ExpiredGrantCleanupService`,
+`HttpPermissionProvider`) mówiące „zakłada jedną instancję" trzeba zdjąć **razem ze zmianą**, nie
+później — komentarz kłamiący o współbieżności jest gorszy niż brak komentarza. Zrobione: każda
+z tych klas niesie dziś `[ClusterSafe]` z opisem mechanizmu, który ją zabezpiecza.
 
 ---
 
@@ -445,9 +451,43 @@ przechodzi — inaczej nie da się go trzymać w CI.
 
 ---
 
-## 11. Zobacz też
+## 11. Odstępstwa od planu
 
-- [Architektura backendu §7](./architecture.md#7-założenia-jednoinstancyjne) — lista założeń, którą ten plan zdejmuje
+Cztery miejsca, w których kod świadomie różni się od tego, co zapisano wyżej. Każde ma powód —
+plan nie jest tu dokumentem historycznym, tylko zapisem rozumowania, a różnica bez uzasadnienia
+byłaby po prostu błędem.
+
+**Kolejka broadcastu nie jest `exclusive`, tylko `auto-delete`.** [§6](#6-faza-3--uprawnienia-i-wymuszone-wylogowanie)
+zakładał obie flagi. Auto-delete wystarcza do tego, o co chodziło — kolejka umiera razem z ostatnim
+konsumentem, więc nie zostawia śmieci w brokerze — a `exclusive` wiąże kolejkę z konkretnym
+połączeniem AMQP i potrafi się wywrócić na `RESOURCE_LOCKED`, gdy Wolverine deklaruje topologię
+innym połączeniem niż nasłuch. Ryzyko niewstającego serwisu za zerowy zysk.
+
+**Broadcast idzie osobną wymianą `erp.broadcast`, nie `erp.events`.** Plan mówił o „kolejce per
+instancja związanej z tą samą wymianą". To by działało dla samego unieważnienia, ale kolejka
+wpięta w `erp.events` dostaje **komplet** zdarzeń domenowych — a wtedy każdy handler modułu
+odpalałby się dwa razy: raz z kolejki serwisu, raz z kolejki instancji. Stąd druga wymiana i typ
+`PermissionsInvalidated` celowo umieszczony **poza** `Erp.BuildingBlocks.Contracts`, żeby reguła
+„wszystko z tego zestawu na `erp.events`" go nie złapała.
+
+**Sygnał unieważnienia publikuje `GrantAuditWriter`, a nie osiem handlerów komend.** Plan nie
+wskazywał miejsca publikacji. Wybrane zostało to jedno, bo opiera się na niezmienniku, który już
+obowiązuje: *każda zmiana tego, kto co może, zostawia wpis w `grant_audit`* — nadanie roli,
+odebranie uprawnienia, dodanie członka, wygaśnięcie nadania, wymuszone wylogowanie. Rozsypanie
+publikacji po handlerach dałoby osiem miejsc, w których dziewiąty handler może o niej zapomnieć.
+
+**Migracje EF dostały blokującą dzierżawę, mimo że [§5](#5-faza-2--start-procesu) stawiał na
+wyłączenie flagi.** Postawa produkcyjna się nie zmienia — `Database:MigrateOnStartup` jest
+domyślnie wyłączone i schemat stosuje osobny krok wdrożenia. Ale flaga bywa włączona w devie,
+w testach integracyjnych i w profilu `docker-compose.multi.yml`, a dwa równoległe `MigrateAsync`
+zostawiają schemat zastosowany w połowie. Dzierżawa kosztuje jedno połączenie i zamyka sprawę
+niezależnie od tego, jak flaga jest ustawiona.
+
+---
+
+## 12. Zobacz też
+
+- [Architektura backendu §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) — lista założeń, którą ten plan zdejmuje
 - [Operacje masowe](./bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`
 - [Eksporty i artefakty](./exports-artifacts.md) — `ExportRun`, `ExportRunner`
 - [Synchronizacja w czasie rzeczywistym](./realtime-signalr.md) §5–6 — licznik sekwencji, backplane

@@ -122,8 +122,16 @@ Trzy rzeczy, które odróżniają go od runnera map-owego:
    i status` gwarantuje, że nie istnieje moment, w którym przebieg jest `Completed`, a pliku
    jeszcze nie ma. Odwrotna kolejność daje użytkownikowi przycisk „Pobierz" prowadzący w pustkę.
 
-`ExportRunner` zakłada **jedną instancję serwisu**, tak samo jak `BulkCommandRunner` — dopisz go
-do listy w [`architecture.md` §7](./architecture.md#7-założenia-jednoinstancyjne) razem z resztą.
+4. **Wyłączność bierze dwuczęściowo**, inaczej niż `BulkCommandRunner`. Wzorzec „`FOR UPDATE
+   SKIP LOCKED` na czas całej pracy" tutaj nie działa: strumieniowanie dziesiątek tysięcy rekordów
+   do MinIO w otwartej transakcji to długowieczny snapshot blokujący `VACUUM`. Zamiast tego krótka
+   transakcja przejęcia (milisekundy, pod `SKIP LOCKED`) i bicie serca w `export_run.heartbeat_at`,
+   odświeżane przy okazji zapisu postępu — więc bez ani jednego dodatkowego polecenia SQL. Przebieg
+   „w toku" ze znacznikiem starszym niż próg wraca do `Pending`.
+
+   Naprawia to przy okazji usterkę obecną **także przy jednej instancji**: padnięcie runnera
+   w połowie eksportu zostawiało dotąd przebieg `Running` na zawsze, a użytkownik oglądał pasek
+   postępu, za którym nie stał żaden proces.
 
 ---
 

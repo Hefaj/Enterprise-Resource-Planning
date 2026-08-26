@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Identity.Application.Abstractions;
 using Identity.Domain.Audit;
 using Identity.Infrastructure.Persistence;
@@ -14,11 +15,14 @@ namespace Identity.Infrastructure.Jobs;
 /// wygasłe nadanie zostaje w bazie i nadal trafia do efektywnych uprawnień, dopóki ktoś ręcznie
 /// go nie odbierze (patrz <c>docs/backend/identity-authz.md</c> Faza 6).
 ///
-/// <para><b>Jedna instancja procesu.</b> Zakłada brak współbieżnego drugiego tickera (patrz
-/// <c>docs/backend/architecture.md</c> §7 — założenia jednoinstancyjne) — przy skalowaniu
-/// poziomym dwie instancje próbowałyby odebrać te same nadania w tym samym oknie 5 minut, co
-/// jest nieszkodliwe (<c>RemoveRole</c> jest idempotentne), ale zdublowałoby wpisy audytowe.</para>
+/// <para><b>Wiele instancji.</b> Przebieg bierze dzierżawę <c>identity:expired-grant-cleanup</c>;
+/// instancja bez niej pomija tykniecie i wraca za pięć minut. Samo odbieranie ról zniosłoby
+/// współbieżność bez szkody (<c>RemoveRole</c> jest idempotentne) — ale <b>wpisy w
+/// <c>grant_audit</c> już nie</b>: bez dzierżawy audyt dostawałby duplikaty, czyli kłamałby
+/// o tym, co się faktycznie wydarzyło. To audyt, a nie sama operacja, wymusza tu wyłączność.</para>
 /// </summary>
+[ClusterSafe("Dzierżawa identity:expired-grant-cleanup na advisory locku Postgresa — odbieranie ról "
+    + "jest idempotentne, ale wpisy w grant_audit nie, więc audyt bez niej dostawałby duplikaty.")]
 public sealed partial class ExpiredGrantCleanupService : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
@@ -53,6 +57,17 @@ public sealed partial class ExpiredGrantCleanupService : BackgroundService
     private async Task CleanupOnceAsync(CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
+
+        var lease = scope.ServiceProvider.GetRequiredService<IExclusiveLease>();
+        await using var held = await lease
+            .TryAcquireAsync("identity:expired-grant-cleanup", ct)
+            .ConfigureAwait(false);
+
+        if (held is null)
+        {
+            return;
+        }
+
         var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
         var auditWriter = scope.ServiceProvider.GetRequiredService<IGrantAuditWriter>();

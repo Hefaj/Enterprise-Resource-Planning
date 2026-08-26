@@ -1,3 +1,4 @@
+using Erp.BuildingBlocks.Application.Messaging;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -172,7 +173,16 @@ public static class ErpAuthExtensions
             client.Timeout = TimeSpan.FromSeconds(5);
         });
 
-        services.AddSingleton<IPermissionProvider, HttpPermissionProvider>();
+        // Konkretny typ, nie tylko interfejs: ta sama instancja odpowiada za dwie role —
+        // czytanie uprawnień i przyjmowanie broadcastu unieważnień. Gdyby były rejestrowane
+        // osobno, unieważnienie trafiałoby do innego obiektu niż ten, który trzyma cache.
+        //
+        // Identity nadpisuje IPermissionProvider własną implementacją in-process; wpis
+        // IPermissionCacheInvalidator zostaje wtedy bez zajęcia i nie robi nic — u siebie
+        // Identity czyta bazę wprost, więc nie ma czego unieważniać.
+        services.AddSingleton<HttpPermissionProvider>();
+        services.AddSingleton<IPermissionProvider>(sp => sp.GetRequiredService<HttpPermissionProvider>());
+        services.AddSingleton<IPermissionCacheInvalidator>(sp => sp.GetRequiredService<HttpPermissionProvider>());
         services.AddTransient<IClaimsTransformation, PermissionClaimsTransformation>();
     }
 }

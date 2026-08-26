@@ -11,6 +11,8 @@
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FastEndpoints.Swagger" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Backplane SignalR — ładowany zawsze, włączany warunkowo przez `Realtime:Redis`. -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
   </ItemGroup>
 
 </Project>

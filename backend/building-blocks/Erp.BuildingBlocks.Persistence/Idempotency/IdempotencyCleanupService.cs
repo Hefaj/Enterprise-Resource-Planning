@@ -19,8 +19,15 @@ namespace Erp.BuildingBlocks.Persistence.Idempotency;
 /// <para>Wygaśnięcie jest już respektowane przy odczycie (<see cref="EfIdempotencyStore{TContext}"/>),
 /// więc ta usługa odpowiada wyłącznie za rozmiar tabeli — jej przestój niczego nie psuje poza
 /// zajętością dysku.</para>
+///
+/// <para><b>Wiele instancji nie wymaga tu niczego</b> — i to jest cała odpowiedź, nie jej brak.
+/// Sprzątanie to jedno <c>ExecuteDelete</c> po predykacie wygaśnięcia: druga instancja robiąca
+/// to samo w tej samej chwili usuwa zero wierszy, bo pierwsza już je zabrała. Dokładanie tu
+/// dzierżawy byłoby kosztem bez odpowiadającego mu ryzyka.</para>
 /// </summary>
 /// <typeparam name="TContext">Kontekst modułu.</typeparam>
+[ClusterSafe("Jedno ExecuteDelete po wygasłych kluczach — druga instancja usuwa zero wierszy, "
+    + "więc równoległy przebieg jest naturalnie bezpieczny i nie potrzebuje dzierżawy.")]
 public sealed partial class IdempotencyCleanupService<TContext> : BackgroundService
     where TContext : ErpDbContext
 {

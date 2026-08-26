@@ -145,7 +145,16 @@ public static class ErpArtifactExtensions
 /// <para>Brak MinIO przy starcie <b>nie przewraca hosta</b> — moduł działa dalej, a eksport padnie
 /// dopiero przy próbie zapisu. Magazyn artefaktów nie jest zależnością krytyczną dla reszty API
 /// i nie ma powodu, żeby jego niedostępność blokowała odczyty produktów.</para>
+///
+/// <para><b>Wiele instancji</b> nie wymaga tu dzierżawy, ale wymaga jednego rozróżnienia:
+/// przy równoległym starcie dwie instancje widzą brak kubełka i obie wołają <c>MakeBucket</c>,
+/// z czego jedna dostaje <c>BucketAlreadyOwnedByYou</c>. To jest sukces przebrany za błąd —
+/// bez połknięcia go start logowałby fałszywą awarię magazynu przy każdym rolloucie. Reguły
+/// lifecycle są nadpisywane w całości, więc równoległe ustawienie ich dwa razy daje ten sam
+/// stan końcowy.</para>
 /// </summary>
+[ClusterSafe("MakeBucket jest idempotentne po połknięciu BucketAlreadyOwnedByYou, a reguły "
+    + "lifecycle nadpisują się w całości — równoległy start daje ten sam stan końcowy.")]
 internal sealed partial class ArtifactBucketInitializer : IHostedService
 {
     /// <summary>Reguła obejmująca cały kubełek — tylko dla magazynów z ustawioną retencją.</summary>
@@ -203,6 +212,21 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
         ["InvalidAccessKeyId", "SignatureDoesNotMatch", "AccessDenied"];
 
     /// <summary>
+    /// Kody, którymi S3 mówi „ten kubełek już jest i jest twój".
+    ///
+    /// <para>Sprawdzane w treści wyjątku z tego samego powodu co <see cref="AuthErrorCodes"/>:
+    /// SDK MinIO nie ma dla nich osobnego typu, więc kod zostaje wyłącznie w komunikacie
+    /// <c>ErrorResponseException</c>.</para>
+    /// </summary>
+    private static readonly string[] AlreadyOwnedCodes =
+        ["BucketAlreadyOwnedByYou", "BucketAlreadyExists"];
+
+    private static bool IsAlreadyOwned(Exception exception)
+        => Array.Exists(
+            AlreadyOwnedCodes,
+            code => exception.Message.Contains(code, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
     /// Zamienia wyjątek z magazynu na wskazówkę, od czego zacząć naprawę.
     ///
     /// <para>Bez tego rozróżnienia log mówi tylko „nie udało się", a trzy zupełnie różne przyczyny
@@ -249,11 +273,21 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
             return;
         }
 
-        await _client
-            .MakeBucketAsync(
-                new Minio.DataModel.Args.MakeBucketArgs().WithBucket(bucketName),
-                cancellationToken)
-            .ConfigureAwait(false);
+        try
+        {
+            await _client
+                .MakeBucketAsync(
+                    new Minio.DataModel.Args.MakeBucketArgs().WithBucket(bucketName),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (IsAlreadyOwned(ex))
+        {
+            // Druga instancja zdążyła między naszym sprawdzeniem a utworzeniem. Kubełek istnieje
+            // i należy do nas — czyli dokładnie to, o co nam chodziło.
+            LogBucketRaced(_logger, bucketName);
+            return;
+        }
 
         LogBucketCreated(_logger, bucketName);
     }
@@ -310,6 +344,10 @@ internal sealed partial class ArtifactBucketInitializer : IHostedService
                 cancellationToken)
             .ConfigureAwait(false);
     }
+
+    [LoggerMessage(EventId = 6, Level = LogLevel.Debug,
+        Message = "Kubełek {Bucket} utworzyła w tej samej chwili inna instancja — nic do zrobienia.")]
+    private static partial void LogBucketRaced(ILogger logger, string bucket);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Information,
         Message = "Założono kubełek artefaktów {Bucket}.")]

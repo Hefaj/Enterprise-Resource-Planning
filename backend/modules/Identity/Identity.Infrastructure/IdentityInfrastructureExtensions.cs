@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Persistence;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Identity.Application.Abstractions;
 using Identity.Application.Audit;
 using Identity.Application.Permissions;
@@ -47,6 +48,11 @@ public static class IdentityInfrastructureExtensions
             connectionString,
             IdentityDbContext.SchemaName,
             typeof(IdentityDbContext).Assembly.GetName().Name));
+
+        // Dzierżawa wyłączności idzie razem z kontekstem, bo z niego bierze łańcuch
+        // połączenia. Korzystają z niej usługi tła i praca startowa modułu —
+        // patrz docs/backend/multi-instance.md §3.1.
+        services.AddErpExclusiveLease<IdentityDbContext>();
 
         // Osobno od DbContext — patrz uzasadnienie w IdentityConnectionStringProvider.
         services.AddSingleton(new IdentityConnectionStringProvider(connectionString));

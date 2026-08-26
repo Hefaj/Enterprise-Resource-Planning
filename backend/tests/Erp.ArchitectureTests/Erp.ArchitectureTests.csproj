@@ -23,17 +23,22 @@
     <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Messaging/Erp.BuildingBlocks.Messaging.csproj" />
     <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Jobs/Erp.BuildingBlocks.Jobs.csproj" />
     <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Api/Erp.BuildingBlocks.Api.csproj" />
+    <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Artifacts/Erp.BuildingBlocks.Artifacts.csproj" />
   </ItemGroup>
 
   <!--
-    Moduły są tu po to, żeby CommandNamingTests miały co skanować. Testy warstwowe ich nie
-    potrzebują — reguła nazewnicza z definicji dotyczy kodu modułów, a nie fundamentu, więc
-    bez tych referencji sprawdzałaby pusty zbiór i zawsze przechodziła.
+    Moduły są tu po to, żeby CommandNamingTests i BackgroundServiceTests miały co skanować.
+    Testy warstwowe ich nie potrzebują — reguła nazewnicza z definicji dotyczy kodu modułów,
+    a nie fundamentu, więc bez tych referencji sprawdzałaby pusty zbiór i zawsze przechodziła.
+
+    Notification nie ma komend, ale ma usługi tła realtime — bez tej referencji
+    BackgroundServiceTests nie widziałyby najtrudniejszego wieloinstancyjnie modułu.
   -->
   <ItemGroup>
     <ProjectReference Include="../../modules/Catalog/Catalog.Api/Catalog.Api.csproj" />
     <ProjectReference Include="../../modules/Identity/Identity.Api/Identity.Api.csproj" />
     <ProjectReference Include="../../modules/Sales/Sales.Api/Sales.Api.csproj" />
+    <ProjectReference Include="../../modules/Notification/Notification.Api/Notification.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

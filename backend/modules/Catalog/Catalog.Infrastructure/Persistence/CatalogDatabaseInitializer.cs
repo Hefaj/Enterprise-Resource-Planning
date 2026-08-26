@@ -1,5 +1,7 @@
 using Catalog.Domain.Products;
 using Catalog.Infrastructure.Seed;
+using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,10 +15,18 @@ namespace Catalog.Infrastructure.Persistence;
 /// danymi przykładowymi.
 ///
 /// Automatyczne migrowanie przy starcie jest wygodą deweloperską, nie wzorcem produkcyjnym:
-/// przy wielu instancjach serwisu każda próbowałaby migrować równolegle, a nieudana migracja
-/// przewracałaby aplikację zamiast zatrzymać wdrożenie. Na produkcji migracje uruchamia osobny
-/// krok pipeline'u, dlatego całość jest sterowana flagą <c>Database:MigrateOnStartup</c>.
+/// nieudana migracja przewracałaby aplikację zamiast zatrzymać wdrożenie. Na produkcji migracje
+/// uruchamia osobny krok pipeline'u, dlatego całość jest sterowana flagą
+/// <c>Database:MigrateOnStartup</c> (domyślnie wyłączoną).
+///
+/// <para><b>Cały przebieg idzie pod jedną blokującą dzierżawą</b> <c>catalog:startup</c>.
+/// Obejmuje ona migrację, backfill i seed łącznie, a nie każdy krok z osobna — bo to one po
+/// kolei budują ten sam stan: backfill zakłada zastosowany schemat, seed zakłada uzupełnione
+/// sygnatury. Instancja B czeka i zastaje bazę gotową; wersja „próbująca" (pomiń, gdy zajęte)
+/// byłaby tu błędem, bo instancja B ruszyłaby na w połowie przygotowanej bazie.</para>
 /// </summary>
+[ClusterSafe("Blokująca dzierżawa catalog:startup obejmująca migrację, backfill i seed — "
+    + "instancja B czeka i zastaje bazę gotową, zamiast pracować na w połowie przygotowanej.")]
 public sealed partial class CatalogDatabaseInitializer : IHostedService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -41,6 +51,11 @@ public sealed partial class CatalogDatabaseInitializer : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
+
+        var lease = scope.ServiceProvider.GetRequiredService<IExclusiveLease>();
+        await using var held = await lease.AcquireAsync("catalog:startup", cancellationToken)
+            .ConfigureAwait(false);
+
         var dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
 
         if (_migrateOnStartup)

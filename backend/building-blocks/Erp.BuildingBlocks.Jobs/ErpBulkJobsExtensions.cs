@@ -35,6 +35,11 @@ public static class ErpBulkJobsExtensions
         // po połączeniu tego samego DbContextu, na którym zakładany jest nagłówek zadania.
         services.AddScoped<IJobItemBulkWriter, PostgresJobItemBulkWriter<TContext>>();
 
+        // Wyłączność runnera na zadaniu. Scoped, bo nazwy tabeli i kolumn czyta z modelu EF
+        // tego kontekstu, a blokuje po JEGO połączeniu — musi więc żyć w tym samym scope
+        // co transakcja chunka.
+        services.AddScoped<JobQueueLock<TContext>>();
+
         return services;
     }
 }

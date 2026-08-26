@@ -1,4 +1,6 @@
+using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Identity.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +16,16 @@ namespace Identity.Infrastructure.Seed;
 /// razem, gdy kod się zmienia: nowy kod → wstawiany; kod, którego już nie ma w
 /// <see cref="Permissions.All"/> → oznaczany <c>is_obsolete = true</c>, NIGDY kasowany
 /// (istniejące nadania mogą wciąż na niego wskazywać).
+///
+/// <para><b>Wiele instancji.</b> Uzgadnianie chodzi przy KAŻDYM starcie, więc przy równoległym
+/// starcie N instancji wyścig na <c>INSERT</c> jest nie wyjątkiem, a regułą — i kończy się
+/// naruszeniem unikalności kodu uprawnienia, czyli wywróconym startem. Stąd blokująca dzierżawa
+/// <c>identity:permission-catalog</c>: instancja B czeka, a potem zastaje katalog uzgodniony
+/// i przechodzi przez pętlę nie robiąc nic. Wariant „pomiń, gdy zajęte" byłby tu ryzykowny —
+/// instancja B mogłaby ruszyć, zanim nowe uprawnienia w ogóle są w bazie.</para>
 /// </summary>
+[ClusterSafe("Blokująca dzierżawa identity:permission-catalog — bez niej równoległy start N instancji "
+    + "daje wyścig na INSERT i naruszenie unikalności kodu uprawnienia.")]
 public sealed partial class PermissionCatalogReconciler : IHostedService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -29,6 +40,12 @@ public sealed partial class PermissionCatalogReconciler : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
+
+        var lease = scope.ServiceProvider.GetRequiredService<IExclusiveLease>();
+        await using var held = await lease
+            .AcquireAsync("identity:permission-catalog", cancellationToken)
+            .ConfigureAwait(false);
+
         var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
 
         var existing = await dbContext.PermissionCatalogEntries.ToDictionaryAsync(

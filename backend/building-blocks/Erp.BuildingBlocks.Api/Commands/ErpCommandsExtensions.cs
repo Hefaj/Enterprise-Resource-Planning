@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Application.Commands;
 using Erp.BuildingBlocks.Persistence;
+using Erp.BuildingBlocks.Persistence.Concurrency;
 using Erp.BuildingBlocks.Persistence.Idempotency;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +40,12 @@ public static class ErpCommandsExtensions
         services.TryAddScoped<CommandTransactionScope>();
         services.TryAddScoped<ICommandDispatcher, CommandDispatcher>();
         services.TryAddScoped<IIdempotencyStore, EfIdempotencyStore<TContext>>();
+
+        // Dzierżawa wyłączności — usługi tła i praca startowa modułu (patrz
+        // docs/backend/multi-instance.md §3.1). TryAdd, więc moduł, który zarejestrował ją już
+        // przy swoim DbContekście (a robią tak wszystkie, bo migrator startuje przed komendami),
+        // nie dostaje drugiego wpisu.
+        services.AddErpExclusiveLease<TContext>();
 
         // ── KOLEJNOŚĆ OGNIW ─────────────────────────────────────────────────────────────────
         //

@@ -1,0 +1,193 @@
+# Profil weryfikacyjny wieloinstancyjności — patrz docs/backend/multi-instance.md §3.3.
+#
+# Uruchamianie:
+#   docker compose -f docker-compose.yml -f docker-compose.multi.yml up
+#
+# CO TO JEST, A CZYM NIE JEST. To narzędzie do udowodnienia, że zmiany z faz 1–4 działają,
+# a nie obraz produkcyjny. Instancje chodzą z bind-mountem repozytorium na obrazie SDK
+# (`dotnet run`), bo backend nie ma dziś Dockerfile'i, a dokładanie ich tylko po to, żeby
+# przetestować SKIP LOCKED, byłoby ogonem merdającym psem. Gdy Dockerfile'e powstaną, ten plik
+# ma się skurczyć do `image:` + `deploy.replicas`.
+#
+# DLACZEGO OSOBNE `ErpBuildSlot` DLA KAŻDEJ INSTANCJI. Dwa procesy MSBuild budujące te same
+# projekty z `building-blocks/` blokują sobie pliki w `obj/` — to ten sam problem, dla którego
+# `Directory.Build.props` w ogóle wprowadza sloty (patrz komentarz tamże). Bez tego druga
+# instancja przewraca się na „because it is being used by another process”.
+
+name: erp
+
+services:
+  # ── Katalog ×2 ───────────────────────────────────────────────────────────────────────────
+  #
+  # Weryfikuje fazę 1 (dwa BulkCommandRunner / ExportRunner nad jednym Postgresem) i fazę 3
+  # (unieważnienie cache uprawnień docierające do OBU instancji).
+  #
+  # Migracje: `Database__MigrateOnStartup=false` na obu — zgodnie z fazą 2 schemat stosuje się
+  # osobnym krokiem. Przed pierwszym `up` wystarczy raz uruchomić Catalog.Api z hosta.
+  catalog-1: &catalog
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: erp-catalog-1
+    working_dir: /src/modules/Catalog/Catalog.Api
+    command: ["dotnet", "run", "--no-launch-profile"]
+    environment:
+      ErpBuildSlot: multi1
+      DOTNET_NOLOGO: "1"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__CatalogDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Database__MigrateOnStartup: "false"
+      # Seed to praca startowa pod dzierżawą (faza 2) — celowo zostaje włączony na OBU
+      # instancjach, bo właśnie jego równoległy start jest tu przedmiotem testu.
+      Seed__Enabled: "true"
+      Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
+      Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Artifacts__Endpoint: minio:9000
+      Keycloak__Authority: http://keycloak:8080/realms/erp
+      Identity__BaseUrl: http://identity:8080
+    volumes:
+      - ..:/src
+      - nuget-cache:/root/.nuget/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  catalog-2:
+    <<: *catalog
+    container_name: erp-catalog-2
+    environment:
+      ErpBuildSlot: multi2
+      DOTNET_NOLOGO: "1"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__CatalogDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Database__MigrateOnStartup: "false"
+      Seed__Enabled: "true"
+      Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
+      Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Artifacts__Endpoint: minio:9000
+      Keycloak__Authority: http://keycloak:8080/realms/erp
+      Identity__BaseUrl: http://identity:8080
+
+  # ── Notification: rozdział ról (faza 4) ──────────────────────────────────────────────────
+  #
+  # Relay jest DOKŁADNIE JEDEN i tylko on słucha kolejki `notification.events`: koalescencja,
+  # licznik sekwencji i próg „all" wymagają jednego miejsca decyzyjnego. Huby wystawiają
+  # WebSockety i nie konsumują z brokera (`Messaging__ListenQueueName` puste) — inaczej
+  # zdarzenia rozdzieliłyby się między nie jako competing consumers.
+  notification-relay:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: erp-notification-relay
+    working_dir: /src/modules/Notification/Notification.Api
+    command: ["dotnet", "run", "--no-launch-profile"]
+    environment:
+      ErpBuildSlot: relay
+      DOTNET_NOLOGO: "1"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Realtime__Role: Relay
+      Realtime__Redis: redis:6379
+      ConnectionStrings__NotificationDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Database__MigrateOnStartup: "false"
+      Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
+      Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Keycloak__Authority: http://keycloak:8080/realms/erp
+    volumes:
+      - ..:/src
+      - nuget-cache:/root/.nuget/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  notification-hub-1: &hub
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: erp-notification-hub-1
+    working_dir: /src/modules/Notification/Notification.Api
+    command: ["dotnet", "run", "--no-launch-profile"]
+    environment:
+      ErpBuildSlot: hub1
+      DOTNET_NOLOGO: "1"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Realtime__Role: Hub
+      Realtime__Redis: redis:6379
+      ConnectionStrings__NotificationDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Database__MigrateOnStartup: "false"
+      Messaging__ListenQueueName: ""
+      Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
+      Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Keycloak__Authority: http://keycloak:8080/realms/erp
+    volumes:
+      - ..:/src
+      - nuget-cache:/root/.nuget/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  notification-hub-2:
+    <<: *hub
+    container_name: erp-notification-hub-2
+    environment:
+      ErpBuildSlot: hub2
+      DOTNET_NOLOGO: "1"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Realtime__Role: Hub
+      Realtime__Redis: redis:6379
+      ConnectionStrings__NotificationDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Database__MigrateOnStartup: "false"
+      Messaging__ListenQueueName: ""
+      Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
+      Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Keycloak__Authority: http://keycloak:8080/realms/erp
+
+  # ── Redis: WYŁĄCZNIE backplane SignalR ───────────────────────────────────────────────────
+  #
+  # Jedyna rzecz, której Postgres nie potrafi zrobić — SignalR nie ma backplane'u na Postgresie.
+  # Dzierżawy, licznik sekwencji i koordynacja startu idą przez Postgresa (multi-instance.md §1).
+  # Nie dokładaj tu cache'a uprawnień ani kolejek: awaria Redisa ma degradować realtime,
+  # a nie kłaść autoryzację całego ERP.
+  redis:
+    image: redis:7-alpine
+    container_name: erp-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Load balancer ────────────────────────────────────────────────────────────────────────
+  #
+  # Bez powinowactwa sesji — i to jest przedmiot testu, nie niedopatrzenie. Front łączy się
+  # z `skipNegotiation: true`, więc SignalR nie zostawia stanu do przyklejenia (§7.4).
+  # `proxy_read_timeout` na 1h: domyślne 60 s zrywałoby bezczynne WebSockety i test resyncu
+  # mierzyłby nginxa zamiast aplikacji.
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: erp-nginx
+    restart: unless-stopped
+    ports:
+      - "5149:5149"   # Catalog — ten sam port co pojedyncza instancja z hosta
+      - "5250:5250"   # Notification (huby)
+    volumes:
+      - ./nginx/multi.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - catalog-1
+      - catalog-2
+      - notification-hub-1
+      - notification-hub-2
+
+volumes:
+  nuget-cache:

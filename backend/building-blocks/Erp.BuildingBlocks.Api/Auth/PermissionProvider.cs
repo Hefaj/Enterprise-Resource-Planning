@@ -1,8 +1,10 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using Erp.BuildingBlocks.Application.Messaging;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace Erp.BuildingBlocks.Api.Auth;
 
@@ -76,17 +78,38 @@ public interface IPermissionProvider
 /// aktywnie (zamiast czekać na wygaśnięcie), to wyłącznie optymalizacja czasu reakcji,
 /// nie warunek poprawności.</para>
 ///
-/// <para><b>Stan w pamięci procesu.</b> Ten cache jest per-instancja — przy skalowaniu
-/// poziomym każda instancja dogania zmiany z osobnym opóźnieniem do TTL. Dopisane do
-/// <c>docs/backend/architecture.md</c> §7 (założenia jednoinstancyjne).</para>
+/// <para><b>Stan w pamięci procesu — i tak ma zostać.</b> Rozważany był wspólny cache w Redisie
+/// (<c>IDistributedCache</c>) i został odrzucony: wkładałby Redisa na ścieżkę <i>każdego żądania
+/// każdego serwisu</i>, w dodatku w warstwie autoryzacji, więc jego awaria musiałaby mieć
+/// zaprojektowaną degradację — inaczej kładzie cały ERP. Zamiast tego szybka ścieżka zostaje
+/// w pamięci procesu, a propagacja unieważnień idzie RabbitMQ, który i tak jest zależnością
+/// każdego serwisu (patrz <see cref="PermissionsInvalidated"/>).</para>
+///
+/// <para><b>Gwarancją pozostaje TTL, nie komunikat.</b> Broadcast skraca czas reakcji z 60 s do
+/// sekundy; jego utrata cofa zachowanie do samego TTL. Ta klasa nie może więc pogorszyć postawy
+/// bezpieczeństwa względem stanu sprzed wieloinstancyjności — może ją tylko poprawić.</para>
 /// </summary>
-public sealed class HttpPermissionProvider : IPermissionProvider
+public sealed class HttpPermissionProvider : IPermissionProvider, IPermissionCacheInvalidator, IDisposable
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMemoryCache _cache;
     private readonly ILogger<HttpPermissionProvider> _logger;
+
+    /// <summary>
+    /// Wspólny „bezpiecznik" wszystkich wpisów uprawnień — pozwala wyczyścić je <b>wszystkie</b>
+    /// jednym ruchem.
+    ///
+    /// <para><see cref="IMemoryCache"/> nie umie usuwać po prefiksie, a trzymanie listy kluczy
+    /// obok cache'u byłoby drugim rejestrem do zsynchronizowania. Token wygaśnięcia rozwiązuje to
+    /// bez dodatkowego stanu: anulowanie źródła unieważnia każdy wpis, który się do niego
+    /// podpiął. Źródło jest potem podmieniane, bo anulowanego nie da się użyć ponownie.</para>
+    ///
+    /// <para>Pole instancyjne wystarcza, bo dostawca jest singletonem (patrz <c>AddErpAuth</c>)
+    /// i dzieli ten sam <see cref="IMemoryCache"/> z każdym żądaniem procesu.</para>
+    /// </summary>
+    private CancellationTokenSource _flushSignal = new();
 
     public HttpPermissionProvider(
         IHttpClientFactory httpClientFactory, IMemoryCache cache, ILogger<HttpPermissionProvider> logger)
@@ -128,7 +151,12 @@ public sealed class HttpPermissionProvider : IPermissionProvider
                 .ReadFromJsonAsync<List<string>>(cancellationToken)
                 .ConfigureAwait(false) ?? [];
 
-            _cache.Set(cacheKey, (IReadOnlyCollection<string>)permissions, CacheTtl);
+            var entryOptions = new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheTtl };
+
+            // Wpis wygasa albo po TTL, albo na sygnał pełnego czyszczenia — co przyjdzie pierwsze.
+            entryOptions.AddExpirationToken(new CancellationChangeToken(_flushSignal.Token));
+
+            _cache.Set(cacheKey, (IReadOnlyCollection<string>)permissions, entryOptions);
             return permissions;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
@@ -148,6 +176,33 @@ public sealed class HttpPermissionProvider : IPermissionProvider
         _cache.Remove($"perm:{userId}");
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Unieważnienie przyjęte z broadcastu — jednego użytkownika albo, gdy nie wiadomo którego
+    /// (zmiana na poziomie roli), wszystkich.
+    /// </summary>
+    Task IPermissionCacheInvalidator.InvalidateAsync(string? userId, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            return InvalidateAsync(userId, cancellationToken);
+        }
+
+        // Podmiana PRZED anulowaniem: nowe wpisy podpinają się już do świeżego źródła, więc
+        // nie mogą urodzić się od razu unieważnione.
+        var previous = Interlocked.Exchange(ref _flushSignal, new CancellationTokenSource());
+
+        previous.Cancel();
+        previous.Dispose();
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Zwalnia bieżące źródło sygnału czyszczenia. Dostawca jest singletonem, więc dzieje się to
+    /// przy zamykaniu hosta — porządek dla analizatora, nie mechanizm, na którym cokolwiek stoi.
+    /// </summary>
+    public void Dispose() => _flushSignal.Dispose();
 
     /// <summary>Nazwa nazwanego <see cref="HttpClient"/> rejestrowanego w <c>AddErpAuth</c>.</summary>
     public const string IdentityHttpClientName = "Identity";

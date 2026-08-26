@@ -101,11 +101,15 @@ Efekt: dopisanie nowej usługi tła zapala czerwone światło w buildzie i zmusz
 świadomej odpowiedzi „co ta usługa robi, gdy chodzą dwie". Dziś takich usług jest 13 i żadna
 tej odpowiedzi nie ma zapisanej w kodzie.
 
-### 3.3 Profil `docker-compose` z dwiema instancjami
+### 3.3 Profil `docker-compose` z wieloma instancjami
 
 `backend/docker-compose.multi.yml` — nadpisanie stawiające 2× Catalog za nginxem, plus (od fazy 4)
-Redis i rozbicie Notification na role. Bez tego żadna faza nie ma jak być zweryfikowana inaczej
-niż przez czytanie kodu.
+Redis i rozbicie Notification na role (przekaźnik + 2× hub). Bez tego żadna faza nie ma jak być
+zweryfikowana inaczej niż przez czytanie kodu.
+
+Docelowy kształt profilu (Identity w komplecie, jednorazowe rozgrzanie cache'u pakietów, stały
+emitent Keycloaka) i pięć potknięć, które go wymusiły, opisuje
+[§8.3](#83-profil-wieloinstancyjny--co-wyszło-przy-pierwszym-uruchomieniu).
 
 ---
 
@@ -433,11 +437,35 @@ istnieje.
 
 > **Flaga jest domyślnie wyłączona i to jest świadome.** Zatwierdzony kod trzeba regenerować przy
 > **każdej** zmianie kształtu handlera — nowej zależności, nowej sygnaturze, nowym handlerze.
-> Rozjazd kończy się błędem przy starcie, więc jest głośny, ale i tak jest kosztem. Włączenie
+> Rozjazd zwykle kończy się błędem przy starcie, ale **nie zawsze**: gdy Wolverine szuka typów
+> w niewłaściwym zestawie, serwis wstaje zdrowy, a każdy handler przelatuje z
+> `ExpectedTypeMissingException` w logu ([§11](#11-odstępstwa-od-planu)). Włączenie
 > flagi to decyzja wdrożenia (gdzie start liczy się w sekundach, a obraz ma być bez kompilatora),
 > a nie stan domyślny repozytorium, w którym handlery wciąż się zmieniają.
 
-### 8.3 Domknięcie dokumentacji
+### 8.3 Profil wieloinstancyjny — co wyszło przy pierwszym uruchomieniu
+
+Profil [`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml) stawia 2× Catalog za
+nginxem, Identity, przekaźnik i 2× hub z backplanem Redis. Pierwsze uruchomienie wywróciło się
+pięć razy i **każde z tych potknięć było prawdziwe** — żadne nie wynikało z tego, że „test jest
+sztuczny". Warto je znać, bo wszystkie wracają przy każdym wdrożeniu wieloinstancyjnym:
+
+| Objaw | Przyczyna | Rozwiązanie |
+|---|---|---|
+| `Could not find file '.../acg4uxhj.h3r'` przy losowym pakiecie | Pięć kontenerów rozpakowuje pakiety NuGet do jednego wolumenu naraz | Jednorazowa usługa `restore`, od której zależą wszystkie instancje |
+| 401 na `/hubs/sync` mimo poprawnego tokenu | Token ma `iss = localhost:8080` (tam loguje się przeglądarka), a serwis w kontenerze ufa `keycloak:8080` | `KC_HOSTNAME` przypina publiczny emitent, a `Keycloak:MetadataAddress` pozwala serwisowi dociągnąć metadane ścieżką wewnętrzną |
+| Port Catalogu zwraca odpowiedzi Notification | nginx rozwiązuje nazwy upstreamów **raz, przy starcie**; odtworzony kontener dostaje nowy adres, a stary bywa już zajęty przez inną usługę | Restart nginxa po każdym `--force-recreate` (opisane w [`nginx/multi.conf`](../../backend/nginx/multi.conf)) |
+| 403 na każdym zapisie | Bez Identity nie ma kogo zapytać o uprawnienia, a `HttpPermissionProvider` fail-closed zwraca pusty zbiór | Identity dołożone do profilu |
+| Handlery nie działają, choć serwis wstaje | `TypeLoadMode.Static` szukał wygenerowanych typów w zestawie fundamentu zamiast w Api — patrz [§11](#11-odstępstwa-od-planu) | `WolverineOptions.ApplicationAssembly` ustawiane jawnie |
+
+**Dowód backplane'u.** Dwaj klienci SignalR z `skipNegotiation: true`, posadzeni <b>celowo</b> na
+dwóch różnych hubach (porty `5251`/`5252` wystawione właśnie po to — round-robin nie gwarantuje
+rozdzielenia i pierwsze podejście posadziło obu na tej samej instancji, czyli sprawdziło zupełnie
+co innego). Zmiana nazwy produktu zlecona przez load balancer na jednej z dwóch instancji Catalogu
+dotarła do **obu** klientów, razem z kanałem `jobs`. Cała droga: Catalog → RabbitMQ → przekaźnik
+(koalescencja, sekwencja, próg) → `IHubContext` → Redis → oba huby → klienci.
+
+### 8.4 Domknięcie dokumentacji
 
 [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nie opisuje już
 stanu faktycznego jako jednoinstancyjnego — jest opisem **zdjętych** założeń, z odesłaniem tutaj.
@@ -488,8 +516,10 @@ uczestnicy rozjeżdżają się w czasie, przechodzi zawsze — i niczego nie dow
 **Czego te testy nie obejmują.** Rozgłaszanie SignalR przez backplane Redis do klientów wiszących
 na różnych hubach nie ma testu automatycznego — wymagałby trzech hostów ASP.NET, Redisa
 i uwierzytelnionych klientów WebSocket, czyli kosztu nieproporcjonalnego do tego, że sprawdzałby
-w istocie bibliotekę Microsoftu. Ta ścieżka zostaje do sprawdzenia ręcznego przez profil
-[`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml). Tak samo „dokładnie jeden
+w istocie bibliotekę Microsoftu. Ta ścieżka została sprawdzona **ręcznie** profilem
+[`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml): dwaj klienci celowo
+posadzeni na dwóch różnych hubach dostali zmianę zleconą przez load balancer
+([§8.3](#83-profil-wieloinstancyjny--co-wyszło-przy-pierwszym-uruchomieniu)). Tak samo „dokładnie jeden
 artefakt w MinIO": wynika wprost z „dokładnie jeden runner przejmuje przebieg", co ma dowód wyżej,
 a dokładanie kontenera MinIO sprawdzałoby tę samą własność drożej.
 
@@ -529,6 +559,15 @@ wskazywał miejsca publikacji. Wybrane zostało to jedno, bo opiera się na niez
 obowiązuje: *każda zmiana tego, kto co może, zostawia wpis w `grant_audit`* — nadanie roli,
 odebranie uprawnienia, dodanie członka, wygaśnięcie nadania, wymuszone wylogowanie. Rozsypanie
 publikacji po handlerach dałoby osiem miejsc, w których dziewiąty handler może o niej zapomnieć.
+
+**`TypeLoadMode.Static` wymaga jawnego wskazania zestawu aplikacji.** Wolverine za „zestaw
+aplikacji" bierze ten, z którego wołane jest `UseWolverine` — czyli u nas fundament
+(`Erp.BuildingBlocks.Messaging`), a nie projekt Api, do którego `codegen write` zapisuje kod.
+W trybie dynamicznym nie ma to znaczenia (kod i tak powstaje w pamięci), więc rozjazd był
+niewidoczny; w statycznym serwis **wstaje normalnie**, a każdy handler kończy się
+`ExpectedTypeMissingException` wpisanym do logu — komunikaty przelatują bez obsługi, a aplikacja
+raportuje pełne zdrowie. Naprawa to `WolverineOptions.ApplicationAssembly`; wykryło to dopiero
+faktyczne uruchomienie profilu, bo test integracyjny chodzi w trybie dynamicznym.
 
 **Migracje EF dostały blokującą dzierżawę, mimo że [§5](#5-faza-2--start-procesu) stawiał na
 wyłączenie flagi.** Postawa produkcyjna się nie zmienia — `Database:MigrateOnStartup` jest

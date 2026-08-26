@@ -1,6 +1,7 @@
 # Synchronizacja w czasie rzeczywistym (SignalR)
 
-**Stan: ✅ działa**, przy jednej instancji Notification. Legenda znaczników —
+**Stan: ✅ działa**, także przy wielu instancjach Notification (rozdział ról `Realtime:Role`
++ backplane Redis — sekcja 6). Legenda znaczników —
 [`architecture.md`](./architecture.md#1-stan-wdrożenia).
 
 ---
@@ -161,16 +162,21 @@ nie da się odtworzyć” jest tu **zawsze prawdziwy**, bo nie ma z czego odtwar
 
 ### Dlaczego restart Notification nie psuje wykrywania
 
-Licznik jest tylko w pamięci — restart zeruje go. Nie jest to problem: restart zrywa wszystkie
-połączenia SignalR, więc każdy klient i tak przechodzi przez pełne `onreconnected` → `Subscribe`
-z `lastSeenSequence` sprzed restartu. Serwer widzi swoje `0`, klient pamięta np. `850` — rozjazd
-wykrywa się poprawnie jako luka i wymusza resync, zamiast po cichu kłamać nieaktualnym stanem.
+Licznik przeżywa proces, bo leży w tabeli `notification.signature_sequence`. Restart przekaźnika
+nie cofa więc numeracji, a restart hubu zrywa połączenia, po czym klient i tak wraca przez
+`onreconnected` → `Subscribe` z zapamiętanym `lastSeenSequence`. W obu przypadkach porównanie
+odbywa się z tą samą, monotoniczną wartością — mechanizm nie ma jak po cichu skłamać.
 
-### Ograniczenie — jedna instancja
+Wariant ulotny (licznik w pamięci procesu) był poprawny dopóty, dopóki licznik i połączenia
+**ginęły razem**; rozdział ról Hub/Relay to rozerwał. Uzasadnienie rewizji:
+[`multi-instance.md` §7.2](./multi-instance.md#72-licznik-sekwencji--postgres-rewizja-wcześniejszej-decyzji).
 
-Przy więcej niż jednej instancji Notification każda liczy sekwencję **osobno** — mechanizm w
-obecnej postaci przestaje być poprawny. To ten sam problem co przy samym rozgłaszaniu SignalR
-(patrz sekcja 6) i czeka na to samo rozwiązanie: backplane.
+### Wiele instancji Notification
+
+Licznik jest wspólny dla całej floty, bo zwiększa go atomowy `INSERT … ON CONFLICT DO UPDATE …
+RETURNING`, a zwiększa go **jeden** przekaźnik (`Realtime:Role = Relay`). Huby tylko czytają
+wartość przy `Subscribe`, więc dołożenie kolejnego hubu nie rozszczepia numeracji — patrz
+sekcja 6.
 
 ---
 
@@ -199,7 +205,7 @@ Dwie rzeczy idą z tym w parze:
 
 - **Licznik sekwencji jest trwały** (`notification.signature_sequence`), a nie w pamięci — po
   rozdzieleniu ról restart przekaźnika **nie zrywa** połączeń, więc wyzerowany licznik zaczynałby
-  wydawać numery, które klienci już widzieli. Szerzej: [`multi-instance.md` §7.2](./multi-instance.md).
+  wydawać numery, które klienci już widzieli. Szerzej: [`multi-instance.md` §7.2](./multi-instance.md#72-licznik-sekwencji--postgres-rewizja-wcześniejszej-decyzji).
 - **Front łączy się z `skipNegotiation: true`**, więc load balancer nie potrzebuje powinowactwa
   sesji. Cena: znika fallback na SSE i long-polling.
 

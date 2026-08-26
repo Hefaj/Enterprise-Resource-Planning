@@ -26,7 +26,7 @@ Dokumenty opisują **stan bieżący**, nie historię zmian ani planów — od te
 
 | Temat | Plik |
 |---|---|
-| Architektura — Clean Architecture per moduł, decyzje technologiczne, założenia jednoinstancyjne | [backend/architecture.md](./backend/architecture.md) |
+| Architektura — Clean Architecture per moduł, decyzje technologiczne, zdjęte założenia jednoinstancyjne | [backend/architecture.md](./backend/architecture.md) |
 | Nowy mikroserwis — 4 projekty, `.sln`, `DbContext`, `Program.cs` | [backend/new-microservice.md](./backend/new-microservice.md) |
 | CQRS — komendy, handlery, zapytania, kontrakt HTTP dla NSwag | [backend/cqrs.md](./backend/cqrs.md) |
 | Nazewnictwo komend i endpointów — pięć czasowników, trasy, test architektoniczny | [backend/endpoint-naming.md](./backend/endpoint-naming.md) |
@@ -38,3 +38,7 @@ Dokumenty opisują **stan bieżący**, nie historię zmian ani planów — od te
 | Realtime SignalR — sygnatury, grupy, koalescencja, resync | [backend/realtime-signalr.md](./backend/realtime-signalr.md) |
 | Persystencja — EF Core, migracje, seed, drzewa/closure table | [backend/persistence-ef.md](./backend/persistence-ef.md) |
 | Tożsamość i uprawnienia — Keycloak (AuthN) + moduł Identity (AuthZ) | [backend/identity-authz.md](./backend/identity-authz.md) |
+| Skalowanie poziome — dzierżawy, rozdział ról Hub/Relay, backplane | [backend/multi-instance.md](./backend/multi-instance.md) |
+| Raporty — biblioteka zamiast mikroserwisu, `ReportRun`, izolacja zasobów ciężkich przebiegów (📐 plan) | [backend/reporting.md](./backend/reporting.md) |
+| Wyjście na produkcję — obrazy, sekrety, gateway, backup (📐 plan) | [backend/production.md](./backend/production.md) |
+| Obserwowalność — health checks, alerty, korelacja śladów, zapobieganie awariom (📐 plan) | [backend/observability.md](./backend/observability.md) |

@@ -85,6 +85,25 @@ public static class ErpMessagingExtensions
                 wolverine.Discovery.IncludeAssembly(assembly);
             }
 
+            // Zestaw, w którym Wolverine szuka wygenerowanego kodu (i w którym `codegen write`
+            // go umieszcza) — projekt Api serwisu, czyli zestaw wejściowy procesu.
+            //
+            // Bez tej linii Wolverine bierze za „zestaw aplikacji" ten, z którego wołane jest
+            // `UseWolverine` — a to jest fundament, nie moduł. Objaw jest podstępny: przy trybie
+            // dynamicznym nic się nie dzieje (kod i tak powstaje w pamięci), a przy trybie
+            // statycznym serwis WSTAJE, tylko każdy handler kończy się `ExpectedTypeMissingException`
+            // wpisanym do logu. Aplikacja wygląda na zdrową, a komunikaty przelatują bez obsługi.
+            var applicationAssembly = Assembly.GetEntryAssembly();
+
+            if (applicationAssembly is not null)
+            {
+                // Obie właściwości, bo to nie jest ta sama rzecz: `WolverineOptions` ustala
+                // zestaw aplikacji przy budowaniu reguł generowania, więc samo ustawienie go
+                // na `CodeGeneration` zostaje nadpisane.
+                wolverine.ApplicationAssembly = applicationAssembly;
+                wolverine.CodeGeneration.ApplicationAssembly = applicationAssembly;
+            }
+
             if (options.PrecompiledHandlers)
             {
                 // Kod handlerów pochodzi z zestawu, nie z Roslyna przy starcie —

@@ -64,6 +64,9 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Migracja EF, mapowanie agregatu, seed, drzewo/closure table | [`docs/backend/persistence-ef.md`](docs/backend/persistence-ef.md) |
 | Autoryzacja/role/uprawnienia — Keycloak (AuthN), moduł Identity (AuthZ), `grant_audit`, wygasające nadania, wymuszone wylogowanie | [`docs/backend/identity-authz.md`](docs/backend/identity-authz.md) |
 | Skalowanie poziome / druga instancja serwisu — dzierżawy `SKIP LOCKED`, rozdział ról Hub/Relay, backplane, kolejność faz | [`docs/backend/multi-instance.md`](docs/backend/multi-instance.md) |
+| Raport (zestawienie, agregacja, plik do pobrania) — dlaczego nie osobny mikroserwis, `ReportRun`/`IReportDefinition`, izolacja zasobów (sloty `Map`/`Reduce`, rola workera, pula połączeń, replika) | [`docs/backend/reporting.md`](docs/backend/reporting.md) |
+| Wdrożenie produkcyjne — obrazy kontenerów, konfiguracja i sekrety poza repo, gateway/TLS, migracje jako krok wdrożenia, health checks, backup, CI/CD | [`docs/backend/production.md`](docs/backend/production.md) |
+| Obserwowalność produkcyjna — health checks (`live`/`ready`/`deps`), co alertować w tej architekturze (outbox, `job`, Relay), korelacja po `X-Request-Id`, retencja i limity | [`docs/backend/observability.md`](docs/backend/observability.md) |
 
 **Mapa portów (frontend)**: client 4200, catalog 4201, inventory 4202, sales 4203, dms 4204, task-management 4205, notification 4206, identity 4207, nowy moduł → następny wolny.
 **Mapa portów (backend, HTTP dev)**: catalog 5149, notification 5250, sales 5269, identity 5280 (Inventory/Dms/Task-management nie mają jeszcze backendu — brak portu do czasu wdrożenia).

@@ -3,7 +3,7 @@
 # Uruchamianie:
 #   docker compose -f docker-compose.yml -f docker-compose.multi.yml up
 #
-# CO TO JEST, A CZYM NIE JEST. To narzędzie do udowodnienia, że zmiany z faz 1–4 działają,
+# CO TO JEST, A CZYM NIE JEST. To narzędzie do udowodnienia, że zmiany z faz 1–5 działają,
 # a nie obraz produkcyjny. Instancje chodzą z bind-mountem repozytorium na obrazie SDK
 # (`dotnet run`), bo backend nie ma dziś Dockerfile'i, a dokładanie ich tylko po to, żeby
 # przetestować SKIP LOCKED, byłoby ogonem merdającym psem. Gdy Dockerfile'e powstaną, ten plik
@@ -17,13 +17,46 @@
 name: erp
 
 services:
+  # ── Rozgrzanie cache'u pakietów ───────────────────────────────────────────────────────────
+  #
+  # Pięć kontenerów startujących naraz odpala pięć równoległych `dotnet restore` do JEDNEGO
+  # wolumenu z pakietami. NuGet radzi sobie z równoległością w obrębie maszyny, ale rozpakowanie
+  # pakietu przez pięć niezależnych kontenerów potrafi zostawić plik w połowie — objawia się to
+  # błędem `Could not find file '.../acg4uxhj.h3r'` przy losowym pakiecie i losowej instancji.
+  #
+  # Jednorazowy krok, od którego zależą wszystkie instancje: pakiety trafiają do wolumenu RAZ,
+  # a potem pięć restore'ów już tylko je czyta. Własny `ErpBuildSlot`, żeby nie pisać rootem do
+  # `obj/` używanego przez build z hosta.
+  restore:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: erp-restore
+    working_dir: /src
+    environment:
+      ErpBuildSlot: restore
+      DOTNET_NOLOGO: "1"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        dotnet restore modules/Catalog/Catalog.Api/Catalog.Api.csproj
+        dotnet restore modules/Notification/Notification.Api/Notification.Api.csproj
+        dotnet restore modules/Identity/Identity.Api/Identity.Api.csproj
+        echo "Cache pakietow gotowy."
+    volumes:
+      - .:/src
+      - nuget-cache:/root/.nuget/packages
+    restart: "no"
+
   # ── Katalog ×2 ───────────────────────────────────────────────────────────────────────────
   #
   # Weryfikuje fazę 1 (dwa BulkCommandRunner / ExportRunner nad jednym Postgresem) i fazę 3
   # (unieważnienie cache uprawnień docierające do OBU instancji).
   #
-  # Migracje: `Database__MigrateOnStartup=false` na obu — zgodnie z fazą 2 schemat stosuje się
-  # osobnym krokiem. Przed pierwszym `up` wystarczy raz uruchomić Catalog.Api z hosta.
+  # Migracje: `Database__MigrateOnStartup=true` na OBU — celowo. Na produkcji schemat stosuje
+  # osobny krok wdrożenia, ale ten profil ma sprawdzać właśnie to, czy równoległy start kilku
+  # instancji nie rozjedzie `__EFMigrationsHistory` (faza 2, dzierżawa blokująca). Wyłączenie
+  # flagi zamieniłoby test w założenie i wymagałoby ręcznego kroku przed każdym `up`.
   catalog-1: &catalog
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: erp-catalog-1
@@ -35,7 +68,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__CatalogDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
-      Database__MigrateOnStartup: "false"
+      Database__MigrateOnStartup: "true"
       # Seed to praca startowa pod dzierżawą (faza 2) — celowo zostaje włączony na OBU
       # instancjach, bo właśnie jego równoległy start jest tu przedmiotem testu.
       Seed__Enabled: "true"
@@ -46,12 +79,17 @@ services:
       # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
       Messaging__PrecompiledHandlers: "true"
       Artifacts__Endpoint: minio:9000
-      Keycloak__Authority: http://keycloak:8080/realms/erp
+      # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
+      # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.
+      Keycloak__Authority: http://localhost:8080/realms/erp
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/erp/.well-known/openid-configuration
       Identity__BaseUrl: http://identity:8080
     volumes:
-      - ..:/src
+      - .:/src
       - nuget-cache:/root/.nuget/packages
     depends_on:
+      restore:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       rabbitmq:
@@ -68,7 +106,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__CatalogDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
-      Database__MigrateOnStartup: "false"
+      Database__MigrateOnStartup: "true"
       Seed__Enabled: "true"
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
@@ -77,8 +115,48 @@ services:
       # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
       Messaging__PrecompiledHandlers: "true"
       Artifacts__Endpoint: minio:9000
-      Keycloak__Authority: http://keycloak:8080/realms/erp
+      # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
+      # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.
+      Keycloak__Authority: http://localhost:8080/realms/erp
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/erp/.well-known/openid-configuration
       Identity__BaseUrl: http://identity:8080
+
+  # ── Identity ─────────────────────────────────────────────────────────────────────────────
+  #
+  # Jedna instancja i to wystarcza: Identity jest tu po to, żeby Catalog miał kogo zapytać
+  # o uprawnienia (bez tego każdy zapis kończy się 403 i profil nie nadaje się do sprawdzenia
+  # czegokolwiek poza startem). Przy okazji to Identity wypuszcza `PermissionsInvalidated`
+  # na `erp.broadcast` — czyli daje się na nim sprawdzić fazę 3 na obu instancjach Catalogu.
+  identity:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: erp-identity
+    working_dir: /src/modules/Identity/Identity.Api
+    command: ["dotnet", "run", "--no-launch-profile"]
+    environment:
+      ErpBuildSlot: identity
+      DOTNET_NOLOGO: "1"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__IdentityDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Database__MigrateOnStartup: "true"
+      Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
+      Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      Keycloak__Authority: http://localhost:8080/realms/erp
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/erp/.well-known/openid-configuration
+      KeycloakAdmin__AuthServerUrl: http://keycloak:8080
+      Identity__BaseUrl: http://identity:8080
+    volumes:
+      - .:/src
+      - nuget-cache:/root/.nuget/packages
+    ports:
+      - "5280:8080"
+    depends_on:
+      restore:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   # ── Notification: rozdział ról (faza 4) ──────────────────────────────────────────────────
   #
@@ -97,20 +175,26 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Realtime__Role: Relay
+      Identity__BaseUrl: http://identity:8080
       Realtime__Redis: redis:6379
       ConnectionStrings__NotificationDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
-      Database__MigrateOnStartup: "false"
+      Database__MigrateOnStartup: "true"
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
       # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
       # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
       Messaging__PrecompiledHandlers: "true"
-      Keycloak__Authority: http://keycloak:8080/realms/erp
+      # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
+      # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.
+      Keycloak__Authority: http://localhost:8080/realms/erp
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/erp/.well-known/openid-configuration
     volumes:
-      - ..:/src
+      - .:/src
       - nuget-cache:/root/.nuget/packages
     depends_on:
+      restore:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       rabbitmq:
@@ -118,9 +202,15 @@ services:
       redis:
         condition: service_healthy
 
+  # Huby mają wystawione porty OBOK load balancera — nie po to, żeby tak chodził klient, tylko
+  # żeby dało się celowo posadzić dwa połączenia na DWÓCH RÓŻNYCH instancjach. Round-robin tego
+  # nie gwarantuje, a bez gwarancji test backplane'u potrafi sprawdzić zupełnie co innego:
+  # dwóch klientów na jednym hubie dostaje wiadomość bez udziału Redisa.
   notification-hub-1: &hub
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: erp-notification-hub-1
+    ports:
+      - "5251:8080"
     working_dir: /src/modules/Notification/Notification.Api
     command: ["dotnet", "run", "--no-launch-profile"]
     environment:
@@ -129,9 +219,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Realtime__Role: Hub
+      Identity__BaseUrl: http://identity:8080
       Realtime__Redis: redis:6379
       ConnectionStrings__NotificationDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
-      Database__MigrateOnStartup: "false"
+      Database__MigrateOnStartup: "true"
       Messaging__ListenQueueName: ""
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
@@ -139,11 +230,16 @@ services:
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
       # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
       Messaging__PrecompiledHandlers: "true"
-      Keycloak__Authority: http://keycloak:8080/realms/erp
+      # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
+      # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.
+      Keycloak__Authority: http://localhost:8080/realms/erp
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/erp/.well-known/openid-configuration
     volumes:
-      - ..:/src
+      - .:/src
       - nuget-cache:/root/.nuget/packages
     depends_on:
+      restore:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -152,15 +248,18 @@ services:
   notification-hub-2:
     <<: *hub
     container_name: erp-notification-hub-2
+    ports:
+      - "5252:8080"
     environment:
       ErpBuildSlot: hub2
       DOTNET_NOLOGO: "1"
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Realtime__Role: Hub
+      Identity__BaseUrl: http://identity:8080
       Realtime__Redis: redis:6379
       ConnectionStrings__NotificationDb: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
-      Database__MigrateOnStartup: "false"
+      Database__MigrateOnStartup: "true"
       Messaging__ListenQueueName: ""
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
@@ -168,7 +267,21 @@ services:
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
       # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
       Messaging__PrecompiledHandlers: "true"
-      Keycloak__Authority: http://keycloak:8080/realms/erp
+      # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
+      # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.
+      Keycloak__Authority: http://localhost:8080/realms/erp
+      Keycloak__MetadataAddress: http://keycloak:8080/realms/erp/.well-known/openid-configuration
+
+  # ── Keycloak: stały, publiczny emitent ───────────────────────────────────────────────────
+  #
+  # Bez `KC_HOSTNAME` Keycloak wystawia `iss` zgodny z hostem żądania: token wzięty z przeglądarki
+  # ma `http://localhost:8080/...`, a serwis w kontenerze ufa `http://keycloak:8080/...` i odrzuca
+  # go z 401. Przypięcie adresu publicznego sprawia, że emitent jest JEDEN dla wszystkich, a różnicę
+  # w dostępie sieciowym zdejmuje `Keycloak__MetadataAddress` po stronie serwisów.
+  keycloak:
+    environment:
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
 
   # ── Redis: WYŁĄCZNIE backplane SignalR ───────────────────────────────────────────────────
   #
@@ -194,6 +307,10 @@ services:
   # z `skipNegotiation: true`, więc SignalR nie zostawia stanu do przyklejenia (§7.4).
   # `proxy_read_timeout` na 1h: domyślne 60 s zrywałoby bezczynne WebSockety i test resyncu
   # mierzyłby nginxa zamiast aplikacji.
+  #
+  # UWAGA PRZY PONOWNYM STAWIANIU POJEDYNCZEJ INSTANCJI: nginx zapamiętuje adresy IP backendów
+  # przy starcie, a odtworzony kontener dostaje nowy adres. Po `--force-recreate` któregokolwiek
+  # serwisu zrestartuj też nginxa — szczegóły w nagłówku ./nginx/multi.conf.
   nginx:
     image: nginx:1.27-alpine
     container_name: erp-nginx

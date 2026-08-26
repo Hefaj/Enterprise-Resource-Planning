@@ -27,6 +27,22 @@ public sealed class KeycloakOptions
     /// w tokenie. Keycloak domyślnie NIE dokłada <c>audience</c> bez dedykowanego mappera —
     /// patrz uwaga w <see cref="ErpAuthExtensions.AddErpAuth"/>.</summary>
     public string Audience { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Adres dokumentu discovery, gdy <b>różni się od tego w tokenie</b>; puste — wyliczany
+    /// z <see cref="Authority"/>.
+    ///
+    /// <para><b>Po co to istnieje.</b> Claim <c>iss</c> w tokenie jest adresem <i>publicznym</i>
+    /// Keycloaka — tym, pod którym zalogowała się przeglądarka. Serwis biegnący w kontenerze
+    /// albo w klastrze zwykle nie ma jak pod ten adres sięgnąć i dociąga metadane ścieżką
+    /// wewnętrzną. Bez rozdzielenia tych dwóch adresów trzeba wybrać: albo serwis nie pobierze
+    /// kluczy, albo odrzuci token na niezgodności emitenta.</para>
+    ///
+    /// <para>Emitent do porównania pochodzi z <b>dokumentu discovery</b>, nie z tej wartości —
+    /// więc podstawienie adresu wewnętrznego nie rozluźnia walidacji. Keycloak musi tylko
+    /// ogłaszać stały <c>issuer</c> (u nas: <c>KC_HOSTNAME</c> w profilu wieloinstancyjnym).</para>
+    /// </summary>
+    public string? MetadataAddress { get; init; }
 }
 
 /// <summary>
@@ -56,6 +72,11 @@ public static class ErpAuthExtensions
             {
                 bearerOptions.Authority = options.Authority;
                 bearerOptions.Audience = options.Audience;
+
+                if (!string.IsNullOrWhiteSpace(options.MetadataAddress))
+                {
+                    bearerOptions.MetadataAddress = options.MetadataAddress;
+                }
 
                 // Dev: Keycloak w compose gada HTTP, nie HTTPS. Do zmiany, gdy realm dostanie TLS.
                 bearerOptions.RequireHttpsMetadata = false;

@@ -272,8 +272,10 @@ kodu nie złapał, obie po stronie broadcastu unieważnień i obie ciche. Opis w
 
 - **Rozgłaszanie SignalR przez backplane** nie ma testu automatycznego — wymagałby trzech hostów
   ASP.NET, Redisa i uwierzytelnionych klientów WebSocket, czyli kosztu nieproporcjonalnego do
-  tego, że sprawdzałby w istocie bibliotekę Microsoftu. Ścieżka do sprawdzenia ręcznego profilem
-  [`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml).
+  tego, że sprawdzałby w istocie bibliotekę Microsoftu. Sprawdzone <b>ręcznie</b> profilem
+  [`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml): dwaj klienci na dwóch
+  różnych hubach dostają zmianę zleconą przez load balancer
+  ([`multi-instance.md` §8.3](./multi-instance.md#83-profil-wieloinstancyjny--co-wyszło-przy-pierwszym-uruchomieniu)).
 - **`Messaging:PrecompiledHandlers`** jest gotowe i wyłączone domyślnie — kod handlerów trzeba
   regenerować przy każdej zmianie ich kształtu, więc włączenie flagi to decyzja wdrożenia
   ([`multi-instance.md` §8.2](./multi-instance.md#82-kod-handlerów-generowany-z-wyprzedzeniem)).

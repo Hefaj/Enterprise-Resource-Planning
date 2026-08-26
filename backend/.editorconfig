@@ -7,3 +7,10 @@ root = false
 [**/Persistence/Migrations/**.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.severity = none
+
+# Kod handlerów Wolverine'a wytworzony przez `dotnet run -- codegen write`. Ta sama racja
+# co przy migracjach EF: plik powstaje z narzędzia i jest regenerowany przy każdej zmianie
+# kształtu handlera, więc reguły pisane dla kodu ręcznego nie mają tu czego pilnować.
+[**/Internal/Generated/**.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none

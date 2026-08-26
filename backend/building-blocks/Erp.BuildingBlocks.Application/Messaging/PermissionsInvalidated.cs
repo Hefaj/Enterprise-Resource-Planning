@@ -34,13 +34,45 @@ public sealed record PermissionsInvalidated(string? UserId, DateTimeOffset Occur
 /// w <c>Erp.BuildingBlocks.Api</c>, a handler komunikatu — w warstwie komunikatów. Zależność
 /// szłaby pod prąd; abstrakcja w <c>Application</c> ustawia ją z powrotem.</para>
 ///
-/// <para>Handler wstrzykuje <b>kolekcję</b> implementacji i woła każdą. Serwis, który nie
-/// cache'uje uprawnień (Identity czyta bazę wprost), po prostu nie rejestruje żadnej — i nie
-/// potrzebuje do tego implementacji-pustaka ani sztywnej kolejności rejestracji w DI.</para>
+/// <para>Implementacji może być zero (serwis bez cache'u uprawnień — Identity czyta bazę wprost)
+/// albo kilka; rozdaje im sygnał <see cref="PermissionCacheInvalidation"/>.</para>
 /// </summary>
 public interface IPermissionCacheInvalidator
 {
     /// <param name="userId">Użytkownik do wyrzucenia z cache'u; <c>null</c> — wyczyść wszystko.</param>
     /// <param name="cancellationToken">Token anulowania.</param>
     Task InvalidateAsync(string? userId, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// Rozdaje unieważnienie wszystkim lokalnym cache'om uprawnień.
+///
+/// <para><b>Dlaczego to osobna usługa, a nie <c>IEnumerable&lt;IPermissionCacheInvalidator&gt;</c>
+/// wprost w sygnaturze handlera.</b> Wolverine generuje kod handlerów i od wersji 6 odmawia
+/// <i>service location</i> — parametru, którego nie umie rozwiązać jako pojedynczej,
+/// jednoznacznej zależności. Kolekcja implementacji jest właśnie takim przypadkiem: handler
+/// z takim parametrem nie kompiluje się do łańcucha i <b>nigdy się nie uruchamia</b>, a jedynym
+/// śladem jest wpis w logu przy starcie. Jedna zależność zamiast kolekcji zdejmuje ten problem
+/// i przy okazji daje miejsce na sensowną nazwę tego, co się dzieje.</para>
+///
+/// <para>Pusta lista jest poprawna i typowa — nie potrzeba do niej implementacji-pustaka
+/// ani sztywnej kolejności rejestracji w DI.</para>
+/// </summary>
+public sealed class PermissionCacheInvalidation
+{
+    private readonly IEnumerable<IPermissionCacheInvalidator> _invalidators;
+
+    public PermissionCacheInvalidation(IEnumerable<IPermissionCacheInvalidator> invalidators)
+        => _invalidators = invalidators;
+
+    /// <summary>Woła każdy zarejestrowany cache.</summary>
+    /// <param name="userId">Użytkownik do wyrzucenia; <c>null</c> — wyczyść wszystko.</param>
+    /// <param name="cancellationToken">Token anulowania.</param>
+    public async Task ApplyAsync(string? userId, CancellationToken cancellationToken)
+    {
+        foreach (var invalidator in _invalidators)
+        {
+            await invalidator.InvalidateAsync(userId, cancellationToken).ConfigureAwait(false);
+        }
+    }
 }

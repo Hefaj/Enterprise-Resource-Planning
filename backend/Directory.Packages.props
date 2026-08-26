@@ -26,6 +26,9 @@
     <!-- Overload `services.Configure<T>(IConfiguration)` — bindowanie opcji z appsettings. -->
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
+    <!-- Pełny host (nie same abstrakcje) — potrzebny testom integracyjnym, które stawiają
+         dwa niezależne procesy-węzły w jednym procesie testowym. -->
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup Label="Walidacja">
@@ -63,9 +66,12 @@
       TypeLoadMode.Dynamic generuje kod handlerów przy starcie — bez tego pakietu host
       w ogóle się nie podnosi.
 
-      Docelowo na produkcji lepiej wygenerować kod z wyprzedzeniem (komenda `codegen write`
-      Wolverine'a + TypeLoadMode.Static): szybszy start i brak Roslyna w obrazie.
-      Zostawiamy tryb dynamiczny, dopóki kształt handlerów się ustala.
+      Kod można wygenerować z wyprzedzeniem: komenda `codegen write` uruchomiona w projekcie Api
+      zapisuje go do `Internal/Generated`, a `Messaging:PrecompiledHandlers=true` przełącza
+      Wolverine'a na TypeLoadMode.Static — szybszy start, brak Roslyna w obrazie i brak wyścigu
+      na generowanym kodzie przy równoległym starcie instancji. Flaga jest domyślnie WYŁĄCZONA:
+      zatwierdzony kod trzeba regenerować przy każdej zmianie kształtu handlera, więc włączenie
+      jej jest decyzją wdrożenia, nie stanem domyślnym. Patrz docs/backend/multi-instance.md §8.2.
     -->
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.28.0" />
   </ItemGroup>

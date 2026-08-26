@@ -4,8 +4,8 @@ Backend **nie zakłada już jednej instancji serwisu**. Ten dokument jest planem
 założenie zostało zdjęte: co zmienić, w jakiej kolejności i **jak udowodnić**, że zadziałało.
 Stan po zmianie opisuje [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
 
-Stan: ✅ fazy 0–4 wdrożone, 📐 faza 5 otwarta. Rozjazdy między planem a kodem — świadome, z
-uzasadnieniem — zebrane w [§11](#11-odstępstwa-od-planu). Legenda znaczników jak w
+Stan: ✅ wdrożone, z dowodami. Rozjazdy między planem a kodem — świadome, z uzasadnieniem —
+zebrane w [§11](#11-odstępstwa-od-planu); dwa z nich to usterki wykryte dopiero przez testy. Legenda znaczników jak w
 [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
 
 ---
@@ -51,11 +51,12 @@ Z tego wynika stan pośredni, który jest sam w sobie użyteczny:
 | 2 | Start procesu: migracje, seedy, reconciler | bezpieczny równoległy start | brak | ✅ |
 | 3 | Cache uprawnień i wymuszone wylogowanie | Catalog/Sales/Identity ×N | brak (RabbitMQ już jest) | ✅ |
 | 4 | Realtime: rola Hub/Relay, licznik, backplane, front | Notification ×N | **Redis** | ✅ |
-| 5 | Wolverine multi-node, load balancer, dokumentacja | wdrożenie | LB | 📐 |
+| 5 | Wolverine multi-node, load balancer, dokumentacja | wdrożenie | LB | ✅ |
 
-Fazy 0–4 są wdrożone i kompilują się z zielonymi testami architektonicznymi. Dowody z
-[§10](#10-kryteria-akceptacji) wymagają żywej infrastruktury (Testcontainers, MinIO, RabbitMQ)
-i **nie zostały jeszcze uruchomione** — to jest otwarta praca, nie założenie.
+Wszystkie fazy są wdrożone, a dowody z [§10](#10-kryteria-akceptacji) chodzą na Testcontainers.
+Otwarte zostaje jedno: rozgłaszanie SignalR przez backplane nie ma testu automatycznego i wymaga
+sprawdzenia ręcznego profilem
+[`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml).
 
 ---
 
@@ -391,28 +392,58 @@ jako pas obok szelek, nie jako warunek działania.
 
 ## 8. Faza 5 — Wolverine, LB, domknięcie
 
-### 8.1 Wolverine w trybie wielowęzłowym — do zweryfikowania, nie do założenia
+### 8.1 Wolverine w trybie wielowęzłowym — zweryfikowane
 
 Outbox Wolverine'a na Postgresie ma własną rejestrację węzłów i elekcję dla swoich agentów
-trwałości. Powinno to działać wielowęzłowo z pudełka, ale **plan nie może się opierać na
-„powinno"**. Zadanie weryfikacyjne, wykonalne na Testcontainers:
+trwałości. Plan wprost odmawiał opierania się na „powinno działać z pudełka" — i słusznie, bo
+weryfikacja wykryła dwie usterki, których przegląd kodu nie złapał (obie opisane w
+[§11](#11-odstępstwa-od-planu)).
 
-- dwa węzły tego samego serwisu, jeden Postgres, jeden RabbitMQ;
-- zapis komendy produkującej zdarzenie integracyjne;
-- sprawdzenie, że **agent odzysku nie wysyła koperty dwa razy** (najbardziej prawdopodobny
-  objaw braku elekcji);
-- sprawdzenie, czy `TypeLoadMode.Dynamic` przy równoległym starcie węzłów nie wchodzi w wyścig
-  na generowanym kodzie — a przy okazji przejście na `codegen write` + `TypeLoadMode.Static`,
-  co `Directory.Packages.props` już dziś wskazuje jako docelowe dla produkcji.
+Test `MultiNodeMessagingTests` stawia dwa węzły nad jednym Postgresem i jednym RabbitMQ
+(Testcontainers) i sprawdza:
 
-### 8.2 Domknięcie dokumentacji
+- **kopertę wysłaną raz, nie dwa** — 50 zdarzeń przez outbox dociera łącznie 50 razy; podwojenie
+  byłoby najbardziej prawdopodobnym objawem braku elekcji dla agenta odzysku;
+- **rozgłoszenie docierające do obu węzłów** — i niewpadające przy okazji na kolejkę roboczą.
 
-[`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) przestaje opisywać stan
-faktyczny i zmienia się w opis **zdjętych** założeń, z odesłaniem tutaj. Adnotacje w kodzie
-(`ExportRunner`, `MediaReconciliationService`, `ExpiredGrantCleanupService`,
-`HttpPermissionProvider`) mówiące „zakłada jedną instancję" trzeba zdjąć **razem ze zmianą**, nie
-później — komentarz kłamiący o współbieżności jest gorszy niż brak komentarza. Zrobione: każda
-z tych klas niesie dziś `[ClusterSafe]` z opisem mechanizmu, który ją zabezpiecza.
+Wynik: **outbox wielowęzłowo działa bez zmian w konfiguracji.** Rejestracja węzłów i przydział
+agentów trwałości robią swoje same.
+
+### 8.2 Kod handlerów generowany z wyprzedzeniem
+
+Wolverine domyślnie generuje kod handlerów Roslynem przy starcie (`TypeLoadMode.Dynamic`).
+Przy równoległym starcie kilku instancji jest to jeszcze jedna rzecz robiona N razy, i jeszcze
+jedno miejsce, w którym instancje mogą sobie wejść w drogę na plikach.
+
+Przełącznik jest gotowy:
+
+```bash
+dotnet run --project modules/Catalog/Catalog.Api -- codegen write
+```
+
+Kod ląduje w `Internal/Generated/WolverineHandlers/` projektu Api i jest **zatwierdzony
+w repozytorium**. `Messaging:PrecompiledHandlers=true` przełącza Wolverine'a na
+`TypeLoadMode.Static`, czyli ładowanie gotowych typów z zestawu — bez Roslyna, bez generowania,
+bez wyścigu. Profil [`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml) ma to
+włączone.
+
+Uruchomienie serwisów przechodzi teraz przez `RunJasperFxCommands(args)` zamiast `RunAsync()`.
+Bez argumentów zachowanie jest identyczne; różnica polega na tym, że komenda `codegen` w ogóle
+istnieje.
+
+> **Flaga jest domyślnie wyłączona i to jest świadome.** Zatwierdzony kod trzeba regenerować przy
+> **każdej** zmianie kształtu handlera — nowej zależności, nowej sygnaturze, nowym handlerze.
+> Rozjazd kończy się błędem przy starcie, więc jest głośny, ale i tak jest kosztem. Włączenie
+> flagi to decyzja wdrożenia (gdzie start liczy się w sekundach, a obraz ma być bez kompilatora),
+> a nie stan domyślny repozytorium, w którym handlery wciąż się zmieniają.
+
+### 8.3 Domknięcie dokumentacji
+
+[`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nie opisuje już
+stanu faktycznego jako jednoinstancyjnego — jest opisem **zdjętych** założeń, z odesłaniem tutaj.
+Adnotacje w kodzie mówiące „zakłada jedną instancję" zostały zdjęte razem ze zmianą, a nie
+później: komentarz kłamiący o współbieżności jest gorszy niż brak komentarza. Każda usługa tła
+niesie dziś `[ClusterSafe]` z opisem mechanizmu, który ją zabezpiecza.
 
 ---
 
@@ -435,19 +466,32 @@ zamiast pamięci procesu. Dotykanie ich w ramach tego planu byłoby zmianą bez 
 
 ## 10. Kryteria akceptacji
 
-Plan bez dowodu jest przypuszczeniem. Każda faza ma mieć test, który przy jednej instancji też
-przechodzi — inaczej nie da się go trzymać w CI.
+Plan bez dowodu jest przypuszczeniem. Dowody leżą w
+[`backend/tests/Erp.IntegrationTests`](../../backend/tests/Erp.IntegrationTests) i chodzą na
+Testcontainers — Postgres i RabbitMQ startują z obrazów, więc CI nie potrzebuje żadnej
+infrastruktury poza Dockerem, a testy nie mieszają swoich wyścigów z cudzymi.
 
-| Faza | Dowód |
-|---|---|
-| 1 | Testcontainers: **dwa** `BulkCommandRunner` nad jednym Postgresem, zadanie na 5 tys. elementów. Asercje: `sum(succeeded + failed) = total`, **zero** `job_item.error_code = 'concurrency_conflict'`, żaden element nie wykonany dwukrotnie (licznik efektów ubocznych na agregacie, nie samo `attempts`). |
-| 1 | Dwa `ExportRunner`, jeden przebieg: **dokładnie jeden** artefakt w MinIO, `export_run.artifact_uuid` niepusty i wskazujący na istniejący obiekt. |
-| 1 | Zabicie runnera w połowie eksportu → przebieg wraca do `Pending` po upływie progu heartbeatu i kończy się poprawnie. |
-| 2 | Równoległy start 3 instancji na pustej bazie: schemat kompletny, `permission_catalog` bez duplikatów, brak wyjątków w logach startu. |
-| 3 | Odebranie uprawnienia → 403 na **obu** instancjach w < 2 s (dziś: do 60 s, niezależnie na każdej). Wymuszone wylogowanie unieważnia cache w całej flocie, nie w jednym procesie. |
-| 4 | 2× Hub + 1× Relay, klienci na **różnych** instancjach: zmiana produktu dociera do obu. Bulk na 50 tys. → **dokładnie jeden** `ReceiveInvalidation(.., 'all')` u każdego klienta, a nie komplet uuid-ów. |
-| 4 | Restart Relaya przy żywych połączeniach: `lastSeenSequence` nie cofa się, a wykrywanie luki działa dalej (weryfikacja [§7.2](#72-licznik-sekwencji--postgres-rewizja-wcześniejszej-decyzji)). |
-| 5 | Dwa węzły Wolverine'a: zdarzenie integracyjne dociera **raz**, nie dwa razy. |
+Wspólny wzorzec: instancje startują **naraz**, przez barierę. Test współbieżności, w którym
+uczestnicy rozjeżdżają się w czasie, przechodzi zawsze — i niczego nie dowodzi.
+
+| Faza | Dowód | Test |
+|---|---|---|
+| 0 | Dzierżawa jest wyłączna, zwalnia się po oddaniu i — kluczowe — **sama po śmierci właściciela**: zerwana sesja TCP puszcza advisory lock bez niczyjego udziału. Wariant blokujący czeka, zamiast pomijać krok. | `ExclusiveLeaseTests` |
+| 1 | **Dwa** `BulkCommandRunner` nad jednym Postgresem, zadanie na 5 tys. elementów: `succeeded + failed = total`, **zero** `job_item.error_code = 'concurrency_conflict'`, każdy agregat dotknięty **dokładnie raz** (licznik skutków ubocznych na agregacie, nie `attempts`). | `BulkCommandRunnerTests` |
+| 1 | `SKIP LOCKED` daje obie własności naraz: zajęte zadanie jest **pomijane** (nie odbierane), a dwa wolne zadania trafiają do dwóch runnerów (nie kolejki do jednego). | `BulkCommandRunnerTests` |
+| 1 | Przebieg eksportu przejmuje **dokładnie jeden** runner; przebieg po martwym runnerze wraca do `Pending` po progu bicia serca; przebieg **żywy** nie jest odzyskiwany. | `ExportRunConcurrencyTests` |
+| 2 | Równoległy start **trzech** instancji na pustej bazie: komplet migracji, historia bez duplikatów, tabele odpowiadają na zapytania. Osobno: trzy instancje uzgadniające katalog uprawnień nie zostawiają duplikatów kodów. | `StartupRaceTests` |
+| 3 | Unieważnienie uprawnień dociera do **obu** węzłów, a nie do jednego — i nie wpada przy okazji na kolejkę roboczą, gdzie byłoby komunikatem bez handlera. | `MultiNodeMessagingTests` |
+| 4 | Licznik sekwencji przeżywa restart przekaźnika (`lastSeenSequence` się nie cofa), nieznana sygnatura daje zero, a równoległe inkrementacje nie gubią numerów. | `SignatureSequenceTests` |
+| 5 | Dwa węzły Wolverine'a nad jednym Postgresem i RabbitMQ: 50 kopert wypuszczonych przez outbox dociera **dokładnie 50 razy** łącznie — agent odzysku nie dubluje wysyłki. | `MultiNodeMessagingTests` |
+
+**Czego te testy nie obejmują.** Rozgłaszanie SignalR przez backplane Redis do klientów wiszących
+na różnych hubach nie ma testu automatycznego — wymagałby trzech hostów ASP.NET, Redisa
+i uwierzytelnionych klientów WebSocket, czyli kosztu nieproporcjonalnego do tego, że sprawdzałby
+w istocie bibliotekę Microsoftu. Ta ścieżka zostaje do sprawdzenia ręcznego przez profil
+[`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml). Tak samo „dokładnie jeden
+artefakt w MinIO": wynika wprost z „dokładnie jeden runner przejmuje przebieg", co ma dowód wyżej,
+a dokładanie kontenera MinIO sprawdzałoby tę samą własność drożej.
 
 ---
 
@@ -457,11 +501,13 @@ Cztery miejsca, w których kod świadomie różni się od tego, co zapisano wyż
 plan nie jest tu dokumentem historycznym, tylko zapisem rozumowania, a różnica bez uzasadnienia
 byłaby po prostu błędem.
 
-**Kolejka broadcastu nie jest `exclusive`, tylko `auto-delete`.** [§6](#6-faza-3--uprawnienia-i-wymuszone-wylogowanie)
-zakładał obie flagi. Auto-delete wystarcza do tego, o co chodziło — kolejka umiera razem z ostatnim
-konsumentem, więc nie zostawia śmieci w brokerze — a `exclusive` wiąże kolejkę z konkretnym
-połączeniem AMQP i potrafi się wywrócić na `RESOURCE_LOCKED`, gdy Wolverine deklaruje topologię
-innym połączeniem niż nasłuch. Ryzyko niewstającego serwisu za zerowy zysk.
+**Kolejka broadcastu jest `exclusive` — i musi być.** Pierwsza wersja miała samo `auto-delete`
+(bez wyłączności), w przekonaniu, że to wystarczy do sprzątania i unika ryzyka `RESOURCE_LOCKED`.
+Test integracyjny wywrócił to natychmiast: **RabbitMQ 4 odrzuca kolejki nietrwałe i niewyłączne**
+(`transient_nonexcl_queues` jest funkcją wycofaną i domyślnie niedozwoloną), a serwis nie wstaje
+w ogóle. To jest dokładnie ta klasa błędu, dla której §10 wymaga dowodu, a nie przeglądu kodu:
+kod wyglądał poprawnie i przechodził kompilację, a padał przy pierwszym kontakcie z brokerem
+w wersji, która stoi w `docker-compose.yml`.
 
 **Broadcast idzie osobną wymianą `erp.broadcast`, nie `erp.events`.** Plan mówił o „kolejce per
 instancja związanej z tą samą wymianą". To by działało dla samego unieważnienia, ale kolejka
@@ -469,6 +515,14 @@ wpięta w `erp.events` dostaje **komplet** zdarzeń domenowych — a wtedy każd
 odpalałby się dwa razy: raz z kolejki serwisu, raz z kolejki instancji. Stąd druga wymiana i typ
 `PermissionsInvalidated` celowo umieszczony **poza** `Erp.BuildingBlocks.Contracts`, żeby reguła
 „wszystko z tego zestawu na `erp.events`" go nie złapała.
+
+**Handler broadcastu bierze jedną zależność, a nie `IEnumerable<IPermissionCacheInvalidator>`.**
+Kolekcja implementacji jest naturalnym kształtem dla „rozdaj sygnał wszystkim cache'om" i była
+pierwszą wersją. Wolverine od wersji 6 odrzuca ją jako *service location*: łańcuch handlera się
+nie kompiluje, handler **nigdy się nie uruchamia**, a jedynym śladem jest wpis w logu przy starcie —
+żadnego wyjątku, żadnego komunikatu w dead letters, po prostu cisza. Znalazł to ten sam test
+integracyjny; między nim a przeglądem kodu nie było tu żadnej innej linii obrony. Rozdawaniem
+zajmuje się teraz `PermissionCacheInvalidation`, wstrzykiwane jako jedna usługa.
 
 **Sygnał unieważnienia publikuje `GrantAuditWriter`, a nie osiem handlerów komend.** Plan nie
 wskazywał miejsca publikacji. Wybrane zostało to jedno, bo opiera się na niezmienniku, który już

@@ -65,7 +65,7 @@ public sealed partial class ExportRunner : BackgroundService
     /// zwłoki w odzysku po faktycznej awarii. Gdyby porcja 500 rekordów zaczęła trwać dłużej niż
     /// ten próg, właściwą reakcją jest zmniejszenie porcji, a nie podniesienie progu.</para>
     /// </summary>
-    private static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromMinutes(5);
+    internal static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromMinutes(5);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ExportRunner> _logger;
@@ -122,7 +122,7 @@ public sealed partial class ExportRunner : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
 
-        await ReclaimAbandonedRunsAsync(db, clock.UtcNow, cancellationToken).ConfigureAwait(false);
+        await ReclaimAbandonedRunsAsync(db, clock.UtcNow, _logger, cancellationToken).ConfigureAwait(false);
 
         var run = await ClaimNextRunAsync(db, clock.UtcNow, cancellationToken).ConfigureAwait(false);
 
@@ -216,7 +216,7 @@ public sealed partial class ExportRunner : BackgroundService
     /// bierze przebieg, a nie towarzyszyć całej jego pracy. Zwrócony agregat jest już
     /// <see cref="ExportRunStatus.Running"/> i zatwierdzony, więc żaden inny runner go nie zobaczy.</para>
     /// </summary>
-    private static async Task<ExportRun?> ClaimNextRunAsync(
+    internal static async Task<ExportRun?> ClaimNextRunAsync(
         CatalogDbContext db,
         DateTimeOffset now,
         CancellationToken cancellationToken)
@@ -263,6 +263,7 @@ public sealed partial class ExportRunner : BackgroundService
     /// <summary>
     /// Oddaje do puli przebiegi po runnerach, które przestały dawać znaki życia.
     ///
+    /// <returns>Liczba oddanych przebiegów.</returns>
     /// <para>Jedno <c>UPDATE</c> po predykacie — druga instancja robiąca to samo w tej samej chwili
     /// ustawia te same wartości w tych samych wierszach, więc operacja jest naturalnie bezpieczna
     /// i nie wymaga żadnej wyłączności.</para>
@@ -271,9 +272,10 @@ public sealed partial class ExportRunner : BackgroundService
     /// runnera w połowie eksportu zostawiało przebieg w stanie „w toku" na zawsze, a użytkownik
     /// oglądał pasek postępu, za którym nie stał żaden proces.</para>
     /// </summary>
-    private async Task ReclaimAbandonedRunsAsync(
+    internal static async Task<int> ReclaimAbandonedRunsAsync(
         CatalogDbContext db,
         DateTimeOffset now,
+        ILogger logger,
         CancellationToken cancellationToken)
     {
         var deadline = now - HeartbeatTimeout;
@@ -290,8 +292,10 @@ public sealed partial class ExportRunner : BackgroundService
 
         if (reclaimed > 0)
         {
-            LogRunsReclaimed(_logger, reclaimed);
+            LogRunsReclaimed(logger, reclaimed);
         }
+
+        return reclaimed;
     }
 
     /// <summary>

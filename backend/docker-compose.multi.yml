@@ -41,6 +41,10 @@ services:
       Seed__Enabled: "true"
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
+      # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
+      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      Messaging__PrecompiledHandlers: "true"
       Artifacts__Endpoint: minio:9000
       Keycloak__Authority: http://keycloak:8080/realms/erp
       Identity__BaseUrl: http://identity:8080
@@ -68,6 +72,10 @@ services:
       Seed__Enabled: "true"
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
+      # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
+      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      Messaging__PrecompiledHandlers: "true"
       Artifacts__Endpoint: minio:9000
       Keycloak__Authority: http://keycloak:8080/realms/erp
       Identity__BaseUrl: http://identity:8080
@@ -94,6 +102,10 @@ services:
       Database__MigrateOnStartup: "false"
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
+      # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
+      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      Messaging__PrecompiledHandlers: "true"
       Keycloak__Authority: http://keycloak:8080/realms/erp
     volumes:
       - ..:/src
@@ -123,6 +135,10 @@ services:
       Messaging__ListenQueueName: ""
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
+      # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
+      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      Messaging__PrecompiledHandlers: "true"
       Keycloak__Authority: http://keycloak:8080/realms/erp
     volumes:
       - ..:/src
@@ -148,6 +164,10 @@ services:
       Messaging__ListenQueueName: ""
       Messaging__RabbitMqConnectionString: amqp://erp:erp@rabbitmq:5672
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
+      # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
+      # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
+      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      Messaging__PrecompiledHandlers: "true"
       Keycloak__Authority: http://keycloak:8080/realms/erp
 
   # ── Redis: WYŁĄCZNIE backplane SignalR ───────────────────────────────────────────────────

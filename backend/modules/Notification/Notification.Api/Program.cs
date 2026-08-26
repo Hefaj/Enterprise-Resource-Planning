@@ -1,11 +1,12 @@
-using System.Reflection;
 using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Messaging;
+using JasperFx;
 using Microsoft.AspNetCore.SignalR;
 using Notification.Api.Hubs;
 using Notification.Api.Realtime;
-using Notification.Infrastructure;
 using Notification.Infrastructure.Persistence;
+using Notification.Infrastructure;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,4 +85,11 @@ app.UseErpApi("Notification");
 
 app.MapHub<SyncHub>(SyncHub.Path);
 
-await app.RunAsync();
+// ── URUCHOMIENIE ─────────────────────────────────────────────────────────────────────────────
+//
+// `RunJasperFxCommands`, a nie `RunAsync`: bez argumentów zachowuje się identycznie (podnosi
+// serwis), ale wystawia narzędzia wiersza poleceń Wolverine'a — przede wszystkim
+// `dotnet run -- codegen write`, którym generuje się kod handlerów z wyprzedzeniem dla trybu
+// `Messaging:PrecompiledHandlers`. Bez tego przełącznika nie da się użyć, bo nie ma czym
+// wytworzyć kodu, którego oczekuje.
+return await app.RunJasperFxCommands(args);

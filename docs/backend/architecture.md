@@ -257,13 +257,26 @@ pamięci procesu:
 - **Cache frontendowy** — `IdentityMapStore` żyje w przeglądarce i jest inwalidowany zdarzeniami
   ([`orchestrators.md`](../frontend/orchestrators.md)).
 
+### Dowody
+
+Kryteria akceptacji nie są listą życzeń — mają testy w
+[`backend/tests/Erp.IntegrationTests`](../../backend/tests/Erp.IntegrationTests), chodzące na
+Testcontainers (Postgres i RabbitMQ z obrazów, bez zależności od infrastruktury deweloperskiej).
+Pełna tabela: [`multi-instance.md` §10](./multi-instance.md#10-kryteria-akceptacji).
+
+Warto odnotować, że weryfikacja **nie była formalnością**: wykryła dwie usterki, których przegląd
+kodu nie złapał, obie po stronie broadcastu unieważnień i obie ciche. Opis w
+[`multi-instance.md` §11](./multi-instance.md#11-odstępstwa-od-planu).
+
 ### Co zostaje otwarte
 
-- **Wolverine w trybie wielowęzłowym** — outbox na Postgresie ma własną rejestrację węzłów
-  i elekcję dla agentów trwałości. Powinno działać z pudełka, ale nie jest to zweryfikowane;
-  zadanie i jego kształt opisuje [`multi-instance.md` §8.1](./multi-instance.md#81-wolverine-w-trybie-wielowęzłowym--do-zweryfikowania-nie-do-założenia).
-- **`TypeLoadMode.Static` + `codegen write`** — wskazane jako docelowe dla produkcji, wymaga
-  zatwierdzenia wygenerowanego kodu w repozytorium.
+- **Rozgłaszanie SignalR przez backplane** nie ma testu automatycznego — wymagałby trzech hostów
+  ASP.NET, Redisa i uwierzytelnionych klientów WebSocket, czyli kosztu nieproporcjonalnego do
+  tego, że sprawdzałby w istocie bibliotekę Microsoftu. Ścieżka do sprawdzenia ręcznego profilem
+  [`docker-compose.multi.yml`](../../backend/docker-compose.multi.yml).
+- **`Messaging:PrecompiledHandlers`** jest gotowe i wyłączone domyślnie — kod handlerów trzeba
+  regenerować przy każdej zmianie ich kształtu, więc włączenie flagi to decyzja wdrożenia
+  ([`multi-instance.md` §8.2](./multi-instance.md#82-kod-handlerów-generowany-z-wyprzedzeniem)).
 
 ---
 

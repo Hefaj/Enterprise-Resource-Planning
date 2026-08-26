@@ -1,13 +1,14 @@
-using Erp.BuildingBlocks.Api;
-using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Api.Auth;
+using Erp.BuildingBlocks.Api.Commands;
+using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
 using Identity.Api.Auth;
 using Identity.Application.Users;
-using Identity.Infrastructure;
 using Identity.Infrastructure.Jobs;
 using Identity.Infrastructure.Persistence;
+using Identity.Infrastructure;
+using JasperFx;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,4 +73,11 @@ if (app.Environment.IsDevelopment())
 // Identity po prostu już go nie potrzebuje.
 app.UseErpApi("Identity");
 
-await app.RunAsync();
+// ── URUCHOMIENIE ─────────────────────────────────────────────────────────────────────────────
+//
+// `RunJasperFxCommands`, a nie `RunAsync`: bez argumentów zachowuje się identycznie (podnosi
+// serwis), ale wystawia narzędzia wiersza poleceń Wolverine'a — przede wszystkim
+// `dotnet run -- codegen write`, którym generuje się kod handlerów z wyprzedzeniem dla trybu
+// `Messaging:PrecompiledHandlers`. Bez tego przełącznika nie da się użyć, bo nie ma czym
+// wytworzyć kodu, którego oczekuje.
+return await app.RunJasperFxCommands(args);

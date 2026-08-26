@@ -61,9 +61,35 @@ public static class ErpMessagingExtensions
         {
             wolverine.ServiceName = options.ServiceName;
 
+            // ── LOKALIZACJA USŁUG W KODZIE HANDLERÓW ────────────────────────────────────────
+            //
+            // Wolverine generuje kod handlerów i domyślnie (od v6) ODMAWIA rozwiązywania
+            // zależności przez kontener — chce je konstruować inline. Dla zależności o jednym,
+            // jednoznacznym konstruktorze to działa i jest szybsze. Nie działa dla zależności,
+            // której inline zbudować się nie da, a taką jest KAŻDA lista implementacji:
+            // `PermissionCacheInvalidation` bierze wszystkie zarejestrowane cache uprawnień
+            // (zero, jeden albo kilka — zależnie od serwisu), więc musi przyjść z kontenera.
+            //
+            // Skutek pozostawienia domyślnej polityki jest cichy i dlatego groźny: łańcuch
+            // handlera się nie kompiluje, komunikat przychodzi i nie jest obsługiwany, a jedynym
+            // śladem jest wpis w logu przy starcie — żadnego wyjątku, żadnego dead lettera.
+            // Wykrył to dopiero test integracyjny na żywym brokerze.
+            //
+            // `AllowedButWarn`, a nie `AlwaysAllowed`: koszt ma zostać widoczny w logu, żeby
+            // kolejne handlery nie zaczęły po cichu korzystać z lokalizacji tam, gdzie da się
+            // jej uniknąć.
+            wolverine.ServiceLocationPolicy = JasperFx.CodeGeneration.Model.ServiceLocationPolicy.AllowedButWarn;
+
             foreach (var assembly in consumerAssemblies)
             {
                 wolverine.Discovery.IncludeAssembly(assembly);
+            }
+
+            if (options.PrecompiledHandlers)
+            {
+                // Kod handlerów pochodzi z zestawu, nie z Roslyna przy starcie —
+                // patrz ErpMessagingOptions.PrecompiledHandlers.
+                wolverine.CodeGeneration.TypeLoadMode = JasperFx.CodeGeneration.TypeLoadMode.Static;
             }
 
             // Outbox/inbox w Postgresie, w schemacie osobnym od schematów modułów.
@@ -115,6 +141,12 @@ public static class ErpMessagingExtensions
         builder.Services.AddScoped<IIntegrationEventPublisher, WolverineIntegrationEventPublisher<TContext>>();
         builder.Services.AddScoped<IUnitOfWork, ErpUnitOfWork<TContext>>();
 
+        // Rozdzielacz unieważnień cache'u uprawnień. Rejestrowany zawsze, również w serwisie,
+        // który nie ma czego unieważniać — wtedy dostaje pustą listę i nic nie robi. Wolverine
+        // kompiluje handlery przy starcie i sprawdza, czy ich zależności da się rozwiązać,
+        // więc brak tej rejestracji wywracałby start, a nie dopiero pierwszy komunikat.
+        builder.Services.AddScoped<PermissionCacheInvalidation>();
+
         return builder;
     }
 
@@ -153,6 +185,7 @@ public static class ErpMessagingExtensions
             {
                 queue.IsDurable = false;
                 queue.AutoDelete = true;
+                queue.IsExclusive = true;
             });
 
         wolverine.ListenToRabbitQueue(queueName);

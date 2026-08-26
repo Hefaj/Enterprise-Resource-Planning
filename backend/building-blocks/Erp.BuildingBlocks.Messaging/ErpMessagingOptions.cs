@@ -47,4 +47,21 @@ public sealed class ErpMessagingOptions
     /// tylko robota nie zostaje wykonana.</para>
     /// </summary>
     public string? ListenQueueName { get; set; }
+
+    /// <summary>
+    /// Czy kod handlerów Wolverine'a jest <b>wygenerowany z wyprzedzeniem</b> i leży w zestawie,
+    /// zamiast powstawać przy starcie procesu.
+    ///
+    /// <para><c>false</c> (domyślnie) — tryb <c>Dynamic</c>: Wolverine kompiluje handlery
+    /// Roslynem przy każdym starcie. Wygodne, dopóki kształt handlerów się zmienia, bo nie
+    /// wymaga niczego poza uruchomieniem aplikacji.</para>
+    ///
+    /// <para><c>true</c> — tryb <c>Static</c>: Wolverine ładuje gotowe typy z zestawu. Szybszy
+    /// start, brak Roslyna w obrazie kontenera, brak wyścigu na generowanym kodzie przy
+    /// równoległym starcie kilku instancji. Cena jest realna i trzeba ją znać: kod trzeba
+    /// <b>wygenerować i zatwierdzić</b> (<c>dotnet run -- codegen write</c>), a rozjazd między
+    /// zatwierdzonym kodem a handlerami kończy się błędem przy starcie. Dlatego flaga, a nie
+    /// zmiana domyślna — o jej włączeniu decyduje wdrożenie, nie biblioteka.</para>
+    /// </summary>
+    public bool PrecompiledHandlers { get; set; }
 }

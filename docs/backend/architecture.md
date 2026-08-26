@@ -233,6 +233,10 @@ jak licznik sekwencji.
 
 ### Kierunki naprawy
 
+Poniższa tabela to skrót. Pełny plan zdjęcia tych założeń — fazy, kolejność, kryteria
+akceptacji i rewizja decyzji o liczniku sekwencji — leży w
+[`multi-instance.md`](./multi-instance.md).
+
 | Obszar | Kierunek | Uwaga |
 |---|---|---|
 | Rozgłaszanie + licznik sekwencji | Backplane Redis + atomowy licznik (`INCR` per sygnatura) | **Jedyne miejsce w systemie, gdzie Redis jest właściwą odpowiedzią, a nie wygodą** — SignalR nie ma backplane'u na Postgresie. Jedno wdrożenie zamyka oba punkty. |

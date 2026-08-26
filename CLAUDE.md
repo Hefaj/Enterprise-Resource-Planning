@@ -50,6 +50,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Tłumaczenia — dodawanie kluczy, bootstrapping scope'u, DI shadowing | [`docs/frontend/translations.md`](docs/frontend/translations.md) |
 | Multimedia produktu — wgrywanie plików (bilet → PUT do magazynu → rejestracja → dopięcie), miniaturki przez `blob:`, biblioteka mediów (`/catalog/multimedia`) i usuwanie zasobów | [`docs/frontend/multimedia.md`](docs/frontend/multimedia.md) |
 | Powiadomienia na froncie — toast (`ErpToastService`), dzwonek, historia zadań, gdzie użytkownik ponownie pobierze artefakt, tłumaczenie kodów błędów backendu (`shared.errors.codes`) | [`docs/frontend/notifications.md`](docs/frontend/notifications.md) |
+| Powiadomienie dla człowieka z dowolnego modułu (komentarz, dokument czeka na akceptację) — drugi agregat w `Notification`, kto ustala odbiorców, `UserNotificationRequested`, grupowanie, preferencje, kanał `notifications` | [`docs/backend/user-notifications.md`](docs/backend/user-notifications.md) |
 | Praca z komponentami TaigaUI (API, migracja z PrimeNG, dialogi, selecty, textfields) | `.agents/skills/taiga-ui/SKILL.md` |
 | Nowy mikroserwis backendowy — 4 projekty Clean Architecture, `.sln`, `DbContext`, `Program.cs`, sygnatura SignalR | [`docs/backend/new-microservice.md`](docs/backend/new-microservice.md) |
 | Komenda/zapytanie CQRS w module backendowym (handler, `IUnitOfWork`, projekcje, sortowanie po whiteliście) | [`docs/backend/cqrs.md`](docs/backend/cqrs.md) |
@@ -66,12 +67,14 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Skalowanie poziome / druga instancja serwisu — dzierżawy `SKIP LOCKED`, rozdział ról Hub/Relay, backplane, kolejność faz | [`docs/backend/multi-instance.md`](docs/backend/multi-instance.md) |
 | Obieg dokumentu (DMS) — `Document`/`DocumentType` ze slotami sortowalnymi, szablon vs instancja ze snapshotem, silnik na tokenach, `document_acl` per dokument, ingest KSeF, metryka archiwalna, kontrakt listy zależnej od typu, granica z księgowością | [`docs/backend/dms-workflow.md`](docs/backend/dms-workflow.md) |
 | Podział na strony w DMS — które ekrany, dlaczego typ dokumentu nie jest osobną stroną, karta dokumentu vs prawy panel, edytor grafu poza `erp-grid-layout`, menu i uprawnienia | [`docs/frontend/dms-pages.md`](docs/frontend/dms-pages.md) |
+| Zarządzanie pracą (Task Management, wzorzec YouTrack) — `Issue` zamiast `Task`, klucz `DEV-123` i licznik per projekt, automat stanów jako dana, pola niestandardowe na slotach, `rank` na tablicy i współbieżny drag&drop, zlecenia międzydziałowe | [`docs/backend/task-management.md`](docs/backend/task-management.md) |
+| Podział na strony w Task Management — projekt jako kontekst listy, tablica poza `erp-grid-layout`, karta zgłoszenia po kluczu czytelnym, zlecenia jako osobna strona, menu i uprawnienia | [`docs/frontend/task-management-pages.md`](docs/frontend/task-management-pages.md) |
 | Raport (zestawienie, agregacja, plik do pobrania) — dlaczego nie osobny mikroserwis, `ReportRun`/`IReportDefinition`, izolacja zasobów (sloty `Map`/`Reduce`, rola workera, pula połączeń, replika) | [`docs/backend/reporting.md`](docs/backend/reporting.md) |
 | Wdrożenie produkcyjne — obrazy kontenerów, konfiguracja i sekrety poza repo, gateway/TLS, migracje jako krok wdrożenia, health checks, backup, CI/CD | [`docs/backend/production.md`](docs/backend/production.md) |
 | Obserwowalność produkcyjna — health checks (`live`/`ready`/`deps`), co alertować w tej architekturze (outbox, `job`, Relay), korelacja po `X-Request-Id`, retencja i limity | [`docs/backend/observability.md`](docs/backend/observability.md) |
 
 **Mapa portów (frontend)**: client 4200, catalog 4201, inventory 4202, sales 4203, dms 4204, task-management 4205, notification 4206, identity 4207, nowy moduł → następny wolny.
-**Mapa portów (backend, HTTP dev)**: catalog 5149, notification 5250, sales 5269, identity 5280 (Inventory/Dms/Task-management nie mają jeszcze backendu — brak portu do czasu wdrożenia).
+**Mapa portów (backend, HTTP dev)**: catalog 5149, notification 5250, sales 5269, identity 5280, task-management 5290 (zarezerwowany projektem, patrz [`docs/backend/task-management.md`](docs/backend/task-management.md)) — Inventory i Dms nie mają jeszcze backendu ani portu.
 
 ## Backend
 

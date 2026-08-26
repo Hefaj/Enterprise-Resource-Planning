@@ -354,8 +354,9 @@ Sygnatury: `dms.document`, `dms.workflowInstance`, `dms.workItem`. Skrzynka czyn
 odświeżać się sama w chwili przypisania. Rejestracja sygnatur w `AggregateSignatures` musi zgadzać
 się z `signalrSignature` orkiestratorów ([`realtime-signalr.md`](./realtime-signalr.md)).
 
-E-mail: DMS **tylko publikuje zdarzenie**; kanał e-mail dokłada Notification. Wysyłka nie
-rozłazi się po modułach.
+E-mail i dzwonek: DMS **tylko publikuje `UserNotificationRequested`** z listą odbiorców, którą
+sam wylicza (i sam decyduje, ile treści ujawnić przy klasie poufnej) — resztę robi Notification,
+[`user-notifications.md`](./user-notifications.md). Wysyłka nie rozłazi się po modułach.
 
 ---
 

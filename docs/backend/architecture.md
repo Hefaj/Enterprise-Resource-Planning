@@ -43,6 +43,8 @@ konsekwentnie we wszystkich dokumentach w tym katalogu:
 | Bramkowanie UI (front) | ✅ | [`identity-authz.md`](./identity-authz.md) §6 — `PermissionStore`, guardy, `*erpHasPermission`, filtr menu przeliczany na żywo, `/forbidden`, toast 403 |
 | Audyt nadań, wygasające nadania, wymuszone wylogowanie | ✅ | [`identity-authz.md`](./identity-authz.md) §7 — `grant_audit` append-only, `ExpiredGrantCleanupService`, odwołanie sesji przez Keycloak Admin API |
 | DMS — dokumenty i obiegi (silnik na tokenach, ACL per dokument, ingest, archiwizacja) | 📐 | [`dms-workflow.md`](./dms-workflow.md) + [`dms-pages.md`](../frontend/dms-pages.md) — projekt; front DMS to dziś atrapa, mikroserwisu `Dms` nie ma |
+| Task Management — zgłoszenia, tablice z ręczną kolejnością, konfiguracja per projekt, zlecenia międzydziałowe | 📐 | [`task-management.md`](./task-management.md) + [`task-management-pages.md`](../frontend/task-management-pages.md) — projekt; front to pusty szkielet z zaślepką w menu, mikroserwisu `TaskManagement` nie ma |
+| Powiadomienia użytkownika (skrzynka międzymodułowa, `UserNotification`) | 📐 | [`user-notifications.md`](./user-notifications.md) — drugi agregat w istniejącym `Notification`; dziś dzwonek karmi się wyłącznie repliką zadań |
 
 ---
 

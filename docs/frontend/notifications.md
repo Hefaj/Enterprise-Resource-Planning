@@ -1,17 +1,21 @@
-# Powiadomienia — toast, dzwonek, historia zadań
+# Powiadomienia — toast, dzwonek, historia zadań, skrzynka
 
-Trzy powierzchnie, jedna zasada. Wszystko opisane niżej **jest w kodzie**: dzwonek, feed zadań,
-strona historii, akcja pobrania artefaktu i `ErpToastService` ze stosem toastów.
+Cztery powierzchnie, jedna zasada. Sekcje 1–9 opisują to, co **jest w kodzie**: dzwonek, feed
+zadań, strona historii, akcja pobrania artefaktu i `ErpToastService` ze stosem toastów.
+[Sekcja 10](#10-skrzynka-powiadomień--druga-zakładka-dzwonka) to **📐 projekt** — skrzynka
+powiadomień międzymodułowych, której dziś nie ma; strona backendowa w
+[`user-notifications.md`](../backend/user-notifications.md).
 
 ---
 
-## 1. Trzy powierzchnie i jedna zasada
+## 1. Cztery powierzchnie i jedna zasada
 
 | Powierzchnia | Trwałość | Do czego |
 |---|---|---|
 | **Toast** | sekundy, ulotny | „stało się teraz, może chcesz kliknąć" |
 | **Dzwonek** (popover) | sesja + replika serwera | ostatnie zadania, licznik nieprzeczytanych |
 | **Historia zadań** (strona) | do `job.expire_on` | źródło prawdy, filtry, paginacja |
+| **Skrzynka** (📐 strona + druga zakładka dzwonka) | do `expire_on` powiadomienia | „ktoś zrobił coś, co Cię dotyczy" — z dowolnego modułu |
 
 > **Zasada: toast nigdy nie jest jedynym miejscem.** Jeśli informacja istnieje wyłącznie w toaście,
 > użytkownik traci ją przez mrugnięcie okiem albo przez przypadkowe kliknięcie. Wszystko, co warto
@@ -258,10 +262,101 @@ robi się ją świadomie, a nie rozbudowuje parser.
 
 ---
 
-## 10. Zobacz też
+## 10. Skrzynka powiadomień — druga zakładka dzwonka
+
+**Stan: 📐 projekt.** Model, kontrakt zdarzenia i kanały →
+[`user-notifications.md`](../backend/user-notifications.md).
+
+### 10.1 Dwie zakładki, nie jedna lista
+
+Dzwonek zaczyna karmić się z dwóch źródeł: feedu zadań (`jobs`) i skrzynki powiadomień
+(`notifications`). Scalenie ich w jedną listę jest kuszące i **odrzucone**:
+
+| | Zadania | Powiadomienia |
+|---|---|---|
+| O czym mówią | *moja* operacja i jej postęp | *cudza* akcja na czymś, co obserwuję |
+| Akcja wiersza | „Pobierz" artefakt, ponów, anuluj | przejście do tematu |
+| Cykl życia | wygasa z artefaktem (`job.expire_on`) | `expire_on` powiadomienia, zwykle 90 dni |
+| „Przeczytane" | wynika ze statusu zadania | jawna akcja użytkownika |
+| Skąd | replika `job` w Notification | `user_notification` |
+
+Jedna lista oznaczałaby wiersz z kolumnami pustymi dla połowy pozycji i przycisk „Pobierz", który
+raz jest, a raz go nie ma. Zakładki w popoverze, wspólny badge (suma nieprzeczytanych), osobne
+listy.
+
+### 10.2 `NotificationStore` idzie do `shared/data-access`
+
+Z tego samego powodu, co `JobService` (§2): **licznik przy dzwonku musi być znany hostowi, zanim
+ktokolwiek pociągnie remota**. Store subskrybuje kanał `notifications`, trzyma licznik
+nieprzeczytanych i ostatnie N pozycji; pełna lista i strona skrzynki żyją w remocie
+`notification` i ładują się leniwie przy pierwszym otwarciu.
+
+`ReceiveNotification(uuid, unreadCount)` niesie licznik razem z uuid, więc badge aktualizuje się
+**bez odpytywania API** — treść dociąga się dopiero, gdy użytkownik otworzy popover.
+
+Rozróżnienie, które trzeba mieć w kodzie od początku: `seen_at` ustawia się przy **otwarciu
+popovera** (badge gaśnie), `read_at` przy **kliknięciu pozycji** albo akcją „oznacz wszystkie".
+Sklejenie tych dwóch stanów daje albo badge, który nigdy nie gaśnie, albo listę, na której
+wszystko jest od razu przeczytane.
+
+### 10.3 Renderowanie wiersza — klucz i parametry, nie tekst
+
+Backend przysyła `titleKey` + `params`, nie zdanie. Wiersz renderuje się przez `erpTranslate`
+z parametrami, a klucze leżą w scope'ie **`shared`** (`shared.notifications.kinds.*`) — remote
+`notification` nigdy nie ma załadowanego scope'u Catalogu czy DMS-u. To ta sama decyzja, co przy
+kodach błędów zadań (§9) i nazwach operacji masowych.
+
+Nieznany `kind` (backend wyprzedził tłumaczenia) pokazuje `subjectKey` i surowy kod rodzaju —
+tak samo jak nieznany kod błędu. `Missing translation for …` w dzwonku jest gorsze niż surowy
+identyfikator.
+
+Grupowanie: `occurrenceCount > 1` renderuje się jako „5 nowych komentarzy", z osobnym kluczem
+w liczbie mnogiej — nie jako pięć wierszy.
+
+### 10.4 Nawigacja z powiadomienia
+
+`link` przychodzi z backendu jako **trasa frontu** (`/task-management/issue/DEV-412`), nie URL
+API. Trzy rzeczy, o których trzeba pamiętać:
+
+1. **`403` jest poprawnym zachowaniem.** Uprawnienie mogło zniknąć po wysyłce — obsługuje to
+   istniejący `erp-permission-error.interceptor` i strona `/forbidden`
+   ([`identity-authz.md` §6](../backend/identity-authz.md)). Nie chowamy pozycji ze skrzynki
+   „na wszelki wypadek": użytkownik ma widzieć, że coś było, i dowiedzieć się, że stracił dostęp.
+2. **Trasa może prowadzić do modułu, którego remote nie jest jeszcze załadowany** — to działa bez
+   zmian, bo kontrakty wszystkich remotów ładują się przy STARTUP (§3), a `feature` dociąga się
+   leniwie przy nawigacji.
+3. **Kliknięcie oznacza jako przeczytane**, ale nie usuwa wpisu. „Zniknęło mi po kliknięciu" to
+   najczęstsza skarga na tego typu skrzynki.
+
+### 10.5 Strony i menu
+
+| Strona | Trasa | Uwagi |
+|---|---|---|
+| Skrzynka | `/notification/inbox` | Standardowy `erp-grid-layout` + filtr (moduł, rodzaj, nieprzeczytane) + tabela; „oznacz wszystkie jako przeczytane" w toolbarze |
+| Historia zadań | `/notification/job` | **Istnieje**, bez zmian |
+| Ustawienia powiadomień | `/notification/preference` | Renderowana **z katalogu rodzajów** (`getNotificationKindCatalog`), nie z listy zaszytej w komponencie |
+
+Pozycje menu bez `requiredPermission` — jak istniejąca historia zadań, to osobisty feed, nie zasób
+uprzywilejowany.
+
+### 10.6 Kiedy toast, a kiedy tylko skrzynka
+
+Zasada z §1 („toast nigdy nie jest jedynym miejscem") działa tu w drugą stronę: **nie każde
+powiadomienie zasługuje na toast**. Toastujemy wyłącznie `severity: high` i rzeczy wymagające
+reakcji teraz (dokument czeka na akceptację, zgłoszenie przypisane do mnie). Komentarz pod
+obserwowanym zgłoszeniem ląduje w skrzynce po cichu — inaczej aktywny projekt zamienia ekran
+w stos toastów.
+
+Most spinający store z `ErpToastService` mieszka **w hoście**, jak `ErpJobToastBridge` (§4, §7) —
+`data-access` nie widzi warstwy `ui` i to się nie zmienia.
+
+---
+
+## 11. Zobacz też
 
 - [Atomy UI](./atoms.md) — wzorzec Single Config Builder
 - [Orkiestratory](./orchestrators.md) — skąd biorą się wpisy optymistyczne w feedzie
 - [Tłumaczenia](./translations.md) — dlaczego klucz, a nie tekst; DI shadowing
 - [Eksporty i artefakty](../backend/exports-artifacts.md) — strona backendowa
-- [Realtime SignalR](../backend/realtime-signalr.md) — kanały `jobs` i `agg:`
+- [Realtime SignalR](../backend/realtime-signalr.md) — kanały `jobs`, `agg:` i `notifications`
+- [Powiadomienia użytkownika](../backend/user-notifications.md) — strona backendowa skrzynki

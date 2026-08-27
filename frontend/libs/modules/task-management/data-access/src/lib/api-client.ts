@@ -43,6 +43,11 @@ export interface ITaskManagementClient {
      */
     projectRemoveMemberMultipleCommand(body: BatchCommandOfProjectRemoveMemberCommandAndSearchProjectRequest): Observable<BatchResult>;
     /**
+     * Podpina albo odpina schemat pól projektu
+     * @return OK
+     */
+    projectSetFieldSchemeMultipleCommand(body: BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest): Observable<BatchResult>;
+    /**
      * Seryjna zmiana nazw projektów z obsługą błędów cząstkowych
      * @return OK
      */
@@ -112,6 +117,11 @@ export interface ITaskManagementClient {
      */
     issueSetCommentBodyMultipleCommand(body: BatchCommandOfIssueSetCommentBodyCommandAndSearchIssueRequest): Observable<BatchResult>;
     /**
+     * Nadpisuje wartości pól niestandardowych zgłoszeń — pole pominięte zostaje wyczyszczone
+     * @return OK
+     */
+    issueSetCustomFieldsMultipleCommand(body: BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest): Observable<BatchResult>;
+    /**
      * Seryjna zmiana opisów zgłoszeń z obsługą błędów cząstkowych
      * @return OK
      */
@@ -136,6 +146,34 @@ export interface ITaskManagementClient {
      * @return OK
      */
     issueSetTitleMultipleCommand(body: BatchCommandOfIssueSetTitleCommandAndSearchIssueRequest): Observable<BatchResult>;
+    /**
+     * @return OK
+     */
+    getProjectFieldProfile(body: GetProjectFieldProfileRequest): Observable<ProjectFieldProfileDto>;
+    /**
+     * @return OK
+     */
+    searchFieldScheme(body: SearchFieldSchemeRequest): Observable<FieldSchemeDto[]>;
+    /**
+     * Dokłada definicję pola do schematu — slot jest niezmienny po utworzeniu
+     * @return OK
+     */
+    fieldSchemeAddFieldMultipleCommand(body: BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
+    /**
+     * Zakłada schematy pól niestandardowych
+     * @return OK
+     */
+    fieldSchemeCreateMultipleCommand(body: BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
+    /**
+     * Usuwa definicję pola — odmawia, gdy zgłoszenia mają w nim wartości
+     * @return OK
+     */
+    fieldSchemeRemoveFieldMultipleCommand(body: BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
+    /**
+     * Seryjna zmiana nazw schematów pól
+     * @return OK
+     */
+    fieldSchemeSetNameMultipleCommand(body: BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
     /**
      * @return OK
      */
@@ -530,6 +568,69 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     protected processProjectRemoveMemberMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Podpina albo odpina schemat pól projektu
+     * @return OK
+     */
+    projectSetFieldSchemeMultipleCommand(body: BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/project/batch-set-field-scheme";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProjectSetFieldSchemeMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProjectSetFieldSchemeMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processProjectSetFieldSchemeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1495,6 +1596,69 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     /**
+     * Nadpisuje wartości pól niestandardowych zgłoszeń — pole pominięte zostaje wyczyszczone
+     * @return OK
+     */
+    issueSetCustomFieldsMultipleCommand(body: BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/issue/batch-set-custom-fields";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIssueSetCustomFieldsMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIssueSetCustomFieldsMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processIssueSetCustomFieldsMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * Seryjna zmiana opisów zgłoszeń z obsługą błędów cząstkowych
      * @return OK
      */
@@ -1781,6 +1945,382 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     protected processIssueSetTitleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getProjectFieldProfile(body: GetProjectFieldProfileRequest): Observable<ProjectFieldProfileDto> {
+        let url_ = this.baseUrl + "/field-scheme/getProjectFieldProfile";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetProjectFieldProfile(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetProjectFieldProfile(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ProjectFieldProfileDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ProjectFieldProfileDto>;
+        }));
+    }
+
+    protected processGetProjectFieldProfile(response: HttpResponseBase): Observable<ProjectFieldProfileDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProjectFieldProfileDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    searchFieldScheme(body: SearchFieldSchemeRequest): Observable<FieldSchemeDto[]> {
+        let url_ = this.baseUrl + "/field-scheme/searchFieldScheme";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchFieldScheme(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchFieldScheme(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FieldSchemeDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FieldSchemeDto[]>;
+        }));
+    }
+
+    protected processSearchFieldScheme(response: HttpResponseBase): Observable<FieldSchemeDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FieldSchemeDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Dokłada definicję pola do schematu — slot jest niezmienny po utworzeniu
+     * @return OK
+     */
+    fieldSchemeAddFieldMultipleCommand(body: BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/field-scheme/batch-add-field";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processFieldSchemeAddFieldMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processFieldSchemeAddFieldMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processFieldSchemeAddFieldMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Zakłada schematy pól niestandardowych
+     * @return OK
+     */
+    fieldSchemeCreateMultipleCommand(body: BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/field-scheme/batch-create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processFieldSchemeCreateMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processFieldSchemeCreateMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processFieldSchemeCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Usuwa definicję pola — odmawia, gdy zgłoszenia mają w nim wartości
+     * @return OK
+     */
+    fieldSchemeRemoveFieldMultipleCommand(body: BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/field-scheme/batch-remove-field";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processFieldSchemeRemoveFieldMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processFieldSchemeRemoveFieldMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processFieldSchemeRemoveFieldMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Seryjna zmiana nazw schematów pól
+     * @return OK
+     */
+    fieldSchemeSetNameMultipleCommand(body: BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/field-scheme/batch-set-name";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processFieldSchemeSetNameMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processFieldSchemeSetNameMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processFieldSchemeSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2345,6 +2885,102 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest {
+    commands?: FieldSchemeAddFieldCommand[] | undefined;
+    templateCommand?: FieldSchemeAddFieldCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchFieldSchemeRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest {
+    commands?: FieldSchemeCreateCommand[] | undefined;
+    templateCommand?: FieldSchemeCreateCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchFieldSchemeRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest {
+    commands?: FieldSchemeRemoveFieldCommand[] | undefined;
+    templateCommand?: FieldSchemeRemoveFieldCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchFieldSchemeRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest {
+    commands?: FieldSchemeSetNameCommand[] | undefined;
+    templateCommand?: FieldSchemeSetNameCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchFieldSchemeRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueAddCommentCommandAndSearchIssueRequest {
     commands?: IssueAddCommentCommand[] | undefined;
     templateCommand?: IssueAddCommentCommand | undefined;
@@ -2444,6 +3080,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 export interface BatchCommandOfIssueSetCommentBodyCommandAndSearchIssueRequest {
     commands?: IssueSetCommentBodyCommand[] | undefined;
     templateCommand?: IssueSetCommentBodyCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchIssueRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest {
+    commands?: IssueSetCustomFieldsCommand[] | undefined;
+    templateCommand?: IssueSetCustomFieldsCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchIssueRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -2657,6 +3317,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest {
+    commands?: ProjectSetFieldSchemeCommand[] | undefined;
+    templateCommand?: ProjectSetFieldSchemeCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProjectRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectSetNameCommandAndSearchProjectRequest {
     commands?: ProjectSetNameCommand[] | undefined;
     templateCommand?: ProjectSetNameCommand | undefined;
@@ -2765,6 +3449,63 @@ export interface BoardSetNameCommand {
     [key: string]: any;
 }
 
+export interface FieldDefinitionDto {
+    uuid: string;
+    code: string;
+    nameKey: string;
+    dataType: number;
+    slot: number;
+    orderNo: number;
+    isRequired: boolean;
+    options: string[];
+
+    [key: string]: any;
+}
+
+export interface FieldSchemeAddFieldCommand {
+    uuid?: string;
+    fieldUuid?: string;
+    code?: string;
+    nameKey?: string;
+    dataType?: number;
+    slot?: number;
+    orderNo?: number;
+    isRequired?: boolean;
+    options?: string[];
+
+    [key: string]: any;
+}
+
+export interface FieldSchemeCreateCommand {
+    uuid?: string;
+    name?: string;
+
+    [key: string]: any;
+}
+
+export interface FieldSchemeDto {
+    uuid: string;
+    name: string;
+    isSystem: boolean;
+    fields: FieldDefinitionDto[];
+
+    [key: string]: any;
+}
+
+export interface FieldSchemeRemoveFieldCommand {
+    uuid?: string;
+    fieldUuid?: string;
+
+    [key: string]: any;
+}
+
+export interface FieldSchemeSetNameCommand {
+    uuid?: string;
+    name?: string;
+
+    [key: string]: any;
+}
+
 export interface GetBoardCardsRequest {
     boardUuid?: string;
     uuids?: string[] | undefined;
@@ -2816,6 +3557,12 @@ export interface GetIssueCommentsRequest {
 
 export interface GetIssueRequest {
     uuids?: string[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface GetProjectFieldProfileRequest {
+    projectUuid?: string;
 
     [key: string]: any;
 }
@@ -2921,6 +3668,13 @@ export interface IssueCreateCommand {
     [key: string]: any;
 }
 
+export interface IssueCustomFieldFilter {
+    code?: string;
+    value?: string;
+
+    [key: string]: any;
+}
+
 export interface IssueDto {
     uuid: string;
     projectUuid: string;
@@ -2940,6 +3694,7 @@ export interface IssueDto {
     isRestricted: boolean;
     createdAt: Date;
     updatedAt: Date;
+    customFields: { [key: string]: string; };
 
     [key: string]: any;
 }
@@ -2960,6 +3715,13 @@ export interface IssueSetAssigneeCommand {
 export interface IssueSetCommentBodyCommand {
     uuid?: string;
     body?: string;
+
+    [key: string]: any;
+}
+
+export interface IssueSetCustomFieldsCommand {
+    uuid?: string;
+    values?: { [key: string]: string; };
 
     [key: string]: any;
 }
@@ -3031,6 +3793,27 @@ export interface ProjectDto {
     [key: string]: any;
 }
 
+export interface ProjectFieldDto {
+    code: string;
+    nameKey: string;
+    dataType: number;
+    isSortable: boolean;
+    isFilterable: boolean;
+    isRequired: boolean;
+    orderNo: number;
+    options: string[];
+
+    [key: string]: any;
+}
+
+export interface ProjectFieldProfileDto {
+    projectUuid: string;
+    fieldSchemeUuid: string | undefined;
+    fields: ProjectFieldDto[];
+
+    [key: string]: any;
+}
+
 export interface ProjectMemberDto {
     userUuid: string;
     role: number;
@@ -3041,6 +3824,13 @@ export interface ProjectMemberDto {
 export interface ProjectRemoveMemberCommand {
     uuid?: string;
     userUuid?: string;
+
+    [key: string]: any;
+}
+
+export interface ProjectSetFieldSchemeCommand {
+    uuid?: string;
+    fieldSchemeUuid?: string | undefined;
 
     [key: string]: any;
 }
@@ -3068,6 +3858,12 @@ export interface SearchBoardRequest {
     [key: string]: any;
 }
 
+export interface SearchFieldSchemeRequest {
+    text?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface SearchIssueRequest {
     scope?: number | undefined;
     projectUuid?: string | undefined;
@@ -3076,6 +3872,7 @@ export interface SearchIssueRequest {
     stateCategory?: number | undefined;
     priority?: number | undefined;
     assigneeUuid?: string | undefined;
+    customFields?: IssueCustomFieldFilter[] | undefined;
     page?: number;
     pageSize?: number;
     sorts?: SortOption[] | undefined;

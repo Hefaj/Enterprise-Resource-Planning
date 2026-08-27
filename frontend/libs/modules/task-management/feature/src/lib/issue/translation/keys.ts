@@ -171,5 +171,11 @@ export const ISSUE_KEYS = {
         },
         emptyValue: 'issue.detail.history.emptyValue',
       },
+      customFields: {
+        label: 'issue.detail.customFields.label',
+        save: 'issue.detail.customFields.save',
+        numberHint: 'issue.detail.customFields.numberHint',
+        dateHint: 'issue.detail.customFields.dateHint',
+      },
     },
   } as const;

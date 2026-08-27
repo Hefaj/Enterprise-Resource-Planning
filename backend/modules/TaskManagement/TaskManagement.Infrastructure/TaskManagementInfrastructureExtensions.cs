@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaskManagement.Application.Issues;
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -71,6 +72,7 @@ public static class TaskManagementInfrastructureExtensions
             .Register<WorkflowScheme>(AggregateSignatures.TaskManagementWorkflowScheme)
             .Register<IssueAttachment>(AggregateSignatures.TaskManagementIssueAttachment)
             .Register<IssueComment>(AggregateSignatures.TaskManagementIssueComment)
+            .Register<FieldScheme>(AggregateSignatures.TaskManagementFieldScheme)
             .Register<Board>(AggregateSignatures.TaskManagementBoard)
 
             // Karta jest osobnym korzeniem agregatu na TYM SAMYM kanale, co tablica: dzięki

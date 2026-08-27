@@ -10,8 +10,10 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { formatDate } from '@angular/common';
 import { TranslocoService } from '@jsverse/transloco';
 
+import { UserDirectoryService } from '@erp/shared/data-access';
 import {
   ErpSelectionMode,
   ErpSelectionState,
@@ -22,11 +24,13 @@ import {
 } from '@erp/shared/ui';
 import {
   IssueVM,
+  ProjectFieldDto,
+  ProjectFieldProfileService,
   SearchIssueRequest,
   SortOption,
   TaskManagementIssueOrchestrator,
 } from '@erp/task-management/data-access';
-import { ISSUE_PRIORITY } from '@erp/task-management/util';
+import { CUSTOM_FIELD_DATA_TYPE, ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS } from '../../../translation';
@@ -53,6 +57,8 @@ import { ISSUE_KEYS } from '../../../translation';
 export class TaskManagementIssueTableComponent {
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _fields = inject(ProjectFieldProfileService);
+  private readonly _users = inject(UserDirectoryService);
 
   public readonly filters = input<SearchIssueRequest>({});
   public readonly stateKey = input<string>();
@@ -83,7 +89,27 @@ export class TaskManagementIssueTableComponent {
       .filter((vm): vm is IssueVM => vm !== undefined);
   });
 
+  /**
+   * Kolumny projekto-specyficzne — <b>wyłącznie przy zawężeniu do jednego projektu</b>.
+   * Bez projektu kod pola nie znaczy nic, bo dwa schematy mogą mapować ten sam kod na różne
+   * kolumny (`docs/frontend/task-management-pages.md` §2.1).
+   */
+  protected readonly customFields = computed<ProjectFieldDto[]>(() =>
+    this._fields.fieldsOf(this.filters().projectUuid)(),
+  );
+
   public constructor() {
+    // Profil pól jedzie za kontekstem projektu. Definicje kolumn NIE mogą być stałą
+    // w komponencie: backend czyta whitelistę sortowania z tego samego profilu, więc stała
+    // rozjechałaby się z nim przy pierwszym dodanym polu (`task-management.md` §6).
+    effect(() => {
+      const projectUuid = this.filters().projectUuid;
+
+      if (projectUuid) {
+        untracked(() => void this._fields.loadAsync(projectUuid));
+      }
+    });
+
     effect(() => {
       const currentFilters = this.filters();
       untracked(() => {
@@ -176,8 +202,51 @@ export class TaskManagementIssueTableComponent {
         }
       });
 
+    // Kolumny projekto-specyficzne dokładamy po wspólnych — pętlą, a nie w łańcuchu, bo ich
+    // liczba i kształt są daną z profilu, nie stałą w komponencie (`task-management.md` §6).
+    for (const field of this.customFields()) {
+      builder.addColumn((c) => {
+        c
+          // Identyfikatorem kolumny jest KOD POLA — to on wraca w `sort.field` i po nim backend
+          // odnajduje slot. Własny identyfikator zerwałby to powiązanie.
+          .setId(field.code)
+          .setAccessorFn((row: IssueVM) => this._customFieldLabel(row, field))
+          .setHeader(field.nameKey)
+          // Sortowanie tylko na polach ze slotem: klik w nagłówek nie może obiecywać
+          // kolejności, której serwer nie wykona.
+          .setEnableSorting(field.isSortable)
+          .setSize(160);
+      });
+    }
+
     return builder.build();
   });
+
+  /**
+   * Wartość pola niestandardowego w postaci do pokazania.
+   *
+   * <p>Po drucie wszystko jest tekstem w postaci kanonicznej (liczba z kropką, data ISO-8601
+   * UTC, użytkownik jako uuid) — formatowanie jest wyłącznie sprawą widoku. Użytkownik pokazuje
+   * się nazwiskiem ze wspólnego katalogu, nigdy uuidem (`docs/frontend/user-directory.md`);
+   * dopóki nazwisko nie dojedzie, zostaje uuid, a nie pustka.</p>
+   */
+  private _customFieldLabel(row: IssueVM, field: ProjectFieldDto): string {
+    const value = row.customFields?.[field.code];
+
+    if (!value) {
+      return '';
+    }
+
+    if (field.dataType === CUSTOM_FIELD_DATA_TYPE.User) {
+      return this._users.getOne(value)()?.displayName ?? value;
+    }
+
+    if (field.dataType === CUSTOM_FIELD_DATA_TYPE.Date) {
+      return formatDate(value, 'short', this._transloco.getActiveLang());
+    }
+
+    return value;
+  }
 
   private _priorityLabel(priority: number | undefined): string {
     switch (priority) {
@@ -205,6 +274,34 @@ export class TaskManagementIssueTableComponent {
     }));
   }
 
+  /**
+   * Dociąga nazwiska z pól niestandardowych typu „użytkownik" — jedną paczką na całą stronę
+   * listy, tak samo jak przypisany i zgłaszający w orkiestratorze.
+   */
+  private async _resolveCustomFieldUsersAsync(): Promise<void> {
+    const userFields = this.customFields().filter((f) => f.dataType === CUSTOM_FIELD_DATA_TYPE.User);
+
+    if (userFields.length === 0) {
+      return;
+    }
+
+    const uuids = new Set<string>();
+
+    for (const row of this.items()) {
+      for (const field of userFields) {
+        const value = row.customFields?.[field.code];
+
+        if (value) {
+          uuids.add(value);
+        }
+      }
+    }
+
+    if (uuids.size > 0) {
+      await this._users.loadAsync([...uuids]);
+    }
+  }
+
   private async _fetchData(filters: SearchIssueRequest, tableState: ErpTableState | null): Promise<void> {
     this._loading.set(true);
     this.loadingChange.emit(true);
@@ -226,6 +323,8 @@ export class TaskManagementIssueTableComponent {
 
       this._currentUuids.set(response.uuids ?? []);
       this._totalCount.set(response.totalCount ?? 0);
+
+      await this._resolveCustomFieldUsersAsync();
     } catch (error) {
       console.error('[TaskManagementIssueTableComponent] Nie udało się pobrać listy zgłoszeń.', error);
       this._currentUuids.set([]);

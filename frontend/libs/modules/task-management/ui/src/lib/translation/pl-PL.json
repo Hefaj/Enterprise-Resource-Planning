@@ -34,5 +34,13 @@
     "viewer": "Obserwator",
     "contributor": "Uczestnik",
     "lead": "Prowadzący"
+  },
+  "fields": {
+    "storyPoints": "Punkty",
+    "component": "Komponent",
+    "fixVersion": "Wersja naprawcza",
+    "startedOn": "Rozpoczęto",
+    "reviewer": "Recenzent",
+    "notes": "Notatki"
   }
 }

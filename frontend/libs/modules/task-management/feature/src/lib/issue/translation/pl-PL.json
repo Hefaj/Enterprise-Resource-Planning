@@ -165,6 +165,12 @@
         "state": "stan"
       },
       "emptyValue": "brak"
+    },
+    "customFields": {
+      "label": "Pola własne",
+      "save": "Zapisz pola",
+      "numberHint": "np. 8.5",
+      "dateHint": "RRRR-MM-DD"
     }
   }
 }

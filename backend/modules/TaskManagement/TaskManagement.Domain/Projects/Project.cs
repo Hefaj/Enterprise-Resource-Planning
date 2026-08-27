@@ -39,6 +39,15 @@ public sealed class Project : AggregateRoot
 
     public Guid WorkflowSchemeUuid { get; private set; }
 
+    /// <summary>
+    /// Schemat pól niestandardowych. <c>null</c> znaczy „projekt bez pól własnych" i jest
+    /// stanem normalnym, nie brakiem konfiguracji — zgłoszenie ma wtedy same pola wspólne.
+    ///
+    /// <para>Osobno od <see cref="WorkflowSchemeUuid"/>, bo to dwie niezależne osie konfiguracji:
+    /// dwa projekty mogą dzielić automat stanów i mieć zupełnie inne pola (§6).</para>
+    /// </summary>
+    public Guid? FieldSchemeUuid { get; private set; }
+
     /// <summary>Projekt publiczny w organizacji — widoczny bez członkostwa.
     /// Drugi (i jedyny inny) składnik predykatu widoczności obok <see cref="Members"/>.</summary>
     public bool IsPublic { get; private set; }
@@ -71,6 +80,13 @@ public sealed class Project : AggregateRoot
     public void SetName(string name) => Name = ValidateName(name);
 
     public void SetVisibility(bool isPublic) => IsPublic = isPublic;
+
+    /// <summary>Podpina albo odpina schemat pól. Odpięcie <b>nie kasuje</b> wartości zapisanych
+    /// na zgłoszeniach — zostają w <c>custom_fields</c> i wrócą, gdy schemat wróci. Kasowanie
+    /// danych przy zmianie konfiguracji jest nieodwracalne, a ta operacja nie wygląda na
+    /// nieodwracalną.</summary>
+    public void SetFieldScheme(Guid? fieldSchemeUuid)
+        => FieldSchemeUuid = fieldSchemeUuid == Guid.Empty ? null : fieldSchemeUuid;
 
     /// <summary>Dodaje albo aktualizuje rolę członka. Idempotentne po użytkowniku —
     /// dwukrotne dodanie tej samej osoby zmienia rolę, nie tworzy drugiego wiersza.</summary>

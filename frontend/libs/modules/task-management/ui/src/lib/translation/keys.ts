@@ -40,4 +40,12 @@ export const TASKMANAGEMENT_KEYS = {
       contributor: 'taskManagement.projectMemberRole.contributor',
       lead: 'taskManagement.projectMemberRole.lead',
     },
+    fields: {
+      storyPoints: 'taskManagement.fields.storyPoints',
+      component: 'taskManagement.fields.component',
+      fixVersion: 'taskManagement.fields.fixVersion',
+      startedOn: 'taskManagement.fields.startedOn',
+      reviewer: 'taskManagement.fields.reviewer',
+      notes: 'taskManagement.fields.notes',
+    },
   } as const;

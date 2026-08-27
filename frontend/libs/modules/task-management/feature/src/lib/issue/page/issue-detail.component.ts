@@ -27,6 +27,7 @@ import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/tas
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
 import { IssueAttachmentsComponent } from './content/issue-attachments.component';
+import { IssueCustomFieldsComponent } from './content/issue-custom-fields.component';
 import { IssueCommentsComponent } from './content/issue-comments.component';
 import { IssueHistoryComponent } from './content/issue-history.component';
 
@@ -58,6 +59,7 @@ import { IssueHistoryComponent } from './content/issue-history.component';
     ErpUserNameComponent,
     IssueAttachmentsComponent,
     IssueCommentsComponent,
+    IssueCustomFieldsComponent,
     IssueHistoryComponent,
   ],
   providers: [provideIssueTranslations(), provideTaskManagementTranslations()],
@@ -178,6 +180,10 @@ import { IssueHistoryComponent } from './content/issue-history.component';
               </span>
               <span>{{ issue.updatedAt | date: 'short' }}</span>
             </div>
+
+            <!-- Pola własne projektu. Sekcja znika w całości, gdy projekt nie ma schematu pól —
+                 pusty nagłówek nad niczym jest gorszy niż jego brak. -->
+            <erp-task-management-issue-custom-fields [issue]="issue" />
           </aside>
         </div>
       </div>

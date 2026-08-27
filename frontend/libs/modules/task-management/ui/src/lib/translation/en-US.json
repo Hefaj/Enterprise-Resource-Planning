@@ -34,5 +34,13 @@
     "viewer": "Viewer",
     "contributor": "Contributor",
     "lead": "Lead"
+  },
+  "fields": {
+    "storyPoints": "Story points",
+    "component": "Component",
+    "fixVersion": "Fix version",
+    "startedOn": "Started on",
+    "reviewer": "Reviewer",
+    "notes": "Notes"
   }
 }

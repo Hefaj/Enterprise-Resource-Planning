@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -39,6 +40,8 @@ public sealed partial class TaskManagementSeeder
         ("Zlecenie: raport sprzedaży za kwartał", IssuePriority.Normal, 0),
     ];
 
+    private static readonly Guid DevFieldSchemeUuid = new("0198f000-0000-7000-8000-0000000000b1");
+
     private static readonly Guid DevProjectUuid = new("0198f000-0000-7000-8000-0000000000a1");
     private static readonly Guid MktProjectUuid = new("0198f000-0000-7000-8000-0000000000a2");
 
@@ -68,6 +71,8 @@ public sealed partial class TaskManagementSeeder
             return;
         }
 
+        var fieldScheme = await EnsureDeliveryFieldSchemeAsync(cancellationToken).ConfigureAwait(false);
+
         if (await _dbContext.Projects.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
             LogSeedSkipped(_logger);
@@ -77,7 +82,12 @@ public sealed partial class TaskManagementSeeder
         var now = _clock.UtcNow;
         var reporter = _options.LeadUserUuid ?? Guid.Empty;
 
+        // Schemat pól dostaje TYLKO projekt Delivery. Projekt bez pól własnych jest stanem
+        // normalnym i musi być widoczny w danych przykładowych — inaczej pierwszy błąd
+        // w obsłudze pustego profilu wyszedłby dopiero u kogoś na produkcji.
         var dev = CreateProject(DevProjectUuid, "DEV", "Rozwój oprogramowania", ProjectKind.Delivery, scheme);
+        dev.SetFieldScheme(fieldScheme.Uuid);
+
         var mkt = CreateProject(MktProjectUuid, "MKT", "Marketing — zlecenia", ProjectKind.Intake, scheme);
 
         var created = 0;
@@ -133,6 +143,78 @@ public sealed partial class TaskManagementSeeder
         AddDefaultBoard(project, scheme);
 
         return project;
+    }
+
+    /// <summary>
+    /// Uzgadnia schemat pól po stałym identyfikatorze i — gdy projekt <c>DEV</c> już istnieje,
+    /// a nie ma jeszcze pól — podpina mu go.
+    ///
+    /// <para>Uzgadnianie, a nie tworzenie tylko przy pustej bazie: baza deweloperska założona
+    /// przed fazą 3 ma już projekty, więc gałąź „seed przykładów" nigdy by się w niej nie
+    /// wykonała i pola nie pojawiłyby się nigdy. To ta sama decyzja, co przy schemacie
+    /// systemowym stanów — istniejący schemat zostaje nietknięty.</para>
+    /// </summary>
+    private async Task<FieldScheme> EnsureDeliveryFieldSchemeAsync(CancellationToken cancellationToken)
+    {
+        var existing = await _dbContext.FieldSchemes
+            .Include(s => s.Fields)
+            .FirstOrDefaultAsync(s => s.Uuid == DevFieldSchemeUuid, cancellationToken)
+            .ConfigureAwait(false);
+
+        var scheme = existing ?? CreateDeliveryFieldScheme();
+
+        var dev = await _dbContext.Projects
+            .FirstOrDefaultAsync(p => p.Uuid == DevProjectUuid && p.FieldSchemeUuid == null, cancellationToken)
+            .ConfigureAwait(false);
+
+        dev?.SetFieldScheme(scheme.Uuid);
+
+        if (existing is null || dev is not null)
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return scheme;
+    }
+
+    /// <summary>
+    /// Schemat pól przykładowego projektu wykonawczego: po jednym polu na typ danych i na slot,
+    /// żeby dało się na danych z seeda sprawdzić sortowanie i filtrowanie każdego rodzaju.
+    /// <c>notes</c> celowo <b>bez slotu</b> — pole, po którym nikt nie sortuje, nie zajmuje
+    /// zasobu rzadkiego (<c>docs/backend/task-management.md</c> §6).
+    /// </summary>
+    private FieldScheme CreateDeliveryFieldScheme()
+    {
+        var scheme = FieldScheme.CreateWithUuid(DevFieldSchemeUuid, "Pola zespołu wykonawczego", isSystem: true);
+
+        scheme.AddField(
+            Guid.CreateVersion7(), "storyPoints", "taskManagement.fields.storyPoints",
+            CustomFieldDataType.Number, FieldSlot.Num1, orderNo: 0);
+
+        scheme.AddField(
+            Guid.CreateVersion7(), "component", "taskManagement.fields.component",
+            CustomFieldDataType.Select, FieldSlot.Text1, orderNo: 1,
+            options: ["Backend", "Frontend", "Infrastruktura", "Dokumentacja"]);
+
+        scheme.AddField(
+            Guid.CreateVersion7(), "fixVersion", "taskManagement.fields.fixVersion",
+            CustomFieldDataType.Text, FieldSlot.Text2, orderNo: 2);
+
+        scheme.AddField(
+            Guid.CreateVersion7(), "startedOn", "taskManagement.fields.startedOn",
+            CustomFieldDataType.Date, FieldSlot.Date1, orderNo: 3);
+
+        scheme.AddField(
+            Guid.CreateVersion7(), "reviewer", "taskManagement.fields.reviewer",
+            CustomFieldDataType.User, FieldSlot.User1, orderNo: 4);
+
+        scheme.AddField(
+            Guid.CreateVersion7(), "notes", "taskManagement.fields.notes",
+            CustomFieldDataType.Text, FieldSlot.None, orderNo: 5);
+
+        _dbContext.FieldSchemes.Add(scheme);
+
+        return scheme;
     }
 
     /// <summary>

@@ -29,6 +29,24 @@ export const WORKFLOW_STATE_CATEGORY = {
 export type WorkflowStateCategoryValue =
   (typeof WORKFLOW_STATE_CATEGORY)[keyof typeof WORKFLOW_STATE_CATEGORY];
 
+/**
+ * `TaskManagement.Domain.FieldSchemes.CustomFieldDataType` — typ pola niestandardowego.
+ *
+ * <p>Zbiór jest zamknięty i mały, bo każdy typ ma po stronie bazy własną pulę slotów
+ * sortowalnych: dołożenie typu to migracja tabeli `issue`, a nie wpis w słowniku
+ * (`docs/backend/task-management.md` §6).</p>
+ */
+export const CUSTOM_FIELD_DATA_TYPE = {
+  Text: 0,
+  Number: 1,
+  Date: 2,
+  User: 3,
+  Select: 4,
+} as const;
+
+export type CustomFieldDataTypeValue =
+  (typeof CUSTOM_FIELD_DATA_TYPE)[keyof typeof CUSTOM_FIELD_DATA_TYPE];
+
 /** `TaskManagement.Domain.Projects.ProjectKind`. */
 export const PROJECT_KIND = {
   Delivery: 0,

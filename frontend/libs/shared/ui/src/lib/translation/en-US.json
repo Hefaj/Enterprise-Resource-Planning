@@ -230,6 +230,7 @@
       "taskmgmtIssueAddComment": "Adding a comment",
       "taskmgmtIssueSetCommentBody": "Editing a comment",
       "taskmgmtIssueRemoveComment": "Removing a comment",
+      "taskmgmtIssueSetCustomFields": "Changing custom fields",
       "taskmgmtBoardSetCardPosition": "Moving a card on the board"
     },
     "toast": {

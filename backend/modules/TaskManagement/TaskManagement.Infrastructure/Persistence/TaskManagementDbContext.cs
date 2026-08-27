@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -53,6 +54,10 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
 
     /// <summary>Historia zmian zgłoszeń — tylko do dopisywania i do czytania w karcie.</summary>
     public DbSet<IssueActivity> IssueActivities => Set<IssueActivity>();
+
+    public DbSet<FieldScheme> FieldSchemes => Set<FieldScheme>();
+
+    public DbSet<FieldDefinition> FieldDefinitions => Set<FieldDefinition>();
 
     public DbSet<WorkflowScheme> WorkflowSchemes => Set<WorkflowScheme>();
 

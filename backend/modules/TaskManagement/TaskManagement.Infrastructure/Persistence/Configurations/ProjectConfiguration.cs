@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Projects;
 
 namespace TaskManagement.Infrastructure.Persistence.Configurations;
@@ -19,6 +20,16 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(p => p.Kind).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(p => p.WorkflowSchemeUuid).IsRequired();
         builder.Property(p => p.IsPublic).IsRequired();
+
+        // Schemat pól jest opcjonalny — projekt bez pól własnych to stan normalny.
+        // `Restrict`, nie kaskada: skasowanie schematu nie może po cichu odpiąć pól projektom,
+        // które z nich korzystają.
+        builder.Property(p => p.FieldSchemeUuid);
+
+        builder.HasOne<FieldScheme>()
+            .WithMany()
+            .HasForeignKey(p => p.FieldSchemeUuid)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(p => p.Code).IsUnique();
 

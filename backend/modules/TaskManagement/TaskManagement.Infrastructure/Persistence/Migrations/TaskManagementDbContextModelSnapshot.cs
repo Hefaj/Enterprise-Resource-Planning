@@ -353,6 +353,98 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("board_column", "taskmgmt");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.FieldSchemes.FieldDefinition", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("data_type");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_required");
+
+                    b.Property<string>("NameKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name_key");
+
+                    b.Property<int>("OrderNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_no");
+
+                    b.Property<Guid>("SchemeUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scheme_uuid");
+
+                    b.Property<string>("Slot")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("slot");
+
+                    b.PrimitiveCollection<List<string>>("_options")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("options");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_field_definition");
+
+                    b.HasIndex("SchemeUuid", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_field_definition_scheme_uuid_code");
+
+                    b.HasIndex("SchemeUuid", "Slot")
+                        .IsUnique()
+                        .HasDatabaseName("ix_field_definition_scheme_uuid_slot")
+                        .HasFilter("slot <> 'None'");
+
+                    b.ToTable("field_definition", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.FieldSchemes.FieldScheme", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_field_scheme");
+
+                    b.ToTable("field_scheme", "taskmgmt");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Issues.Issue", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -367,6 +459,22 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("Date1")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_1");
+
+                    b.Property<DateTimeOffset?>("Date2")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_2");
+
+                    b.Property<DateTimeOffset?>("Date3")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_3");
+
+                    b.Property<DateTimeOffset?>("Date4")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_4");
 
                     b.Property<string>("Description")
                         .HasColumnType("text")
@@ -385,6 +493,22 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("key");
+
+                    b.Property<decimal?>("Num1")
+                        .HasColumnType("numeric")
+                        .HasColumnName("num_1");
+
+                    b.Property<decimal?>("Num2")
+                        .HasColumnType("numeric")
+                        .HasColumnName("num_2");
+
+                    b.Property<decimal?>("Num3")
+                        .HasColumnType("numeric")
+                        .HasColumnName("num_3");
+
+                    b.Property<decimal?>("Num4")
+                        .HasColumnType("numeric")
+                        .HasColumnName("num_4");
 
                     b.Property<Guid?>("ParentUuid")
                         .HasColumnType("uuid")
@@ -408,6 +532,26 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("state_uuid");
 
+                    b.Property<string>("Text1")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("text_1");
+
+                    b.Property<string>("Text2")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("text_2");
+
+                    b.Property<string>("Text3")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("text_3");
+
+                    b.Property<string>("Text4")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("text_4");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -417,6 +561,21 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("User1")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_1");
+
+                    b.Property<Guid?>("User2")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_2");
+
+                    b.Property<string>("_customFields")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("custom_fields")
+                        .HasDefaultValueSql("'{}'::jsonb");
 
                     b.PrimitiveCollection<List<string>>("_previousKeys")
                         .IsRequired()
@@ -448,8 +607,32 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.HasIndex("ReporterUuid")
                         .HasDatabaseName("ix_issue_reporter_uuid");
 
+                    b.HasIndex("ProjectUuid", "Date1")
+                        .HasDatabaseName("ix_issue_project_uuid_date_1");
+
+                    b.HasIndex("ProjectUuid", "Date2")
+                        .HasDatabaseName("ix_issue_project_uuid_date_2");
+
+                    b.HasIndex("ProjectUuid", "Num1")
+                        .HasDatabaseName("ix_issue_project_uuid_num_1");
+
+                    b.HasIndex("ProjectUuid", "Num2")
+                        .HasDatabaseName("ix_issue_project_uuid_num_2");
+
                     b.HasIndex("ProjectUuid", "StateUuid")
                         .HasDatabaseName("ix_issue_project_uuid_state_uuid");
+
+                    b.HasIndex("ProjectUuid", "Text1")
+                        .HasDatabaseName("ix_issue_project_uuid_text_1");
+
+                    b.HasIndex("ProjectUuid", "Text2")
+                        .HasDatabaseName("ix_issue_project_uuid_text_2");
+
+                    b.HasIndex("ProjectUuid", "User1")
+                        .HasDatabaseName("ix_issue_project_uuid_user_1");
+
+                    b.HasIndex("ProjectUuid", "User2")
+                        .HasDatabaseName("ix_issue_project_uuid_user_2");
 
                     b.ToTable("issue", "taskmgmt");
                 });
@@ -643,6 +826,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("code");
 
+                    b.Property<Guid?>("FieldSchemeUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("field_scheme_uuid");
+
                     b.Property<bool>("IsPublic")
                         .HasColumnType("boolean")
                         .HasColumnName("is_public");
@@ -675,6 +862,9 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique()
                         .HasDatabaseName("ix_project_code");
+
+                    b.HasIndex("FieldSchemeUuid")
+                        .HasDatabaseName("ix_project_field_scheme_uuid");
 
                     b.ToTable("project", "taskmgmt");
                 });
@@ -894,6 +1084,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_board_column_board_board_uuid");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.FieldSchemes.FieldDefinition", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.FieldSchemes.FieldScheme", null)
+                        .WithMany("Fields")
+                        .HasForeignKey("SchemeUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_field_definition_field_scheme_scheme_uuid");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Issues.Issue", b =>
                 {
                     b.HasOne("TaskManagement.Domain.Projects.Project", null)
@@ -938,6 +1138,15 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ParentUuid")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_issue_comment_issue_comment_parent_uuid");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Projects.Project", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.FieldSchemes.FieldScheme", null)
+                        .WithMany()
+                        .HasForeignKey("FieldSchemeUuid")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_project_field_scheme_field_scheme_uuid");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Projects.ProjectKeyCounter", b =>
@@ -988,6 +1197,11 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TaskManagement.Domain.Boards.Board", b =>
                 {
                     b.Navigation("Columns");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.FieldSchemes.FieldScheme", b =>
+                {
+                    b.Navigation("Fields");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Projects.Project", b =>

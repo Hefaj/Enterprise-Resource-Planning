@@ -1,5 +1,6 @@
 using TaskManagement.Application.Issues;
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -106,6 +107,33 @@ public interface IWorkflowSchemeRepository
     Task<WorkflowScheme?> FindByProjectAsync(Guid projectUuid, CancellationToken cancellationToken);
 
     void Add(WorkflowScheme scheme);
+}
+
+/// <summary>Dostęp do agregatu <see cref="FieldScheme"/> po stronie zapisu — ładuje schemat
+/// razem z definicjami pól, bo to jeden agregat i reguły slotów obowiązują w jego całości.</summary>
+public interface IFieldSchemeRepository
+{
+    Task<FieldScheme?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    /// <summary>Schemat pól wskazany przez projekt albo <c>null</c>, gdy projekt nie ma pól
+    /// własnych — to stan normalny, nie brak konfiguracji.</summary>
+    Task<FieldScheme?> FindByProjectAsync(Guid projectUuid, CancellationToken cancellationToken);
+
+    void Add(FieldScheme scheme);
+}
+
+/// <summary>
+/// Pytanie „czy którekolwiek zgłoszenie ma wartość w tym polu".
+///
+/// <para>Świadomie <b>nie</b> repozytorium: to jedno zapytanie zbiorcze przez granicę agregatu,
+/// a nie dostęp do zgłoszeń po stronie zapisu. Reguła, której broni („mapowanie pole↔slot jest
+/// niezmienne po pierwszym użyciu"), mieszka poza <see cref="FieldScheme"/>, bo dane, o które
+/// pyta, leżą na zgłoszeniach — a agregat nie widzi poza swoją granicę
+/// (<c>docs/backend/task-management.md</c> §6).</para>
+/// </summary>
+public interface IFieldUsageProbe
+{
+    Task<bool> IsUsedAsync(Guid fieldSchemeUuid, string fieldCode, CancellationToken cancellationToken);
 }
 
 /// <summary>Zapis licznika numeracji projektu. Osobno od <see cref="IIssueKeyAllocator"/>,

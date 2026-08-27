@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Domain;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Domain.Issues;
@@ -16,6 +17,11 @@ namespace TaskManagement.Domain.Issues;
 public sealed class Issue : AggregateRoot
 {
     private readonly List<string> _previousKeys = [];
+
+    /// <summary>Wartości pól niestandardowych w postaci kanonicznej, kluczowane kodem pola —
+    /// źródło prawdy. Sloty poniżej są ich <b>duplikatem</b> utrzymywanym wyłącznie po to,
+    /// żeby dało się po nich sortować i filtrować w SQL (§6).</summary>
+    private readonly Dictionary<string, string> _customFields = [];
 
     /// <summary>Konstruktor dla EF Core.</summary>
     private Issue()
@@ -76,6 +82,48 @@ public sealed class Issue : AggregateRoot
     /// <summary>Klucze sprzed przeniesień do innych projektów. Wyszukiwanie idzie także po nich,
     /// inaczej „DEV-412” z maila przestaje cokolwiek znajdować dzień po przeniesieniu (§4).</summary>
     public IReadOnlyList<string> PreviousKeys => _previousKeys.AsReadOnly();
+
+    /// <summary>
+    /// Wartości pól niestandardowych: kod pola → wartość kanoniczna
+    /// (<see cref="CustomFieldValue.ToCanonicalString"/>). Pole bez wartości nie ma wpisu.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> CustomFields => _customFields.AsReadOnly();
+
+    // ── Sloty sortowalne ──
+    //
+    // Stała pula kolumn, w której DUBLUJĄ SIĘ wartości pól sortowalnych i filtrowalnych.
+    // To nie jest drugie źródło prawdy, tylko projekcja `custom_fields` utrzymywana w tej samej
+    // metodzie, co one — rozjazd wymagałby zapisu z pominięciem `SetCustomFields`, a takiej
+    // ścieżki nie ma. Dlaczego sloty, a nie indeksy wyrażeniowe na jsonb, tabele projekcji
+    // per typ czy EAV: docs/backend/dms-workflow.md §3.2.
+
+    public decimal? Num1 { get; private set; }
+
+    public decimal? Num2 { get; private set; }
+
+    public decimal? Num3 { get; private set; }
+
+    public decimal? Num4 { get; private set; }
+
+    public string? Text1 { get; private set; }
+
+    public string? Text2 { get; private set; }
+
+    public string? Text3 { get; private set; }
+
+    public string? Text4 { get; private set; }
+
+    public DateTimeOffset? Date1 { get; private set; }
+
+    public DateTimeOffset? Date2 { get; private set; }
+
+    public DateTimeOffset? Date3 { get; private set; }
+
+    public DateTimeOffset? Date4 { get; private set; }
+
+    public Guid? User1 { get; private set; }
+
+    public Guid? User2 { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
 
@@ -177,6 +225,91 @@ public sealed class Issue : AggregateRoot
 
         StateUuid = toStateUuid;
         Touch(now);
+    }
+
+    /// <summary>
+    /// Nadpisuje <b>całą</b> kolekcję wartości pól niestandardowych — to, co przyszło, jest tym,
+    /// co zostaje; pole pominięte w żądaniu zostaje wyczyszczone razem ze swoim slotem
+    /// (<c>docs/backend/endpoint-naming.md</c> §2).
+    ///
+    /// <para>Schemat wchodzi parametrem, bo jest <b>osobnym agregatem</b> — tak samo jak schemat
+    /// stanów przy <see cref="SetState"/>. Cała walidacja dzieje się PRZED pierwszą zmianą
+    /// stanu: zgłoszenie z jednym błędnym polem nie może zostać z połową zapisanych wartości,
+    /// bo na tym stoi częściowy sukces operacji masowej.</para>
+    /// </summary>
+    public void SetCustomFields(
+        FieldScheme scheme,
+        IReadOnlyDictionary<string, string?> values,
+        DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(scheme);
+        ArgumentNullException.ThrowIfNull(values);
+
+        var unknown = values.Keys.FirstOrDefault(code => scheme.FindByCode(code) is null);
+
+        if (unknown is not null)
+        {
+            throw new DomainException(
+                "taskmgmt.field_unknown",
+                $"Pole `{unknown}` nie należy do schematu pól `{scheme.Name}`.");
+        }
+
+        // Najpierw rozkładamy WSZYSTKIE wartości — dopiero potem dotykamy stanu. Rozkładanie
+        // w pętli zapisującej zostawiałoby zgłoszenie w połowie zmienione, gdy piąte pole
+        // okaże się nieliczbą.
+        var parsed = new List<(FieldDefinition Definition, CustomFieldValue Value)>(scheme.Fields.Count);
+
+        foreach (var definition in scheme.Fields)
+        {
+            values.TryGetValue(definition.Code, out var raw);
+            parsed.Add((definition, CustomFieldValue.Parse(definition, raw)));
+        }
+
+        _customFields.Clear();
+        ClearSlots();
+
+        foreach (var (definition, value) in parsed)
+        {
+            if (value.IsEmpty)
+            {
+                continue;
+            }
+
+            _customFields[definition.Code] = value.ToCanonicalString()!;
+            WriteSlot(definition.Slot, value);
+        }
+
+        Touch(now);
+    }
+
+    private void ClearSlots()
+    {
+        Num1 = Num2 = Num3 = Num4 = null;
+        Text1 = Text2 = Text3 = Text4 = null;
+        Date1 = Date2 = Date3 = Date4 = null;
+        User1 = User2 = null;
+    }
+
+    private void WriteSlot(FieldSlot slot, CustomFieldValue value)
+    {
+        switch (slot)
+        {
+            case FieldSlot.Num1: Num1 = value.Number; break;
+            case FieldSlot.Num2: Num2 = value.Number; break;
+            case FieldSlot.Num3: Num3 = value.Number; break;
+            case FieldSlot.Num4: Num4 = value.Number; break;
+            case FieldSlot.Text1: Text1 = value.Text; break;
+            case FieldSlot.Text2: Text2 = value.Text; break;
+            case FieldSlot.Text3: Text3 = value.Text; break;
+            case FieldSlot.Text4: Text4 = value.Text; break;
+            case FieldSlot.Date1: Date1 = value.Date; break;
+            case FieldSlot.Date2: Date2 = value.Date; break;
+            case FieldSlot.Date3: Date3 = value.Date; break;
+            case FieldSlot.Date4: Date4 = value.Date; break;
+            case FieldSlot.User1: User1 = value.User; break;
+            case FieldSlot.User2: User2 = value.User; break;
+            default: break;
+        }
     }
 
     /// <summary>Przenosi zgłoszenie do innego projektu, nadając <b>nowy</b> klucz i zachowując

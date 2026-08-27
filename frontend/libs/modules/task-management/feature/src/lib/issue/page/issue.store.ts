@@ -1,6 +1,8 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import {
   IssueVM,
+  ProjectFieldDto,
+  ProjectFieldProfileService,
   ProjectWorkflowService,
   SearchIssueRequest,
   TaskManagementIssueOrchestrator,
@@ -32,6 +34,7 @@ export const ISSUE_SELECTION_MATERIALIZE_LIMIT = 100;
 export class IssueStore {
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
   private readonly _workflow = inject(ProjectWorkflowService);
+  private readonly _fields = inject(ProjectFieldProfileService);
 
   public readonly filters = signal<Partial<SearchIssueRequest>>({});
   public readonly loading = signal<boolean>(false);
@@ -45,6 +48,33 @@ export class IssueStore {
    * nie dojedzie albo dopóki nie wybrano projektu. */
   public readonly states = computed(() => this._workflow.statesOf(this.projectUuid())());
 
+  /**
+   * Pola projekto-specyficzne, po których wolno filtrować — czyli te ze slotem. Pole bez slotu
+   * jest w profilu i widać je w tabeli, ale filtr po nim wymagałby skanu jsonb
+   * (`docs/backend/task-management.md` §6).
+   */
+  public readonly filterableFields = computed<ProjectFieldDto[]>(() =>
+    this._fields.sortableFieldsOf(this.projectUuid())(),
+  );
+
+  /** Bieżąca wartość filtra po polu własnym — puste, gdy użytkownik go nie tknął. */
+  public customFieldValue(code: string): string {
+    return this.filters().customFields?.find((f) => f.code === code)?.value ?? '';
+  }
+
+  /**
+   * Ustawia albo czyści filtr po polu własnym. Pusta wartość <b>usuwa wpis</b> zamiast wysyłać
+   * pusty ciąg — inaczej backend dostawałby filtr, który niczego nie zawęża, i trafiałby
+   * z nim do planu zapytania.
+   */
+  public setCustomFieldFilter(code: string, value: string): void {
+    const current = this.filters().customFields ?? [];
+    const rest = current.filter((f) => f.code !== code);
+    const next = value.trim() ? [...rest, { code, value: value.trim() }] : rest;
+
+    this.updateFilters({ customFields: next.length > 0 ? next : undefined });
+  }
+
   public updateFilters(partial: Partial<SearchIssueRequest>): void {
     this._uuidCache.clear();
 
@@ -52,8 +82,11 @@ export class IssueStore {
       const next = { ...current, ...partial };
 
       if (partial.projectUuid !== undefined && partial.projectUuid !== current.projectUuid) {
-        // Nowy kontekst projektu — stan i sortowanie z poprzedniego nie mają tu odpowiednika.
+        // Nowy kontekst projektu — stan, sortowanie i filtry po polach własnych z poprzedniego
+        // nie mają tu odpowiednika. Kod pola bez projektu nie znaczy nic: dwa schematy mogą
+        // mapować ten sam kod na różne sloty.
         delete next.stateUuid;
+        delete next.customFields;
         this.sorts.set(undefined);
       }
 
@@ -75,7 +108,13 @@ export class IssueStore {
     effect(() => {
       const projectUuid = this.projectUuid();
       if (projectUuid) {
-        untracked(() => void this._workflow.loadAsync(projectUuid));
+        untracked(() => {
+          void this._workflow.loadAsync(projectUuid);
+
+          // Profil pól jedzie za kontekstem projektu razem ze schematem stanów: filtr, tabela
+          // i karta czytają z niego to samo, więc nie ma sensu dociągać go trzy razy z osobna.
+          void this._fields.loadAsync(projectUuid);
+        });
       }
     });
 

@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
-import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig } from '@erp/shared/ui';
+import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig, erpUserPickerField } from '@erp/shared/ui';
+import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import {
+  ProjectFieldDto,
   ProjectVM,
   SearchIssueRequest,
   TaskManagementProjectOrchestrator,
 } from '@erp/task-management/data-access';
-import { ISSUE_SCOPE, ISSUE_PRIORITY } from '@erp/task-management/util';
+import { CUSTOM_FIELD_DATA_TYPE, ISSUE_SCOPE, ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { IssueStore } from '../issue.store';
@@ -35,13 +37,14 @@ interface FilterOption {
   selector: 'erp-task-management-issue-filter',
   standalone: true,
   imports: [ErpFilterComponent],
-  template: `<erp-filter [config]="filterConfig" />`,
+  template: `<erp-filter [config]="filterConfig()" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IssueFilterComponent implements OnInit {
   private readonly _store = inject(IssueStore);
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _directory = inject(ERP_USER_DIRECTORY, { optional: true });
 
   private readonly _projectUuids = signal<string[]>([]);
 
@@ -80,8 +83,17 @@ export class IssueFilterComponent implements OnInit {
 
   private readonly _initialValues = computed(() => this._store.filters());
 
-  public readonly filterConfig: ErpFilterConfig = ErpFilterBuilder.create((b) =>
-    b
+  /**
+   * Konfiguracja filtra jest <b>przeliczana</b>, bo pola projekto-specyficzne dochodzą i znikają
+   * razem z kontekstem projektu. Przebudowa tworzy nową grupę formularza — i tak jest to
+   * pożądane, bo zmiana projektu i tak czyści filtry po polach z poprzedniego schematu
+   * (`docs/frontend/task-management-pages.md` §2.1).
+   */
+  public readonly filterConfig = computed<ErpFilterConfig>(() => {
+    const fields = this._store.filterableFields();
+
+    const config = ErpFilterBuilder.create((b) => {
+      b
       .setFilterKey('taskmgmt-issue-list')
       .setInitialValues(this._initialValues)
       .setOnSearch((val) => this.onSearch(val))
@@ -123,15 +135,75 @@ export class IssueFilterComponent implements OnInit {
           .setLabelKey('label')
           .setValueKey('value')
           .setStrategy('single'),
-      ),
-  );
+      );
+
+      // Filtry po polach własnych — wyłącznie po tych ze slotem. Pole bez slotu widać
+      // w tabeli, ale filtrowanie po nim wymagałoby skanu jsonb (`task-management.md` §6).
+      for (const field of fields) {
+        this._addCustomFieldFilter(b, field);
+      }
+    });
+
+    return config;
+  });
 
   public ngOnInit(): void {
     void this._loadProjects();
   }
 
-  public onSearch(filters: Partial<SearchIssueRequest>): void {
-    this._store.updateFilters(filters);
+  /**
+   * Rozdziela wartości formularza na filtry wspólne i filtry po polach własnych.
+   *
+   * <p>Formularz jest płaski — pola własne siedzą w nim pod swoimi kodami — a kontrakt HTTP
+   * ma dla nich osobną listę `customFields`. Tłumaczenie jest tutaj, a nie w store: to widok
+   * wie, które klucze formularza są polami z profilu.</p>
+   */
+  public onSearch(values: Record<string, unknown>): void {
+    const codes = new Set(this._store.filterableFields().map((f) => f.code));
+    const common: Record<string, unknown> = {};
+    const customFields: { code: string; value: string }[] = [];
+
+    for (const [key, value] of Object.entries(values ?? {})) {
+      if (!codes.has(key)) {
+        common[key] = value;
+        continue;
+      }
+
+      const text = value === null || value === undefined ? '' : String(value).trim();
+
+      if (text) {
+        customFields.push({ code: key, value: text });
+      }
+    }
+
+    this._store.updateFilters({
+      ...(common as Partial<SearchIssueRequest>),
+      customFields: customFields.length > 0 ? customFields : undefined,
+    });
+  }
+
+  /** Pole filtra dobrane do typu danych: słownik i użytkownik dostają picker, reszta tekst.
+   * Liczba i data jadą jako tekst, bo backend porównuje je dokładnie do wartości kanonicznej
+   * i nie ma tu zakresów — te wejdą razem z zapisanymi widokami (faza 7). */
+  private _addCustomFieldFilter(builder: ErpFilterBuilder, field: ProjectFieldDto): void {
+    if (field.dataType === CUSTOM_FIELD_DATA_TYPE.User) {
+      builder.addFormField(field.code, 'inputPicker', erpUserPickerField(this._directory, { label: field.nameKey }));
+      return;
+    }
+
+    if (field.dataType === CUSTOM_FIELD_DATA_TYPE.Select) {
+      builder.addFormField(field.code, 'inputPicker', (f) =>
+        f
+          .setLabel(field.nameKey)
+          .setItems(field.options.map((option) => ({ value: option, label: option })))
+          .setLabelKey('label')
+          .setValueKey('value')
+          .setStrategy('single'),
+      );
+      return;
+    }
+
+    builder.addFormField(field.code, 'text', (f) => f.setLabel(field.nameKey));
   }
 
   /** Projektów są dziesiątki, nie tysiące — jedno pobranie na wejście na stronę wystarcza,

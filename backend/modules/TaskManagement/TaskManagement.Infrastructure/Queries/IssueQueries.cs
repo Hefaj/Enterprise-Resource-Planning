@@ -1,8 +1,11 @@
+using System.Globalization;
 using System.Linq.Expressions;
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using TaskManagement.Application.FieldSchemes;
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Infrastructure.Persistence;
 
@@ -17,11 +20,16 @@ public sealed class IssueQueries : IIssueQueries
 {
     private readonly TaskManagementDbContext _dbContext;
     private readonly IExecutionContext _executionContext;
+    private readonly IFieldSchemeQueries _fields;
 
-    public IssueQueries(TaskManagementDbContext dbContext, IExecutionContext executionContext)
+    public IssueQueries(
+        TaskManagementDbContext dbContext,
+        IExecutionContext executionContext,
+        IFieldSchemeQueries fields)
     {
         _dbContext = dbContext;
         _executionContext = executionContext;
+        _fields = fields;
     }
 
     /// <inheritdoc />
@@ -29,11 +37,12 @@ public sealed class IssueQueries : IIssueQueries
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var query = Filtered(request);
+        var slots = await SlotMapAsync(request, cancellationToken).ConfigureAwait(false);
+        var query = ApplyCustomFieldFilters(Filtered(request), request, slots);
 
         var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
-        var uuids = await ApplySorting(query, request)
+        var uuids = await ApplySorting(query, request, slots)
             .Skip((Math.Max(request.Page, 1) - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(i => i.Uuid)
@@ -50,7 +59,9 @@ public sealed class IssueQueries : IIssueQueries
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return await Filtered(request)
+        var slots = await SlotMapAsync(request, cancellationToken).ConfigureAwait(false);
+
+        return await ApplyCustomFieldFilters(Filtered(request), request, slots)
             .OrderBy(i => i.Uuid)
             .Select(i => i.Uuid)
             .ToListAsync(cancellationToken)
@@ -180,7 +191,150 @@ public sealed class IssueQueries : IIssueQueries
                issue.ParentUuid,
                issue.IsRestricted,
                issue.CreatedAt,
-               issue.UpdatedAt);
+               issue.UpdatedAt,
+               EF.Property<Dictionary<string, string>>(issue, "_customFields"));
+
+    /// <summary>
+    /// Mapa „kod pola → slot" dla kontekstu żądania. Pusta bez wybranego projektu: dwa schematy
+    /// mogą mapować ten sam kod pola na różne kolumny, więc poza kontekstem projektu nazwa pola
+    /// nie znaczy nic (<c>docs/backend/task-management.md</c> §6).
+    /// </summary>
+    private async Task<IReadOnlyDictionary<string, FieldSlot>> SlotMapAsync(
+        SearchIssueRequest request,
+        CancellationToken cancellationToken)
+    {
+        var needsSlots = request.CustomFields is { Count: > 0 }
+            || request.Sorts is { Count: > 0 };
+
+        if (request.ProjectUuid is not { } projectUuid || !needsSlots)
+        {
+            return new Dictionary<string, FieldSlot>();
+        }
+
+        return await _fields.GetProjectSlotMapAsync(projectUuid, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static IQueryable<Issue> ApplyCustomFieldFilters(
+        IQueryable<Issue> query,
+        SearchIssueRequest request,
+        IReadOnlyDictionary<string, FieldSlot> slots)
+    {
+        if (request.CustomFields is not { Count: > 0 })
+        {
+            return query;
+        }
+
+        foreach (var filter in request.CustomFields)
+        {
+            if (string.IsNullOrWhiteSpace(filter.Value)
+                || !slots.TryGetValue(filter.Code, out var slot))
+            {
+                continue;
+            }
+
+            query = FilterBySlot(query, slot, filter.Value.Trim());
+        }
+
+        return query;
+    }
+
+    /// <summary>
+    /// Filtr po slocie. Tekst dopasowuje się częściowo, reszta dokładnie — a wartość spoza
+    /// typu (litery w polu liczbowym) <b>nie zawęża wyniku i nie wywraca żądania</b>: filtr,
+    /// którego użytkownik jeszcze nie dopisał do końca, nie jest błędem.
+    /// </summary>
+    private static IQueryable<Issue> FilterBySlot(IQueryable<Issue> query, FieldSlot slot, string value)
+    {
+        switch (slot)
+        {
+            case FieldSlot.Text1: return query.Where(i => i.Text1 != null && EF.Functions.ILike(i.Text1, $"%{value}%"));
+            case FieldSlot.Text2: return query.Where(i => i.Text2 != null && EF.Functions.ILike(i.Text2, $"%{value}%"));
+            case FieldSlot.Text3: return query.Where(i => i.Text3 != null && EF.Functions.ILike(i.Text3, $"%{value}%"));
+            case FieldSlot.Text4: return query.Where(i => i.Text4 != null && EF.Functions.ILike(i.Text4, $"%{value}%"));
+        }
+
+        if (slot is FieldSlot.Num1 or FieldSlot.Num2 or FieldSlot.Num3 or FieldSlot.Num4)
+        {
+            if (!decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var number))
+            {
+                return query;
+            }
+
+            return slot switch
+            {
+                FieldSlot.Num1 => query.Where(i => i.Num1 == number),
+                FieldSlot.Num2 => query.Where(i => i.Num2 == number),
+                FieldSlot.Num3 => query.Where(i => i.Num3 == number),
+                _ => query.Where(i => i.Num4 == number),
+            };
+        }
+
+        if (slot is FieldSlot.Date1 or FieldSlot.Date2 or FieldSlot.Date3 or FieldSlot.Date4)
+        {
+            if (!DateTimeOffset.TryParse(
+                    value,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
+                    out var date))
+            {
+                return query;
+            }
+
+            return slot switch
+            {
+                FieldSlot.Date1 => query.Where(i => i.Date1 == date),
+                FieldSlot.Date2 => query.Where(i => i.Date2 == date),
+                FieldSlot.Date3 => query.Where(i => i.Date3 == date),
+                _ => query.Where(i => i.Date4 == date),
+            };
+        }
+
+        if (slot is FieldSlot.User1 or FieldSlot.User2)
+        {
+            if (!Guid.TryParse(value, out var user))
+            {
+                return query;
+            }
+
+            return slot == FieldSlot.User1
+                ? query.Where(i => i.User1 == user)
+                : query.Where(i => i.User2 == user);
+        }
+
+        return query;
+    }
+
+    private static IOrderedQueryable<Issue>? SortBySlot(
+        IOrderedQueryable<Issue>? ordered,
+        IQueryable<Issue> query,
+        string field,
+        IReadOnlyDictionary<string, FieldSlot> slots,
+        bool descending)
+    {
+        if (!slots.TryGetValue(field, out var slot))
+        {
+            return ordered;
+        }
+
+        return slot switch
+        {
+            FieldSlot.Num1 => Chain(ordered, query, i => i.Num1, descending),
+            FieldSlot.Num2 => Chain(ordered, query, i => i.Num2, descending),
+            FieldSlot.Num3 => Chain(ordered, query, i => i.Num3, descending),
+            FieldSlot.Num4 => Chain(ordered, query, i => i.Num4, descending),
+            FieldSlot.Text1 => Chain(ordered, query, i => i.Text1, descending),
+            FieldSlot.Text2 => Chain(ordered, query, i => i.Text2, descending),
+            FieldSlot.Text3 => Chain(ordered, query, i => i.Text3, descending),
+            FieldSlot.Text4 => Chain(ordered, query, i => i.Text4, descending),
+            FieldSlot.Date1 => Chain(ordered, query, i => i.Date1, descending),
+            FieldSlot.Date2 => Chain(ordered, query, i => i.Date2, descending),
+            FieldSlot.Date3 => Chain(ordered, query, i => i.Date3, descending),
+            FieldSlot.Date4 => Chain(ordered, query, i => i.Date4, descending),
+            FieldSlot.User1 => Chain(ordered, query, i => i.User1, descending),
+            FieldSlot.User2 => Chain(ordered, query, i => i.User2, descending),
+            _ => ordered,
+        };
+    }
 
     /// <summary>
     /// Whitelist sortowania. Pole spoza listy jest <b>ignorowane</b>, nie przekładane na SQL —
@@ -188,7 +342,10 @@ public sealed class IssueQueries : IIssueQueries
     /// sortowanie właśnie po to, żeby nie przyszło tu pole z poprzedniego kontekstu
     /// (<c>docs/frontend/task-management-pages.md</c> §2.1).
     /// </summary>
-    private static IQueryable<Issue> ApplySorting(IQueryable<Issue> query, SearchIssueRequest request)
+    private static IQueryable<Issue> ApplySorting(
+        IQueryable<Issue> query,
+        SearchIssueRequest request,
+        IReadOnlyDictionary<string, FieldSlot> slots)
     {
         if (request.Sorts is null || request.Sorts.Count == 0)
         {
@@ -211,7 +368,13 @@ public sealed class IssueQueries : IIssueQueries
                 "DUEAT" => Chain(ordered, query, i => i.DueAt, descending),
                 "CREATEDAT" => Chain(ordered, query, i => i.CreatedAt, descending),
                 "UPDATEDAT" => Chain(ordered, query, i => i.UpdatedAt, descending),
-                _ => ordered,
+
+                // Pole spoza kolumn wspólnych szukamy w profilu pól projektu. Nieznane
+                // ZOSTAJE ZIGNOROWANE, nie odrzucone: przełącznik projektu na liście resetuje
+                // sortowanie właśnie po to, żeby nie przyszło tu pole z poprzedniego kontekstu,
+                // a wyścig między resetem a żądaniem nie ma prawa kończyć się błędem 400
+                // (docs/frontend/task-management-pages.md §2.1).
+                _ => SortBySlot(ordered, query, sort.Field, slots, descending),
             };
         }
 

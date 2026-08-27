@@ -230,6 +230,7 @@
       "taskmgmtIssueAddComment": "Dodanie komentarza",
       "taskmgmtIssueSetCommentBody": "Zmiana treści komentarza",
       "taskmgmtIssueRemoveComment": "Usunięcie komentarza",
+      "taskmgmtIssueSetCustomFields": "Zmiana pól niestandardowych",
       "taskmgmtBoardSetCardPosition": "Przestawienie karty na tablicy"
     },
     "toast": {

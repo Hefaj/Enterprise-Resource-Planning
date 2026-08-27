@@ -235,6 +235,7 @@ export const SHARED_KEYS = {
         taskmgmtIssueAddComment: 'shared.jobs.commands.taskmgmtIssueAddComment',
         taskmgmtIssueSetCommentBody: 'shared.jobs.commands.taskmgmtIssueSetCommentBody',
         taskmgmtIssueRemoveComment: 'shared.jobs.commands.taskmgmtIssueRemoveComment',
+        taskmgmtIssueSetCustomFields: 'shared.jobs.commands.taskmgmtIssueSetCustomFields',
         taskmgmtBoardSetCardPosition: 'shared.jobs.commands.taskmgmtBoardSetCardPosition',
       },
       toast: {

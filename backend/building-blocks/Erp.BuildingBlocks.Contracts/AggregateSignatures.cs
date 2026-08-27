@@ -84,6 +84,11 @@ public static class AggregateSignatures
     /// odczytywaną raz przy starcie aplikacji.</summary>
     public const string TaskManagementWorkflowScheme = "taskmgmt.workflow_scheme";
 
+    /// <summary>Schemat pól niestandardowych. Zmiana definicji pola przestawia kolumny listy
+    /// zgłoszeń i formularz karty u wszystkich naraz — jak schemat stanów, jest daną czytaną
+    /// na bieżąco, a nie konfiguracją wczytaną raz przy starcie aplikacji.</summary>
+    public const string TaskManagementFieldScheme = "taskmgmt.field_scheme";
+
     /// <summary>Tablica i kolejność kart — kanał wchodzi w fazie 2
     /// (<c>docs/backend/task-management.md</c> §7.4).</summary>
     public const string TaskManagementBoard = "taskmgmt.board";
@@ -108,6 +113,7 @@ public static class AggregateSignatures
         TaskManagementIssue,
         TaskManagementIssueAttachment,
         TaskManagementIssueComment,
+        TaskManagementFieldScheme,
         TaskManagementProject,
         TaskManagementWorkflowScheme,
         TaskManagementBoard,

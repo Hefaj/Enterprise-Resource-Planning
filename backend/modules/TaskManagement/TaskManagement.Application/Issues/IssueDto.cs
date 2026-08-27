@@ -25,7 +25,8 @@ public sealed record IssueDto(
     Guid? ParentUuid,
     bool IsRestricted,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    Dictionary<string, string> CustomFields);
 
 /// <summary>
 /// Zakres listy zgłoszeń — <b>parametr, nie osobna strona</b>. „Moje zgłoszenia” jako oddzielny
@@ -42,6 +43,24 @@ public enum IssueScope
 
     /// <summary>Zgłoszone przeze mnie.</summary>
     ReportedByMe = 2,
+}
+
+/// <summary>
+/// Filtr po polu niestandardowym.
+///
+/// <para>Działa <b>wyłącznie na polach ze slotem</b> i wyłącznie w kontekście jednego projektu:
+/// bez projektu nie da się przetłumaczyć kodu pola na slot, bo dwa schematy mogą mapować ten
+/// sam kod na różne kolumny. Pole spoza profilu jest <b>ignorowane</b>, nie odrzucane —
+/// tak samo jak nieznane pole sortowania (<c>docs/backend/cqrs.md</c>).</para>
+/// </summary>
+public sealed class IssueCustomFieldFilter
+{
+    /// <summary>Kod pola z profilu projektu.</summary>
+    public string Code { get; set; } = string.Empty;
+
+    /// <summary>Wartość w postaci kanonicznej. Dla tekstu dopasowanie jest częściowe
+    /// (<c>ILIKE</c>), dla liczby, daty i użytkownika — dokładne.</summary>
+    public string Value { get; set; } = string.Empty;
 }
 
 /// <summary>Filtry wyszukiwania zgłoszeń.</summary>
@@ -70,6 +89,12 @@ public sealed class SearchIssueRequest : PagedRequest
     public IssuePriority? Priority { get; set; }
 
     public Guid? AssigneeUuid { get; set; }
+
+    /// <summary>
+    /// Filtry po polach niestandardowych. Wymagają ustawionego <see cref="ProjectUuid"/> —
+    /// bez niego są pomijane w całości, bo kod pola nie ma jak zamienić się w slot.
+    /// </summary>
+    public List<IssueCustomFieldFilter>? CustomFields { get; set; }
 }
 
 /// <summary>Pobranie zgłoszeń po identyfikatorach.</summary>

@@ -165,6 +165,12 @@
         "state": "state"
       },
       "emptyValue": "none"
+    },
+    "customFields": {
+      "label": "Custom fields",
+      "save": "Save fields",
+      "numberHint": "e.g. 8.5",
+      "dateHint": "YYYY-MM-DD"
     }
   }
 }

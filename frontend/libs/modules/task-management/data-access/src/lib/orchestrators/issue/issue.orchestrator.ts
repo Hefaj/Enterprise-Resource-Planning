@@ -22,6 +22,7 @@ import {
   IssueDto,
   IssueRemoveCommentCommand,
   IssueSetCommentBodyCommand,
+  IssueSetCustomFieldsCommand,
   IssueSetDescriptionCommand,
   IssueSetDueDateCommand,
   IssueSetStateCommand,
@@ -197,6 +198,22 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
    * więc front nie musi (i nie powinien) duplikować tej reguły; wygaszenie niedostępnych
    * przycisków to wygoda, nie kontrola.
    */
+  /**
+   * Nadpisuje <b>całą</b> mapę wartości pól niestandardowych. Pole pominięte w mapie zostaje
+   * wyczyszczone — komenda ma człon w liczbie mnogiej, więc to, co przyszło, jest tym, co
+   * zostaje (`docs/backend/endpoint-naming.md` §2).
+   *
+   * <p>Wartości jadą jako tekst w postaci kanonicznej (liczba z kropką, data ISO-8601 UTC,
+   * użytkownik jako uuid), bo kontrakt NSwag musi mieć jeden typ na pole, a nie union zależny
+   * od danych z bazy (`docs/backend/task-management.md` §6).</p>
+   */
+  public setCustomFieldsAsync(command: IssueSetCustomFieldsCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueSetCustomFieldsMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueCustomFields,
+      queueId,
+    });
+  }
+
   public setStateAsync(command: IssueSetStateCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueSetStateMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueState,

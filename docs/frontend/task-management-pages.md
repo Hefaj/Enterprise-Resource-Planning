@@ -280,7 +280,7 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 | 0 ✅ | Zgłoszenia (bez pól niestandardowych), Karta zgłoszenia; **usunięcie zaślepki „Dashboard Analityczny Zadań"** |
 | 1 ✅ | Karta zgłoszenia — przejścia stanów, komentarze, historia |
 | 2 ✅ | **Tablica** (kanban, drag&drop, realtime) |
-| 3 | Kontekst projektu na liście, kolumny i filtry z profilu; Karta projektu — zakładka pól |
+| 3 🟡 | Kontekst projektu na liście ✅, kolumny i filtry z profilu ✅; Karta projektu — zakładka pól (jeszcze nie) |
 | 4 | Tryb drzewa na liście, pasek powiązań na karcie |
 | 5 | Zlecenia, odbiór; Karta projektu — SLA |
 | 6 | Backlog i planowanie sprintu, akcje masowe |

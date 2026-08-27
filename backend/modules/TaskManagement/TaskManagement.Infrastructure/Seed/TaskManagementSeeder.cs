@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -129,7 +130,34 @@ public sealed partial class TaskManagementSeeder
         _dbContext.Projects.Add(project);
         _dbContext.ProjectKeyCounters.Add(ProjectKeyCounter.Create(project.Uuid, project.Code));
 
+        AddDefaultBoard(project, scheme);
+
         return project;
+    }
+
+    /// <summary>
+    /// Domyślna tablica projektu — po jednej kolumnie na stan schematu.
+    ///
+    /// <para>Kart tu nie zakładamy. Wiersz w <c>board_card</c> powstaje przy pierwszym
+    /// przeciągnięciu (<c>docs/backend/task-management.md</c> §7.1), a seed zakładający go
+    /// z góry udawałby, że ktoś już ustawiał kolejność ręcznie.</para>
+    /// </summary>
+    private void AddDefaultBoard(Project project, WorkflowScheme scheme)
+    {
+        var board = Board.CreateWithUuid(
+            Guid.CreateVersion7(),
+            project.Uuid,
+            $"Tablica {project.Code}",
+            BoardMode.Kanban,
+            isDefault: true);
+
+        var orderNo = 0;
+        foreach (var state in scheme.States.OrderBy(s => s.OrderNo))
+        {
+            board.AddColumn(Guid.CreateVersion7(), state.Code, orderNo++, [state.Uuid]);
+        }
+
+        _dbContext.Boards.Add(board);
     }
 
     private int AddIssues(

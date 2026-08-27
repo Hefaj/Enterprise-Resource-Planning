@@ -1,3 +1,5 @@
+export * from './lib/board/page/board.component';
+export * from './lib/board/translation';
 export * from './lib/issue/page/issue.component';
 export * from './lib/issue/page/issue-detail.component';
 export * from './lib/issue/components/tables/task-management-issue-table/task-management-issue-table.component';

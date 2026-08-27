@@ -229,7 +229,8 @@
       "taskmgmtIssueSetState": "Zmiana stanu zgłoszeń",
       "taskmgmtIssueAddComment": "Dodanie komentarza",
       "taskmgmtIssueSetCommentBody": "Zmiana treści komentarza",
-      "taskmgmtIssueRemoveComment": "Usunięcie komentarza"
+      "taskmgmtIssueRemoveComment": "Usunięcie komentarza",
+      "taskmgmtBoardSetCardPosition": "Przestawienie karty na tablicy"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

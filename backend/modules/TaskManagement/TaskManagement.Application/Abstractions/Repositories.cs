@@ -1,4 +1,5 @@
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -46,6 +47,42 @@ public interface IIssueCommentRepository
 public interface IIssueActivityWriter
 {
     void Add(IssueActivity activity);
+}
+
+/// <summary>Dostęp do agregatu <see cref="Board"/> po stronie zapisu — ładuje tablicę razem
+/// z kolumnami, bo układ kolumn zmienia się metodą agregatu.</summary>
+public interface IBoardRepository
+{
+    Task<Board?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(Board board);
+}
+
+/// <summary>
+/// Dostęp do kart tablicy po stronie zapisu.
+///
+/// <para>Interfejs jest niesymetryczny wobec pozostałych repozytoriów i to jest celowe: karty
+/// przestawia się <b>zawsze w kontekście całej tablicy</b>, bo rank wylicza się z sąsiadów.
+/// Metoda „znajdź jedną kartę” zachęcałaby do policzenia ranku bez wiedzy o sąsiadach, czyli
+/// do jedynego błędu, przed którym cały ten schemat ma chronić
+/// (<c>docs/backend/task-management.md</c> §7.2).</para>
+/// </summary>
+public interface IBoardCardRepository
+{
+    /// <summary>
+    /// Karty tablicy — śledzone, w kolejności <c>(rank, uuid)</c>, z <b>uzupełnieniem
+    /// brakujących</b>.
+    ///
+    /// <para>Zgłoszenie, którego nikt jeszcze nie przestawiał, nie ma wiersza w
+    /// <c>board_card</c>. Pierwsze przeciągnięcie na tablicy zakłada wiersze wszystkim jej
+    /// zgłoszeniom naraz, w kolejności, w jakiej użytkownik je właśnie widział — inaczej
+    /// sąsiedzi upuszczonej karty bywają bez ranku i nie ma między czym szukać środka.
+    /// Kolejne przeciągnięcia to już jeden <c>UPDATE</c> jednego wiersza.</para>
+    /// </summary>
+    Task<IReadOnlyList<BoardCard>> MaterializeBoardAsync(
+        Guid boardUuid,
+        DateTimeOffset now,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Dostęp do agregatu <see cref="Project"/> po stronie zapisu — ładuje projekt

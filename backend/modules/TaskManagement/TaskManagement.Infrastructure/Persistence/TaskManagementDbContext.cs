@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
+using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -37,6 +38,14 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     public DbSet<ProjectKeyCounter> ProjectKeyCounters => Set<ProjectKeyCounter>();
 
     public DbSet<Issue> Issues => Set<Issue>();
+
+    public DbSet<Board> Boards => Set<Board>();
+
+    public DbSet<BoardColumn> BoardColumns => Set<BoardColumn>();
+
+    /// <summary>Kolejność kart na tablicach. Wiersz powstaje przy pierwszym przestawieniu
+    /// karty, nie przy założeniu zgłoszenia (<c>docs/backend/task-management.md</c> §7.1).</summary>
+    public DbSet<BoardCard> BoardCards => Set<BoardCard>();
 
     public DbSet<IssueAttachment> IssueAttachments => Set<IssueAttachment>();
 

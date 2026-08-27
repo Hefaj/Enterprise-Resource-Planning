@@ -1,0 +1,19 @@
+{
+  "title": "Tablica",
+  "loading": "Wczytuję tablicę…",
+  "notFound": "Nie znaleziono tablicy albo nie masz do niej dostępu.",
+  "empty": {
+    "columns": "Ta tablica nie ma jeszcze żadnych kolumn.",
+    "column": "Brak kart"
+  },
+  "column": {
+    "count": "kart: {{count}}"
+  },
+  "card": {
+    "unassigned": "Nieprzypisane"
+  },
+  "move": {
+    "failed": "Nie udało się przestawić karty — pokazuję aktualny stan tablicy.",
+    "blocked": "Przejście do tej kolumny nie istnieje w schemacie projektu."
+  }
+}

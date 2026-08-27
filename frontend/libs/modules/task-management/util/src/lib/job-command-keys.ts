@@ -19,4 +19,5 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   addIssueComment: 'shared.jobs.commands.taskmgmtIssueAddComment',
   setIssueCommentBody: 'shared.jobs.commands.taskmgmtIssueSetCommentBody',
   removeIssueComment: 'shared.jobs.commands.taskmgmtIssueRemoveComment',
+  setBoardCardPosition: 'shared.jobs.commands.taskmgmtBoardSetCardPosition',
 } as const;

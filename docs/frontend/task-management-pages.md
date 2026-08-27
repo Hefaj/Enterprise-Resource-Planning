@@ -55,7 +55,7 @@ wiersza zmienia się z zakresem. Tutaj nie ma czynności, więc dedup nie ma cze
 Zaznaczenie i akcje masowe idą przez pełny [`ErpSelectionScope`](./selection-scope.md) — zmiana
 stanu, przypisanie i dodanie do sprintu na kilkuset zgłoszeniach to zwykłe zadanie masowe.
 
-### 2.2 Tablica — `/task-management/board/:uuid`
+### 2.2 Tablica — `/task-management/board/:uuid` ✅
 **Strona, która świadomie łamie wzorzec `erp-grid-layout` + filtr + tabela** — zapisane tutaj,
 żeby przy review nie wyglądało na niedbalstwo. Drugi taki przypadek w systemie po edytorze
 szablonu obiegu w DMS.
@@ -69,15 +69,23 @@ Trzy rzeczy, których nie robi dziś żaden ekran w systemie:
    `setBoardCardPosition` leci z `beforeUuid`/`afterUuid` (nie z wyliczonym rankiem — liczy go
    serwer, [`task-management.md` §7.2](../backend/task-management.md#72-rank-jest-łańcuchem-nie-liczbą-całkowitą)).
    Odpowiedź `409` cofa ruch i pokazuje toast.
-2. **Pomijanie echa własnej zmiany.** Orkiestrator ignoruje zdarzenie SignalR o korelacji
-   odpowiadającej własnej, jeszcze niepotwierdzonej komendzie (`X-Request-Id` → `CorrelationId`
-   w `AggregateChanged`). Bez tego karta przeskakuje pod kursorem w trakcie przeciągania.
+2. **Pomijanie echa własnej zmiany.** Orkiestrator pomija odświeżenie kart, dla których leci
+   własna, jeszcze niepotwierdzona komenda. Bez tego karta przeskakuje pod kursorem w trakcie
+   przeciągania. **Odstępstwo od pierwotnego projektu:** miało to iść po korelacji
+   (`X-Request-Id` → `CorrelationId`), ale hub rozsyła dziś `ReceiveUpdates(sygnatura, uuid-y)`
+   bez korelacji — rozszerzanie kontraktu realtime dla jednego ekranu byłoby drożej niż zbiór
+   uuid-ów w orkiestratorze ([`task-management.md` §7.3](../backend/task-management.md#73-współbieżność-i-echo-własnej-zmiany)).
 3. **Przeciąganie w kolumnę, do której przejście jest niedozwolone.** Kolumna niedostępna dla
    danej karty jest wygaszana **w chwili chwycenia karty**, na podstawie przejść ze schematu.
    Poznanie tego dopiero z błędu po upuszczeniu jest wrogie użytkownikowi.
 
 Przejście wymagające pól (`required_fields`) otwiera modal przed potwierdzeniem ruchu — karta
 wisi w stanie „w toku" do zamknięcia modala.
+
+**Czego faza 2 świadomie nie dowozi**: swimlane'ów (drugi wymiar grupowania nad tym samym
+mechanizmem kolejności — nie on jest pytaniem tej fazy) i modala pól wymaganych przy przejściu
+(`required_fields` to pola niestandardowe, czyli faza 3). Strona rysuje dziś kolumny wprost
+ze stanów schematu projektu.
 
 ### 2.3 Karta zgłoszenia — `/task-management/issue/:key`
 **Osobna strona, nie prawy panel przy tabeli.** Powód jest praktyczny: opis, komentarze i historia
@@ -269,9 +277,9 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 
 | Faza | Strony |
 |---|---|
-| 0 | Zgłoszenia (bez pól niestandardowych), Karta zgłoszenia; **usunięcie zaślepki „Dashboard Analityczny Zadań"** |
-| 1 | Karta zgłoszenia — przejścia stanów, komentarze, historia |
-| 2 | **Tablica** (kanban, drag&drop, realtime) |
+| 0 ✅ | Zgłoszenia (bez pól niestandardowych), Karta zgłoszenia; **usunięcie zaślepki „Dashboard Analityczny Zadań"** |
+| 1 ✅ | Karta zgłoszenia — przejścia stanów, komentarze, historia |
+| 2 ✅ | **Tablica** (kanban, drag&drop, realtime) |
 | 3 | Kontekst projektu na liście, kolumny i filtry z profilu; Karta projektu — zakładka pól |
 | 4 | Tryb drzewa na liście, pasek powiązań na karcie |
 | 5 | Zlecenia, odbiór; Karta projektu — SLA |

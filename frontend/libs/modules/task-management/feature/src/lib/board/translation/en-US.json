@@ -1,0 +1,19 @@
+{
+  "title": "Board",
+  "loading": "Loading the board…",
+  "notFound": "Board not found, or you have no access to it.",
+  "empty": {
+    "columns": "This board has no columns yet.",
+    "column": "No cards"
+  },
+  "column": {
+    "count": "cards: {{count}}"
+  },
+  "card": {
+    "unassigned": "Unassigned"
+  },
+  "move": {
+    "failed": "The card could not be moved — showing the board as it is now.",
+    "blocked": "That transition does not exist in the project's workflow scheme."
+  }
+}

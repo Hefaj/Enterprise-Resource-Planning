@@ -1,6 +1,6 @@
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: ✅ faza 0 wdrożona i zweryfikowana end-to-end; faza 1 ✅ wdrożona; fazy 2–7 📐 projekt.**
+**Stan: ✅ faza 0 wdrożona i zweryfikowana end-to-end; fazy 1–2 ✅ wdrożone; fazy 3–7 📐 projekt.**
 Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
@@ -14,7 +14,16 @@ czyszczony przy zapisie (`IRichTextSanitizer`).
 Front: strona `/task-management/issue` (lista serwerowa z filtrem i akcją masową) oraz karta
 `/task-management/issue/:key` (opis w edytorze, przejścia stanów, załączniki, wątek komentarzy
 z odpowiedziami i historia zmian); zaślepka „Dashboard Analityczny Zadań" usunięta z menu.
-Nie ma jeszcze tablicy, pól niestandardowych, hierarchii ani zleceń — to fazy 2–7.
+Faza 2 jest wdrożona po obu stronach: `Board` z kolumnami mapowanymi na stany
+(`board`, `board_column` ze stanami jako `uuid[]`), kolejność kart w `board_card` z rankiem jako
+łańcuchem porządkowanym leksykograficznie (`BoardRank`, zestawienie `C` na kolumnie),
+komenda `BoardSetCardPosition` licząca rank **z sąsiadów, w transakcji**, oraz rebalans
+`BoardRankRebalanceService` z dzierżawą `taskmgmt:board-rank-rebalance`. Front: strona
+`/task-management/board/:uuid` z przeciąganiem kart (`@angular/cdk`), optymistycznym
+przestawieniem, wygaszaniem kolumn niedostępnych w chwili chwycenia karty i odświeżaniem
+kanałem `taskmgmt.board`.
+
+Nie ma jeszcze pól niestandardowych, hierarchii, sprintów ani zleceń — to fazy 3–7.
 Obrazków osadzonych w treści opisu też jeszcze nie ma: backend je unosi, front wymaga podmiany
 `src` na `blob:` w obie strony ([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
 
@@ -37,8 +46,8 @@ wyzwań — bierze cztery, których nie ma dziś nigdzie:
 
 | Wyzwanie | Stan | Gdzie w tym dokumencie |
 |---|---|---|
-| **Uporządkowana kolekcja** — ręczna kolejność kart, przestawiana przez drag&drop | 📐 wszystkie listy sortują się po kolumnie | [§7](#7-kolejność-na-tablicy) |
-| **Współbieżna edycja tej samej kolekcji** — dwie osoby przestawiają karty w tej samej chwili | 📐 realtime dziś tylko odświeża cache | [§7.3](#73-współbieżność-i-echo-własnej-zmiany) |
+| **Uporządkowana kolekcja** — ręczna kolejność kart, przestawiana przez drag&drop | ✅ `board_card.rank`, indeksowanie ułamkowe | [§7](#7-kolejność-na-tablicy) |
+| **Współbieżna edycja tej samej kolekcji** — dwie osoby przestawiają karty w tej samej chwili | ✅ identyczny rank u obojga, porządek `(rank, uuid)` | [§7.3](#73-współbieżność-i-echo-własnej-zmiany) |
 | **Konfiguracja per projekt** — inny zestaw pól i inny automat stanów w każdym projekcie | 📐 | [§5](#5-automat-stanów-jako-dana), [§6](#6-pola-niestandardowe) |
 | **Graf między encjami tego samego agregatu** — hierarchia i powiązania, z wykrywaniem cykli | 🟡 jest precedens: `RoleGraphCycleRule` w Identity | [§8](#8-hierarchia-i-powiązania) |
 | **Zlecenie przechodzące przez granicę działu** z terminem i odbiorem | 📐 | [§9](#9-zlecenia-międzydziałowe) |
@@ -315,6 +324,13 @@ Kolizja realna to co innego: **ktoś przeciągnął kartę, którą ktoś inny w
 albo przeniósł do innego projektu**. Tu obowiązuje optymistyczna kontrola po wersji zgłoszenia —
 komenda odpada z `409`, front cofa optymistyczny ruch i pokazuje toast.
 
+Echo — **jedno odstępstwo od projektu, wdrożone świadomie**. Hub rozsyła dziś
+`ReceiveUpdates(sygnatura, uuid-y)` i **nie niesie korelacji**, więc front nie ma jak rozpoznać
+własnego zdarzenia po stronie odbioru. Zamiast rozszerzać kontrakt realtime, orkiestrator tablicy
+pomija odświeżenie kart, dla których leci **własna, jeszcze niepotwierdzona komenda**
+(`TaskManagementBoardOrchestrator._pendingCardUuids`). Skutek jest ten sam — karta pod kursorem
+nie przeskakuje — a kontrakt zostaje nietknięty. Docelowo:
+
 Echo: `AggregateChanged` niesie `CorrelationId`
 ([`AggregateChanged.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/AggregateChanged.cs)),
 a front wysyła `X-Request-Id` przy każdej komendzie. **Front pomija zdarzenie o korelacji
@@ -498,9 +514,9 @@ częściowy sukces.
 
 | Faza | Zakres | Co weryfikuje |
 |---|---|---|
-| 0 | Mikroserwis `TaskManagement`, schemat `taskmgmt`, `Project` + `Issue`, licznik klucza, lista serwerowa, karta zgłoszenia, przepisanie szkieletu frontu | Szablon modułu na nowej domenie + **sekwencja per encja przy dwóch instancjach** |
-| 1 | `WorkflowScheme` w seedzie, przejścia z regułami, komentarze, `issue_activity` | Automat stanów jako dana |
-| 2 | `Board` + `board_card` + `rank`, drag&drop, realtime kolejności, rebalans `[ClusterSafe]` | **Uporządkowana kolekcja i współbieżna edycja — główne pytanie modułu** |
+| 0 ✅ | Mikroserwis `TaskManagement`, schemat `taskmgmt`, `Project` + `Issue`, licznik klucza, lista serwerowa, karta zgłoszenia, przepisanie szkieletu frontu | Szablon modułu na nowej domenie + **sekwencja per encja przy dwóch instancjach** |
+| 1 ✅ | `WorkflowScheme` w seedzie, przejścia z regułami, komentarze, `issue_activity` | Automat stanów jako dana |
+| 2 ✅ | `Board` + `board_card` + `rank`, drag&drop, realtime kolejności, rebalans `[ClusterSafe]` | **Uporządkowana kolekcja i współbieżna edycja — główne pytanie modułu** |
 | 3 | `FieldScheme`, sloty, `getProjectFieldProfile`, kolumny i filtry z profilu | Konfiguracja per projekt |
 | 4 | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
 | 5 | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, odbiór, SLA i eskalacje | Zlecenia przez granicę działu |

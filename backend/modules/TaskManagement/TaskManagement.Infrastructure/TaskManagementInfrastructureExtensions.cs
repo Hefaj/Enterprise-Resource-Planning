@@ -6,9 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
+using TaskManagement.Infrastructure.Jobs;
 using TaskManagement.Infrastructure.Persistence;
 using TaskManagement.Infrastructure.Seed;
 
@@ -58,6 +60,9 @@ public static class TaskManagementInfrastructureExtensions
         services.AddHostedService<ErpDatabaseMigrator<TaskManagementDbContext>>();
         services.AddHostedService<TaskManagementSeedInitializer>();
 
+        // Rebalans rangi kart — rzadki, pod dzierżawą, patrz BoardRankRebalanceService.
+        services.AddHostedService<BoardRankRebalanceService>();
+
         // Sygnatury SignalR — kontrakt z frontendem. Muszą zgadzać się co do znaku
         // z `signalrSignature` orkiestratorów (docs/backend/realtime-signalr.md).
         services.AddSingleton<IAggregateSignatureMap>(new AggregateSignatureMap()
@@ -65,7 +70,15 @@ public static class TaskManagementInfrastructureExtensions
             .Register<Project>(AggregateSignatures.TaskManagementProject)
             .Register<WorkflowScheme>(AggregateSignatures.TaskManagementWorkflowScheme)
             .Register<IssueAttachment>(AggregateSignatures.TaskManagementIssueAttachment)
-            .Register<IssueComment>(AggregateSignatures.TaskManagementIssueComment));
+            .Register<IssueComment>(AggregateSignatures.TaskManagementIssueComment)
+            .Register<Board>(AggregateSignatures.TaskManagementBoard)
+
+            // Karta jest osobnym korzeniem agregatu na TYM SAMYM kanale, co tablica: dzięki
+            // temu przeciągnięcie rozgłasza uuid karty, a nie uuid tablicy, czyli nie każe
+            // wszystkim klientom przeładować kilkuset kart (§7.4). Klient dostaje jednym
+            // kanałem oba rodzaje uuid-ów i odpytuje o nie ten sam endpoint — uuid tablicy
+            // nie pasuje wtedy do żadnej karty i nic nie zmienia.
+            .Register<BoardCard>(AggregateSignatures.TaskManagementBoard));
 
         // `IssueActivity` świadomie NIE ma sygnatury: historia zmienia się wyłącznie razem
         // ze zgłoszeniem albo komentarzem, a te mają własne kanały. Osobny kanał oznaczałby

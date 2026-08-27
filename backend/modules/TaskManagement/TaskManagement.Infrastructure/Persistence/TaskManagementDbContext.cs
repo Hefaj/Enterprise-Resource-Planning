@@ -38,6 +38,8 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
 
     public DbSet<Issue> Issues => Set<Issue>();
 
+    public DbSet<IssueAttachment> IssueAttachments => Set<IssueAttachment>();
+
     public DbSet<WorkflowScheme> WorkflowSchemes => Set<WorkflowScheme>();
 
     public DbSet<WorkflowState> WorkflowStates => Set<WorkflowState>();

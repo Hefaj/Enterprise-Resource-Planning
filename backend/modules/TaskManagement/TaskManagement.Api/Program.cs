@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Api;
+using Erp.BuildingBlocks.Artifacts;
 using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
@@ -33,6 +34,12 @@ builder.Services.AddErpCommands<TaskManagementDbContext>(builder.Configuration);
 // module idzie przez runner, a to on otwiera transakcję chunka, w której licznik klucza
 // zgłoszenia i samo zgłoszenie zapisują się razem (docs/backend/task-management.md §4).
 builder.Services.AddErpBulkJobs<TaskManagementDbContext>(builder.Configuration);
+
+// Magazyn plików modułu — dwa kubełki (`erp-taskmgmt-artifacts` / `erp-taskmgmt-media`) i konto
+// MinIO tego serwisu. Nie ma centralnego mikroserwisu do multimediów: moduł jest właścicielem
+// swoich plików, bo referencja i rekord muszą leżeć w jednej transakcji
+// (docs/backend/media-storage.md).
+builder.Services.AddErpArtifacts(builder.Configuration);
 
 builder.Services.AddOpenApi();
 

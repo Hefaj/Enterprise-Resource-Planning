@@ -91,6 +91,13 @@
          wersja pełna ciągnie fontconfig, a my nie rysujemy tekstu — tylko dekodujemy i skalujemy.
          Na obrazie bez fontconfiga pełna wersja wywraca się przy pierwszym użyciu, nie przy starcie. -->
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.151.1" />
+
+    <!-- Oczyszczanie HTML wpisanego przez użytkownika w edytorze tekstu formatowanego
+         (`erp-rich-text`). MIT, oparte o AngleSharp — parsuje dokument tak jak przeglądarka,
+         zamiast filtrować regexem, więc nie da się go obejść przez egzotyczne kodowanie znaków.
+         Sanityzacja idzie przy ZAPISIE, nie przy renderowaniu: front i tak sanityzuje po swojej
+         stronie, ale zapisany HTML czytają też eksporty, powiadomienia i integracje. -->
+    <PackageVersion Include="HtmlSanitizer" Version="9.2.995" />
   </ItemGroup>
 
   <ItemGroup Label="Realtime">

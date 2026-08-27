@@ -39,6 +39,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     private readonly IWorkflowSchemeRepository _schemes;
     private readonly IIssueKeyAllocator _keyAllocator;
     private readonly IExecutionContext _executionContext;
+    private readonly IRichTextSanitizer _sanitizer;
     private readonly IClock _clock;
 
     public IssueCreateCommandHandler(
@@ -46,12 +47,14 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         IWorkflowSchemeRepository schemes,
         IIssueKeyAllocator keyAllocator,
         IExecutionContext executionContext,
+        IRichTextSanitizer sanitizer,
         IClock clock)
     {
         _repository = repository;
         _schemes = schemes;
         _keyAllocator = keyAllocator;
         _executionContext = executionContext;
+        _sanitizer = sanitizer;
         _clock = clock;
     }
 
@@ -77,7 +80,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
             ActorUuid(_executionContext),
             now);
 
-        issue.SetDescription(command.Description, now);
+        issue.SetDescription(_sanitizer.Sanitize(command.Description), now);
         issue.SetPriority(command.Priority, now);
         issue.SetAssignee(command.AssigneeUuid, now);
         issue.SetDueDate(command.DueAt, now);
@@ -117,14 +120,27 @@ public sealed class IssueSetDescriptionCommand : ICommand<Guid>, IAggregateComma
     public string? Description { get; set; }
 }
 
+/// <summary>
+/// Opis jest tekstem formatowanym (HTML z edytora), więc przechodzi przez
+/// <see cref="IRichTextSanitizer"/> ZANIM dotknie agregatu — patrz uzasadnienie przy tym
+/// interfejsie. Reszta komend zgłoszenia operuje na wartościach prostych i sanityzacji nie
+/// potrzebuje.
+/// </summary>
 public sealed class IssueSetDescriptionCommandHandler : IssueCommandHandlerBase<IssueSetDescriptionCommand>
 {
-    public IssueSetDescriptionCommandHandler(IIssueRepository repository, IClock clock) : base(repository, clock)
+    private readonly IRichTextSanitizer _sanitizer;
+
+    public IssueSetDescriptionCommandHandler(
+        IIssueRepository repository,
+        IRichTextSanitizer sanitizer,
+        IClock clock)
+        : base(repository, clock)
     {
+        _sanitizer = sanitizer;
     }
 
     protected override void Apply(Issue issue, IssueSetDescriptionCommand command, DateTimeOffset now)
-        => issue.SetDescription(command.Description, now);
+        => issue.SetDescription(_sanitizer.Sanitize(command.Description), now);
 }
 
 public sealed class IssueSetPriorityCommand : ICommand<Guid>, IAggregateCommand

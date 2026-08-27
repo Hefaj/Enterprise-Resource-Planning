@@ -96,6 +96,10 @@ export const ISSUE_KEYS = {
       description: {
         label: 'issue.detail.description.label',
         empty: 'issue.detail.description.empty',
+        placeholder: 'issue.detail.description.placeholder',
+        edit: 'issue.detail.description.edit',
+        save: 'issue.detail.description.save',
+        cancel: 'issue.detail.description.cancel',
       },
       sidebar: {
         state: 'issue.detail.sidebar.state',
@@ -109,6 +113,20 @@ export const ISSUE_KEYS = {
         createdAt: 'issue.detail.sidebar.createdAt',
         updatedAt: 'issue.detail.sidebar.updatedAt',
         restricted: 'issue.detail.sidebar.restricted',
+      },
+      attachments: {
+        label: 'issue.detail.attachments.label',
+        empty: 'issue.detail.attachments.empty',
+        add: 'issue.detail.attachments.add',
+        dropHint: 'issue.detail.attachments.dropHint',
+        uploading: 'issue.detail.attachments.uploading',
+        uploadFailed: 'issue.detail.attachments.uploadFailed',
+        tooManyFiles: 'issue.detail.attachments.tooManyFiles',
+        download: 'issue.detail.attachments.download',
+        downloadFailed: 'issue.detail.attachments.downloadFailed',
+        preview: 'issue.detail.attachments.preview',
+        previewUnavailable: 'issue.detail.attachments.previewUnavailable',
+        uploadedAt: 'issue.detail.attachments.uploadedAt',
       },
     },
   } as const;

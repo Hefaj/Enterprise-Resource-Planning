@@ -70,6 +70,10 @@ public static class AggregateSignatures
 
     public const string TaskManagementProject = "taskmgmt.project";
 
+    /// <summary>Załącznik zgłoszenia — obrazek w opisie albo plik dopięty obok. Osobny kanał,
+    /// bo wgranie pliku nie zmienia samego zgłoszenia, a karta ma odświeżyć listę plików.</summary>
+    public const string TaskManagementIssueAttachment = "taskmgmt.issue_attachment";
+
     /// <summary>Schemat stanów. Zmiana schematu przestawia kolumny tablicy i przyciski przejść
     /// na karcie u wszystkich naraz, więc jest zdarzeniem realtime, a nie konfiguracją
     /// odczytywaną raz przy starcie aplikacji.</summary>
@@ -97,6 +101,7 @@ public static class AggregateSignatures
         IdentityUser,
         IdentityRole,
         TaskManagementIssue,
+        TaskManagementIssueAttachment,
         TaskManagementProject,
         TaskManagementWorkflowScheme,
         TaskManagementBoard,

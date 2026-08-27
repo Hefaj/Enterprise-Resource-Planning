@@ -12,6 +12,16 @@ public interface IIssueRepository
     void Add(Issue issue);
 }
 
+/// <summary>Dostęp do agregatu <see cref="IssueAttachment"/> po stronie zapisu. Tylko dopisywanie
+/// i odczyt po uuid — usunięcie idzie kaskadą po zgłoszeniu, nie osobną komendą na pliku
+/// (patrz uzasadnienie przy <see cref="IssueAttachment"/>).</summary>
+public interface IIssueAttachmentRepository
+{
+    Task<IssueAttachment?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(IssueAttachment attachment);
+}
+
 /// <summary>Dostęp do agregatu <see cref="Project"/> po stronie zapisu — ładuje projekt
 /// razem z członkami, bo rola w projekcie zmienia się metodą agregatu.</summary>
 public interface IProjectRepository

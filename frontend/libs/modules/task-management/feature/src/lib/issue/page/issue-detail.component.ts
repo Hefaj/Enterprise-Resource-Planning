@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,6 +9,9 @@ import {
   ErpButtonComponent,
   ErpButtonConfig,
   ErpEmptyStateComponent,
+  ErpRichTextBuilder,
+  ErpRichTextComponent,
+  ErpRichTextConfig,
   ErpTranslatePipe,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
@@ -21,6 +25,7 @@ import { ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
+import { IssueAttachmentsComponent } from './content/issue-attachments.component';
 
 /**
  * Karta zgłoszenia — `/task-management/issue/:key`.
@@ -41,7 +46,14 @@ import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
 @Component({
   selector: 'erp-task-management-issue-detail',
   standalone: true,
-  imports: [DatePipe, ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe],
+  imports: [
+    DatePipe,
+    ErpButtonComponent,
+    ErpEmptyStateComponent,
+    ErpRichTextComponent,
+    ErpTranslatePipe,
+    IssueAttachmentsComponent,
+  ],
   providers: [provideIssueTranslations(), provideTaskManagementTranslations()],
   template: `
     @let issue = this.issue();
@@ -67,13 +79,31 @@ import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
             <h1 class="m-0 text-2xl font-semibold">{{ issue.title }}</h1>
 
             <section class="flex flex-col gap-2">
-              <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.description.label | erpTranslate }}
-              </h2>
-              <p class="m-0 whitespace-pre-wrap">
-                {{ issue.description || (ISSUE_KEYS.detail.description.empty | erpTranslate) }}
-              </p>
+              <div class="flex items-center gap-2">
+                <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
+                  {{ ISSUE_KEYS.detail.description.label | erpTranslate }}
+                </h2>
+                @if (!editingDescription() && canEdit()) {
+                  <erp-button [config]="editDescriptionButton" />
+                }
+              </div>
+
+              @if (editingDescription()) {
+                <erp-rich-text [config]="descriptionEditorConfig" [control]="descriptionControl" />
+                <div class="flex gap-2">
+                  <erp-button [config]="saveDescriptionButton" />
+                  <erp-button [config]="cancelDescriptionButton" />
+                </div>
+              } @else if (issue.description) {
+                <erp-rich-text [config]="descriptionPreviewConfig()" />
+              } @else {
+                <p class="m-0 text-[var(--tui-text-secondary)]">
+                  {{ ISSUE_KEYS.detail.description.empty | erpTranslate }}
+                </p>
+              }
             </section>
+
+            <erp-task-management-issue-attachments [issueUuid]="issue.uuid" [canEdit]="canEdit()" />
           </div>
 
           <aside class="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-[var(--tui-border-normal)] pl-4">
@@ -240,6 +270,54 @@ export class IssueDetailComponent {
       }));
   });
 
+  // ── Opis: podgląd ↔ edycja ───────────────────────────────────────────────────────────────
+  //
+  // Karta stoi w podglądzie (`tui-editor-socket` — ta sama typografia, zero tiptap w bundlu)
+  // i podnosi edytor dopiero na żądanie. Treść jest HTML-em, więc backend musi ją oczyścić
+  // przy zapisie — renderowanie tutaj idzie przez sanitizer Angulara, ale zapisany HTML czytają
+  // też inni konsumenci.
+
+  protected readonly editingDescription = signal<boolean>(false);
+
+  protected readonly descriptionControl = new FormControl<string>('');
+
+  protected readonly canEdit = computed(() =>
+    this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate),
+  );
+
+  protected readonly descriptionPreviewConfig = computed<ErpRichTextConfig>(() =>
+    ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(this.issue()?.description ?? '')),
+  );
+
+  protected readonly descriptionEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
+    b.setToolset('standard').setMinHeight(220).setPlaceholder(ISSUE_KEYS.detail.description.placeholder),
+  );
+
+  protected readonly editDescriptionButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.detail.description.edit,
+    appearance: 'flat',
+    size: 'xs',
+    iconStart: '@tui.pencil',
+    fn: (): void => {
+      this.descriptionControl.setValue(this.issue()?.description ?? '');
+      this.editingDescription.set(true);
+    },
+  };
+
+  protected readonly saveDescriptionButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.detail.description.save,
+    appearance: 'primary',
+    size: 's',
+    fn: (): Promise<void> => this._saveDescription(),
+  };
+
+  protected readonly cancelDescriptionButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.detail.description.cancel,
+    appearance: 'flat',
+    size: 's',
+    fn: (): void => this.editingDescription.set(false),
+  };
+
   protected readonly backButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.backToList,
     appearance: 'flat',
@@ -279,6 +357,23 @@ export class IssueDetailComponent {
       this._uuid.set(null);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private async _saveDescription(): Promise<void> {
+    const issue = this.issue();
+    if (!issue) {
+      return;
+    }
+
+    try {
+      await this._orchestrator.setDescriptionAsync({
+        uuid: issue.uuid,
+        description: this.descriptionControl.value || undefined,
+      });
+      this.editingDescription.set(false);
+    } catch (error) {
+      console.error('[IssueDetailComponent] Nie udało się zapisać opisu.', error);
     }
   }
 

@@ -4,6 +4,7 @@
     <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Api/Erp.BuildingBlocks.Api.csproj" />
     <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Messaging/Erp.BuildingBlocks.Messaging.csproj" />
     <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Jobs/Erp.BuildingBlocks.Jobs.csproj" />
+    <ProjectReference Include="../../../building-blocks/Erp.BuildingBlocks.Artifacts/Erp.BuildingBlocks.Artifacts.csproj" />
     <ProjectReference Include="../TaskManagement.Application/TaskManagement.Application.csproj" />
     <ProjectReference Include="../TaskManagement.Infrastructure/TaskManagement.Infrastructure.csproj" />
   </ItemGroup>

@@ -1,8 +1,11 @@
 # Task Management — podział na strony
 
-**Stan: 📐 projekt, brak kodu.** Front modułu to dziś pusty szkielet: `TaskComponent` bez treści,
-jedna trasa `tasks`, a `entry.menu.ts` zawiera pozycję-zaślepkę **„Dashboard Analityczny Zadań"** —
-idzie do kosza w fazie 0 (dashboard robiony pierwszy przez pół roku świeci pustkami).
+**Stan: ✅ faza 0 wdrożona; pozostałe strony 📐 projekt.** Istnieją dwie trasy — lista
+`/task-management/issue` (filtr, tabela serwerowa, akcje masowe) i karta `/task-management/issue/:key`
+(opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki). Zaślepka
+**„Dashboard Analityczny Zadań"** zniknęła z `entry.menu.ts` razem z fazą 0 (dashboard robiony
+pierwszy przez pół roku świeci pustkami). Tablicy, zleceń i grupy „Konfiguracja" w menu nie ma —
+pozycja bez działającej strony to ten sam błąd, który usunęła faza 0.
 
 Model domenowy, automat stanów, sloty pól i mechanika kolejności na tablicy →
 [`docs/backend/task-management.md`](../backend/task-management.md).
@@ -85,9 +88,31 @@ Trasa idzie po **kluczu czytelnym**, nie po UUID. Stare klucze przekierowują na
 (`issue.previous_keys`, [`task-management.md` §4](../backend/task-management.md#4-klucz-czytelny-dev-123)) —
 inaczej każdy link sprzed przeniesienia projektu jest martwy.
 
-Layout: kolumna główna (tytuł, opis, komentarze, historia), panel boczny (stan i dostępne
-przejścia, przypisany, priorytet, termin, sprint, pola niestandardowe **budowane w runtime
-z profilu projektu**), pasek powiązań (rodzic, podzadania, blokady, zlecenie).
+Layout: kolumna główna (tytuł, opis, załączniki, komentarze, historia), panel boczny (stan
+i dostępne przejścia, przypisany, priorytet, termin, sprint, pola niestandardowe **budowane
+w runtime z profilu projektu**), pasek powiązań (rodzic, podzadania, blokady, zlecenie).
+
+**Załączniki** (`erp-task-management-issue-attachments`, sekcja pod opisem) mają trzy decyzje
+przeniesione z multimediów Catalogu i jedną własną:
+
+- **pliki wgrywają się od razu po wybraniu**, nie za przyciskiem zapisu — karta zgłoszenia
+  żadnego „zapisz całość" nie ma, a transfer schowany za przyciskiem zamienia ekran
+  w zawieszony formularz bez informacji zwrotnej;
+- **bajty nie idą przez mikroserwis** — bilet (`getIssueAttachmentUploadTickets`) → `PUT` prosto
+  do magazynu → rejestracja paczki jedną komendą w jednej transakcji, pod jednym `X-Request-Id`;
+- **podgląd przez `blob:`**, nie przez adres endpointu w `src` — zawartość jest za uprawnieniem,
+  a `<img>` nie dokłada nagłówka `Authorization` ([`multimedia.md` §3](./multimedia.md#3-miniaturki-blob-nie-adres-endpointu));
+  miniatur pochodnych tu nie ma, więc adres zamawia dopiero kafelek obrazu, nie każdy wiersz;
+- **usuwania nie ma i nie jest to przeoczenie** — plik należy do zgłoszenia i znika razem z nim
+  w tej samej transakcji ([`media-storage.md` §4c](../backend/media-storage.md)), więc backend
+  nie wystawia komendy kasującej pojedynczy załącznik.
+
+> **Obrazki osadzone w treści opisu to osobna pozycja, jeszcze niezrobiona.** Backend jest na nie
+> gotowy (`GET issue/attachment/content/{uuid}` z trwałym adresem), ale ten adres wymaga tokenu,
+> więc `<img>` w zapisanym HTML-u sam się nie wyrenderuje. Wymaga to podmiany `src` na `blob:`
+> przy wyświetlaniu i z powrotem przy zapisie — w obu kierunkach i w obu trybach (podgląd
+> i edytor). Do czasu tej decyzji `TuiEditorTool.Img` świadomie nie wchodzi do żadnego zestawu
+> narzędzi `erp-rich-text`, a pliki dopina się obok treści.
 
 ### 2.4 Backlog i planowanie sprintu — `/task-management/board/:uuid/backlog`
 Podstrona tablicy scrumowej, nie osobna pozycja w menu: dwie listy obok siebie (backlog ↔ sprint),

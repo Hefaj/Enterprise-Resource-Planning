@@ -15,6 +15,7 @@ export * from './lib/form/erp-datepicker';
 export * from './lib/form/erp-input-picker';
 export * from './lib/form/erp-tree-picker';
 export * from './lib/form/erp-bulk-input';
+export * from './lib/form/erp-rich-text';
 export * from './lib/form/erp-toggle-group';
 
 export * from './lib/layouts/erp-page-layout';

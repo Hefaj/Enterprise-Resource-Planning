@@ -90,7 +90,11 @@
     "backToList": "Back to the list",
     "description": {
       "label": "Description",
-      "empty": "No description."
+      "empty": "No description.",
+      "placeholder": "Describe the issue…",
+      "edit": "Edit",
+      "save": "Save description",
+      "cancel": "Cancel"
     },
     "sidebar": {
       "state": "State",
@@ -104,6 +108,20 @@
       "createdAt": "Created",
       "updatedAt": "Updated",
       "restricted": "Restricted issue"
+    },
+    "attachments": {
+      "label": "Attachments",
+      "empty": "No attachments.",
+      "add": "Add files",
+      "dropHint": "Drop files here, or click to pick them.",
+      "uploading": "Uploaded {{ uploaded }} of {{ total }}",
+      "uploadFailed": "The files could not be uploaded. Try again.",
+      "tooManyFiles": "You can upload at most {{ max }} files at once.",
+      "download": "Download",
+      "downloadFailed": "The file could not be downloaded.",
+      "preview": "Preview",
+      "previewUnavailable": "This file cannot be displayed — download it to open.",
+      "uploadedAt": "Uploaded {{ date }}"
     }
   }
 }

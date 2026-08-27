@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Kod testowy nie musi spełniać rygoru analizatorów fundamentu. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!--
+      xunit v3 uruchamia się na Microsoft.Testing.Platform, a nie na VSTest: każdy projekt
+      testowy jest samodzielnym programem, stąd OutputType=Exe. Bez tych dwóch właściwości
+      `dotnet test` buduje projekt, ale nie znajduje w nim ani jednego testu.
+    -->
+    <OutputType>Exe</OutputType>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../modules/TaskManagement/TaskManagement.Domain/TaskManagement.Domain.csproj" />
+    <ProjectReference Include="../../modules/TaskManagement/TaskManagement.Application/TaskManagement.Application.csproj" />
+    <ProjectReference Include="../../modules/TaskManagement/TaskManagement.Infrastructure/TaskManagement.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+</Project>

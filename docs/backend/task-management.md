@@ -5,9 +5,15 @@ Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia)
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
 schemat stanów w seedzie oraz endpointy listy, karty po kluczu i zmiany stanu.
+Doszły do tego **załączniki zgłoszenia** (`IssueAttachment`, migracja `IssueAttachments`, kubełek
+i klucz MinIO per moduł, sygnatura `taskmgmt.issue_attachment`) oraz opis w formacie HTML
+czyszczony przy zapisie (`IRichTextSanitizer`).
 Front: strona `/task-management/issue` (lista serwerowa z filtrem i akcją masową) oraz karta
-`/task-management/issue/:key`; zaślepka „Dashboard Analityczny Zadań" usunięta z menu.
+`/task-management/issue/:key` (opis w edytorze, przejścia stanów, wgrywanie i pobieranie
+załączników); zaślepka „Dashboard Analityczny Zadań" usunięta z menu.
 Nie ma jeszcze tablicy, pól niestandardowych, hierarchii ani zleceń — to fazy 2–7.
+Obrazków osadzonych w treści opisu też jeszcze nie ma: backend je unosi, front wymaga podmiany
+`src` na `blob:` w obie strony ([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
 
 Ten dokument opisuje **docelowy model** modułu zarządzania pracą wzorowanego na YouTracku:
 projekty z własnym zestawem pól i własnym automatem stanów, tablice z ręczną kolejnością kart,

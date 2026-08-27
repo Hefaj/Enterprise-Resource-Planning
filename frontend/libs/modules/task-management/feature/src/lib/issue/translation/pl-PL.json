@@ -90,7 +90,11 @@
     "backToList": "Wróć do listy",
     "description": {
       "label": "Opis",
-      "empty": "Bez opisu."
+      "empty": "Bez opisu.",
+      "placeholder": "Opisz zgłoszenie…",
+      "edit": "Edytuj",
+      "save": "Zapisz opis",
+      "cancel": "Anuluj"
     },
     "sidebar": {
       "state": "Stan",
@@ -104,6 +108,20 @@
       "createdAt": "Utworzono",
       "updatedAt": "Zmodyfikowano",
       "restricted": "Zgłoszenie prywatne"
+    },
+    "attachments": {
+      "label": "Załączniki",
+      "empty": "Brak załączników.",
+      "add": "Dodaj pliki",
+      "dropHint": "Przeciągnij pliki tutaj albo kliknij, żeby je wybrać.",
+      "uploading": "Wgrano {{ uploaded }} z {{ total }}",
+      "uploadFailed": "Nie udało się wgrać plików. Spróbuj jeszcze raz.",
+      "tooManyFiles": "Jednorazowo można wgrać najwyżej {{ max }} plików.",
+      "download": "Pobierz",
+      "downloadFailed": "Nie udało się pobrać pliku.",
+      "preview": "Podgląd",
+      "previewUnavailable": "Tego pliku nie da się pokazać — pobierz go, żeby otworzyć.",
+      "uploadedAt": "Wgrano {{ date }}"
     }
   }
 }

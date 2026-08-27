@@ -12,6 +12,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "importHelpers": true,
     "target": "es2022",
     "module": "esnext",

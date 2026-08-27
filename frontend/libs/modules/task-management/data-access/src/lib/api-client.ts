@@ -52,6 +52,20 @@ export interface ITaskManagementClient {
      */
     getIssue(body: GetIssueRequest): Observable<IssueDto[]>;
     /**
+     * Zawartość załącznika zgłoszenia
+     * @return No Content
+     */
+    getIssueAttachmentContent(body: GetIssueAttachmentContentRequest): Observable<void>;
+    /**
+     * @return OK
+     */
+    getIssueAttachments(body: GetIssueAttachmentsRequest): Observable<IssueAttachmentDto[]>;
+    /**
+     * Adresy do wgrania plików prosto do magazynu
+     * @return OK
+     */
+    getIssueAttachmentUploadTickets(body: GetIssueAttachmentUploadTicketsRequest): Observable<IssueAttachmentUploadTicketDto[]>;
+    /**
      * @return OK
      */
     getIssueByKey(body: GetIssueByKeyRequest): Observable<IssueDto>;
@@ -59,6 +73,11 @@ export interface ITaskManagementClient {
      * @return OK
      */
     searchIssue(body: SearchIssueRequest): Observable<SearchResponse>;
+    /**
+     * Rejestracja wgranych załączników zgłoszenia
+     * @return OK
+     */
+    issueAttachmentCreateCommand(body: IssueAttachmentCreateRequest): Observable<IssueAttachmentCreateResponse>;
     /**
      * Seryjne zakładanie zgłoszeń z obsługą błędów cząstkowych
      * @return OK
@@ -610,6 +629,191 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     /**
+     * Zawartość załącznika zgłoszenia
+     * @return No Content
+     */
+    getIssueAttachmentContent(body: GetIssueAttachmentContentRequest): Observable<void> {
+        let url_ = this.baseUrl + "/issue/attachment/content/{uuid}";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "*/*",
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetIssueAttachmentContent(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetIssueAttachmentContent(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processGetIssueAttachmentContent(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getIssueAttachments(body: GetIssueAttachmentsRequest): Observable<IssueAttachmentDto[]> {
+        let url_ = this.baseUrl + "/issue/getIssueAttachments";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetIssueAttachments(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetIssueAttachments(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<IssueAttachmentDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<IssueAttachmentDto[]>;
+        }));
+    }
+
+    protected processGetIssueAttachments(response: HttpResponseBase): Observable<IssueAttachmentDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Adresy do wgrania plików prosto do magazynu
+     * @return OK
+     */
+    getIssueAttachmentUploadTickets(body: GetIssueAttachmentUploadTicketsRequest): Observable<IssueAttachmentUploadTicketDto[]> {
+        let url_ = this.baseUrl + "/issue/getIssueAttachmentUploadTickets";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetIssueAttachmentUploadTickets(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetIssueAttachmentUploadTickets(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<IssueAttachmentUploadTicketDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<IssueAttachmentUploadTicketDto[]>;
+        }));
+    }
+
+    protected processGetIssueAttachmentUploadTickets(response: HttpResponseBase): Observable<IssueAttachmentUploadTicketDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentUploadTicketDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * @return OK
      */
     getIssueByKey(body: GetIssueByKeyRequest): Observable<IssueDto> {
@@ -715,6 +919,69 @@ export class TaskManagementClient implements ITaskManagementClient {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Rejestracja wgranych załączników zgłoszenia
+     * @return OK
+     */
+    issueAttachmentCreateCommand(body: IssueAttachmentCreateRequest): Observable<IssueAttachmentCreateResponse> {
+        let url_ = this.baseUrl + "/issue/attachment-create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIssueAttachmentCreateCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIssueAttachmentCreateCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<IssueAttachmentCreateResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<IssueAttachmentCreateResponse>;
+        }));
+    }
+
+    protected processIssueAttachmentCreateCommand(response: HttpResponseBase): Observable<IssueAttachmentCreateResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentCreateResponse;
             return _observableOf(result200);
             }));
         } else if (status === 401) {
@@ -1445,6 +1712,24 @@ export interface BatchResult {
     [key: string]: any;
 }
 
+export interface GetIssueAttachmentContentRequest {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
+export interface GetIssueAttachmentUploadTicketsRequest {
+    count?: number;
+
+    [key: string]: any;
+}
+
+export interface GetIssueAttachmentsRequest {
+    issueUuid?: string;
+
+    [key: string]: any;
+}
+
 export interface GetIssueByKeyRequest {
     key?: string;
 
@@ -1465,6 +1750,48 @@ export interface GetProjectRequest {
 
 export interface GetProjectWorkflowRequest {
     projectUuid?: string;
+
+    [key: string]: any;
+}
+
+export interface IssueAttachmentCreateCommand {
+    uuid?: string;
+    issueUuid?: string;
+    artifactUuid?: string;
+    fileName?: string;
+
+    [key: string]: any;
+}
+
+export interface IssueAttachmentCreateRequest {
+    commands?: IssueAttachmentCreateCommand[];
+
+    [key: string]: any;
+}
+
+export interface IssueAttachmentCreateResponse {
+    uuids: string[];
+
+    [key: string]: any;
+}
+
+export interface IssueAttachmentDto {
+    uuid: string;
+    issueUuid: string;
+    fileName: string;
+    mimeType: string;
+    fileSize: number;
+    isImage: boolean;
+    uploadedByUuid: string;
+    createdAt: Date;
+
+    [key: string]: any;
+}
+
+export interface IssueAttachmentUploadTicketDto {
+    artifactUuid: string;
+    url: string;
+    expiresOn: Date;
 
     [key: string]: any;
 }

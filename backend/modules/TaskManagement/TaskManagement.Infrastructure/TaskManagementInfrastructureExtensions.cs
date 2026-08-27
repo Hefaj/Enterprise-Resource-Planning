@@ -5,6 +5,7 @@ using Erp.BuildingBlocks.Persistence.Concurrency;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TaskManagement.Application.Issues;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -44,6 +45,8 @@ public static class TaskManagementInfrastructureExtensions
         // także rebalans rangi kart na tablicy (docs/backend/multi-instance.md §3.1).
         services.AddErpExclusiveLease<TaskManagementDbContext>();
 
+        services.Configure<IssueAttachmentOptions>(configuration.GetSection(IssueAttachmentOptions.SectionName));
+
         services.AddScoped<TaskManagementSeeder>();
 
         var seedOptions = configuration.GetSection(TaskManagementSeedOptions.SectionName)
@@ -60,7 +63,8 @@ public static class TaskManagementInfrastructureExtensions
         services.AddSingleton<IAggregateSignatureMap>(new AggregateSignatureMap()
             .Register<Issue>(AggregateSignatures.TaskManagementIssue)
             .Register<Project>(AggregateSignatures.TaskManagementProject)
-            .Register<WorkflowScheme>(AggregateSignatures.TaskManagementWorkflowScheme));
+            .Register<WorkflowScheme>(AggregateSignatures.TaskManagementWorkflowScheme)
+            .Register<IssueAttachment>(AggregateSignatures.TaskManagementIssueAttachment));
 
         return services;
     }

@@ -22,6 +22,21 @@ public sealed class IssueRepository : IIssueRepository
     public void Add(Issue issue) => _dbContext.Issues.Add(issue);
 }
 
+/// <summary>Repozytorium załączników.</summary>
+public sealed class IssueAttachmentRepository : IIssueAttachmentRepository
+{
+    private readonly TaskManagementDbContext _dbContext;
+
+    public IssueAttachmentRepository(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+
+    /// <inheritdoc />
+    public Task<IssueAttachment?> FindAsync(Guid uuid, CancellationToken cancellationToken)
+        => _dbContext.IssueAttachments.FirstOrDefaultAsync(a => a.Uuid == uuid, cancellationToken);
+
+    /// <inheritdoc />
+    public void Add(IssueAttachment attachment) => _dbContext.IssueAttachments.Add(attachment);
+}
+
 /// <summary>Repozytorium projektów — ładuje agregat razem z członkami, bo rola zmienia się
 /// metodą agregatu, a nie osobnym zapisem w tabeli podrzędnej.</summary>
 public sealed class ProjectRepository : IProjectRepository

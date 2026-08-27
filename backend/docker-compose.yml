@@ -99,7 +99,7 @@ services:
         # Wszystkie kroki są idempotentne: `policy create` nadpisuje istniejącą politykę
         # (dzięki temu edycja pliku dociera po zwykłym restarcie), a `user add`/`policy attach`
         # na już istniejącym stanie kończą się błędem, który tu nic nie znaczy.
-        for M in catalog; do
+        for M in catalog taskmgmt; do
           mc admin policy create local "erp-$$M" "/policies/$$M.json" || true
           mc admin user add local "$$M" "$${M}12345" >/dev/null 2>&1 || true
           mc admin policy attach local "erp-$$M" --user "$$M" >/dev/null 2>&1 || true

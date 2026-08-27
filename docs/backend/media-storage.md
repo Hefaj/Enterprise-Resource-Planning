@@ -139,11 +139,12 @@ Cztery powody, każdy wystarczający sam z siebie:
    czego rozdzielić.
 4. **Ops** — metryki, backup i limity per moduł, zamiast jednego worka.
 
-> **Stan faktyczny do naprawy.** `ErpArtifactOptions.MediaBucketName` ma default `erp-media`,
-> a [`Catalog.Api/appsettings.Development.json`](../../backend/modules/Catalog/Catalog.Api/appsettings.Development.json)
-> nadpisuje wyłącznie `BucketName` (`catalog-artifacts`). Multimedia Catalogu lądują więc
-> w generycznym `erp-media` — pierwszy kolejny moduł z plikami wejdzie tam obok nich.
-> To jest pozycja blokująca dla Marketingu i DMS-u.
+> **Zrobione.** `ErpArtifactOptions` nie ma już domyślnej nazwy kubełka: magazyny leżą
+> w słowniku `Stores`, a `RequireStore(klucz)` rzuca czytelnym wyjątkiem, gdy konfiguracja
+> nie ma wpisu, po który sięga kod. Domyślny kubełek „na wszelki wypadek" byłby dokładnie tym
+> cichym rozjazdem, przed którym broni ten podział. Catalog ma skonfigurowane
+> `erp-catalog-artifacts` i `erp-catalog-media`; kolejny moduł z plikami dokłada własną parę
+> i nie ma jak wejść w cudzy kubełek przez pomyłkę.
 
 ### 2.3 Oś C — klucz MinIO per serwis
 

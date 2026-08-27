@@ -2,10 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BaseOrchestrator, LoadOptions, OrchestratorConfig } from '@erp/shared/data-access';
+import { TASK_MANAGEMENT_JOB_COMMAND_KEYS } from '@erp/task-management/util';
 
 import {
   GetProjectRequest,
   ProjectDto,
+  ProjectSetFieldSchemeCommand,
   SearchProjectRequest,
   SearchResponse,
   TaskManagementClient,
@@ -48,5 +50,20 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
 
   protected override mapToViewModel(dto: ProjectDto): ProjectVM {
     return dto;
+  }
+
+  /**
+   * Podpina albo odpina schemat pól niestandardowych.
+   *
+   * <p>Pusty <c>fieldSchemeUuid</c> odpina schemat i <b>nie kasuje</b> wartości zapisanych
+   * na zgłoszeniach — wracają, gdy schemat wróci. Kasowanie danych przy zmianie konfiguracji
+   * jest nieodwracalne, a ta operacja nie wygląda na nieodwracalną
+   * (`docs/backend/task-management.md` §6).</p>
+   */
+  public setFieldSchemeAsync(command: ProjectSetFieldSchemeCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetFieldSchemeMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectFieldScheme,
+      queueId,
+    });
   }
 }

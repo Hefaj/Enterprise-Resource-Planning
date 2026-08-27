@@ -20,6 +20,12 @@ export const remoteMenu: ErpNavigationItem[] = [
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
   {
+    label: 'Projekty',
+    iconId: 'folder-kanban',
+    route: 'project',
+    requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
+  },
+  {
     label: 'Tablica',
     iconId: 'columns-3',
     route: 'board',

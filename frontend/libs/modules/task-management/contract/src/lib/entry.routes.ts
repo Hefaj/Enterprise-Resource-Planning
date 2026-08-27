@@ -15,6 +15,21 @@ export const remoteRoutes: Route[] = [
         loadComponent: () => import('@erp/task-management/feature').then((m) => m.IssueComponent),
       },
       {
+        path: 'project',
+        pathMatch: 'full',
+        data: { breadcrumb: 'Projekty' },
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
+        loadComponent: () => import('@erp/task-management/feature').then((m) => m.ProjectComponent),
+      },
+      {
+        // Karta projektu idzie po uuid, nie po kodzie: kod jest zmienny (prefiks klucza da się
+        // zmienić), a link do konfiguracji nie może przestać działać po jego zmianie.
+        path: 'project/:uuid',
+        data: { breadcrumb: 'Projekt' },
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.ProjectManage)],
+        loadComponent: () => import('@erp/task-management/feature').then((m) => m.ProjectDetailComponent),
+      },
+      {
         // Wejście z menu: pozycja menu nie ma skąd wziąć uuid-a, więc strona sama rozwiązuje
         // tablicę domyślną i podmienia adres na konkretną.
         path: 'board',

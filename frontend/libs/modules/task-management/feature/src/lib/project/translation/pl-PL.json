@@ -1,0 +1,79 @@
+{
+  "title": "Projekty",
+  "filters": {
+    "text": {
+      "label": "Szukaj",
+      "placeholder": "Kod albo nazwa, np. DEV"
+    },
+    "kind": {
+      "label": "Rodzaj",
+      "placeholder": "Dowolny rodzaj",
+      "delivery": "Wykonawczy",
+      "intake": "Rejestr zleceń"
+    },
+    "onlyMine": {
+      "label": "Tylko moje"
+    }
+  },
+  "table": {
+    "emptyMessage": "Brak projektów spełniających kryteria.",
+    "columns": {
+      "code": "Kod",
+      "name": "Nazwa",
+      "kind": "Rodzaj",
+      "openIssues": "Otwarte",
+      "members": "Członkowie",
+      "fieldScheme": "Schemat pól"
+    },
+    "noScheme": "—"
+  },
+  "detail": {
+    "loading": "Wczytuję projekt…",
+    "notFound": "Nie znaleziono projektu albo nie masz do niego dostępu.",
+    "back": "Wróć",
+    "fields": {
+      "title": "Pola niestandardowe",
+      "scheme": {
+        "label": "Schemat pól",
+        "placeholder": "Bez pól własnych",
+        "detach": "Odepnij schemat",
+        "detachHint": "Odpięcie nie kasuje wartości zapisanych na zgłoszeniach — wrócą, gdy schemat wróci.",
+        "empty": "Ten projekt nie ma schematu pól. Wybierz schemat, żeby dodać własne pola do zgłoszeń."
+      },
+      "columns": {
+        "code": "Kod",
+        "name": "Nazwa",
+        "type": "Typ",
+        "slot": "Slot",
+        "required": "Wymagane"
+      },
+      "noSlot": "bez slotu",
+      "slotWarning": "Slot jest przypisany do pola na stałe. Po zapisie nie da się go zmienić — jedyną drogą jest usunięcie pola, a to blokuje pierwsza zapisana wartość.",
+      "add": {
+        "title": "Nowe pole",
+        "code": "Kod pola",
+        "codeHint": "litery, cyfry i podkreślenie",
+        "nameKey": "Klucz tłumaczenia nazwy",
+        "type": "Typ danych",
+        "slot": "Slot",
+        "slotNone": "bez slotu — pole tylko do wyświetlania",
+        "options": "Dopuszczalne wartości",
+        "optionsHint": "oddzielone przecinkiem",
+        "required": "Pole wymagane",
+        "submit": "Dodaj pole"
+      },
+      "remove": {
+        "label": "Usuń",
+        "confirmTitle": "Usunąć pole?",
+        "confirmMessage": "Slot wróci do puli dopiero razem z polem. Jeśli którekolwiek zgłoszenie ma w tym polu wartość, serwer odmówi."
+      },
+      "types": {
+        "text": "Tekst",
+        "number": "Liczba",
+        "date": "Data",
+        "user": "Użytkownik",
+        "select": "Lista wyboru"
+      }
+    }
+  }
+}

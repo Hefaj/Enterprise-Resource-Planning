@@ -47,6 +47,32 @@ export const CUSTOM_FIELD_DATA_TYPE = {
 export type CustomFieldDataTypeValue =
   (typeof CUSTOM_FIELD_DATA_TYPE)[keyof typeof CUSTOM_FIELD_DATA_TYPE];
 
+/**
+ * `TaskManagement.Domain.FieldSchemes.FieldSlot` — slot sortowalny na `issue`.
+ *
+ * <p>`None` jest wartością pełnoprawną, nie brakiem decyzji: pole, po którym nikt nie sortuje
+ * ani nie filtruje, nie zajmuje zasobu rzadkiego (`docs/backend/task-management.md` §6).</p>
+ */
+export const FIELD_SLOT = {
+  None: 0,
+  Num1: 1,
+  Num2: 2,
+  Num3: 3,
+  Num4: 4,
+  Text1: 11,
+  Text2: 12,
+  Text3: 13,
+  Text4: 14,
+  Date1: 21,
+  Date2: 22,
+  Date3: 23,
+  Date4: 24,
+  User1: 31,
+  User2: 32,
+} as const;
+
+export type FieldSlotValue = (typeof FIELD_SLOT)[keyof typeof FIELD_SLOT];
+
 /** `TaskManagement.Domain.Projects.ProjectKind`. */
 export const PROJECT_KIND = {
   Delivery: 0,

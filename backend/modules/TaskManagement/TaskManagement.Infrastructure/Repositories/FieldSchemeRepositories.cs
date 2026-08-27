@@ -63,13 +63,16 @@ public sealed class FieldUsageProbe : IFieldUsageProbe
         var used = await _dbContext.Database
             .SqlQuery<bool>(
                 $"""
+                 -- Alias `Value` jest wymagany: `SqlQuery<T>` dla typu skalarnego szuka
+                 -- kolumny o dokładnie takiej nazwie i bez niego wywraca się na
+                 -- `42703: column s.Value does not exist` dopiero w czasie działania.
                  select exists (
                      select 1
                      from taskmgmt.issue i
                      join taskmgmt.project p on p.uuid = i.project_uuid
                      where p.field_scheme_uuid = {fieldSchemeUuid}
                        and jsonb_exists(i.custom_fields, {fieldCode})
-                 )
+                 ) as "Value"
                  """)
             .SingleAsync(cancellationToken)
             .ConfigureAwait(false);

@@ -3786,6 +3786,7 @@ export interface ProjectDto {
     name: string;
     kind: number;
     workflowSchemeUuid: string;
+    fieldSchemeUuid: string | undefined;
     isPublic: boolean;
     openIssueCount: number;
     members: ProjectMemberDto[];

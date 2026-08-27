@@ -1,0 +1,79 @@
+{
+  "title": "Projects",
+  "filters": {
+    "text": {
+      "label": "Search",
+      "placeholder": "Code or name, e.g. DEV"
+    },
+    "kind": {
+      "label": "Kind",
+      "placeholder": "Any kind",
+      "delivery": "Delivery",
+      "intake": "Intake"
+    },
+    "onlyMine": {
+      "label": "Only mine"
+    }
+  },
+  "table": {
+    "emptyMessage": "No projects match the criteria.",
+    "columns": {
+      "code": "Code",
+      "name": "Name",
+      "kind": "Kind",
+      "openIssues": "Open",
+      "members": "Members",
+      "fieldScheme": "Field scheme"
+    },
+    "noScheme": "—"
+  },
+  "detail": {
+    "loading": "Loading the project…",
+    "notFound": "Project not found, or you have no access to it.",
+    "back": "Back",
+    "fields": {
+      "title": "Custom fields",
+      "scheme": {
+        "label": "Field scheme",
+        "placeholder": "No custom fields",
+        "detach": "Detach scheme",
+        "detachHint": "Detaching does not delete values stored on issues — they come back when the scheme does.",
+        "empty": "This project has no field scheme. Pick one to add custom fields to its issues."
+      },
+      "columns": {
+        "code": "Code",
+        "name": "Name",
+        "type": "Type",
+        "slot": "Slot",
+        "required": "Required"
+      },
+      "noSlot": "no slot",
+      "slotWarning": "A slot is bound to a field permanently. After saving it cannot be changed — the only way out is deleting the field, and the first stored value blocks that.",
+      "add": {
+        "title": "New field",
+        "code": "Field code",
+        "codeHint": "letters, digits and underscore",
+        "nameKey": "Name translation key",
+        "type": "Data type",
+        "slot": "Slot",
+        "slotNone": "no slot — display only",
+        "options": "Allowed values",
+        "optionsHint": "comma separated",
+        "required": "Required field",
+        "submit": "Add field"
+      },
+      "remove": {
+        "label": "Remove",
+        "confirmTitle": "Remove the field?",
+        "confirmMessage": "The slot returns to the pool only together with the field. If any issue has a value in it, the server refuses."
+      },
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date",
+        "user": "User",
+        "select": "Select list"
+      }
+    }
+  }
+}

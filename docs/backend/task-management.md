@@ -1,7 +1,6 @@
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: ✅ fazy 0–2 wdrożone i zweryfikowane end-to-end; faza 3 ✅ backend + lista i karta zgłoszenia
-(karta projektu z zakładką pól jeszcze nie); fazy 4–7 📐 projekt.**
+**Stan: ✅ fazy 0–3 wdrożone i zweryfikowane end-to-end; fazy 4–7 📐 projekt.**
 Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
@@ -29,8 +28,9 @@ sloty na `issue` (`num_1..4`, `text_1..4`, `date_1..4`, `user_1..2`), wartości 
 (jsonb, źródło prawdy), `getProjectFieldProfile` jako jedno źródło kolumn, filtrów i whitelisty
 sortowania, komenda `IssueSetCustomFields` oraz `ProjectSetFieldScheme`. Front: kolumny i filtry
 listy budowane z profilu, sekcja pól własnych na karcie zgłoszenia.
-**Karty projektu z zakładką pól (`/task-management/project/:uuid`) jeszcze nie ma** — definicje
-pól zakłada się dziś komendami, nie z UI.
+Doszła lista projektów (`/task-management/project`) i karta projektu z **zakładką pól**:
+wybór schematu, definicje z widocznym mapowaniem na sloty, dodawanie pola z ostrzeżeniem
+o niezmienności slotu i usuwanie — odmawiane, gdy pole ma wartości na zgłoszeniach.
 
 Nie ma jeszcze hierarchii, sprintów ani zleceń — to fazy 4–7.
 Obrazków osadzonych w treści opisu też jeszcze nie ma: backend je unosi, front wymaga podmiany
@@ -535,7 +535,7 @@ częściowy sukces.
 | 0 ✅ | Mikroserwis `TaskManagement`, schemat `taskmgmt`, `Project` + `Issue`, licznik klucza, lista serwerowa, karta zgłoszenia, przepisanie szkieletu frontu | Szablon modułu na nowej domenie + **sekwencja per encja przy dwóch instancjach** |
 | 1 ✅ | `WorkflowScheme` w seedzie, przejścia z regułami, komentarze, `issue_activity` | Automat stanów jako dana |
 | 2 ✅ | `Board` + `board_card` + `rank`, drag&drop, realtime kolejności, rebalans `[ClusterSafe]` | **Uporządkowana kolekcja i współbieżna edycja — główne pytanie modułu** |
-| 3 🟡 | `FieldScheme`, sloty, `getProjectFieldProfile`, kolumny i filtry z profilu | Konfiguracja per projekt |
+| 3 ✅ | `FieldScheme`, sloty, `getProjectFieldProfile`, kolumny i filtry z profilu | Konfiguracja per projekt |
 | 4 | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
 | 5 | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, odbiór, SLA i eskalacje | Zlecenia przez granicę działu |
 | 6 | Sprinty, backlog, zamknięcie iteracji, operacje masowe na zgłoszeniach | Dojrzałość narzędzia |

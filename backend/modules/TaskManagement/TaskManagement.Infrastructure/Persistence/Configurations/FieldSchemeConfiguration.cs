@@ -44,6 +44,12 @@ public sealed class FieldDefinitionConfiguration : IEntityTypeConfiguration<Fiel
         builder.ToTable("field_definition");
         builder.HasKey(f => f.Uuid);
 
+        // Klucz nadaje agregat, a NIE baza. Bez tego EF widzi dziecko dołożone do już śledzonego
+        // schematu jako encję z ustawionym kluczem, czyli „istniejącą", i zamiast INSERT-a
+        // wysyła UPDATE — który trafia w zero wierszy i kończy się konfliktem współbieżności.
+        // Ten sam powód, co przy `attribute_option` w Catalogu.
+        builder.Property(f => f.Uuid).ValueGeneratedNever();
+
         builder.Property(f => f.SchemeUuid).IsRequired();
         builder.Property(f => f.Code).HasMaxLength(64).IsRequired();
         builder.Property(f => f.NameKey).HasMaxLength(256).IsRequired();

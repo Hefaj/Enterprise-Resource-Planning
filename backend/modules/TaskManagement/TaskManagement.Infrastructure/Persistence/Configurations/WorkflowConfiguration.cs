@@ -43,6 +43,10 @@ public sealed class WorkflowStateConfiguration : IEntityTypeConfiguration<Workfl
         builder.ToTable("workflow_state");
         builder.HasKey(s => s.Uuid);
 
+        // Klucz nadaje agregat, nie baza — patrz `field_definition`. Dziś dokłada je wyłącznie
+        // seed razem z całym schematem, ale edytor schematu z fazy 7 doda je do istniejącego.
+        builder.Property(s => s.Uuid).ValueGeneratedNever();
+
         builder.Property(s => s.SchemeUuid).IsRequired();
         builder.Property(s => s.Code).HasMaxLength(64).IsRequired();
         builder.Property(s => s.NameKey).HasMaxLength(256).IsRequired();
@@ -63,6 +67,10 @@ public sealed class WorkflowTransitionConfiguration : IEntityTypeConfiguration<W
 
         builder.ToTable("workflow_transition");
         builder.HasKey(t => t.Uuid);
+
+        // Klucz nadaje agregat, nie baza — patrz `field_definition`. Dziś dokłada je wyłącznie
+        // seed razem z całym schematem, ale edytor schematu z fazy 7 doda je do istniejącego.
+        builder.Property(t => t.Uuid).ValueGeneratedNever();
 
         builder.Property(t => t.SchemeUuid).IsRequired();
         builder.Property(t => t.FromStateUuid).IsRequired();

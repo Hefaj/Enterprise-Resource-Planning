@@ -20,5 +20,9 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   setIssueCommentBody: 'shared.jobs.commands.taskmgmtIssueSetCommentBody',
   removeIssueComment: 'shared.jobs.commands.taskmgmtIssueRemoveComment',
   setIssueCustomFields: 'shared.jobs.commands.taskmgmtIssueSetCustomFields',
+  createFieldScheme: 'shared.jobs.commands.taskmgmtFieldSchemeCreate',
+  addSchemeField: 'shared.jobs.commands.taskmgmtFieldSchemeAddField',
+  removeSchemeField: 'shared.jobs.commands.taskmgmtFieldSchemeRemoveField',
+  setProjectFieldScheme: 'shared.jobs.commands.taskmgmtProjectSetFieldScheme',
   setBoardCardPosition: 'shared.jobs.commands.taskmgmtBoardSetCardPosition',
 } as const;

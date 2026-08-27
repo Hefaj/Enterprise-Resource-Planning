@@ -231,7 +231,11 @@
       "taskmgmtIssueSetCommentBody": "Editing a comment",
       "taskmgmtIssueRemoveComment": "Removing a comment",
       "taskmgmtIssueSetCustomFields": "Changing custom fields",
-      "taskmgmtBoardSetCardPosition": "Moving a card on the board"
+      "taskmgmtBoardSetCardPosition": "Moving a card on the board",
+      "taskmgmtFieldSchemeCreate": "Creating a field scheme",
+      "taskmgmtFieldSchemeAddField": "Adding a field to a scheme",
+      "taskmgmtFieldSchemeRemoveField": "Removing a field from a scheme",
+      "taskmgmtProjectSetFieldScheme": "Changing a project's field scheme"
     },
     "toast": {
       "completed": "Finished: {{name}}",

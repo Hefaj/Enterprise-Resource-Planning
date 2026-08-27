@@ -171,13 +171,21 @@ realizujące z ich stanami. Zamawiający widzi **nagłówki**, nie treść cudzy
 
 ## 4. Grupa C — konfiguracja
 
-### 4.1 Projekty — `/task-management/project`
+### 4.1 Projekty — `/task-management/project` ✅
 Lista projektów: kod, typ (`Delivery`/`Intake`), lead, liczba otwartych zgłoszeń, schemat pól,
 schemat stanów.
 
-### 4.2 Karta projektu — `/task-management/project/:uuid`
+### 4.2 Karta projektu — `/task-management/project/:uuid` 🟡 (faza 3 dowozi zakładkę pól)
 Master-detail z zakładkami: **pola** (definicje + **mapowanie na sloty**), **stany** (wybór
 schematu), **tablice**, **członkowie** (`project_member` z rolą), **SLA**.
+
+Zakładki poza polami wchodzą razem z fazami, które je wypełniają — pusta zakładka to ta sama
+zaślepka, którą usunęliśmy z menu w fazie 0.
+
+**Znany chropowaty brzeg**: pole zakładane z UI podaje `nameKey`, czyli klucz tłumaczenia.
+Klucz, którego nikt nie dopisał do `translation/*.json`, wyświetla się użytkownikowi dosłownie.
+Dla schematów systemowych (seed) jest to poprawne, dla pól zakładanych ręcznie — nie; właściwą
+odpowiedzią jest nazwa jako zwykły tekst obok opcjonalnego klucza, a nie zamiast niego.
 
 Tu żyje ostrzeżenie „slot już użyty, mapowania nie zmienisz"
 ([`task-management.md` §6](../backend/task-management.md#6-pola-niestandardowe)) — identyczne co do
@@ -280,7 +288,7 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 | 0 ✅ | Zgłoszenia (bez pól niestandardowych), Karta zgłoszenia; **usunięcie zaślepki „Dashboard Analityczny Zadań"** |
 | 1 ✅ | Karta zgłoszenia — przejścia stanów, komentarze, historia |
 | 2 ✅ | **Tablica** (kanban, drag&drop, realtime) |
-| 3 🟡 | Kontekst projektu na liście ✅, kolumny i filtry z profilu ✅; Karta projektu — zakładka pól (jeszcze nie) |
+| 3 ✅ | Kontekst projektu na liście, kolumny i filtry z profilu; Projekty i Karta projektu — zakładka pól |
 | 4 | Tryb drzewa na liście, pasek powiązań na karcie |
 | 5 | Zlecenia, odbiór; Karta projektu — SLA |
 | 6 | Backlog i planowanie sprintu, akcje masowe |

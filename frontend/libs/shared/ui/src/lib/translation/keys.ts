@@ -237,6 +237,10 @@ export const SHARED_KEYS = {
         taskmgmtIssueRemoveComment: 'shared.jobs.commands.taskmgmtIssueRemoveComment',
         taskmgmtIssueSetCustomFields: 'shared.jobs.commands.taskmgmtIssueSetCustomFields',
         taskmgmtBoardSetCardPosition: 'shared.jobs.commands.taskmgmtBoardSetCardPosition',
+        taskmgmtFieldSchemeCreate: 'shared.jobs.commands.taskmgmtFieldSchemeCreate',
+        taskmgmtFieldSchemeAddField: 'shared.jobs.commands.taskmgmtFieldSchemeAddField',
+        taskmgmtFieldSchemeRemoveField: 'shared.jobs.commands.taskmgmtFieldSchemeRemoveField',
+        taskmgmtProjectSetFieldScheme: 'shared.jobs.commands.taskmgmtProjectSetFieldScheme',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',

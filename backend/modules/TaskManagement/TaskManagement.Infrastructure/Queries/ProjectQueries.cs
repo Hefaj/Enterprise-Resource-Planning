@@ -78,6 +78,7 @@ public sealed class ProjectQueries : IProjectQueries
                 p.Name,
                 p.Kind,
                 p.WorkflowSchemeUuid,
+                p.FieldSchemeUuid,
                 p.IsPublic,
                 // Licznik otwartych zgłoszeń liczy się po KATEGORII stanu, nie po jego nazwie —
                 // projekt może mieć stan „Czeka na sprzęt”, który nadal jest pracą w toku.

@@ -231,7 +231,11 @@
       "taskmgmtIssueSetCommentBody": "Zmiana treści komentarza",
       "taskmgmtIssueRemoveComment": "Usunięcie komentarza",
       "taskmgmtIssueSetCustomFields": "Zmiana pól niestandardowych",
-      "taskmgmtBoardSetCardPosition": "Przestawienie karty na tablicy"
+      "taskmgmtBoardSetCardPosition": "Przestawienie karty na tablicy",
+      "taskmgmtFieldSchemeCreate": "Utworzenie schematu pól",
+      "taskmgmtFieldSchemeAddField": "Dodanie pola do schematu",
+      "taskmgmtFieldSchemeRemoveField": "Usunięcie pola ze schematu",
+      "taskmgmtProjectSetFieldScheme": "Zmiana schematu pól projektu"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

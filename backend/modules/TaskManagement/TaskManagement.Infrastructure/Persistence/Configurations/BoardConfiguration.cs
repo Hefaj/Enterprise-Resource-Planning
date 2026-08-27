@@ -48,6 +48,10 @@ public sealed class BoardColumnConfiguration : IEntityTypeConfiguration<BoardCol
         builder.ToTable("board_column");
         builder.HasKey(c => c.Uuid);
 
+        // Klucz nadaje agregat, nie baza — patrz `field_definition`. Dotyczy `BoardSetColumns`
+        // na istniejącej tablicy: bez tego dołożona kolumna szłaby UPDATE-em w zero wierszy.
+        builder.Property(c => c.Uuid).ValueGeneratedNever();
+
         builder.Property(c => c.BoardUuid).IsRequired();
         builder.Property(c => c.Name).HasMaxLength(256).IsRequired();
         builder.Property(c => c.OrderNo).IsRequired();

@@ -122,6 +122,45 @@
       "preview": "Podgląd",
       "previewUnavailable": "Tego pliku nie da się pokazać — pobierz go, żeby otworzyć.",
       "uploadedAt": "Wgrano {{ date }}"
+    },
+    "comments": {
+      "label": "Komentarze",
+      "empty": "Nikt jeszcze nic nie napisał.",
+      "placeholder": "Napisz komentarz…",
+      "submit": "Skomentuj",
+      "cancel": "Anuluj",
+      "reply": "Odpowiedz",
+      "replyPlaceholder": "Odpowiedz w wątku…",
+      "edit": "Edytuj",
+      "save": "Zapisz",
+      "remove": "Usuń",
+      "removeConfirm": "Usunąć ten komentarz? Treść zniknie, wpis w wątku zostanie.",
+      "removed": "Komentarz usunięty.",
+      "edited": "edytowany",
+      "failed": "Nie udało się zapisać komentarza.",
+      "removeTitle": "Usunięcie komentarza"
+    },
+    "history": {
+      "label": "Historia",
+      "empty": "Brak zapisanych zmian.",
+      "kind": {
+        "created": "utworzył zgłoszenie {{ value }}",
+        "fieldChanged": "zmienił pole {{ field }}",
+        "fieldChangedWithValues": "zmienił pole {{ field }}: {{ from }} → {{ to }}",
+        "stateChanged": "zmienił stan",
+        "commentAdded": "dodał komentarz",
+        "commentRemoved": "usunął komentarz",
+        "attachmentAdded": "dodał załącznik {{ value }}"
+      },
+      "fields": {
+        "title": "tytuł",
+        "description": "opis",
+        "priority": "priorytet",
+        "assignee": "przypisany",
+        "dueAt": "termin",
+        "state": "stan"
+      },
+      "emptyValue": "brak"
     }
   }
 }

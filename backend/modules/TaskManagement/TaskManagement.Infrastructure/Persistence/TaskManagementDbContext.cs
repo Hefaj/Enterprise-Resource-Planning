@@ -40,6 +40,11 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
 
     public DbSet<IssueAttachment> IssueAttachments => Set<IssueAttachment>();
 
+    public DbSet<IssueComment> IssueComments => Set<IssueComment>();
+
+    /// <summary>Historia zmian zgłoszeń — tylko do dopisywania i do czytania w karcie.</summary>
+    public DbSet<IssueActivity> IssueActivities => Set<IssueActivity>();
+
     public DbSet<WorkflowScheme> WorkflowSchemes => Set<WorkflowScheme>();
 
     public DbSet<WorkflowState> WorkflowStates => Set<WorkflowState>();

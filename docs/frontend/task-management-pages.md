@@ -1,10 +1,10 @@
 # Task Management — podział na strony
 
-**Stan: ✅ faza 0 wdrożona; pozostałe strony 📐 projekt.** Istnieją dwie trasy — lista
+**Stan: ✅ fazy 0–1 wdrożone; pozostałe strony 📐 projekt.** Istnieją dwie trasy — lista
 `/task-management/issue` (filtr, tabela serwerowa, akcje masowe) i karta `/task-management/issue/:key`
-(opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki). Zaślepka
-**„Dashboard Analityczny Zadań"** zniknęła z `entry.menu.ts` razem z fazą 0 (dashboard robiony
-pierwszy przez pół roku świeci pustkami). Tablicy, zleceń i grupy „Konfiguracja" w menu nie ma —
+(opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki, wątek komentarzy
+i historia zmian). Zaślepka **„Dashboard Analityczny Zadań"** zniknęła z `entry.menu.ts` razem
+z fazą 0 (dashboard robiony pierwszy przez pół roku świeci pustkami). Tablicy, zleceń i grupy „Konfiguracja" w menu nie ma —
 pozycja bez działającej strony to ten sam błąd, który usunęła faza 0.
 
 Model domenowy, automat stanów, sloty pól i mechanika kolejności na tablicy →
@@ -106,6 +106,25 @@ przeniesione z multimediów Catalogu i jedną własną:
 - **usuwania nie ma i nie jest to przeoczenie** — plik należy do zgłoszenia i znika razem z nim
   w tej samej transakcji ([`media-storage.md` §4c](../backend/media-storage.md)), więc backend
   nie wystawia komendy kasującej pojedynczy załącznik.
+
+**Komentarze** (`erp-task-management-issue-comments`) i **historia** (`…-issue-history`) to dwie
+osobne sekcje pod załącznikami, nie zakładki — karta czyta się w jednej kolumnie, od tego,
+czym zgłoszenie jest, do tego, co się z nim działo. Trzy rzeczy warte zapamiętania:
+
+- **wątek jest jednopoziomowy**, bo taka jest reguła domeny, a nie uproszczenie widoku
+  ([`task-management.md` §11](../backend/task-management.md#11-historia-zmian-i-komentarze));
+  odpowiedź składa się w jednym przebiegu po płaskiej liście, bez rekurencji;
+- **po zapisie nic nie dopisujemy do listy ręcznie** — komenda idzie zadaniem, a wątek wraca
+  zdarzeniem na kanale `taskmgmt.issue_comment`, tą samą drogą, którą przychodzi cudza
+  wypowiedź; optymistyczne wstawienie dałoby przez chwilę dwa komentarze;
+- **zdanie w historii składa szablon, nie backend**: serwer zapisuje rodzaj wpisu, kod pola
+  i surowe wartości, a nazwa pola jest kluczem tłumaczenia, więc przechodzi przez `erpTranslate`
+  jako parametr drugiego `erpTranslate` (Transloco nie rozwiązuje kluczy zagnieżdżonych
+  w parametrach — złożenie tego w TS wypisałoby użytkownikowi surowy klucz).
+
+> **Uuid zamiast nazwiska.** Autor komentarza, aktor zmiany i przypisany pokazują się dziś jako
+> uuid — front nie ma katalogu użytkowników w żadnym module. To jedna pozycja do zrobienia,
+> nie trzy: rozwiązuje ją wspólny słownik z Identity, nie lokalne obejście na karcie.
 
 > **Obrazki osadzone w treści opisu to osobna pozycja, jeszcze niezrobiona.** Backend jest na nie
 > gotowy (`GET issue/attachment/content/{uuid}` z trwałym adresem), ale ten adres wymaga tokenu,

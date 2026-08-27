@@ -10,8 +10,11 @@ import {
   BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
   GetIssueByKeyRequest,
   GetIssueRequest,
+  IssueAddCommentCommand,
   IssueCreateCommand,
   IssueDto,
+  IssueRemoveCommentCommand,
+  IssueSetCommentBodyCommand,
   IssueSetDescriptionCommand,
   IssueSetDueDateCommand,
   IssueSetStateCommand,
@@ -166,6 +169,41 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   public setStateAsync(command: IssueSetStateCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueSetStateMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueState,
+      queueId,
+    });
+  }
+
+  // ── Komentarze ──
+  //
+  // Komendy nazywają się `IssueAddComment…`, bo agregatem jest ZGŁOSZENIE, nie komentarz —
+  // i dlatego mieszkają tutaj, a nie w `IssueCommentService` (ten trzyma sam odczyt).
+  // Lista odświeża się zdarzeniem na `taskmgmt.issue_comment`, więc żadna z tych metod nie
+  // dopisuje niczego do cache’u ręcznie: cudzy komentarz i własny wracają tą samą drogą.
+
+  /**
+   * Dodaje komentarz. `uuid` generuje klient — tryb `Commands[]` wymaga identyfikatora
+   * w payloadzie, a wątek i tak wraca z serwera.
+   */
+  public addCommentAsync(command: IssueAddCommentCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync(
+      (p) => this._api.issueAddCommentMultipleCommand(p),
+      { ...command, uuid: crypto.randomUUID() } as IssueAddCommentCommand,
+      { commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueComment, queueId },
+    );
+  }
+
+  /** Zmienia treść własnego komentarza; cudzy odrzuci backend (`taskmgmt.comment_not_author`). */
+  public setCommentBodyAsync(command: IssueSetCommentBodyCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueSetCommentBodyMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueCommentBody,
+      queueId,
+    });
+  }
+
+  /** Usuwa komentarz — miękko: wiersz zostaje, treść znika (odpowiedzi mają się do czego piąć). */
+  public removeCommentAsync(command: IssueRemoveCommentCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveCommentMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueComment,
       queueId,
     });
   }

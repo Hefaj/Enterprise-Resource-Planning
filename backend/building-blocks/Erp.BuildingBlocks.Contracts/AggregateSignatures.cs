@@ -74,6 +74,11 @@ public static class AggregateSignatures
     /// bo wgranie pliku nie zmienia samego zgłoszenia, a karta ma odświeżyć listę plików.</summary>
     public const string TaskManagementIssueAttachment = "taskmgmt.issue_attachment";
 
+    /// <summary>Komentarz pod zgłoszeniem. Osobny kanał od <see cref="TaskManagementIssue"/>,
+    /// bo dyskusja toczy się bez zmiany samego zgłoszenia — a karta ma dopisać cudzą wypowiedź
+    /// bez przeładowania (<c>docs/backend/task-management.md</c> §11).</summary>
+    public const string TaskManagementIssueComment = "taskmgmt.issue_comment";
+
     /// <summary>Schemat stanów. Zmiana schematu przestawia kolumny tablicy i przyciski przejść
     /// na karcie u wszystkich naraz, więc jest zdarzeniem realtime, a nie konfiguracją
     /// odczytywaną raz przy starcie aplikacji.</summary>
@@ -102,6 +107,7 @@ public static class AggregateSignatures
         IdentityRole,
         TaskManagementIssue,
         TaskManagementIssueAttachment,
+        TaskManagementIssueComment,
         TaskManagementProject,
         TaskManagementWorkflowScheme,
         TaskManagementBoard,

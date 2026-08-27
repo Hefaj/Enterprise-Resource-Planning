@@ -64,7 +64,12 @@ public static class TaskManagementInfrastructureExtensions
             .Register<Issue>(AggregateSignatures.TaskManagementIssue)
             .Register<Project>(AggregateSignatures.TaskManagementProject)
             .Register<WorkflowScheme>(AggregateSignatures.TaskManagementWorkflowScheme)
-            .Register<IssueAttachment>(AggregateSignatures.TaskManagementIssueAttachment));
+            .Register<IssueAttachment>(AggregateSignatures.TaskManagementIssueAttachment)
+            .Register<IssueComment>(AggregateSignatures.TaskManagementIssueComment));
+
+        // `IssueActivity` świadomie NIE ma sygnatury: historia zmienia się wyłącznie razem
+        // ze zgłoszeniem albo komentarzem, a te mają własne kanały. Osobny kanał oznaczałby
+        // dwa zdarzenia realtime na jedną zmianę i drugie odświeżenie karty bez nowej treści.
 
         return services;
     }

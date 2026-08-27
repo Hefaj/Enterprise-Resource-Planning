@@ -16,4 +16,7 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   setIssueAssignee: 'shared.jobs.commands.taskmgmtIssueSetAssignee',
   setIssueDueDate: 'shared.jobs.commands.taskmgmtIssueSetDueDate',
   setIssueState: 'shared.jobs.commands.taskmgmtIssueSetState',
+  addIssueComment: 'shared.jobs.commands.taskmgmtIssueAddComment',
+  setIssueCommentBody: 'shared.jobs.commands.taskmgmtIssueSetCommentBody',
+  removeIssueComment: 'shared.jobs.commands.taskmgmtIssueRemoveComment',
 } as const;

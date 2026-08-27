@@ -38,6 +38,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     private readonly IIssueRepository _repository;
     private readonly IWorkflowSchemeRepository _schemes;
     private readonly IIssueKeyAllocator _keyAllocator;
+    private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
     private readonly IRichTextSanitizer _sanitizer;
     private readonly IClock _clock;
@@ -46,6 +47,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         IIssueRepository repository,
         IWorkflowSchemeRepository schemes,
         IIssueKeyAllocator keyAllocator,
+        IIssueActivityWriter activity,
         IExecutionContext executionContext,
         IRichTextSanitizer sanitizer,
         IClock clock)
@@ -53,6 +55,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         _repository = repository;
         _schemes = schemes;
         _keyAllocator = keyAllocator;
+        _activity = activity;
         _executionContext = executionContext;
         _sanitizer = sanitizer;
         _clock = clock;
@@ -70,6 +73,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         var key = await _keyAllocator.AllocateAsync(command.ProjectUuid, ct).ConfigureAwait(false);
 
         var now = _clock.UtcNow;
+        var actor = ActorUuid(_executionContext);
 
         var issue = Issue.CreateWithUuid(
             command.Uuid,
@@ -77,7 +81,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
             key,
             command.Title,
             scheme,
-            ActorUuid(_executionContext),
+            actor,
             now);
 
         issue.SetDescription(_sanitizer.Sanitize(command.Description), now);
@@ -86,6 +90,18 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         issue.SetDueDate(command.DueAt, now);
 
         _repository.Add(issue);
+
+        // Pierwszy wpis historii. Wartości początkowych pól tu NIE powielamy — są w samym
+        // zgłoszeniu, a historia odpowiada na pytanie „co się zmieniło”, nie „od czego zaczęto”.
+        _activity.Add(IssueActivity.Record(
+            issue.Uuid,
+            IssueActivityKind.Created,
+            fieldCode: null,
+            oldValue: null,
+            newValue: issue.Key,
+            actor,
+            _executionContext.CorrelationId,
+            now));
 
         return issue.Uuid;
     }
@@ -105,12 +121,22 @@ public sealed class IssueSetTitleCommand : ICommand<Guid>, IAggregateCommand
 
 public sealed class IssueSetTitleCommandHandler : IssueCommandHandlerBase<IssueSetTitleCommand>
 {
-    public IssueSetTitleCommandHandler(IIssueRepository repository, IClock clock) : base(repository, clock)
+    public IssueSetTitleCommandHandler(
+        IIssueRepository repository,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
+        IClock clock)
+        : base(repository, activity, executionContext, clock)
     {
     }
 
-    protected override void Apply(Issue issue, IssueSetTitleCommand command, DateTimeOffset now)
-        => issue.SetTitle(command.Title, now);
+    protected override IssueFieldChange Apply(Issue issue, IssueSetTitleCommand command, DateTimeOffset now)
+    {
+        var previous = issue.Title;
+        issue.SetTitle(command.Title, now);
+
+        return IssueFieldChange.Of("title", previous, issue.Title);
+    }
 }
 
 public sealed class IssueSetDescriptionCommand : ICommand<Guid>, IAggregateCommand
@@ -132,15 +158,25 @@ public sealed class IssueSetDescriptionCommandHandler : IssueCommandHandlerBase<
 
     public IssueSetDescriptionCommandHandler(
         IIssueRepository repository,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
         IRichTextSanitizer sanitizer,
         IClock clock)
-        : base(repository, clock)
+        : base(repository, activity, executionContext, clock)
     {
         _sanitizer = sanitizer;
     }
 
-    protected override void Apply(Issue issue, IssueSetDescriptionCommand command, DateTimeOffset now)
-        => issue.SetDescription(_sanitizer.Sanitize(command.Description), now);
+    protected override IssueFieldChange Apply(Issue issue, IssueSetDescriptionCommand command, DateTimeOffset now)
+    {
+        var previous = issue.Description;
+        issue.SetDescription(_sanitizer.Sanitize(command.Description), now);
+
+        // Do historii idzie sam FAKT zmiany opisu, bez treści: opis bywa wielostronicowy,
+        // a jego dwie pełne kopie przy każdej edycji zamieniłyby historię w archiwum treści
+        // (patrz `IssueActivity.MaxValueLength`).
+        return IssueFieldChange.Fact("description", previous != issue.Description);
+    }
 }
 
 public sealed class IssueSetPriorityCommand : ICommand<Guid>, IAggregateCommand
@@ -152,12 +188,25 @@ public sealed class IssueSetPriorityCommand : ICommand<Guid>, IAggregateCommand
 
 public sealed class IssueSetPriorityCommandHandler : IssueCommandHandlerBase<IssueSetPriorityCommand>
 {
-    public IssueSetPriorityCommandHandler(IIssueRepository repository, IClock clock) : base(repository, clock)
+    public IssueSetPriorityCommandHandler(
+        IIssueRepository repository,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
+        IClock clock)
+        : base(repository, activity, executionContext, clock)
     {
     }
 
-    protected override void Apply(Issue issue, IssueSetPriorityCommand command, DateTimeOffset now)
-        => issue.SetPriority(command.Priority, now);
+    protected override IssueFieldChange Apply(Issue issue, IssueSetPriorityCommand command, DateTimeOffset now)
+    {
+        var previous = issue.Priority;
+        issue.SetPriority(command.Priority, now);
+
+        return IssueFieldChange.Of(
+            "priority",
+            IssueActivityValue.From(previous),
+            IssueActivityValue.From(issue.Priority));
+    }
 }
 
 public sealed class IssueSetAssigneeCommand : ICommand<Guid>, IAggregateCommand
@@ -170,12 +219,25 @@ public sealed class IssueSetAssigneeCommand : ICommand<Guid>, IAggregateCommand
 
 public sealed class IssueSetAssigneeCommandHandler : IssueCommandHandlerBase<IssueSetAssigneeCommand>
 {
-    public IssueSetAssigneeCommandHandler(IIssueRepository repository, IClock clock) : base(repository, clock)
+    public IssueSetAssigneeCommandHandler(
+        IIssueRepository repository,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
+        IClock clock)
+        : base(repository, activity, executionContext, clock)
     {
     }
 
-    protected override void Apply(Issue issue, IssueSetAssigneeCommand command, DateTimeOffset now)
-        => issue.SetAssignee(command.AssigneeUuid, now);
+    protected override IssueFieldChange Apply(Issue issue, IssueSetAssigneeCommand command, DateTimeOffset now)
+    {
+        var previous = issue.AssigneeUuid;
+        issue.SetAssignee(command.AssigneeUuid, now);
+
+        return IssueFieldChange.Of(
+            "assignee",
+            IssueActivityValue.From(previous),
+            IssueActivityValue.From(issue.AssigneeUuid));
+    }
 }
 
 public sealed class IssueSetDueDateCommand : ICommand<Guid>, IAggregateCommand
@@ -187,12 +249,25 @@ public sealed class IssueSetDueDateCommand : ICommand<Guid>, IAggregateCommand
 
 public sealed class IssueSetDueDateCommandHandler : IssueCommandHandlerBase<IssueSetDueDateCommand>
 {
-    public IssueSetDueDateCommandHandler(IIssueRepository repository, IClock clock) : base(repository, clock)
+    public IssueSetDueDateCommandHandler(
+        IIssueRepository repository,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
+        IClock clock)
+        : base(repository, activity, executionContext, clock)
     {
     }
 
-    protected override void Apply(Issue issue, IssueSetDueDateCommand command, DateTimeOffset now)
-        => issue.SetDueDate(command.DueAt, now);
+    protected override IssueFieldChange Apply(Issue issue, IssueSetDueDateCommand command, DateTimeOffset now)
+    {
+        var previous = issue.DueAt;
+        issue.SetDueDate(command.DueAt, now);
+
+        return IssueFieldChange.Of(
+            "due_at",
+            IssueActivityValue.From(previous),
+            IssueActivityValue.From(issue.DueAt));
+    }
 }
 
 /// <summary>
@@ -210,15 +285,21 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
 {
     private readonly IIssueRepository _repository;
     private readonly IWorkflowSchemeRepository _schemes;
+    private readonly IIssueActivityWriter _activity;
+    private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
     public IssueSetStateCommandHandler(
         IIssueRepository repository,
         IWorkflowSchemeRepository schemes,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
         IClock clock)
     {
         _repository = repository;
         _schemes = schemes;
+        _activity = activity;
+        _executionContext = executionContext;
         _clock = clock;
     }
 
@@ -232,26 +313,80 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         var scheme = await _schemes.FindByProjectAsync(issue.ProjectUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(WorkflowScheme), issue.ProjectUuid);
 
-        issue.SetState(scheme, command.StateUuid, _clock.UtcNow);
+        var now = _clock.UtcNow;
+        var previous = issue.StateUuid;
+
+        issue.SetState(scheme, command.StateUuid, now);
+
+        // Wpis dopisuje się dopiero PO metodzie agregatu i tylko przy faktycznej zmianie:
+        // przejście odrzucone rzuca wyjątkiem i nie dochodzi tutaj, a przejście „w to samo
+        // miejsce” agregat pomija po cichu i historia ma je pominąć tak samo.
+        if (previous != issue.StateUuid)
+        {
+            _activity.Add(IssueActivity.Record(
+                issue.Uuid,
+                IssueActivityKind.StateChanged,
+                "state",
+                previous.ToString(),
+                issue.StateUuid.ToString(),
+                IssueCreateCommandHandler.ActorUuid(_executionContext),
+                _executionContext.CorrelationId,
+                now));
+        }
 
         return issue.Uuid;
     }
 }
 
 /// <summary>
+/// Zmiana jednego pola opisana na potrzeby historii: co się zmieniło, z czego i na co.
+///
+/// <para>Zwracana przez <see cref="IssueCommandHandlerBase{TCommand}.Apply"/>, bo tylko tam
+/// widać obie wartości — przed i po. Wyliczanie „co się zmieniło” po fakcie, ze ChangeTrackera,
+/// dałoby dokładnie to, co daje już <c>AggregateChanged</c>: informację, że coś się ruszyło,
+/// bez znaczenia pola (<c>docs/backend/task-management.md</c> §11).</para>
+/// </summary>
+public readonly record struct IssueFieldChange(string? FieldCode, string? OldValue, string? NewValue, bool Changed)
+{
+    /// <summary>Zmiana z wartościami — do historii idzie stara i nowa.</summary>
+    public static IssueFieldChange Of(string fieldCode, string? oldValue, string? newValue)
+        => new(fieldCode, oldValue, newValue, !string.Equals(oldValue, newValue, StringComparison.Ordinal));
+
+    /// <summary>Zmiana bez wartości — do historii idzie sam fakt (pola zbyt obszerne, żeby je
+    /// kopiować).</summary>
+    public static IssueFieldChange Fact(string fieldCode, bool changed)
+        => new(fieldCode, null, null, changed);
+
+    /// <summary>Brak zmiany godnej historii.</summary>
+    public static IssueFieldChange None => new(null, null, null, false);
+}
+
+/// <summary>
 /// Wspólny szkielet komend, które tylko wołają jedną metodę agregatu. Bez tego pięć handlerów
 /// różniłoby się jedną linijką — a to jest dokładnie ten rodzaj powtórzenia, przy którym
 /// literówka w „nie znaleziono” przechodzi przez review.
+///
+/// <para>Baza dopisuje też wpis historii, żeby nie dało się dodać komendy zmieniającej pole
+/// i <b>zapomnieć</b> o historii: <see cref="Apply"/> musi powiedzieć, co zmieniła, bo taki
+/// ma typ zwracany.</para>
 /// </summary>
 public abstract class IssueCommandHandlerBase<TCommand> : CommandHandler<TCommand, Guid>
     where TCommand : ICommand<Guid>, IAggregateCommand
 {
     private readonly IIssueRepository _repository;
+    private readonly IIssueActivityWriter _activity;
+    private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
-    protected IssueCommandHandlerBase(IIssueRepository repository, IClock clock)
+    protected IssueCommandHandlerBase(
+        IIssueRepository repository,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
+        IClock clock)
     {
         _repository = repository;
+        _activity = activity;
+        _executionContext = executionContext;
         _clock = clock;
     }
 
@@ -262,10 +397,28 @@ public abstract class IssueCommandHandlerBase<TCommand> : CommandHandler<TComman
         var issue = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Issue), command.Uuid);
 
-        Apply(issue, command, _clock.UtcNow);
+        var now = _clock.UtcNow;
+        var change = Apply(issue, command, now);
+
+        // Zapis „tytuł na ten sam tytuł” nie jest zdarzeniem w historii, choć jest poprawną
+        // komendą — inaczej masowe ustawienie priorytetu na już ustawiony zasypałoby kartę.
+        if (change is { Changed: true, FieldCode: not null })
+        {
+            _activity.Add(IssueActivity.Record(
+                issue.Uuid,
+                IssueActivityKind.FieldChanged,
+                change.FieldCode,
+                change.OldValue,
+                change.NewValue,
+                IssueCreateCommandHandler.ActorUuid(_executionContext),
+                _executionContext.CorrelationId,
+                now));
+        }
 
         return issue.Uuid;
     }
 
-    protected abstract void Apply(Issue issue, TCommand command, DateTimeOffset now);
+    /// <summary>Wykonuje zmianę i mówi, co zmieniła. Wartości „przed” trzeba odczytać
+    /// <b>przed</b> wywołaniem metody agregatu — potem już ich nie ma.</summary>
+    protected abstract IssueFieldChange Apply(Issue issue, TCommand command, DateTimeOffset now);
 }

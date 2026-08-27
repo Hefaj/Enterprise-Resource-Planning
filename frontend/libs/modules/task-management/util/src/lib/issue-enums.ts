@@ -55,3 +55,20 @@ export const ISSUE_SCOPE = {
 } as const;
 
 export type IssueScopeValue = (typeof ISSUE_SCOPE)[keyof typeof ISSUE_SCOPE];
+
+/**
+ * `TaskManagement.Domain.Issues.IssueActivityKind` — rodzaj wpisu historii.
+ *
+ * Rodzaj mówi, <b>jak</b> przeczytać wpis (zmiana pola, komentarz, plik), a `fieldCode` —
+ * <b>czego</b> dotyczy. Front dobiera po rodzaju szablon zdania, po kodzie pola — nazwę pola.
+ */
+export const ISSUE_ACTIVITY_KIND = {
+  Created: 0,
+  FieldChanged: 1,
+  StateChanged: 2,
+  CommentAdded: 3,
+  CommentRemoved: 4,
+  AttachmentAdded: 5,
+} as const;
+
+export type IssueActivityKindValue = (typeof ISSUE_ACTIVITY_KIND)[keyof typeof ISSUE_ACTIVITY_KIND];

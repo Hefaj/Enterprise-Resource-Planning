@@ -1,8 +1,7 @@
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Injectable, Signal, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { SignalrSyncService, withRequestId } from '@erp/shared/data-access';
+import { withRequestId } from '@erp/shared/data-access';
 
 import {
   GetIssueAttachmentsRequest,
@@ -10,6 +9,7 @@ import {
   IssueAttachmentDto,
   TaskManagementClient,
 } from '../api-client';
+import { IssueChildCache } from '../issue-child-cache';
 
 /**
  * Ile plików wolno wgrać jednym żądaniem.
@@ -24,76 +24,28 @@ export const ISSUE_ATTACHMENT_MAX_FILES_PER_REQUEST = 20;
 const SIGNATURE = 'taskmgmt.issue_attachment';
 
 /**
- * Załączniki zgłoszenia — lista, wgrywanie, unieważnianie cache.
+ * Załączniki zgłoszenia — lista, wgrywanie, unieważnianie cache’u.
  *
- * <p><b>Dlaczego zwykły serwis, a nie orkiestrator</b> — ten sam powód co przy
- * {@link ProjectWorkflowService}: `BaseOrchestrator` stoi na wyszukiwaniu i cache'u tożsamości
- * po uuid, a załączniki czyta się kompletem per zgłoszenie i backend nie wystawia dla nich
- * żadnego `searchIssueAttachment`. Użycie orkiestratora wymagałoby udawania wyszukiwania,
- * którego nie ma.</p>
- *
- * <p><b>Wgrywanie idzie z pominięciem tego serwisu jako pośrednika bajtów</b>: przeglądarka
- * wysyła plik prosto do magazynu adresem z biletu, a tutaj wraca dopiero rejestracja
- * (`docs/backend/media-storage.md`, `GetIssueAttachmentUploadTicketsEndpoint`).</p>
+ * <p>Cache i realtime dziedziczy po {@link IssueChildCache} (tam też uzasadnienie, dlaczego
+ * to nie jest orkiestrator). Własne jest tu jedno: <b>wgrywanie idzie z pominięciem tego
+ * serwisu jako pośrednika bajtów</b> — przeglądarka wysyła plik prosto do magazynu adresem
+ * z biletu, a tutaj wraca dopiero rejestracja (`docs/backend/media-storage.md`,
+ * `GetIssueAttachmentUploadTicketsEndpoint`).</p>
  */
 @Injectable({ providedIn: 'root' })
-export class IssueAttachmentService {
-  private readonly _api = inject(TaskManagementClient);
-  private readonly _signalr = inject(SignalrSyncService);
+export class IssueAttachmentService extends IssueChildCache<IssueAttachmentDto> {
+  protected override readonly label = 'IssueAttachmentService';
 
-  private readonly _byIssue = signal<ReadonlyMap<string, readonly IssueAttachmentDto[]>>(new Map());
-  private readonly _inFlight = new Map<string, Promise<readonly IssueAttachmentDto[]>>();
+  private readonly _api = inject(TaskManagementClient);
 
   public constructor() {
-    this._signalr.subscribe(SIGNATURE);
-
-    // Zdarzenie niesie uuidy ZAŁĄCZNIKÓW, a cache jest trzymany per ZGŁOSZENIE — mapowania
-    // w drugą stronę front nie ma i nie ma po co dokładać. Odświeżamy więc listy, które
-    // ktoś faktycznie ogląda; w praktyce jest to jedna otwarta karta zgłoszenia.
-    this._signalr
-      .onUpdate(SIGNATURE)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => void this._refreshCached());
-
-    this._signalr
-      .onDelete(SIGNATURE)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => void this._refreshCached());
+    super();
+    this.watch([SIGNATURE]);
   }
 
-  /**
-   * Załączniki zgłoszenia z cache — nie odpala żądania (do tego jest {@link loadAsync}).
-   * Pusta lista jest poprawnym stanem przejściowym: sekcja renderuje się bez pozycji zamiast
-   * blokować kartę do czasu odpowiedzi.
-   */
+  /** Załączniki zgłoszenia z cache’u, najstarsze pierwsze. */
   public attachmentsOf(issueUuid: string | null | undefined): Signal<readonly IssueAttachmentDto[]> {
-    return computed(() => (issueUuid ? (this._byIssue().get(issueUuid) ?? []) : []));
-  }
-
-  /**
-   * Dociąga listę załączników. Równoległe wywołania dla tego samego zgłoszenia dzielą jedno
-   * żądanie; `force` pomija cache po wgraniu plików.
-   */
-  public async loadAsync(issueUuid: string, force = false): Promise<readonly IssueAttachmentDto[]> {
-    if (!issueUuid) {
-      return [];
-    }
-
-    if (!force) {
-      const cached = this._byIssue().get(issueUuid);
-      if (cached) {
-        return cached;
-      }
-
-      const pending = this._inFlight.get(issueUuid);
-      if (pending) {
-        return pending;
-      }
-    }
-
-    const request = this._fetch(issueUuid).finally(() => this._inFlight.delete(issueUuid));
-    this._inFlight.set(issueUuid, request);
-    return request;
+    return this.itemsOf(issueUuid);
   }
 
   /**
@@ -163,35 +115,7 @@ export class IssueAttachmentService {
     return result.uuids;
   }
 
-  /** Wyrzuca listę z cache — dla jednego zgłoszenia albo dla wszystkich. */
-  public invalidate(issueUuid?: string): void {
-    this._byIssue.update((map) => {
-      if (!issueUuid) {
-        return new Map();
-      }
-      const next = new Map(map);
-      next.delete(issueUuid);
-      return next;
-    });
-  }
-
-  private async _fetch(issueUuid: string): Promise<readonly IssueAttachmentDto[]> {
-    try {
-      const attachments = await firstValueFrom(
-        this._api.getIssueAttachments({ issueUuid } as GetIssueAttachmentsRequest),
-      );
-
-      this._byIssue.update((map) => new Map(map).set(issueUuid, attachments));
-      return attachments;
-    } catch (error) {
-      // Brak dostępu do zgłoszenia wraca jako 404 — to nie jest awaria widoku, tylko granica
-      // widoczności. Karta pokaże sekcję pustą, a nie komunikat o błędzie.
-      console.error('[IssueAttachmentService] Nie udało się pobrać załączników zgłoszenia.', error);
-      return [];
-    }
-  }
-
-  private async _refreshCached(): Promise<void> {
-    await Promise.all([...this._byIssue().keys()].map((issueUuid) => this.loadAsync(issueUuid, true)));
+  protected override fetchAsync(issueUuid: string): Promise<readonly IssueAttachmentDto[]> {
+    return firstValueFrom(this._api.getIssueAttachments({ issueUuid } as GetIssueAttachmentsRequest));
   }
 }

@@ -45,6 +45,7 @@ public sealed class IssueAttachmentCreateCommandHandler : CommandHandler<IssueAt
 {
     private readonly IIssueAttachmentRepository _repository;
     private readonly IIssueRepository _issues;
+    private readonly IIssueActivityWriter _activity;
     private readonly IArtifactStore _artifacts;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
@@ -53,6 +54,7 @@ public sealed class IssueAttachmentCreateCommandHandler : CommandHandler<IssueAt
     public IssueAttachmentCreateCommandHandler(
         IIssueAttachmentRepository repository,
         IIssueRepository issues,
+        IIssueActivityWriter activity,
         // Magazyn trwały, nie domyślny: w domyślnym obowiązuje reguła wygasania, która skasowałaby
         // załączniki po kilku dniach (patrz ErpArtifactStoreOptions.RetentionDays).
         [FromKeyedServices(ArtifactStoreKeys.Media)] IArtifactStore artifacts,
@@ -64,6 +66,7 @@ public sealed class IssueAttachmentCreateCommandHandler : CommandHandler<IssueAt
 
         _repository = repository;
         _issues = issues;
+        _activity = activity;
         _artifacts = artifacts;
         _executionContext = executionContext;
         _clock = clock;
@@ -98,6 +101,9 @@ public sealed class IssueAttachmentCreateCommandHandler : CommandHandler<IssueAt
                     + $"{_options.MaxFileSizeBytes / 1024 / 1024} MB."));
         }
 
+        var actor = ActorUuid(_executionContext);
+        var now = _clock.UtcNow;
+
         var attachment = IssueAttachment.CreateUploaded(
             command.Uuid,
             command.IssueUuid,
@@ -105,10 +111,22 @@ public sealed class IssueAttachmentCreateCommandHandler : CommandHandler<IssueAt
             command.FileName,
             metadata.ContentType,
             metadata.SizeBytes,
-            ActorUuid(_executionContext),
-            _clock.UtcNow);
+            actor,
+            now);
 
         _repository.Add(attachment);
+
+        // Plik dopięty do zgłoszenia jest zdarzeniem w jego historii — na karcie czyta się to
+        // razem ze zmianami pól i komentarzami, jednym strumieniem.
+        _activity.Add(IssueActivity.Record(
+            attachment.IssueUuid,
+            IssueActivityKind.AttachmentAdded,
+            fieldCode: null,
+            oldValue: null,
+            newValue: attachment.FileName,
+            actor,
+            _executionContext.CorrelationId,
+            now));
 
         await _artifacts.PromoteAsync(command.ArtifactUuid, ct).ConfigureAwait(false);
 

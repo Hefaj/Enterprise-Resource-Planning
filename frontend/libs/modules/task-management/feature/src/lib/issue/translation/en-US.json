@@ -122,6 +122,45 @@
       "preview": "Preview",
       "previewUnavailable": "This file cannot be displayed — download it to open.",
       "uploadedAt": "Uploaded {{ date }}"
+    },
+    "comments": {
+      "label": "Comments",
+      "empty": "Nobody has written anything yet.",
+      "placeholder": "Write a comment…",
+      "submit": "Comment",
+      "cancel": "Cancel",
+      "reply": "Reply",
+      "replyPlaceholder": "Reply in the thread…",
+      "edit": "Edit",
+      "save": "Save",
+      "remove": "Remove",
+      "removeConfirm": "Remove this comment? The text goes, the entry stays.",
+      "removed": "Comment removed.",
+      "edited": "edited",
+      "failed": "The comment could not be saved.",
+      "removeTitle": "Remove comment"
+    },
+    "history": {
+      "label": "History",
+      "empty": "No recorded changes.",
+      "kind": {
+        "created": "created issue {{ value }}",
+        "fieldChanged": "changed the {{ field }}",
+        "fieldChangedWithValues": "changed the {{ field }}: {{ from }} → {{ to }}",
+        "stateChanged": "changed the state",
+        "commentAdded": "added a comment",
+        "commentRemoved": "removed a comment",
+        "attachmentAdded": "added attachment {{ value }}"
+      },
+      "fields": {
+        "title": "title",
+        "description": "description",
+        "priority": "priority",
+        "assignee": "assignee",
+        "dueAt": "due date",
+        "state": "state"
+      },
+      "emptyValue": "none"
     }
   }
 }

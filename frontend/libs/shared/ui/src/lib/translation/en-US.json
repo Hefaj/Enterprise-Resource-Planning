@@ -226,7 +226,10 @@
       "taskmgmtIssueSetPriority": "Changing issue priority",
       "taskmgmtIssueSetAssignee": "Assigning issues",
       "taskmgmtIssueSetDueDate": "Changing issue due dates",
-      "taskmgmtIssueSetState": "Changing issue state"
+      "taskmgmtIssueSetState": "Changing issue state",
+      "taskmgmtIssueAddComment": "Adding a comment",
+      "taskmgmtIssueSetCommentBody": "Editing a comment",
+      "taskmgmtIssueRemoveComment": "Removing a comment"
     },
     "toast": {
       "completed": "Finished: {{name}}",
@@ -299,6 +302,7 @@
       "roleNameEmpty": "Role name cannot be empty.",
       "roleSelfMembership": "A role cannot contain itself.",
       "roleSystemImmutable": "A system role cannot be modified.",
+      "taskmgmtActivityIssueEmpty": "A history entry must belong to an issue.",
       "taskmgmtAttachmentArtifactEmpty": "An attachment must point at a file in storage.",
       "taskmgmtAttachmentEmptyFile": "The uploaded file is empty.",
       "taskmgmtAttachmentFileNameEmpty": "The file name cannot be empty.",
@@ -306,6 +310,13 @@
       "taskmgmtAttachmentFileTooLarge": "The file exceeds the attachment size limit.",
       "taskmgmtAttachmentIssueEmpty": "An attachment must belong to an issue.",
       "taskmgmtAttachmentNotUploaded": "The file did not reach storage — upload it again.",
+      "taskmgmtCommentBodyEmpty": "The comment cannot be empty.",
+      "taskmgmtCommentBodyTooLong": "The comment is too long.",
+      "taskmgmtCommentIssueEmpty": "A comment must belong to an issue.",
+      "taskmgmtCommentNotAuthor": "Only the author can edit a comment.",
+      "taskmgmtCommentParentOtherIssue": "The parent comment belongs to a different issue.",
+      "taskmgmtCommentRemoved": "This comment has been removed.",
+      "taskmgmtCommentThreadTooDeep": "You can only reply to a top-level comment.",
       "taskmgmtIssueKeyEmpty": "An issue must have a readable key.",
       "taskmgmtIssueProjectEmpty": "An issue must belong to a project.",
       "taskmgmtIssueTitleEmpty": "Issue title cannot be empty.",

@@ -226,7 +226,10 @@
       "taskmgmtIssueSetPriority": "Zmiana priorytetu zgłoszeń",
       "taskmgmtIssueSetAssignee": "Przypisanie zgłoszeń",
       "taskmgmtIssueSetDueDate": "Zmiana terminu zgłoszeń",
-      "taskmgmtIssueSetState": "Zmiana stanu zgłoszeń"
+      "taskmgmtIssueSetState": "Zmiana stanu zgłoszeń",
+      "taskmgmtIssueAddComment": "Dodanie komentarza",
+      "taskmgmtIssueSetCommentBody": "Zmiana treści komentarza",
+      "taskmgmtIssueRemoveComment": "Usunięcie komentarza"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",
@@ -299,6 +302,7 @@
       "roleNameEmpty": "Nazwa roli nie może być pusta.",
       "roleSelfMembership": "Rola nie może zawierać samej siebie.",
       "roleSystemImmutable": "Rola systemowa nie może być zmieniana.",
+      "taskmgmtActivityIssueEmpty": "Wpis historii musi należeć do zgłoszenia.",
       "taskmgmtAttachmentArtifactEmpty": "Załącznik musi wskazywać plik w magazynie.",
       "taskmgmtAttachmentEmptyFile": "Wgrany plik jest pusty.",
       "taskmgmtAttachmentFileNameEmpty": "Nazwa pliku nie może być pusta.",
@@ -306,6 +310,13 @@
       "taskmgmtAttachmentFileTooLarge": "Plik przekracza dopuszczalny rozmiar załącznika.",
       "taskmgmtAttachmentIssueEmpty": "Załącznik musi należeć do zgłoszenia.",
       "taskmgmtAttachmentNotUploaded": "Plik nie dotarł do magazynu — wgraj go ponownie.",
+      "taskmgmtCommentBodyEmpty": "Treść komentarza nie może być pusta.",
+      "taskmgmtCommentBodyTooLong": "Treść komentarza jest za długa.",
+      "taskmgmtCommentIssueEmpty": "Komentarz musi należeć do zgłoszenia.",
+      "taskmgmtCommentNotAuthor": "Edytować komentarz może wyłącznie jego autor.",
+      "taskmgmtCommentParentOtherIssue": "Komentarz nadrzędny należy do innego zgłoszenia.",
+      "taskmgmtCommentRemoved": "Ten komentarz został usunięty.",
+      "taskmgmtCommentThreadTooDeep": "Odpowiadać można wyłącznie na komentarz główny.",
       "taskmgmtIssueKeyEmpty": "Zgłoszenie musi mieć klucz czytelny.",
       "taskmgmtIssueProjectEmpty": "Zgłoszenie musi należeć do projektu.",
       "taskmgmtIssueTitleEmpty": "Tytuł zgłoszenia nie może być pusty.",

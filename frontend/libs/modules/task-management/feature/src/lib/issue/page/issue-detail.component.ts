@@ -26,6 +26,8 @@ import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/tas
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
 import { IssueAttachmentsComponent } from './content/issue-attachments.component';
+import { IssueCommentsComponent } from './content/issue-comments.component';
+import { IssueHistoryComponent } from './content/issue-history.component';
 
 /**
  * Karta zgłoszenia — `/task-management/issue/:key`.
@@ -53,6 +55,8 @@ import { IssueAttachmentsComponent } from './content/issue-attachments.component
     ErpRichTextComponent,
     ErpTranslatePipe,
     IssueAttachmentsComponent,
+    IssueCommentsComponent,
+    IssueHistoryComponent,
   ],
   providers: [provideIssueTranslations(), provideTaskManagementTranslations()],
   template: `
@@ -104,6 +108,10 @@ import { IssueAttachmentsComponent } from './content/issue-attachments.component
             </section>
 
             <erp-task-management-issue-attachments [issueUuid]="issue.uuid" [canEdit]="canEdit()" />
+
+            <erp-task-management-issue-comments [issueUuid]="issue.uuid" [canWrite]="canEdit()" />
+
+            <erp-task-management-issue-history [issueUuid]="issue.uuid" />
           </div>
 
           <aside class="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-[var(--tui-border-normal)] pl-4">

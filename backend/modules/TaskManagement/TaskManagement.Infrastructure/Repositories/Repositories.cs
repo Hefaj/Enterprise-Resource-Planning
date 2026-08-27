@@ -37,6 +37,38 @@ public sealed class IssueAttachmentRepository : IIssueAttachmentRepository
     public void Add(IssueAttachment attachment) => _dbContext.IssueAttachments.Add(attachment);
 }
 
+/// <summary>Repozytorium komentarzy.</summary>
+public sealed class IssueCommentRepository : IIssueCommentRepository
+{
+    private readonly TaskManagementDbContext _dbContext;
+
+    public IssueCommentRepository(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+
+    /// <inheritdoc />
+    public Task<IssueComment?> FindAsync(Guid uuid, CancellationToken cancellationToken)
+        => _dbContext.IssueComments.FirstOrDefaultAsync(c => c.Uuid == uuid, cancellationToken);
+
+    /// <inheritdoc />
+    public void Add(IssueComment comment) => _dbContext.IssueComments.Add(comment);
+}
+
+/// <summary>
+/// Dopisywanie historii zgłoszenia.
+///
+/// <para>Sam <c>Add</c> i nic więcej — brak <c>Find</c> i <c>Remove</c> jest tutaj sygnałem,
+/// a nie niedokończoną implementacją: wpisu historii nie da się zmienić ani cofnąć, bo to on
+/// jest zapisem tego, co się stało.</para>
+/// </summary>
+public sealed class IssueActivityWriter : IIssueActivityWriter
+{
+    private readonly TaskManagementDbContext _dbContext;
+
+    public IssueActivityWriter(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+
+    /// <inheritdoc />
+    public void Add(IssueActivity activity) => _dbContext.IssueActivities.Add(activity);
+}
+
 /// <summary>Repozytorium projektów — ładuje agregat razem z członkami, bo rola zmienia się
 /// metodą agregatu, a nie osobnym zapisem w tabeli podrzędnej.</summary>
 public sealed class ProjectRepository : IProjectRepository

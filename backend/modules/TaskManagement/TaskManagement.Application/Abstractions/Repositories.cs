@@ -1,3 +1,4 @@
+using TaskManagement.Application.Issues;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -20,6 +21,31 @@ public interface IIssueAttachmentRepository
     Task<IssueAttachment?> FindAsync(Guid uuid, CancellationToken cancellationToken);
 
     void Add(IssueAttachment attachment);
+}
+
+/// <summary>Dostęp do komentarzy zgłoszenia po stronie zapisu. Odpowiedź potrzebuje rodzica
+/// jako obiektu, bo regułę „wątki są jednopoziomowe” egzekwuje agregat
+/// (<see cref="IssueComment.ReplyTo"/>), a nie handler.</summary>
+public interface IIssueCommentRepository
+{
+    Task<IssueComment?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(IssueComment comment);
+}
+
+/// <summary>
+/// Dopisywanie wpisów historii zgłoszenia.
+///
+/// <para>Świadomie <b>nie</b> repozytorium: historia jest tylko do dopisywania, więc interfejs
+/// z <c>FindAsync</c> i <c>Remove</c> kłamałby o tym, co z nią wolno zrobić. Odczyt idzie
+/// projekcją przez <see cref="IIssueActivityQueries"/>, jak każdy inny odczyt w tym module.</para>
+///
+/// <para>Wpis powstaje w tej samej jednostce pracy, co zmiana, którą opisuje — nie ma ścieżki,
+/// w której zmiana się zapisze, a historia nie (<c>docs/backend/task-management.md</c> §11).</para>
+/// </summary>
+public interface IIssueActivityWriter
+{
+    void Add(IssueActivity activity);
 }
 
 /// <summary>Dostęp do agregatu <see cref="Project"/> po stronie zapisu — ładuje projekt

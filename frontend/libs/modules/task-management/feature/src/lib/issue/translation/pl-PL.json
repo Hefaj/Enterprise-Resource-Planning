@@ -1,0 +1,109 @@
+{
+  "title": "Zgłoszenia",
+  "tabs": {
+    "list": "Lista"
+  },
+  "filters": {
+    "scope": {
+      "label": "Zakres",
+      "available": "Wszystkie dostępne",
+      "assignedToMe": "Moje",
+      "reportedByMe": "Zgłoszone przeze mnie"
+    },
+    "project": {
+      "label": "Projekt",
+      "placeholder": "Wszystkie projekty"
+    },
+    "text": {
+      "label": "Szukaj",
+      "placeholder": "Klucz albo tytuł, np. DEV-412"
+    },
+    "state": {
+      "label": "Stan",
+      "placeholder": "Dowolny stan"
+    },
+    "priority": {
+      "label": "Priorytet",
+      "placeholder": "Dowolny priorytet"
+    }
+  },
+  "table": {
+    "emptyMessage": "Brak zgłoszeń spełniających kryteria.",
+    "columns": {
+      "key": "Klucz",
+      "title": "Tytuł",
+      "state": "Stan",
+      "priority": "Priorytet",
+      "assignee": "Przypisany",
+      "dueAt": "Termin",
+      "updatedAt": "Zmodyfikowano"
+    },
+    "unassigned": "—"
+  },
+  "commands": {
+    "open": {
+      "label": "Otwórz zgłoszenie"
+    },
+    "setState": {
+      "label": "Zmień stan",
+      "modalTitle": "Zmiana stanu zgłoszeń",
+      "submitButton": "Zmień stan",
+      "stateLabel": "Stan docelowy",
+      "noProjectContext": "Zaznaczone zgłoszenia należą do różnych projektów, a stany są konfiguracją projektu. Zawęź zakres do jednego projektu, żeby wybrać stan.",
+      "editMessage": "Zmieniasz stan",
+      "issueSuffixSingle": "zgłoszenia",
+      "issueSuffixPlural": "zgłoszeń",
+      "filterModeSuffix": "zgłoszeń pasujących do filtra",
+      "filterModeHint": "Operacja obejmie wszystkie zgłoszenia pasujące do bieżącego filtra, także te spoza widocznej strony."
+    },
+    "setPriority": {
+      "label": "Zmień priorytet"
+    },
+    "setAssignee": {
+      "label": "Przypisz"
+    },
+    "create": {
+      "label": "Nowe zgłoszenie",
+      "modalTitle": "Nowe zgłoszenie",
+      "submitButton": "Utwórz",
+      "projectLabel": "Projekt",
+      "titleLabel": "Tytuł",
+      "titlePlaceholder": "Co trzeba zrobić?",
+      "descriptionLabel": "Opis",
+      "priorityLabel": "Priorytet",
+      "dueAtLabel": "Termin",
+      "dueAtPlaceholder": "RRRR-MM-DD"
+    },
+    "assignToMe": {
+      "label": "Przypisz do mnie"
+    },
+    "unassign": {
+      "label": "Zdejmij przypisanie"
+    }
+  },
+  "detail": {
+    "notFound": {
+      "title": "Nie ma takiego zgłoszenia",
+      "message": "Klucz nie istnieje albo nie masz dostępu do projektu, w którym leży to zgłoszenie."
+    },
+    "loading": "Wczytywanie zgłoszenia…",
+    "backToList": "Wróć do listy",
+    "description": {
+      "label": "Opis",
+      "empty": "Bez opisu."
+    },
+    "sidebar": {
+      "state": "Stan",
+      "transitions": "Przenieś do",
+      "noTransitions": "Z tego stanu nie ma dokąd przejść.",
+      "project": "Projekt",
+      "priority": "Priorytet",
+      "assignee": "Przypisany",
+      "reporter": "Zgłaszający",
+      "dueAt": "Termin",
+      "createdAt": "Utworzono",
+      "updatedAt": "Zmodyfikowano",
+      "restricted": "Zgłoszenie prywatne"
+    }
+  }
+}

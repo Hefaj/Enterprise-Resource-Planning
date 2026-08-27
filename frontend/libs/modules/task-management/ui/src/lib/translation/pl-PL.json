@@ -1,0 +1,38 @@
+{
+  "workflow": {
+    "states": {
+      "todo": "Do zrobienia",
+      "inProgress": "W toku",
+      "done": "Zrobione"
+    },
+    "transitions": {
+      "start": "Rozpocznij pracę",
+      "return": "Cofnij do zrobienia",
+      "finish": "Zakończ",
+      "reopen": "Wznów pracę",
+      "close": "Zamknij bez pracy",
+      "reopenToTodo": "Otwórz ponownie"
+    },
+    "categories": {
+      "todo": "Do zrobienia",
+      "inProgress": "W toku",
+      "done": "Zrobione"
+    }
+  },
+  "priority": {
+    "lowest": "Najniższy",
+    "low": "Niski",
+    "normal": "Normalny",
+    "high": "Wysoki",
+    "critical": "Krytyczny"
+  },
+  "projectKind": {
+    "delivery": "Wykonawczy",
+    "intake": "Zlecenia"
+  },
+  "projectMemberRole": {
+    "viewer": "Obserwator",
+    "contributor": "Uczestnik",
+    "lead": "Prowadzący"
+  }
+}

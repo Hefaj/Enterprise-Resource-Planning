@@ -39,6 +39,7 @@
     <ProjectReference Include="../../modules/Identity/Identity.Api/Identity.Api.csproj" />
     <ProjectReference Include="../../modules/Sales/Sales.Api/Sales.Api.csproj" />
     <ProjectReference Include="../../modules/Notification/Notification.Api/Notification.Api.csproj" />
+    <ProjectReference Include="../../modules/TaskManagement/TaskManagement.Api/TaskManagement.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,18 @@
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "TaskManagement.Api",
+  "targets": {
+    "watch": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "options": {
+        "cwd": "backend/modules/TaskManagement/TaskManagement.Api",
+        "command": "dotnet watch",
+        "env": {
+          "ErpBuildSlot": "taskmanagement"
+        }
+      }
+    }
+  }
+}

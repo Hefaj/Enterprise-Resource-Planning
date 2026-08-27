@@ -33,9 +33,11 @@ public class CommandNamingTests
         typeof(Catalog.Application.Products.ProductSetPriceCommand).Assembly,
         typeof(Identity.Application.Users.UserAddRoleCommand).Assembly,
         typeof(Sales.Application.Customers.CustomerSetNameCommand).Assembly,
+        typeof(TaskManagement.Application.Issues.IssueCreateCommand).Assembly,
         typeof(Catalog.Products.Command.ProductSetPriceMultipleCommandEndpoint).Assembly,
         typeof(Identity.Users.Command.UserAddRoleMultipleCommandEndpoint).Assembly,
         typeof(Sales.Customers.Command.CustomerSetNameMultipleCommandEndpoint).Assembly,
+        typeof(TaskManagement.Issues.Command.IssueCreateMultipleCommandEndpoint).Assembly,
     ];
 
     private static IReadOnlyList<Type> Commands() =>

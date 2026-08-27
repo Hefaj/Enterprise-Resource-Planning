@@ -74,7 +74,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 | Obserwowalność produkcyjna — health checks (`live`/`ready`/`deps`), co alertować w tej architekturze (outbox, `job`, Relay), korelacja po `X-Request-Id`, retencja i limity | [`docs/backend/observability.md`](docs/backend/observability.md) |
 
 **Mapa portów (frontend)**: client 4200, catalog 4201, inventory 4202, sales 4203, dms 4204, task-management 4205, notification 4206, identity 4207, nowy moduł → następny wolny.
-**Mapa portów (backend, HTTP dev)**: catalog 5149, notification 5250, sales 5269, identity 5280, task-management 5290 (zarezerwowany projektem, patrz [`docs/backend/task-management.md`](docs/backend/task-management.md)) — Inventory i Dms nie mają jeszcze backendu ani portu.
+**Mapa portów (backend, HTTP dev)**: catalog 5149, notification 5250, sales 5269, identity 5280, task-management 5290 — Inventory i Dms nie mają jeszcze backendu ani portu.
 
 ## Backend
 

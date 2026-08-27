@@ -31,4 +31,13 @@ export const ERP_PERMISSIONS = {
     RoleManage: 'identity.role.manage',
     PermissionRead: 'identity.permission.read',
   },
+  TaskManagement: {
+    IssueRead: 'taskmgmt.issue.read',
+    IssueCreate: 'taskmgmt.issue.create',
+    IssueUpdate: 'taskmgmt.issue.update',
+    IssueBulk: 'taskmgmt.issue.bulk',
+    BoardManage: 'taskmgmt.board.manage',
+    ProjectManage: 'taskmgmt.project.manage',
+    SchemeManage: 'taskmgmt.scheme.manage',
+  },
 } as const;

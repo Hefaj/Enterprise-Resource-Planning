@@ -1,8 +1,13 @@
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: 📐 projekt, brak kodu.** Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
-Front to dziś pusty szkielet (`TaskComponent` bez treści, `entry.menu.ts` z jedną pozycją-zaślepką
-„Dashboard Analityczny Zadań"), mikroserwisu `TaskManagement` nie ma.
+**Stan: ✅ faza 0 wdrożona i zweryfikowana end-to-end; fazy 1–7 📐 projekt.**
+Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
+Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
+`InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
+schemat stanów w seedzie oraz endpointy listy, karty po kluczu i zmiany stanu.
+Front: strona `/task-management/issue` (lista serwerowa z filtrem i akcją masową) oraz karta
+`/task-management/issue/:key`; zaślepka „Dashboard Analityczny Zadań" usunięta z menu.
+Nie ma jeszcze tablicy, pól niestandardowych, hierarchii ani zleceń — to fazy 2–7.
 
 Ten dokument opisuje **docelowy model** modułu zarządzania pracą wzorowanego na YouTracku:
 projekty z własnym zestawem pól i własnym automatem stanów, tablice z ręczną kolejnością kart,

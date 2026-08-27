@@ -35,10 +35,12 @@ public class BackgroundServiceTests
         typeof(Catalog.Infrastructure.Jobs.ExportRunner).Assembly,
         typeof(Identity.Infrastructure.Jobs.ExpiredGrantCleanupService).Assembly,
         typeof(Sales.Infrastructure.Seed.SalesSeedInitializer).Assembly,
+        typeof(TaskManagement.Infrastructure.Seed.TaskManagementSeedInitializer).Assembly,
         typeof(Notification.Infrastructure.NotificationInfrastructureExtensions).Assembly,
         typeof(Catalog.Products.Command.ProductSetPriceMultipleCommandEndpoint).Assembly,
         typeof(Identity.Users.Command.UserAddRoleMultipleCommandEndpoint).Assembly,
         typeof(Sales.Customers.Command.CustomerSetNameMultipleCommandEndpoint).Assembly,
+        typeof(TaskManagement.Issues.Command.IssueCreateMultipleCommandEndpoint).Assembly,
     ];
 
     /// <summary>

@@ -20,9 +20,17 @@ import { SHARED_KEYS } from './keys';
  */
 const ERROR_CODE_KEYS = SHARED_KEYS.errors.codes as Record<string, string>;
 
-/** `multimedia_still_referenced` → `multimediaStillReferenced`. */
+/**
+ * `multimedia_still_referenced` → `multimediaStillReferenced`,
+ * `taskmgmt.transition_not_allowed` → `taskmgmtTransitionNotAllowed`.
+ *
+ * Kropka jest traktowana jak podkreślnik, bo Task Management prefiksuje swoje kody nazwą modułu
+ * (`docs/backend/task-management.md` §2). Rejestr kluczy zostaje płaski — zagnieżdżanie go per
+ * moduł rozbiłoby jedyną zaletę tego scope'u, czyli to, że `notification` widzi wszystkie kody
+ * naraz bez ładowania scope'ów cudzych modułów.
+ */
 function toCamelCase(errorCode: string): string {
-  return errorCode.toLowerCase().replace(/_([a-z0-9])/g, (_, char: string) => char.toUpperCase());
+  return errorCode.toLowerCase().replace(/[._]([a-z0-9])/g, (_, char: string) => char.toUpperCase());
 }
 
 /**

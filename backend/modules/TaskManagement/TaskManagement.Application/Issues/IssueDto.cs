@@ -1,0 +1,102 @@
+using Erp.BuildingBlocks.Api.Contracts;
+using TaskManagement.Domain.Issues;
+using TaskManagement.Domain.Workflow;
+
+namespace TaskManagement.Application.Issues;
+
+/// <summary>Zgłoszenie w widoku odczytu. Kategoria stanu jedzie razem ze stanem, bo to po niej
+/// front decyduje o kolorze i o tym, czy karta „wyszła z pracy” — bez niej musiałby doładowywać
+/// schemat, żeby narysować listę.</summary>
+public sealed record IssueDto(
+    Guid Uuid,
+    Guid ProjectUuid,
+    string ProjectCode,
+    string Key,
+    string Title,
+    string? Description,
+    IssuePriority Priority,
+    Guid StateUuid,
+    string StateCode,
+    string StateNameKey,
+    WorkflowStateCategory StateCategory,
+    Guid ReporterUuid,
+    Guid? AssigneeUuid,
+    DateTimeOffset? DueAt,
+    Guid? ParentUuid,
+    bool IsRestricted,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
+/// <summary>
+/// Zakres listy zgłoszeń — <b>parametr, nie osobna strona</b>. „Moje zgłoszenia” jako oddzielny
+/// ekran zmusza użytkownika do zgadywania, gdzie patrzeć
+/// (<c>docs/frontend/task-management-pages.md</c> §2.1).
+/// </summary>
+public enum IssueScope
+{
+    /// <summary>Wszystko, co użytkownik ma prawo zobaczyć.</summary>
+    Available = 0,
+
+    /// <summary>Przypisane do mnie.</summary>
+    AssignedToMe = 1,
+
+    /// <summary>Zgłoszone przeze mnie.</summary>
+    ReportedByMe = 2,
+}
+
+/// <summary>Filtry wyszukiwania zgłoszeń.</summary>
+public sealed class SearchIssueRequest : PagedRequest
+{
+    /// <summary>
+    /// Zakres listy; puste = <see cref="IssueScope.Available"/>.
+    ///
+    /// <para><b>Nullowalne celowo</b>, jak każde inne pole tego filtra. Formularz filtrów na
+    /// froncie wysyła <c>null</c> dla pól, których użytkownik nie tknął — przy nienullowalnym
+    /// enumie deserializacja wywala się na <c>null</c> zanim żądanie w ogóle dojdzie do handlera,
+    /// więc „Wyszukaj" bez ustawionego zakresu kończyło się błędem 400.</para>
+    /// </summary>
+    public IssueScope? Scope { get; set; }
+
+    /// <summary>Kontekst projektu — dopiero on odblokowuje kolumny projekto-specyficzne (faza 3).</summary>
+    public Guid? ProjectUuid { get; set; }
+
+    /// <summary>Szukanie po tytule <b>oraz po kluczu</b>, w tym po kluczach historycznych.</summary>
+    public string? Text { get; set; }
+
+    public Guid? StateUuid { get; set; }
+
+    public WorkflowStateCategory? StateCategory { get; set; }
+
+    public IssuePriority? Priority { get; set; }
+
+    public Guid? AssigneeUuid { get; set; }
+}
+
+/// <summary>Pobranie zgłoszeń po identyfikatorach.</summary>
+public sealed class GetIssueRequest
+{
+    public List<Guid>? Uuids { get; set; }
+}
+
+/// <summary>Pobranie zgłoszenia po kluczu czytelnym — trasa karty idzie po <c>DEV-412</c>,
+/// nie po UUID.</summary>
+public sealed class GetIssueByKeyRequest
+{
+    public string Key { get; set; } = string.Empty;
+}
+
+/// <summary>Odczyty zgłoszeń. Implementacja w <c>TaskManagement.Infrastructure</c>.</summary>
+public interface IIssueQueries
+{
+    Task<SearchResponse> SearchAsync(SearchIssueRequest request, CancellationToken cancellationToken);
+
+    Task<List<IssueDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken);
+
+    /// <summary>Zwraca zgłoszenie po kluczu bieżącym albo historycznym. <c>null</c>, gdy klucza
+    /// nie ma albo użytkownik nie ma do zgłoszenia dostępu — rozróżnianie tych dwóch przypadków
+    /// w odpowiedzi zdradzałoby istnienie zgłoszeń z projektów, których nie widać.</summary>
+    Task<IssueDto?> GetByKeyAsync(string key, CancellationToken cancellationToken);
+
+    /// <summary>Identyfikatory pasujące do filtra, bez stronicowania — zbiór celów operacji masowej.</summary>
+    Task<List<Guid>> GetMatchingUuidsAsync(SearchIssueRequest request, CancellationToken cancellationToken);
+}

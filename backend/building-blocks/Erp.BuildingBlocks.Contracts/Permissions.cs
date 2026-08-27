@@ -84,6 +84,30 @@ public static class Permissions
         public const string JobControl = "identity.job.control";
     }
 
+    /// <summary>
+    /// Task Management. Prefiks kodów to <c>taskmgmt</c>, spójnie ze schematem bazy
+    /// i sygnaturami SignalR (<c>docs/backend/task-management.md</c> §2, §10.2).
+    ///
+    /// <para><b>Rola w projekcie nie jest uprawnieniem.</b> Te kody odpowiadają na pytanie
+    /// „czy w ogóle wolno ci ruszać zgłoszenia”; „w których projektach” rozstrzyga
+    /// <c>project_member</c> jako atrybut nadania. Odwrotnie katalog rósłby z liczbą działów.</para>
+    /// </summary>
+    public static class TaskManagement
+    {
+        public const string IssueRead = "taskmgmt.issue.read";
+        public const string IssueCreate = "taskmgmt.issue.create";
+        public const string IssueUpdate = "taskmgmt.issue.update";
+        public const string IssueBulk = "taskmgmt.issue.bulk";
+
+        /// <summary>Zarządzanie tablicami — kod istnieje od fazy 0, żeby menu i katalog
+        /// uprawnień nie zmieniały się przy dołożeniu ekranu w fazie 2.</summary>
+        public const string BoardManage = "taskmgmt.board.manage";
+
+        public const string ProjectManage = "taskmgmt.project.manage";
+
+        public const string SchemeManage = "taskmgmt.scheme.manage";
+    }
+
     /// <summary>Pełny katalog — źródło seedu <c>permission_catalog</c> i uzgadniania przy starcie.
     /// Nowy moduł dopisuje tu swoją grupę kodów; usunięcie kodu NIE usuwa go z bazy
     /// (patrz <see cref="PermissionDefinition"/>).</summary>
@@ -112,5 +136,13 @@ public static class Permissions
         new(Identity.RoleManage, "identity", "role", "manage", "identity.permissions.identity.role.manage"),
         new(Identity.PermissionRead, "identity", "permission", "read", "identity.permissions.identity.permission.read"),
         new(Identity.JobControl, "identity", "job", "control", "identity.permissions.identity.job.control"),
+
+        new(TaskManagement.IssueRead, "taskmgmt", "issue", "read", "identity.permissions.taskmgmt.issue.read"),
+        new(TaskManagement.IssueCreate, "taskmgmt", "issue", "create", "identity.permissions.taskmgmt.issue.create"),
+        new(TaskManagement.IssueUpdate, "taskmgmt", "issue", "update", "identity.permissions.taskmgmt.issue.update"),
+        new(TaskManagement.IssueBulk, "taskmgmt", "issue", "bulk", "identity.permissions.taskmgmt.issue.bulk"),
+        new(TaskManagement.BoardManage, "taskmgmt", "board", "manage", "identity.permissions.taskmgmt.board.manage"),
+        new(TaskManagement.ProjectManage, "taskmgmt", "project", "manage", "identity.permissions.taskmgmt.project.manage"),
+        new(TaskManagement.SchemeManage, "taskmgmt", "scheme", "manage", "identity.permissions.taskmgmt.scheme.manage"),
     ];
 }

@@ -1,0 +1,38 @@
+{
+  "workflow": {
+    "states": {
+      "todo": "To do",
+      "inProgress": "In progress",
+      "done": "Done"
+    },
+    "transitions": {
+      "start": "Start work",
+      "return": "Back to to-do",
+      "finish": "Finish",
+      "reopen": "Resume work",
+      "close": "Close without work",
+      "reopenToTodo": "Reopen"
+    },
+    "categories": {
+      "todo": "To do",
+      "inProgress": "In progress",
+      "done": "Done"
+    }
+  },
+  "priority": {
+    "lowest": "Lowest",
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "projectKind": {
+    "delivery": "Delivery",
+    "intake": "Intake"
+  },
+  "projectMemberRole": {
+    "viewer": "Viewer",
+    "contributor": "Contributor",
+    "lead": "Lead"
+  }
+}

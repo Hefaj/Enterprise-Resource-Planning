@@ -60,6 +60,25 @@ public static class AggregateSignatures
 
     public const string IdentityRole = "identity.role";
 
+    /// <summary>
+    /// Zgłoszenie w module Task Management. Prefiks to <c>taskmgmt</c>, nie <c>task</c> —
+    /// <see cref="Jobs"/> i <see cref="NotificationJob"/> zajmują już pole semantyczne
+    /// „zadanie” i w logach nie dałoby się ich rozróżnić
+    /// (<c>docs/backend/task-management.md</c> §2).
+    /// </summary>
+    public const string TaskManagementIssue = "taskmgmt.issue";
+
+    public const string TaskManagementProject = "taskmgmt.project";
+
+    /// <summary>Schemat stanów. Zmiana schematu przestawia kolumny tablicy i przyciski przejść
+    /// na karcie u wszystkich naraz, więc jest zdarzeniem realtime, a nie konfiguracją
+    /// odczytywaną raz przy starcie aplikacji.</summary>
+    public const string TaskManagementWorkflowScheme = "taskmgmt.workflow_scheme";
+
+    /// <summary>Tablica i kolejność kart — kanał wchodzi w fazie 2
+    /// (<c>docs/backend/task-management.md</c> §7.4).</summary>
+    public const string TaskManagementBoard = "taskmgmt.board";
+
     /// <summary>Wszystkie sygnatury agregatów — do walidacji przy starcie i w testach,
     /// żeby nikt nie rozgłosił zmiany na kanał, którego nikt nie słucha.</summary>
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -77,5 +96,9 @@ public static class AggregateSignatures
         Jobs,
         IdentityUser,
         IdentityRole,
+        TaskManagementIssue,
+        TaskManagementProject,
+        TaskManagementWorkflowScheme,
+        TaskManagementBoard,
     };
 }

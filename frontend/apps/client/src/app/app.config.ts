@@ -59,7 +59,15 @@ export const appConfig: ApplicationConfig = {
         useRefreshToken: true,
         // Token dołączany tylko do naszych mikroserwisów — nigdy do Keycloaka samego
         // (odświeżanie tokenu, endpoint /token) ani do zewnętrznych zasobów.
-        secureRoutes: ['http://localhost:5149', 'http://localhost:5250', 'http://localhost:5280'],
+        // Każdy port mikroserwisu musi być tu wymieniony — interceptor dokleja `Authorization`
+        // WYŁĄCZNIE do żądań pasujących do tej listy, a pominięty port objawia się jako 401
+        // z backendu, nie jako błąd konfiguracji frontu.
+        secureRoutes: [
+          'http://localhost:5149',
+          'http://localhost:5250',
+          'http://localhost:5280',
+          'http://localhost:5290',
+        ],
       },
     }),
     // Zastępuje `withAppInitializerAuthCheck()` z `angular-auth-oidc-client` — tamten wariant

@@ -19,3 +19,4 @@ export * from './lib/jobs/erp-job-result-registry.service';
 export * from './lib/preferences/erp-user-preferences.service';
 export * from './lib/preferences/erp-theme.service';
 export * from './lib/preferences/erp-language.service';
+export * from './lib/user/user-directory.service';

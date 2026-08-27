@@ -138,7 +138,7 @@ export class TaskManagementIssueTableComponent {
       .addColumn((c) =>
         c
           .setId('assignee')
-          .setAccessorFn((row) => row.assigneeUuid ?? this._transloco.translate(ISSUE_KEYS.table.unassigned))
+          .setAccessorFn((row) => row.assignee?.displayName ?? this._transloco.translate(ISSUE_KEYS.table.unassigned))
           .setHeader(ISSUE_KEYS.table.columns.assignee)
           .setEnableSorting(false)
           .setSize(220),

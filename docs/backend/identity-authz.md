@@ -223,6 +223,19 @@ Keycloak ──JWT(sub)──► Catalog.Api
 - `requiredPermission` w pozycjach `remoteMenu` — shell filtruje menu w `STARTUP.ts` przed rejestracją, nie każdy moduł osobno. Menu jest **przeliczane na żywo**: po zdarzeniu `identity.user` dotyczącym własnego użytkownika `STARTUP.ts` ponownie ładuje uprawnienia, filtruje zapamiętane niefiltrowane drzewa i re-rejestruje je przez `ErpNavRegistryService.register()` (upsert po `id`).
 - Kopia katalogu kodów po stronie frontu: [`permission-codes.ts`](../../frontend/libs/shared/auth/src/lib/permission-codes.ts) (`ERP_PERMISSIONS`) — dopisanie kodu w `Permissions.cs` wymaga dopisania go też tutaj.
 
+### Katalog użytkowników dla pozostałych modułów
+
+Task Management, DMS i każdy kolejny moduł wskazujący ludzi zapisują u siebie **wyłącznie uuid**
+(claim `sub`). Nazwiska sklejają przez wspólny katalog: `user/searchUserDirectory` +
+`user/getUserDirectory` (lekkie DTO: `uuid`, `displayName`, `email`, `isActive`), za **samym
+uwierzytelnieniem** — to książka telefoniczna firmy, a nie dane administracyjne. Role, nadania
+i historia zostają za `identity.user.read`/`identity.user.manage` na `searchUser`/`getUser`.
+
+Po stronie frontu wchodzi to portem `ERP_USER_DIRECTORY` (`@erp/shared/util`) z implementacją
+w `@erp/shared/data-access` — moduły nie widzą `@erp/identity/data-access`, bo `scope:*` pozwala
+im zależeć wyłącznie od `scope:shared`. Szczegóły i wzorce użycia →
+[`docs/frontend/user-directory.md`](../frontend/user-directory.md).
+
 **Front tylko chowa UI.** Źródłem prawdy jest sprawdzenie na endpoincie. Ukryty przycisk nie jest zabezpieczeniem — `testuser` bez uprawnień dostaje realne 403 z backendu, niezależnie od tego, co widzi.
 
 ### Moduł `identity` (remote, port 4207)

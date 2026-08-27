@@ -3,7 +3,7 @@ import { API_BASE_URL as CATALOG_API_BASE_URL } from '@erp/catalog/data-access';
 import { API_BASE_URL as NOTIFICATION_API_BASE_URL } from '@erp/notification/data-access';
 import { API_BASE_URL as IDENTITY_API_BASE_URL } from '@erp/identity/data-access';
 import { API_BASE_URL as TASK_MANAGEMENT_API_BASE_URL } from '@erp/task-management/data-access';
-import { SIGNALR_HUB_URL } from '@erp/shared/data-access';
+import { SIGNALR_HUB_URL, provideErpUserDirectory } from '@erp/shared/data-access';
 import { IDENTITY_PERMISSIONS_API_BASE_URL } from '@erp/shared/auth';
 
 /**
@@ -23,4 +23,8 @@ export const remoteApiProviders: Provider[] = [
   // wspólny origin za gatewayem, którego jeszcze nie ma, więc do czasu jego powstania
   // wskazujemy wprost na port Notification.
   { provide: SIGNALR_HUB_URL, useValue: 'http://localhost:5250/hubs/sync' },
+  // Katalog użytkowników — trzeci token wskazujący na Identity (obok API klienta modułu
+  // i uprawnień), z tego samego powodu: `@erp/shared/data-access` nie może zależeć od
+  // `@erp/identity/data-access`, bo `scope:shared` widzi wyłącznie `scope:shared`.
+  ...provideErpUserDirectory('http://localhost:5280'),
 ];

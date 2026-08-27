@@ -60,7 +60,11 @@
       "label": "Change priority"
     },
     "setAssignee": {
-      "label": "Assign"
+      "label": "Assign",
+      "modalTitle": "Assign issues",
+      "submitButton": "Assign",
+      "userLabel": "Person",
+      "editMessage": "You are assigning"
     },
     "create": {
       "label": "New issue",

@@ -12,13 +12,19 @@ import {
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, ErpAuthService, PermissionStore } from '@erp/shared/auth';
 import {
+  BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest,
   BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
   IssueCreateCommand,
   IssueVM,
   SearchIssueRequest,
   TaskManagementIssueOrchestrator,
 } from '@erp/task-management/data-access';
-import { ISSUE_CREATE_MODAL_ID, ISSUE_PRIORITY, ISSUE_SET_STATE_MODAL_ID } from '@erp/task-management/util';
+import {
+  ISSUE_CREATE_MODAL_ID,
+  ISSUE_PRIORITY,
+  ISSUE_SET_ASSIGNEE_MODAL_ID,
+  ISSUE_SET_STATE_MODAL_ID,
+} from '@erp/task-management/util';
 
 import { IssueStore } from '../issue.store';
 import { IssueSetStateMetadata } from '../../modal/issue-set-state/issue-set-state.definition';
@@ -32,10 +38,11 @@ import { ISSUE_KEYS } from '../../translation';
  * (`ErpSelectionScope`) dociera do akcji masowych. Cele buduje `erpBuildBatchTargets(scope)`,
  * nigdy ręczne składanie `targetUuids` (`docs/frontend/selection-scope.md` §3).</p>
  *
- * <p><b>Przypisanie idzie bez modala i bez wyboru osoby</b> — „przypisz do mnie" / „zdejmij
- * przypisanie" nie potrzebują listy użytkowników, której ten moduł nie ma jak dostać:
- * użytkownicy należą do Identity, a `scope:task-management` nie może importować `scope:identity`.
- * Wskazanie <i>innej</i> osoby wymaga wspólnego pickera w `libs/shared` i czeka na tę decyzję.</p>
+ * <p><b>Przypisanie ma trzy drogi, bo to trzy różne czynności.</b> „Przypisz do mnie" i „zdejmij
+ * przypisanie" idą wprost komendą — osoby nie trzeba wybierać, więc modal byłby tylko klikiem
+ * więcej. Wskazanie <i>innej</i> osoby otwiera modal z pickerem zasilanym wspólnym katalogiem
+ * użytkowników (`ERP_USER_DIRECTORY`); moduł nadal nie zna Identity — kontrakt katalogu leży
+ * w `@erp/shared/util`, a implementację wstrzykuje aplikacja.</p>
  */
 @Component({
   selector: 'erp-task-management-issue-tab',
@@ -116,6 +123,14 @@ export class IssueTabComponent {
           )
           .addAction((a) =>
             a
+              .setId('set-assignee')
+              .setLabel(ISSUE_KEYS.commands.setAssignee.label)
+              .setIcon('@tui.user')
+              .setHidden(this._canUpdate)
+              .setFn(() => this._openSetAssignee()),
+          )
+          .addAction((a) =>
+            a
               .setId('assign-to-me')
               .setLabel(ISSUE_KEYS.commands.assignToMe.label)
               .setIcon('@tui.user-check')
@@ -171,6 +186,15 @@ export class IssueTabComponent {
       ISSUE_SET_STATE_MODAL_ID,
       erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
       { targetCount: this.selectionCount(), projectUuid: this.store.projectUuid() ?? undefined },
+    );
+  }
+
+  /** Wybór osoby z katalogu — jedyna z trzech dróg przypisania, która potrzebuje modalu. */
+  private _openSetAssignee(): void {
+    this._modalService.open<BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest>(
+      ISSUE_SET_ASSIGNEE_MODAL_ID,
+      erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
+      { targetCount: this.selectionCount() },
     );
   }
 

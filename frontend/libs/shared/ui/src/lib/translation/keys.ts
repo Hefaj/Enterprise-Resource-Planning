@@ -346,4 +346,10 @@ export const SHARED_KEYS = {
         warrantyNameEmpty: 'shared.errors.codes.warrantyNameEmpty',
       },
     },
+    userPicker: {
+      label: 'shared.userPicker.label',
+      placeholder: 'shared.userPicker.placeholder',
+      searchPlaceholder: 'shared.userPicker.searchPlaceholder',
+      empty: 'shared.userPicker.empty',
+    },
   } as const;

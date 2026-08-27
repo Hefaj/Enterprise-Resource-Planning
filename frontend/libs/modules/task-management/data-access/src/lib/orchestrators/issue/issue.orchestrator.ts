@@ -1,7 +1,14 @@
 import { Injectable, Injector, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { BaseOrchestrator, LoadOptions, OrchestratorConfig, ResolvedDeps } from '@erp/shared/data-access';
+import {
+  BaseOrchestrator,
+  LoadOptions,
+  OrchestratorConfig,
+  ResolvedDeps,
+  UserDirectoryService,
+} from '@erp/shared/data-access';
+import { ErpUserRef } from '@erp/shared/util';
 import { TASK_MANAGEMENT_JOB_COMMAND_KEYS } from '@erp/task-management/util';
 
 import {
@@ -43,6 +50,7 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   LoadOptions
 > {
   private readonly _api = inject(TaskManagementClient);
+  private readonly _users = inject(UserDirectoryService);
   private readonly _injector = inject(Injector);
   private _projects: TaskManagementProjectOrchestrator | null = null;
 
@@ -69,26 +77,49 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   }
 
   protected override mapToViewModel(dto: IssueDto, resolvedDeps: ResolvedDeps): IssueVM {
-    return { ...dto, project: resolvedDeps['project'] as ProjectVM | undefined };
+    return {
+      ...dto,
+      project: resolvedDeps['project'] as ProjectVM | undefined,
+      assignee: resolvedDeps['assignee'] as ErpUserRef | undefined,
+      reporter: resolvedDeps['reporter'] as ErpUserRef | undefined,
+    };
   }
 
   protected override async resolveEagerDependencies(uuids: string[]): Promise<void> {
     const projectUuids = new Set<string>();
+    const userUuids = new Set<string>();
 
     for (const uuid of uuids) {
       const dto = this.identityMap.peek(uuid);
+
       if (dto?.projectUuid) {
         projectUuids.add(dto.projectUuid);
       }
+
+      // Przypisany i zgłaszający idą do katalogu jedną paczką na całą stronę listy —
+      // serwis skleja zamówienia z tego samego cyklu w jedno żądanie.
+      if (dto?.assigneeUuid) {
+        userUuids.add(dto.assigneeUuid);
+      }
+
+      if (dto?.reporterUuid) {
+        userUuids.add(dto.reporterUuid);
+      }
     }
 
-    if (projectUuids.size > 0) {
-      await this._projectSibling.loadAsync([...projectUuids]);
-    }
+    await Promise.all([
+      projectUuids.size > 0 ? this._projectSibling.loadAsync([...projectUuids]) : Promise.resolve(),
+      userUuids.size > 0 ? this._users.loadAsync([...userUuids]) : Promise.resolve(),
+    ]);
   }
 
   protected override _resolveCurrentDeps(dto: IssueDto): ResolvedDeps {
-    return { project: dto.projectUuid ? this._projectSibling.getOne(dto.projectUuid)() : undefined };
+    return {
+      project: dto.projectUuid ? this._projectSibling.getOne(dto.projectUuid)() : undefined,
+      // Odczyt sygnału katalogu — wiersz przerysuje się sam, gdy nazwisko dojedzie.
+      assignee: this._users.getOne(dto.assigneeUuid)(),
+      reporter: this._users.getOne(dto.reporterUuid)(),
+    };
   }
 
   /**

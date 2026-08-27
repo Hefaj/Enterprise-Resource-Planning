@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
-import { ErpTranslatePipe } from '@erp/shared/ui';
+import { ErpTranslatePipe, ErpUserNameComponent } from '@erp/shared/ui';
 import { IssueActivityDto, IssueActivityService } from '@erp/task-management/data-access';
 import { ISSUE_ACTIVITY_KIND } from '@erp/task-management/util';
 
@@ -50,7 +50,7 @@ interface IssueHistoryRow {
 @Component({
   selector: 'erp-task-management-issue-history',
   standalone: true,
-  imports: [DatePipe, ErpTranslatePipe],
+  imports: [DatePipe, ErpTranslatePipe, ErpUserNameComponent],
   template: `
     <section class="flex flex-col gap-2">
       <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
@@ -68,7 +68,7 @@ interface IssueHistoryRow {
               <span class="text-xs text-[var(--tui-text-secondary)]">
                 {{ row.occurredAt | date: 'short' }}
               </span>
-              <span class="font-medium">{{ row.actorUuid }}</span>
+              <erp-user-name class="font-medium" [uuid]="row.actorUuid" />
               @if (row.fieldKey) {
                 <span>
                   {{

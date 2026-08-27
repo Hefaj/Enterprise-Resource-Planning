@@ -13,6 +13,7 @@ import {
   ErpRichTextComponent,
   ErpRichTextConfig,
   ErpTranslatePipe,
+  ErpUserNameComponent,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import {
@@ -54,6 +55,7 @@ import { IssueHistoryComponent } from './content/issue-history.component';
     ErpEmptyStateComponent,
     ErpRichTextComponent,
     ErpTranslatePipe,
+    ErpUserNameComponent,
     IssueAttachmentsComponent,
     IssueCommentsComponent,
     IssueHistoryComponent,
@@ -157,7 +159,10 @@ import { IssueHistoryComponent } from './content/issue-history.component';
               <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
                 {{ ISSUE_KEYS.detail.sidebar.assignee | erpTranslate }}
               </span>
-              <span>{{ issue.assigneeUuid || (ISSUE_KEYS.table.unassigned | erpTranslate) }}</span>
+              <erp-user-name
+                [uuid]="issue.assigneeUuid"
+                [empty]="ISSUE_KEYS.table.unassigned | erpTranslate"
+              />
             </div>
 
             <div class="flex flex-col gap-1">

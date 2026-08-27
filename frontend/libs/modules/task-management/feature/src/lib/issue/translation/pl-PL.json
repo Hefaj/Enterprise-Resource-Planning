@@ -60,7 +60,11 @@
       "label": "Zmień priorytet"
     },
     "setAssignee": {
-      "label": "Przypisz"
+      "label": "Przypisz",
+      "modalTitle": "Przypisanie zgłoszeń",
+      "submitButton": "Przypisz",
+      "userLabel": "Osoba",
+      "editMessage": "Przypisujesz"
     },
     "create": {
       "label": "Nowe zgłoszenie",

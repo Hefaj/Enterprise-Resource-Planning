@@ -20,6 +20,7 @@ import {
   ErpRichTextConfig,
   ErpToastService,
   ErpTranslatePipe,
+  ErpUserNameComponent,
 } from '@erp/shared/ui';
 import { ErpAuthService } from '@erp/shared/auth';
 import {
@@ -51,7 +52,14 @@ interface IssueCommentThread {
 @Component({
   selector: 'erp-task-management-issue-comments',
   standalone: true,
-  imports: [DatePipe, NgTemplateOutlet, ErpButtonComponent, ErpRichTextComponent, ErpTranslatePipe],
+  imports: [
+    DatePipe,
+    NgTemplateOutlet,
+    ErpButtonComponent,
+    ErpRichTextComponent,
+    ErpTranslatePipe,
+    ErpUserNameComponent,
+  ],
   template: `
     <section class="flex flex-col gap-3">
       <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
@@ -105,7 +113,7 @@ interface IssueCommentThread {
     <ng-template #commentTpl let-comment>
       <div class="flex flex-col gap-1">
         <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--tui-text-secondary)]">
-          <span class="font-medium">{{ comment.authorUuid }}</span>
+          <erp-user-name class="font-medium" [uuid]="comment.authorUuid" />
           <span>{{ comment.createdAt | date: 'short' }}</span>
           @if (comment.editedAt) {
             <span>({{ ISSUE_KEYS.detail.comments.edited | erpTranslate }})</span>

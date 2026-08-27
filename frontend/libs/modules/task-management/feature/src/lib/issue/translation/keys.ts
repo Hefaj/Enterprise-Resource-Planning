@@ -66,6 +66,10 @@ export const ISSUE_KEYS = {
       },
       setAssignee: {
         label: 'issue.commands.setAssignee.label',
+        modalTitle: 'issue.commands.setAssignee.modalTitle',
+        submitButton: 'issue.commands.setAssignee.submitButton',
+        userLabel: 'issue.commands.setAssignee.userLabel',
+        editMessage: 'issue.commands.setAssignee.editMessage',
       },
       create: {
         label: 'issue.commands.create.label',

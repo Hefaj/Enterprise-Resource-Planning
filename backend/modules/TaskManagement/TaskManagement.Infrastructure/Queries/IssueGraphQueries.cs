@@ -54,10 +54,10 @@ public sealed class IssueGraphQueries : IIssueGraphQueries
         }
 
         var parent = issue.ParentUuid is { } parentUuid
-            ? await Headers(i => i.Uuid == parentUuid).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+            ? await VisibleHeaders(userUuid, i => i.Uuid == parentUuid).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
             : null;
 
-        var children = await Headers(i => i.ParentUuid == issueUuid)
+        var children = await VisibleHeaders(userUuid, i => i.ParentUuid == issueUuid)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -234,8 +234,8 @@ public sealed class IssueGraphQueries : IIssueGraphQueries
     /// <c>OrderBy</c> po polu rekordu, który sam dopiero powstaje w <c>select</c>, i wywraca
     /// całe zapytanie w czasie działania.</para>
     /// </summary>
-    private IQueryable<IssueChildDto> Headers(Expression<Func<Issue, bool>> predicate)
-        => from issue in _dbContext.Issues.AsNoTracking().Where(predicate).OrderBy(i => i.Key)
+    private IQueryable<IssueChildDto> VisibleHeaders(Guid userUuid, Expression<Func<Issue, bool>> predicate)
+        => from issue in _dbContext.Issues.AsNoTracking().VisibleTo(_dbContext, userUuid).Where(predicate).OrderBy(i => i.Key)
            join state in _dbContext.WorkflowStates.AsNoTracking() on issue.StateUuid equals state.Uuid
            select new IssueChildDto(
                issue.Uuid,

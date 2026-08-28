@@ -1,6 +1,6 @@
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: ✅ fazy 0–3 wdrożone i zweryfikowane end-to-end; fazy 4–7 📐 projekt.**
+**Stan: ✅ fazy 0–3 wdrożone i zweryfikowane end-to-end; faza 4 🟡 wdrożona i oczekuje na pełną weryfikację end-to-end; fazy 5–7 📐 projekt.**
 Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
@@ -32,7 +32,9 @@ Doszła lista projektów (`/task-management/project`) i karta projektu z **zakł
 wybór schematu, definicje z widocznym mapowaniem na sloty, dodawanie pola z ostrzeżeniem
 o niezmienności slotu i usuwanie — odmawiane, gdy pole ma wartości na zgłoszeniach.
 
-Nie ma jeszcze hierarchii, sprintów ani zleceń — to fazy 4–7.
+Faza 4 jest zaimplementowana: hierarchia (`issue.parent_uuid`), powiązania (`issue_link`),
+rekurencyjne CTE wykrywające cykle oraz tryb drzewa listy i pasek powiązań na karcie. Sprintów
+i zleceń jeszcze nie ma — to fazy 5–7.
 Obrazków osadzonych w treści opisu też jeszcze nie ma: backend je unosi, front wymaga podmiany
 `src` na `blob:` w obie strony ([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
 
@@ -536,7 +538,7 @@ częściowy sukces.
 | 1 ✅ | `WorkflowScheme` w seedzie, przejścia z regułami, komentarze, `issue_activity` | Automat stanów jako dana |
 | 2 ✅ | `Board` + `board_card` + `rank`, drag&drop, realtime kolejności, rebalans `[ClusterSafe]` | **Uporządkowana kolekcja i współbieżna edycja — główne pytanie modułu** |
 | 3 ✅ | `FieldScheme`, sloty, `getProjectFieldProfile`, kolumny i filtry z profilu | Konfiguracja per projekt |
-| 4 | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
+| 4 🟡 | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
 | 5 | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, odbiór, SLA i eskalacje | Zlecenia przez granicę działu |
 | 6 | Sprinty, backlog, zamknięcie iteracji, operacje masowe na zgłoszeniach | Dojrzałość narzędzia |
 | 7 | Edytor schematu stanów, migracja stanów przy publikacji, zapisane widoki, `work_log` | Konfiguracja z UI, nie z seeda |

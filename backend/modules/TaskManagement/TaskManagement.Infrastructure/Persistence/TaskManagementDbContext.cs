@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
-using TaskManagement.Infrastructure.Persistence.Graph;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
 
@@ -82,10 +81,6 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
         ArgumentNullException.ThrowIfNull(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TaskManagementDbContext).Assembly);
-
-        // Typy bezkluczowe pod wyniki rekurencyjnych CTE — bez tabeli i bez śladu w migracjach.
-        modelBuilder.Entity<GraphEdgeRow>().HasNoKey().ToView(null);
-        modelBuilder.Entity<SubtreeRow>().HasNoKey().ToView(null);
 
         modelBuilder.ApplyConfiguration(new JobConfiguration());
         modelBuilder.ApplyConfiguration(new JobItemConfiguration());

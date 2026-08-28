@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { remoteRoutes } from '@erp/task-management/contract';
+import { getModalProviders, registerModals, remoteModalIds, remoteRoutes } from '@erp/task-management/contract';
 import { provideRemoteDevSupport } from '@erp/shared/ui';
 import { provideErpUserDirectory } from '@erp/shared/data-access';
 import { API_BASE_URL } from '@erp/task-management/data-access';
@@ -9,7 +9,11 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRemoteDevSupport({
       modulePrefix: 'task-management',
-      contractLoader: () => import('@erp/task-management/contract'),
+      // Kontrakt jest już potrzebny synchronicznie dla routingu samodzielnego remote'a.
+      // Nie importujemy go drugi raz dynamicznie: Nx traktuje wtedy tę samą bibliotekę jako
+      // jednocześnie eager i lazy, co łamie granice modułów. Same definicje modali pozostają
+      // leniwe wewnątrz `registerModals` i `getModalProviders` kontraktu.
+      contractLoader: async () => ({ remoteModalIds, registerModals, getModalProviders }),
     }),
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
@@ -20,4 +24,3 @@ export const appConfig: ApplicationConfig = {
     ...provideErpUserDirectory('http://localhost:5280'),
   ],
 };
-

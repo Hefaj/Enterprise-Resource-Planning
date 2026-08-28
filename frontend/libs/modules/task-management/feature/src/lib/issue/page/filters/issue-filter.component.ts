@@ -127,7 +127,6 @@ export class IssueFilterComponent implements OnInit {
           .setValueKey('value')
           .setStrategy('single'),
       )
-      .addFormField('treeMode', 'checkbox', (f) => f.setLabel(ISSUE_KEYS.filters.treeMode.label))
       .addFormField('priority', 'inputPicker', (f) =>
         f
           .setLabel(ISSUE_KEYS.filters.priority.label)

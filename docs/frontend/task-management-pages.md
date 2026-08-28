@@ -1,11 +1,13 @@
 # Task Management — podział na strony
 
-**Stan: ✅ fazy 0–1 wdrożone; pozostałe strony 📐 projekt.** Istnieją dwie trasy — lista
+**Stan: ✅ fazy 0–3 wdrożone; faza 4 🟡 wdrożona i oczekuje na pełną weryfikację end-to-end; fazy 5–7 📐 projekt.** Istnieją dwie trasy — lista
 `/task-management/issue` (filtr, tabela serwerowa, akcje masowe) i karta `/task-management/issue/:key`
 (opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki, wątek komentarzy
-i historia zmian). Zaślepka **„Dashboard Analityczny Zadań"** zniknęła z `entry.menu.ts` razem
-z fazą 0 (dashboard robiony pierwszy przez pół roku świeci pustkami). Tablicy, zleceń i grupy „Konfiguracja" w menu nie ma —
-pozycja bez działającej strony to ten sam błąd, który usunęła faza 0.
+i historia zmian). Jest też tablica oraz lista projektów z kartą pól; faza 4 dodała tryb drzewa
+na liście i pasek hierarchii/powiązań na karcie. Zaślepka **„Dashboard Analityczny Zadań"**
+zniknęła z `entry.menu.ts` razem z fazą 0 (dashboard robiony pierwszy przez pół roku świeci
+pustkami). Zleceń i grupy „Konfiguracja" w menu nie ma — pozycja bez działającej strony to ten
+sam błąd, który usunęła faza 0.
 
 Model domenowy, automat stanów, sloty pól i mechanika kolejności na tablicy →
 [`docs/backend/task-management.md`](../backend/task-management.md).
@@ -289,7 +291,7 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 | 1 ✅ | Karta zgłoszenia — przejścia stanów, komentarze, historia |
 | 2 ✅ | **Tablica** (kanban, drag&drop, realtime) |
 | 3 ✅ | Kontekst projektu na liście, kolumny i filtry z profilu; Projekty i Karta projektu — zakładka pól |
-| 4 | Tryb drzewa na liście, pasek powiązań na karcie |
+| 4 🟡 | Tryb drzewa na liście, pasek powiązań na karcie |
 | 5 | Zlecenia, odbiór; Karta projektu — SLA |
 | 6 | Backlog i planowanie sprintu, akcje masowe |
 | 7 | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki |

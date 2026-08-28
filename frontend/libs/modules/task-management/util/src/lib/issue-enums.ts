@@ -48,6 +48,22 @@ export type CustomFieldDataTypeValue =
   (typeof CUSTOM_FIELD_DATA_TYPE)[keyof typeof CUSTOM_FIELD_DATA_TYPE];
 
 /**
+ * `TaskManagement.Domain.Issues.IssueLinkType` — rodzaj powiązania.
+ *
+ * <p>`Blocks` to jedyny typ, który musi być acykliczny; `Delivers` jest zarezerwowany dla
+ * zleceń międzydziałowych (faza 5) i nie wolno go używać jako zwykłego powiązania
+ * (`docs/backend/task-management.md` §8.1).</p>
+ */
+export const ISSUE_LINK_TYPE = {
+  Blocks: 0,
+  Duplicates: 1,
+  Relates: 2,
+  Delivers: 3,
+} as const;
+
+export type IssueLinkTypeValue = (typeof ISSUE_LINK_TYPE)[keyof typeof ISSUE_LINK_TYPE];
+
+/**
  * `TaskManagement.Domain.FieldSchemes.FieldSlot` — slot sortowalny na `issue`.
  *
  * <p>`None` jest wartością pełnoprawną, nie brakiem decyzji: pole, po którym nikt nie sortuje

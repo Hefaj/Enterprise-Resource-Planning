@@ -50,6 +50,19 @@ public interface IIssueActivityWriter
     void Add(IssueActivity activity);
 }
 
+/// <summary>Dostęp do krawędzi grafu powiązań po stronie zapisu. <c>Remove</c> jest tu
+/// pełnoprawną operacją — w odróżnieniu od komentarza krawędź usuwa się twardo, bo nie ma
+/// czego zachowywać: „było powiązanie, już go nie ma" niesie całą treść tej zmiany, a ślad
+/// zostaje w historii zgłoszenia.</summary>
+public interface IIssueLinkRepository
+{
+    Task<IssueLink?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(IssueLink link);
+
+    void Remove(IssueLink link);
+}
+
 /// <summary>Dostęp do agregatu <see cref="Board"/> po stronie zapisu — ładuje tablicę razem
 /// z kolumnami, bo układ kolumn zmienia się metodą agregatu.</summary>
 public interface IBoardRepository

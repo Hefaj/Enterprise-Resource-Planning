@@ -31,6 +31,9 @@ export const ISSUE_KEYS = {
         label: 'issue.filters.priority.label',
         placeholder: 'issue.filters.priority.placeholder',
       },
+      treeMode: {
+        label: 'issue.filters.treeMode.label',
+      },
     },
     table: {
       emptyMessage: 'issue.table.emptyMessage',
@@ -176,6 +179,33 @@ export const ISSUE_KEYS = {
         save: 'issue.detail.customFields.save',
         numberHint: 'issue.detail.customFields.numberHint',
         dateHint: 'issue.detail.customFields.dateHint',
+      },
+      links: {
+        title: 'issue.detail.links.title',
+        parent: 'issue.detail.links.parent',
+        children: 'issue.detail.links.children',
+        none: 'issue.detail.links.none',
+        add: {
+          type: 'issue.detail.links.add.type',
+          target: 'issue.detail.links.add.target',
+          submit: 'issue.detail.links.add.submit',
+        },
+        remove: 'issue.detail.links.remove',
+        types: {
+          blocks: 'issue.detail.links.types.blocks',
+          blockedBy: 'issue.detail.links.types.blockedBy',
+          duplicates: 'issue.detail.links.types.duplicates',
+          duplicatedBy: 'issue.detail.links.types.duplicatedBy',
+          relates: 'issue.detail.links.types.relates',
+          delivers: 'issue.detail.links.types.delivers',
+          deliveredBy: 'issue.detail.links.types.deliveredBy',
+        },
+        notFound: 'issue.detail.links.notFound',
+        setParent: {
+          placeholder: 'issue.detail.links.setParent.placeholder',
+          submit: 'issue.detail.links.setParent.submit',
+          detach: 'issue.detail.links.setParent.detach',
+        },
       },
     },
   } as const;

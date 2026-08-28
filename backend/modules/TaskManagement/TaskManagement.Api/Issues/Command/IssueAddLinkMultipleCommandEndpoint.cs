@@ -1,0 +1,40 @@
+using Erp.BuildingBlocks.Api.Contracts;
+using Erp.BuildingBlocks.Validation;
+using TaskManagement.Application.Issues;
+using P = Erp.BuildingBlocks.Contracts.Permissions;
+
+namespace TaskManagement.Issues.Command;
+
+/// <summary>Seryjne dopięcie powiązań — blokada zamykająca pętlę odpada w pre-checku</summary>
+public sealed class IssueAddLinkMultipleCommandEndpoint
+    : BatchEndpointBase<IssueAddLinkCommand, SearchIssueRequest>
+{
+    private readonly IIssueQueries _queries;
+    private readonly IssueBatchValidator _validator;
+
+    public IssueAddLinkMultipleCommandEndpoint(IIssueQueries queries, IssueBatchValidator validator)
+    {
+        _queries = queries;
+        _validator = validator;
+    }
+
+    public override void Configure()
+    {
+        Post("batch-add-link");
+        Group<IssueGroup>();
+        Permissions(P.TaskManagement.IssueUpdate);
+        Description(d => d.WithSummary("Seryjne dopięcie powiązań — blokada zamykająca pętlę odpada w pre-checku"));
+    }
+
+    /// <inheritdoc />
+    protected override async Task<IEnumerable<Guid>> GetUuidsFromFilterAsync(
+        SearchIssueRequest filter,
+        CancellationToken ct)
+        => await _queries.GetMatchingUuidsAsync(filter, ct);
+
+    /// <inheritdoc />
+    protected override Task<ValidationTracker> ValidateTargetsAsync(
+        IReadOnlyList<BatchTarget<IssueAddLinkCommand>> targets,
+        CancellationToken ct)
+        => _validator.ValidateAddLinkAsync(targets, ct);
+}

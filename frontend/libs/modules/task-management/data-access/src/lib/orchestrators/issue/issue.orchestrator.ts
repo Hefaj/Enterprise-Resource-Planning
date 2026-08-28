@@ -22,7 +22,10 @@ import {
   IssueDto,
   IssueRemoveCommentCommand,
   IssueSetCommentBodyCommand,
+  IssueAddLinkCommand,
+  IssueRemoveLinkCommand,
   IssueSetCustomFieldsCommand,
+  IssueSetParentCommand,
   IssueSetDescriptionCommand,
   IssueSetDueDateCommand,
   IssueSetStateCommand,
@@ -210,6 +213,44 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   public setCustomFieldsAsync(command: IssueSetCustomFieldsCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueSetCustomFieldsMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueCustomFields,
+      queueId,
+    });
+  }
+
+  // ── Hierarchia i powiązania ──
+  //
+  // Komendy nazywają się `IssueSetParent…`/`IssueAddLink…`, bo agregatem jest ZGŁOSZENIE —
+  // krawędź powiązania ma własny korzeń w bazie, ale operacja wychodzi zawsze z karty
+  // zgłoszenia (`docs/backend/task-management.md` §8.1).
+
+  /**
+   * Ustawia albo zdejmuje rodzica. Pusty `parentUuid` wypina zgłoszenie z hierarchii — to
+   * poprawna operacja, nie brak decyzji.
+   *
+   * <p>Pętli front NIE sprawdza: robi to reguła wsadowa `IssueParentCycleRule` rekurencyjnym
+   * CTE, a handler powtarza sprawdzenie jako drugą linię obrony. Dublowanie tego w przeglądarce
+   * dałoby trzecią kopię reguły, która rozjedzie się pierwsza.</p>
+   */
+  public setParentAsync(command: IssueSetParentCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueSetParentMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueParent,
+      queueId,
+    });
+  }
+
+  /** Dopina powiązanie; `uuid` to ŹRÓDŁO krawędzi, bo kierunek jest częścią znaczenia. */
+  public addLinkAsync(command: IssueAddLinkCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync(
+      (p) => this._api.issueAddLinkMultipleCommand(p),
+      { ...command, linkUuid: command.linkUuid || crypto.randomUUID() } as IssueAddLinkCommand,
+      { commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueLink, queueId },
+    );
+  }
+
+  /** Odpina powiązanie — wolno to zrobić z obu jego stron. */
+  public removeLinkAsync(command: IssueRemoveLinkCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveLinkMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueLink,
       queueId,
     });
   }

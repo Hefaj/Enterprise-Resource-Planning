@@ -141,7 +141,15 @@ export class TaskManagementIssueTableComponent {
       .setOnRowDoubleClick((row: IssueVM) => this.rowActivated.emit(row))
 
       .addColumn((c) =>
-        c.setId('key').setAccessorKey('key').setHeader(ISSUE_KEYS.table.columns.key).setSize(120).setGrow(0),
+        c
+          .setId('key')
+          // W trybie drzewa klucz dostaje wcięcie wg poziomu zagnieżdżenia. Wcięcie, a nie
+          // osobna kolumna „poziom": to klucz jest tym, po czym użytkownik wodzi wzrokiem,
+          // szukając struktury, a pusta kolumna przy płaskiej liście byłaby kosztem bez zysku.
+          .setAccessorFn((row) => `${'\u00a0\u00a0\u00a0'.repeat(this._level(row))}${row.key}`)
+          .setHeader(ISSUE_KEYS.table.columns.key)
+          .setSize(160)
+          .setGrow(0),
       )
       .addColumn((c) => c.setId('title').setAccessorKey('title').setHeader(ISSUE_KEYS.table.columns.title).setSize(360))
       .addColumn((c) =>
@@ -246,6 +254,63 @@ export class TaskManagementIssueTableComponent {
     }
 
     return value;
+  }
+
+  /**
+   * Poziom zagnieżdżenia liczony <b>lokalnie</b>, z `parentUuid` wierszy będących na stronie.
+   *
+   * <p>Backend nie odsyła poziomu i nie musi: w trybie drzewa gwarantuje, że przodek każdego
+   * zgłoszenia jest gdzieś na tej samej stronie, więc łańcuch da się odtworzyć bez dodatkowego
+   * pola w kontrakcie. Poza trybem drzewa zawsze zero — płaska lista nie udaje struktury,
+   * której nie pokazuje w całości.</p>
+   */
+  private _level(row: IssueVM): number {
+    if (!this.filters().treeMode) {
+      return 0;
+    }
+
+    const byUuid = new Map(this.items().map((item) => [item.uuid, item]));
+
+    let level = 0;
+    let current = row;
+
+    // Ogranicznik na wypadek danych z pętlą — CTE po stronie serwera ma swój, ten jest
+    // po to, żeby przeglądarka nie zawiesiła się na wierszu, którego backend nie odrzucił.
+    while (current.parentUuid && level < 32) {
+      const parent = byUuid.get(current.parentUuid);
+
+      if (!parent) {
+        break;
+      }
+
+      level++;
+      current = parent;
+    }
+
+    return level;
+  }
+
+  /**
+   * Poziom zagnieżdżenia wiersza liczony w obrębie ZAŁADOWANEJ strony.
+   *
+   * <p>Zgłoszenie, którego rodzica nie ma na stronie, jest korzeniem z punktu widzenia widoku —
+   * i tak właśnie ma się rysować. Wchodzenie po rodzicach poza stronę oznaczałoby dociąganie
+   * zgłoszeń tylko po to, żeby policzyć wcięcie.</p>
+   */
+  private _levelOf(row: IssueVM): number {
+    const byUuid = new Map(this.items().map((item) => [item.uuid, item]));
+
+    let level = 0;
+    let parent = row.parentUuid ? byUuid.get(row.parentUuid) : undefined;
+
+    // Ogranicznik głębokości nie jest ozdobnikiem: dane sprzed reguł cyklu (albo wpisane
+    // ręcznie w bazie) mogą zawierać pętlę, a pętla w tej pętli zawiesiłaby renderowanie wiersza.
+    while (parent && level < 16) {
+      level++;
+      parent = parent.parentUuid ? byUuid.get(parent.parentUuid) : undefined;
+    }
+
+    return level;
   }
 
   private _priorityLabel(priority: number | undefined): string {

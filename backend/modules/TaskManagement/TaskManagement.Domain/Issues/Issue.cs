@@ -71,8 +71,8 @@ public sealed class Issue : AggregateRoot
 
     public DateTimeOffset? DueAt { get; private set; }
 
-    /// <summary>Rodzic w hierarchii epik → zadanie → podzadanie. Kolumna jest od fazy 0,
-    /// bo migracja tabeli z danymi kosztuje więcej niż pusta kolumna; wypełnia ją faza 4.</summary>
+    /// <summary>Rodzic w hierarchii epik → zadanie → podzadanie. <b>Jeden rodzic</b> — to jest
+    /// różnica wobec powiązań (<see cref="IssueLink"/>), które są grafem (§8.1).</summary>
     public Guid? ParentUuid { get; private set; }
 
     /// <summary>Zgłoszenie prywatne — widoczne dla zgłaszającego, przypisanego i <c>Lead</c>
@@ -310,6 +310,46 @@ public sealed class Issue : AggregateRoot
             case FieldSlot.User2: User2 = value.User; break;
             default: break;
         }
+    }
+
+    /// <summary>
+    /// Ustawia albo zdejmuje rodzica w hierarchii.
+    ///
+    /// <para>Rodzic wchodzi <b>obiektem</b>, nie identyfikatorem: reguła „rodzic i dziecko są
+    /// w tym samym projekcie" wymaga jego stanu, a agregat nie ma jak sam sięgnąć poza swoją
+    /// granicę. Przeniesienie rodzica do innego projektu przenosi dzieci (§8.3), więc
+    /// hierarchia rozpięta między projektami nigdy nie powstaje legalnie.</para>
+    ///
+    /// <para><b>Cyklu ta metoda NIE sprawdza</b> i to jest świadome: „czy nowy rodzic jest moim
+    /// potomkiem" to pytanie o całe drzewo, czyli o dane spoza agregatu. Odpowiada na nie
+    /// <c>IssueParentCycleRule</c> rekurencyjnym CTE, a handler komendy powtarza je jako drugą
+    /// linię obrony — dokładnie tak samo, jak przy grafie ról w Identity (§8.2).</para>
+    /// </summary>
+    public void SetParent(Issue? parent, DateTimeOffset now)
+    {
+        if (parent is null)
+        {
+            ParentUuid = null;
+            Touch(now);
+            return;
+        }
+
+        if (parent.Uuid == Uuid)
+        {
+            throw new DomainException(
+                "taskmgmt.parent_self",
+                "Zgłoszenie nie może być swoim własnym rodzicem.");
+        }
+
+        if (parent.ProjectUuid != ProjectUuid)
+        {
+            throw new DomainException(
+                "taskmgmt.parent_other_project",
+                "Rodzic musi należeć do tego samego projektu, co zgłoszenie.");
+        }
+
+        ParentUuid = parent.Uuid;
+        Touch(now);
     }
 
     /// <summary>Przenosi zgłoszenie do innego projektu, nadając <b>nowy</b> klucz i zachowując

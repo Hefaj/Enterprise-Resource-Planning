@@ -132,3 +132,21 @@ public sealed class ProjectKeyCounterWriter : IProjectKeyCounterWriter
     /// <inheritdoc />
     public void Add(ProjectKeyCounter counter) => _dbContext.ProjectKeyCounters.Add(counter);
 }
+
+/// <summary>Repozytorium krawędzi powiązań.</summary>
+public sealed class IssueLinkRepository : IIssueLinkRepository
+{
+    private readonly TaskManagementDbContext _dbContext;
+
+    public IssueLinkRepository(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+
+    /// <inheritdoc />
+    public Task<IssueLink?> FindAsync(Guid uuid, CancellationToken cancellationToken)
+        => _dbContext.IssueLinks.FirstOrDefaultAsync(l => l.Uuid == uuid, cancellationToken);
+
+    /// <inheritdoc />
+    public void Add(IssueLink link) => _dbContext.IssueLinks.Add(link);
+
+    /// <inheritdoc />
+    public void Remove(IssueLink link) => _dbContext.IssueLinks.Remove(link);
+}

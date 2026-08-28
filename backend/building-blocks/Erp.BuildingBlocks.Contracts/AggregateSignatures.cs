@@ -84,6 +84,11 @@ public static class AggregateSignatures
     /// odczytywaną raz przy starcie aplikacji.</summary>
     public const string TaskManagementWorkflowScheme = "taskmgmt.workflow_scheme";
 
+    /// <summary>Powiązanie między zgłoszeniami. Osobny kanał od <see cref="TaskManagementIssue"/>,
+    /// bo dopięcie blokady nie zmienia żadnego z dwóch zgłoszeń, a pasek powiązań ma się
+    /// odświeżyć na OBU kartach naraz (<c>docs/backend/task-management.md</c> §8.1).</summary>
+    public const string TaskManagementIssueLink = "taskmgmt.issue_link";
+
     /// <summary>Schemat pól niestandardowych. Zmiana definicji pola przestawia kolumny listy
     /// zgłoszeń i formularz karty u wszystkich naraz — jak schemat stanów, jest daną czytaną
     /// na bieżąco, a nie konfiguracją wczytaną raz przy starcie aplikacji.</summary>
@@ -114,6 +119,7 @@ public static class AggregateSignatures
         TaskManagementIssueAttachment,
         TaskManagementIssueComment,
         TaskManagementFieldScheme,
+        TaskManagementIssueLink,
         TaskManagementProject,
         TaskManagementWorkflowScheme,
         TaskManagementBoard,

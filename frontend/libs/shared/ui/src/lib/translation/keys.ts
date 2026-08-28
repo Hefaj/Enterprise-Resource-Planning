@@ -241,6 +241,9 @@ export const SHARED_KEYS = {
         taskmgmtFieldSchemeAddField: 'shared.jobs.commands.taskmgmtFieldSchemeAddField',
         taskmgmtFieldSchemeRemoveField: 'shared.jobs.commands.taskmgmtFieldSchemeRemoveField',
         taskmgmtProjectSetFieldScheme: 'shared.jobs.commands.taskmgmtProjectSetFieldScheme',
+        taskmgmtIssueSetParent: 'shared.jobs.commands.taskmgmtIssueSetParent',
+        taskmgmtIssueAddLink: 'shared.jobs.commands.taskmgmtIssueAddLink',
+        taskmgmtIssueRemoveLink: 'shared.jobs.commands.taskmgmtIssueRemoveLink',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',

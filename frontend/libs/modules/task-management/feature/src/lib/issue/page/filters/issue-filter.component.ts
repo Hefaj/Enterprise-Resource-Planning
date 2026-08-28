@@ -127,6 +127,7 @@ export class IssueFilterComponent implements OnInit {
           .setValueKey('value')
           .setStrategy('single'),
       )
+      .addFormField('treeMode', 'checkbox', (f) => f.setLabel(ISSUE_KEYS.filters.treeMode.label))
       .addFormField('priority', 'inputPicker', (f) =>
         f
           .setLabel(ISSUE_KEYS.filters.priority.label)
@@ -136,6 +137,11 @@ export class IssueFilterComponent implements OnInit {
           .setValueKey('value')
           .setStrategy('single'),
       );
+
+      // Tryb drzewa jest FILTREM, nie przełącznikiem widoku: zmienia to, co serwer zwraca
+      // (stronicowanie po korzeniach + poddrzewa), więc jego miejsce jest tam, gdzie reszta
+      // parametrów żądania.
+      b.addFormField('treeMode', 'checkbox', (f) => f.setLabel(ISSUE_KEYS.filters.treeMode.label));
 
       // Filtry po polach własnych — wyłącznie po tych ze slotem. Pole bez slotu widać
       // w tabeli, ale filtrowanie po nim wymagałoby skanu jsonb (`task-management.md` §6).

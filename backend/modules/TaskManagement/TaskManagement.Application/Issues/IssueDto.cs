@@ -95,6 +95,18 @@ public sealed class SearchIssueRequest : PagedRequest
     /// bez niego są pomijane w całości, bo kod pola nie ma jak zamienić się w slot.
     /// </summary>
     public List<IssueCustomFieldFilter>? CustomFields { get; set; }
+
+    /// <summary>
+    /// Tryb drzewa: stronicowanie idzie po <b>zgłoszeniach bez rodzica</b>, a odpowiedź niesie
+    /// dodatkowo całe ich poddrzewa, w kolejności drzewa.
+    ///
+    /// <para>Potomkowie wracają <b>niezależnie od pozostałych filtrów</b> i to jest świadome:
+    /// drzewo z wyciętymi gałęziami nie jest drzewem, a użytkownik, który filtruje po „moje"
+    /// i włącza tryb drzewa, chce zobaczyć swoje epiki z całą zawartością — nie epiki z jednym
+    /// podzadaniem, które akurat też jest jego. <c>totalCount</c> liczy korzenie, bo to one
+    /// są jednostką stronicowania.</para>
+    /// </summary>
+    public bool TreeMode { get; set; }
 }
 
 /// <summary>Pobranie zgłoszeń po identyfikatorach.</summary>

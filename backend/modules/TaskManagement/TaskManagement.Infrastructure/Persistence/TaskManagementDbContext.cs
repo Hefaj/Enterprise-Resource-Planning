@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
+using TaskManagement.Infrastructure.Persistence.Graph;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
 
@@ -52,6 +53,11 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
 
     public DbSet<IssueComment> IssueComments => Set<IssueComment>();
 
+    /// <summary>Krawędzie grafu powiązań. Hierarchia (<c>issue.parent_uuid</c>) mieszka OSOBNO
+    /// i to jest celowe — rodzic ma inne reguły niż link
+    /// (<c>docs/backend/task-management.md</c> §8.1).</summary>
+    public DbSet<IssueLink> IssueLinks => Set<IssueLink>();
+
     /// <summary>Historia zmian zgłoszeń — tylko do dopisywania i do czytania w karcie.</summary>
     public DbSet<IssueActivity> IssueActivities => Set<IssueActivity>();
 
@@ -76,6 +82,10 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
         ArgumentNullException.ThrowIfNull(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TaskManagementDbContext).Assembly);
+
+        // Typy bezkluczowe pod wyniki rekurencyjnych CTE — bez tabeli i bez śladu w migracjach.
+        modelBuilder.Entity<GraphEdgeRow>().HasNoKey().ToView(null);
+        modelBuilder.Entity<SubtreeRow>().HasNoKey().ToView(null);
 
         modelBuilder.ApplyConfiguration(new JobConfiguration());
         modelBuilder.ApplyConfiguration(new JobItemConfiguration());

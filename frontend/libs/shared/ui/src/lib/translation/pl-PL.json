@@ -235,7 +235,10 @@
       "taskmgmtFieldSchemeCreate": "Utworzenie schematu pól",
       "taskmgmtFieldSchemeAddField": "Dodanie pola do schematu",
       "taskmgmtFieldSchemeRemoveField": "Usunięcie pola ze schematu",
-      "taskmgmtProjectSetFieldScheme": "Zmiana schematu pól projektu"
+      "taskmgmtProjectSetFieldScheme": "Zmiana schematu pól projektu",
+      "taskmgmtIssueSetParent": "Zmiana rodzica zgłoszenia",
+      "taskmgmtIssueAddLink": "Dopięcie powiązania",
+      "taskmgmtIssueRemoveLink": "Odpięcie powiązania"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

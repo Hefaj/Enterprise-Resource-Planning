@@ -25,6 +25,9 @@
     "priority": {
       "label": "Priority",
       "placeholder": "Any priority"
+    },
+    "treeMode": {
+      "label": "Tree"
     }
   },
   "table": {
@@ -171,6 +174,33 @@
       "save": "Save fields",
       "numberHint": "e.g. 8.5",
       "dateHint": "YYYY-MM-DD"
+    },
+    "links": {
+      "title": "Links",
+      "parent": "Parent",
+      "children": "Sub-tasks",
+      "none": "No links",
+      "add": {
+        "type": "Type",
+        "target": "Issue key, e.g. DEV-412",
+        "submit": "Link"
+      },
+      "remove": "Unlink",
+      "types": {
+        "blocks": "blocks",
+        "blockedBy": "blocked by",
+        "duplicates": "duplicates",
+        "duplicatedBy": "duplicated by",
+        "relates": "relates to",
+        "delivers": "delivers",
+        "deliveredBy": "delivered by"
+      },
+      "notFound": "No issue with that key.",
+      "setParent": {
+        "placeholder": "Parent key, e.g. DEV-1",
+        "submit": "Set parent",
+        "detach": "Detach parent"
+      }
     }
   }
 }

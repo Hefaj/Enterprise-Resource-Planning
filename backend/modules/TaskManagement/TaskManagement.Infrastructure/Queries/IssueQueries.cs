@@ -21,15 +21,18 @@ public sealed class IssueQueries : IIssueQueries
     private readonly TaskManagementDbContext _dbContext;
     private readonly IExecutionContext _executionContext;
     private readonly IFieldSchemeQueries _fields;
+    private readonly IIssueGraphQueries _graph;
 
     public IssueQueries(
         TaskManagementDbContext dbContext,
         IExecutionContext executionContext,
-        IFieldSchemeQueries fields)
+        IFieldSchemeQueries fields,
+        IIssueGraphQueries graph)
     {
         _dbContext = dbContext;
         _executionContext = executionContext;
         _fields = fields;
+        _graph = graph;
     }
 
     /// <inheritdoc />
@@ -40,6 +43,13 @@ public sealed class IssueQueries : IIssueQueries
         var slots = await SlotMapAsync(request, cancellationToken).ConfigureAwait(false);
         var query = ApplyCustomFieldFilters(Filtered(request), request, slots);
 
+        // Tryb drzewa stronicuje po KORZENIACH, nie po zgłoszeniach: strona z połową epiku
+        // i kawałkiem cudzego poddrzewa nie jest drzewem.
+        if (request.TreeMode)
+        {
+            query = query.Where(i => i.ParentUuid == null);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var uuids = await ApplySorting(query, request, slots)
@@ -48,6 +58,21 @@ public sealed class IssueQueries : IIssueQueries
             .Select(i => i.Uuid)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        if (request.TreeMode && uuids.Count > 0)
+        {
+            var subtree = await _graph.GetSubtreeAsync(uuids, cancellationToken).ConfigureAwait(false);
+
+            // Kolejność korzeni ustawia sortowanie strony, a wewnątrz poddrzewa — kolejność
+            // z CTE (poziom, potem uuid). Front odtwarza zagnieżdżenie z `parentUuid`, więc
+            // wystarczy mu, że przodek każdego zgłoszenia jest gdzieś na tej liście.
+            var byRoot = subtree.GroupBy(r => r.RootUuid).ToDictionary(g => g.Key, g => g.ToList());
+
+            uuids = [.. uuids.SelectMany(root =>
+                byRoot.TryGetValue(root, out var nodes)
+                    ? nodes.Select(n => n.Uuid)
+                    : [root])];
+        }
 
         return new SearchResponse { Uuids = uuids, TotalCount = totalCount };
     }

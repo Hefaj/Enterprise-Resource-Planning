@@ -235,7 +235,10 @@
       "taskmgmtFieldSchemeCreate": "Creating a field scheme",
       "taskmgmtFieldSchemeAddField": "Adding a field to a scheme",
       "taskmgmtFieldSchemeRemoveField": "Removing a field from a scheme",
-      "taskmgmtProjectSetFieldScheme": "Changing a project's field scheme"
+      "taskmgmtProjectSetFieldScheme": "Changing a project's field scheme",
+      "taskmgmtIssueSetParent": "Changing an issue's parent",
+      "taskmgmtIssueAddLink": "Adding a link",
+      "taskmgmtIssueRemoveLink": "Removing a link"
     },
     "toast": {
       "completed": "Finished: {{name}}",

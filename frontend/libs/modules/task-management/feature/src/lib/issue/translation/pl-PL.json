@@ -25,6 +25,9 @@
     "priority": {
       "label": "Priorytet",
       "placeholder": "Dowolny priorytet"
+    },
+    "treeMode": {
+      "label": "Drzewo"
     }
   },
   "table": {
@@ -171,6 +174,33 @@
       "save": "Zapisz pola",
       "numberHint": "np. 8.5",
       "dateHint": "RRRR-MM-DD"
+    },
+    "links": {
+      "title": "Powiązania",
+      "parent": "Rodzic",
+      "children": "Podzadania",
+      "none": "Brak powiązań",
+      "add": {
+        "type": "Rodzaj",
+        "target": "Klucz zgłoszenia, np. DEV-412",
+        "submit": "Powiąż"
+      },
+      "remove": "Odepnij",
+      "types": {
+        "blocks": "blokuje",
+        "blockedBy": "blokowane przez",
+        "duplicates": "duplikuje",
+        "duplicatedBy": "duplikowane przez",
+        "relates": "dotyczy",
+        "delivers": "realizuje",
+        "deliveredBy": "realizowane przez"
+      },
+      "notFound": "Nie znaleziono zgłoszenia o tym kluczu.",
+      "setParent": {
+        "placeholder": "Klucz rodzica, np. DEV-1",
+        "submit": "Ustaw rodzica",
+        "detach": "Odepnij rodzica"
+      }
     }
   }
 }

@@ -72,6 +72,7 @@ public static class TaskManagementInfrastructureExtensions
             .Register<WorkflowScheme>(AggregateSignatures.TaskManagementWorkflowScheme)
             .Register<IssueAttachment>(AggregateSignatures.TaskManagementIssueAttachment)
             .Register<IssueComment>(AggregateSignatures.TaskManagementIssueComment)
+            .Register<IssueLink>(AggregateSignatures.TaskManagementIssueLink)
             .Register<FieldScheme>(AggregateSignatures.TaskManagementFieldScheme)
             .Register<Board>(AggregateSignatures.TaskManagementBoard)
 

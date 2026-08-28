@@ -28,6 +28,7 @@ import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/tas
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
 import { IssueAttachmentsComponent } from './content/issue-attachments.component';
 import { IssueCustomFieldsComponent } from './content/issue-custom-fields.component';
+import { IssueLinksComponent } from './content/issue-links.component';
 import { IssueCommentsComponent } from './content/issue-comments.component';
 import { IssueHistoryComponent } from './content/issue-history.component';
 
@@ -60,6 +61,7 @@ import { IssueHistoryComponent } from './content/issue-history.component';
     IssueAttachmentsComponent,
     IssueCommentsComponent,
     IssueCustomFieldsComponent,
+    IssueLinksComponent,
     IssueHistoryComponent,
   ],
   providers: [provideIssueTranslations(), provideTaskManagementTranslations()],
@@ -184,6 +186,10 @@ import { IssueHistoryComponent } from './content/issue-history.component';
             <!-- Pola własne projektu. Sekcja znika w całości, gdy projekt nie ma schematu pól —
                  pusty nagłówek nad niczym jest gorszy niż jego brak. -->
             <erp-task-management-issue-custom-fields [issue]="issue" />
+
+            <!-- Pasek powiązań: rodzic, podzadania i graf. Ta sama krawędź czyta się inaczej
+                 z każdej ze stron, dlatego etykietę wybiera flaga isOutgoing. -->
+            <erp-task-management-issue-links [issueUuid]="issue.uuid" />
           </aside>
         </div>
       </div>

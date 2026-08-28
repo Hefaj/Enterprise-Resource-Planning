@@ -4,6 +4,7 @@ import { JobService } from '@erp/shared/data-access';
 import { ErpToastService } from '@erp/shared/ui';
 import {
   BoardCardVM,
+  erpAwaitJobAsync,
   BoardColumnDto,
   BoardSetCardPositionCommand,
   IssueSetStateCommand,
@@ -252,31 +253,10 @@ export class BoardStore {
   }
 
   /**
-   * Czeka na zakończenie zadania stojącego za komendą.
-   *
-   * <p>Komenda wraca z `jobUuid` natychmiast, a wykonuje się asynchronicznie
-   * (`BulkCommandRunner`). Odświeżenie tablicy bez tego czekania pobierałoby stan sprzed
-   * własnej zmiany i karta wracałaby na chwilę na stare miejsce.</p>
+   * Czekanie na zadanie mieszka w `erpAwaitJobAsync` — ten sam obrys obowiązuje pasek powiązań
+   * na karcie zgłoszenia, więc nie ma po co trzymać dwóch kopii.
    */
-  private async _runAsync(command: Promise<string>): Promise<void> {
-    const jobUuid = await command;
-    const job = this._jobs.getJob(jobUuid);
-
-    for (let attempt = 0; attempt < 50; attempt++) {
-      const status = job()?.status;
-
-      if (status === 'failed' || status === 'completedWithErrors' || status === 'cancelled') {
-        throw new Error(`Zadanie ${jobUuid} nie powiodło się.`);
-      }
-
-      if (status === 'completed') {
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    }
-
-    // Zadanie żyje dłużej niż dziesięć sekund: nie uznajemy go za błąd (nadal może się udać),
-    // ale przestajemy na nie czekać — tablica odświeży się zdarzeniem na `taskmgmt.board`.
+  private _runAsync(command: Promise<string>): Promise<void> {
+    return command.then((jobUuid) => erpAwaitJobAsync(this._jobs, jobUuid));
   }
 }

@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
-import { ErpTranslatePipe, ErpUserNameComponent } from '@erp/shared/ui';
+import { ErpTranslatePipe } from '@erp/shared/ui';
 import { IssueActivityDto, IssueActivityService } from '@erp/task-management/data-access';
 import { ISSUE_ACTIVITY_KIND } from '@erp/task-management/util';
 
 import { ISSUE_KEYS } from '../../translation';
+import { TaskManagementUserNameComponent } from '../../../user/task-management-user-name.component';
 
 /**
  * Wpis historii gotowy do wyświetlenia.
@@ -50,7 +51,7 @@ interface IssueHistoryRow {
 @Component({
   selector: 'erp-task-management-issue-history',
   standalone: true,
-  imports: [DatePipe, ErpTranslatePipe, ErpUserNameComponent],
+  imports: [DatePipe, ErpTranslatePipe, TaskManagementUserNameComponent],
   template: `
     <section class="flex flex-col gap-2">
       <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
@@ -68,13 +69,13 @@ interface IssueHistoryRow {
               <span class="text-xs text-[var(--tui-text-secondary)]">
                 {{ row.occurredAt | date: 'short' }}
               </span>
-              <erp-user-name class="font-medium" [uuid]="row.actorUuid" />
+              <erp-task-management-user-name
+                class="font-medium"
+                [uuid]="row.actorUuid"
+              />
               @if (row.fieldKey) {
                 <span>
-                  {{
-                    row.sentenceKey
-                      | erpTranslate: { field: row.fieldKey | erpTranslate, from: row.from, to: row.to }
-                  }}
+                  {{ row.sentenceKey | erpTranslate: { field: row.fieldKey | erpTranslate, from: row.from, to: row.to } }}
                 </span>
               } @else {
                 <span>{{ row.sentenceKey | erpTranslate: { value: row.value } }}</span>
@@ -96,12 +97,14 @@ export class IssueHistoryComponent {
   private readonly _activity = inject(IssueActivityService);
 
   protected readonly rows = computed<IssueHistoryRow[]>(() =>
-    this._activity.entriesOf(this.issueUuid())().map((entry) => ({
-      uuid: entry.uuid,
-      actorUuid: entry.actorUuid,
-      occurredAt: entry.occurredAt,
-      ...sentenceOf(entry),
-    })),
+    this._activity
+      .entriesOf(this.issueUuid())()
+      .map((entry) => ({
+        uuid: entry.uuid,
+        actorUuid: entry.actorUuid,
+        occurredAt: entry.occurredAt,
+        ...sentenceOf(entry),
+      })),
   );
 
   public constructor() {

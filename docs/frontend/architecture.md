@@ -8,16 +8,16 @@ Frontend to **Angular NX Monorepo** złożony z mikrofrontendów spinanych przez
 
 Aplikacja składa się z jednego **hosta** i kilku **remote'ów**, każdy jako osobna aplikacja Angular, osobno budowana i serwowana:
 
-| Aplikacja | Rola | Port |
-|---|---|---|
-| `client` | Host — powłoka, routing najwyższego poziomu, layout | 4200 |
-| `catalog` | Remote — moduł katalogu produktów | 4201 |
-| `inventory` | Remote — moduł magazynu | 4202 |
-| `sales` | Remote — moduł sprzedaży | 4203 |
-| `dms` | Remote — zarządzanie dokumentami | 4204 |
-| `task-management` | Remote — zarządzanie zadaniami | 4205 |
-| `notification` | Remote — powiadomienia | 4206 |
-| `identity` | Remote — użytkownicy, role, uprawnienia | 4207 |
+| Aplikacja         | Rola                                                | Port |
+| ----------------- | --------------------------------------------------- | ---- |
+| `client`          | Host — powłoka, routing najwyższego poziomu, layout | 4200 |
+| `catalog`         | Remote — moduł katalogu produktów                   | 4201 |
+| `inventory`       | Remote — moduł magazynu                             | 4202 |
+| `sales`           | Remote — moduł sprzedaży                            | 4203 |
+| `dms`             | Remote — zarządzanie dokumentami                    | 4204 |
+| `task-management` | Remote — zarządzanie zadaniami                      | 4205 |
+| `notification`    | Remote — powiadomienia                              | 4206 |
+| `identity`        | Remote — użytkownicy, role, uprawnienia             | 4207 |
 
 Kolejny nowy moduł dostaje pierwszy wolny port od 4208 wzwyż.
 
@@ -37,17 +37,21 @@ Efekt: host startuje bez znajomości logiki biznesowej żadnego modułu — zna 
 
 Host sięga po kod remota na trzy sposoby — każdy dla innego rodzaju zawartości:
 
-| Droga | Co przynosi | Mechanizm | Kiedy się ładuje |
-|---|---|---|---|
-| `remoteRoutes` | Całe ekrany pod własnym adresem | `app.routes.ts` + `loadRemoteModule()` | Przy wejściu na trasę modułu |
-| `registerModals` / `remoteModalIds` | Modale otwierane z dowolnego miejsca | `ErpModalService.open(queueID, …)` | Przy pierwszym otwarciu danego modalu |
-| **Rejestr widżetów** | Komponenty osadzane w layoucie HOSTA | `ErpWidgetRegistryService` | Przy pierwszym użyciu widżetu |
+| Droga                               | Co przynosi                          | Mechanizm                              | Kiedy się ładuje                      |
+| ----------------------------------- | ------------------------------------ | -------------------------------------- | ------------------------------------- |
+| `remoteRoutes`                      | Całe ekrany pod własnym adresem      | `app.routes.ts` + `loadRemoteModule()` | Przy wejściu na trasę modułu          |
+| `registerModals` / `remoteModalIds` | Modale otwierane z dowolnego miejsca | `ErpModalService.open(queueID, …)`     | Przy pierwszym otwarciu danego modalu |
+| **Rejestr widżetów**                | Komponenty osadzane w layoucie HOSTA | `ErpWidgetRegistryService`             | Przy pierwszym użyciu widżetu         |
 
 Trzecia droga powstała dla listy zadań masowych pod dzwonkiem powiadomień: to komponent modułu `notification`, ale renderuje się w nagłówku hosta — nie jest więc ani trasą, ani modalem.
 
 Działa tak samo jak modale: `STARTUP.ts` (jedyna warstwa, która może zależeć od `contract`) rejestruje **funkcję ładującą**, a shell prosi o widżet po identyfikatorze, nic nie wiedząc o module, z którego on pochodzi. Kontrakt remota eksponuje funkcję zwracającą klasę komponentu i **providery swojego modułu** (`entry.widgets.ts`); rejestr buduje z nich child injector, żeby scope tłumaczeń remota nie przesłonił scope'ów pozostałych modułów.
 
 Wszystko idzie przez `import()` wewnątrz funkcji — statyczny re-eksport komponentu z `contract` wciągnąłby warstwę `feature` do bundla ładowanego przy STARTUP, dla ekranu, którego użytkownik może nigdy nie otworzyć.
+
+### Widżet, modal czy token danych?
+
+Widżet nie jest ogólnym mechanizmem udostępniania kontrolek formularzy między remote’ami. Służy wyłącznie do gotowego UI renderowanego w stałym slocie hosta, tak jak lista zadań pod dzwonkiem. Moduł, który jest właścicielem filtra lub formularza, zachowuje jego komponent i stan; dane z innej domeny bierze przez port i token DI, a do renderowania używa generycznego atomu `shared/ui`. Pełna tabela decyzji i procedura dla katalogów (użytkownicy, języki itd.) znajdują się w [komponentach i danych między modułami](./cross-module-composition.md).
 
 ---
 
@@ -95,13 +99,13 @@ frontend/
 
 Każdy moduł biznesowy (`libs/modules/MODULE_NAME/`) dzieli się na 5 bibliotek. Podział nie jest umowny — jest **wymuszony przez ESLint** (`@nx/enforce-module-boundaries`), więc próba importu w złą stronę wywala build, nie tylko code review.
 
-| Warstwa | Tag NX | Rola | Może importować |
-|---|---|---|---|
-| `contract` | `type:contract` | Routing (`remoteRoutes`), menu (`remoteMenu`), definicje modali. Jedyna warstwa eksponowana bezpośrednio przez Native Federation. | `feature`, `ui`, `auth`, `data-access`, `util`, `env` |
-| `feature` | `type:feature` | Smart components — logika, wstrzykiwanie serwisów, `RemoteEntry`. | `ui`, `data-access`, `util` |
-| `ui` | `type:ui` | Prezentacyjne (dumb) komponenty TaigaUI — tylko `@Input`/`@Output`, zero serwisów. | `ui`, `util` |
-| `data-access` | `type:data-access` | Klienci HTTP (NSwag), orkiestratory, Signal Stores. | `data-access`, `util` |
-| `util` | `type:util` | Helpery, modele, stałe — zero zależności od Angulara poza typami. | `util` |
+| Warstwa       | Tag NX             | Rola                                                                                                                              | Może importować                                       |
+| ------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `contract`    | `type:contract`    | Routing (`remoteRoutes`), menu (`remoteMenu`), definicje modali. Jedyna warstwa eksponowana bezpośrednio przez Native Federation. | `feature`, `ui`, `auth`, `data-access`, `util`, `env` |
+| `feature`     | `type:feature`     | Smart components — logika, wstrzykiwanie serwisów, `RemoteEntry`.                                                                 | `ui`, `data-access`, `util`                           |
+| `ui`          | `type:ui`          | Prezentacyjne (dumb) komponenty TaigaUI — tylko `@Input`/`@Output`, zero serwisów.                                                | `ui`, `util`                                          |
+| `data-access` | `type:data-access` | Klienci HTTP (NSwag), orkiestratory, Signal Stores.                                                                               | `data-access`, `util`                                 |
+| `util`        | `type:util`        | Helpery, modele, stałe — zero zależności od Angulara poza typami.                                                                 | `util`                                                |
 
 Kierunek zależności jest jednokierunkowy i zbiega się w `util`:
 
@@ -136,12 +140,12 @@ Domyślnie `shareAll()` rejestruje **wszystkie** biblioteki workspace'u jako `sh
 
 **Dlatego** każdy moduł musi jawnie dodać swoje **własne** wewnętrzne biblioteki do tablicy `skip` w `federation.config.mjs` — wtedy trafiają do bundla inline i HMR działa normalnie.
 
-| Biblioteka | Shared? | HMR? | Uzasadnienie |
-|---|---|---|---|
+| Biblioteka                                       | Shared?   | HMR?   | Uzasadnienie                                                                           |
+| ------------------------------------------------ | --------- | ------ | -------------------------------------------------------------------------------------- |
 | `@erp/MODULE_NAME/{feature,data-access,ui,util}` | ❌ `skip` | ✅ tak | Używane tylko przez ten jeden moduł — nie ma sensu ich współdzielić między aplikacjami |
-| `@erp/client/{feature,contract,ui,util}` | ❌ `skip` | ✅ tak | Używane tylko przez hosta |
-| `@erp/shared/*` | ✅ shared | ❌ nie | Współdzielone między hostem i wszystkimi remote'ami — restart wymagany po zmianie |
-| `@angular/*`, `rxjs`, `@taiga-ui/*` | ✅ shared | ❌ nie | Zależności zewnętrzne — jedna kopia w runtime dla wszystkich aplikacji |
+| `@erp/client/{feature,contract,ui,util}`         | ❌ `skip` | ✅ tak | Używane tylko przez hosta                                                              |
+| `@erp/shared/*`                                  | ✅ shared | ❌ nie | Współdzielone między hostem i wszystkimi remote'ami — restart wymagany po zmianie      |
+| `@angular/*`, `rxjs`, `@taiga-ui/*`              | ✅ shared | ❌ nie | Zależności zewnętrzne — jedna kopia w runtime dla wszystkich aplikacji                 |
 
 Konsekwencja praktyczna: jeśli edytujesz coś w `libs/shared/**` i zmiana się nie pojawia, to nie bug — zrestartuj dev server. Jeśli edytujesz coś w `libs/modules/MODULE_NAME/**` i HMR nie działa, sprawdź najpierw, czy ta biblioteka faktycznie jest w `skip` w `federation.config.mjs` tego modułu.
 
@@ -166,6 +170,7 @@ Konsekwencja praktyczna: jeśli edytujesz coś w `libs/shared/**` i zmiana się 
 - [Struktura `feature`](./feature-structure.md) → [Page dla agregatu](./pages.md) → [Smart tabele](./smart-tables.md) → [Zasięg zaznaczenia](./selection-scope.md) — ścieżka od katalogu do gotowego ekranu listy.
 - [Orkiestratory (`data-access`)](./orchestrators.md) — jak moduły pobierają, cache'ują i wzbogacają dane agregatów.
 - [Modale](./modals.md), [Atomy UI](./atoms.md), [Tłumaczenia](./translations.md) — pozostałe przepisy zadaniowe, zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md).
+- [Komponenty i dane między modułami](./cross-module-composition.md) — wybór między widżetem, modalem, tokenem i generycznym UI; procedura dla katalogów referencyjnych.
 - [Podział na strony w DMS](./dms-pages.md) — 📐 projekt; przykład rozpisania całego modułu na ekrany, razem z modelem domenowym w [`dms-workflow.md`](../backend/dms-workflow.md).
 - Backend: [architektura](../backend/architecture.md), [uprawnienia i bramkowanie UI](../backend/identity-authz.md).
 - Praca z komponentami TaigaUI: [`.agents/skills/taiga-ui/SKILL.md`](../../.agents/skills/taiga-ui/SKILL.md).

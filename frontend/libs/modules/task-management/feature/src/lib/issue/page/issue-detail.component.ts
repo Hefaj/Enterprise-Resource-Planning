@@ -5,27 +5,14 @@ import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
-import {
-  ErpButtonComponent,
-  ErpButtonConfig,
-  ErpEmptyStateComponent,
-  ErpRichTextBuilder,
-  ErpRichTextComponent,
-  ErpRichTextConfig,
-  ErpTranslatePipe,
-  ErpUserNameComponent,
-} from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpTranslatePipe } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
-import {
-  IssueVM,
-  ProjectWorkflowService,
-  TaskManagementIssueOrchestrator,
-  WorkflowTransitionDto,
-} from '@erp/task-management/data-access';
+import { IssueVM, ProjectWorkflowService, TaskManagementIssueOrchestrator, WorkflowTransitionDto } from '@erp/task-management/data-access';
 import { ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
+import { TaskManagementUserNameComponent } from '../../user/task-management-user-name.component';
 import { IssueAttachmentsComponent } from './content/issue-attachments.component';
 import { IssueCustomFieldsComponent } from './content/issue-custom-fields.component';
 import { IssueLinksComponent } from './content/issue-links.component';
@@ -57,7 +44,7 @@ import { IssueHistoryComponent } from './content/issue-history.component';
     ErpEmptyStateComponent,
     ErpRichTextComponent,
     ErpTranslatePipe,
-    ErpUserNameComponent,
+    TaskManagementUserNameComponent,
     IssueAttachmentsComponent,
     IssueCommentsComponent,
     IssueCustomFieldsComponent,
@@ -99,7 +86,10 @@ import { IssueHistoryComponent } from './content/issue-history.component';
               </div>
 
               @if (editingDescription()) {
-                <erp-rich-text [config]="descriptionEditorConfig" [control]="descriptionControl" />
+                <erp-rich-text
+                  [config]="descriptionEditorConfig"
+                  [control]="descriptionControl"
+                />
                 <div class="flex gap-2">
                   <erp-button [config]="saveDescriptionButton" />
                   <erp-button [config]="cancelDescriptionButton" />
@@ -113,9 +103,15 @@ import { IssueHistoryComponent } from './content/issue-history.component';
               }
             </section>
 
-            <erp-task-management-issue-attachments [issueUuid]="issue.uuid" [canEdit]="canEdit()" />
+            <erp-task-management-issue-attachments
+              [issueUuid]="issue.uuid"
+              [canEdit]="canEdit()"
+            />
 
-            <erp-task-management-issue-comments [issueUuid]="issue.uuid" [canWrite]="canEdit()" />
+            <erp-task-management-issue-comments
+              [issueUuid]="issue.uuid"
+              [canWrite]="canEdit()"
+            />
 
             <erp-task-management-issue-history [issueUuid]="issue.uuid" />
           </div>
@@ -163,7 +159,7 @@ import { IssueHistoryComponent } from './content/issue-history.component';
               <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
                 {{ ISSUE_KEYS.detail.sidebar.assignee | erpTranslate }}
               </span>
-              <erp-user-name
+              <erp-task-management-user-name
                 [uuid]="issue.assigneeUuid"
                 [empty]="ISSUE_KEYS.table.unassigned | erpTranslate"
               />
@@ -222,10 +218,7 @@ export class IssueDetailComponent {
    * parametrów — host nie włącza `withComponentInputBinding()`, a włączanie go globalnie dla
    * jednej strony zmieniłoby sposób wiązania parametrów i `data` we wszystkich modułach naraz.
    */
-  public readonly key = toSignal(
-    this._route.paramMap.pipe(map((params) => params.get('key') ?? '')),
-    { initialValue: '' },
-  );
+  public readonly key = toSignal(this._route.paramMap.pipe(map((params) => params.get('key') ?? '')), { initialValue: '' });
 
   private readonly _uuid = signal<string | null>(null);
 
@@ -306,13 +299,9 @@ export class IssueDetailComponent {
 
   protected readonly descriptionControl = new FormControl<string>('');
 
-  protected readonly canEdit = computed(() =>
-    this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate),
-  );
+  protected readonly canEdit = computed(() => this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate));
 
-  protected readonly descriptionPreviewConfig = computed<ErpRichTextConfig>(() =>
-    ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(this.issue()?.description ?? '')),
-  );
+  protected readonly descriptionPreviewConfig = computed<ErpRichTextConfig>(() => ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(this.issue()?.description ?? '')));
 
   protected readonly descriptionEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
     b.setToolset('standard').setMinHeight(220).setPlaceholder(ISSUE_KEYS.detail.description.placeholder),

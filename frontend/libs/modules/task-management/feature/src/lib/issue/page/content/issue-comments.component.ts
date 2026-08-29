@@ -1,35 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-  untracked,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
-import {
-  ErpButtonComponent,
-  ErpButtonConfig,
-  ErpConfirmDialogService,
-  ErpRichTextBuilder,
-  ErpRichTextComponent,
-  ErpRichTextConfig,
-  ErpToastService,
-  ErpTranslatePipe,
-  ErpUserNameComponent,
-} from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonConfig, ErpConfirmDialogService, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpToastService, ErpTranslatePipe } from '@erp/shared/ui';
 import { ErpAuthService } from '@erp/shared/auth';
-import {
-  IssueCommentDto,
-  IssueCommentService,
-  TaskManagementIssueOrchestrator,
-} from '@erp/task-management/data-access';
+import { IssueCommentDto, IssueCommentService, TaskManagementIssueOrchestrator } from '@erp/task-management/data-access';
 
 import { ISSUE_KEYS } from '../../translation';
+import { TaskManagementUserNameComponent } from '../../../user/task-management-user-name.component';
 
 /** Wątek złożony z komentarza głównego i jego odpowiedzi — poziom jest dokładnie jeden. */
 interface IssueCommentThread {
@@ -52,14 +30,7 @@ interface IssueCommentThread {
 @Component({
   selector: 'erp-task-management-issue-comments',
   standalone: true,
-  imports: [
-    DatePipe,
-    NgTemplateOutlet,
-    ErpButtonComponent,
-    ErpRichTextComponent,
-    ErpTranslatePipe,
-    ErpUserNameComponent,
-  ],
+  imports: [DatePipe, NgTemplateOutlet, ErpButtonComponent, ErpRichTextComponent, ErpTranslatePipe, TaskManagementUserNameComponent],
   template: `
     <section class="flex flex-col gap-3">
       <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
@@ -85,7 +56,10 @@ interface IssueCommentThread {
           @if (canWrite() && !thread.root.isRemoved) {
             @if (replyingTo() === thread.root.uuid) {
               <div class="ml-6 flex flex-col gap-2">
-                <erp-rich-text [config]="replyEditorConfig" [control]="replyControl" />
+                <erp-rich-text
+                  [config]="replyEditorConfig"
+                  [control]="replyControl"
+                />
                 <div class="flex gap-2">
                   <erp-button [config]="submitReplyButton" />
                   <erp-button [config]="cancelReplyButton" />
@@ -102,7 +76,10 @@ interface IssueCommentThread {
 
       @if (canWrite()) {
         <div class="flex flex-col gap-2">
-          <erp-rich-text [config]="composerConfig" [control]="composerControl" />
+          <erp-rich-text
+            [config]="composerConfig"
+            [control]="composerControl"
+          />
           <div>
             <erp-button [config]="submitButton" />
           </div>
@@ -110,10 +87,16 @@ interface IssueCommentThread {
       }
     </section>
 
-    <ng-template #commentTpl let-comment>
+    <ng-template
+      #commentTpl
+      let-comment
+    >
       <div class="flex flex-col gap-1">
         <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--tui-text-secondary)]">
-          <erp-user-name class="font-medium" [uuid]="comment.authorUuid" />
+          <erp-task-management-user-name
+            class="font-medium"
+            [uuid]="comment.authorUuid"
+          />
           <span>{{ comment.createdAt | date: 'short' }}</span>
           @if (comment.editedAt) {
             <span>({{ ISSUE_KEYS.detail.comments.edited | erpTranslate }})</span>
@@ -125,7 +108,10 @@ interface IssueCommentThread {
             {{ ISSUE_KEYS.detail.comments.removed | erpTranslate }}
           </p>
         } @else if (editing() === comment.uuid) {
-          <erp-rich-text [config]="editEditorConfig" [control]="editControl" />
+          <erp-rich-text
+            [config]="editEditorConfig"
+            [control]="editControl"
+          />
           <div class="flex gap-2">
             <erp-button [config]="submitEditButton" />
             <erp-button [config]="cancelEditButton" />
@@ -187,22 +173,14 @@ export class IssueCommentsComponent {
       }
     }
 
-    return list
-      .filter((comment) => !comment.parentUuid)
-      .map((root) => ({ root, replies: replies.get(root.uuid) ?? [] }));
+    return list.filter((comment) => !comment.parentUuid).map((root) => ({ root, replies: replies.get(root.uuid) ?? [] }));
   });
 
-  protected readonly composerConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
-    b.setToolset('basic').setMinHeight(120).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder),
-  );
+  protected readonly composerConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setToolset('basic').setMinHeight(120).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder));
 
-  protected readonly replyEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
-    b.setToolset('basic').setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.replyPlaceholder),
-  );
+  protected readonly replyEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setToolset('basic').setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.replyPlaceholder));
 
-  protected readonly editEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
-    b.setToolset('basic').setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder),
-  );
+  protected readonly editEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setToolset('basic').setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder));
 
   protected readonly submitButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.comments.submit,

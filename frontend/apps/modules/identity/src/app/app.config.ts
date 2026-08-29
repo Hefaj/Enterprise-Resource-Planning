@@ -2,6 +2,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter } from '@angular/router';
 import { remoteRoutes, remoteModalIds, registerModals, getModalProviders } from '@erp/identity/contract';
 import { API_BASE_URL } from '@erp/identity/data-access';
+import { provideErpUserDirectory } from '@erp/shared/data-access';
 import { provideRemoteDevSupport } from '@erp/shared/ui';
 
 export const appConfig: ApplicationConfig = {
@@ -15,5 +16,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(remoteRoutes),
     { provide: API_BASE_URL, useValue: 'http://localhost:5280' },
+    ...provideErpUserDirectory('http://localhost:5280'),
   ],
 };

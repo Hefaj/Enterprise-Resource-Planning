@@ -1,19 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
-import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig, erpUserPickerField } from '@erp/shared/ui';
+import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig } from '@erp/shared/ui';
 import { ERP_USER_DIRECTORY } from '@erp/shared/util';
-import {
-  ProjectFieldDto,
-  ProjectVM,
-  SearchIssueRequest,
-  TaskManagementProjectOrchestrator,
-} from '@erp/task-management/data-access';
+import { ProjectFieldDto, ProjectVM, SearchIssueRequest, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE, ISSUE_SCOPE, ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { IssueStore } from '../issue.store';
 import { ISSUE_KEYS } from '../../translation';
+import { configureTaskManagementUserPicker } from '../../../user/task-management-user-picker';
 
 /** Pozycja listy wyboru w filtrze — etykieta jest już przetłumaczona, bo `erp-input-picker`
  * pokazuje wartość pola, nie klucz. */
@@ -93,50 +89,40 @@ export class IssueFilterComponent implements OnInit {
     const fields = this._store.filterableFields();
 
     const config = ErpFilterBuilder.create((b) => {
-      b
-      .setFilterKey('taskmgmt-issue-list')
-      .setInitialValues(this._initialValues)
-      .setOnSearch((val) => this.onSearch(val))
-      .setLoading(this._store.loading)
-      .addFormField('text', 'text', (f) =>
-        f.setLabel(ISSUE_KEYS.filters.text.label).setPlaceholder(ISSUE_KEYS.filters.text.placeholder),
-      )
-      .addFormField('scope', 'inputPicker', (f) =>
-        f
-          .setLabel(ISSUE_KEYS.filters.scope.label)
-          .setItems(this._scopeOptions)
-          .setLabelKey('label')
-          .setValueKey('value')
-          .setStrategy('single'),
-      )
-      .addFormField('projectUuid', 'inputPicker', (f) =>
-        f
-          .setLabel(ISSUE_KEYS.filters.project.label)
-          .setSearchPlaceholder(ISSUE_KEYS.filters.project.placeholder)
-          .setItems(this._projectOptions)
-          .setLabelKey('label')
-          .setValueKey('value')
-          .setStrategy('single'),
-      )
-      .addFormField('stateUuid', 'inputPicker', (f) =>
-        f
-          .setLabel(ISSUE_KEYS.filters.state.label)
-          .setSearchPlaceholder(ISSUE_KEYS.filters.state.placeholder)
-          .setItems(this._stateOptions)
-          .setLabelKey('label')
-          .setValueKey('value')
-          .setStrategy('single'),
-      )
-      .addFormField('treeMode', 'checkbox', (f) => f.setLabel(ISSUE_KEYS.filters.treeMode.label))
-      .addFormField('priority', 'inputPicker', (f) =>
-        f
-          .setLabel(ISSUE_KEYS.filters.priority.label)
-          .setSearchPlaceholder(ISSUE_KEYS.filters.priority.placeholder)
-          .setItems(this._priorityOptions)
-          .setLabelKey('label')
-          .setValueKey('value')
-          .setStrategy('single'),
-      );
+      b.setFilterKey('taskmgmt-issue-list')
+        .setInitialValues(this._initialValues)
+        .setOnSearch((val) => this.onSearch(val))
+        .setLoading(this._store.loading)
+        .addFormField('text', 'text', (f) => f.setLabel(ISSUE_KEYS.filters.text.label).setPlaceholder(ISSUE_KEYS.filters.text.placeholder))
+        .addFormField('scope', 'inputPicker', (f) => f.setLabel(ISSUE_KEYS.filters.scope.label).setItems(this._scopeOptions).setLabelKey('label').setValueKey('value').setStrategy('single'))
+        .addFormField('projectUuid', 'inputPicker', (f) =>
+          f
+            .setLabel(ISSUE_KEYS.filters.project.label)
+            .setSearchPlaceholder(ISSUE_KEYS.filters.project.placeholder)
+            .setItems(this._projectOptions)
+            .setLabelKey('label')
+            .setValueKey('value')
+            .setStrategy('single'),
+        )
+        .addFormField('stateUuid', 'inputPicker', (f) =>
+          f
+            .setLabel(ISSUE_KEYS.filters.state.label)
+            .setSearchPlaceholder(ISSUE_KEYS.filters.state.placeholder)
+            .setItems(this._stateOptions)
+            .setLabelKey('label')
+            .setValueKey('value')
+            .setStrategy('single'),
+        )
+        .addFormField('treeMode', 'checkbox', (f) => f.setLabel(ISSUE_KEYS.filters.treeMode.label))
+        .addFormField('priority', 'inputPicker', (f) =>
+          f
+            .setLabel(ISSUE_KEYS.filters.priority.label)
+            .setSearchPlaceholder(ISSUE_KEYS.filters.priority.placeholder)
+            .setItems(this._priorityOptions)
+            .setLabelKey('label')
+            .setValueKey('value')
+            .setStrategy('single'),
+        );
 
       // Tryb drzewa jest FILTREM, nie przełącznikiem widoku: zmienia to, co serwer zwraca
       // (stronicowanie po korzeniach + poddrzewa), więc jego miejsce jest tam, gdzie reszta
@@ -193,7 +179,7 @@ export class IssueFilterComponent implements OnInit {
    * i nie ma tu zakresów — te wejdą razem z zapisanymi widokami (faza 7). */
   private _addCustomFieldFilter(builder: ErpFilterBuilder, field: ProjectFieldDto): void {
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.User) {
-      builder.addFormField(field.code, 'inputPicker', erpUserPickerField(this._directory, { label: field.nameKey }));
+      builder.addFormField(field.code, 'inputPicker', configureTaskManagementUserPicker(this._directory, { label: field.nameKey }));
       return;
     }
 

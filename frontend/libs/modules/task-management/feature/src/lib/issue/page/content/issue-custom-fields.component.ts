@@ -11,18 +11,13 @@ import {
   ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpTranslatePipe,
-  ErpUserPickerComponent,
 } from '@erp/shared/ui';
-import {
-  IssueVM,
-  ProjectFieldDto,
-  ProjectFieldProfileService,
-  IssueSetCustomFieldsCommand,
-  TaskManagementIssueOrchestrator,
-} from '@erp/task-management/data-access';
+import { ERP_USER_DIRECTORY } from '@erp/shared/util';
+import { IssueVM, ProjectFieldDto, ProjectFieldProfileService, IssueSetCustomFieldsCommand, TaskManagementIssueOrchestrator } from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE } from '@erp/task-management/util';
 
 import { ISSUE_KEYS } from '../../translation';
+import { taskManagementUserPickerConfig } from '../../../user/task-management-user-picker';
 
 /** Pole profilu razem z kontrolką formularza — model dla widoku. */
 interface CustomFieldControl {
@@ -47,14 +42,7 @@ interface CustomFieldControl {
 @Component({
   selector: 'erp-task-management-issue-custom-fields',
   standalone: true,
-  imports: [
-    ErpButtonComponent,
-    ErpInputComponent,
-    ErpInputPickerComponent,
-    ErpTranslatePipe,
-    ErpUserPickerComponent,
-    ReactiveFormsModule,
-  ],
+  imports: [ErpButtonComponent, ErpInputComponent, ErpInputPickerComponent, ErpTranslatePipe, ReactiveFormsModule],
   template: `
     @if (this.controls().length > 0) {
       <section class="flex flex-col gap-3">
@@ -64,12 +52,16 @@ interface CustomFieldControl {
 
         <div class="flex flex-col gap-3">
           @for (item of this.controls(); track item.field.code) {
-            @if (item.pickerConfig && item.field.dataType === USER_TYPE) {
-              <erp-user-picker [config]="{ label: item.field.nameKey }" [control]="item.control" />
-            } @else if (item.pickerConfig) {
-              <erp-input-picker [config]="item.pickerConfig" [control]="item.control" />
+            @if (item.pickerConfig) {
+              <erp-input-picker
+                [config]="item.pickerConfig"
+                [control]="item.control"
+              />
             } @else if (item.inputConfig) {
-              <erp-input [config]="item.inputConfig" [formControl]="item.control" />
+              <erp-input
+                [config]="item.inputConfig"
+                [formControl]="item.control"
+              />
             }
           }
         </div>
@@ -84,10 +76,9 @@ interface CustomFieldControl {
 })
 export class IssueCustomFieldsComponent {
   protected readonly ISSUE_KEYS = ISSUE_KEYS;
-  protected readonly USER_TYPE = CUSTOM_FIELD_DATA_TYPE.User;
-
   private readonly _fields = inject(ProjectFieldProfileService);
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
+  private readonly _directory = inject(ERP_USER_DIRECTORY, { optional: true });
 
   public readonly issue = input.required<IssueVM>();
 
@@ -128,8 +119,11 @@ export class IssueCustomFieldsComponent {
     const control = new FormControl<string | null>(value);
 
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.User) {
-      // Konfiguracja pickera osoby powstaje w szablonie — komponent sam zna katalog.
-      return { field, control, pickerConfig: {} as ErpInputPickerConfig };
+      return {
+        field,
+        control,
+        pickerConfig: taskManagementUserPickerConfig(this._directory, { label: field.nameKey }),
+      };
     }
 
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.Select) {

@@ -349,11 +349,5 @@
       "warrantyDurationInvalid": "Nieprawidłowy okres gwarancji.",
       "warrantyNameEmpty": "Nazwa gwarancji nie może być pusta."
     }
-  },
-  "userPicker": {
-    "label": "Użytkownik",
-    "placeholder": "Wybierz osobę",
-    "searchPlaceholder": "Szukaj po nazwisku albo e-mailu",
-    "empty": "Nie znaleziono nikogo."
   }
 }

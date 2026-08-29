@@ -1,20 +1,11 @@
 import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 
-import {
-  ErpBatchStepBase,
-  ErpBatchTargetItem,
-  ErpStepContentBuilder,
-  ErpStepContentComponent,
-  ErpStepContentConfig,
-  erpUserPickerField,
-} from '@erp/shared/ui';
+import { ErpBatchStepBase, ErpBatchTargetItem, ErpStepContentBuilder, ErpStepContentComponent, ErpStepContentConfig } from '@erp/shared/ui';
 import { ERP_USER_DIRECTORY } from '@erp/shared/util';
-import {
-  BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest,
-  TaskManagementIssueOrchestrator,
-} from '@erp/task-management/data-access';
+import { BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest, TaskManagementIssueOrchestrator } from '@erp/task-management/data-access';
 
 import { ISSUE_KEYS } from '../../translation';
+import { configureTaskManagementUserPicker } from '../../../user/task-management-user-picker';
 
 /**
  * Krok modalu seryjnego przypisania: podsumowanie celów + wybór osoby ze wspólnego katalogu.
@@ -62,21 +53,16 @@ export class IssueSetAssigneeStepComponent extends ErpBatchStepBase<BatchCommand
               filterModeHintKey: ISSUE_KEYS.commands.setState.filterModeHint,
             }),
         )
-        .addFormField(
-          'assigneeUuid',
-          'inputPicker',
-          erpUserPickerField(directory, { label: ISSUE_KEYS.commands.setAssignee.userLabel }),
-          {
-            value: () => this.command()().templateCommand?.assigneeUuid ?? null,
-            onChange: (value) =>
-              this.command().update((cmd) => ({
-                ...cmd,
-                // `undefined` zamiast `null`: komenda backendu czyta brak wartości jako
-                // zdjęcie przypisania (`IssueSetAssigneeCommand.AssigneeUuid`).
-                templateCommand: { ...cmd.templateCommand, assigneeUuid: value ?? undefined },
-              })),
-          },
-        ),
+        .addFormField('assigneeUuid', 'inputPicker', configureTaskManagementUserPicker(directory, { label: ISSUE_KEYS.commands.setAssignee.userLabel }), {
+          value: () => this.command()().templateCommand?.assigneeUuid ?? null,
+          onChange: (value) =>
+            this.command().update((cmd) => ({
+              ...cmd,
+              // `undefined` zamiast `null`: komenda backendu czyta brak wartości jako
+              // zdjęcie przypisania (`IssueSetAssigneeCommand.AssigneeUuid`).
+              templateCommand: { ...cmd.templateCommand, assigneeUuid: value ?? undefined },
+            })),
+        }),
     );
 
     super(config);

@@ -349,11 +349,5 @@
       "warrantyDurationInvalid": "Invalid warranty duration.",
       "warrantyNameEmpty": "Warranty name cannot be empty."
     }
-  },
-  "userPicker": {
-    "label": "User",
-    "placeholder": "Pick a person",
-    "searchPlaceholder": "Search by name or e-mail",
-    "empty": "Nobody found."
   }
 }

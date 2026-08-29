@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { ErpTranslatePipe, ErpUserNameComponent } from '@erp/shared/ui';
+import { ErpTranslatePipe } from '@erp/shared/ui';
 import { BoardCardVM } from '@erp/task-management/data-access';
 import { ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { BOARD_KEYS } from '../translation';
+import { TaskManagementUserNameComponent } from '../../user/task-management-user-name.component';
 
 /**
  * Karta na tablicy — komponent prezentacyjny. Nie zna orkiestratora, nie wysyła komend
@@ -15,25 +16,30 @@ import { BOARD_KEYS } from '../translation';
 @Component({
   selector: 'erp-board-card',
   standalone: true,
-  imports: [ErpTranslatePipe, ErpUserNameComponent, RouterLink],
+  imports: [ErpTranslatePipe, RouterLink, TaskManagementUserNameComponent],
   template: `
     @let card = this.card();
 
-    <div
-      class="flex flex-col gap-2 rounded-md border border-[var(--tui-border-normal)] bg-[var(--tui-background-base)] p-3"
-    >
+    <div class="flex flex-col gap-2 rounded-md border border-[var(--tui-border-normal)] bg-[var(--tui-background-base)] p-3">
       <div class="flex items-center justify-between gap-2">
         <a
           class="font-mono text-xs text-[var(--tui-text-secondary)] hover:underline"
           [routerLink]="['/task-management/issue', card.key]"
           >{{ card.key }}</a
         >
-        <span class="text-xs" [class]="priorityClass()">{{ priorityKey() | erpTranslate }}</span>
+        <span
+          class="text-xs"
+          [class]="priorityClass()"
+          >{{ priorityKey() | erpTranslate }}</span
+        >
       </div>
 
       <span class="text-sm leading-snug">{{ card.title }}</span>
 
-      <erp-user-name [uuid]="card.assigneeUuid" [empty]="BOARD_KEYS.card.unassigned | erpTranslate" />
+      <erp-task-management-user-name
+        [uuid]="card.assigneeUuid"
+        [empty]="BOARD_KEYS.card.unassigned | erpTranslate"
+      />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,8 +1,8 @@
 # Użytkownicy w module, który nie jest Identity
 
-**Stan: ✅ wdrożone.** Katalog działa, korzysta z niego Task Management (przypisany na liście
-i na karcie, autor komentarza, aktor w historii, modal seryjnego przypisania). DMS wpina się
-w to samo bez własnego kodu.
+**Stan: ✅ katalog wdrożony; 🔄 UI do migracji.** Port, cache i użycie w Task Management
+działają. Domenowe wrappery UI w `shared/ui` są stanem przejściowym — docelowa kompozycja
+poniżej zostawia tam tylko generyczne atomy.
 
 Ten dokument odpowiada na jedno pytanie: **skąd moduł bierze nazwisko, skoro backend oddaje mu
 sam `uuid`, a użytkownicy należą do Identity.**
@@ -33,12 +33,13 @@ Front musi więc zamienić uuid na nazwisko sam. Trzy rzeczy stają temu na drod
 
 ```
 @erp/shared/util          ERP_USER_DIRECTORY  (token + interfejs ErpUserDirectory, ErpUserRef)
-       ▲                                ▲
-       │ type:ui → util                 │ type:data-access → util
-@erp/shared/ui                    @erp/shared/data-access
-  erp-user-name                     UserDirectoryService  (HTTP + cache + sklejanie paczek)
-  erp-user-picker                   provideErpUserDirectory(baseUrl)
-  erpUserPickerField()
+                                       ▲
+                                       │ type:data-access → util
+@erp/shared/data-access           UserDirectoryService  (HTTP + cache + sklejanie paczek)
+                                  provideErpUserDirectory(baseUrl)
+                                       │ token DI
+                                       ▼
+moduł konsumenta / feature         config dla generycznego `erp-input-picker`
 ```
 
 `type:util` jest **jedynym miejscem, które widzą obie strony naraz** — dlatego biblioteka
@@ -46,19 +47,19 @@ Front musi więc zamienić uuid na nazwisko sam. Trzy rzeczy stają temu na drod
 samodzielnie) woła `provideErpUserDirectory('http://localhost:5280')` i dopiero to spina port
 z implementacją.
 
-> **Dlaczego nie po prostu serwis wstrzykiwany wprost w komponencie.** Bo komponent siedzi
-> w `type:ui`. Ta sama droga, którą wcześniej poszedł `IDENTITY_PERMISSIONS_API_BASE_URL`
-> w `@erp/shared/auth` ([`identity-authz.md` §6](../backend/identity-authz.md)).
+`shared/ui` pozostaje generyczne: nie ma w nim domenowego `erp-user-picker` ani wstrzyknięcia `ERP_USER_DIRECTORY`. Smart component w `feature` modułu, który jest właścicielem formularza, wstrzykuje port i przekazuje konfigurację do `erp-input-picker`. Dzięki temu wzorzec da się powtórzyć dla języków bez rozrastania `shared/ui` o komponenty poszczególnych domen.
+
+> **Dlaczego nie po prostu serwis Identity wstrzykiwany wprost.** Moduły nie mogą importować `@erp/identity/data-access`, a `shared/data-access` nie może zależeć od Identity. Port w `shared/util` to publiczny, kierunkowy kontrakt; implementacja HTTP zostaje po stronie wspólnej infrastruktury.
 
 ---
 
 ## 3. Backend: dwa endpointy katalogowe, osobne od administracyjnych
 
-| Endpoint | Zwraca | Bramka |
-|---|---|---|
-| `user/searchUserDirectory` | uuidy pasujące do frazy + `totalCount` | samo uwierzytelnienie |
-| `user/getUserDirectory` | `{uuid, displayName, email, isActive}` | samo uwierzytelnienie |
-| `user/searchUser`, `user/getUser` | to samo **plus nadania ról i uprawnień** | `identity.user.read` |
+| Endpoint                          | Zwraca                                   | Bramka                |
+| --------------------------------- | ---------------------------------------- | --------------------- |
+| `user/searchUserDirectory`        | uuidy pasujące do frazy + `totalCount`   | samo uwierzytelnienie |
+| `user/getUserDirectory`           | `{uuid, displayName, email, isActive}`   | samo uwierzytelnienie |
+| `user/searchUser`, `user/getUser` | to samo **plus nadania ról i uprawnień** | `identity.user.read`  |
 
 **Katalog jest za samym tokenem, bez kodu uprawnienia — to decyzja, nie przeoczenie.** To
 książka telefoniczna firmy: żeby przypisać komuś zgłoszenie albo wskazać akceptującego, trzeba
@@ -69,7 +70,7 @@ i `identity.user.manage`.
 
 **`getUserDirectory` oddaje także konta wyłączone.** Przypisanie sprzed roku i komentarz
 z zeszłego kwartału muszą mieć nazwisko również wtedy, gdy ta osoba nie pracuje już w firmie.
-Filtr aktywności obowiązuje przy *szukaniu nowej* osoby (`searchUserDirectory`), nie przy
+Filtr aktywności obowiązuje przy _szukaniu nowej_ osoby (`searchUserDirectory`), nie przy
 pokazywaniu starego wyboru.
 
 ---
@@ -78,30 +79,37 @@ pokazywaniu starego wyboru.
 
 ### Nazwisko zamiast uuidu
 
-```html
-<erp-user-name [uuid]="issue.assigneeUuid" [empty]="ISSUE_KEYS.table.unassigned | erpTranslate" />
-```
+Smart component `feature` pobiera pozycję z `ERP_USER_DIRECTORY` i renderuje jej
+`displayName` we własnym scope’ie. W tabeli właściwym miejscem jest nadal orkiestrator, który
+rozwiązuje paczkę UUID-ów dla całej strony. Dopóki nazwisko nie dojedzie — i na zawsze, gdy
+katalog tej osoby nie zna — pokazujemy skrócony UUID, nigdy pustkę: puste miejsce znaczyłoby
+„nieprzypisane”, czyli zupełnie inną informację.
 
-`empty` przyjmuje **gotowy tekst**, nie klucz: komponent żyje w `shared/ui` i nie zna scope’u
-tłumaczeń modułu, który go renderuje. Dopóki nazwisko nie dojedzie — i na zawsze, gdy katalog
-tej osoby nie zna — widać skrócony uuid, nigdy pustkę: puste miejsce znaczyłoby „nieprzypisane”,
-czyli zupełnie inną informację.
+Obecny `erp-user-name`, który sam wstrzykuje katalog, jest wrapperem przejściowym do usunięcia
+razem z `erp-user-picker`; nie kopiuj go przy tworzeniu kolejnego katalogu.
 
 ### Wybór osoby w formularzu
 
 ```html
-<erp-user-picker [config]="{ label: KEYS.assignee }" [control]="assigneeControl" />
+<erp-input-picker
+  [config]="assigneePickerConfig()"
+  [control]="assigneeControl"
+/>
 ```
+
+`assigneePickerConfig()` żyje w `feature` danego modułu. Wstrzykuje `ERP_USER_DIRECTORY`, ustawia `valueKey: 'uuid'`, `labelKey: 'displayName'`, obsługuje wyszukiwanie i dociąga wybrane UUID-y. Etykieta pochodzi z tłumaczeń modułu konsumenta. To jest celowy wzorzec docelowy; obecny wrapper `erp-user-picker` należy podczas refaktoru usunąć z `shared/ui`.
 
 ### Wybór osoby w modalu operacji masowej
 
 ```ts
 const directory = inject(ERP_USER_DIRECTORY, { optional: true });
 …
-.addFormField('assigneeUuid', 'inputPicker', erpUserPickerField(directory), { … })
+.addFormField('assigneeUuid', 'inputPicker', configureAssigneePicker(directory), { … })
 ```
 
-Wzorzec referencyjny: `issue-set-assignee` w Task Management.
+`configureAssigneePicker` żyje w `feature` modala, nie w `shared/ui`; ustawia na generycznym
+builderze `erp-input-picker` wyszukiwanie oraz rozwiązywanie UUID-ów przez port. Obecny
+`erpUserPickerField` jest analogicznym wrapperem przejściowym do migracji.
 
 ### Nazwisko w wierszu tabeli — przez orkiestrator, nie przez komórkę
 
@@ -129,12 +137,12 @@ przerysowuje się sam, gdy nazwisko dojedzie) — dokładnie tak samo, jak rozwi
 
 ## 6. Czego tu nie ma
 
-| Kuszące | Dlaczego nie (dziś) |
-|---|---|
+| Kuszące                                                | Dlaczego nie (dziś)                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Replikacja użytkowników do schematu każdego modułu** | Wymaga zdarzenia `UserAccountChanged`, konsumenta i backfillu w każdym module. Kupuje jedną rzecz: sortowanie, filtrowanie i eksport **po nazwisku** po stronie serwera. Do czasu, aż ktoś tego naprawdę zażąda, front sklejający nazwiska wystarcza — a decyzja jest odwracalna, bo kontrakt HTTP się nie zmieni |
-| **Awatary** | Keycloak ich nie trzyma; wejdą razem z magazynem plików dla profilu, nie wcześniej |
-| **Grupy i jednostki organizacyjne** | Identity, pozycja odłożona ([`identity-authz.md` §9](../backend/identity-authz.md)). Do tego czasu „dział” to projekt i jego zespół |
-| **Podpowiadanie @wzmianek w komentarzach** | Ten sam katalog, ale wymaga integracji z edytorem tiptap — osobna pozycja przy powiadomieniach dla ludzi ([`user-notifications.md`](../backend/user-notifications.md)) |
+| **Awatary**                                            | Keycloak ich nie trzyma; wejdą razem z magazynem plików dla profilu, nie wcześniej                                                                                                                                                                                                                                |
+| **Grupy i jednostki organizacyjne**                    | Identity, pozycja odłożona ([`identity-authz.md` §9](../backend/identity-authz.md)). Do tego czasu „dział” to projekt i jego zespół                                                                                                                                                                               |
+| **Podpowiadanie @wzmianek w komentarzach**             | Ten sam katalog, ale wymaga integracji z edytorem tiptap — osobna pozycja przy powiadomieniach dla ludzi ([`user-notifications.md`](../backend/user-notifications.md))                                                                                                                                            |
 
 ---
 
@@ -144,3 +152,4 @@ przerysowuje się sam, gdy nazwisko dojedzie) — dokładnie tak samo, jak rozwi
 - [`architecture.md`](./architecture.md) — scope’y i warstwy, których ten port nie łamie
 - [`orchestrators.md`](./orchestrators.md) — rozwiązywanie zależności wiersza
 - [`atoms.md`](./atoms.md) — wzorzec Single Config Builder, na którym stoi picker
+- [`cross-module-composition.md`](./cross-module-composition.md) — kiedy stosować token, widżet, modal albo generyczny atom oraz jak dodać następny katalog

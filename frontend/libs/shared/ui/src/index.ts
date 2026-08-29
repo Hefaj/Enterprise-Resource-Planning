@@ -53,9 +53,5 @@ export * from './lib/atoms/erp-modal';
 export * from './lib/atoms/erp-step-content';
 export * from './lib/organisms/erp-group-panel';
 
-// Użytkownicy — katalog wspólny dla wszystkich modułów (port `ERP_USER_DIRECTORY`)
-export * from './lib/user';
-
 // Translations
 export * from './lib/translation';
-

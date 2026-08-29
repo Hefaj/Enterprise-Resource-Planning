@@ -4,6 +4,7 @@ using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
 using TaskManagement.Domain.Issues;
+using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Application.Issues;
@@ -37,6 +38,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
 {
     private readonly IIssueRepository _repository;
     private readonly IWorkflowSchemeRepository _schemes;
+    private readonly IProjectRepository _projects;
     private readonly IIssueKeyAllocator _keyAllocator;
     private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
@@ -46,6 +48,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     public IssueCreateCommandHandler(
         IIssueRepository repository,
         IWorkflowSchemeRepository schemes,
+        IProjectRepository projects,
         IIssueKeyAllocator keyAllocator,
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
@@ -54,6 +57,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     {
         _repository = repository;
         _schemes = schemes;
+        _projects = projects;
         _keyAllocator = keyAllocator;
         _activity = activity;
         _executionContext = executionContext;
@@ -66,6 +70,8 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         ArgumentNullException.ThrowIfNull(command);
 
         var scheme = await _schemes.FindByProjectAsync(command.ProjectUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), command.ProjectUuid);
+        var project = await _projects.FindAsync(command.ProjectUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), command.ProjectUuid);
 
         // Numer bierzemy z licznika projektu w TEJ SAMEJ transakcji, co zapis zgłoszenia —
@@ -87,7 +93,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         issue.SetDescription(_sanitizer.Sanitize(command.Description), now);
         issue.SetPriority(command.Priority, now);
         issue.SetAssignee(command.AssigneeUuid, now);
-        issue.SetDueDate(command.DueAt, now);
+        issue.SetDueDate(command.DueAt ?? project.SlaPolicy?.CalculateResolutionDueAt(now), now);
 
         _repository.Add(issue);
 
@@ -284,23 +290,29 @@ public sealed class IssueSetStateCommand : ICommand<Guid>, IAggregateCommand
 public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCommand, Guid>
 {
     private readonly IIssueRepository _repository;
+    private readonly IProjectRepository _projects;
     private readonly IWorkflowSchemeRepository _schemes;
     private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
+    private readonly IRequestDeliveryStateRecalculator _deliveryState;
 
     public IssueSetStateCommandHandler(
         IIssueRepository repository,
+        IProjectRepository projects,
         IWorkflowSchemeRepository schemes,
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
-        IClock clock)
+        IClock clock,
+        IRequestDeliveryStateRecalculator deliveryState)
     {
         _repository = repository;
+        _projects = projects;
         _schemes = schemes;
         _activity = activity;
         _executionContext = executionContext;
         _clock = clock;
+        _deliveryState = deliveryState;
     }
 
     public override async Task<Guid> ExecuteAsync(IssueSetStateCommand command, CancellationToken ct = default)
@@ -312,6 +324,28 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
 
         var scheme = await _schemes.FindByProjectAsync(issue.ProjectUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(WorkflowScheme), issue.ProjectUuid);
+
+        var targetState = scheme.States.FirstOrDefault(state => state.Uuid == command.StateUuid)
+            ?? throw new DomainException(
+                "taskmgmt.transition_unknown_state",
+                $"Stan {command.StateUuid} nie należy do schematu `{scheme.Name}`.");
+
+        // „Zakończone” na zleceniu Intake oznacza odbiór przez człowieka, a nie techniczne
+        // domknięcie pracy. Nie można go wykonać, dopóki wszystkie powiązane realizacje nie
+        // skończą pracy; sama decyzja o odbiorze wciąż jest jawnym przejściem użytkownika.
+        if (issue.StateUuid != command.StateUuid && targetState.Category == WorkflowStateCategory.Done)
+        {
+            var project = await _projects.FindAsync(issue.ProjectUuid, ct).ConfigureAwait(false)
+                ?? throw new AggregateNotFoundException(nameof(Project), issue.ProjectUuid);
+
+            if (project.Kind == ProjectKind.Intake
+                && issue.DerivedDeliveryState != WorkflowStateCategory.Done)
+            {
+                throw new DomainException(
+                    "taskmgmt.request_delivery_incomplete",
+                    "Nie można odebrać zlecenia, dopóki wszystkie jego realizacje nie są zakończone.");
+            }
+        }
 
         var now = _clock.UtcNow;
         var previous = issue.StateUuid;
@@ -332,6 +366,8 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
                 IssueCreateCommandHandler.ActorUuid(_executionContext),
                 _executionContext.CorrelationId,
                 now));
+
+            await _deliveryState.RecalculateForDeliveryAsync(issue.Uuid, now, ct).ConfigureAwait(false);
         }
 
         return issue.Uuid;

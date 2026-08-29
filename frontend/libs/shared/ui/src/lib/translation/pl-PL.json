@@ -70,6 +70,18 @@
     "presetOverwriteWarning": "Profil \"{{name}}\" posiada identyczne filtry. Zapisanie pod nową nazwą nadpisze (zmieni) jego nazwę."
   },
   "navigation": "Nawigacja",
+  "menu": {
+    "requests": "Zlecenia"
+  },
+  "notifications": {
+    "kinds": {
+      "taskmgmt": {
+        "issue": {
+          "sla-overdue": "Zgłoszenie {{issueKey}} przekroczyło termin"
+        }
+      }
+    }
+  },
   "settings": {
     "title": "Ustawienia",
     "theme": {
@@ -236,6 +248,7 @@
       "taskmgmtFieldSchemeAddField": "Dodanie pola do schematu",
       "taskmgmtFieldSchemeRemoveField": "Usunięcie pola ze schematu",
       "taskmgmtProjectSetFieldScheme": "Zmiana schematu pól projektu",
+      "taskmgmtProjectSetSlaPolicy": "Zmiana polityki SLA projektu",
       "taskmgmtIssueSetParent": "Zmiana rodzica zgłoszenia",
       "taskmgmtIssueAddLink": "Dopięcie powiązania",
       "taskmgmtIssueRemoveLink": "Odpięcie powiązania"
@@ -338,6 +351,7 @@
       "taskmgmtProjectNameEmpty": "Nazwa projektu nie może być pusta.",
       "taskmgmtProjectWorkflowSchemeEmpty": "Projekt musi wskazywać schemat stanów.",
       "taskmgmtTransitionNotAllowed": "To przejście nie istnieje w schemacie stanów projektu.",
+      "taskmgmtRequestDeliveryIncomplete": "Nie można odebrać zlecenia, dopóki wszystkie jego realizacje nie są zakończone.",
       "taskmgmtTransitionUnknownState": "Wskazany stan nie należy do schematu projektu.",
       "taskmgmtWorkflowSchemeNameEmpty": "Nazwa schematu stanów nie może być pusta.",
       "taskmgmtWorkflowSchemeWithoutInitialState": "Schemat stanów nie ma stanu początkowego.",

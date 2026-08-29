@@ -80,11 +80,13 @@ public sealed class ProjectQueries : IProjectQueries
                 p.WorkflowSchemeUuid,
                 p.FieldSchemeUuid,
                 p.IsPublic,
+                p.SlaPolicy == null
+                    ? null
+                    : new ProjectSlaPolicyDto(p.SlaPolicy.ResponseMinutes, p.SlaPolicy.ResolutionMinutes),
                 // Licznik otwartych zgłoszeń liczy się po KATEGORII stanu, nie po jego nazwie —
                 // projekt może mieć stan „Czeka na sprzęt”, który nadal jest pracą w toku.
                 _dbContext.Issues.Count(i => i.ProjectUuid == p.Uuid
-                    && _dbContext.WorkflowStates.Any(s =>
-                        s.Uuid == i.StateUuid && s.Category != WorkflowStateCategory.Done)),
+                    && i.StateCategory != WorkflowStateCategory.Done),
                 p.Members
                     .Select(m => new ProjectMemberDto(m.UserUuid, m.Role))
                     .ToList()))

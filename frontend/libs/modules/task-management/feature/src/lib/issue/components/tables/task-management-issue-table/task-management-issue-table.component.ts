@@ -30,7 +30,7 @@ import {
   SortOption,
   TaskManagementIssueOrchestrator,
 } from '@erp/task-management/data-access';
-import { CUSTOM_FIELD_DATA_TYPE, ISSUE_PRIORITY } from '@erp/task-management/util';
+import { CUSTOM_FIELD_DATA_TYPE, ISSUE_PRIORITY, PROJECT_KIND, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS } from '../../../translation';
@@ -180,6 +180,7 @@ export class TaskManagementIssueTableComponent {
       .addColumn((c) =>
         c.setId('dueAt').setAccessorKey('dueAt').setHeader(ISSUE_KEYS.table.columns.dueAt).setSize(140).setGrow(0),
       )
+
       .addColumn((c) =>
         c
           .setId('updatedAt')
@@ -209,6 +210,18 @@ export class TaskManagementIssueTableComponent {
           void this._fetchData(this.filters(), state);
         }
       });
+
+    if (this.filters().projectKind === PROJECT_KIND.Intake) {
+      builder.addColumn((column) =>
+        column
+          .setId('derivedDeliveryState')
+          .setAccessorFn((row) => this._deliveryStateLabel(row))
+          .setHeader(ISSUE_KEYS.table.columns.deliveryState)
+          .setEnableSorting(false)
+          .setSize(160)
+          .setGrow(0),
+      );
+    }
 
     // Kolumny projekto-specyficzne dokładamy po wspólnych — pętlą, a nie w łańcuchu, bo ich
     // liczba i kształt są daną z profilu, nie stałą w komponencie (`task-management.md` §6).
@@ -325,6 +338,19 @@ export class TaskManagementIssueTableComponent {
         return this._transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest);
       default:
         return this._transloco.translate(TASKMANAGEMENT_KEYS.priority.normal);
+    }
+  }
+
+  private _deliveryStateLabel(row: IssueVM): string {
+    switch (row.derivedDeliveryState) {
+      case WORKFLOW_STATE_CATEGORY.Todo:
+        return this._transloco.translate(TASKMANAGEMENT_KEYS.workflow.categories.todo);
+      case WORKFLOW_STATE_CATEGORY.InProgress:
+        return this._transloco.translate(TASKMANAGEMENT_KEYS.workflow.categories.inProgress);
+      case WORKFLOW_STATE_CATEGORY.Done:
+        return this._transloco.translate(TASKMANAGEMENT_KEYS.workflow.categories.done);
+      default:
+        return this._transloco.translate(ISSUE_KEYS.table.noDelivery);
     }
   }
 

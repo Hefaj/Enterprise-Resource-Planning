@@ -9,12 +9,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TuiIcon, TuiExpand } from '@taiga-ui/core';
 import { ErpNavigationMenuConfig, ErpNavigationItem } from './erp-navigation-menu.types';
-import { unwrapSignal } from '@erp/shared/ui';
+import { ErpTranslatePipe, unwrapSignal } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-navigation-menu',
   standalone: true,
-  imports: [CommonModule, TuiIcon, TuiExpand],
+  imports: [CommonModule, TuiIcon, TuiExpand, ErpTranslatePipe],
   styles: [`
     :host {
       display: block;
@@ -145,7 +145,7 @@ import { unwrapSignal } from '@erp/shared/ui';
         }
 
         <span class="nav-label">
-          {{ node.label }}
+          {{ (node.label | erpTranslate) || '' }}
         </span>
 
         @if (hasChildren) {

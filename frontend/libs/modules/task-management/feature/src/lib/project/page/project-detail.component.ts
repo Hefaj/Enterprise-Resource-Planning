@@ -8,6 +8,7 @@ import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-manageme
 import { PROJECT_KIND } from '@erp/task-management/util';
 
 import { ProjectFieldsComponent } from './content/project-fields.component';
+import { ProjectSlaComponent } from './content/project-sla.component';
 import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 
 /**
@@ -22,7 +23,7 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 @Component({
   selector: 'erp-task-management-project-detail',
   standalone: true,
-  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe, ProjectFieldsComponent],
+  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe, ProjectFieldsComponent, ProjectSlaComponent],
   providers: [provideProjectTranslations()],
   template: `
     @let project = this.project();
@@ -43,6 +44,7 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
         </div>
 
         <erp-task-management-project-fields [project]="project" />
+        <erp-task-management-project-sla [project]="project" />
       </div>
     }
   `,

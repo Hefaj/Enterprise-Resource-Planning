@@ -31,6 +31,14 @@
     "loading": "Loading the project…",
     "notFound": "Project not found, or you have no access to it.",
     "back": "Back",
+    "sla": {
+      "title": "SLA",
+      "hint": "Enter time in minutes. An empty policy can be removed; Saturdays and Sundays do not count toward the resolution due date.",
+      "responseMinutes": "Response time (min)",
+      "resolutionMinutes": "Resolution time (min)",
+      "save": "Save SLA",
+      "clear": "Remove SLA"
+    },
     "fields": {
       "title": "Custom fields",
       "scheme": {

@@ -49,7 +49,7 @@ public sealed class ProjectCreateCommandHandler : CommandHandler<ProjectCreateCo
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var schemeUuid = command.WorkflowSchemeUuid ?? WorkflowSchemeDefaults.SystemSchemeUuid;
+        var schemeUuid = command.WorkflowSchemeUuid ?? WorkflowSchemeDefaults.DefaultSchemeUuid(command.Kind);
 
         var scheme = await _schemes.FindAsync(schemeUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Domain.Workflow.WorkflowScheme), schemeUuid);
@@ -90,6 +90,41 @@ public sealed class ProjectSetNameCommandHandler : CommandHandler<ProjectSetName
             ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
 
         project.SetName(command.Name);
+
+        return project.Uuid;
+    }
+}
+
+/// <summary>Ustawia politykę SLA projektu; wartości są w minutach, a <c>null/null</c> usuwa
+/// politykę, gdy projekt przestaje podlegać SLA.</summary>
+public sealed class ProjectSetSlaPolicyCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+    public int? ResponseMinutes { get; set; }
+    public int? ResolutionMinutes { get; set; }
+}
+
+public sealed class ProjectSetSlaPolicyCommandHandler : CommandHandler<ProjectSetSlaPolicyCommand, Guid>
+{
+    private readonly IProjectRepository _repository;
+
+    public ProjectSetSlaPolicyCommandHandler(IProjectRepository repository) => _repository = repository;
+
+    public override async Task<Guid> ExecuteAsync(ProjectSetSlaPolicyCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
+
+        if (command.ResponseMinutes is null && command.ResolutionMinutes is null)
+        {
+            project.ClearSlaPolicy();
+        }
+        else
+        {
+            project.SetSlaPolicy(command.ResponseMinutes, command.ResolutionMinutes);
+        }
 
         return project.Uuid;
     }

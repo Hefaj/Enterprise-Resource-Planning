@@ -3,7 +3,10 @@
     "states": {
       "todo": "Do zrobienia",
       "inProgress": "W toku",
-      "done": "Zrobione"
+      "done": "Zrobione",
+      "submitted": "Zgłoszone",
+      "inDelivery": "W realizacji",
+      "accepted": "Odebrane"
     },
     "transitions": {
       "start": "Rozpocznij pracę",
@@ -11,7 +14,11 @@
       "finish": "Zakończ",
       "reopen": "Wznów pracę",
       "close": "Zamknij bez pracy",
-      "reopenToTodo": "Otwórz ponownie"
+      "reopenToTodo": "Otwórz ponownie",
+      "startDelivery": "Przekaż do realizacji",
+      "returnToSubmitted": "Cofnij do zgłoszonych",
+      "accept": "Odbierz zlecenie",
+      "reopenAcceptance": "Cofnij odbiór"
     },
     "categories": {
       "todo": "Do zrobienia",
@@ -34,6 +41,9 @@
     "viewer": "Obserwator",
     "contributor": "Uczestnik",
     "lead": "Prowadzący"
+  },
+  "navigation": {
+    "requests": "Zlecenia"
   },
   "fields": {
     "storyPoints": "Punkty",

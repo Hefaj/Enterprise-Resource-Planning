@@ -64,7 +64,14 @@ public sealed partial class TaskManagementSeeder
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var scheme = await EnsureSystemSchemeAsync(cancellationToken).ConfigureAwait(false);
+        var deliveryScheme = await EnsureSystemSchemeAsync(
+            WorkflowSchemeDefaults.SystemSchemeUuid,
+            WorkflowSchemeDefaults.Build,
+            cancellationToken).ConfigureAwait(false);
+        var intakeScheme = await EnsureSystemSchemeAsync(
+            WorkflowSchemeDefaults.IntakeSchemeUuid,
+            WorkflowSchemeDefaults.BuildIntake,
+            cancellationToken).ConfigureAwait(false);
 
         if (!_options.Enabled)
         {
@@ -85,14 +92,14 @@ public sealed partial class TaskManagementSeeder
         // Schemat pól dostaje TYLKO projekt Delivery. Projekt bez pól własnych jest stanem
         // normalnym i musi być widoczny w danych przykładowych — inaczej pierwszy błąd
         // w obsłudze pustego profilu wyszedłby dopiero u kogoś na produkcji.
-        var dev = CreateProject(DevProjectUuid, "DEV", "Rozwój oprogramowania", ProjectKind.Delivery, scheme);
+        var dev = CreateProject(DevProjectUuid, "DEV", "Rozwój oprogramowania", ProjectKind.Delivery, deliveryScheme);
         dev.SetFieldScheme(fieldScheme.Uuid);
 
-        var mkt = CreateProject(MktProjectUuid, "MKT", "Marketing — zlecenia", ProjectKind.Intake, scheme);
+        var mkt = CreateProject(MktProjectUuid, "MKT", "Marketing — zlecenia", ProjectKind.Intake, intakeScheme);
 
         var created = 0;
-        created += AddIssues(dev, SeedIssues, scheme, reporter, now);
-        created += AddIssues(mkt, SeedRequests, scheme, reporter, now);
+        created += AddIssues(dev, SeedIssues, deliveryScheme, reporter, now);
+        created += AddIssues(mkt, SeedRequests, intakeScheme, reporter, now);
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -104,12 +111,15 @@ public sealed partial class TaskManagementSeeder
     /// katalog uprawnień w Identity. Istniejący zostaje nietknięty: nadpisywanie go przy każdym
     /// starcie kasowałoby zmiany wprowadzone edytorem z fazy 7.
     /// </summary>
-    private async Task<WorkflowScheme> EnsureSystemSchemeAsync(CancellationToken cancellationToken)
+    private async Task<WorkflowScheme> EnsureSystemSchemeAsync(
+        Guid schemeUuid,
+        Func<WorkflowScheme> create,
+        CancellationToken cancellationToken)
     {
         var existing = await _dbContext.WorkflowSchemes
             .Include(s => s.States)
             .Include(s => s.Transitions)
-            .FirstOrDefaultAsync(s => s.Uuid == WorkflowSchemeDefaults.SystemSchemeUuid, cancellationToken)
+            .FirstOrDefaultAsync(s => s.Uuid == schemeUuid, cancellationToken)
             .ConfigureAwait(false);
 
         if (existing is not null)
@@ -117,7 +127,7 @@ public sealed partial class TaskManagementSeeder
             return existing;
         }
 
-        var scheme = WorkflowSchemeDefaults.Build();
+        var scheme = create();
         _dbContext.WorkflowSchemes.Add(scheme);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

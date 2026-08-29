@@ -6,6 +6,9 @@ namespace TaskManagement.Application.Projects;
 /// <summary>Członek projektu w widoku odczytu.</summary>
 public sealed record ProjectMemberDto(Guid UserUuid, ProjectMemberRole Role);
 
+/// <summary>Konfiguracja SLA pokazywana razem z projektem.</summary>
+public sealed record ProjectSlaPolicyDto(int? ResponseMinutes, int? ResolutionMinutes);
+
 /// <summary>Projekt w widoku odczytu.</summary>
 public sealed record ProjectDto(
     Guid Uuid,
@@ -17,6 +20,7 @@ public sealed record ProjectDto(
     /// stan normalny, nie brak konfiguracji.</summary>
     Guid? FieldSchemeUuid,
     bool IsPublic,
+    ProjectSlaPolicyDto? SlaPolicy,
     int OpenIssueCount,
     IReadOnlyList<ProjectMemberDto> Members);
 

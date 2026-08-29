@@ -32,12 +32,14 @@
   },
   "table": {
     "emptyMessage": "No issues match the criteria.",
+    "noDelivery": "No delivery",
     "columns": {
       "key": "Key",
       "title": "Title",
       "state": "State",
       "priority": "Priority",
       "assignee": "Assignee",
+      "deliveryState": "Delivery",
       "dueAt": "Due",
       "updatedAt": "Updated"
     },
@@ -105,6 +107,7 @@
     },
     "sidebar": {
       "state": "State",
+      "deliveryState": "Delivery progress",
       "transitions": "Move to",
       "noTransitions": "There is nowhere to move from this state.",
       "project": "Project",

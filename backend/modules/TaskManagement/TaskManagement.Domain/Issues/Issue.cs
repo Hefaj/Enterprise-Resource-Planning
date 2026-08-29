@@ -42,6 +42,7 @@ public sealed class Issue : AggregateRoot
         Key = key;
         Title = title;
         StateUuid = stateUuid;
+        StateCategory = WorkflowStateCategory.Todo;
         ReporterUuid = reporterUuid;
         Priority = IssuePriority.Normal;
         CreatedAt = createdAt;
@@ -65,11 +66,26 @@ public sealed class Issue : AggregateRoot
     /// dla którego nie da się tu użyć silnika z tokenami z DMS-u (§5.4).</summary>
     public Guid StateUuid { get; private set; }
 
+    /// <summary>Kategoria bieżącego stanu utrwalona obok identyfikatora stanu. Jest projekcją
+    /// automatu, ale pozwala skanowi SLA przejść po częściowym indeksie bez joina do schematu.</summary>
+    public WorkflowStateCategory StateCategory { get; private set; }
+
+    /// <summary>
+    /// Zagregowany postęp zgłoszeń wykonawczych powiązanych relacją <c>Delivers</c>.
+    /// Wartość ma znaczenie wyłącznie dla zlecenia w projekcie <c>Intake</c>; nie jest jego
+    /// własnym stanem, ponieważ odbiór realizacji pozostaje decyzją człowieka (§9.2).
+    /// </summary>
+    public WorkflowStateCategory? DerivedDeliveryState { get; private set; }
+
     public Guid ReporterUuid { get; private set; }
 
     public Guid? AssigneeUuid { get; private set; }
 
     public DateTimeOffset? DueAt { get; private set; }
+
+    /// <summary>Dzień ostatniego przypomnienia SLA. Zapobiega wielokrotnej eskalacji w tym samym
+    /// dniu, gdy usługa cykliczna uruchomi się ponownie lub pracuje kilka godzin.</summary>
+    public DateOnly? SlaLastNotifiedOn { get; private set; }
 
     /// <summary>Rodzic w hierarchii epik → zadanie → podzadanie. <b>Jeden rodzic</b> — to jest
     /// różnica wobec powiązań (<see cref="IssueLink"/>), które są grafem (§8.1).</summary>
@@ -155,7 +171,13 @@ public sealed class Issue : AggregateRoot
             throw new DomainException("taskmgmt.issue_key_empty", "Zgłoszenie musi mieć klucz czytelny.");
         }
 
-        return new Issue(uuid, projectUuid, key.Trim(), ValidateTitle(title), scheme.InitialState().Uuid, reporterUuid, createdAt);
+        var initialState = scheme.InitialState();
+        var issue = new Issue(uuid, projectUuid, key.Trim(), ValidateTitle(title), initialState.Uuid, reporterUuid, createdAt)
+        {
+            StateCategory = initialState.Category,
+        };
+
+        return issue;
     }
 
     public void SetTitle(string title, DateTimeOffset now)
@@ -188,9 +210,33 @@ public sealed class Issue : AggregateRoot
         Touch(now);
     }
 
+    public bool TryMarkSlaReminder(DateOnly today, DateTimeOffset now)
+    {
+        if (SlaLastNotifiedOn == today)
+        {
+            return false;
+        }
+
+        SlaLastNotifiedOn = today;
+        Touch(now);
+        return true;
+    }
+
     public void SetRestricted(bool isRestricted, DateTimeOffset now)
     {
         IsRestricted = isRestricted;
+        Touch(now);
+    }
+
+    /// <summary>Aktualizuje projekcję postępu realizacji bez zmieniania stanu zlecenia.</summary>
+    public void SetDerivedDeliveryState(WorkflowStateCategory? state, DateTimeOffset now)
+    {
+        if (DerivedDeliveryState == state)
+        {
+            return;
+        }
+
+        DerivedDeliveryState = state;
         Touch(now);
     }
 
@@ -224,6 +270,7 @@ public sealed class Issue : AggregateRoot
         }
 
         StateUuid = toStateUuid;
+        StateCategory = scheme.State(toStateUuid).Category;
         Touch(now);
     }
 

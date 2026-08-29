@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Application.Jobs;
+using Notification.Application.UserNotifications;
 using Notification.Domain.Jobs;
 using Notification.Infrastructure.Persistence;
+using Notification.Infrastructure.Consumers;
 using Notification.Infrastructure.Queries;
 using Notification.Infrastructure.Realtime;
 
@@ -41,6 +43,8 @@ public static class NotificationInfrastructureExtensions
         services.AddErpExclusiveLease<NotificationDbContext>();
 
         services.AddScoped<IJobQueries, JobQueries>();
+        services.AddScoped<IUserNotificationQueries, UserNotificationQueries>();
+        services.Configure<UserNotificationOptions>(configuration.GetSection(UserNotificationOptions.SectionName));
 
         // Trwały licznik sekwencji realtime — czytany przez hub przy Subscribe, zwiększany przez
         // przekaźnik. Po rozdzieleniu ról te dwie strony mogą chodzić w różnych procesach, więc

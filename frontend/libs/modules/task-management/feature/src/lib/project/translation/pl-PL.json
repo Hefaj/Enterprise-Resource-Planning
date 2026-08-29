@@ -31,6 +31,14 @@
     "loading": "Wczytuję projekt…",
     "notFound": "Nie znaleziono projektu albo nie masz do niego dostępu.",
     "back": "Wróć",
+    "sla": {
+      "title": "SLA",
+      "hint": "Podaj czas w minutach. Pustą politykę można usunąć; soboty i niedziele nie są liczone do terminu realizacji.",
+      "responseMinutes": "Czas reakcji (min)",
+      "resolutionMinutes": "Czas realizacji (min)",
+      "save": "Zapisz SLA",
+      "clear": "Usuń SLA"
+    },
     "fields": {
       "title": "Pola niestandardowe",
       "scheme": {

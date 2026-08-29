@@ -8,6 +8,7 @@ import {
   GetProjectRequest,
   ProjectDto,
   ProjectSetFieldSchemeCommand,
+  ProjectSetSlaPolicyCommand,
   SearchProjectRequest,
   SearchResponse,
   TaskManagementClient,
@@ -63,6 +64,14 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
   public setFieldSchemeAsync(command: ProjectSetFieldSchemeCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetFieldSchemeMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectFieldScheme,
+      queueId,
+    });
+  }
+
+  /** Ustawia terminy SLA projektu; puste obie wartości usuwają politykę. */
+  public setSlaPolicyAsync(command: ProjectSetSlaPolicyCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetSlaPolicyMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectSlaPolicy,
       queueId,
     });
   }

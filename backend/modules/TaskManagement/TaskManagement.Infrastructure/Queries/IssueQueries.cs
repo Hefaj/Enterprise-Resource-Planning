@@ -7,6 +7,7 @@ using TaskManagement.Application.FieldSchemes;
 using TaskManagement.Application.Issues;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
+using TaskManagement.Domain.Projects;
 using TaskManagement.Infrastructure.Persistence;
 
 namespace TaskManagement.Infrastructure.Queries;
@@ -159,6 +160,11 @@ public sealed class IssueQueries : IIssueQueries
             query = query.Where(i => i.ProjectUuid == projectUuid);
         }
 
+        if (request.ProjectKind is { } projectKind)
+        {
+            query = query.Where(i => _dbContext.Projects.Any(p => p.Uuid == i.ProjectUuid && p.Kind == projectKind));
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Text))
         {
             var text = request.Text.Trim();
@@ -177,8 +183,7 @@ public sealed class IssueQueries : IIssueQueries
 
         if (request.StateCategory is { } category)
         {
-            query = query.Where(i => _dbContext.WorkflowStates
-                .Any(s => s.Uuid == i.StateUuid && s.Category == category));
+            query = query.Where(i => i.StateCategory == category);
         }
 
         if (request.Priority is { } priority)
@@ -210,6 +215,7 @@ public sealed class IssueQueries : IIssueQueries
                state.Code,
                state.NameKey,
                state.Category,
+               issue.DerivedDeliveryState,
                issue.ReporterUuid,
                issue.AssigneeUuid,
                issue.DueAt,

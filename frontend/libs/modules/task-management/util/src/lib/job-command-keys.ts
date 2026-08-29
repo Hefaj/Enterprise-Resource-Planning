@@ -27,5 +27,6 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   addSchemeField: 'shared.jobs.commands.taskmgmtFieldSchemeAddField',
   removeSchemeField: 'shared.jobs.commands.taskmgmtFieldSchemeRemoveField',
   setProjectFieldScheme: 'shared.jobs.commands.taskmgmtProjectSetFieldScheme',
+  setProjectSlaPolicy: 'shared.jobs.commands.taskmgmtProjectSetSlaPolicy',
   setBoardCardPosition: 'shared.jobs.commands.taskmgmtBoardSetCardPosition',
 } as const;

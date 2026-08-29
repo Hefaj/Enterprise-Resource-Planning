@@ -1,5 +1,6 @@
 export * from './lib/project/page/project.component';
 export * from './lib/project/page/project-detail.component';
+export * from './lib/request/page/request.component';
 export * from './lib/project/translation';
 export * from './lib/board/page/board.component';
 export * from './lib/board/translation';

@@ -1,6 +1,9 @@
 # Powiadomienia użytkownika — skrzynka międzymodułowa
 
-**Stan: 📐 projekt, brak kodu.** Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
+**Stan: 🟡 faza 1 wdrożona w backendzie.** `UserNotificationRequested` jest utrwalany jako
+`UserNotification`, ma idempotentny fan-out, prywatny feed i kanał SignalR `notifications`.
+Zakładka dzwonka oraz preferencje kanałów pozostają w kolejce. Legenda znaczników —
+[`architecture.md`](./architecture.md#1-stan-wdrożenia).
 Dziś dzwonek w nagłówku karmi się **wyłącznie** zadaniami masowymi (`NotificationJob` — replika
 `job`, kanał `jobs`). Ten dokument opisuje **drugi agregat** w istniejącym mikroserwisie
 `Notification`: powiadomienie adresowane do człowieka, pochodzące z dowolnego modułu.

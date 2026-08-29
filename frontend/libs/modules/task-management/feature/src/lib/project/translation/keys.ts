@@ -36,6 +36,14 @@ export const PROJECT_KEYS = {
       loading: 'project.detail.loading',
       notFound: 'project.detail.notFound',
       back: 'project.detail.back',
+      sla: {
+        title: 'project.detail.sla.title',
+        hint: 'project.detail.sla.hint',
+        responseMinutes: 'project.detail.sla.responseMinutes',
+        resolutionMinutes: 'project.detail.sla.resolutionMinutes',
+        save: 'project.detail.sla.save',
+        clear: 'project.detail.sla.clear',
+      },
       fields: {
         title: 'project.detail.fields.title',
         scheme: {

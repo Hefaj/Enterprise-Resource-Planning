@@ -4,6 +4,7 @@ using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
 using TaskManagement.Domain.Issues;
+using TaskManagement.Domain.Projects;
 
 namespace TaskManagement.Application.Issues;
 
@@ -111,6 +112,8 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
     private readonly IIssueRepository _issues;
     private readonly IIssueLinkRepository _links;
     private readonly IIssueGraphQueries _graph;
+    private readonly IProjectRepository _projects;
+    private readonly IRequestDeliveryStateRecalculator _deliveryState;
     private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
@@ -119,6 +122,8 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
         IIssueRepository issues,
         IIssueLinkRepository links,
         IIssueGraphQueries graph,
+        IProjectRepository projects,
+        IRequestDeliveryStateRecalculator deliveryState,
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
         IClock clock)
@@ -126,6 +131,8 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
         _issues = issues;
         _links = links;
         _graph = graph;
+        _projects = projects;
+        _deliveryState = deliveryState;
         _activity = activity;
         _executionContext = executionContext;
         _clock = clock;
@@ -141,8 +148,23 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
         // Cel musi istnieć, ale NIE musi być w tym samym projekcie: blokada między działami
         // jest dokładnie tym, po co ten graf istnieje. Widoczność rozstrzyga się przy odczycie
         // („wgląd z powiązania" to nagłówek, §10.1), nie przy zapisie.
-        _ = await _issues.FindAsync(command.TargetUuid, ct).ConfigureAwait(false)
+        var target = await _issues.FindAsync(command.TargetUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Issue), command.TargetUuid);
+
+        if (command.Type == IssueLinkType.Delivers)
+        {
+            var sourceProject = await _projects.FindAsync(source.ProjectUuid, ct).ConfigureAwait(false)
+                ?? throw new AggregateNotFoundException(nameof(Project), source.ProjectUuid);
+            var targetProject = await _projects.FindAsync(target.ProjectUuid, ct).ConfigureAwait(false)
+                ?? throw new AggregateNotFoundException(nameof(Project), target.ProjectUuid);
+
+            if (sourceProject.Kind != ProjectKind.Delivery || targetProject.Kind != ProjectKind.Intake)
+            {
+                throw new DomainException(
+                    "taskmgmt.delivery_link_project_kind",
+                    "Relacja „realizuje” musi prowadzić ze zgłoszenia wykonawczego do zlecenia Intake.");
+            }
+        }
 
         if (command.Type == IssueLinkType.Blocks)
         {
@@ -171,6 +193,11 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
 
         _links.Add(link);
 
+        if (command.Type == IssueLinkType.Delivers)
+        {
+            await _deliveryState.RecalculateRequestAsync(target.Uuid, now, ct).ConfigureAwait(false);
+        }
+
         _activity.Add(IssueActivity.Record(
             source.Uuid,
             IssueActivityKind.FieldChanged,
@@ -198,16 +225,19 @@ public sealed class IssueRemoveLinkCommandHandler : CommandHandler<IssueRemoveLi
 {
     private readonly IIssueLinkRepository _links;
     private readonly IIssueActivityWriter _activity;
+    private readonly IRequestDeliveryStateRecalculator _deliveryState;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
     public IssueRemoveLinkCommandHandler(
         IIssueLinkRepository links,
+        IRequestDeliveryStateRecalculator deliveryState,
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
         IClock clock)
     {
         _links = links;
+        _deliveryState = deliveryState;
         _activity = activity;
         _executionContext = executionContext;
         _clock = clock;
@@ -230,6 +260,11 @@ public sealed class IssueRemoveLinkCommandHandler : CommandHandler<IssueRemoveLi
         }
 
         _links.Remove(link);
+
+        if (link.Type == IssueLinkType.Delivers)
+        {
+            await _deliveryState.RecalculateRequestAsync(link.TargetUuid, _clock.UtcNow, ct).ConfigureAwait(false);
+        }
 
         _activity.Add(IssueActivity.Record(
             command.Uuid,

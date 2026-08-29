@@ -27,6 +27,7 @@ import {
 } from '@erp/task-management/util';
 
 import { IssueStore } from '../issue.store';
+import { ISSUE_LIST_PRESET } from '../issue-list-preset';
 import { IssueSetStateMetadata } from '../../modal/issue-set-state/issue-set-state.definition';
 import { TaskManagementIssueTableComponent } from '../../components/tables/task-management-issue-table/task-management-issue-table.component';
 import { ISSUE_KEYS } from '../../translation';
@@ -60,7 +61,7 @@ import { ISSUE_KEYS } from '../../translation';
 
         <div class="flex-1 min-h-0">
           <erp-task-management-issue-table
-            stateKey="taskmgmt-issue-list"
+            [stateKey]="listStateKey"
             [filters]="store.filters()"
             (loadingChange)="store.setLoading($event)"
             (selectionChange)="store.setSelection($event)"
@@ -81,10 +82,13 @@ export class IssueTabComponent {
   private readonly _permissionStore = inject(PermissionStore);
   private readonly _auth = inject(ErpAuthService);
   private readonly _router = inject(Router);
+  private readonly _preset = inject(ISSUE_LIST_PRESET, { optional: true });
 
   private readonly _table = viewChild(TaskManagementIssueTableComponent);
 
   protected readonly selectionCount = computed(() => erpSelectionScopeCount(this.store.scope()));
+  protected readonly listStateKey = this._preset?.stateKey ?? 'taskmgmt-issue-list';
+  protected readonly listLabel = this._preset?.label ?? ISSUE_KEYS.title;
 
   private readonly _canCreate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueCreate));
   private readonly _canUpdate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate));
@@ -95,7 +99,7 @@ export class IssueTabComponent {
       .addDefaultGroup((g) =>
         g
           .setId('issue-default')
-          .setLabel(ISSUE_KEYS.title)
+          .setLabel(this.listLabel)
           .setIcon('@tui.list-checks')
           .addAction((a) =>
             a
@@ -110,7 +114,7 @@ export class IssueTabComponent {
       .addSelectionGroup((g) =>
         g
           .setId('issue-bulk')
-          .setLabel(ISSUE_KEYS.title)
+          .setLabel(this.listLabel)
           .setIcon('@tui.list-checks')
           .addAction((a) =>
             a
@@ -157,7 +161,7 @@ export class IssueTabComponent {
       )
       .setSelectionCount(this.selectionCount)
       .setSelectionScope(this.store.scopeKind)
-      .setSelectionLabel(ISSUE_KEYS.title)
+      .setSelectionLabel(this.listLabel)
       .setOnClearSelection(() => {
         this.store.clearSelection();
         this._table()?.clearSelection();

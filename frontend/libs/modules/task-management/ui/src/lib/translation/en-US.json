@@ -3,7 +3,10 @@
     "states": {
       "todo": "To do",
       "inProgress": "In progress",
-      "done": "Done"
+      "done": "Done",
+      "submitted": "Submitted",
+      "inDelivery": "In delivery",
+      "accepted": "Accepted"
     },
     "transitions": {
       "start": "Start work",
@@ -11,7 +14,11 @@
       "finish": "Finish",
       "reopen": "Resume work",
       "close": "Close without work",
-      "reopenToTodo": "Reopen"
+      "reopenToTodo": "Reopen",
+      "startDelivery": "Send for delivery",
+      "returnToSubmitted": "Return to submitted",
+      "accept": "Accept request",
+      "reopenAcceptance": "Reopen acceptance"
     },
     "categories": {
       "todo": "To do",
@@ -34,6 +41,9 @@
     "viewer": "Viewer",
     "contributor": "Contributor",
     "lead": "Lead"
+  },
+  "navigation": {
+    "requests": "Requests"
   },
   "fields": {
     "storyPoints": "Story points",

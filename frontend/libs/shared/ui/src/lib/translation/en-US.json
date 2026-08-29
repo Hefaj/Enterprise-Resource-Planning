@@ -70,6 +70,18 @@
     "presetOverwriteWarning": "Preset \"{{name}}\" has identical filters. Saving under a new name will overwrite (rename) it."
   },
   "navigation": "Navigation",
+  "menu": {
+    "requests": "Requests"
+  },
+  "notifications": {
+    "kinds": {
+      "taskmgmt": {
+        "issue": {
+          "sla-overdue": "Issue {{issueKey}} is overdue"
+        }
+      }
+    }
+  },
   "settings": {
     "title": "Settings",
     "theme": {
@@ -236,6 +248,7 @@
       "taskmgmtFieldSchemeAddField": "Adding a field to a scheme",
       "taskmgmtFieldSchemeRemoveField": "Removing a field from a scheme",
       "taskmgmtProjectSetFieldScheme": "Changing a project's field scheme",
+      "taskmgmtProjectSetSlaPolicy": "Changing a project's SLA policy",
       "taskmgmtIssueSetParent": "Changing an issue's parent",
       "taskmgmtIssueAddLink": "Adding a link",
       "taskmgmtIssueRemoveLink": "Removing a link"
@@ -338,6 +351,7 @@
       "taskmgmtProjectNameEmpty": "Project name cannot be empty.",
       "taskmgmtProjectWorkflowSchemeEmpty": "A project must point at a workflow scheme.",
       "taskmgmtTransitionNotAllowed": "This transition does not exist in the project's workflow scheme.",
+      "taskmgmtRequestDeliveryIncomplete": "The request cannot be accepted until all of its deliveries are complete.",
       "taskmgmtTransitionUnknownState": "The requested state does not belong to the project's scheme.",
       "taskmgmtWorkflowSchemeNameEmpty": "Workflow scheme name cannot be empty.",
       "taskmgmtWorkflowSchemeWithoutInitialState": "The workflow scheme has no initial state.",

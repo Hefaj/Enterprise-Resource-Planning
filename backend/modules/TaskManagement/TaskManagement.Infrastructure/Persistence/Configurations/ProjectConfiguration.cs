@@ -33,6 +33,11 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
 
         builder.HasIndex(p => p.Code).IsUnique();
 
+        builder.HasOne(p => p.SlaPolicy)
+            .WithOne()
+            .HasForeignKey<ProjectSlaPolicy>(policy => policy.ProjectUuid)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasMany(p => p.Members)
             .WithOne()
             .HasForeignKey(m => m.ProjectUuid)
@@ -62,6 +67,18 @@ public sealed class ProjectMemberConfiguration : IEntityTypeConfiguration<Projec
         // Predykat widoczności listy zgłoszeń startuje od „w których projektach jestem” —
         // bez tego indeksu każde wyszukiwanie zaczyna się od skanu członkostw.
         builder.HasIndex(m => m.UserUuid);
+    }
+}
+
+/// <summary>Trwała konfiguracja SLA należąca do projektu.</summary>
+public sealed class ProjectSlaPolicyConfiguration : IEntityTypeConfiguration<ProjectSlaPolicy>
+{
+    public void Configure(EntityTypeBuilder<ProjectSlaPolicy> builder)
+    {
+        builder.ToTable("sla_policy");
+        builder.HasKey(policy => policy.ProjectUuid);
+        builder.Property(policy => policy.ResponseMinutes);
+        builder.Property(policy => policy.ResolutionMinutes);
     }
 }
 

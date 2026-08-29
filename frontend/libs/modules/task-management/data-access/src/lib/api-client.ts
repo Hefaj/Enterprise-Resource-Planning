@@ -52,6 +52,8 @@ export interface ITaskManagementClient {
      * @return OK
      */
     projectSetNameMultipleCommand(body: BatchCommandOfProjectSetNameCommandAndSearchProjectRequest): Observable<BatchResult>;
+    /** Ustawia albo usuwa politykę SLA projektu */
+    projectSetSlaPolicyMultipleCommand(body: BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest): Observable<BatchResult>;
     /**
      * @return OK
      */
@@ -739,6 +741,30 @@ export class TaskManagementClient implements ITaskManagementClient {
             }));
         }
         return _observableOf(null as any);
+    }
+
+    /** Ustawia albo usuwa politykę SLA projektu. */
+    projectSetSlaPolicyMultipleCommand(body: BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/project/batch-set-sla-policy";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const options_: any = {
+            body: JSON.stringify(body), observe: "response", responseType: "blob",
+            headers: new HttpHeaders({ "Content-Type": "application/json", "Accept": "application/json" })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_: any) =>
+            this.processProjectSetNameMultipleCommand(response_)
+        )).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProjectSetNameMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            }
+            return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
     }
 
     /**
@@ -3706,6 +3732,17 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
     [key: string]: any;
 }
 
+export interface BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest {
+    commands?: ProjectSetSlaPolicyCommand[] | undefined;
+    templateCommand?: ProjectSetSlaPolicyCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProjectRequest | undefined;
+    queueId?: string | undefined;
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface BatchResult {
     jobUuid?: string;
 
@@ -4056,6 +4093,7 @@ export interface IssueDto {
     stateCode: string;
     stateNameKey: string;
     stateCategory: number;
+    derivedDeliveryState: number | undefined;
     reporterUuid: string;
     assigneeUuid: string | undefined;
     dueAt: Date | undefined;
@@ -4195,8 +4233,16 @@ export interface ProjectDto {
     workflowSchemeUuid: string;
     fieldSchemeUuid: string | undefined;
     isPublic: boolean;
+    slaPolicy: ProjectSlaPolicyDto | undefined;
     openIssueCount: number;
     members: ProjectMemberDto[];
+
+    [key: string]: any;
+}
+
+export interface ProjectSlaPolicyDto {
+    responseMinutes: number | undefined;
+    resolutionMinutes: number | undefined;
 
     [key: string]: any;
 }
@@ -4250,6 +4296,14 @@ export interface ProjectSetNameCommand {
     [key: string]: any;
 }
 
+export interface ProjectSetSlaPolicyCommand {
+    uuid?: string;
+    responseMinutes?: number | undefined;
+    resolutionMinutes?: number | undefined;
+
+    [key: string]: any;
+}
+
 export interface ProjectWorkflowDto {
     projectUuid: string;
     schemeUuid: string;
@@ -4275,6 +4329,7 @@ export interface SearchFieldSchemeRequest {
 export interface SearchIssueRequest {
     scope?: number | undefined;
     projectUuid?: string | undefined;
+    projectKind?: number | undefined;
     text?: string | undefined;
     stateUuid?: string | undefined;
     stateCategory?: number | undefined;

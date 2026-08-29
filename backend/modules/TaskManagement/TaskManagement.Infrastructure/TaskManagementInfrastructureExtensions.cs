@@ -63,6 +63,7 @@ public static class TaskManagementInfrastructureExtensions
 
         // Rebalans rangi kart — rzadki, pod dzierżawą, patrz BoardRankRebalanceService.
         services.AddHostedService<BoardRankRebalanceService>();
+        services.AddHostedService<SlaEscalationService>();
 
         // Sygnatury SignalR — kontrakt z frontendem. Muszą zgadzać się co do znaku
         // z `signalrSignature` orkiestratorów (docs/backend/realtime-signalr.md).

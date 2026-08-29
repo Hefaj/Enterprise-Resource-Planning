@@ -1,6 +1,6 @@
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: ✅ fazy 0–3 wdrożone i zweryfikowane end-to-end; fazy 4–7 📐 projekt.**
+**Stan: ✅ fazy 0–4 wdrożone; faza 5 ✅ ma listę zleceń `Intake`, relację `realizuje`, wyliczany postęp, odbiór oraz politykę SLA ze skanerem eskalacji; fazy 6–7 📐 projekt.**
 Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
@@ -32,7 +32,7 @@ Doszła lista projektów (`/task-management/project`) i karta projektu z **zakł
 wybór schematu, definicje z widocznym mapowaniem na sloty, dodawanie pola z ostrzeżeniem
 o niezmienności slotu i usuwanie — odmawiane, gdy pole ma wartości na zgłoszeniach.
 
-Nie ma jeszcze hierarchii, sprintów ani zleceń — to fazy 4–7.
+Hierarchia i powiązania są wdrożone: `issue.parent_uuid`, `issue_link`, reguły cykli i tryb drzewa listy. Zlecenia mają już osobną listę `Intake`, własny domyślny automat (`zgłoszone → w realizacji → odebrane`) oraz relację `Delivery → Intake` utrzymującą `derived_delivery_state`. Odbiór jest jawnym przejściem z `required_permission`, zablokowanym dopóki wszystkie realizacje nie są `Done`. Projekt może mieć politykę SLA konfigurowaną na karcie, a skaner pod dzierżawą klastra wysyła dzienne eskalacje przeterminowanych, otwartych zgłoszeń. Sprinty pozostają w kolejce fazy 6.
 Obrazków osadzonych w treści opisu też jeszcze nie ma: backend je unosi, front wymaga podmiany
 `src` na `blob:` w obie strony ([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
 
@@ -536,8 +536,8 @@ częściowy sukces.
 | 1 ✅ | `WorkflowScheme` w seedzie, przejścia z regułami, komentarze, `issue_activity` | Automat stanów jako dana |
 | 2 ✅ | `Board` + `board_card` + `rank`, drag&drop, realtime kolejności, rebalans `[ClusterSafe]` | **Uporządkowana kolekcja i współbieżna edycja — główne pytanie modułu** |
 | 3 ✅ | `FieldScheme`, sloty, `getProjectFieldProfile`, kolumny i filtry z profilu | Konfiguracja per projekt |
-| 4 | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
-| 5 | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, odbiór, SLA i eskalacje | Zlecenia przez granicę działu |
+| 4 ✅ | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
+| 5 ✅ | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, lista zleceń, odbiór, polityka SLA na karcie projektu i dzienne eskalacje | Zlecenia przez granicę działu |
 | 6 | Sprinty, backlog, zamknięcie iteracji, operacje masowe na zgłoszeniach | Dojrzałość narzędzia |
 | 7 | Edytor schematu stanów, migracja stanów przy publikacji, zapisane widoki, `work_log` | Konfiguracja z UI, nie z seeda |
 

@@ -98,6 +98,11 @@ public sealed class WorkflowScheme : AggregateRoot
 
     public bool HasState(Guid stateUuid) => _states.Exists(s => s.Uuid == stateUuid);
 
+    /// <summary>Stan schematu po UUID; używany przez agregat Issue do utrzymania trwałej
+    /// kategorii stanu dla indeksów zapytań operacyjnych.</summary>
+    public WorkflowState State(Guid stateUuid)
+        => _states.First(state => state.Uuid == stateUuid);
+
     private static string ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))

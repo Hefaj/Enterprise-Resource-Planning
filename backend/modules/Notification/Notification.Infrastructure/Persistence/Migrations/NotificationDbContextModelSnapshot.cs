@@ -188,6 +188,35 @@ namespace Notification.Infrastructure.Persistence.Migrations
 
                     b.ToTable("signature_sequence", "notification");
                 });
+
+            modelBuilder.Entity("Notification.Domain.UserNotifications.UserNotification", b =>
+                {
+                    b.Property<Guid>("Uuid").ValueGeneratedOnAdd().HasColumnType("uuid").HasColumnName("uuid");
+                    b.Property<Guid>("UserUuid").HasColumnType("uuid").HasColumnName("user_uuid");
+                    b.Property<string>("Kind").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)").HasColumnName("kind");
+                    b.Property<string>("SubjectSignature").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)").HasColumnName("subject_signature");
+                    b.Property<Guid>("SubjectUuid").HasColumnType("uuid").HasColumnName("subject_uuid");
+                    b.Property<string>("SubjectKey").HasMaxLength(64).HasColumnType("character varying(64)").HasColumnName("subject_key");
+                    b.Property<string>("TitleKey").IsRequired().HasMaxLength(256).HasColumnType("character varying(256)").HasColumnName("title_key");
+                    b.Property<string>("ParamsJson").IsRequired().HasColumnType("jsonb").HasColumnName("params");
+                    b.Property<string>("GroupKey").HasMaxLength(256).HasColumnType("character varying(256)").HasColumnName("group_key");
+                    b.Property<Guid>("CorrelationId").HasColumnType("uuid").HasColumnName("correlation_id");
+                    b.Property<string>("Link").IsRequired().HasMaxLength(512).HasColumnType("character varying(512)").HasColumnName("link");
+                    b.Property<int>("Severity").HasColumnType("integer").HasColumnName("severity");
+                    b.Property<int>("OccurrenceCount").HasColumnType("integer").HasColumnName("occurrence_count");
+                    b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone").HasColumnName("created_at");
+                    b.Property<DateTimeOffset>("LastOccurredAt").HasColumnType("timestamp with time zone").HasColumnName("last_occurred_at");
+                    b.Property<DateTimeOffset?>("SeenAt").HasColumnType("timestamp with time zone").HasColumnName("seen_at");
+                    b.Property<DateTimeOffset?>("ReadAt").HasColumnType("timestamp with time zone").HasColumnName("read_at");
+                    b.Property<DateTimeOffset?>("ExpireOn").HasColumnType("timestamp with time zone").HasColumnName("expire_on");
+                    b.Property<uint>("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate().HasColumnType("xid").HasColumnName("xmin");
+                    b.HasKey("Uuid").HasName("pk_user_notification");
+                    b.HasIndex("UserUuid", "CreatedAt").IsDescending(false, true).HasDatabaseName("ix_user_notification_user_uuid_created_at");
+                    b.HasIndex("UserUuid").HasDatabaseName("ix_user_notification_unread").HasFilter("read_at IS NULL");
+                    b.HasIndex("UserUuid", "GroupKey").IsUnique().HasDatabaseName("ix_user_notification_active_group").HasFilter("group_key IS NOT NULL AND read_at IS NULL");
+                    b.HasIndex("UserUuid", "Kind", "SubjectUuid", "CorrelationId").IsUnique().HasDatabaseName("ix_user_notification_ungrouped_dedup").HasFilter("group_key IS NULL");
+                    b.ToTable("user_notification", "notification");
+                });
 #pragma warning restore 612, 618
         }
     }

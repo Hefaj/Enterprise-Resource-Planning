@@ -9,6 +9,9 @@ export const TASKMANAGEMENT_KEYS = {
         todo: 'taskManagement.workflow.states.todo',
         inProgress: 'taskManagement.workflow.states.inProgress',
         done: 'taskManagement.workflow.states.done',
+        submitted: 'taskManagement.workflow.states.submitted',
+        inDelivery: 'taskManagement.workflow.states.inDelivery',
+        accepted: 'taskManagement.workflow.states.accepted',
       },
       transitions: {
         start: 'taskManagement.workflow.transitions.start',
@@ -17,6 +20,10 @@ export const TASKMANAGEMENT_KEYS = {
         reopen: 'taskManagement.workflow.transitions.reopen',
         close: 'taskManagement.workflow.transitions.close',
         reopenToTodo: 'taskManagement.workflow.transitions.reopenToTodo',
+        startDelivery: 'taskManagement.workflow.transitions.startDelivery',
+        returnToSubmitted: 'taskManagement.workflow.transitions.returnToSubmitted',
+        accept: 'taskManagement.workflow.transitions.accept',
+        reopenAcceptance: 'taskManagement.workflow.transitions.reopenAcceptance',
       },
       categories: {
         todo: 'taskManagement.workflow.categories.todo',
@@ -39,6 +46,9 @@ export const TASKMANAGEMENT_KEYS = {
       viewer: 'taskManagement.projectMemberRole.viewer',
       contributor: 'taskManagement.projectMemberRole.contributor',
       lead: 'taskManagement.projectMemberRole.lead',
+    },
+    navigation: {
+      requests: 'taskManagement.navigation.requests',
     },
     fields: {
       storyPoints: 'taskManagement.fields.storyPoints',

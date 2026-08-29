@@ -81,6 +81,7 @@ public sealed class ProjectRepository : IProjectRepository
     public Task<Project?> FindAsync(Guid uuid, CancellationToken cancellationToken)
         => _dbContext.Projects
             .Include(p => p.Members)
+            .Include(p => p.SlaPolicy)
             .FirstOrDefaultAsync(p => p.Uuid == uuid, cancellationToken);
 
     /// <inheritdoc />

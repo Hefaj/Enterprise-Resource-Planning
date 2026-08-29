@@ -14,6 +14,8 @@ import {
   erpSelectionCount,
 } from '@erp/shared/ui';
 
+import { ISSUE_LIST_PRESET } from './issue-list-preset';
+
 /**
  * Do ilu zgłoszeń „Zaznacz wszystko" jest jeszcze rozwiązywane do listy identyfikatorów —
  * ten sam próg co w Catalogu i Identity, patrz `docs/frontend/selection-scope.md` §2.
@@ -35,8 +37,9 @@ export class IssueStore {
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
   private readonly _workflow = inject(ProjectWorkflowService);
   private readonly _fields = inject(ProjectFieldProfileService);
+  private readonly _preset = inject(ISSUE_LIST_PRESET, { optional: true });
 
-  public readonly filters = signal<Partial<SearchIssueRequest>>({});
+  public readonly filters = signal<Partial<SearchIssueRequest>>(this._preset?.filters ?? {});
   public readonly loading = signal<boolean>(false);
   public readonly sorts = signal<SearchIssueRequest['sorts']>(undefined);
 

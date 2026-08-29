@@ -46,10 +46,13 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         builder.Property(i => i.Description);
         builder.Property(i => i.Priority).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(i => i.StateUuid).IsRequired();
+        builder.Property(i => i.StateCategory).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(i => i.DerivedDeliveryState).HasConversion<string>().HasMaxLength(16);
         builder.Property(i => i.ReporterUuid).IsRequired();
         builder.Property(i => i.IsRestricted).IsRequired();
         builder.Property(i => i.CreatedAt).IsRequired();
         builder.Property(i => i.UpdatedAt).IsRequired();
+        builder.Property(i => i.SlaLastNotifiedOn);
 
         // Klucze historyczne to lista tekstów, nie tabela podrzędna: nie mają własnych atrybutów,
         // nikt po nich nie sortuje, a jedyne zapytanie brzmi „czy zawiera ten klucz”.
@@ -128,7 +131,8 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
 
         // Skan terminów (faza 5) idzie po tym indeksie, nie po wpisie harmonogramu per zgłoszenie —
         // rozdzielczość jest dzienna, więc drugi mechanizm z DMS-u byłby kosztem bez zysku (§9.3).
-        builder.HasIndex(i => i.DueAt);
+        builder.HasIndex(i => i.DueAt)
+            .HasFilter("due_at IS NOT NULL AND state_category <> 'Done'");
 
         builder.HasOne<Project>()
             .WithMany()

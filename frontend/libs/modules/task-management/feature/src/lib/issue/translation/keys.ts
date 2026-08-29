@@ -37,12 +37,14 @@ export const ISSUE_KEYS = {
     },
     table: {
       emptyMessage: 'issue.table.emptyMessage',
+      noDelivery: 'issue.table.noDelivery',
       columns: {
         key: 'issue.table.columns.key',
         title: 'issue.table.columns.title',
         state: 'issue.table.columns.state',
         priority: 'issue.table.columns.priority',
         assignee: 'issue.table.columns.assignee',
+        deliveryState: 'issue.table.columns.deliveryState',
         dueAt: 'issue.table.columns.dueAt',
         updatedAt: 'issue.table.columns.updatedAt',
       },
@@ -110,6 +112,7 @@ export const ISSUE_KEYS = {
       },
       sidebar: {
         state: 'issue.detail.sidebar.state',
+        deliveryState: 'issue.detail.sidebar.deliveryState',
         transitions: 'issue.detail.sidebar.transitions',
         noTransitions: 'issue.detail.sidebar.noTransitions',
         project: 'issue.detail.sidebar.project',

@@ -474,6 +474,11 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_4");
 
+                    b.Property<string>("DerivedDeliveryState")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("derived_delivery_state");
+
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
@@ -529,6 +534,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("StateUuid")
                         .HasColumnType("uuid")
                         .HasColumnName("state_uuid");
+
+                    b.Property<string>("StateCategory")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("state_category");
+
+                    b.Property<DateOnly?>("SlaLastNotifiedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("sla_last_notified_on");
 
                     b.Property<string>("Text1")
                         .HasMaxLength(512)
@@ -593,7 +608,8 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_issue_assignee_uuid");
 
                     b.HasIndex("DueAt")
-                        .HasDatabaseName("ix_issue_due_at");
+                        .HasDatabaseName("ix_issue_due_at")
+                        .HasFilter("due_at IS NOT NULL AND state_category <> 'Done'");
 
                     b.HasIndex("Key")
                         .IsUnique()
@@ -913,6 +929,26 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_project_field_scheme_uuid");
 
                     b.ToTable("project", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Projects.ProjectSlaPolicy", b =>
+                {
+                    b.Property<Guid>("ProjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_uuid");
+
+                    b.Property<int?>("ResponseMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("response_minutes");
+
+                    b.Property<int?>("ResolutionMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("resolution_minutes");
+
+                    b.HasKey("ProjectUuid")
+                        .HasName("pk_sla_policy");
+
+                    b.ToTable("sla_policy", "taskmgmt");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Projects.ProjectKeyCounter", b =>
@@ -1244,6 +1280,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_project_field_scheme_field_scheme_uuid");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Projects.ProjectSlaPolicy", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.Projects.Project", null)
+                        .WithOne("SlaPolicy")
+                        .HasForeignKey("TaskManagement.Domain.Projects.ProjectSlaPolicy", "ProjectUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sla_policy_project_project_uuid");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Projects.ProjectKeyCounter", b =>
                 {
                     b.HasOne("TaskManagement.Domain.Projects.Project", null)
@@ -1302,6 +1348,8 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TaskManagement.Domain.Projects.Project", b =>
                 {
                     b.Navigation("Members");
+
+                    b.Navigation("SlaPolicy");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Workflow.WorkflowScheme", b =>

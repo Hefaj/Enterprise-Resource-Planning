@@ -8,7 +8,7 @@ import { map } from 'rxjs';
 import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpTranslatePipe } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { IssueVM, ProjectWorkflowService, TaskManagementIssueOrchestrator, WorkflowTransitionDto } from '@erp/task-management/data-access';
-import { ISSUE_PRIORITY } from '@erp/task-management/util';
+import { ISSUE_PRIORITY, PROJECT_KIND, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
@@ -123,6 +123,15 @@ import { IssueHistoryComponent } from './content/issue-history.component';
               </span>
               <span class="font-medium">{{ stateLabel() | erpTranslate }}</span>
             </div>
+
+            @if (isRequest()) {
+              <div class="flex flex-col gap-1">
+                <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
+                  {{ ISSUE_KEYS.detail.sidebar.deliveryState | erpTranslate }}
+                </span>
+                <span class="font-medium">{{ deliveryStateLabel() | erpTranslate }}</span>
+              </div>
+            }
 
             <div class="flex flex-col gap-2">
               <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
@@ -239,6 +248,22 @@ export class IssueDetailComponent {
     return issue.stateNameKey || issue.stateCode;
   });
 
+  /** `Intake` zachowuje własny stan — ten wskaźnik jest wyłącznie agregatem postępu realizacji. */
+  protected readonly isRequest = computed(() => this.issue()?.project?.kind === PROJECT_KIND.Intake);
+
+  protected readonly deliveryStateLabel = computed(() => {
+    switch (this.issue()?.derivedDeliveryState) {
+      case WORKFLOW_STATE_CATEGORY.Done:
+        return TASKMANAGEMENT_KEYS.workflow.categories.done;
+      case WORKFLOW_STATE_CATEGORY.InProgress:
+        return TASKMANAGEMENT_KEYS.workflow.categories.inProgress;
+      case WORKFLOW_STATE_CATEGORY.Todo:
+        return TASKMANAGEMENT_KEYS.workflow.categories.todo;
+      default:
+        return ISSUE_KEYS.table.noDelivery;
+    }
+  });
+
   protected readonly projectLabel = computed(() => {
     const issue = this.issue();
     if (!issue) {
@@ -275,6 +300,8 @@ export class IssueDetailComponent {
       return [];
     }
 
+    const workflow = this._workflow.getOne(issue.projectUuid)();
+
     return this._workflow
       .transitionsFrom(issue.projectUuid, issue.stateUuid)()
       .map((transition: WorkflowTransitionDto) => ({
@@ -283,6 +310,10 @@ export class IssueDetailComponent {
           label: transition.nameKey,
           appearance: 'secondary',
           size: 's',
+          disabled:
+            this.isRequest()
+            && workflow?.states.find((state) => state.uuid === transition.toStateUuid)?.category === WORKFLOW_STATE_CATEGORY.Done
+            && issue.derivedDeliveryState !== WORKFLOW_STATE_CATEGORY.Done,
           fn: (): Promise<void> => this._applyTransition(issue.uuid, transition.toStateUuid),
         } satisfies ErpButtonConfig,
       }));

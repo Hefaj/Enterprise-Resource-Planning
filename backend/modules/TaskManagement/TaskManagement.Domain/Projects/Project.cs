@@ -52,6 +52,9 @@ public sealed class Project : AggregateRoot
     /// Drugi (i jedyny inny) składnik predykatu widoczności obok <see cref="Members"/>.</summary>
     public bool IsPublic { get; private set; }
 
+    /// <summary>Opcjonalna polityka terminów. Brak jest prawidłowy dla projektów bez SLA.</summary>
+    public ProjectSlaPolicy? SlaPolicy { get; private set; }
+
     public IReadOnlyList<ProjectMember> Members => _members.AsReadOnly();
 
     public static Project Create(string code, string name, ProjectKind kind, Guid workflowSchemeUuid, bool isPublic)
@@ -87,6 +90,11 @@ public sealed class Project : AggregateRoot
     /// nieodwracalną.</summary>
     public void SetFieldScheme(Guid? fieldSchemeUuid)
         => FieldSchemeUuid = fieldSchemeUuid == Guid.Empty ? null : fieldSchemeUuid;
+
+    public void SetSlaPolicy(int? responseMinutes, int? resolutionMinutes)
+        => SlaPolicy = ProjectSlaPolicy.Create(Uuid, responseMinutes, resolutionMinutes);
+
+    public void ClearSlaPolicy() => SlaPolicy = null;
 
     /// <summary>Dodaje albo aktualizuje rolę członka. Idempotentne po użytkowniku —
     /// dwukrotne dodanie tej samej osoby zmienia rolę, nie tworzy drugiego wiersza.</summary>

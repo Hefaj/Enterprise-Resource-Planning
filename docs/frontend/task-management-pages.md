@@ -1,10 +1,11 @@
 # Task Management — podział na strony
 
-**Stan: ✅ fazy 0–1 wdrożone; pozostałe strony 📐 projekt.** Istnieją dwie trasy — lista
-`/task-management/issue` (filtr, tabela serwerowa, akcje masowe) i karta `/task-management/issue/:key`
+**Stan: ✅ fazy 0–5 wdrożone.** Istnieją trasy listy
+`/task-management/issue` (filtr, tabela serwerowa, akcje masowe), `/task-management/request`
+(zlecenia z projektów `Intake`) i karta `/task-management/issue/:key`
 (opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki, wątek komentarzy
 i historia zmian). Zaślepka **„Dashboard Analityczny Zadań"** zniknęła z `entry.menu.ts` razem
-z fazą 0 (dashboard robiony pierwszy przez pół roku świeci pustkami). Tablicy, zleceń i grupy „Konfiguracja" w menu nie ma —
+z fazą 0 (dashboard robiony pierwszy przez pół roku świeci pustkami). Zlecenia są już w menu; grupa „Konfiguracja" pozostaje zależna od uprawnienia —
 pozycja bez działającej strony to ten sam błąd, który usunęła faza 0.
 
 Model domenowy, automat stanów, sloty pól i mechanika kolejności na tablicy →
@@ -175,12 +176,14 @@ realizujące z ich stanami. Zamawiający widzi **nagłówki**, nie treść cudzy
 Lista projektów: kod, typ (`Delivery`/`Intake`), lead, liczba otwartych zgłoszeń, schemat pól,
 schemat stanów.
 
-### 4.2 Karta projektu — `/task-management/project/:uuid` 🟡 (faza 3 dowozi zakładkę pól)
+### 4.2 Karta projektu — `/task-management/project/:uuid` 🟡 (pola + SLA)
 Master-detail z zakładkami: **pola** (definicje + **mapowanie na sloty**), **stany** (wybór
 schematu), **tablice**, **członkowie** (`project_member` z rolą), **SLA**.
 
-Zakładki poza polami wchodzą razem z fazami, które je wypełniają — pusta zakładka to ta sama
-zaślepka, którą usunęliśmy z menu w fazie 0.
+Sekcja SLA pozwala ustawić czas reakcji i realizacji w minutach albo odpiąć politykę. Termin
+realizacji nowych zgłoszeń pomija weekendy, a skaner eskalacji korzysta z częściowego indeksu
+otwartych zgłoszeń. Pozostałe zakładki wchodzą razem z fazami, które je wypełniają — pusta
+zakładka to ta sama zaślepka, którą usunęliśmy z menu w fazie 0.
 
 **Znany chropowaty brzeg**: pole zakładane z UI podaje `nameKey`, czyli klucz tłumaczenia.
 Klucz, którego nikt nie dopisał do `translation/*.json`, wyświetla się użytkownikowi dosłownie.
@@ -289,8 +292,8 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 | 1 ✅ | Karta zgłoszenia — przejścia stanów, komentarze, historia |
 | 2 ✅ | **Tablica** (kanban, drag&drop, realtime) |
 | 3 ✅ | Kontekst projektu na liście, kolumny i filtry z profilu; Projekty i Karta projektu — zakładka pól |
-| 4 | Tryb drzewa na liście, pasek powiązań na karcie |
-| 5 | Zlecenia, odbiór; Karta projektu — SLA |
+| 4 ✅ | Tryb drzewa na liście, pasek powiązań na karcie |
+| 5 ✅ | Lista zleceń i stan realizacji, odbiór oraz Karta projektu — SLA |
 | 6 | Backlog i planowanie sprintu, akcje masowe |
 | 7 | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki |
 

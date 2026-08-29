@@ -1,5 +1,6 @@
 import { ErpNavigationItem } from '@erp/shared/data-access';
 import { ERP_PERMISSIONS } from '@erp/shared/auth';
+import { SHARED_KEYS } from '@erp/shared/ui';
 
 /**
  * Menu modułu. Każda pozycja ma `requiredPermission` — poprzednia zaślepka
@@ -29,6 +30,14 @@ export const remoteMenu: ErpNavigationItem[] = [
     label: 'Tablica',
     iconId: 'columns-3',
     route: 'board',
+    requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
+  },
+  {
+    // Menu rysuje shell hosta przed aktywacją trasy remota, więc etykieta musi
+    // należeć do globalnego scope'u `shared`, a nie ładowanego leniwie `taskManagement`.
+    label: SHARED_KEYS.menu.requests,
+    iconId: 'inbox',
+    route: 'request',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
 ];

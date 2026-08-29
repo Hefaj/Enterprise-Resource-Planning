@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Api.Contracts;
 using TaskManagement.Domain.Issues;
+using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Application.Issues;
@@ -19,6 +20,7 @@ public sealed record IssueDto(
     string StateCode,
     string StateNameKey,
     WorkflowStateCategory StateCategory,
+    WorkflowStateCategory? DerivedDeliveryState,
     Guid ReporterUuid,
     Guid? AssigneeUuid,
     DateTimeOffset? DueAt,
@@ -78,6 +80,12 @@ public sealed class SearchIssueRequest : PagedRequest
 
     /// <summary>Kontekst projektu — dopiero on odblokowuje kolumny projekto-specyficzne (faza 3).</summary>
     public Guid? ProjectUuid { get; set; }
+
+    /// <summary>
+    /// Ogranicza listę do rodzaju projektu. Widok zleceń ustawia <see cref="ProjectKind.Intake"/>,
+    /// ale nadal używa dokładnie tego samego agregatu i endpointu co lista zgłoszeń.
+    /// </summary>
+    public ProjectKind? ProjectKind { get; set; }
 
     /// <summary>Szukanie po tytule <b>oraz po kluczu</b>, w tym po kluczach historycznych.</summary>
     public string? Text { get; set; }

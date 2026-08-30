@@ -3,6 +3,7 @@ using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Application.Abstractions;
@@ -48,6 +49,17 @@ public interface IIssueCommentRepository
 public interface IIssueActivityWriter
 {
     void Add(IssueActivity activity);
+}
+
+public interface IWorkLogRepository
+{
+    void Add(WorkLog workLog);
+}
+
+public interface ISavedIssueViewRepository
+{
+    Task<SavedIssueView?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+    void Add(SavedIssueView view);
 }
 
 /// <summary>Dostęp do krawędzi grafu powiązań po stronie zapisu. <c>Remove</c> jest tu
@@ -97,6 +109,17 @@ public interface IBoardCardRepository
         Guid boardUuid,
         DateTimeOffset now,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<BoardCard>> GetOpenInSprintAsync(Guid sprintUuid, CancellationToken cancellationToken);
+}
+
+/// <summary>Dostęp zapisu do sprintu. Zamknięcie iteracji zmienia też karty, ale sam stan
+/// sprintu pozostaje własnością tego agregatu.</summary>
+public interface ISprintRepository
+{
+    Task<Sprint?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(Sprint sprint);
 }
 
 /// <summary>Dostęp do agregatu <see cref="Project"/> po stronie zapisu — ładuje projekt

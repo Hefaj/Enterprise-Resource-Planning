@@ -29,4 +29,8 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   setProjectFieldScheme: 'shared.jobs.commands.taskmgmtProjectSetFieldScheme',
   setProjectSlaPolicy: 'shared.jobs.commands.taskmgmtProjectSetSlaPolicy',
   setBoardCardPosition: 'shared.jobs.commands.taskmgmtBoardSetCardPosition',
+  setIssueSprint: 'shared.jobs.commands.taskmgmtSprintSetIssueSprint',
+  createSprint: 'shared.jobs.commands.taskmgmtSprintCreate',
+  startSprint: 'shared.jobs.commands.taskmgmtSprintStart',
+  closeSprint: 'shared.jobs.commands.taskmgmtSprintClose',
 } as const;

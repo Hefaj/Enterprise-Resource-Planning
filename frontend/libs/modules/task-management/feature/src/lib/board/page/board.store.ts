@@ -1,7 +1,7 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 
 import { JobService } from '@erp/shared/data-access';
-import { ErpToastService } from '@erp/shared/ui';
+import { ErpModalService, ErpToastService } from '@erp/shared/ui';
 import {
   BoardCardVM,
   erpAwaitJobAsync,
@@ -9,9 +9,11 @@ import {
   BoardSetCardPositionCommand,
   IssueSetStateCommand,
   ProjectWorkflowService,
+  ProjectFieldProfileService,
   TaskManagementBoardOrchestrator,
   TaskManagementIssueOrchestrator,
 } from '@erp/task-management/data-access';
+import { ISSUE_SET_STATE_MODAL_ID } from '@erp/task-management/util';
 
 import { BOARD_KEYS } from '../translation';
 
@@ -47,6 +49,8 @@ export class BoardStore {
   private readonly _workflow = inject(ProjectWorkflowService);
   private readonly _jobs = inject(JobService);
   private readonly _toast = inject(ErpToastService);
+  private readonly _modals = inject(ErpModalService);
+  private readonly _fields = inject(ProjectFieldProfileService);
 
   private readonly _pendingMove = signal<PendingMove | null>(null);
   private readonly _draggedCardUuid = signal<string | null>(null);
@@ -80,9 +84,7 @@ export class BoardStore {
     return [...board.columns]
       .sort((left, right) => left.orderNo - right.orderNo)
       .map((column) => {
-        const own = cards.filter(
-          (card) => card.uuid !== moved?.uuid && column.stateUuids.includes(card.stateUuid),
-        );
+        const own = cards.filter((card) => card.uuid !== moved?.uuid && column.stateUuids.includes(card.stateUuid));
 
         if (moved && pending?.columnUuid === column.uuid) {
           own.splice(Math.min(pending.index, own.length), 0, moved);
@@ -129,11 +131,7 @@ export class BoardStore {
     // przejściem stanu i nie ma go w schemacie.
     reachable.add(card.stateUuid);
 
-    return new Set(
-      board.columns
-        .filter((column) => column.stateUuids.some((stateUuid) => reachable.has(stateUuid)))
-        .map((column) => column.uuid),
-    );
+    return new Set(board.columns.filter((column) => column.stateUuids.some((stateUuid) => reachable.has(stateUuid))).map((column) => column.uuid));
   });
 
   /**
@@ -201,13 +199,33 @@ export class BoardStore {
 
     try {
       if (targetStateUuid !== card.stateUuid) {
-        // Pole nazywa się `stateUuid`, nie `toStateUuid` — wygenerowany interfejs ma indeks
-        // `[key: string]: any`, więc literówka w nazwie NIE jest błędem kompilacji i dociera
-        // do backendu jako pusty `Guid`. Stąd jawnie typowana zmienna zamiast rzutowania
-        // obiektu literalnego.
-        const setState: IssueSetStateCommand = { uuid: card.issueUuid, stateUuid: targetStateUuid };
+        const transition = this._workflow
+          .transitionsFrom(board.projectUuid, card.stateUuid)()
+          .find((item) => item.toStateUuid === targetStateUuid);
+        const requiredCodes = transition?.requiredFieldCodes ?? [];
+        if (requiredCodes.length > 0) {
+          const profile = await this._fields.loadAsync(board.projectUuid);
+          const requiredFields = profile?.fields.filter((field) => requiredCodes.includes(field.code)) ?? [];
+          const modal = await this._modals.open(
+            ISSUE_SET_STATE_MODAL_ID,
+            {
+              targetUuids: [card.issueUuid],
+              templateCommand: { stateUuid: targetStateUuid },
+            },
+            { targetCount: 1, projectUuid: board.projectUuid, requiredFields },
+          );
+          const result = await modal.closed;
+          if (!result.saved) return;
+          await this._runAsync(Promise.resolve(result.result as string));
+        } else {
+          // Pole nazywa się `stateUuid`, nie `toStateUuid` — wygenerowany interfejs ma indeks
+          // `[key: string]: any`, więc literówka w nazwie NIE jest błędem kompilacji i dociera
+          // do backendu jako pusty `Guid`. Stąd jawnie typowana zmienna zamiast rzutowania
+          // obiektu literalnego.
+          const setState: IssueSetStateCommand = { uuid: card.issueUuid, stateUuid: targetStateUuid };
 
-        await this._runAsync(this._issues.setStateAsync(setState));
+          await this._runAsync(this._issues.setStateAsync(setState));
+        }
       }
 
       const setPosition: BoardSetCardPositionCommand = {
@@ -237,14 +255,8 @@ export class BoardStore {
    * karty. Do serwera idą <b>identyfikatory sąsiadów, nigdy wyliczony rank</b>: rank liczy
    * serwer z ich bieżących wartości, w transakcji (`docs/backend/task-management.md` §7.2).
    */
-  private _neighbours(
-    columnUuid: string,
-    cardUuid: string,
-    index: number,
-  ): { afterIssueUuid: string | undefined; beforeIssueUuid: string | undefined } {
-    const cards = (this.columns().find((column) => column.uuid === columnUuid)?.cards ?? []).filter(
-      (card) => card.uuid !== cardUuid,
-    );
+  private _neighbours(columnUuid: string, cardUuid: string, index: number): { afterIssueUuid: string | undefined; beforeIssueUuid: string | undefined } {
+    const cards = (this.columns().find((column) => column.uuid === columnUuid)?.cards ?? []).filter((card) => card.uuid !== cardUuid);
 
     return {
       afterIssueUuid: cards[index - 1]?.issueUuid,

@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { TuiEditorTool } from '@taiga-ui/editor';
 
-import { ErpButtonComponent, ErpButtonConfig, ErpConfirmDialogService, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpToastService, ErpTranslatePipe } from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonConfig, ErpConfirmDialogService, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpToastService, ErpTranslatePipe, erpRichTextToolset } from '@erp/shared/ui';
 import { ErpAuthService } from '@erp/shared/auth';
 import { IssueCommentDto, IssueCommentService, TaskManagementIssueOrchestrator } from '@erp/task-management/data-access';
 
 import { ISSUE_KEYS } from '../../translation';
 import { TaskManagementUserNameComponent } from '../../../user/task-management-user-name.component';
+import { IssueRichTextImagesService } from './issue-rich-text-images.service';
 
 /** Wątek złożony z komentarza głównego i jego odpowiedzi — poziom jest dokładnie jeden. */
 interface IssueCommentThread {
@@ -145,6 +147,7 @@ export class IssueCommentsComponent {
   private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _toasts = inject(ErpToastService);
   private readonly _auth = inject(ErpAuthService);
+  private readonly _richTextImages = inject(IssueRichTextImagesService);
 
   protected readonly composerControl = new FormControl<string>('');
   protected readonly replyControl = new FormControl<string>('');
@@ -176,11 +179,11 @@ export class IssueCommentsComponent {
     return list.filter((comment) => !comment.parentUuid).map((root) => ({ root, replies: replies.get(root.uuid) ?? [] }));
   });
 
-  protected readonly composerConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setToolset('basic').setMinHeight(120).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder));
+  protected readonly composerConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setTools([...erpRichTextToolset('basic'), TuiEditorTool.Img]).setMinHeight(120).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder));
 
-  protected readonly replyEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setToolset('basic').setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.replyPlaceholder));
+  protected readonly replyEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setTools([...erpRichTextToolset('basic'), TuiEditorTool.Img]).setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.replyPlaceholder));
 
-  protected readonly editEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setToolset('basic').setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder));
+  protected readonly editEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) => b.setTools([...erpRichTextToolset('basic'), TuiEditorTool.Img]).setMinHeight(100).setPlaceholder(ISSUE_KEYS.detail.comments.placeholder));
 
   protected readonly submitButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.comments.submit,
@@ -231,7 +234,7 @@ export class IssueCommentsComponent {
   /** Podgląd treści — ten sam edytor w trybie tylko do odczytu, więc formatowanie zgadza się
    * z tym, co widział piszący. */
   protected bodyConfig(body: string): ErpRichTextConfig {
-    return ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(body));
+    return ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(this._richTextImages.displayHtml(body)));
   }
 
   /** Czy zalogowany jest autorem — po tym idzie widoczność „edytuj”. Backend i tak odrzuci
@@ -280,7 +283,10 @@ export class IssueCommentsComponent {
 
   private async _submit(control: FormControl<string | null>, parentUuid: string | null): Promise<void> {
     const issueUuid = this.issueUuid();
-    const body = control.value?.trim();
+    // Wstawienie obrazu kończy się po asynchronicznym uploadzie. Normalizacja tuż przed
+    // komendą gwarantuje, że zapisany HTML wskazuje na trwały endpoint załącznika, a nie
+    // tymczasowy `blob:` z karty przeglądarki.
+    const body = this._richTextImages.toControlValue(control.value).trim();
 
     if (!issueUuid || !body) {
       return;
@@ -306,7 +312,7 @@ export class IssueCommentsComponent {
 
   private async _saveEdit(): Promise<void> {
     const uuid = this.editing();
-    const body = this.editControl.value?.trim();
+    const body = this._richTextImages.toControlValue(this.editControl.value).trim();
     const issueUuid = this.issueUuid();
 
     if (!uuid || !body || !issueUuid) {

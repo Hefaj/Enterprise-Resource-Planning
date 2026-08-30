@@ -4,8 +4,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
+import { TUI_EDITOR_VALUE_TRANSFORMER, TUI_IMAGE_LOADER, TuiEditorTool } from '@taiga-ui/editor';
 
-import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpTranslatePipe } from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpTranslatePipe, erpRichTextToolset } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { IssueVM, ProjectWorkflowService, TaskManagementIssueOrchestrator, WorkflowTransitionDto } from '@erp/task-management/data-access';
 import { ISSUE_PRIORITY, PROJECT_KIND, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
@@ -18,6 +19,8 @@ import { IssueCustomFieldsComponent } from './content/issue-custom-fields.compon
 import { IssueLinksComponent } from './content/issue-links.component';
 import { IssueCommentsComponent } from './content/issue-comments.component';
 import { IssueHistoryComponent } from './content/issue-history.component';
+import { IssueWorkLogComponent } from './content/issue-work-log.component';
+import { IssueRichTextImagesService } from './content/issue-rich-text-images.service';
 
 /**
  * Karta zgłoszenia — `/task-management/issue/:key`.
@@ -50,8 +53,24 @@ import { IssueHistoryComponent } from './content/issue-history.component';
     IssueCustomFieldsComponent,
     IssueLinksComponent,
     IssueHistoryComponent,
+    IssueWorkLogComponent,
   ],
-  providers: [provideIssueTranslations(), provideTaskManagementTranslations()],
+  providers: [
+    provideIssueTranslations(),
+    provideTaskManagementTranslations(),
+    IssueRichTextImagesService,
+    {
+      provide: TUI_IMAGE_LOADER,
+      useFactory: (images: IssueRichTextImagesService): ((file: File | Blob) => ReturnType<IssueRichTextImagesService['loadImage']>) =>
+        (file: File | Blob): ReturnType<IssueRichTextImagesService['loadImage']> => images.loadImage(file),
+      deps: [IssueRichTextImagesService],
+    },
+    {
+      provide: TUI_EDITOR_VALUE_TRANSFORMER,
+      useFactory: (images: IssueRichTextImagesService): IssueRichTextImagesService['valueTransformer'] => images.valueTransformer,
+      deps: [IssueRichTextImagesService],
+    },
+  ],
   template: `
     @let issue = this.issue();
 
@@ -112,6 +131,8 @@ import { IssueHistoryComponent } from './content/issue-history.component';
               [issueUuid]="issue.uuid"
               [canWrite]="canEdit()"
             />
+
+            <erp-task-management-issue-work-log [issueUuid]="issue.uuid" [canWrite]="canEdit()" />
 
             <erp-task-management-issue-history [issueUuid]="issue.uuid" />
           </div>
@@ -218,6 +239,7 @@ export class IssueDetailComponent {
 
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
   private readonly _workflow = inject(ProjectWorkflowService);
+  private readonly _richTextImages = inject(IssueRichTextImagesService);
   private readonly _permissionStore = inject(PermissionStore);
   private readonly _router = inject(Router);
   private readonly _route = inject(ActivatedRoute);
@@ -332,10 +354,13 @@ export class IssueDetailComponent {
 
   protected readonly canEdit = computed(() => this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate));
 
-  protected readonly descriptionPreviewConfig = computed<ErpRichTextConfig>(() => ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(this.issue()?.description ?? '')));
+  protected readonly descriptionPreviewConfig = computed<ErpRichTextConfig>(() => ErpRichTextBuilder.create((b) => b
+    .setReadOnly(true)
+    .setValue(this._richTextImages.displayHtml(this.issue()?.description)),
+  ));
 
   protected readonly descriptionEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
-    b.setToolset('standard').setMinHeight(220).setPlaceholder(ISSUE_KEYS.detail.description.placeholder),
+    b.setTools([...erpRichTextToolset('standard'), TuiEditorTool.Img]).setMinHeight(220).setPlaceholder(ISSUE_KEYS.detail.description.placeholder),
   );
 
   protected readonly editDescriptionButton: ErpButtonConfig = {
@@ -391,6 +416,7 @@ export class IssueDetailComponent {
     try {
       const issue = await this._orchestrator.loadByKeyAsync(key);
       this._uuid.set(issue?.uuid ?? null);
+      this._richTextImages.setIssueUuid(issue?.uuid ?? null);
 
       // Schemat projektu jest potrzebny do przycisków przejść — bez niego karta wyświetliłaby
       // stan bez żadnej możliwości jego zmiany.
@@ -414,7 +440,11 @@ export class IssueDetailComponent {
     try {
       await this._orchestrator.setDescriptionAsync({
         uuid: issue.uuid,
-        description: this.descriptionControl.value || undefined,
+        // `TUI_EDITOR_VALUE_TRANSFORMER` normalizuje wartość podczas zwykłych zmian
+        // edytora. Wklejenie obrazka jest jednak asynchroniczne (loader najpierw wysyła
+        // plik), więc przy zapisie zabezpieczamy tę granicę jeszcze raz. Dzięki temu
+        // `blob:` używany wyłącznie do podglądu nigdy nie trafia do backendu.
+        description: this._richTextImages.toControlValue(this.descriptionControl.value) || undefined,
       });
       this.editingDescription.set(false);
     } catch (error) {

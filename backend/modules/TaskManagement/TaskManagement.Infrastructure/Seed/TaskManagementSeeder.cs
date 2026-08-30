@@ -80,6 +80,8 @@ public sealed partial class TaskManagementSeeder
 
         var fieldScheme = await EnsureDeliveryFieldSchemeAsync(cancellationToken).ConfigureAwait(false);
 
+        await EnsureDevDefaultBoardModeAsync(cancellationToken).ConfigureAwait(false);
+
         if (await _dbContext.Projects.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
             LogSeedSkipped(_logger);
@@ -240,7 +242,7 @@ public sealed partial class TaskManagementSeeder
             Guid.CreateVersion7(),
             project.Uuid,
             $"Tablica {project.Code}",
-            BoardMode.Kanban,
+            project.Kind == ProjectKind.Delivery ? BoardMode.Scrum : BoardMode.Kanban,
             isDefault: true);
 
         var orderNo = 0;
@@ -250,6 +252,23 @@ public sealed partial class TaskManagementSeeder
         }
 
         _dbContext.Boards.Add(board);
+    }
+
+    /// <summary>Przykładowy projekt DEV jest miejscem do planowania iteracji, więc jego
+    /// domyślna tablica musi być Scrum również w bazie utworzonej przed fazą 6.</summary>
+    private async Task EnsureDevDefaultBoardModeAsync(CancellationToken cancellationToken)
+    {
+        var board = await _dbContext.Boards
+            .FirstOrDefaultAsync(board => board.ProjectUuid == DevProjectUuid && board.IsDefault, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (board is null || board.Mode == BoardMode.Scrum)
+        {
+            return;
+        }
+
+        board.SetMode(BoardMode.Scrum);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private int AddIssues(

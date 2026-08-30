@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Text.Json;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Infrastructure.Persistence.Configurations;
@@ -61,6 +64,17 @@ public sealed class WorkflowStateConfiguration : IEntityTypeConfiguration<Workfl
 /// przejścia różniłyby się tylko nazwą, a wtedy nie wiadomo, które wykonał użytkownik.</summary>
 public sealed class WorkflowTransitionConfiguration : IEntityTypeConfiguration<WorkflowTransition>
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private static readonly ValueConverter<List<string>, string> RequiredFieldCodesConverter = new(
+        value => JsonSerializer.Serialize(value, JsonOptions),
+        json => JsonSerializer.Deserialize<List<string>>(json, JsonOptions) ?? new List<string>());
+
+    private static readonly ValueComparer<List<string>> RequiredFieldCodesComparer = new(
+        (left, right) => left != null && right != null && left.SequenceEqual(right, StringComparer.Ordinal),
+        value => value.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode(StringComparison.Ordinal))),
+        value => value.ToList());
+
     public void Configure(EntityTypeBuilder<WorkflowTransition> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -77,6 +91,15 @@ public sealed class WorkflowTransitionConfiguration : IEntityTypeConfiguration<W
         builder.Property(t => t.ToStateUuid).IsRequired();
         builder.Property(t => t.NameKey).HasMaxLength(256).IsRequired();
         builder.Property(t => t.RequiredPermission).HasMaxLength(128);
+        builder.Property<List<string>>("_requiredFieldCodes")
+            .HasColumnName("required_field_codes")
+            .HasColumnType("jsonb")
+            .HasConversion(RequiredFieldCodesConverter, RequiredFieldCodesComparer)
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .HasDefaultValueSql("'[]'::jsonb")
+            .IsRequired();
+
+        builder.Ignore(t => t.RequiredFieldCodes);
 
         builder.HasIndex(t => new { t.SchemeUuid, t.FromStateUuid, t.ToStateUuid }).IsUnique();
     }

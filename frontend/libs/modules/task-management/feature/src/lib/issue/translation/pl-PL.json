@@ -88,7 +88,16 @@
     },
     "unassign": {
       "label": "Zdejmij przypisanie"
+    },
+    "setSprint": {
+      "label": "Dodaj do aktywnego sprintu"
     }
+  },
+  "savedViews": {
+    "label": "Zapisane widoki",
+    "select": "Wybierz widok",
+    "name": "Nazwa widoku",
+    "save": "Zapisz widok"
   },
   "detail": {
     "notFound": {
@@ -171,6 +180,14 @@
         "state": "stan"
       },
       "emptyValue": "brak"
+    },
+    "workLog": {
+      "label": "Czas pracy",
+      "empty": "Brak zalogowanej pracy.",
+      "minutes": "Minuty",
+      "note": "Notatka",
+      "submit": "Zaloguj pracę",
+      "total": "Łącznie: {{ minutes }} min"
     },
     "customFields": {
       "label": "Pola własne",

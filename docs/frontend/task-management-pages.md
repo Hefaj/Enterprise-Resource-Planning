@@ -1,6 +1,6 @@
 # Task Management — podział na strony
 
-**Stan: ✅ fazy 0–5 wdrożone.** Istnieją trasy listy
+**Stan: ✅ fazy 0–6 wdrożone.** Istnieją trasy listy
 `/task-management/issue` (filtr, tabela serwerowa, akcje masowe), `/task-management/request`
 (zlecenia z projektów `Intake`) i karta `/task-management/issue/:key`
 (opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki, wątek komentarzy
@@ -135,18 +135,19 @@ czym zgłoszenie jest, do tego, co się z nim działo. Trzy rzeczy warte zapami�
 > uuid — front nie ma katalogu użytkowników w żadnym module. To jedna pozycja do zrobienia,
 > nie trzy: rozwiązuje ją wspólny słownik z Identity, nie lokalne obejście na karcie.
 
-> **Obrazki osadzone w treści opisu to osobna pozycja, jeszcze niezrobiona.** Backend jest na nie
-> gotowy (`GET issue/attachment/content/{uuid}` z trwałym adresem), ale ten adres wymaga tokenu,
-> więc `<img>` w zapisanym HTML-u sam się nie wyrenderuje. Wymaga to podmiany `src` na `blob:`
-> przy wyświetlaniu i z powrotem przy zapisie — w obu kierunkach i w obu trybach (podgląd
-> i edytor). Do czasu tej decyzji `TuiEditorTool.Img` świadomie nie wchodzi do żadnego zestawu
-> narzędzi `erp-rich-text`, a pliki dopina się obok treści.
+> **Obrazki w opisie i komentarzach.** `TuiEditorTool.Img` wgrywa obraz bezpośrednio do
+> załączników zgłoszenia, także po wklejeniu screenshota ze schowka. Edytor dostaje `blob:`-URL,
+> aby wyświetlić obraz za nagłówkiem autoryzacji, a do HTML-a wraca trwały adres
+> `GET issue/attachment/content/{uuid}`. Dzięki temu plik pozostaje załącznikiem zgłoszenia i nie
+> ma `data:` w bazie.
 
 ### 2.4 Backlog i planowanie sprintu — `/task-management/board/:uuid/backlog`
 Podstrona tablicy scrumowej, nie osobna pozycja w menu: dwie listy obok siebie (backlog ↔ sprint),
 przeciąganie między nimi, suma estymat w nagłówku sprintu.
 
-Wchodzi dopiero z fazą 6 — tablica kanban jest użyteczna bez backlogu, odwrotnie nie.
+Wdrożone jako `/task-management/board/:uuid/backlog`: backlog i aktywny sprint są obok siebie,
+a kliknięcie karty przenosi ją przez operację masową. Formularz zakłada sprint, a akcje pozwalają
+go uruchomić oraz zamknąć z przeniesieniem otwartych zgłoszeń do backlogu.
 
 ---
 
@@ -294,8 +295,8 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 | 3 ✅ | Kontekst projektu na liście, kolumny i filtry z profilu; Projekty i Karta projektu — zakładka pól |
 | 4 ✅ | Tryb drzewa na liście, pasek powiązań na karcie |
 | 5 ✅ | Lista zleceń i stan realizacji, odbiór oraz Karta projektu — SLA |
-| 6 | Backlog i planowanie sprintu, akcje masowe |
-| 7 | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki |
+| 6 ✅ | Backlog i planowanie sprintu, akcje masowe |
+| 7 ✅ | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki |
 
 Fazy 0–2 to **trzy strony, nie dziesięć** — i to faza 2 odpowiada na pytanie, po co ten moduł
 w ogóle powstał.

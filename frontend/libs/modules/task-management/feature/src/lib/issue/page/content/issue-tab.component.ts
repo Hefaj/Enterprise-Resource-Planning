@@ -18,19 +18,17 @@ import {
   IssueVM,
   SearchIssueRequest,
   TaskManagementIssueOrchestrator,
+  TaskManagementBoardOrchestrator,
+  TaskManagementSprintOrchestrator,
 } from '@erp/task-management/data-access';
-import {
-  ISSUE_CREATE_MODAL_ID,
-  ISSUE_PRIORITY,
-  ISSUE_SET_ASSIGNEE_MODAL_ID,
-  ISSUE_SET_STATE_MODAL_ID,
-} from '@erp/task-management/util';
+import { ISSUE_CREATE_MODAL_ID, ISSUE_PRIORITY, ISSUE_SET_ASSIGNEE_MODAL_ID, ISSUE_SET_STATE_MODAL_ID } from '@erp/task-management/util';
 
 import { IssueStore } from '../issue.store';
 import { ISSUE_LIST_PRESET } from '../issue-list-preset';
 import { IssueSetStateMetadata } from '../../modal/issue-set-state/issue-set-state.definition';
 import { TaskManagementIssueTableComponent } from '../../components/tables/task-management-issue-table/task-management-issue-table.component';
 import { ISSUE_KEYS } from '../../translation';
+import { SavedIssueViewsComponent } from './saved-issue-views.component';
 
 /**
  * Pasek akcji + tabela listy zgłoszeń.
@@ -48,15 +46,17 @@ import { ISSUE_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-issue-tab',
   standalone: true,
-  imports: [
-    ErpActionToolbarComponent,
-    ErpActionToolbarZoneDirective,
-    ErpActionToolbarContextDirective,
-    TaskManagementIssueTableComponent,
-  ],
+  imports: [ErpActionToolbarComponent, ErpActionToolbarZoneDirective, ErpActionToolbarContextDirective, TaskManagementIssueTableComponent, SavedIssueViewsComponent],
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
-      <div class="flex-1 min-h-0 flex flex-col gap-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
+      @if (!isRequestList) {
+        <erp-task-management-saved-issue-views />
+      }
+      <div
+        class="flex-1 min-h-0 flex flex-col gap-2"
+        erpActionToolbarZone
+        [erpActionToolbarContext]="actionToolbar"
+      >
         <erp-action-toolbar [config]="actionToolbar" />
 
         <div class="flex-1 min-h-0">
@@ -78,6 +78,8 @@ export class IssueTabComponent {
   protected readonly store = inject(IssueStore);
 
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
+  private readonly _boards = inject(TaskManagementBoardOrchestrator);
+  private readonly _sprints = inject(TaskManagementSprintOrchestrator);
   private readonly _modalService = inject(ErpModalService);
   private readonly _permissionStore = inject(PermissionStore);
   private readonly _auth = inject(ErpAuthService);
@@ -89,6 +91,7 @@ export class IssueTabComponent {
   protected readonly selectionCount = computed(() => erpSelectionScopeCount(this.store.scope()));
   protected readonly listStateKey = this._preset?.stateKey ?? 'taskmgmt-issue-list';
   protected readonly listLabel = this._preset?.label ?? ISSUE_KEYS.title;
+  protected readonly isRequestList = this._preset?.mode === 'requests';
 
   private readonly _canCreate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueCreate));
   private readonly _canUpdate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate));
@@ -101,6 +104,14 @@ export class IssueTabComponent {
           .setId('issue-default')
           .setLabel(this.listLabel)
           .setIcon('@tui.list-checks')
+          .addAction((a) =>
+            a
+              .setId('add-to-active-sprint')
+              .setLabel(ISSUE_KEYS.commands.setSprint.label)
+              .setIcon('@tui.gauge')
+              .setHidden(computed(() => this.isRequestList || this._canUpdate()))
+              .setFn(() => this._setActiveSprint()),
+          )
           .addAction((a) =>
             a
               .setId('create-issue')
@@ -186,20 +197,17 @@ export class IssueTabComponent {
 
   /** Kontekst projektu jedzie w metadanych, bo to on wyznacza zbiór stanów do wyboru. */
   private _openSetStateModal(): void {
-    this._modalService.open<BatchCommandOfIssueSetStateCommandAndSearchIssueRequest, IssueSetStateMetadata>(
-      ISSUE_SET_STATE_MODAL_ID,
-      erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
-      { targetCount: this.selectionCount(), projectUuid: this.store.projectUuid() ?? undefined },
-    );
+    this._modalService.open<BatchCommandOfIssueSetStateCommandAndSearchIssueRequest, IssueSetStateMetadata>(ISSUE_SET_STATE_MODAL_ID, erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()), {
+      targetCount: this.selectionCount(),
+      projectUuid: this.store.projectUuid() ?? undefined,
+    });
   }
 
   /** Wybór osoby z katalogu — jedyna z trzech dróg przypisania, która potrzebuje modalu. */
   private _openSetAssignee(): void {
-    this._modalService.open<BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest>(
-      ISSUE_SET_ASSIGNEE_MODAL_ID,
-      erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
-      { targetCount: this.selectionCount() },
-    );
+    this._modalService.open<BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest>(ISSUE_SET_ASSIGNEE_MODAL_ID, erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()), {
+      targetCount: this.selectionCount(),
+    });
   }
 
   private _setAssignee(assigneeUuid: string | undefined): void {
@@ -218,5 +226,19 @@ export class IssueTabComponent {
         templateCommand: { priority: ISSUE_PRIORITY.High },
       })
       .catch((err: unknown) => console.error('[IssueTabComponent] Nie udało się zmienić priorytetu zgłoszeń.', err));
+  }
+
+  private async _setActiveSprint(): Promise<void> {
+    const projectUuid = this.store.projectUuid();
+    if (!projectUuid) return;
+    const board = (await this._boards.searchBoardsAsync({ projectUuid })).find((item) => item.isDefault);
+    if (!board) return;
+    const result = await this._sprints.searchAsync({ boardUuid: board.uuid, page: 1, pageSize: 100 });
+    const activeSprint = (result.uuids ?? []).map((uuid) => this._sprints.getOne(uuid)()).find((sprint) => sprint?.status === 1);
+    if (!activeSprint) return;
+    await this._sprints.setIssuesSprintAsync({
+      ...erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
+      templateCommand: { boardUuid: board.uuid, sprintUuid: activeSprint.uuid },
+    });
   }
 }

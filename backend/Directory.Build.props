@@ -21,6 +21,13 @@
     -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
+    <!--
+      SDK 10.0.110 potrafi zakończyć równoległe odczyty TargetFramework projektów referencyjnych
+      błędem MSB4181 bez właściwej diagnostyki. Sekwencyjne przejście grafu eliminuje ten defekt
+      i jest szczególnie ważne dla wielu watcherów korzystających ze wspólnych building blocks.
+    -->
+    <BuildInParallel>false</BuildInParallel>
+
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 

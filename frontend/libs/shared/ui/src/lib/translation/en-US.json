@@ -71,7 +71,18 @@
   },
   "navigation": "Navigation",
   "menu": {
-    "requests": "Requests"
+    "requests": "Requests",
+    "taskManagement": {
+      "module": "Work management",
+      "issues": "Issues",
+      "projects": "Projects",
+      "board": "Board",
+      "configuration": "Configuration",
+      "workflowSchemes": "Workflow schemes",
+      "issue": "Issue",
+      "project": "Project",
+      "backlog": "Backlog"
+    }
   },
   "notifications": {
     "kinds": {
@@ -244,6 +255,10 @@
       "taskmgmtIssueRemoveComment": "Removing a comment",
       "taskmgmtIssueSetCustomFields": "Changing custom fields",
       "taskmgmtBoardSetCardPosition": "Moving a card on the board",
+      "taskmgmtSprintSetIssueSprint": "Move issue to sprint",
+      "taskmgmtSprintCreate": "Create sprint",
+      "taskmgmtSprintStart": "Start sprint",
+      "taskmgmtSprintClose": "Close sprint",
       "taskmgmtFieldSchemeCreate": "Creating a field scheme",
       "taskmgmtFieldSchemeAddField": "Adding a field to a scheme",
       "taskmgmtFieldSchemeRemoveField": "Removing a field from a scheme",

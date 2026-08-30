@@ -88,7 +88,16 @@
     },
     "unassign": {
       "label": "Unassign"
+    },
+    "setSprint": {
+      "label": "Add to active sprint"
     }
+  },
+  "savedViews": {
+    "label": "Saved views",
+    "select": "Select a view",
+    "name": "View name",
+    "save": "Save view"
   },
   "detail": {
     "notFound": {
@@ -171,6 +180,14 @@
         "state": "state"
       },
       "emptyValue": "none"
+    },
+    "workLog": {
+      "label": "Work log",
+      "empty": "No logged work.",
+      "minutes": "Minutes",
+      "note": "Note",
+      "submit": "Log work",
+      "total": "Total: {{ minutes }} min"
     },
     "customFields": {
       "label": "Custom fields",

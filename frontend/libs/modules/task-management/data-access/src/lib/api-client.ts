@@ -15,4423 +15,6888 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
 export interface ITaskManagementClient {
-    /**
-     * @return OK
-     */
-    getProjectWorkflow(body: GetProjectWorkflowRequest): Observable<ProjectWorkflowDto>;
-    /**
-     * @return OK
-     */
-    getProject(body: GetProjectRequest): Observable<ProjectDto[]>;
-    /**
-     * @return OK
-     */
-    searchProject(body: SearchProjectRequest): Observable<SearchResponse>;
-    /**
-     * Seryjne nadanie roli w projekcie — atrybut nadania, nie kod uprawnienia
-     * @return OK
-     */
-    projectAddMemberMultipleCommand(body: BatchCommandOfProjectAddMemberCommandAndSearchProjectRequest): Observable<BatchResult>;
-    /**
-     * Seryjne zakładanie projektów z obsługą błędów cząstkowych
-     * @return OK
-     */
-    projectCreateMultipleCommand(body: BatchCommandOfProjectCreateCommandAndSearchProjectRequest): Observable<BatchResult>;
-    /**
-     * Seryjne odebranie roli w projekcie
-     * @return OK
-     */
-    projectRemoveMemberMultipleCommand(body: BatchCommandOfProjectRemoveMemberCommandAndSearchProjectRequest): Observable<BatchResult>;
-    /**
-     * Podpina albo odpina schemat pól projektu
-     * @return OK
-     */
-    projectSetFieldSchemeMultipleCommand(body: BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana nazw projektów z obsługą błędów cząstkowych
-     * @return OK
-     */
-    projectSetNameMultipleCommand(body: BatchCommandOfProjectSetNameCommandAndSearchProjectRequest): Observable<BatchResult>;
-    /** Ustawia albo usuwa politykę SLA projektu */
-    projectSetSlaPolicyMultipleCommand(body: BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest): Observable<BatchResult>;
-    /**
-     * @return OK
-     */
-    getIssue(body: GetIssueRequest): Observable<IssueDto[]>;
-    /**
-     * @return OK
-     */
-    getIssueActivity(body: GetIssueActivityRequest): Observable<IssueActivityDto[]>;
-    /**
-     * Zawartość załącznika zgłoszenia
-     * @return No Content
-     */
-    getIssueAttachmentContent(body: GetIssueAttachmentContentRequest): Observable<void>;
-    /**
-     * @return OK
-     */
-    getIssueAttachments(body: GetIssueAttachmentsRequest): Observable<IssueAttachmentDto[]>;
-    /**
-     * Adresy do wgrania plików prosto do magazynu
-     * @return OK
-     */
-    getIssueAttachmentUploadTickets(body: GetIssueAttachmentUploadTicketsRequest): Observable<IssueAttachmentUploadTicketDto[]>;
-    /**
-     * @return OK
-     */
-    getIssueByKey(body: GetIssueByKeyRequest): Observable<IssueDto>;
-    /**
-     * @return OK
-     */
-    getIssueComments(body: GetIssueCommentsRequest): Observable<IssueCommentDto[]>;
-    /**
-     * @return OK
-     */
-    getIssueGraph(body: GetIssueGraphRequest): Observable<IssueGraphDto>;
-    /**
-     * @return OK
-     */
-    searchIssue(body: SearchIssueRequest): Observable<SearchResponse>;
-    /**
-     * Dodanie komentarzy do zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueAddCommentMultipleCommand(body: BatchCommandOfIssueAddCommentCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjne dopięcie powiązań — blokada zamykająca pętlę odpada w pre-checku
-     * @return OK
-     */
-    issueAddLinkMultipleCommand(body: BatchCommandOfIssueAddLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Rejestracja wgranych załączników zgłoszenia
-     * @return OK
-     */
-    issueAttachmentCreateCommand(body: IssueAttachmentCreateRequest): Observable<IssueAttachmentCreateResponse>;
-    /**
-     * Seryjne zakładanie zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueCreateMultipleCommand(body: BatchCommandOfIssueCreateCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Usunięcie komentarzy z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueRemoveCommentMultipleCommand(body: BatchCommandOfIssueRemoveCommentCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjne odpięcie powiązań — bez pre-checku, bo usunięcie krawędzi nie może zamknąć pętli
-     * @return OK
-     */
-    issueRemoveLinkMultipleCommand(body: BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjne przypisanie zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetAssigneeMultipleCommand(body: BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Zmiana treści komentarzy z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetCommentBodyMultipleCommand(body: BatchCommandOfIssueSetCommentBodyCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Nadpisuje wartości pól niestandardowych zgłoszeń — pole pominięte zostaje wyczyszczone
-     * @return OK
-     */
-    issueSetCustomFieldsMultipleCommand(body: BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana opisów zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetDescriptionMultipleCommand(body: BatchCommandOfIssueSetDescriptionCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana terminów zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetDueDateMultipleCommand(body: BatchCommandOfIssueSetDueDateCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana rodzica w hierarchii — pętla w drzewie odpada w pre-checku
-     * @return OK
-     */
-    issueSetParentMultipleCommand(body: BatchCommandOfIssueSetParentCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana priorytetu zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetPriorityMultipleCommand(body: BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana stanu zgłoszeń — przejście spoza schematu odpada jako błąd elementu
-     * @return OK
-     */
-    issueSetStateMultipleCommand(body: BatchCommandOfIssueSetStateCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana tytułów zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetTitleMultipleCommand(body: BatchCommandOfIssueSetTitleCommandAndSearchIssueRequest): Observable<BatchResult>;
-    /**
-     * @return OK
-     */
-    getProjectFieldProfile(body: GetProjectFieldProfileRequest): Observable<ProjectFieldProfileDto>;
-    /**
-     * @return OK
-     */
-    searchFieldScheme(body: SearchFieldSchemeRequest): Observable<FieldSchemeDto[]>;
-    /**
-     * Dokłada definicję pola do schematu — slot jest niezmienny po utworzeniu
-     * @return OK
-     */
-    fieldSchemeAddFieldMultipleCommand(body: BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
-    /**
-     * Zakłada schematy pól niestandardowych
-     * @return OK
-     */
-    fieldSchemeCreateMultipleCommand(body: BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
-    /**
-     * Usuwa definicję pola — odmawia, gdy zgłoszenia mają w nim wartości
-     * @return OK
-     */
-    fieldSchemeRemoveFieldMultipleCommand(body: BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana nazw schematów pól
-     * @return OK
-     */
-    fieldSchemeSetNameMultipleCommand(body: BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
-    /**
-     * @return OK
-     */
-    getBoard(body: GetBoardRequest): Observable<BoardDto>;
-    /**
-     * @return OK
-     */
-    getBoardCards(body: GetBoardCardsRequest): Observable<BoardCardDto[]>;
-    /**
-     * @return OK
-     */
-    searchBoard(body: SearchBoardRequest): Observable<BoardDto[]>;
-    /**
-     * Zakłada tablice — kolumny powstają z bieżącego schematu stanów projektu
-     * @return OK
-     */
-    boardCreateMultipleCommand(body: BatchCommandOfBoardCreateCommandAndSearchBoardRequest): Observable<BatchResult>;
-    /**
-     * Przestawia karty na tablicy — rank liczy serwer z sąsiadów wskazanych w komendzie
-     * @return OK
-     */
-    boardSetCardPositionMultipleCommand(body: BatchCommandOfBoardSetCardPositionCommandAndSearchBoardRequest): Observable<BatchResult>;
-    /**
-     * Nadpisuje układ kolumn tablicy w całości
-     * @return OK
-     */
-    boardSetColumnsMultipleCommand(body: BatchCommandOfBoardSetColumnsCommandAndSearchBoardRequest): Observable<BatchResult>;
-    /**
-     * Seryjna zmiana nazwy tablic
-     * @return OK
-     */
-    boardSetNameMultipleCommand(body: BatchCommandOfBoardSetNameCommandAndSearchBoardRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  getProjectWorkflow(body: GetProjectWorkflowRequest): Observable<ProjectWorkflowDto>;
+  /**
+   * @return OK
+   */
+  getWorkflowScheme(body: GetWorkflowSchemeRequest): Observable<WorkflowSchemeDto>;
+  /**
+   * @return OK
+   */
+  getWorkflowSchemes(): Observable<WorkflowSchemeListItemDto[]>;
+  /**
+   * @return OK
+   */
+  workflowSchemeCreateCommand(body: WorkflowSchemeCreateCommand): Observable<string>;
+  /**
+   * @return OK
+   */
+  workflowSchemePublishCommand(body: WorkflowSchemePublishCommand): Observable<string>;
+  /**
+   * @return OK
+   */
+  searchSprint(body: SearchSprintRequest): Observable<SearchResponse>;
+  /**
+   * @return OK
+   */
+  getSprint(body: GetSprintRequest): Observable<SprintDto[]>;
+  /**
+   * @return OK
+   */
+  sprintCreateMultipleCommand(body: BatchCommandOfSprintCreateCommandAndSearchSprintRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  sprintStartMultipleCommand(body: BatchCommandOfSprintStartCommandAndSearchSprintRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  sprintCloseMultipleCommand(body: BatchCommandOfSprintCloseCommandAndSearchSprintRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  sprintSetIssueSprintMultipleCommand(body: BatchCommandOfSprintSetIssueSprintCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  getProject(body: GetProjectRequest): Observable<ProjectDto[]>;
+  /**
+   * @return OK
+   */
+  searchProject(body: SearchProjectRequest): Observable<SearchResponse>;
+  /**
+   * Seryjne nadanie roli w projekcie — atrybut nadania, nie kod uprawnienia
+   * @return OK
+   */
+  projectAddMemberMultipleCommand(body: BatchCommandOfProjectAddMemberCommandAndSearchProjectRequest): Observable<BatchResult>;
+  /**
+   * Seryjne zakładanie projektów z obsługą błędów cząstkowych
+   * @return OK
+   */
+  projectCreateMultipleCommand(body: BatchCommandOfProjectCreateCommandAndSearchProjectRequest): Observable<BatchResult>;
+  /**
+   * Seryjne odebranie roli w projekcie
+   * @return OK
+   */
+  projectRemoveMemberMultipleCommand(body: BatchCommandOfProjectRemoveMemberCommandAndSearchProjectRequest): Observable<BatchResult>;
+  /**
+   * Podpina albo odpina schemat pól projektu
+   * @return OK
+   */
+  projectSetFieldSchemeMultipleCommand(body: BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana nazw projektów z obsługą błędów cząstkowych
+   * @return OK
+   */
+  projectSetNameMultipleCommand(body: BatchCommandOfProjectSetNameCommandAndSearchProjectRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  projectSetSlaPolicyMultipleCommand(body: BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  getIssue(body: GetIssueRequest): Observable<IssueDto[]>;
+  /**
+   * @return OK
+   */
+  getIssueActivity(body: GetIssueActivityRequest): Observable<IssueActivityDto[]>;
+  /**
+   * Zawartość załącznika zgłoszenia
+   * @return No Content
+   */
+  getIssueAttachmentContent(body: GetIssueAttachmentContentRequest): Observable<void>;
+  /**
+   * @return OK
+   */
+  getIssueAttachments(body: GetIssueAttachmentsRequest): Observable<IssueAttachmentDto[]>;
+  /**
+   * Adresy do wgrania plików prosto do magazynu
+   * @return OK
+   */
+  getIssueAttachmentUploadTickets(body: GetIssueAttachmentUploadTicketsRequest): Observable<IssueAttachmentUploadTicketDto[]>;
+  /**
+   * @return OK
+   */
+  getIssueByKey(body: GetIssueByKeyRequest): Observable<IssueDto>;
+  /**
+   * @return OK
+   */
+  getIssueComments(body: GetIssueCommentsRequest): Observable<IssueCommentDto[]>;
+  /**
+   * @return OK
+   */
+  getIssueGraph(body: GetIssueGraphRequest): Observable<IssueGraphDto>;
+  /**
+   * @return OK
+   */
+  searchIssue(body: SearchIssueRequest): Observable<SearchResponse>;
+  /**
+   * @return OK
+   */
+  getIssueWorkLogs(body: GetIssueWorkLogsRequest): Observable<WorkLogDto[]>;
+  /**
+   * @return OK
+   */
+  getSavedIssueViews(): Observable<SavedIssueViewDto[]>;
+  /**
+   * Dodanie komentarzy do zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueAddCommentMultipleCommand(body: BatchCommandOfIssueAddCommentCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjne dopięcie powiązań — blokada zamykająca pętlę odpada w pre-checku
+   * @return OK
+   */
+  issueAddLinkMultipleCommand(body: BatchCommandOfIssueAddLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Rejestracja wgranych załączników zgłoszenia
+   * @return OK
+   */
+  issueAttachmentCreateCommand(body: IssueAttachmentCreateRequest): Observable<IssueAttachmentCreateResponse>;
+  /**
+   * Seryjne zakładanie zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueCreateMultipleCommand(body: BatchCommandOfIssueCreateCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  issueMigrateWorkflowStateMultipleCommand(body: BatchCommandOfIssueMigrateWorkflowStateCommandAndWorkflowStateMigrationFilter): Observable<BatchResult>;
+  /**
+   * Usunięcie komentarzy z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueRemoveCommentMultipleCommand(body: BatchCommandOfIssueRemoveCommentCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjne odpięcie powiązań — bez pre-checku, bo usunięcie krawędzi nie może zamknąć pętli
+   * @return OK
+   */
+  issueRemoveLinkMultipleCommand(body: BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjne przypisanie zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetAssigneeMultipleCommand(body: BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Zmiana treści komentarzy z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetCommentBodyMultipleCommand(body: BatchCommandOfIssueSetCommentBodyCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Nadpisuje wartości pól niestandardowych zgłoszeń — pole pominięte zostaje wyczyszczone
+   * @return OK
+   */
+  issueSetCustomFieldsMultipleCommand(body: BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana opisów zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetDescriptionMultipleCommand(body: BatchCommandOfIssueSetDescriptionCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana terminów zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetDueDateMultipleCommand(body: BatchCommandOfIssueSetDueDateCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana rodzica w hierarchii — pętla w drzewie odpada w pre-checku
+   * @return OK
+   */
+  issueSetParentMultipleCommand(body: BatchCommandOfIssueSetParentCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana priorytetu zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetPriorityMultipleCommand(body: BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana stanu zgłoszeń — przejście spoza schematu odpada jako błąd elementu
+   * @return OK
+   */
+  issueSetStateMultipleCommand(body: BatchCommandOfIssueSetStateCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana tytułów zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetTitleMultipleCommand(body: BatchCommandOfIssueSetTitleCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  workLogCreateCommand(body: WorkLogCreateCommand): Observable<string>;
+  /**
+   * @return OK
+   */
+  savedIssueViewCreateCommand(body: SavedIssueViewCreateCommand): Observable<string>;
+  /**
+   * @return OK
+   */
+  savedIssueViewUpdateCommand(body: SavedIssueViewUpdateCommand): Observable<string>;
+  /**
+   * @return OK
+   */
+  getProjectFieldProfile(body: GetProjectFieldProfileRequest): Observable<ProjectFieldProfileDto>;
+  /**
+   * @return OK
+   */
+  searchFieldScheme(body: SearchFieldSchemeRequest): Observable<FieldSchemeDto[]>;
+  /**
+   * Dokłada definicję pola do schematu — slot jest niezmienny po utworzeniu
+   * @return OK
+   */
+  fieldSchemeAddFieldMultipleCommand(body: BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
+  /**
+   * Zakłada schematy pól niestandardowych
+   * @return OK
+   */
+  fieldSchemeCreateMultipleCommand(body: BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
+  /**
+   * Usuwa definicję pola — odmawia, gdy zgłoszenia mają w nim wartości
+   * @return OK
+   */
+  fieldSchemeRemoveFieldMultipleCommand(body: BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana nazw schematów pól
+   * @return OK
+   */
+  fieldSchemeSetNameMultipleCommand(body: BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  getBoard(body: GetBoardRequest): Observable<BoardDto>;
+  /**
+   * @return OK
+   */
+  getBoardCards(body: GetBoardCardsRequest): Observable<BoardCardDto[]>;
+  /**
+   * @return OK
+   */
+  searchBoard(body: SearchBoardRequest): Observable<BoardDto[]>;
+  /**
+   * Zakłada tablice — kolumny powstają z bieżącego schematu stanów projektu
+   * @return OK
+   */
+  boardCreateMultipleCommand(body: BatchCommandOfBoardCreateCommandAndSearchBoardRequest): Observable<BatchResult>;
+  /**
+   * Przestawia karty na tablicy — rank liczy serwer z sąsiadów wskazanych w komendzie
+   * @return OK
+   */
+  boardSetCardPositionMultipleCommand(body: BatchCommandOfBoardSetCardPositionCommandAndSearchBoardRequest): Observable<BatchResult>;
+  /**
+   * Nadpisuje układ kolumn tablicy w całości
+   * @return OK
+   */
+  boardSetColumnsMultipleCommand(body: BatchCommandOfBoardSetColumnsCommandAndSearchBoardRequest): Observable<BatchResult>;
+  /**
+   * Seryjna zmiana nazwy tablic
+   * @return OK
+   */
+  boardSetNameMultipleCommand(body: BatchCommandOfBoardSetNameCommandAndSearchBoardRequest): Observable<BatchResult>;
 }
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root',
 })
 export class TaskManagementClient implements ITaskManagementClient {
-    private http: HttpClient;
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+  private http: HttpClient;
+  private baseUrl: string;
+  protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
 
-    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
-        this.http = http;
-        this.baseUrl = baseUrl ?? "http://localhost:5290/";
-    }
+  constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+    this.http = http;
+    this.baseUrl = baseUrl ?? 'http://localhost:5290/';
+  }
 
-    /**
-     * @return OK
-     */
-    getProjectWorkflow(body: GetProjectWorkflowRequest): Observable<ProjectWorkflowDto> {
-        let url_ = this.baseUrl + "/workflow/getProjectWorkflow";
-        url_ = url_.replace(/[?&]$/, "");
+  /**
+   * @return OK
+   */
+  getProjectWorkflow(body: GetProjectWorkflowRequest): Observable<ProjectWorkflowDto> {
+    let url_ = this.baseUrl + '/workflow/getProjectWorkflow';
+    url_ = url_.replace(/[?&]$/, '');
 
-        const content_ = JSON.stringify(body);
+    const content_ = JSON.stringify(body);
 
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
 
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetProjectWorkflow(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetProjectWorkflow(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<ProjectWorkflowDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<ProjectWorkflowDto>;
-        }));
-    }
-
-    protected processGetProjectWorkflow(response: HttpResponseBase): Observable<ProjectWorkflowDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProjectWorkflowDto;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getProject(body: GetProjectRequest): Observable<ProjectDto[]> {
-        let url_ = this.baseUrl + "/project/getProject";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetProject(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetProject(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<ProjectDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<ProjectDto[]>;
-        }));
-    }
-
-    protected processGetProject(response: HttpResponseBase): Observable<ProjectDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProjectDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    searchProject(body: SearchProjectRequest): Observable<SearchResponse> {
-        let url_ = this.baseUrl + "/project/searchProject";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSearchProject(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSearchProject(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<SearchResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<SearchResponse>;
-        }));
-    }
-
-    protected processSearchProject(response: HttpResponseBase): Observable<SearchResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne nadanie roli w projekcie — atrybut nadania, nie kod uprawnienia
-     * @return OK
-     */
-    projectAddMemberMultipleCommand(body: BatchCommandOfProjectAddMemberCommandAndSearchProjectRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/project/batch-add-member";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processProjectAddMemberMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProjectAddMemberMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processProjectAddMemberMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne zakładanie projektów z obsługą błędów cząstkowych
-     * @return OK
-     */
-    projectCreateMultipleCommand(body: BatchCommandOfProjectCreateCommandAndSearchProjectRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/project/batch-create";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processProjectCreateMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProjectCreateMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processProjectCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne odebranie roli w projekcie
-     * @return OK
-     */
-    projectRemoveMemberMultipleCommand(body: BatchCommandOfProjectRemoveMemberCommandAndSearchProjectRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/project/batch-remove-member";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processProjectRemoveMemberMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProjectRemoveMemberMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processProjectRemoveMemberMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Podpina albo odpina schemat pól projektu
-     * @return OK
-     */
-    projectSetFieldSchemeMultipleCommand(body: BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/project/batch-set-field-scheme";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processProjectSetFieldSchemeMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProjectSetFieldSchemeMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processProjectSetFieldSchemeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana nazw projektów z obsługą błędów cząstkowych
-     * @return OK
-     */
-    projectSetNameMultipleCommand(body: BatchCommandOfProjectSetNameCommandAndSearchProjectRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/project/batch-set-name";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processProjectSetNameMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProjectSetNameMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processProjectSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /** Ustawia albo usuwa politykę SLA projektu. */
-    projectSetSlaPolicyMultipleCommand(body: BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/project/batch-set-sla-policy";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const options_: any = {
-            body: JSON.stringify(body), observe: "response", responseType: "blob",
-            headers: new HttpHeaders({ "Content-Type": "application/json", "Accept": "application/json" })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_: any) =>
-            this.processProjectSetNameMultipleCommand(response_)
-        )).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProjectSetNameMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetProjectWorkflow(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetProjectWorkflow(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<ProjectWorkflowDto>;
             }
-            return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    /**
-     * @return OK
-     */
-    getIssue(body: GetIssueRequest): Observable<IssueDto[]> {
-        let url_ = this.baseUrl + "/issue/getIssue";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssue(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssue(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueDto[]>;
-        }));
-    }
-
-    protected processGetIssue(response: HttpResponseBase): Observable<IssueDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getIssueActivity(body: GetIssueActivityRequest): Observable<IssueActivityDto[]> {
-        let url_ = this.baseUrl + "/issue/getIssueActivity";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssueActivity(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssueActivity(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueActivityDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueActivityDto[]>;
-        }));
-    }
-
-    protected processGetIssueActivity(response: HttpResponseBase): Observable<IssueActivityDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueActivityDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Zawartość załącznika zgłoszenia
-     * @return No Content
-     */
-    getIssueAttachmentContent(body: GetIssueAttachmentContentRequest): Observable<void> {
-        let url_ = this.baseUrl + "/issue/attachment/content/{uuid}";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "*/*",
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssueAttachmentContent(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssueAttachmentContent(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processGetIssueAttachmentContent(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getIssueAttachments(body: GetIssueAttachmentsRequest): Observable<IssueAttachmentDto[]> {
-        let url_ = this.baseUrl + "/issue/getIssueAttachments";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssueAttachments(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssueAttachments(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueAttachmentDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueAttachmentDto[]>;
-        }));
-    }
-
-    protected processGetIssueAttachments(response: HttpResponseBase): Observable<IssueAttachmentDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Adresy do wgrania plików prosto do magazynu
-     * @return OK
-     */
-    getIssueAttachmentUploadTickets(body: GetIssueAttachmentUploadTicketsRequest): Observable<IssueAttachmentUploadTicketDto[]> {
-        let url_ = this.baseUrl + "/issue/getIssueAttachmentUploadTickets";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssueAttachmentUploadTickets(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssueAttachmentUploadTickets(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueAttachmentUploadTicketDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueAttachmentUploadTicketDto[]>;
-        }));
-    }
-
-    protected processGetIssueAttachmentUploadTickets(response: HttpResponseBase): Observable<IssueAttachmentUploadTicketDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentUploadTicketDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getIssueByKey(body: GetIssueByKeyRequest): Observable<IssueDto> {
-        let url_ = this.baseUrl + "/issue/getIssueByKey";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssueByKey(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssueByKey(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueDto>;
-        }));
-    }
-
-    protected processGetIssueByKey(response: HttpResponseBase): Observable<IssueDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueDto;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getIssueComments(body: GetIssueCommentsRequest): Observable<IssueCommentDto[]> {
-        let url_ = this.baseUrl + "/issue/getIssueComments";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssueComments(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssueComments(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueCommentDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueCommentDto[]>;
-        }));
-    }
-
-    protected processGetIssueComments(response: HttpResponseBase): Observable<IssueCommentDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueCommentDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getIssueGraph(body: GetIssueGraphRequest): Observable<IssueGraphDto> {
-        let url_ = this.baseUrl + "/issue/getIssueGraph";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetIssueGraph(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetIssueGraph(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueGraphDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueGraphDto>;
-        }));
-    }
-
-    protected processGetIssueGraph(response: HttpResponseBase): Observable<IssueGraphDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueGraphDto;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    searchIssue(body: SearchIssueRequest): Observable<SearchResponse> {
-        let url_ = this.baseUrl + "/issue/searchIssue";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSearchIssue(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSearchIssue(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<SearchResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<SearchResponse>;
-        }));
-    }
-
-    protected processSearchIssue(response: HttpResponseBase): Observable<SearchResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Dodanie komentarzy do zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueAddCommentMultipleCommand(body: BatchCommandOfIssueAddCommentCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-add-comment";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueAddCommentMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueAddCommentMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueAddCommentMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne dopięcie powiązań — blokada zamykająca pętlę odpada w pre-checku
-     * @return OK
-     */
-    issueAddLinkMultipleCommand(body: BatchCommandOfIssueAddLinkCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-add-link";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueAddLinkMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueAddLinkMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueAddLinkMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Rejestracja wgranych załączników zgłoszenia
-     * @return OK
-     */
-    issueAttachmentCreateCommand(body: IssueAttachmentCreateRequest): Observable<IssueAttachmentCreateResponse> {
-        let url_ = this.baseUrl + "/issue/attachment-create";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueAttachmentCreateCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueAttachmentCreateCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<IssueAttachmentCreateResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<IssueAttachmentCreateResponse>;
-        }));
-    }
-
-    protected processIssueAttachmentCreateCommand(response: HttpResponseBase): Observable<IssueAttachmentCreateResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentCreateResponse;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne zakładanie zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueCreateMultipleCommand(body: BatchCommandOfIssueCreateCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-create";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueCreateMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueCreateMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Usunięcie komentarzy z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueRemoveCommentMultipleCommand(body: BatchCommandOfIssueRemoveCommentCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-remove-comment";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueRemoveCommentMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueRemoveCommentMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueRemoveCommentMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne odpięcie powiązań — bez pre-checku, bo usunięcie krawędzi nie może zamknąć pętli
-     * @return OK
-     */
-    issueRemoveLinkMultipleCommand(body: BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-remove-link";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueRemoveLinkMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueRemoveLinkMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueRemoveLinkMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjne przypisanie zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetAssigneeMultipleCommand(body: BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-assignee";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetAssigneeMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetAssigneeMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetAssigneeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Zmiana treści komentarzy z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetCommentBodyMultipleCommand(body: BatchCommandOfIssueSetCommentBodyCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-comment-body";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetCommentBodyMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetCommentBodyMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetCommentBodyMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Nadpisuje wartości pól niestandardowych zgłoszeń — pole pominięte zostaje wyczyszczone
-     * @return OK
-     */
-    issueSetCustomFieldsMultipleCommand(body: BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-custom-fields";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetCustomFieldsMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetCustomFieldsMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetCustomFieldsMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana opisów zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetDescriptionMultipleCommand(body: BatchCommandOfIssueSetDescriptionCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-description";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetDescriptionMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetDescriptionMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetDescriptionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana terminów zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetDueDateMultipleCommand(body: BatchCommandOfIssueSetDueDateCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-due-date";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetDueDateMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetDueDateMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetDueDateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana rodzica w hierarchii — pętla w drzewie odpada w pre-checku
-     * @return OK
-     */
-    issueSetParentMultipleCommand(body: BatchCommandOfIssueSetParentCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-parent";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetParentMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetParentMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetParentMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana priorytetu zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetPriorityMultipleCommand(body: BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-priority";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetPriorityMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetPriorityMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetPriorityMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana stanu zgłoszeń — przejście spoza schematu odpada jako błąd elementu
-     * @return OK
-     */
-    issueSetStateMultipleCommand(body: BatchCommandOfIssueSetStateCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-state";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetStateMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetStateMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetStateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana tytułów zgłoszeń z obsługą błędów cząstkowych
-     * @return OK
-     */
-    issueSetTitleMultipleCommand(body: BatchCommandOfIssueSetTitleCommandAndSearchIssueRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/issue/batch-set-title";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processIssueSetTitleMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processIssueSetTitleMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processIssueSetTitleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getProjectFieldProfile(body: GetProjectFieldProfileRequest): Observable<ProjectFieldProfileDto> {
-        let url_ = this.baseUrl + "/field-scheme/getProjectFieldProfile";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetProjectFieldProfile(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetProjectFieldProfile(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<ProjectFieldProfileDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<ProjectFieldProfileDto>;
-        }));
-    }
-
-    protected processGetProjectFieldProfile(response: HttpResponseBase): Observable<ProjectFieldProfileDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProjectFieldProfileDto;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    searchFieldScheme(body: SearchFieldSchemeRequest): Observable<FieldSchemeDto[]> {
-        let url_ = this.baseUrl + "/field-scheme/searchFieldScheme";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSearchFieldScheme(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSearchFieldScheme(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<FieldSchemeDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<FieldSchemeDto[]>;
-        }));
-    }
-
-    protected processSearchFieldScheme(response: HttpResponseBase): Observable<FieldSchemeDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FieldSchemeDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Dokłada definicję pola do schematu — slot jest niezmienny po utworzeniu
-     * @return OK
-     */
-    fieldSchemeAddFieldMultipleCommand(body: BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/field-scheme/batch-add-field";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processFieldSchemeAddFieldMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processFieldSchemeAddFieldMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processFieldSchemeAddFieldMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Zakłada schematy pól niestandardowych
-     * @return OK
-     */
-    fieldSchemeCreateMultipleCommand(body: BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/field-scheme/batch-create";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processFieldSchemeCreateMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processFieldSchemeCreateMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processFieldSchemeCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Usuwa definicję pola — odmawia, gdy zgłoszenia mają w nim wartości
-     * @return OK
-     */
-    fieldSchemeRemoveFieldMultipleCommand(body: BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/field-scheme/batch-remove-field";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processFieldSchemeRemoveFieldMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processFieldSchemeRemoveFieldMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processFieldSchemeRemoveFieldMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana nazw schematów pól
-     * @return OK
-     */
-    fieldSchemeSetNameMultipleCommand(body: BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/field-scheme/batch-set-name";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processFieldSchemeSetNameMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processFieldSchemeSetNameMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processFieldSchemeSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getBoard(body: GetBoardRequest): Observable<BoardDto> {
-        let url_ = this.baseUrl + "/board/getBoard";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetBoard(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetBoard(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BoardDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BoardDto>;
-        }));
-    }
-
-    protected processGetBoard(response: HttpResponseBase): Observable<BoardDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BoardDto;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getBoardCards(body: GetBoardCardsRequest): Observable<BoardCardDto[]> {
-        let url_ = this.baseUrl + "/board/getBoardCards";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetBoardCards(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetBoardCards(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BoardCardDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BoardCardDto[]>;
-        }));
-    }
-
-    protected processGetBoardCards(response: HttpResponseBase): Observable<BoardCardDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BoardCardDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    searchBoard(body: SearchBoardRequest): Observable<BoardDto[]> {
-        let url_ = this.baseUrl + "/board/searchBoard";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSearchBoard(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSearchBoard(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BoardDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BoardDto[]>;
-        }));
-    }
-
-    protected processSearchBoard(response: HttpResponseBase): Observable<BoardDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BoardDto[];
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Zakłada tablice — kolumny powstają z bieżącego schematu stanów projektu
-     * @return OK
-     */
-    boardCreateMultipleCommand(body: BatchCommandOfBoardCreateCommandAndSearchBoardRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/board/batch-create";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processBoardCreateMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processBoardCreateMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processBoardCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Przestawia karty na tablicy — rank liczy serwer z sąsiadów wskazanych w komendzie
-     * @return OK
-     */
-    boardSetCardPositionMultipleCommand(body: BatchCommandOfBoardSetCardPositionCommandAndSearchBoardRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/board/batch-set-card-position";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processBoardSetCardPositionMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processBoardSetCardPositionMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processBoardSetCardPositionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Nadpisuje układ kolumn tablicy w całości
-     * @return OK
-     */
-    boardSetColumnsMultipleCommand(body: BatchCommandOfBoardSetColumnsCommandAndSearchBoardRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/board/batch-set-columns";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processBoardSetColumnsMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processBoardSetColumnsMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processBoardSetColumnsMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Seryjna zmiana nazwy tablic
-     * @return OK
-     */
-    boardSetNameMultipleCommand(body: BatchCommandOfBoardSetNameCommandAndSearchBoardRequest): Observable<BatchResult> {
-        let url_ = this.baseUrl + "/board/batch-set-name";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processBoardSetNameMultipleCommand(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processBoardSetNameMultipleCommand(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BatchResult>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BatchResult>;
-        }));
-    }
-
-    protected processBoardSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
-            return _observableOf(result200);
-            }));
-        } else if (status === 401) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Unauthorized", status, _responseText, _headers);
-            }));
-        } else if (status === 403) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("Forbidden", status, _responseText, _headers);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
+          } else return _observableThrow(response_) as any as Observable<ProjectWorkflowDto>;
+        }),
+      );
+  }
+
+  protected processGetProjectWorkflow(response: HttpResponseBase): Observable<ProjectWorkflowDto> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as ProjectWorkflowDto);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getWorkflowScheme(body: GetWorkflowSchemeRequest): Observable<WorkflowSchemeDto> {
+    let url_ = this.baseUrl + '/workflow/getWorkflowScheme';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetWorkflowScheme(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetWorkflowScheme(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<WorkflowSchemeDto>;
+            }
+          } else return _observableThrow(response_) as any as Observable<WorkflowSchemeDto>;
+        }),
+      );
+  }
+
+  protected processGetWorkflowScheme(response: HttpResponseBase): Observable<WorkflowSchemeDto> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as WorkflowSchemeDto);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getWorkflowSchemes(): Observable<WorkflowSchemeListItemDto[]> {
+    let url_ = this.baseUrl + '/workflow/getWorkflowSchemes';
+    url_ = url_.replace(/[?&]$/, '');
+
+    let options_: any = {
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('get', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetWorkflowSchemes(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetWorkflowSchemes(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<WorkflowSchemeListItemDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<WorkflowSchemeListItemDto[]>;
+        }),
+      );
+  }
+
+  protected processGetWorkflowSchemes(response: HttpResponseBase): Observable<WorkflowSchemeListItemDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as WorkflowSchemeListItemDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  workflowSchemeCreateCommand(body: WorkflowSchemeCreateCommand): Observable<string> {
+    let url_ = this.baseUrl + '/workflow/create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processWorkflowSchemeCreateCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processWorkflowSchemeCreateCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<string>;
+            }
+          } else return _observableThrow(response_) as any as Observable<string>;
+        }),
+      );
+  }
+
+  protected processWorkflowSchemeCreateCommand(response: HttpResponseBase): Observable<string> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as string);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  workflowSchemePublishCommand(body: WorkflowSchemePublishCommand): Observable<string> {
+    let url_ = this.baseUrl + '/workflow/publish';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processWorkflowSchemePublishCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processWorkflowSchemePublishCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<string>;
+            }
+          } else return _observableThrow(response_) as any as Observable<string>;
+        }),
+      );
+  }
+
+  protected processWorkflowSchemePublishCommand(response: HttpResponseBase): Observable<string> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as string);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  searchSprint(body: SearchSprintRequest): Observable<SearchResponse> {
+    let url_ = this.baseUrl + '/sprint/searchSprint';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSearchSprint(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSearchSprint(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<SearchResponse>;
+            }
+          } else return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }),
+      );
+  }
+
+  protected processSearchSprint(response: HttpResponseBase): Observable<SearchResponse> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getSprint(body: GetSprintRequest): Observable<SprintDto[]> {
+    let url_ = this.baseUrl + '/sprint/getSprint';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetSprint(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetSprint(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<SprintDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<SprintDto[]>;
+        }),
+      );
+  }
+
+  protected processGetSprint(response: HttpResponseBase): Observable<SprintDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as SprintDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  sprintCreateMultipleCommand(body: BatchCommandOfSprintCreateCommandAndSearchSprintRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/sprint/batch-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSprintCreateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSprintCreateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processSprintCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  sprintStartMultipleCommand(body: BatchCommandOfSprintStartCommandAndSearchSprintRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/sprint/batch-start';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSprintStartMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSprintStartMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processSprintStartMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  sprintCloseMultipleCommand(body: BatchCommandOfSprintCloseCommandAndSearchSprintRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/sprint/batch-close';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSprintCloseMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSprintCloseMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processSprintCloseMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  sprintSetIssueSprintMultipleCommand(body: BatchCommandOfSprintSetIssueSprintCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/sprint/batch-set-issue-sprint';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSprintSetIssueSprintMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSprintSetIssueSprintMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processSprintSetIssueSprintMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getProject(body: GetProjectRequest): Observable<ProjectDto[]> {
+    let url_ = this.baseUrl + '/project/getProject';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetProject(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetProject(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<ProjectDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<ProjectDto[]>;
+        }),
+      );
+  }
+
+  protected processGetProject(response: HttpResponseBase): Observable<ProjectDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as ProjectDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  searchProject(body: SearchProjectRequest): Observable<SearchResponse> {
+    let url_ = this.baseUrl + '/project/searchProject';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSearchProject(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSearchProject(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<SearchResponse>;
+            }
+          } else return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }),
+      );
+  }
+
+  protected processSearchProject(response: HttpResponseBase): Observable<SearchResponse> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjne nadanie roli w projekcie — atrybut nadania, nie kod uprawnienia
+   * @return OK
+   */
+  projectAddMemberMultipleCommand(body: BatchCommandOfProjectAddMemberCommandAndSearchProjectRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/project/batch-add-member';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processProjectAddMemberMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processProjectAddMemberMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processProjectAddMemberMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjne zakładanie projektów z obsługą błędów cząstkowych
+   * @return OK
+   */
+  projectCreateMultipleCommand(body: BatchCommandOfProjectCreateCommandAndSearchProjectRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/project/batch-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processProjectCreateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processProjectCreateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processProjectCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjne odebranie roli w projekcie
+   * @return OK
+   */
+  projectRemoveMemberMultipleCommand(body: BatchCommandOfProjectRemoveMemberCommandAndSearchProjectRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/project/batch-remove-member';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processProjectRemoveMemberMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processProjectRemoveMemberMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processProjectRemoveMemberMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Podpina albo odpina schemat pól projektu
+   * @return OK
+   */
+  projectSetFieldSchemeMultipleCommand(body: BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/project/batch-set-field-scheme';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processProjectSetFieldSchemeMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processProjectSetFieldSchemeMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processProjectSetFieldSchemeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana nazw projektów z obsługą błędów cząstkowych
+   * @return OK
+   */
+  projectSetNameMultipleCommand(body: BatchCommandOfProjectSetNameCommandAndSearchProjectRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/project/batch-set-name';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processProjectSetNameMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processProjectSetNameMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processProjectSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  projectSetSlaPolicyMultipleCommand(body: BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/project/batch-set-sla-policy';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processProjectSetSlaPolicyMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processProjectSetSlaPolicyMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processProjectSetSlaPolicyMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getIssue(body: GetIssueRequest): Observable<IssueDto[]> {
+    let url_ = this.baseUrl + '/issue/getIssue';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssue(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssue(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueDto[]>;
+        }),
+      );
+  }
+
+  protected processGetIssue(response: HttpResponseBase): Observable<IssueDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getIssueActivity(body: GetIssueActivityRequest): Observable<IssueActivityDto[]> {
+    let url_ = this.baseUrl + '/issue/getIssueActivity';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueActivity(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueActivity(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueActivityDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueActivityDto[]>;
+        }),
+      );
+  }
+
+  protected processGetIssueActivity(response: HttpResponseBase): Observable<IssueActivityDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueActivityDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Zawartość załącznika zgłoszenia
+   * @return No Content
+   */
+  getIssueAttachmentContent(body: GetIssueAttachmentContentRequest): Observable<void> {
+    let url_ = this.baseUrl + '/issue/attachment/content/{uuid}';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': '*/*',
+      }),
+    };
+
+    return this.http
+      .request('get', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueAttachmentContent(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueAttachmentContent(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<void>;
+            }
+          } else return _observableThrow(response_) as any as Observable<void>;
+        }),
+      );
+  }
+
+  protected processGetIssueAttachmentContent(response: HttpResponseBase): Observable<void> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return _observableOf(null as any);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getIssueAttachments(body: GetIssueAttachmentsRequest): Observable<IssueAttachmentDto[]> {
+    let url_ = this.baseUrl + '/issue/getIssueAttachments';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueAttachments(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueAttachments(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueAttachmentDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueAttachmentDto[]>;
+        }),
+      );
+  }
+
+  protected processGetIssueAttachments(response: HttpResponseBase): Observable<IssueAttachmentDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Adresy do wgrania plików prosto do magazynu
+   * @return OK
+   */
+  getIssueAttachmentUploadTickets(body: GetIssueAttachmentUploadTicketsRequest): Observable<IssueAttachmentUploadTicketDto[]> {
+    let url_ = this.baseUrl + '/issue/getIssueAttachmentUploadTickets';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueAttachmentUploadTickets(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueAttachmentUploadTickets(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueAttachmentUploadTicketDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueAttachmentUploadTicketDto[]>;
+        }),
+      );
+  }
+
+  protected processGetIssueAttachmentUploadTickets(response: HttpResponseBase): Observable<IssueAttachmentUploadTicketDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentUploadTicketDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getIssueByKey(body: GetIssueByKeyRequest): Observable<IssueDto> {
+    let url_ = this.baseUrl + '/issue/getIssueByKey';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueByKey(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueByKey(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueDto>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueDto>;
+        }),
+      );
+  }
+
+  protected processGetIssueByKey(response: HttpResponseBase): Observable<IssueDto> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueDto);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getIssueComments(body: GetIssueCommentsRequest): Observable<IssueCommentDto[]> {
+    let url_ = this.baseUrl + '/issue/getIssueComments';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueComments(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueComments(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueCommentDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueCommentDto[]>;
+        }),
+      );
+  }
+
+  protected processGetIssueComments(response: HttpResponseBase): Observable<IssueCommentDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueCommentDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getIssueGraph(body: GetIssueGraphRequest): Observable<IssueGraphDto> {
+    let url_ = this.baseUrl + '/issue/getIssueGraph';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueGraph(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueGraph(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueGraphDto>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueGraphDto>;
+        }),
+      );
+  }
+
+  protected processGetIssueGraph(response: HttpResponseBase): Observable<IssueGraphDto> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueGraphDto);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  searchIssue(body: SearchIssueRequest): Observable<SearchResponse> {
+    let url_ = this.baseUrl + '/issue/searchIssue';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSearchIssue(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSearchIssue(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<SearchResponse>;
+            }
+          } else return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }),
+      );
+  }
+
+  protected processSearchIssue(response: HttpResponseBase): Observable<SearchResponse> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getIssueWorkLogs(body: GetIssueWorkLogsRequest): Observable<WorkLogDto[]> {
+    let url_ = this.baseUrl + '/issue/getIssueWorkLogs';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetIssueWorkLogs(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetIssueWorkLogs(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<WorkLogDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<WorkLogDto[]>;
+        }),
+      );
+  }
+
+  protected processGetIssueWorkLogs(response: HttpResponseBase): Observable<WorkLogDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as WorkLogDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getSavedIssueViews(): Observable<SavedIssueViewDto[]> {
+    let url_ = this.baseUrl + '/issue/getSavedIssueViews';
+    url_ = url_.replace(/[?&]$/, '');
+
+    let options_: any = {
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('get', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetSavedIssueViews(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetSavedIssueViews(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<SavedIssueViewDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<SavedIssueViewDto[]>;
+        }),
+      );
+  }
+
+  protected processGetSavedIssueViews(response: HttpResponseBase): Observable<SavedIssueViewDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as SavedIssueViewDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Dodanie komentarzy do zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueAddCommentMultipleCommand(body: BatchCommandOfIssueAddCommentCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-add-comment';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueAddCommentMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueAddCommentMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueAddCommentMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjne dopięcie powiązań — blokada zamykająca pętlę odpada w pre-checku
+   * @return OK
+   */
+  issueAddLinkMultipleCommand(body: BatchCommandOfIssueAddLinkCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-add-link';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueAddLinkMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueAddLinkMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueAddLinkMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Rejestracja wgranych załączników zgłoszenia
+   * @return OK
+   */
+  issueAttachmentCreateCommand(body: IssueAttachmentCreateRequest): Observable<IssueAttachmentCreateResponse> {
+    let url_ = this.baseUrl + '/issue/attachment-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueAttachmentCreateCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueAttachmentCreateCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<IssueAttachmentCreateResponse>;
+            }
+          } else return _observableThrow(response_) as any as Observable<IssueAttachmentCreateResponse>;
+        }),
+      );
+  }
+
+  protected processIssueAttachmentCreateCommand(response: HttpResponseBase): Observable<IssueAttachmentCreateResponse> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as IssueAttachmentCreateResponse);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjne zakładanie zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueCreateMultipleCommand(body: BatchCommandOfIssueCreateCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueCreateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueCreateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  issueMigrateWorkflowStateMultipleCommand(body: BatchCommandOfIssueMigrateWorkflowStateCommandAndWorkflowStateMigrationFilter): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-migrate-workflow-state';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueMigrateWorkflowStateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueMigrateWorkflowStateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueMigrateWorkflowStateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Usunięcie komentarzy z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueRemoveCommentMultipleCommand(body: BatchCommandOfIssueRemoveCommentCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-remove-comment';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueRemoveCommentMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueRemoveCommentMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueRemoveCommentMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjne odpięcie powiązań — bez pre-checku, bo usunięcie krawędzi nie może zamknąć pętli
+   * @return OK
+   */
+  issueRemoveLinkMultipleCommand(body: BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-remove-link';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueRemoveLinkMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueRemoveLinkMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueRemoveLinkMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjne przypisanie zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetAssigneeMultipleCommand(body: BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-assignee';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetAssigneeMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetAssigneeMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetAssigneeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Zmiana treści komentarzy z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetCommentBodyMultipleCommand(body: BatchCommandOfIssueSetCommentBodyCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-comment-body';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetCommentBodyMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetCommentBodyMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetCommentBodyMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Nadpisuje wartości pól niestandardowych zgłoszeń — pole pominięte zostaje wyczyszczone
+   * @return OK
+   */
+  issueSetCustomFieldsMultipleCommand(body: BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-custom-fields';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetCustomFieldsMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetCustomFieldsMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetCustomFieldsMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana opisów zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetDescriptionMultipleCommand(body: BatchCommandOfIssueSetDescriptionCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-description';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetDescriptionMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetDescriptionMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetDescriptionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana terminów zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetDueDateMultipleCommand(body: BatchCommandOfIssueSetDueDateCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-due-date';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetDueDateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetDueDateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetDueDateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana rodzica w hierarchii — pętla w drzewie odpada w pre-checku
+   * @return OK
+   */
+  issueSetParentMultipleCommand(body: BatchCommandOfIssueSetParentCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-parent';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetParentMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetParentMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetParentMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana priorytetu zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetPriorityMultipleCommand(body: BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-priority';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetPriorityMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetPriorityMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetPriorityMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana stanu zgłoszeń — przejście spoza schematu odpada jako błąd elementu
+   * @return OK
+   */
+  issueSetStateMultipleCommand(body: BatchCommandOfIssueSetStateCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-state';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetStateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetStateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetStateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana tytułów zgłoszeń z obsługą błędów cząstkowych
+   * @return OK
+   */
+  issueSetTitleMultipleCommand(body: BatchCommandOfIssueSetTitleCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-title';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetTitleMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetTitleMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetTitleMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  workLogCreateCommand(body: WorkLogCreateCommand): Observable<string> {
+    let url_ = this.baseUrl + '/issue/work-log-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processWorkLogCreateCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processWorkLogCreateCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<string>;
+            }
+          } else return _observableThrow(response_) as any as Observable<string>;
+        }),
+      );
+  }
+
+  protected processWorkLogCreateCommand(response: HttpResponseBase): Observable<string> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as string);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  savedIssueViewCreateCommand(body: SavedIssueViewCreateCommand): Observable<string> {
+    let url_ = this.baseUrl + '/issue/saved-view-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSavedIssueViewCreateCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSavedIssueViewCreateCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<string>;
+            }
+          } else return _observableThrow(response_) as any as Observable<string>;
+        }),
+      );
+  }
+
+  protected processSavedIssueViewCreateCommand(response: HttpResponseBase): Observable<string> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as string);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  savedIssueViewUpdateCommand(body: SavedIssueViewUpdateCommand): Observable<string> {
+    let url_ = this.baseUrl + '/issue/saved-view-update';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSavedIssueViewUpdateCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSavedIssueViewUpdateCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<string>;
+            }
+          } else return _observableThrow(response_) as any as Observable<string>;
+        }),
+      );
+  }
+
+  protected processSavedIssueViewUpdateCommand(response: HttpResponseBase): Observable<string> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as string);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getProjectFieldProfile(body: GetProjectFieldProfileRequest): Observable<ProjectFieldProfileDto> {
+    let url_ = this.baseUrl + '/field-scheme/getProjectFieldProfile';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetProjectFieldProfile(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetProjectFieldProfile(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<ProjectFieldProfileDto>;
+            }
+          } else return _observableThrow(response_) as any as Observable<ProjectFieldProfileDto>;
+        }),
+      );
+  }
+
+  protected processGetProjectFieldProfile(response: HttpResponseBase): Observable<ProjectFieldProfileDto> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as ProjectFieldProfileDto);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  searchFieldScheme(body: SearchFieldSchemeRequest): Observable<FieldSchemeDto[]> {
+    let url_ = this.baseUrl + '/field-scheme/searchFieldScheme';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSearchFieldScheme(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSearchFieldScheme(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<FieldSchemeDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<FieldSchemeDto[]>;
+        }),
+      );
+  }
+
+  protected processSearchFieldScheme(response: HttpResponseBase): Observable<FieldSchemeDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as FieldSchemeDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Dokłada definicję pola do schematu — slot jest niezmienny po utworzeniu
+   * @return OK
+   */
+  fieldSchemeAddFieldMultipleCommand(body: BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/field-scheme/batch-add-field';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processFieldSchemeAddFieldMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processFieldSchemeAddFieldMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processFieldSchemeAddFieldMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Zakłada schematy pól niestandardowych
+   * @return OK
+   */
+  fieldSchemeCreateMultipleCommand(body: BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/field-scheme/batch-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processFieldSchemeCreateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processFieldSchemeCreateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processFieldSchemeCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Usuwa definicję pola — odmawia, gdy zgłoszenia mają w nim wartości
+   * @return OK
+   */
+  fieldSchemeRemoveFieldMultipleCommand(body: BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/field-scheme/batch-remove-field';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processFieldSchemeRemoveFieldMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processFieldSchemeRemoveFieldMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processFieldSchemeRemoveFieldMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana nazw schematów pól
+   * @return OK
+   */
+  fieldSchemeSetNameMultipleCommand(body: BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/field-scheme/batch-set-name';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processFieldSchemeSetNameMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processFieldSchemeSetNameMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processFieldSchemeSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getBoard(body: GetBoardRequest): Observable<BoardDto> {
+    let url_ = this.baseUrl + '/board/getBoard';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetBoard(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetBoard(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BoardDto>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BoardDto>;
+        }),
+      );
+  }
+
+  protected processGetBoard(response: HttpResponseBase): Observable<BoardDto> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BoardDto);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  getBoardCards(body: GetBoardCardsRequest): Observable<BoardCardDto[]> {
+    let url_ = this.baseUrl + '/board/getBoardCards';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetBoardCards(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetBoardCards(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BoardCardDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BoardCardDto[]>;
+        }),
+      );
+  }
+
+  protected processGetBoardCards(response: HttpResponseBase): Observable<BoardCardDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BoardCardDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  searchBoard(body: SearchBoardRequest): Observable<BoardDto[]> {
+    let url_ = this.baseUrl + '/board/searchBoard';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processSearchBoard(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processSearchBoard(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BoardDto[]>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BoardDto[]>;
+        }),
+      );
+  }
+
+  protected processSearchBoard(response: HttpResponseBase): Observable<BoardDto[]> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BoardDto[]);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Zakłada tablice — kolumny powstają z bieżącego schematu stanów projektu
+   * @return OK
+   */
+  boardCreateMultipleCommand(body: BatchCommandOfBoardCreateCommandAndSearchBoardRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/board/batch-create';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processBoardCreateMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processBoardCreateMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processBoardCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Przestawia karty na tablicy — rank liczy serwer z sąsiadów wskazanych w komendzie
+   * @return OK
+   */
+  boardSetCardPositionMultipleCommand(body: BatchCommandOfBoardSetCardPositionCommandAndSearchBoardRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/board/batch-set-card-position';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processBoardSetCardPositionMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processBoardSetCardPositionMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processBoardSetCardPositionMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Nadpisuje układ kolumn tablicy w całości
+   * @return OK
+   */
+  boardSetColumnsMultipleCommand(body: BatchCommandOfBoardSetColumnsCommandAndSearchBoardRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/board/batch-set-columns';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processBoardSetColumnsMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processBoardSetColumnsMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processBoardSetColumnsMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * Seryjna zmiana nazwy tablic
+   * @return OK
+   */
+  boardSetNameMultipleCommand(body: BatchCommandOfBoardSetNameCommandAndSearchBoardRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/board/batch-set-name';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processBoardSetNameMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processBoardSetNameMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processBoardSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfBoardCreateCommandAndSearchBoardRequest {
-    commands?: BoardCreateCommand[] | undefined;
-    templateCommand?: BoardCreateCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchBoardRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: BoardCreateCommand[] | undefined;
+  templateCommand?: BoardCreateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchBoardRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfBoardSetCardPositionCommandAndSearchBoardRequest {
-    commands?: BoardSetCardPositionCommand[] | undefined;
-    templateCommand?: BoardSetCardPositionCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchBoardRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: BoardSetCardPositionCommand[] | undefined;
+  templateCommand?: BoardSetCardPositionCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchBoardRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfBoardSetColumnsCommandAndSearchBoardRequest {
-    commands?: BoardSetColumnsCommand[] | undefined;
-    templateCommand?: BoardSetColumnsCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchBoardRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: BoardSetColumnsCommand[] | undefined;
+  templateCommand?: BoardSetColumnsCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchBoardRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfBoardSetNameCommandAndSearchBoardRequest {
-    commands?: BoardSetNameCommand[] | undefined;
-    templateCommand?: BoardSetNameCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchBoardRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: BoardSetNameCommand[] | undefined;
+  templateCommand?: BoardSetNameCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchBoardRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfFieldSchemeAddFieldCommandAndSearchFieldSchemeRequest {
-    commands?: FieldSchemeAddFieldCommand[] | undefined;
-    templateCommand?: FieldSchemeAddFieldCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchFieldSchemeRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: FieldSchemeAddFieldCommand[] | undefined;
+  templateCommand?: FieldSchemeAddFieldCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchFieldSchemeRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfFieldSchemeCreateCommandAndSearchFieldSchemeRequest {
-    commands?: FieldSchemeCreateCommand[] | undefined;
-    templateCommand?: FieldSchemeCreateCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchFieldSchemeRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: FieldSchemeCreateCommand[] | undefined;
+  templateCommand?: FieldSchemeCreateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchFieldSchemeRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfFieldSchemeRemoveFieldCommandAndSearchFieldSchemeRequest {
-    commands?: FieldSchemeRemoveFieldCommand[] | undefined;
-    templateCommand?: FieldSchemeRemoveFieldCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchFieldSchemeRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: FieldSchemeRemoveFieldCommand[] | undefined;
+  templateCommand?: FieldSchemeRemoveFieldCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchFieldSchemeRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfFieldSchemeSetNameCommandAndSearchFieldSchemeRequest {
-    commands?: FieldSchemeSetNameCommand[] | undefined;
-    templateCommand?: FieldSchemeSetNameCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchFieldSchemeRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: FieldSchemeSetNameCommand[] | undefined;
+  templateCommand?: FieldSchemeSetNameCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchFieldSchemeRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueAddCommentCommandAndSearchIssueRequest {
-    commands?: IssueAddCommentCommand[] | undefined;
-    templateCommand?: IssueAddCommentCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueAddCommentCommand[] | undefined;
+  templateCommand?: IssueAddCommentCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueAddLinkCommandAndSearchIssueRequest {
-    commands?: IssueAddLinkCommand[] | undefined;
-    templateCommand?: IssueAddLinkCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueAddLinkCommand[] | undefined;
+  templateCommand?: IssueAddLinkCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueCreateCommandAndSearchIssueRequest {
-    commands?: IssueCreateCommand[] | undefined;
-    templateCommand?: IssueCreateCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueCreateCommand[] | undefined;
+  templateCommand?: IssueCreateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIssueMigrateWorkflowStateCommandAndWorkflowStateMigrationFilter {
+  commands?: IssueMigrateWorkflowStateCommand[] | undefined;
+  templateCommand?: IssueMigrateWorkflowStateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: WorkflowStateMigrationFilter | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueRemoveCommentCommandAndSearchIssueRequest {
-    commands?: IssueRemoveCommentCommand[] | undefined;
-    templateCommand?: IssueRemoveCommentCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueRemoveCommentCommand[] | undefined;
+  templateCommand?: IssueRemoveCommentCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest {
-    commands?: IssueRemoveLinkCommand[] | undefined;
-    templateCommand?: IssueRemoveLinkCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueRemoveLinkCommand[] | undefined;
+  templateCommand?: IssueRemoveLinkCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest {
-    commands?: IssueSetAssigneeCommand[] | undefined;
-    templateCommand?: IssueSetAssigneeCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetAssigneeCommand[] | undefined;
+  templateCommand?: IssueSetAssigneeCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetCommentBodyCommandAndSearchIssueRequest {
-    commands?: IssueSetCommentBodyCommand[] | undefined;
-    templateCommand?: IssueSetCommentBodyCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetCommentBodyCommand[] | undefined;
+  templateCommand?: IssueSetCommentBodyCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetCustomFieldsCommandAndSearchIssueRequest {
-    commands?: IssueSetCustomFieldsCommand[] | undefined;
-    templateCommand?: IssueSetCustomFieldsCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetCustomFieldsCommand[] | undefined;
+  templateCommand?: IssueSetCustomFieldsCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetDescriptionCommandAndSearchIssueRequest {
-    commands?: IssueSetDescriptionCommand[] | undefined;
-    templateCommand?: IssueSetDescriptionCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetDescriptionCommand[] | undefined;
+  templateCommand?: IssueSetDescriptionCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetDueDateCommandAndSearchIssueRequest {
-    commands?: IssueSetDueDateCommand[] | undefined;
-    templateCommand?: IssueSetDueDateCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetDueDateCommand[] | undefined;
+  templateCommand?: IssueSetDueDateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetParentCommandAndSearchIssueRequest {
-    commands?: IssueSetParentCommand[] | undefined;
-    templateCommand?: IssueSetParentCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetParentCommand[] | undefined;
+  templateCommand?: IssueSetParentCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest {
-    commands?: IssueSetPriorityCommand[] | undefined;
-    templateCommand?: IssueSetPriorityCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetPriorityCommand[] | undefined;
+  templateCommand?: IssueSetPriorityCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetStateCommandAndSearchIssueRequest {
-    commands?: IssueSetStateCommand[] | undefined;
-    templateCommand?: IssueSetStateCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetStateCommand[] | undefined;
+  templateCommand?: IssueSetStateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueSetTitleCommandAndSearchIssueRequest {
-    commands?: IssueSetTitleCommand[] | undefined;
-    templateCommand?: IssueSetTitleCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchIssueRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: IssueSetTitleCommand[] | undefined;
+  templateCommand?: IssueSetTitleCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectAddMemberCommandAndSearchProjectRequest {
-    commands?: ProjectAddMemberCommand[] | undefined;
-    templateCommand?: ProjectAddMemberCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchProjectRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: ProjectAddMemberCommand[] | undefined;
+  templateCommand?: ProjectAddMemberCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchProjectRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectCreateCommandAndSearchProjectRequest {
-    commands?: ProjectCreateCommand[] | undefined;
-    templateCommand?: ProjectCreateCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchProjectRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: ProjectCreateCommand[] | undefined;
+  templateCommand?: ProjectCreateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchProjectRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectRemoveMemberCommandAndSearchProjectRequest {
-    commands?: ProjectRemoveMemberCommand[] | undefined;
-    templateCommand?: ProjectRemoveMemberCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchProjectRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: ProjectRemoveMemberCommand[] | undefined;
+  templateCommand?: ProjectRemoveMemberCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchProjectRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest {
-    commands?: ProjectSetFieldSchemeCommand[] | undefined;
-    templateCommand?: ProjectSetFieldSchemeCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchProjectRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: ProjectSetFieldSchemeCommand[] | undefined;
+  templateCommand?: ProjectSetFieldSchemeCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchProjectRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectSetNameCommandAndSearchProjectRequest {
-    commands?: ProjectSetNameCommand[] | undefined;
-    templateCommand?: ProjectSetNameCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchProjectRequest | undefined;
-    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+  commands?: ProjectSetNameCommand[] | undefined;
+  templateCommand?: ProjectSetNameCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchProjectRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
 Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
-    queueId?: string | undefined;
-    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
 bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
 
 Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
 (`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
 Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
 przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
-    uiMetadata?: string | undefined;
+  uiMetadata?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest {
-    commands?: ProjectSetSlaPolicyCommand[] | undefined;
-    templateCommand?: ProjectSetSlaPolicyCommand | undefined;
-    targetUuids?: string[] | undefined;
-    targetFilter?: SearchProjectRequest | undefined;
-    queueId?: string | undefined;
-    uiMetadata?: string | undefined;
+  commands?: ProjectSetSlaPolicyCommand[] | undefined;
+  templateCommand?: ProjectSetSlaPolicyCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchProjectRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
 
-    [key: string]: any;
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfSprintCloseCommandAndSearchSprintRequest {
+  commands?: SprintCloseCommand[] | undefined;
+  templateCommand?: SprintCloseCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchSprintRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfSprintCreateCommandAndSearchSprintRequest {
+  commands?: SprintCreateCommand[] | undefined;
+  templateCommand?: SprintCreateCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchSprintRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfSprintSetIssueSprintCommandAndSearchIssueRequest {
+  commands?: SprintSetIssueSprintCommand[] | undefined;
+  templateCommand?: SprintSetIssueSprintCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfSprintStartCommandAndSearchSprintRequest {
+  commands?: SprintStartCommand[] | undefined;
+  templateCommand?: SprintStartCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchSprintRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
 }
 
 export interface BatchResult {
-    jobUuid?: string;
+  jobUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardCardDto {
-    uuid: string;
-    boardUuid: string;
-    issueUuid: string;
-    rank: string | undefined;
-    sprintUuid: string | undefined;
-    key: string;
-    title: string;
-    stateUuid: string;
-    priority: number;
-    assigneeUuid: string | undefined;
-    dueAt: Date | undefined;
-    createdAt: Date;
+  uuid: string;
+  boardUuid: string;
+  issueUuid: string;
+  rank: string | undefined;
+  sprintUuid: string | undefined;
+  key: string;
+  title: string;
+  stateUuid: string;
+  priority: number;
+  assigneeUuid: string | undefined;
+  dueAt: Date | undefined;
+  createdAt: Date;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardColumnDto {
-    uuid: string;
-    name: string;
-    orderNo: number;
-    stateUuids: string[];
+  uuid: string;
+  name: string;
+  orderNo: number;
+  stateUuids: string[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardColumnInput {
-    uuid?: string;
-    name?: string;
-    orderNo?: number;
-    stateUuids?: string[];
+  uuid?: string;
+  name?: string;
+  orderNo?: number;
+  stateUuids?: string[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardCreateCommand {
-    uuid?: string;
-    projectUuid?: string;
-    name?: string;
-    mode?: number;
-    isDefault?: boolean;
+  uuid?: string;
+  projectUuid?: string;
+  name?: string;
+  mode?: number;
+  isDefault?: boolean;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardDto {
-    uuid: string;
-    projectUuid: string;
-    name: string;
-    mode: number;
-    isDefault: boolean;
-    columns: BoardColumnDto[];
+  uuid: string;
+  projectUuid: string;
+  name: string;
+  mode: number;
+  isDefault: boolean;
+  columns: BoardColumnDto[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardSetCardPositionCommand {
-    uuid?: string;
-    issueUuid?: string;
-    afterIssueUuid?: string | undefined;
-    beforeIssueUuid?: string | undefined;
+  uuid?: string;
+  issueUuid?: string;
+  afterIssueUuid?: string | undefined;
+  beforeIssueUuid?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardSetColumnsCommand {
-    uuid?: string;
-    columns?: BoardColumnInput[];
+  uuid?: string;
+  columns?: BoardColumnInput[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface BoardSetNameCommand {
-    uuid?: string;
-    name?: string;
+  uuid?: string;
+  name?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface FieldDefinitionDto {
-    uuid: string;
-    code: string;
-    nameKey: string;
-    dataType: number;
-    slot: number;
-    orderNo: number;
-    isRequired: boolean;
-    options: string[];
+  uuid: string;
+  code: string;
+  nameKey: string;
+  dataType: number;
+  slot: number;
+  orderNo: number;
+  isRequired: boolean;
+  options: string[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface FieldSchemeAddFieldCommand {
-    uuid?: string;
-    fieldUuid?: string;
-    code?: string;
-    nameKey?: string;
-    dataType?: number;
-    slot?: number;
-    orderNo?: number;
-    isRequired?: boolean;
-    options?: string[];
+  uuid?: string;
+  fieldUuid?: string;
+  code?: string;
+  nameKey?: string;
+  dataType?: number;
+  slot?: number;
+  orderNo?: number;
+  isRequired?: boolean;
+  options?: string[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface FieldSchemeCreateCommand {
-    uuid?: string;
-    name?: string;
+  uuid?: string;
+  name?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface FieldSchemeDto {
-    uuid: string;
-    name: string;
-    isSystem: boolean;
-    fields: FieldDefinitionDto[];
+  uuid: string;
+  name: string;
+  isSystem: boolean;
+  fields: FieldDefinitionDto[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface FieldSchemeRemoveFieldCommand {
-    uuid?: string;
-    fieldUuid?: string;
+  uuid?: string;
+  fieldUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface FieldSchemeSetNameCommand {
-    uuid?: string;
-    name?: string;
+  uuid?: string;
+  name?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetBoardCardsRequest {
-    boardUuid?: string;
-    uuids?: string[] | undefined;
+  boardUuid?: string;
+  uuids?: string[] | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetBoardRequest {
-    uuid?: string;
+  uuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueActivityRequest {
-    issueUuid?: string;
+  issueUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueAttachmentContentRequest {
-    uuid?: string;
+  uuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueAttachmentUploadTicketsRequest {
-    count?: number;
+  count?: number;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueAttachmentsRequest {
-    issueUuid?: string;
+  issueUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueByKeyRequest {
-    key?: string;
+  key?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueCommentsRequest {
-    issueUuid?: string;
+  issueUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueGraphRequest {
-    issueUuid?: string;
+  issueUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetIssueRequest {
-    uuids?: string[] | undefined;
+  uuids?: string[] | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface GetIssueWorkLogsRequest {
+  issueUuid?: string;
+
+  [key: string]: any;
 }
 
 export interface GetProjectFieldProfileRequest {
-    projectUuid?: string;
+  projectUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetProjectRequest {
-    uuids?: string[] | undefined;
+  uuids?: string[] | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface GetProjectWorkflowRequest {
-    projectUuid?: string;
+  projectUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface GetSprintRequest {
+  uuids?: string[] | undefined;
+
+  [key: string]: any;
+}
+
+export interface GetWorkflowSchemeRequest {
+  schemeUuid?: string;
+
+  [key: string]: any;
 }
 
 export interface IssueActivityDto {
-    uuid: string;
-    issueUuid: string;
-    kind: number;
-    fieldCode: string | undefined;
-    oldValue: string | undefined;
-    newValue: string | undefined;
-    actorUuid: string;
-    occurredAt: Date;
+  uuid: string;
+  issueUuid: string;
+  kind: number;
+  fieldCode: string | undefined;
+  oldValue: string | undefined;
+  newValue: string | undefined;
+  actorUuid: string;
+  occurredAt: Date;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueAddCommentCommand {
-    uuid?: string;
-    issueUuid?: string;
-    parentUuid?: string | undefined;
-    body?: string;
+  uuid?: string;
+  issueUuid?: string;
+  parentUuid?: string | undefined;
+  body?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueAddLinkCommand {
-    uuid?: string;
-    linkUuid?: string;
-    targetUuid?: string;
-    type?: number;
+  uuid?: string;
+  linkUuid?: string;
+  targetUuid?: string;
+  type?: number;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueAttachmentCreateCommand {
-    uuid?: string;
-    issueUuid?: string;
-    artifactUuid?: string;
-    fileName?: string;
+  uuid?: string;
+  issueUuid?: string;
+  artifactUuid?: string;
+  fileName?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueAttachmentCreateRequest {
-    commands?: IssueAttachmentCreateCommand[];
+  commands?: IssueAttachmentCreateCommand[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueAttachmentCreateResponse {
-    uuids: string[];
+  uuids: string[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueAttachmentDto {
-    uuid: string;
-    issueUuid: string;
-    fileName: string;
-    mimeType: string;
-    fileSize: number;
-    isImage: boolean;
-    uploadedByUuid: string;
-    createdAt: Date;
+  uuid: string;
+  issueUuid: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  isImage: boolean;
+  uploadedByUuid: string;
+  createdAt: Date;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueAttachmentUploadTicketDto {
-    artifactUuid: string;
-    url: string;
-    expiresOn: Date;
+  artifactUuid: string;
+  url: string;
+  expiresOn: Date;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueChildDto {
-    uuid: string;
-    key: string;
-    title: string;
-    stateUuid: string;
-    stateNameKey: string;
-    stateCategory: number;
-    assigneeUuid: string | undefined;
+  uuid: string;
+  key: string;
+  title: string;
+  stateUuid: string;
+  stateNameKey: string;
+  stateCategory: number;
+  assigneeUuid: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueCommentDto {
-    uuid: string;
-    issueUuid: string;
-    parentUuid: string | undefined;
-    body: string;
-    authorUuid: string;
-    createdAt: Date;
-    editedAt: Date | undefined;
-    isRemoved: boolean;
+  uuid: string;
+  issueUuid: string;
+  parentUuid: string | undefined;
+  body: string;
+  authorUuid: string;
+  createdAt: Date;
+  editedAt: Date | undefined;
+  isRemoved: boolean;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueCreateCommand {
-    uuid?: string;
-    projectUuid?: string;
-    title?: string;
-    description?: string | undefined;
-    priority?: number;
-    assigneeUuid?: string | undefined;
-    dueAt?: Date | undefined;
+  uuid?: string;
+  projectUuid?: string;
+  title?: string;
+  description?: string | undefined;
+  priority?: number;
+  assigneeUuid?: string | undefined;
+  dueAt?: Date | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueCustomFieldFilter {
-    code?: string;
-    value?: string;
+  code?: string;
+  value?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueDto {
-    uuid: string;
-    projectUuid: string;
-    projectCode: string;
-    key: string;
-    title: string;
-    description: string | undefined;
-    priority: number;
-    stateUuid: string;
-    stateCode: string;
-    stateNameKey: string;
-    stateCategory: number;
-    derivedDeliveryState: number | undefined;
-    reporterUuid: string;
-    assigneeUuid: string | undefined;
-    dueAt: Date | undefined;
-    parentUuid: string | undefined;
-    isRestricted: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-    customFields: { [key: string]: string; };
+  uuid: string;
+  projectUuid: string;
+  projectCode: string;
+  key: string;
+  title: string;
+  description: string | undefined;
+  priority: number;
+  stateUuid: string;
+  stateCode: string;
+  stateNameKey: string;
+  stateCategory: number;
+  derivedDeliveryState: number | undefined;
+  reporterUuid: string;
+  assigneeUuid: string | undefined;
+  dueAt: Date | undefined;
+  parentUuid: string | undefined;
+  isRestricted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  customFields: { [key: string]: string };
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueGraphDto {
-    issueUuid: string;
-    parent: IssueChildDto | undefined;
-    children: IssueChildDto[];
-    links: IssueLinkDto[];
+  issueUuid: string;
+  parent: IssueChildDto | undefined;
+  children: IssueChildDto[];
+  links: IssueLinkDto[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueLinkDto {
-    uuid: string;
-    issueUuid: string;
-    otherIssueUuid: string;
-    type: number;
-    isOutgoing: boolean;
-    otherKey: string;
-    otherTitle: string;
-    otherStateUuid: string;
-    otherStateNameKey: string;
-    otherStateCategory: number;
+  uuid: string;
+  issueUuid: string;
+  otherIssueUuid: string;
+  type: number;
+  isOutgoing: boolean;
+  otherKey: string;
+  otherTitle: string;
+  otherStateUuid: string;
+  otherStateNameKey: string;
+  otherStateCategory: number;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface IssueMigrateWorkflowStateCommand {
+  uuid?: string;
+  schemeUuid?: string;
+  fromStateUuid?: string;
+  toStateUuid?: string;
+
+  [key: string]: any;
 }
 
 export interface IssueRemoveCommentCommand {
-    uuid?: string;
+  uuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueRemoveLinkCommand {
-    uuid?: string;
-    linkUuid?: string;
+  uuid?: string;
+  linkUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetAssigneeCommand {
-    uuid?: string;
-    assigneeUuid?: string | undefined;
+  uuid?: string;
+  assigneeUuid?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetCommentBodyCommand {
-    uuid?: string;
-    body?: string;
+  uuid?: string;
+  body?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetCustomFieldsCommand {
-    uuid?: string;
-    values?: { [key: string]: string; };
+  uuid?: string;
+  values?: { [key: string]: string };
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetDescriptionCommand {
-    uuid?: string;
-    description?: string | undefined;
+  uuid?: string;
+  description?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetDueDateCommand {
-    uuid?: string;
-    dueAt?: Date | undefined;
+  uuid?: string;
+  dueAt?: Date | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetParentCommand {
-    uuid?: string;
-    parentUuid?: string | undefined;
+  uuid?: string;
+  parentUuid?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetPriorityCommand {
-    uuid?: string;
-    priority?: number;
+  uuid?: string;
+  priority?: number;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetStateCommand {
-    uuid?: string;
-    stateUuid?: string;
+  uuid?: string;
+  stateUuid?: string;
+  customFieldValues?: { [key: string]: string };
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface IssueSetTitleCommand {
-    uuid?: string;
-    title?: string;
+  uuid?: string;
+  title?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectAddMemberCommand {
-    uuid?: string;
-    userUuid?: string;
-    role?: number;
+  uuid?: string;
+  userUuid?: string;
+  role?: number;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectCreateCommand {
-    uuid?: string;
-    code?: string;
-    name?: string;
-    kind?: number;
-    workflowSchemeUuid?: string | undefined;
-    isPublic?: boolean;
+  uuid?: string;
+  code?: string;
+  name?: string;
+  kind?: number;
+  workflowSchemeUuid?: string | undefined;
+  isPublic?: boolean;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectDto {
-    uuid: string;
-    code: string;
-    name: string;
-    kind: number;
-    workflowSchemeUuid: string;
-    fieldSchemeUuid: string | undefined;
-    isPublic: boolean;
-    slaPolicy: ProjectSlaPolicyDto | undefined;
-    openIssueCount: number;
-    members: ProjectMemberDto[];
+  uuid: string;
+  code: string;
+  name: string;
+  kind: number;
+  workflowSchemeUuid: string;
+  fieldSchemeUuid: string | undefined;
+  isPublic: boolean;
+  slaPolicy: ProjectSlaPolicyDto | undefined;
+  openIssueCount: number;
+  members: ProjectMemberDto[];
 
-    [key: string]: any;
-}
-
-export interface ProjectSlaPolicyDto {
-    responseMinutes: number | undefined;
-    resolutionMinutes: number | undefined;
-
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectFieldDto {
-    code: string;
-    nameKey: string;
-    dataType: number;
-    isSortable: boolean;
-    isFilterable: boolean;
-    isRequired: boolean;
-    orderNo: number;
-    options: string[];
+  code: string;
+  nameKey: string;
+  dataType: number;
+  isSortable: boolean;
+  isFilterable: boolean;
+  isRequired: boolean;
+  orderNo: number;
+  options: string[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectFieldProfileDto {
-    projectUuid: string;
-    fieldSchemeUuid: string | undefined;
-    fields: ProjectFieldDto[];
+  projectUuid: string;
+  fieldSchemeUuid: string | undefined;
+  fields: ProjectFieldDto[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectMemberDto {
-    userUuid: string;
-    role: number;
+  userUuid: string;
+  role: number;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectRemoveMemberCommand {
-    uuid?: string;
-    userUuid?: string;
+  uuid?: string;
+  userUuid?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectSetFieldSchemeCommand {
-    uuid?: string;
-    fieldSchemeUuid?: string | undefined;
+  uuid?: string;
+  fieldSchemeUuid?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectSetNameCommand {
-    uuid?: string;
-    name?: string;
+  uuid?: string;
+  name?: string;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ProjectSetSlaPolicyCommand {
-    uuid?: string;
-    responseMinutes?: number | undefined;
-    resolutionMinutes?: number | undefined;
+  uuid?: string;
+  responseMinutes?: number | undefined;
+  resolutionMinutes?: number | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface ProjectSlaPolicyDto {
+  responseMinutes: number | undefined;
+  resolutionMinutes: number | undefined;
+
+  [key: string]: any;
 }
 
 export interface ProjectWorkflowDto {
-    projectUuid: string;
-    schemeUuid: string;
-    schemeName: string;
-    states: WorkflowStateDto[];
-    transitions: WorkflowTransitionDto[];
+  projectUuid: string;
+  schemeUuid: string;
+  schemeName: string;
+  states: WorkflowStateDto[];
+  transitions: WorkflowTransitionDto[];
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface SavedIssueViewCreateCommand {
+  name?: string;
+  filterJson?: string;
+  columnsJson?: string;
+  isDefault?: boolean;
+
+  [key: string]: any;
+}
+
+export interface SavedIssueViewDto {
+  uuid: string;
+  name: string;
+  filterJson: string;
+  columnsJson: string;
+  isDefault: boolean;
+
+  [key: string]: any;
+}
+
+export interface SavedIssueViewUpdateCommand {
+  uuid?: string;
+  name?: string;
+  filterJson?: string;
+  columnsJson?: string;
+  isDefault?: boolean;
+
+  [key: string]: any;
 }
 
 export interface SearchBoardRequest {
-    projectUuid?: string | undefined;
+  projectUuid?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface SearchFieldSchemeRequest {
-    text?: string | undefined;
+  text?: string | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface SearchIssueRequest {
-    scope?: number | undefined;
-    projectUuid?: string | undefined;
-    projectKind?: number | undefined;
-    text?: string | undefined;
-    stateUuid?: string | undefined;
-    stateCategory?: number | undefined;
-    priority?: number | undefined;
-    assigneeUuid?: string | undefined;
-    customFields?: IssueCustomFieldFilter[] | undefined;
-    treeMode?: boolean;
-    page?: number;
-    pageSize?: number;
-    sorts?: SortOption[] | undefined;
+  scope?: number | undefined;
+  projectUuid?: string | undefined;
+  projectKind?: number | undefined;
+  text?: string | undefined;
+  stateUuid?: string | undefined;
+  stateCategory?: number | undefined;
+  priority?: number | undefined;
+  assigneeUuid?: string | undefined;
+  customFields?: IssueCustomFieldFilter[] | undefined;
+  treeMode?: boolean;
+  page?: number;
+  pageSize?: number;
+  sorts?: SortOption[] | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface SearchProjectRequest {
-    text?: string | undefined;
-    kind?: number | undefined;
-    onlyMine?: boolean | undefined;
-    page?: number;
-    pageSize?: number;
-    sorts?: SortOption[] | undefined;
+  text?: string | undefined;
+  kind?: number | undefined;
+  onlyMine?: boolean | undefined;
+  page?: number;
+  pageSize?: number;
+  sorts?: SortOption[] | undefined;
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface SearchResponse {
-    uuids?: string[];
-    totalCount?: number;
+  uuids?: string[];
+  totalCount?: number;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface SearchSprintRequest {
+  boardUuid?: string | undefined;
+  page?: number;
+  pageSize?: number;
+  sorts?: SortOption[] | undefined;
+
+  [key: string]: any;
 }
 
 export interface SortOption {
-    field?: string;
-    order?: number;
+  field?: string;
+  order?: number;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface SprintCloseCommand {
+  uuid?: string;
+  openIssuesDisposition?: number;
+  nextSprintUuid?: string | undefined;
+
+  [key: string]: any;
+}
+
+export interface SprintCreateCommand {
+  uuid?: string;
+  boardUuid?: string;
+  name?: string;
+  startOn?: Date;
+  endOn?: Date;
+
+  [key: string]: any;
+}
+
+export interface SprintDto {
+  uuid: string;
+  boardUuid: string;
+  name: string;
+  startOn: Date;
+  endOn: Date;
+  status: number;
+
+  [key: string]: any;
+}
+
+export interface SprintSetIssueSprintCommand {
+  uuid?: string;
+  boardUuid?: string;
+  sprintUuid?: string | undefined;
+
+  [key: string]: any;
+}
+
+export interface SprintStartCommand {
+  uuid?: string;
+
+  [key: string]: any;
+}
+
+export interface WorkLogCreateCommand {
+  issueUuid?: string;
+  minutes?: number;
+  note?: string | undefined;
+  loggedAt?: Date;
+
+  [key: string]: any;
+}
+
+export interface WorkLogDto {
+  uuid: string;
+  issueUuid: string;
+  authorUuid: string;
+  minutes: number;
+  note: string | undefined;
+  loggedAt: Date;
+
+  [key: string]: any;
+}
+
+export interface WorkflowSchemeCreateCommand {
+  name?: string;
+
+  [key: string]: any;
+}
+
+export interface WorkflowSchemeDto {
+  schemeUuid: string;
+  schemeName: string;
+  isSystem: boolean;
+  states: WorkflowStateDto[];
+  transitions: WorkflowTransitionDto[];
+
+  [key: string]: any;
+}
+
+export interface WorkflowSchemeListItemDto {
+  uuid: string;
+  name: string;
+  isSystem: boolean;
+
+  [key: string]: any;
+}
+
+export interface WorkflowSchemePublishCommand {
+  schemeUuid?: string;
+  name?: string;
+  states?: WorkflowStateDefinitionDto[];
+  transitions?: WorkflowTransitionDefinitionDto[];
+  removedStateMappings?: { [key: string]: string };
+
+  [key: string]: any;
+}
+
+export interface WorkflowStateDefinitionDto {
+  uuid?: string;
+  code?: string;
+  nameKey?: string;
+  category?: number;
+  orderNo?: number;
+
+  [key: string]: any;
 }
 
 export interface WorkflowStateDto {
-    uuid: string;
-    code: string;
-    nameKey: string;
-    category: number;
-    orderNo: number;
+  uuid: string;
+  code: string;
+  nameKey: string;
+  category: number;
+  orderNo: number;
 
-    [key: string]: any;
+  [key: string]: any;
+}
+
+export interface WorkflowStateMigrationFilter {
+  schemeUuid?: string;
+  fromStateUuid?: string;
+
+  [key: string]: any;
+}
+
+export interface WorkflowTransitionDefinitionDto {
+  uuid?: string;
+  fromStateUuid?: string;
+  toStateUuid?: string;
+  nameKey?: string;
+  requiredPermission?: string | undefined;
+  requiredFieldCodes?: string[];
+
+  [key: string]: any;
 }
 
 export interface WorkflowTransitionDto {
-    uuid: string;
-    fromStateUuid: string;
-    toStateUuid: string;
-    nameKey: string;
-    requiredPermission: string | undefined;
+  uuid: string;
+  fromStateUuid: string;
+  toStateUuid: string;
+  nameKey: string;
+  requiredPermission: string | undefined;
+  requiredFieldCodes: string[];
 
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export class ApiException extends Error {
-    override message: string;
-    status: number;
-    response: string;
-    headers: { [key: string]: any; };
-    result: any;
+  override message: string;
+  status: number;
+  response: string;
+  headers: { [key: string]: any };
+  result: any;
 
-    constructor(message: string, status: number, response: string, headers: { [key: string]: any; }, result: any) {
-        super();
+  constructor(message: string, status: number, response: string, headers: { [key: string]: any }, result: any) {
+    super();
 
-        this.message = message;
-        this.status = status;
-        this.response = response;
-        this.headers = headers;
-        this.result = result;
-    }
+    this.message = message;
+    this.status = status;
+    this.response = response;
+    this.headers = headers;
+    this.result = result;
+  }
 
-    protected isApiException = true;
+  protected isApiException = true;
 
-    static isApiException(obj: any): obj is ApiException {
-        return obj.isApiException === true;
-    }
+  static isApiException(obj: any): obj is ApiException {
+    return obj.isApiException === true;
+  }
 }
 
-function throwException(message: string, status: number, response: string, headers: { [key: string]: any; }, result?: any): Observable<any> {
-    if (result !== null && result !== undefined)
-        return _observableThrow(result);
-    else
-        return _observableThrow(new ApiException(message, status, response, headers, null));
+function throwException(message: string, status: number, response: string, headers: { [key: string]: any }, result?: any): Observable<any> {
+  if (result !== null && result !== undefined) return _observableThrow(result);
+  else return _observableThrow(new ApiException(message, status, response, headers, null));
 }
 
 function blobToText(blob: any): Observable<string> {
-    return new Observable<string>((observer: any) => {
-        if (!blob) {
-            observer.next("");
-            observer.complete();
-        } else {
-            let reader = new FileReader();
-            reader.onload = event => {
-                observer.next((event.target as any).result);
-                observer.complete();
-            };
-            reader.readAsText(blob);
-        }
-    });
+  return new Observable<string>((observer: any) => {
+    if (!blob) {
+      observer.next('');
+      observer.complete();
+    } else {
+      let reader = new FileReader();
+      reader.onload = (event) => {
+        observer.next((event.target as any).result);
+        observer.complete();
+      };
+      reader.readAsText(blob);
+    }
+  });
 }

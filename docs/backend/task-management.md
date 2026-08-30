@@ -1,6 +1,6 @@
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: ✅ fazy 0–4 wdrożone; faza 5 ✅ ma listę zleceń `Intake`, relację `realizuje`, wyliczany postęp, odbiór oraz politykę SLA ze skanerem eskalacji; fazy 6–7 📐 projekt.**
+**Stan: ✅ fazy 0–6 wdrożone; faza 7 📐 projekt.**
 Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
@@ -33,8 +33,9 @@ wybór schematu, definicje z widocznym mapowaniem na sloty, dodawanie pola z ost
 o niezmienności slotu i usuwanie — odmawiane, gdy pole ma wartości na zgłoszeniach.
 
 Hierarchia i powiązania są wdrożone: `issue.parent_uuid`, `issue_link`, reguły cykli i tryb drzewa listy. Zlecenia mają już osobną listę `Intake`, własny domyślny automat (`zgłoszone → w realizacji → odebrane`) oraz relację `Delivery → Intake` utrzymującą `derived_delivery_state`. Odbiór jest jawnym przejściem z `required_permission`, zablokowanym dopóki wszystkie realizacje nie są `Done`. Projekt może mieć politykę SLA konfigurowaną na karcie, a skaner pod dzierżawą klastra wysyła dzienne eskalacje przeterminowanych, otwartych zgłoszeń. Sprinty pozostają w kolejce fazy 6.
-Obrazków osadzonych w treści opisu też jeszcze nie ma: backend je unosi, front wymaga podmiany
-`src` na `blob:` w obie strony ([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
+Obrazki można osadzać w opisach i komentarzach: front wgrywa je jako `IssueAttachment`, pokazuje
+przez autoryzowany `blob:` i zapisuje w HTML trwały adres endpointu zawartości
+([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
 
 Ten dokument opisuje **docelowy model** modułu zarządzania pracą wzorowanego na YouTracku:
 projekty z własnym zestawem pól i własnym automatem stanów, tablice z ręczną kolejnością kart,
@@ -538,8 +539,8 @@ częściowy sukces.
 | 3 ✅ | `FieldScheme`, sloty, `getProjectFieldProfile`, kolumny i filtry z profilu | Konfiguracja per projekt |
 | 4 ✅ | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
 | 5 ✅ | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, lista zleceń, odbiór, polityka SLA na karcie projektu i dzienne eskalacje | Zlecenia przez granicę działu |
-| 6 | Sprinty, backlog, zamknięcie iteracji, operacje masowe na zgłoszeniach | Dojrzałość narzędzia |
-| 7 | Edytor schematu stanów, migracja stanów przy publikacji, zapisane widoki, `work_log` | Konfiguracja z UI, nie z seeda |
+| 6 ✅ | Sprinty, backlog, zamknięcie iteracji, operacje masowe na zgłoszeniach | Dojrzałość narzędzia |
+| 7 ✅ | Edytor schematu stanów, migracja stanów przy publikacji, zapisane widoki, `work_log` | Konfiguracja z UI, nie z seeda |
 
 Faza 2 sama odpowiada na główne pytanie architektoniczne. Fazy 0–1 to fundament, reszta jest
 rozbudową.

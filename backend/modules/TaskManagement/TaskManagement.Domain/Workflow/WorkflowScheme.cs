@@ -63,7 +63,8 @@ public sealed class WorkflowScheme : AggregateRoot
         Guid fromStateUuid,
         Guid toStateUuid,
         string nameKey,
-        string? requiredPermission = null)
+        string? requiredPermission = null,
+        IEnumerable<string>? requiredFieldCodes = null)
     {
         if (!_states.Exists(s => s.Uuid == fromStateUuid) || !_states.Exists(s => s.Uuid == toStateUuid))
         {
@@ -72,9 +73,68 @@ public sealed class WorkflowScheme : AggregateRoot
                 "Przejście musi łączyć stany należące do tego samego schematu.");
         }
 
-        var transition = WorkflowTransition.Create(uuid, fromStateUuid, toStateUuid, nameKey, requiredPermission);
+        var transition = WorkflowTransition.Create(uuid, fromStateUuid, toStateUuid, nameKey, requiredPermission, requiredFieldCodes);
         _transitions.Add(transition);
         return transition;
+    }
+
+    /// <summary>
+    /// Publikuje pełną definicję edytowanego schematu. Stany zachowane w definicji muszą
+    /// zachować UUID — dzięki temu zgłoszenia nadal w nich będące nie wymagają migracji.
+    /// Usuwane stany sprawdza warstwa aplikacji przed wywołaniem tej metody.
+    /// </summary>
+    public void ReplaceDefinition(
+        string name,
+        IReadOnlyCollection<WorkflowStateDefinition> states,
+        IReadOnlyCollection<WorkflowTransitionDefinition> transitions)
+    {
+        Name = ValidateName(name);
+
+        if (states.Count == 0)
+        {
+            throw new DomainException("taskmgmt.workflow_scheme_without_states", "Schemat musi zawierać co najmniej jeden stan.");
+        }
+
+        var definitions = states.ToList();
+        if (definitions.Any(s => s.Uuid == Guid.Empty)
+            || definitions.Select(s => s.Uuid).Distinct().Count() != definitions.Count
+            || definitions.Select(s => s.Code.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != definitions.Count)
+        {
+            throw new DomainException("taskmgmt.workflow_state_duplicate", "Stany schematu muszą mieć unikalne identyfikatory i kody.");
+        }
+
+        if (!definitions.Any(s => s.Category == WorkflowStateCategory.Todo))
+        {
+            throw new DomainException("taskmgmt.workflow_scheme_without_initial_state", "Schemat musi mieć stan początkowy w kategorii Todo.");
+        }
+
+        var stateUuids = definitions.Select(s => s.Uuid).ToHashSet();
+        var transitionDefinitions = transitions.ToList();
+        if (transitionDefinitions.Any(t => t.Uuid == Guid.Empty
+                || !stateUuids.Contains(t.FromStateUuid)
+                || !stateUuids.Contains(t.ToStateUuid))
+            || transitionDefinitions.Select(t => (t.FromStateUuid, t.ToStateUuid)).Distinct().Count() != transitionDefinitions.Count)
+        {
+            throw new DomainException("taskmgmt.workflow_transition_unknown_state", "Przejścia muszą łączyć istniejące stany i nie mogą się powtarzać.");
+        }
+
+        _states.Clear();
+        _transitions.Clear();
+        foreach (var state in definitions.OrderBy(s => s.OrderNo))
+        {
+            AddState(state.Uuid, state.Code, state.NameKey, state.Category, state.OrderNo);
+        }
+
+        foreach (var transition in transitionDefinitions)
+        {
+            AddTransition(
+                transition.Uuid,
+                transition.FromStateUuid,
+                transition.ToStateUuid,
+                transition.NameKey,
+                transition.RequiredPermission,
+                transition.RequiredFieldCodes);
+        }
     }
 
     /// <summary>Stan początkowy nowego zgłoszenia — pierwszy w kolejności z kategorii <c>Todo</c>.</summary>
@@ -113,3 +173,13 @@ public sealed class WorkflowScheme : AggregateRoot
         return name.Trim();
     }
 }
+
+public sealed record WorkflowStateDefinition(Guid Uuid, string Code, string NameKey, WorkflowStateCategory Category, int OrderNo);
+
+public sealed record WorkflowTransitionDefinition(
+    Guid Uuid,
+    Guid FromStateUuid,
+    Guid ToStateUuid,
+    string NameKey,
+    string? RequiredPermission,
+    IReadOnlyCollection<string> RequiredFieldCodes);

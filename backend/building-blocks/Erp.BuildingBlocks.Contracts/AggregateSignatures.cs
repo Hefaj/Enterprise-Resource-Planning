@@ -98,6 +98,9 @@ public static class AggregateSignatures
     /// (<c>docs/backend/task-management.md</c> §7.4).</summary>
     public const string TaskManagementBoard = "taskmgmt.board";
 
+    /// <summary>Sprint tablicy Scrum. Backlog odświeża się po zmianie jego cyklu życia.</summary>
+    public const string TaskManagementSprint = "taskmgmt.sprint";
+
     /// <summary>Wszystkie sygnatury agregatów — do walidacji przy starcie i w testach,
     /// żeby nikt nie rozgłosił zmiany na kanał, którego nikt nie słucha.</summary>
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -123,5 +126,6 @@ public static class AggregateSignatures
         TaskManagementProject,
         TaskManagementWorkflowScheme,
         TaskManagementBoard,
+        TaskManagementSprint,
     };
 }

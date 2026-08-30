@@ -5,7 +5,9 @@ import { TranslocoService } from '@jsverse/transloco';
 
 import {
   ErpButtonComponent,
+  ErpButtonBuilder,
   ErpButtonConfig,
+  ErpCheckboxBuilder,
   ErpCheckboxComponent,
   ErpConfirmDialogService,
   ErpInputBuilder,
@@ -42,20 +44,17 @@ import { PROJECT_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-project-fields',
   standalone: true,
-  imports: [
-    ErpButtonComponent,
-    ErpCheckboxComponent,
-    ErpInputComponent,
-    ErpInputPickerComponent,
-    ErpTranslatePipe,
-    ReactiveFormsModule,
-  ],
+  imports: [ErpButtonComponent, ErpCheckboxComponent, ErpInputComponent, ErpInputPickerComponent, ErpTranslatePipe, ReactiveFormsModule],
   template: `
     <section class="flex flex-col gap-4">
       <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.fields.title | erpTranslate }}</span>
 
       <div class="flex items-end gap-3">
-        <erp-input-picker class="w-80" [config]="schemePickerConfig()" [control]="schemeControl" />
+        <erp-input-picker
+          class="w-80"
+          [config]="schemePickerConfig()"
+          [control]="schemeControl"
+        />
         <erp-button [config]="attachButton" />
       </div>
 
@@ -107,14 +106,32 @@ import { PROJECT_KEYS } from '../../translation';
           </span>
 
           <div class="grid grid-cols-2 gap-3">
-            <erp-input [config]="codeInput" [formControl]="codeControl" />
-            <erp-input [config]="nameKeyInput" [formControl]="nameKeyControl" />
-            <erp-input-picker [config]="typePickerConfig()" [control]="typeControl" />
-            <erp-input-picker [config]="slotPickerConfig()" [control]="slotControl" />
+            <erp-input
+              [config]="codeInput"
+              [formControl]="codeControl"
+            />
+            <erp-input
+              [config]="nameKeyInput"
+              [formControl]="nameKeyControl"
+            />
+            <erp-input-picker
+              [config]="typePickerConfig()"
+              [control]="typeControl"
+            />
+            <erp-input-picker
+              [config]="slotPickerConfig()"
+              [control]="slotControl"
+            />
             @if (this.isSelect()) {
-              <erp-input [config]="optionsInput" [formControl]="optionsControl" />
+              <erp-input
+                [config]="optionsInput"
+                [formControl]="optionsControl"
+              />
             }
-            <erp-checkbox [config]="requiredCheckbox" [formControl]="requiredControl" />
+            <erp-checkbox
+              [config]="requiredCheckbox"
+              [formControl]="requiredControl"
+            />
           </div>
 
           <div class="flex justify-end">
@@ -207,50 +224,37 @@ export class ProjectFieldsComponent {
 
     const items = [
       { value: FIELD_SLOT.None, label: this._t(PROJECT_KEYS.detail.fields.add.slotNone) },
-      ...FIELD_SLOT_POOL[this._poolOf(dataType)]
-        .filter((slot) => !taken.has(slot))
-        .map((slot) => ({ value: slot, label: FIELD_SLOT_NAMES[slot] })),
+      ...FIELD_SLOT_POOL[this._poolOf(dataType)].filter((slot) => !taken.has(slot)).map((slot) => ({ value: slot, label: FIELD_SLOT_NAMES[slot] })),
     ];
 
-    return ErpInputPickerBuilder.create((b) =>
-      b
-        .setLabel(PROJECT_KEYS.detail.fields.add.slot)
-        .setItems(items)
-        .setLabelKey('label')
-        .setValueKey('value')
-        .setStrategy('single'),
-    );
+    return ErpInputPickerBuilder.create((b) => b.setLabel(PROJECT_KEYS.detail.fields.add.slot).setItems(items).setLabelKey('label').setValueKey('value').setStrategy('single'));
   });
 
-  protected readonly codeInput: ErpInputConfig = ErpInputBuilder.create((b) =>
-    b.setLabel(PROJECT_KEYS.detail.fields.add.code).setHint(PROJECT_KEYS.detail.fields.add.codeHint),
+  protected readonly codeInput: ErpInputConfig = ErpInputBuilder.create((b) => b.setLabel(PROJECT_KEYS.detail.fields.add.code).setHint(PROJECT_KEYS.detail.fields.add.codeHint));
+
+  protected readonly nameKeyInput: ErpInputConfig = ErpInputBuilder.create((b) => b.setLabel(PROJECT_KEYS.detail.fields.add.nameKey));
+
+  protected readonly optionsInput: ErpInputConfig = ErpInputBuilder.create((b) => b.setLabel(PROJECT_KEYS.detail.fields.add.options).setHint(PROJECT_KEYS.detail.fields.add.optionsHint));
+
+  protected readonly requiredCheckbox = ErpCheckboxBuilder.create((b) => b.setLabel(PROJECT_KEYS.detail.fields.add.required));
+
+  protected readonly attachButton: ErpButtonConfig = ErpButtonBuilder.create((b) =>
+    b
+      .setLabel(PROJECT_KEYS.detail.fields.scheme.label)
+      .setAppearance('secondary')
+      .setSize('m')
+      .setLoading(this._saving)
+      .setFn(() => this._attachAsync()),
   );
 
-  protected readonly nameKeyInput: ErpInputConfig = ErpInputBuilder.create((b) =>
-    b.setLabel(PROJECT_KEYS.detail.fields.add.nameKey),
+  protected readonly addButton: ErpButtonConfig = ErpButtonBuilder.create((b) =>
+    b
+      .setLabel(PROJECT_KEYS.detail.fields.add.submit)
+      .setAppearance('primary')
+      .setSize('m')
+      .setLoading(this._saving)
+      .setFn(() => this._addFieldAsync()),
   );
-
-  protected readonly optionsInput: ErpInputConfig = ErpInputBuilder.create((b) =>
-    b.setLabel(PROJECT_KEYS.detail.fields.add.options).setHint(PROJECT_KEYS.detail.fields.add.optionsHint),
-  );
-
-  protected readonly requiredCheckbox = { label: PROJECT_KEYS.detail.fields.add.required };
-
-  protected readonly attachButton: ErpButtonConfig = {
-    label: PROJECT_KEYS.detail.fields.scheme.label,
-    appearance: 'secondary',
-    size: 'm',
-    loading: this._saving,
-    fn: () => this._attachAsync(),
-  };
-
-  protected readonly addButton: ErpButtonConfig = {
-    label: PROJECT_KEYS.detail.fields.add.submit,
-    appearance: 'primary',
-    size: 'm',
-    loading: this._saving,
-    fn: () => this._addFieldAsync(),
-  };
 
   public constructor() {
     effect(() => {
@@ -290,12 +294,13 @@ export class ProjectFieldsComponent {
   }
 
   protected removeButton(field: FieldDefinitionDto): ErpButtonConfig {
-    return {
-      label: PROJECT_KEYS.detail.fields.remove.label,
-      appearance: 'flat',
-      size: 's',
-      fn: () => this._removeFieldAsync(field),
-    };
+    return ErpButtonBuilder.create((b) =>
+      b
+        .setLabel(PROJECT_KEYS.detail.fields.remove.label)
+        .setAppearance('flat')
+        .setSize('s')
+        .setFn(() => this._removeFieldAsync(field)),
+    );
   }
 
   private _poolOf(dataType: number): keyof typeof FIELD_SLOT_POOL {

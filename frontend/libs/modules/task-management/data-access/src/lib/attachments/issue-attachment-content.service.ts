@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Injectable, Signal, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL, IssueAttachmentDto } from '../api-client';
@@ -34,6 +34,7 @@ export class IssueAttachmentContentService {
 
   private readonly _urls = new Map<string, ReturnType<typeof signal<string | undefined>>>();
   private readonly _order: string[] = [];
+  private readonly _loading = new Map<string, Promise<string | undefined>>();
 
   private readonly _pending = signal<ReadonlySet<string>>(new Set());
 
@@ -50,6 +51,18 @@ export class IssueAttachmentContentService {
    */
   public apiUrl(uuid: string): string {
     return `${this._baseUrl}/issue/attachment/content/${uuid}`;
+  }
+
+  /** Semantyczny alias używany przez edytor — utrzymuje URL kanoniczny w jednym miejscu. */
+  public apiUrlFromUuid(uuid: string): string {
+    return this.apiUrl(uuid);
+  }
+
+  /** Rozpoznaje wyłącznie adresy własnego endpointu; obce obrazki pozostają nietknięte. */
+  public uuidFromApiUrl(url: string): string | null {
+    const prefix = `${this._baseUrl}/issue/attachment/content/`;
+    const uuid = url.startsWith(prefix) ? url.slice(prefix.length) : '';
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid) ? uuid : null;
   }
 
   /**
@@ -70,12 +83,43 @@ export class IssueAttachmentContentService {
     this._order.push(uuid);
     this._evictIfNeeded();
 
-    this._http.get(this.apiUrl(uuid), { responseType: 'blob' }).subscribe({
-      next: (blob) => url.set(URL.createObjectURL(blob)),
-      error: () => url.set(undefined),
-    });
+    void this._loadUrlAsync(uuid);
 
     return url.asReadonly();
+  }
+
+  /** Czeka na `blob:`-URL; potrzebne, zanim edytor wstawi świeżo przesłany obrazek. */
+  public async loadContentUrlAsync(uuid: string): Promise<string | undefined> {
+    this.contentUrl(uuid);
+    return this._loadUrlAsync(uuid);
+  }
+
+  /**
+   * Umieszcza właśnie wysłany plik w cache'u pod jego docelowym UUID.
+   *
+   * Nie pobieramy świeżo przesłanego obrazu drugi raz tylko po to, aby pokazać go w edytorze.
+   * To eliminuje wyścig między rejestracją załącznika a pierwszym odczytem z magazynu. Po
+   * przeładowaniu widoku cache nie istnieje i standardowa ścieżka {@link contentUrl} ponownie
+   * pobierze plik przez autoryzowany `HttpClient`.
+   */
+  public cacheUploadedContent(uuid: string, content: Blob): string {
+    const url = URL.createObjectURL(content);
+    const cached = this._urls.get(uuid);
+    const previousUrl = cached?.();
+
+    if (cached) {
+      cached.set(url);
+    } else {
+      this._urls.set(uuid, signal(url));
+      this._order.push(uuid);
+      this._evictIfNeeded();
+    }
+
+    if (previousUrl) {
+      URL.revokeObjectURL(previousUrl);
+    }
+
+    return url;
   }
 
   /**
@@ -140,6 +184,30 @@ export class IssueAttachmentContentService {
         URL.revokeObjectURL(url);
       }
     }
+  }
+
+  private _loadUrlAsync(uuid: string): Promise<string | undefined> {
+    const cached = this._urls.get(uuid)?.();
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+
+    const pending = this._loading.get(uuid);
+    if (pending) {
+      return pending;
+    }
+
+    const loading = firstValueFrom(this._http.get(this.apiUrl(uuid), { responseType: 'blob' }))
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        this._urls.get(uuid)?.set(url);
+        return url;
+      })
+      .catch(() => undefined)
+      .finally(() => this._loading.delete(uuid));
+
+    this._loading.set(uuid, loading);
+    return loading;
   }
 
   private _mark(uuid: string, active: boolean): void {

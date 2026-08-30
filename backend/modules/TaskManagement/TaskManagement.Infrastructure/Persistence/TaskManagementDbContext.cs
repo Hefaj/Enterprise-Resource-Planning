@@ -6,6 +6,7 @@ using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Infrastructure.Persistence.Graph;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Infrastructure.Persistence;
@@ -49,6 +50,8 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     /// karty, nie przy założeniu zgłoszenia (<c>docs/backend/task-management.md</c> §7.1).</summary>
     public DbSet<BoardCard> BoardCards => Set<BoardCard>();
 
+    public DbSet<Sprint> Sprints => Set<Sprint>();
+
     public DbSet<IssueAttachment> IssueAttachments => Set<IssueAttachment>();
 
     public DbSet<IssueComment> IssueComments => Set<IssueComment>();
@@ -60,6 +63,10 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
 
     /// <summary>Historia zmian zgłoszeń — tylko do dopisywania i do czytania w karcie.</summary>
     public DbSet<IssueActivity> IssueActivities => Set<IssueActivity>();
+
+    public DbSet<WorkLog> WorkLogs => Set<WorkLog>();
+
+    public DbSet<SavedIssueView> SavedIssueViews => Set<SavedIssueView>();
 
     public DbSet<FieldScheme> FieldSchemes => Set<FieldScheme>();
 

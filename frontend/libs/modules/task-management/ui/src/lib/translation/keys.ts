@@ -49,6 +49,7 @@ export const TASKMANAGEMENT_KEYS = {
     },
     navigation: {
       requests: 'taskManagement.navigation.requests',
+      workflowSchemes: 'taskManagement.navigation.workflowSchemes',
     },
     fields: {
       storyPoints: 'taskManagement.fields.storyPoints',

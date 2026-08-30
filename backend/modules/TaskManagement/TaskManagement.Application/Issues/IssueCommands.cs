@@ -285,6 +285,52 @@ public sealed class IssueSetStateCommand : ICommand<Guid>, IAggregateCommand
     public Guid Uuid { get; set; }
 
     public Guid StateUuid { get; set; }
+
+    /// <summary>
+    /// Wartości uzupełniane razem z przejściem. Pole jest opcjonalne, aby istniejące klienty i
+    /// przejścia bez wymagań zachowały kontrakt; nieobecne wartości pozostają bez zmian.
+    /// </summary>
+    public Dictionary<string, string?> CustomFieldValues { get; set; } = [];
+}
+
+/// <summary>
+/// Techniczna migracja po publikacji schematu. Idzie przez <c>BatchEndpointBase</c>, więc
+/// użytkownik widzi postęp i błędy pojedynczych zgłoszeń w zwykłej historii zadań.
+/// </summary>
+public sealed class IssueMigrateWorkflowStateCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+    public Guid SchemeUuid { get; set; }
+    public Guid FromStateUuid { get; set; }
+    public Guid ToStateUuid { get; set; }
+}
+
+public sealed class IssueMigrateWorkflowStateCommandHandler : CommandHandler<IssueMigrateWorkflowStateCommand, Guid>
+{
+    private readonly IIssueRepository _repository;
+    private readonly IWorkflowSchemeRepository _schemes;
+    private readonly IIssueActivityWriter _activity;
+    private readonly IExecutionContext _executionContext;
+    private readonly IClock _clock;
+
+    public IssueMigrateWorkflowStateCommandHandler(IIssueRepository repository, IWorkflowSchemeRepository schemes, IIssueActivityWriter activity, IExecutionContext executionContext, IClock clock)
+        => (_repository, _schemes, _activity, _executionContext, _clock) = (repository, schemes, activity, executionContext, clock);
+
+    public override async Task<Guid> ExecuteAsync(IssueMigrateWorkflowStateCommand command, CancellationToken ct = default)
+    {
+        var issue = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Issue), command.Uuid);
+        if (issue.StateUuid != command.FromStateUuid)
+            return issue.Uuid; // ponowione zadanie nie może cofnąć późniejszej ręcznej zmiany.
+
+        var scheme = await _schemes.FindAsync(command.SchemeUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(WorkflowScheme), command.SchemeUuid);
+        var previous = issue.StateUuid;
+        var now = _clock.UtcNow;
+        issue.MigrateWorkflowState(scheme, command.ToStateUuid, now);
+        _activity.Add(IssueActivity.Record(issue.Uuid, IssueActivityKind.StateChanged, "state", previous.ToString(), issue.StateUuid.ToString(), IssueCreateCommandHandler.ActorUuid(_executionContext), _executionContext.CorrelationId, now));
+        return issue.Uuid;
+    }
 }
 
 public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCommand, Guid>
@@ -292,6 +338,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
     private readonly IIssueRepository _repository;
     private readonly IProjectRepository _projects;
     private readonly IWorkflowSchemeRepository _schemes;
+    private readonly IFieldSchemeRepository _fieldSchemes;
     private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
@@ -301,6 +348,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         IIssueRepository repository,
         IProjectRepository projects,
         IWorkflowSchemeRepository schemes,
+        IFieldSchemeRepository fieldSchemes,
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
         IClock clock,
@@ -309,6 +357,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         _repository = repository;
         _projects = projects;
         _schemes = schemes;
+        _fieldSchemes = fieldSchemes;
         _activity = activity;
         _executionContext = executionContext;
         _clock = clock;
@@ -349,6 +398,19 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
 
         var now = _clock.UtcNow;
         var previous = issue.StateUuid;
+
+        var transition = scheme.Transitions.FirstOrDefault(item =>
+            item.FromStateUuid == issue.StateUuid && item.ToStateUuid == command.StateUuid);
+
+        if (transition is not null && transition.RequiredFieldCodes.Count > 0)
+        {
+            var fieldScheme = await _fieldSchemes.FindByProjectAsync(issue.ProjectUuid, ct).ConfigureAwait(false)
+                ?? throw new DomainException(
+                    "taskmgmt.project_without_field_scheme",
+                    "Przejście wymaga pól niestandardowych, ale projekt nie ma schematu pól.");
+
+            issue.SetTransitionCustomFields(fieldScheme, transition.RequiredFieldCodes, command.CustomFieldValues, now);
+        }
 
         issue.SetState(scheme, command.StateUuid, now);
 

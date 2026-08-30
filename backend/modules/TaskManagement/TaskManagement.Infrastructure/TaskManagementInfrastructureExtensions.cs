@@ -10,6 +10,7 @@ using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Workflow;
 using TaskManagement.Infrastructure.Jobs;
 using TaskManagement.Infrastructure.Persistence;
@@ -76,6 +77,7 @@ public static class TaskManagementInfrastructureExtensions
             .Register<IssueLink>(AggregateSignatures.TaskManagementIssueLink)
             .Register<FieldScheme>(AggregateSignatures.TaskManagementFieldScheme)
             .Register<Board>(AggregateSignatures.TaskManagementBoard)
+            .Register<Sprint>(AggregateSignatures.TaskManagementSprint)
 
             // Karta jest osobnym korzeniem agregatu na TYM SAMYM kanale, co tablica: dzięki
             // temu przeciągnięcie rozgłasza uuid karty, a nie uuid tablicy, czyli nie każe

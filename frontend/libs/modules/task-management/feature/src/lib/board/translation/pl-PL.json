@@ -12,6 +12,7 @@
   "card": {
     "unassigned": "Nieprzypisane"
   },
+  "backlog": { "title": "Backlog i sprint", "backlog": "Backlog", "noActive": "Brak aktywnego sprintu", "name": "Nazwa sprintu", "start": "Początek", "end": "Koniec", "create": "Utwórz sprint", "startSprint": "Rozpocznij", "closeSprint": "Zamknij do backlogu", "closeToSprint": "Zamknij do sprintu {{name}}" },
   "move": {
     "failed": "Nie udało się przestawić karty — pokazuję aktualny stan tablicy.",
     "blocked": "Przejście do tej kolumny nie istnieje w schemacie projektu."

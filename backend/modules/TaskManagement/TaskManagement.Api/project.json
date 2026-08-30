@@ -10,7 +10,8 @@
         "cwd": "backend/modules/TaskManagement/TaskManagement.Api",
         "command": "dotnet watch",
         "env": {
-          "ErpBuildSlot": "taskmanagement"
+          "ErpBuildSlot": "taskmanagement",
+          "BuildInParallel": "false"
         }
       }
     }

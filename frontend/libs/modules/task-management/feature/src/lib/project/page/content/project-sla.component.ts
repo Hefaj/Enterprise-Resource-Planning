@@ -1,14 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
-import {
-  ErpButtonComponent,
-  ErpButtonConfig,
-  ErpInputNumberBuilder,
-  ErpInputNumberComponent,
-  ErpInputNumberConfig,
-  ErpTranslatePipe,
-} from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonBuilder, ErpButtonConfig, ErpInputNumberBuilder, ErpInputNumberComponent, ErpInputNumberConfig, ErpTranslatePipe } from '@erp/shared/ui';
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 
 import { PROJECT_KEYS } from '../../translation';
@@ -29,8 +22,14 @@ import { PROJECT_KEYS } from '../../translation';
       </div>
 
       <div class="grid max-w-2xl grid-cols-1 gap-3 md:grid-cols-2">
-        <erp-input-number [config]="responseInput" [formControl]="responseControl" />
-        <erp-input-number [config]="resolutionInput" [formControl]="resolutionControl" />
+        <erp-input-number
+          [config]="responseInput"
+          [formControl]="responseControl"
+        />
+        <erp-input-number
+          [config]="resolutionInput"
+          [formControl]="resolutionControl"
+        />
       </div>
 
       <div class="flex items-center gap-3">
@@ -58,18 +57,20 @@ export class ProjectSlaComponent {
   protected readonly resolutionInput: ErpInputNumberConfig = ErpInputNumberBuilder.create((builder) =>
     builder.setLabel(PROJECT_KEYS.detail.sla.resolutionMinutes).setMode('integer').setSign('positive').setMin(1),
   );
-  protected readonly saveButton: ErpButtonConfig = {
-    label: PROJECT_KEYS.detail.sla.save,
-    appearance: 'primary',
-    loading: this._saving,
-    fn: () => this._saveAsync(),
-  };
-  protected readonly clearButton: ErpButtonConfig = {
-    label: PROJECT_KEYS.detail.sla.clear,
-    appearance: 'flat',
-    loading: this._saving,
-    fn: () => this._clearAsync(),
-  };
+  protected readonly saveButton: ErpButtonConfig = ErpButtonBuilder.create((b) =>
+    b
+      .setLabel(PROJECT_KEYS.detail.sla.save)
+      .setAppearance('primary')
+      .setLoading(this._saving)
+      .setFn(() => this._saveAsync()),
+  );
+  protected readonly clearButton: ErpButtonConfig = ErpButtonBuilder.create((b) =>
+    b
+      .setLabel(PROJECT_KEYS.detail.sla.clear)
+      .setAppearance('flat')
+      .setLoading(this._saving)
+      .setFn(() => this._clearAsync()),
+  );
 
   public constructor() {
     effect(() => {

@@ -94,6 +94,15 @@ export const ISSUE_KEYS = {
       unassign: {
         label: 'issue.commands.unassign.label',
       },
+      setSprint: {
+        label: 'issue.commands.setSprint.label',
+      },
+    },
+    savedViews: {
+      label: 'issue.savedViews.label',
+      select: 'issue.savedViews.select',
+      name: 'issue.savedViews.name',
+      save: 'issue.savedViews.save',
     },
     detail: {
       notFound: {
@@ -176,6 +185,14 @@ export const ISSUE_KEYS = {
           state: 'issue.detail.history.fields.state',
         },
         emptyValue: 'issue.detail.history.emptyValue',
+      },
+      workLog: {
+        label: 'issue.detail.workLog.label',
+        empty: 'issue.detail.workLog.empty',
+        minutes: 'issue.detail.workLog.minutes',
+        note: 'issue.detail.workLog.note',
+        submit: 'issue.detail.workLog.submit',
+        total: 'issue.detail.workLog.total',
       },
       customFields: {
         label: 'issue.detail.customFields.label',

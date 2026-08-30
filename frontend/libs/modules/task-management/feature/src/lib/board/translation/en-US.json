@@ -12,6 +12,7 @@
   "card": {
     "unassigned": "Unassigned"
   },
+  "backlog": { "title": "Backlog and sprint", "backlog": "Backlog", "noActive": "No active sprint", "name": "Sprint name", "start": "Start", "end": "End", "create": "Create sprint", "startSprint": "Start", "closeSprint": "Close to backlog", "closeToSprint": "Close to sprint {{name}}" },
   "move": {
     "failed": "The card could not be moved — showing the board as it is now.",
     "blocked": "That transition does not exist in the project's workflow scheme."

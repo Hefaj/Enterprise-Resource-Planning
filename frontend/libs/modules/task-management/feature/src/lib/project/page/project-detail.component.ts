@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
-import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpTranslatePipe } from '@erp/shared/ui';
+import { ErpButtonBuilder, ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpTranslatePipe } from '@erp/shared/ui';
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 import { PROJECT_KIND } from '@erp/task-management/util';
 
@@ -82,17 +82,16 @@ export class ProjectDetailComponent {
     return uuid ? this._orchestrator.getOne(uuid)() : undefined;
   });
 
-  protected readonly kindLabel = computed(() =>
-    this.project()?.kind === PROJECT_KIND.Intake ? PROJECT_KEYS.filters.kind.intake : PROJECT_KEYS.filters.kind.delivery,
-  );
+  protected readonly kindLabel = computed(() => (this.project()?.kind === PROJECT_KIND.Intake ? PROJECT_KEYS.filters.kind.intake : PROJECT_KEYS.filters.kind.delivery));
 
-  protected readonly backButton: ErpButtonConfig = {
-    label: PROJECT_KEYS.detail.back,
-    appearance: 'flat',
-    size: 's',
-    iconStart: '@tui.arrow-left',
-    fn: () => void this._router.navigate(['/task-management/project']),
-  };
+  protected readonly backButton: ErpButtonConfig = ErpButtonBuilder.create((b) =>
+    b
+      .setLabel(PROJECT_KEYS.detail.back)
+      .setAppearance('flat')
+      .setSize('s')
+      .setIconStart('@tui.arrow-left')
+      .setFn(() => void this._router.navigate(['/task-management/project'])),
+  );
 
   public constructor() {
     effect(() => {

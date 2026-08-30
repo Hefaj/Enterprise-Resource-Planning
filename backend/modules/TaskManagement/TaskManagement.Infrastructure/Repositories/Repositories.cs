@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Abstractions;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Workflow;
 using TaskManagement.Infrastructure.Persistence;
 
@@ -52,6 +53,18 @@ public sealed class IssueCommentRepository : IIssueCommentRepository
     public void Add(IssueComment comment) => _dbContext.IssueComments.Add(comment);
 }
 
+public sealed class SprintRepository : ISprintRepository
+{
+    private readonly TaskManagementDbContext _dbContext;
+
+    public SprintRepository(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+
+    public Task<Sprint?> FindAsync(Guid uuid, CancellationToken cancellationToken)
+        => _dbContext.Sprints.FirstOrDefaultAsync(s => s.Uuid == uuid, cancellationToken);
+
+    public void Add(Sprint sprint) => _dbContext.Sprints.Add(sprint);
+}
+
 /// <summary>
 /// Dopisywanie historii zgłoszenia.
 ///
@@ -67,6 +80,22 @@ public sealed class IssueActivityWriter : IIssueActivityWriter
 
     /// <inheritdoc />
     public void Add(IssueActivity activity) => _dbContext.IssueActivities.Add(activity);
+}
+
+public sealed class WorkLogRepository : IWorkLogRepository
+{
+    private readonly TaskManagementDbContext _dbContext;
+    public WorkLogRepository(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+    public void Add(WorkLog workLog) => _dbContext.WorkLogs.Add(workLog);
+}
+
+public sealed class SavedIssueViewRepository : ISavedIssueViewRepository
+{
+    private readonly TaskManagementDbContext _dbContext;
+    public SavedIssueViewRepository(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+    public Task<SavedIssueView?> FindAsync(Guid uuid, CancellationToken cancellationToken)
+        => _dbContext.SavedIssueViews.FirstOrDefaultAsync(x => x.Uuid == uuid, cancellationToken);
+    public void Add(SavedIssueView view) => _dbContext.SavedIssueViews.Add(view);
 }
 
 /// <summary>Repozytorium projektów — ładuje agregat razem z członkami, bo rola zmienia się

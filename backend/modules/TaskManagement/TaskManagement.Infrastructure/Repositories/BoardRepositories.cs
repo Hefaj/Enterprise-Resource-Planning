@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Abstractions;
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.Workflow;
 using TaskManagement.Infrastructure.Persistence;
 
 namespace TaskManagement.Infrastructure.Repositories;
@@ -101,6 +102,15 @@ public sealed class BoardCardRepository : IBoardCardRepository
 
         return materialized;
     }
+
+    public async Task<IReadOnlyList<BoardCard>> GetOpenInSprintAsync(Guid sprintUuid, CancellationToken cancellationToken)
+        => await (
+            from card in _dbContext.BoardCards
+            join issue in _dbContext.Issues on card.IssueUuid equals issue.Uuid
+            where card.SprintUuid == sprintUuid && issue.StateCategory != WorkflowStateCategory.Done
+            select card)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 
     /// <summary>Porządek kart: rank, a przy identycznym ranku — uuid. Para <c>(rank, uuid)</c>
     /// jest tu rozstrzygająca celowo: dwie osoby wstawiające kartę w to samo miejsce wyliczą

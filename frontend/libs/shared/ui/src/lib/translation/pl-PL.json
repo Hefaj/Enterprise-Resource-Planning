@@ -71,7 +71,18 @@
   },
   "navigation": "Nawigacja",
   "menu": {
-    "requests": "Zlecenia"
+    "requests": "Zlecenia",
+    "taskManagement": {
+      "module": "Zarządzanie pracą",
+      "issues": "Zgłoszenia",
+      "projects": "Projekty",
+      "board": "Tablica",
+      "configuration": "Konfiguracja",
+      "workflowSchemes": "Schematy stanów",
+      "issue": "Zgłoszenie",
+      "project": "Projekt",
+      "backlog": "Backlog"
+    }
   },
   "notifications": {
     "kinds": {
@@ -244,6 +255,10 @@
       "taskmgmtIssueRemoveComment": "Usunięcie komentarza",
       "taskmgmtIssueSetCustomFields": "Zmiana pól niestandardowych",
       "taskmgmtBoardSetCardPosition": "Przestawienie karty na tablicy",
+      "taskmgmtSprintSetIssueSprint": "Przenieś zgłoszenie do sprintu",
+      "taskmgmtSprintCreate": "Utwórz sprint",
+      "taskmgmtSprintStart": "Rozpocznij sprint",
+      "taskmgmtSprintClose": "Zamknij sprint",
       "taskmgmtFieldSchemeCreate": "Utworzenie schematu pól",
       "taskmgmtFieldSchemeAddField": "Dodanie pola do schematu",
       "taskmgmtFieldSchemeRemoveField": "Usunięcie pola ze schematu",

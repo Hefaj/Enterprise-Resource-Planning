@@ -1,20 +1,26 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   forwardRef,
+  inject,
   input,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TuiLabel } from '@taiga-ui/core/components/label';
 import { TuiErrorComponent } from '@taiga-ui/core/components/error';
-import { TUI_EDITOR_PROVIDERS, TuiEditor, TuiEditorSocket, provideTuiEditor } from '@taiga-ui/editor';
+import { TUI_EDITOR_PROVIDERS, TUI_IMAGE_LOADER, TuiEditor, TuiEditorSocket, provideTuiEditor } from '@taiga-ui/editor';
 import { noop } from 'rxjs';
 
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { unwrapSignal } from '../../base/erp-signal-utils';
+import { erpClipboardImageUrls } from './erp-rich-text-clipboard.utils';
 import { ErpRichTextConfig } from './erp-rich-text.types';
 import { erpRichTextToolset } from './erp-rich-text.builder';
 
@@ -112,6 +118,16 @@ export class ErpRichTextComponent implements ControlValueAccessor {
 
   public readonly activeControl = computed(() => this.control() ?? this.internalControl);
 
+  /**
+   * Taiga obsługuje obraz z `DataTransfer.files`. Ten fallback dotyczy wyłącznie przeglądarek,
+   * które wystawiają screenshot z systemowego schowka tylko przez
+   * `DataTransferItem.getAsFile()`. Dla zwykłego pliku nie robi nic, aby nie zdublować
+   * uploadu wykonywanego już przez Taiga.
+   */
+  private readonly _editor = viewChild(TuiEditor);
+  private readonly _imageLoader = inject(TUI_IMAGE_LOADER, { optional: true });
+  private readonly _destroyRef = inject(DestroyRef);
+
   protected readonly _label = computed(() => unwrapSignal(this.config().label));
   protected readonly _placeholder = computed(() => unwrapSignal(this.config().placeholder));
   protected readonly _hint = computed(() => unwrapSignal(this.config().hint));
@@ -139,6 +155,8 @@ export class ErpRichTextComponent implements ControlValueAccessor {
   protected onTouched: () => void = noop;
 
   public constructor() {
+    afterNextRender(() => this._registerClipboardImageHandler());
+
     effect(() => {
       const value = unwrapSignal(this.config().value);
       if (value !== undefined) {
@@ -183,4 +201,33 @@ export class ErpRichTextComponent implements ControlValueAccessor {
       this.internalControl.enable({ emitEvent: false });
     }
   }
+
+  private _registerClipboardImageHandler(): void {
+    const editor = this._editor();
+    const host = editor?.rootEl;
+    const imageLoader = this._imageLoader;
+
+    if (!editor || !host || !imageLoader) {
+      return;
+    }
+
+    const onPaste = (event: ClipboardEvent): void => {
+      const imageUrls = erpClipboardImageUrls(event, imageLoader);
+
+      if (!imageUrls) {
+        return;
+      }
+
+      imageUrls.pipe(takeUntilDestroyed(this._destroyRef)).subscribe({
+        next: (url) => editor.editor?.setImage(url),
+        // Loader modułu raportuje błąd własnym komunikatem. Nie pozwalamy, aby błąd
+        // asynchronicznego uploadu wyszedł z subskrypcji jako nieobsłużony wyjątek.
+        error: () => undefined,
+      });
+    };
+
+    host.addEventListener('paste', onPaste, { capture: true });
+    this._destroyRef.onDestroy(() => host.removeEventListener('paste', onPaste, { capture: true }));
+  }
+
 }

@@ -43,7 +43,8 @@
     "lead": "Lead"
   },
   "navigation": {
-    "requests": "Requests"
+    "requests": "Requests",
+    "workflowSchemes": "Workflow schemes"
   },
   "fields": {
     "storyPoints": "Story points",

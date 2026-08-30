@@ -303,29 +303,6 @@ export class TaskManagementIssueTableComponent {
     return level;
   }
 
-  /**
-   * Poziom zagnieżdżenia wiersza liczony w obrębie ZAŁADOWANEJ strony.
-   *
-   * <p>Zgłoszenie, którego rodzica nie ma na stronie, jest korzeniem z punktu widzenia widoku —
-   * i tak właśnie ma się rysować. Wchodzenie po rodzicach poza stronę oznaczałoby dociąganie
-   * zgłoszeń tylko po to, żeby policzyć wcięcie.</p>
-   */
-  private _levelOf(row: IssueVM): number {
-    const byUuid = new Map(this.items().map((item) => [item.uuid, item]));
-
-    let level = 0;
-    let parent = row.parentUuid ? byUuid.get(row.parentUuid) : undefined;
-
-    // Ogranicznik głębokości nie jest ozdobnikiem: dane sprzed reguł cyklu (albo wpisane
-    // ręcznie w bazie) mogą zawierać pętlę, a pętla w tej pętli zawiesiłaby renderowanie wiersza.
-    while (parent && level < 16) {
-      level++;
-      parent = parent.parentUuid ? byUuid.get(parent.parentUuid) : undefined;
-    }
-
-    return level;
-  }
-
   private _priorityLabel(priority: number | undefined): string {
     switch (priority) {
       case ISSUE_PRIORITY.Critical:

@@ -1,6 +1,7 @@
 using Shouldly;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Workflow;
 using Xunit;
 
@@ -63,5 +64,35 @@ public sealed class SlaPolicyTests
 
         issue.TryMarkSlaReminder(today, new DateTimeOffset(2026, 8, 29, 8, 0, 0, TimeSpan.Zero)).ShouldBeTrue();
         issue.TryMarkSlaReminder(today, new DateTimeOffset(2026, 8, 29, 9, 0, 0, TimeSpan.Zero)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Sprint_mozna_zamknac_dopiero_po_uruchomieniu()
+    {
+        var sprint = Sprint.CreateWithUuid(
+            Guid.CreateVersion7(),
+            Guid.CreateVersion7(),
+            "Sprint 1",
+            new DateOnly(2026, 9, 1),
+            new DateOnly(2026, 9, 14));
+
+        Should.Throw<Erp.BuildingBlocks.Domain.DomainException>(() => sprint.Close());
+        sprint.Start();
+        sprint.Close();
+
+        sprint.Status.ShouldBe(SprintStatus.Closed);
+    }
+
+    [Fact]
+    public void Sprint_odrzuca_nieprawidlowy_zakres_dat_i_ponowne_uruchomienie()
+    {
+        Should.Throw<Erp.BuildingBlocks.Domain.DomainException>(() => Sprint.CreateWithUuid(
+            Guid.CreateVersion7(), Guid.CreateVersion7(), "Sprint", new DateOnly(2026, 9, 2), new DateOnly(2026, 9, 1)));
+
+        var sprint = Sprint.CreateWithUuid(
+            Guid.CreateVersion7(), Guid.CreateVersion7(), "Sprint", new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 2));
+        sprint.Start();
+
+        Should.Throw<Erp.BuildingBlocks.Domain.DomainException>(() => sprint.Start());
     }
 }

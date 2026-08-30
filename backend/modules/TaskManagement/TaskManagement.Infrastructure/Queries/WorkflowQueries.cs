@@ -69,10 +69,34 @@ public sealed class WorkflowQueries : IWorkflowQueries
                 t.FromStateUuid,
                 t.ToStateUuid,
                 t.NameKey,
-                t.RequiredPermission))
+                t.RequiredPermission,
+                t.RequiredFieldCodes))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         return new ProjectWorkflowDto(project.Uuid, scheme.Uuid, scheme.Name, states, transitions);
     }
+
+    public async Task<WorkflowSchemeDto?> GetWorkflowSchemeAsync(Guid schemeUuid, CancellationToken cancellationToken)
+    {
+        var scheme = await _dbContext.WorkflowSchemes.AsNoTracking().Where(x => x.Uuid == schemeUuid)
+            .Select(x => new { x.Uuid, x.Name, x.IsSystem }).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (scheme is null) return null;
+        var states = await _dbContext.WorkflowStates.AsNoTracking().Where(x => x.SchemeUuid == schemeUuid).OrderBy(x => x.OrderNo)
+            .Select(x => new WorkflowStateDto(x.Uuid, x.Code, x.NameKey, x.Category, x.OrderNo)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        var transitions = await _dbContext.WorkflowTransitions.AsNoTracking().Where(x => x.SchemeUuid == schemeUuid)
+            .Select(x => new WorkflowTransitionDto(
+                x.Uuid,
+                x.FromStateUuid,
+                x.ToStateUuid,
+                x.NameKey,
+                x.RequiredPermission,
+                x.RequiredFieldCodes)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        return new WorkflowSchemeDto(scheme.Uuid, scheme.Name, scheme.IsSystem, states, transitions);
+    }
+
+    public async Task<IReadOnlyList<WorkflowSchemeListItemDto>> GetWorkflowSchemesAsync(CancellationToken cancellationToken)
+        => await _dbContext.WorkflowSchemes.AsNoTracking().OrderBy(x => x.Name)
+            .Select(x => new WorkflowSchemeListItemDto(x.Uuid, x.Name, x.IsSystem))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 }

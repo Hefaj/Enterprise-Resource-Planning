@@ -15,19 +15,13 @@ import { SHARED_KEYS } from '@erp/shared/ui';
  */
 export const remoteMenu: ErpNavigationItem[] = [
   {
-    label: 'Zgłoszenia',
+    label: SHARED_KEYS.menu.taskManagement.issues,
     iconId: 'list-checks',
     route: 'issue',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
   {
-    label: 'Projekty',
-    iconId: 'folder-kanban',
-    route: 'project',
-    requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
-  },
-  {
-    label: 'Tablica',
+    label: SHARED_KEYS.menu.taskManagement.board,
     iconId: 'columns-3',
     route: 'board',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
@@ -39,5 +33,23 @@ export const remoteMenu: ErpNavigationItem[] = [
     iconId: 'inbox',
     route: 'request',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
+  },
+  {
+    label: SHARED_KEYS.menu.taskManagement.configuration,
+    iconId: 'settings',
+    children: [
+      {
+        label: SHARED_KEYS.menu.taskManagement.projects,
+        iconId: 'folder-kanban',
+        route: 'project',
+        requiredPermission: ERP_PERMISSIONS.TaskManagement.ProjectManage,
+      },
+      {
+        label: SHARED_KEYS.menu.taskManagement.workflowSchemes,
+        iconId: 'git-branch',
+        route: 'workflow-scheme',
+        requiredPermission: ERP_PERMISSIONS.TaskManagement.SchemeManage,
+      },
+    ],
   },
 ];

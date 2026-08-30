@@ -1,8 +1,4 @@
-import {
-  ISSUE_CREATE_MODAL_ID,
-  ISSUE_SET_ASSIGNEE_MODAL_ID,
-  ISSUE_SET_STATE_MODAL_ID,
-} from '@erp/task-management/util';
+import { ISSUE_CREATE_MODAL_ID, ISSUE_SET_ASSIGNEE_MODAL_ID, ISSUE_SET_STATE_MODAL_ID, WORKFLOW_SCHEME_PUBLISH_MODAL_ID } from '@erp/task-management/util';
 
 /**
  * Identyfikatory modali tego modułu.
@@ -12,18 +8,12 @@ import {
  * otwarty. Rozdzielone od `registerModals()` celowo: „co istnieje" jest tanie i synchroniczne,
  * „jak to załadować" — kosztowne i leniwe (patrz `docs/frontend/modals.md` §7).
  */
-export const remoteModalIds: string[] = [
-  ISSUE_CREATE_MODAL_ID,
-  ISSUE_SET_STATE_MODAL_ID,
-  ISSUE_SET_ASSIGNEE_MODAL_ID,
-];
+export const remoteModalIds: string[] = [ISSUE_CREATE_MODAL_ID, ISSUE_SET_STATE_MODAL_ID, ISSUE_SET_ASSIGNEE_MODAL_ID, WORKFLOW_SCHEME_PUBLISH_MODAL_ID];
 
 /** Leniwie ładuje tokeny DI definicji modali tego modułu. */
 export async function registerModals(): Promise<unknown[]> {
-  const { IssueCreateModalDefinition, IssueSetStateModalDefinition, IssueSetAssigneeModalDefinition } = await import(
-    '@erp/task-management/feature'
-  );
-  return [IssueCreateModalDefinition, IssueSetStateModalDefinition, IssueSetAssigneeModalDefinition];
+  const { IssueCreateModalDefinition, IssueSetStateModalDefinition, IssueSetAssigneeModalDefinition, WorkflowSchemePublishModalDefinition } = await import('@erp/task-management/feature');
+  return [IssueCreateModalDefinition, IssueSetStateModalDefinition, IssueSetAssigneeModalDefinition, WorkflowSchemePublishModalDefinition];
 }
 
 /**
@@ -34,6 +24,6 @@ export async function registerModals(): Promise<unknown[]> {
  * miejsca aplikacji został otwarty (`docs/frontend/translations.md` §3).
  */
 export async function getModalProviders(): Promise<unknown[]> {
-  const { provideIssueTranslations } = await import('@erp/task-management/feature');
-  return provideIssueTranslations();
+  const { provideIssueTranslations, provideWorkflowTranslations } = await import('@erp/task-management/feature');
+  return [...provideIssueTranslations(), ...provideWorkflowTranslations()];
 }

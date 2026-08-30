@@ -15,7 +15,7 @@ import { provideIssueTranslations } from '../../issue/translation';
   standalone: true,
   imports: [ErpGridLayoutComponent],
   providers: [
-    { provide: ISSUE_LIST_PRESET, useValue: { filters: { projectKind: PROJECT_KIND.Intake }, stateKey: 'taskmgmt-request-list', label: TASKMANAGEMENT_KEYS.navigation.requests } },
+    { provide: ISSUE_LIST_PRESET, useValue: { filters: { projectKind: PROJECT_KIND.Intake }, stateKey: 'taskmgmt-request-list', label: TASKMANAGEMENT_KEYS.navigation.requests, mode: 'requests' } },
     IssueStore,
     provideIssueTranslations(),
   ],
@@ -25,8 +25,11 @@ import { provideIssueTranslations } from '../../issue/translation';
 })
 export class RequestComponent {
   protected readonly pageConfig = ErpGridLayoutBuilder.create((builder) =>
-    builder.setLayoutId('taskmgmt-requests-page').setShowBorders(true)
+    builder
+      .setLayoutId('taskmgmt-requests-page')
+      .setShowBorders(true)
       .setGrid({ areas: ['filter content'], columns: '280px 1fr', rows: '1fr', gap: '0' })
-      .fill('filter', IssueFilterComponent).fill('content', IssueTabComponent),
+      .fill('filter', IssueFilterComponent)
+      .fill('content', IssueTabComponent),
   );
 }

@@ -1,7 +1,7 @@
 import { CdkDragDrop, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ErpEmptyStateComponent, ErpTranslatePipe } from '@erp/shared/ui';
@@ -25,7 +25,7 @@ import { BoardStore } from './board.store';
 @Component({
   selector: 'erp-task-management-board',
   standalone: true,
-  imports: [BoardColumnComponent, CdkDropListGroup, ErpEmptyStateComponent, ErpTranslatePipe],
+  imports: [BoardColumnComponent, CdkDropListGroup, ErpEmptyStateComponent, ErpTranslatePipe, RouterLink],
   providers: [BoardStore, provideBoardTranslations()],
   template: `
     @let board = this.board();
@@ -36,7 +36,7 @@ import { BoardStore } from './board.store';
       <erp-empty-state [config]="{ icon: '@tui.search-x', message: BOARD_KEYS.notFound }" />
     } @else {
       <div class="flex h-full min-h-0 w-full flex-col gap-3 p-4">
-        <span class="text-lg font-medium">{{ board.name | erpTranslate }}</span>
+        <div class="flex items-center justify-between"><span class="text-lg font-medium">{{ board.name | erpTranslate }}</span><a [routerLink]="['/task-management/board', board.uuid, 'backlog']">{{ BOARD_KEYS.backlog.title | erpTranslate }}</a></div>
 
         @if (this.columns().length === 0) {
           <erp-empty-state [config]="{ icon: '@tui.columns-3', message: BOARD_KEYS.empty.columns }" />

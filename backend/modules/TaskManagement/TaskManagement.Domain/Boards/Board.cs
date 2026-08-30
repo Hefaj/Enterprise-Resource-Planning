@@ -60,6 +60,10 @@ public sealed class Board : AggregateRoot
 
     public void SetName(string name) => Name = ValidateName(name);
 
+    /// <summary>Zmiana trybu tablicy jest konfiguracją projektu. Sprinty są dozwolone tylko
+    /// dla <see cref="BoardMode.Scrum"/>; przełączenie nie kasuje kart ani ich kolejności.</summary>
+    public void SetMode(BoardMode mode) => Mode = mode;
+
     /// <summary>
     /// Dokłada kolumnę mapowaną na stany schematu.
     /// </summary>

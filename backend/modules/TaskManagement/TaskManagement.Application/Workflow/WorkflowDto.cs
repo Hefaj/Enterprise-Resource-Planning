@@ -18,7 +18,8 @@ public sealed record WorkflowTransitionDto(
     Guid FromStateUuid,
     Guid ToStateUuid,
     string NameKey,
-    string? RequiredPermission);
+    string? RequiredPermission,
+    IReadOnlyList<string> RequiredFieldCodes);
 
 /// <summary>
 /// Schemat stanów projektu — <b>jedno źródło prawdy dla kolumn tablicy, przycisków przejść
@@ -32,14 +33,27 @@ public sealed record ProjectWorkflowDto(
     IReadOnlyList<WorkflowStateDto> States,
     IReadOnlyList<WorkflowTransitionDto> Transitions);
 
+public sealed record WorkflowSchemeDto(
+    Guid SchemeUuid,
+    string SchemeName,
+    bool IsSystem,
+    IReadOnlyList<WorkflowStateDto> States,
+    IReadOnlyList<WorkflowTransitionDto> Transitions);
+
+public sealed record WorkflowSchemeListItemDto(Guid Uuid, string Name, bool IsSystem);
+
 /// <summary>Żądanie schematu dla projektu.</summary>
 public sealed class GetProjectWorkflowRequest
 {
     public Guid ProjectUuid { get; set; }
 }
 
+public sealed class GetWorkflowSchemeRequest { public Guid SchemeUuid { get; set; } }
+
 /// <summary>Odczyty konfiguracji obiegu. Implementacja w <c>TaskManagement.Infrastructure</c>.</summary>
 public interface IWorkflowQueries
 {
     Task<ProjectWorkflowDto?> GetProjectWorkflowAsync(Guid projectUuid, CancellationToken cancellationToken);
+    Task<WorkflowSchemeDto?> GetWorkflowSchemeAsync(Guid schemeUuid, CancellationToken cancellationToken);
+    Task<IReadOnlyList<WorkflowSchemeListItemDto>> GetWorkflowSchemesAsync(CancellationToken cancellationToken);
 }

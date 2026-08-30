@@ -20,3 +20,6 @@ export const ISSUE_SET_STATE_MODAL_ID = '7ecad2cd265bd4f45d1253da2ea4d7bf';
 /** Modal: seryjne przypisanie zgłoszeń do osoby. Lista osób pochodzi ze wspólnego katalogu
  * użytkowników (`ERP_USER_DIRECTORY`), nie z modułu — patrz `cross-module-composition.md`. */
 export const ISSUE_SET_ASSIGNEE_MODAL_ID = '45ee67c3d582d94b6502ffe26f49a1a8';
+
+/** Modal: potwierdzenie publikacji workflow i mapowanie usuwanych stanów. */
+export const WORKFLOW_SCHEME_PUBLISH_MODAL_ID = '098a7f9b29c1429b8b9c2df001a3997e';

@@ -30,8 +30,7 @@
         "targetName": "lint"
       }
     },
-    "@nx/dotnet",
-    "@nx-dotnet/core"
+    "@nx/dotnet"
   ],
   "generators": {
     "@nx/angular:application": {

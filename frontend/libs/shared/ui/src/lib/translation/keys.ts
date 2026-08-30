@@ -77,6 +77,17 @@ export const SHARED_KEYS = {
     navigation: 'shared.navigation',
     menu: {
       requests: 'shared.menu.requests',
+      taskManagement: {
+        module: 'shared.menu.taskManagement.module',
+        issues: 'shared.menu.taskManagement.issues',
+        projects: 'shared.menu.taskManagement.projects',
+        board: 'shared.menu.taskManagement.board',
+        configuration: 'shared.menu.taskManagement.configuration',
+        workflowSchemes: 'shared.menu.taskManagement.workflowSchemes',
+        issue: 'shared.menu.taskManagement.issue',
+        project: 'shared.menu.taskManagement.project',
+        backlog: 'shared.menu.taskManagement.backlog',
+      },
     },
     notifications: {
       kinds: {
@@ -249,6 +260,10 @@ export const SHARED_KEYS = {
         taskmgmtIssueRemoveComment: 'shared.jobs.commands.taskmgmtIssueRemoveComment',
         taskmgmtIssueSetCustomFields: 'shared.jobs.commands.taskmgmtIssueSetCustomFields',
         taskmgmtBoardSetCardPosition: 'shared.jobs.commands.taskmgmtBoardSetCardPosition',
+        taskmgmtSprintSetIssueSprint: 'shared.jobs.commands.taskmgmtSprintSetIssueSprint',
+        taskmgmtSprintCreate: 'shared.jobs.commands.taskmgmtSprintCreate',
+        taskmgmtSprintStart: 'shared.jobs.commands.taskmgmtSprintStart',
+        taskmgmtSprintClose: 'shared.jobs.commands.taskmgmtSprintClose',
         taskmgmtFieldSchemeCreate: 'shared.jobs.commands.taskmgmtFieldSchemeCreate',
         taskmgmtFieldSchemeAddField: 'shared.jobs.commands.taskmgmtFieldSchemeAddField',
         taskmgmtFieldSchemeRemoveField: 'shared.jobs.commands.taskmgmtFieldSchemeRemoveField',

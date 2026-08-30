@@ -17,6 +17,18 @@ export const BOARD_KEYS = {
     card: {
       unassigned: 'board.card.unassigned',
     },
+    backlog: {
+      title: 'board.backlog.title',
+      backlog: 'board.backlog.backlog',
+      noActive: 'board.backlog.noActive',
+      name: 'board.backlog.name',
+      start: 'board.backlog.start',
+      end: 'board.backlog.end',
+      create: 'board.backlog.create',
+      startSprint: 'board.backlog.startSprint',
+      closeSprint: 'board.backlog.closeSprint',
+      closeToSprint: 'board.backlog.closeToSprint',
+    },
     move: {
       failed: 'board.move.failed',
       blocked: 'board.move.blocked',

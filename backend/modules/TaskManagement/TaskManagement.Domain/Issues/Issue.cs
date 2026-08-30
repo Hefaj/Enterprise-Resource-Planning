@@ -274,6 +274,27 @@ public sealed class Issue : AggregateRoot
         Touch(now);
     }
 
+    /// <summary>Przenosi zgłoszenie do stanu wskazanego podczas publikacji schematu.
+    /// Nie jest to przejście użytkownika: poprzedni stan właśnie znika, więc nie można
+    /// wymagać krawędzi automatu, która przestała istnieć.</summary>
+    public void MigrateWorkflowState(WorkflowScheme scheme, Guid toStateUuid, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(scheme);
+        if (!scheme.HasState(toStateUuid))
+        {
+            throw new DomainException("taskmgmt.workflow_migration_unknown_target", "Stan docelowy migracji nie należy do opublikowanego schematu.");
+        }
+
+        if (StateUuid == toStateUuid)
+        {
+            return;
+        }
+
+        StateUuid = toStateUuid;
+        StateCategory = scheme.State(toStateUuid).Category;
+        Touch(now);
+    }
+
     /// <summary>
     /// Nadpisuje <b>całą</b> kolekcję wartości pól niestandardowych — to, co przyszło, jest tym,
     /// co zostaje; pole pominięte w żądaniu zostaje wyczyszczone razem ze swoim slotem
@@ -327,6 +348,63 @@ public sealed class Issue : AggregateRoot
         }
 
         Touch(now);
+    }
+
+    /// <summary>
+    /// Uzupełnia wyłącznie wartości podane przy przejściu workflow i sprawdza, czy krawędź ma
+    /// wszystkie wymagane dane. Nie jest to drugi wariant publicznego „ustaw pola”: zwykła
+    /// komenda nadal zastępuje pełną kolekcję. Tutaj scalanie jest konieczne, bo przejście może
+    /// pytać tylko o brakujący numer protokołu bez kasowania pozostałych pól zgłoszenia.
+    /// </summary>
+    public void SetTransitionCustomFields(
+        FieldScheme scheme,
+        IReadOnlyCollection<string> requiredFieldCodes,
+        IReadOnlyDictionary<string, string?> values,
+        DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(scheme);
+        ArgumentNullException.ThrowIfNull(requiredFieldCodes);
+        ArgumentNullException.ThrowIfNull(values);
+
+        var required = requiredFieldCodes
+            .Select(code => code.Trim())
+            .Where(code => code.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        var unknownRequired = required.FirstOrDefault(code => scheme.FindByCode(code) is null);
+        if (unknownRequired is not null)
+        {
+            throw new DomainException(
+                "taskmgmt.transition_required_field_unknown",
+                $"Przejście wymaga pola `{unknownRequired}`, którego nie ma w schemacie `{scheme.Name}`.");
+        }
+
+        var unknownValue = values.Keys.FirstOrDefault(code => scheme.FindByCode(code) is null);
+        if (unknownValue is not null)
+        {
+            throw new DomainException(
+                "taskmgmt.field_unknown",
+                $"Pole `{unknownValue}` nie należy do schematu pól `{scheme.Name}`.");
+        }
+
+        var merged = _customFields.ToDictionary(pair => pair.Key, pair => (string?)pair.Value, StringComparer.Ordinal);
+        foreach (var (code, value) in values)
+        {
+            merged[code] = value;
+        }
+
+        var missing = required.FirstOrDefault(code => !merged.TryGetValue(code, out var value) || string.IsNullOrWhiteSpace(value));
+        if (missing is not null)
+        {
+            throw new DomainException(
+                "taskmgmt.transition_required_field_missing",
+                $"Przejście wymaga wartości pola `{missing}`.");
+        }
+
+        // SetCustomFields najpierw parsuje wszystkie wartości, a dopiero później zmienia stan,
+        // więc zachowujemy atomowość również dla przejścia tablicy/batcha.
+        SetCustomFields(scheme, merged, now);
     }
 
     private void ClearSlots()

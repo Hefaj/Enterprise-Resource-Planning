@@ -43,7 +43,8 @@
     "lead": "Prowadzący"
   },
   "navigation": {
-    "requests": "Zlecenia"
+    "requests": "Zlecenia",
+    "workflowSchemes": "Schematy stanów"
   },
   "fields": {
     "storyPoints": "Punkty",

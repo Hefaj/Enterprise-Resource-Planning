@@ -1,13 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { ErpBatchMetadata, ErpModalBuilder, ErpModalConfig, ErpModalDefinition } from '@erp/shared/ui';
-import {
-  BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
-  ProjectWorkflowService,
-  TaskManagementIssueOrchestrator,
-} from '@erp/task-management/data-access';
+import { BatchCommandOfIssueSetStateCommandAndSearchIssueRequest, ProjectFieldDto, ProjectWorkflowService, TaskManagementIssueOrchestrator } from '@erp/task-management/data-access';
 import { ISSUE_SET_STATE_MODAL_ID } from '@erp/task-management/util';
 
 import { IssueSetStateStepComponent } from './issue-set-state.step';
+import { IssueSetStateFieldsStepComponent } from './issue-set-state-fields.step';
 import { ISSUE_KEYS } from '../../translation';
 
 /**
@@ -18,6 +15,7 @@ import { ISSUE_KEYS } from '../../translation';
 export interface IssueSetStateMetadata extends ErpBatchMetadata {
   /** Projekt z przełącznika kontekstu na liście; puste = wyliczany z celów operacji. */
   projectUuid?: string;
+  requiredFields?: readonly ProjectFieldDto[];
 }
 
 /**
@@ -31,10 +29,7 @@ export interface IssueSetStateMetadata extends ErpBatchMetadata {
  * odpadłaby błędem `taskmgmt.transition_unknown_state`.</p>
  */
 @Injectable({ providedIn: 'root' })
-export class IssueSetStateModalDefinition
-  implements
-    ErpModalDefinition<BatchCommandOfIssueSetStateCommandAndSearchIssueRequest, IssueSetStateMetadata>
-{
+export class IssueSetStateModalDefinition implements ErpModalDefinition<BatchCommandOfIssueSetStateCommandAndSearchIssueRequest, IssueSetStateMetadata> {
   public readonly id = ISSUE_SET_STATE_MODAL_ID;
 
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
@@ -47,29 +42,24 @@ export class IssueSetStateModalDefinition
     // Klucze i projekty zaznaczonych zgłoszeń pokazuje krok modalu. W trybie filtra nie ma czego
     // dociągać — celów nie zna nawet frontend.
     if (command.targetUuids?.length) {
-      this._issues
-        .loadAsync(command.targetUuids, {})
-        .catch((err: unknown) => console.error('[IssueSetStateModalDefinition] Nie udało się pobrać zgłoszeń.', err));
+      this._issues.loadAsync(command.targetUuids, {}).catch((err: unknown) => console.error('[IssueSetStateModalDefinition] Nie udało się pobrać zgłoszeń.', err));
     }
 
     const projectUuid = metadata?.projectUuid ?? command.targetFilter?.projectUuid;
     if (projectUuid) {
-      this._workflow
-        .loadAsync(projectUuid)
-        .catch((err: unknown) => console.error('[IssueSetStateModalDefinition] Nie udało się pobrać schematu.', err));
+      this._workflow.loadAsync(projectUuid).catch((err: unknown) => console.error('[IssueSetStateModalDefinition] Nie udało się pobrać schematu.', err));
     }
 
-    return ErpModalBuilder.modal<BatchCommandOfIssueSetStateCommandAndSearchIssueRequest, IssueSetStateMetadata>(
-      (b) =>
-        b
-          .setTitle([ISSUE_KEYS.title, ISSUE_KEYS.commands.setState.modalTitle])
-          .setCommand(command)
-          .setMetadata(metadata)
-          .addStep(ISSUE_KEYS.commands.setState.label, IssueSetStateStepComponent)
-          .setSaveLabel(ISSUE_KEYS.commands.setState.submitButton)
-          .setOnSave(async (cmd) => {
-            await this._issues.setStateMultipleAsync(cmd, ISSUE_SET_STATE_MODAL_ID);
-          }),
+    return ErpModalBuilder.modal<BatchCommandOfIssueSetStateCommandAndSearchIssueRequest, IssueSetStateMetadata>((b) =>
+      b
+        .setTitle([ISSUE_KEYS.title, ISSUE_KEYS.commands.setState.modalTitle])
+        .setCommand(command)
+        .setMetadata(metadata)
+        .addStep(ISSUE_KEYS.commands.setState.label, (metadata?.requiredFields?.length ? IssueSetStateFieldsStepComponent : IssueSetStateStepComponent) as unknown as typeof IssueSetStateStepComponent)
+        .setSaveLabel(ISSUE_KEYS.commands.setState.submitButton)
+        .setOnSave(async (cmd) => {
+          return this._issues.setStateMultipleAsync(cmd, ISSUE_SET_STATE_MODAL_ID);
+        }),
     );
   }
 }

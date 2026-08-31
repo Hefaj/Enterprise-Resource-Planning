@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Domain;
 using Erp.BuildingBlocks.Validation;
 using Shouldly;
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Workflow;
 using Xunit;
@@ -29,6 +30,7 @@ public class IssueGraphTests
             key,
             "Tytuł",
             WorkflowSchemeDefaults.Build(),
+            IssueTypeSchemeDefaults.Build().DefaultType(),
             Reporter,
             Now);
 
@@ -37,7 +39,7 @@ public class IssueGraphTests
     {
         var issue = Issue();
 
-        Should.Throw<DomainException>(() => issue.SetParent(issue, Now))
+        Should.Throw<DomainException>(() => issue.SetParent(issue, IssueTypeCategory.Standard, IssueTypeCategory.Standard, Now))
             .ErrorCode.ShouldBe("taskmgmt.parent_self");
     }
 
@@ -50,7 +52,7 @@ public class IssueGraphTests
         var child = Issue();
         var parent = Issue(OtherProject, "MKT-1");
 
-        Should.Throw<DomainException>(() => child.SetParent(parent, Now))
+        Should.Throw<DomainException>(() => child.SetParent(parent, IssueTypeCategory.Standard, IssueTypeCategory.Standard, Now))
             .ErrorCode.ShouldBe("taskmgmt.parent_other_project");
     }
 
@@ -59,11 +61,42 @@ public class IssueGraphTests
     {
         var child = Issue();
         var parent = Issue(key: "DEV-2");
-        child.SetParent(parent, Now);
+        child.SetParent(parent, IssueTypeCategory.Standard, IssueTypeCategory.Standard, Now);
 
-        child.SetParent(null, Now);
+        child.SetParent(null, IssueTypeCategory.Standard, null, Now);
 
         child.ParentUuid.ShouldBeNull();
+    }
+
+    /// <summary>LNK-001 AC2: epik nie może mieć rodzica. Sprawdzamy też, że odrzucenie nie
+    /// zmienia stanu agregatu — reguła „metoda agregatu waliduje PRZED zmianą stanu”, na której
+    /// stoi częściowy sukces operacji masowych (<c>docs/backend/cqrs.md</c> §3).</summary>
+    [Fact]
+    public void Epik_nie_moze_miec_rodzica()
+    {
+        var epic = Issue();
+        var parent = Issue(key: "DEV-2");
+        var originalParent = epic.ParentUuid;
+
+        Should.Throw<DomainException>(() => epic.SetParent(parent, IssueTypeCategory.Epic, IssueTypeCategory.Standard, Now))
+            .ErrorCode.ShouldBe("taskmgmt.parent_epic_cannot_have_parent");
+
+        epic.ParentUuid.ShouldBe(originalParent);
+    }
+
+    /// <summary>LNK-001 AC2: podzadanie nie może być rodzicem. Tak samo sprawdzamy, że
+    /// odrzucenie zostawia rodzica dziecka niezmienionym.</summary>
+    [Fact]
+    public void Podzadanie_nie_moze_byc_rodzicem()
+    {
+        var child = Issue();
+        var subtaskParent = Issue(key: "DEV-2");
+        var originalParent = child.ParentUuid;
+
+        Should.Throw<DomainException>(() => child.SetParent(subtaskParent, IssueTypeCategory.Standard, IssueTypeCategory.Subtask, Now))
+            .ErrorCode.ShouldBe("taskmgmt.parent_subtask_cannot_be_parent");
+
+        child.ParentUuid.ShouldBe(originalParent);
     }
 
     [Fact]

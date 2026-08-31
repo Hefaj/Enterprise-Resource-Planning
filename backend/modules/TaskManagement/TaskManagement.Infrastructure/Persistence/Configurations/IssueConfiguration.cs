@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 
@@ -41,6 +42,11 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         builder.HasKey(i => i.Uuid);
 
         builder.Property(i => i.ProjectUuid).IsRequired();
+
+        // Typ steruje hierarchią (`Issue.SetParent`) i opcjonalnie zawęża konfigurację —
+        // wymagany od tej migracji, dane sprzed niej są do wyrzucenia (TYP-001).
+        builder.Property(i => i.TypeUuid).IsRequired();
+
         builder.Property(i => i.Key).HasMaxLength(32).IsRequired();
         builder.Property(i => i.Title).HasMaxLength(512).IsRequired();
         builder.Property(i => i.Description);
@@ -134,6 +140,15 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
             .WithMany()
             .HasForeignKey(i => i.ProjectUuid)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<IssueType>()
+            .WithMany()
+            .HasForeignKey(i => i.TypeUuid)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Filtr „zgłoszenia typu X w projekcie Y” (kolumna typu na liście, modal tworzenia)
+        // idzie po tym indeksie.
+        builder.HasIndex(i => new { i.ProjectUuid, i.TypeUuid });
 
         // Rodzic bez klucza obcego do samego siebie z kaskadą: usunięcie epiku nie może
         // wykasować podzadań po cichu. Hierarchię wypełnia faza 4.

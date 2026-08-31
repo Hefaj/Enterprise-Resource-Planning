@@ -60,7 +60,10 @@
         "options": "Allowed values",
         "optionsHint": "comma separated",
         "required": "Required field",
-        "submit": "Add field"
+        "submit": "Add field",
+        "name": "Name",
+        "nameKeyHint": "optional — without it the field shows the name above, untranslated",
+        "slotsExhausted": "All slots of this type are taken ({{used}}/{{total}}): {{fields}}. Remove one of those fields to free a slot."
       },
       "remove": {
         "label": "Remove",
@@ -73,6 +76,33 @@
         "date": "Date",
         "user": "User",
         "select": "Select list"
+      }
+    },
+    "types": {
+      "title": "Issue types",
+      "empty": "This scheme has no types yet.",
+      "scheme": {
+        "label": "Type scheme",
+        "placeholder": "Pick a scheme",
+        "attach": "Attach scheme"
+      },
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "icon": "Icon"
+      },
+      "add": {
+        "title": "New type",
+        "name": "Name",
+        "icon": "TaigaUI icon",
+        "iconHint": "e.g. @tui.bug",
+        "category": "Category",
+        "submit": "Add type"
+      },
+      "remove": {
+        "label": "Remove",
+        "confirmTitle": "Remove this type?",
+        "confirmMessage": "The backend refuses if any issue still has this type."
       }
     }
   }

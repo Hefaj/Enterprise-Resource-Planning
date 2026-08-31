@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Api.Contracts;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Workflow;
 
@@ -6,7 +7,8 @@ namespace TaskManagement.Application.Issues;
 
 /// <summary>Zgłoszenie w widoku odczytu. Kategoria stanu jedzie razem ze stanem, bo to po niej
 /// front decyduje o kolorze i o tym, czy karta „wyszła z pracy” — bez niej musiałby doładowywać
-/// schemat, żeby narysować listę.</summary>
+/// schemat, żeby narysować listę. Typ jedzie tą samą drogą, z tego samego powodu: kolumna typu
+/// na liście i ikona na karcie nie mogą doładowywać schematu typów osobnym zapytaniem.</summary>
 public sealed record IssueDto(
     Guid Uuid,
     Guid ProjectUuid,
@@ -15,6 +17,10 @@ public sealed record IssueDto(
     string Title,
     string? Description,
     IssuePriority Priority,
+    Guid TypeUuid,
+    string TypeName,
+    IssueTypeCategory TypeCategory,
+    string TypeIcon,
     Guid StateUuid,
     string StateCode,
     string StateNameKey,

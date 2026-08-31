@@ -19,13 +19,21 @@ public sealed class Project : AggregateRoot
     {
     }
 
-    private Project(Guid uuid, string code, string name, ProjectKind kind, Guid workflowSchemeUuid, bool isPublic)
+    private Project(
+        Guid uuid,
+        string code,
+        string name,
+        ProjectKind kind,
+        Guid workflowSchemeUuid,
+        Guid issueTypeSchemeUuid,
+        bool isPublic)
         : base(uuid)
     {
         Code = code;
         Name = name;
         Kind = kind;
         WorkflowSchemeUuid = workflowSchemeUuid;
+        IssueTypeSchemeUuid = issueTypeSchemeUuid;
         IsPublic = isPublic;
     }
 
@@ -38,6 +46,12 @@ public sealed class Project : AggregateRoot
     public ProjectKind Kind { get; private set; }
 
     public Guid WorkflowSchemeUuid { get; private set; }
+
+    /// <summary>Schemat typów zgłoszeń — tak samo jak <see cref="WorkflowSchemeUuid"/>,
+    /// wymagany: projekt bez typów nie da założyć żadnego zgłoszenia (TYP-001). Nowe projekty
+    /// dostają domyślnie schemat systemowy z seeda; zmiana idzie przez
+    /// <see cref="SetIssueTypeScheme"/>.</summary>
+    public Guid IssueTypeSchemeUuid { get; private set; }
 
     /// <summary>
     /// Schemat pól niestandardowych. <c>null</c> znaczy „projekt bez pól własnych" i jest
@@ -54,8 +68,14 @@ public sealed class Project : AggregateRoot
 
     public IReadOnlyList<ProjectMember> Members => _members.AsReadOnly();
 
-    public static Project Create(string code, string name, ProjectKind kind, Guid workflowSchemeUuid, bool isPublic)
-        => CreateWithUuid(NewUuid(), code, name, kind, workflowSchemeUuid, isPublic);
+    public static Project Create(
+        string code,
+        string name,
+        ProjectKind kind,
+        Guid workflowSchemeUuid,
+        Guid issueTypeSchemeUuid,
+        bool isPublic)
+        => CreateWithUuid(NewUuid(), code, name, kind, workflowSchemeUuid, issueTypeSchemeUuid, isPublic);
 
     /// <summary>Odtwarza projekt o znanym identyfikatorze — dla seedera i dla komendy
     /// tworzącej, która dostaje uuid od klienta (tryb <c>Commands[]</c> operacji masowej).</summary>
@@ -65,6 +85,7 @@ public sealed class Project : AggregateRoot
         string name,
         ProjectKind kind,
         Guid workflowSchemeUuid,
+        Guid issueTypeSchemeUuid,
         bool isPublic)
     {
         if (workflowSchemeUuid == Guid.Empty)
@@ -74,10 +95,32 @@ public sealed class Project : AggregateRoot
                 "Projekt musi wskazywać schemat stanów.");
         }
 
-        return new Project(uuid, ValidateCode(code), ValidateName(name), kind, workflowSchemeUuid, isPublic);
+        if (issueTypeSchemeUuid == Guid.Empty)
+        {
+            throw new DomainException(
+                "taskmgmt.project_issue_type_scheme_empty",
+                "Projekt musi wskazywać schemat typów zgłoszeń.");
+        }
+
+        return new Project(uuid, ValidateCode(code), ValidateName(name), kind, workflowSchemeUuid, issueTypeSchemeUuid, isPublic);
     }
 
     public void SetName(string name) => Name = ValidateName(name);
+
+    /// <summary>Podmienia schemat typów zgłoszeń. Zgłoszenia istniejące na starym schemacie
+    /// zachowują swój <c>TypeUuid</c> — podmiana nie migruje danych wstecz, tak samo jak zmiana
+    /// automatu stanów nie przenosi kart na inne kolumny (§5.3).</summary>
+    public void SetIssueTypeScheme(Guid issueTypeSchemeUuid)
+    {
+        if (issueTypeSchemeUuid == Guid.Empty)
+        {
+            throw new DomainException(
+                "taskmgmt.project_issue_type_scheme_empty",
+                "Projekt musi wskazywać schemat typów zgłoszeń.");
+        }
+
+        IssueTypeSchemeUuid = issueTypeSchemeUuid;
+    }
 
     public void SetVisibility(bool isPublic) => IsPublic = isPublic;
 

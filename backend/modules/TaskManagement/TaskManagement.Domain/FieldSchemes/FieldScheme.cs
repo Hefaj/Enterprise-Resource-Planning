@@ -51,7 +51,8 @@ public sealed class FieldScheme : AggregateRoot
     public FieldDefinition AddField(
         Guid uuid,
         string code,
-        string nameKey,
+        string name,
+        string? nameKey,
         CustomFieldDataType dataType,
         FieldSlot slot,
         int orderNo,
@@ -85,7 +86,7 @@ public sealed class FieldScheme : AggregateRoot
                 $"Pole `{normalizedCode}` typu Select musi mieć listę dopuszczalnych wartości.");
         }
 
-        var field = FieldDefinition.Create(uuid, Uuid, normalizedCode, nameKey, dataType, slot, orderNo, isRequired, optionList);
+        var field = FieldDefinition.Create(uuid, Uuid, normalizedCode, name, nameKey, dataType, slot, orderNo, isRequired, optionList);
         _fields.Add(field);
         return field;
     }
@@ -173,7 +174,8 @@ public sealed class FieldDefinition : Entity
         Guid uuid,
         Guid schemeUuid,
         string code,
-        string nameKey,
+        string name,
+        string? nameKey,
         CustomFieldDataType dataType,
         FieldSlot slot,
         int orderNo,
@@ -183,6 +185,7 @@ public sealed class FieldDefinition : Entity
     {
         SchemeUuid = schemeUuid;
         Code = code;
+        Name = name;
         NameKey = nameKey;
         DataType = dataType;
         Slot = slot;
@@ -197,9 +200,14 @@ public sealed class FieldDefinition : Entity
     /// i nazwa pola w sortowaniu.</summary>
     public string Code { get; private set; } = string.Empty;
 
-    /// <summary>Klucz tłumaczenia nagłówka. Nazwa pola nie ma języka po stronie serwera —
-    /// tak samo jak nazwy stanów w schemacie przejść.</summary>
-    public string NameKey { get; private set; } = string.Empty;
+    /// <summary>Nazwa wpisana wprost przez użytkownika zakładającego pole z UI (<c>FLD-002</c>)
+    /// — front przestaje pokazywać surowy <see cref="NameKey"/>, gdy go zabraknie.</summary>
+    public string Name { get; private set; } = string.Empty;
+
+    /// <summary>Klucz tłumaczenia nagłówka — tylko dla pól systemowych z seeda. Opcjonalny:
+    /// pole założone z UI ma tylko <see cref="Name"/>, tak samo jak nazwa stanu w schemacie
+    /// przejść ma klucz tylko, gdy pochodzi z seeda.</summary>
+    public string? NameKey { get; private set; }
 
     public CustomFieldDataType DataType { get; private set; }
 
@@ -222,11 +230,19 @@ public sealed class FieldDefinition : Entity
         Guid uuid,
         Guid schemeUuid,
         string code,
-        string nameKey,
+        string name,
+        string? nameKey,
         CustomFieldDataType dataType,
         FieldSlot slot,
         int orderNo,
         bool isRequired,
         IEnumerable<string> options)
-        => new(uuid, schemeUuid, code, nameKey, dataType, slot, orderNo, isRequired, options);
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new DomainException("taskmgmt.field_name_empty", "Nazwa pola nie może być pusta.");
+        }
+
+        return new(uuid, schemeUuid, code, name.Trim(), nameKey, dataType, slot, orderNo, isRequired, options);
+    }
 }

@@ -2,7 +2,9 @@ using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
+using FluentValidation;
 using TaskManagement.Application.Abstractions;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Workflow;
 
@@ -22,6 +24,10 @@ public sealed class IssueCreateCommand : ICommand<Guid>, IAggregateCommand
 
     public Guid ProjectUuid { get; set; }
 
+    /// <summary>Typ zgłoszenia — musi należeć do schematu typów projektu (TYP-001, zmiana
+    /// łamiąca kontrakt względem fazy poprzedzającej typy).</summary>
+    public Guid TypeUuid { get; set; }
+
     public string Title { get; set; } = string.Empty;
 
     public string? Description { get; set; }
@@ -33,10 +39,24 @@ public sealed class IssueCreateCommand : ICommand<Guid>, IAggregateCommand
     public DateTimeOffset? DueAt { get; set; }
 }
 
+/// <summary>Walidacja wejścia — komenda bez typu odpada w pipeline'u komend, ZANIM dotknie
+/// bazy (400, nie 422): brak typu nie jest naruszeniem reguły biznesowej, tylko niekompletnym
+/// żądaniem (<c>docs/backend/cqrs.md</c> §6).</summary>
+public sealed class IssueCreateCommandValidator : AbstractValidator<IssueCreateCommand>
+{
+    public IssueCreateCommandValidator()
+    {
+        RuleFor(c => c.ProjectUuid).NotEqual(Guid.Empty);
+        RuleFor(c => c.TypeUuid).NotEqual(Guid.Empty);
+        RuleFor(c => c.Title).NotEmpty();
+    }
+}
+
 public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateCommand, Guid>
 {
     private readonly IIssueRepository _repository;
     private readonly IWorkflowSchemeRepository _schemes;
+    private readonly IIssueTypeSchemeRepository _issueTypeSchemes;
     private readonly IIssueKeyAllocator _keyAllocator;
     private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
@@ -46,6 +66,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     public IssueCreateCommandHandler(
         IIssueRepository repository,
         IWorkflowSchemeRepository schemes,
+        IIssueTypeSchemeRepository issueTypeSchemes,
         IIssueKeyAllocator keyAllocator,
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
@@ -54,6 +75,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     {
         _repository = repository;
         _schemes = schemes;
+        _issueTypeSchemes = issueTypeSchemes;
         _keyAllocator = keyAllocator;
         _activity = activity;
         _executionContext = executionContext;
@@ -68,6 +90,12 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         var scheme = await _schemes.FindByProjectAsync(command.ProjectUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), command.ProjectUuid);
 
+        var issueTypeScheme = await _issueTypeSchemes.FindByProjectAsync(command.ProjectUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), command.ProjectUuid);
+
+        var issueType = issueTypeScheme.FindByUuid(command.TypeUuid)
+            ?? throw new AggregateNotFoundException(nameof(IssueType), command.TypeUuid);
+
         // Numer bierzemy z licznika projektu w TEJ SAMEJ transakcji, co zapis zgłoszenia —
         // `MAX(number) + 1` byłby klasycznym wyścigiem przy dwóch instancjach (§4).
         var key = await _keyAllocator.AllocateAsync(command.ProjectUuid, ct).ConfigureAwait(false);
@@ -81,6 +109,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
             key,
             command.Title,
             scheme,
+            issueType,
             actor,
             now);
 
@@ -267,6 +296,100 @@ public sealed class IssueSetDueDateCommandHandler : IssueCommandHandlerBase<Issu
             "due_at",
             IssueActivityValue.From(previous),
             IssueActivityValue.From(issue.DueAt));
+    }
+}
+
+/// <summary>
+/// Zmiana typu zgłoszenia (TYP-001).
+///
+/// <para>Gdy nowy typ nadpisuje inny schemat stanów niż stary (TYP-003 AC2), handler mapuje
+/// bieżący stan na <c>InitialState()</c> nowego schematu — ta sama mechanika, co
+/// <c>MoveToProject</c> przy zmianie projektu. Efektywny schemat stanów typu jest
+/// <c>type.WorkflowSchemeUuid ?? project.WorkflowSchemeUuid</c> (TYP-003 AC1: brak wskazania
+/// własnego schematu to dziedziczenie po projekcie).</para>
+/// </summary>
+public sealed class IssueSetTypeCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public Guid TypeUuid { get; set; }
+}
+
+public sealed class IssueSetTypeCommandHandler : CommandHandler<IssueSetTypeCommand, Guid>
+{
+    private readonly IIssueRepository _issues;
+    private readonly IProjectRepository _projects;
+    private readonly IIssueTypeSchemeRepository _issueTypeSchemes;
+    private readonly IWorkflowSchemeRepository _workflowSchemes;
+    private readonly IIssueActivityWriter _activity;
+    private readonly IExecutionContext _executionContext;
+    private readonly IClock _clock;
+
+    public IssueSetTypeCommandHandler(
+        IIssueRepository issues,
+        IProjectRepository projects,
+        IIssueTypeSchemeRepository issueTypeSchemes,
+        IWorkflowSchemeRepository workflowSchemes,
+        IIssueActivityWriter activity,
+        IExecutionContext executionContext,
+        IClock clock)
+    {
+        _issues = issues;
+        _projects = projects;
+        _issueTypeSchemes = issueTypeSchemes;
+        _workflowSchemes = workflowSchemes;
+        _activity = activity;
+        _executionContext = executionContext;
+        _clock = clock;
+    }
+
+    public override async Task<Guid> ExecuteAsync(IssueSetTypeCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var issue = await _issues.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Issue), command.Uuid);
+
+        var project = await _projects.FindAsync(issue.ProjectUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), issue.ProjectUuid);
+
+        var scheme = await _issueTypeSchemes.FindByProjectAsync(issue.ProjectUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), issue.ProjectUuid);
+
+        var oldType = scheme.FindByUuid(issue.TypeUuid);
+        var newType = scheme.FindByUuid(command.TypeUuid)
+            ?? throw new AggregateNotFoundException(nameof(IssueType), command.TypeUuid);
+
+        var oldWorkflowSchemeUuid = oldType?.WorkflowSchemeUuid ?? project.WorkflowSchemeUuid;
+        var newWorkflowSchemeUuid = newType.WorkflowSchemeUuid ?? project.WorkflowSchemeUuid;
+
+        WorkflowScheme? targetWorkflowScheme = null;
+
+        if (oldWorkflowSchemeUuid != newWorkflowSchemeUuid)
+        {
+            targetWorkflowScheme = await _workflowSchemes.FindAsync(newWorkflowSchemeUuid, ct).ConfigureAwait(false)
+                ?? throw new AggregateNotFoundException(nameof(WorkflowScheme), newWorkflowSchemeUuid);
+        }
+
+        var now = _clock.UtcNow;
+        var previous = issue.TypeUuid;
+
+        issue.SetType(scheme, command.TypeUuid, targetWorkflowScheme, now);
+
+        if (previous != issue.TypeUuid)
+        {
+            _activity.Add(IssueActivity.Record(
+                issue.Uuid,
+                IssueActivityKind.FieldChanged,
+                "type",
+                previous.ToString(),
+                issue.TypeUuid.ToString(),
+                IssueCreateCommandHandler.ActorUuid(_executionContext),
+                _executionContext.CorrelationId,
+                now));
+        }
+
+        return issue.Uuid;
     }
 }
 

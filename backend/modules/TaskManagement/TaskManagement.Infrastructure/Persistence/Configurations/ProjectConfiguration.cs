@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TaskManagement.Domain.FieldSchemes;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Projects;
 
 namespace TaskManagement.Infrastructure.Persistence.Configurations;
@@ -19,6 +20,11 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(p => p.Name).HasMaxLength(256).IsRequired();
         builder.Property(p => p.Kind).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(p => p.WorkflowSchemeUuid).IsRequired();
+
+        // Schemat typów zgłoszeń — wymagany tak samo jak schemat stanów (TYP-001): projekt bez
+        // typów nie da założyć żadnego zgłoszenia.
+        builder.Property(p => p.IssueTypeSchemeUuid).IsRequired();
+
         builder.Property(p => p.IsPublic).IsRequired();
 
         // Schemat pól jest opcjonalny — projekt bez pól własnych to stan normalny.
@@ -29,6 +35,11 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.HasOne<FieldScheme>()
             .WithMany()
             .HasForeignKey(p => p.FieldSchemeUuid)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<IssueTypeScheme>()
+            .WithMany()
+            .HasForeignKey(p => p.IssueTypeSchemeUuid)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(p => p.Code).IsUnique();

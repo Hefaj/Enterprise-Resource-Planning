@@ -1,4 +1,5 @@
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 
 namespace TaskManagement.Application.Boards;
@@ -41,6 +42,10 @@ public sealed record BoardCardDto(
     Guid? SprintUuid,
     string Key,
     string Title,
+    Guid TypeUuid,
+    string TypeName,
+    IssueTypeCategory TypeCategory,
+    string TypeIcon,
     Guid StateUuid,
     IssuePriority Priority,
     Guid? AssigneeUuid,

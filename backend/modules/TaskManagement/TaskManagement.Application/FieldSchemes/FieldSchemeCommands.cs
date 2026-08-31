@@ -80,7 +80,13 @@ public sealed class FieldSchemeAddFieldCommand : ICommand<Guid>, IAggregateComma
 
     public string Code { get; set; } = string.Empty;
 
-    public string NameKey { get; set; } = string.Empty;
+    /// <summary>Nazwa wpisana wprost przez użytkownika (<c>FLD-002</c>) — wymagana.</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Klucz tłumaczenia — opcjonalny, tylko dla pól systemowych z seeda. Pole
+    /// założone z UI nie ma klucza i front pokazuje <see cref="Name"/>, nigdy surowy klucz
+    /// (<c>FLD-002</c> AC1).</summary>
+    public string? NameKey { get; set; }
 
     public CustomFieldDataType DataType { get; set; }
 
@@ -111,6 +117,7 @@ public sealed class FieldSchemeAddFieldCommandHandler : CommandHandler<FieldSche
         scheme.AddField(
             command.FieldUuid == Guid.Empty ? Entity.NewUuid() : command.FieldUuid,
             command.Code,
+            command.Name,
             command.NameKey,
             command.DataType,
             command.Slot,

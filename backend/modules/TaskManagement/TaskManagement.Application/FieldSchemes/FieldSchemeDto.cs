@@ -9,11 +9,13 @@ public sealed record FieldSchemeDto(
     bool IsSystem,
     List<FieldDefinitionDto> Fields);
 
-/// <summary>Definicja pola w widoku odczytu.</summary>
+/// <summary>Definicja pola w widoku odczytu. <see cref="Name"/> jest tym, co pokazuje front —
+/// <see cref="NameKey"/> istnieje tylko dla pól systemowych z seeda (<c>FLD-002</c>).</summary>
 public sealed record FieldDefinitionDto(
     Guid Uuid,
     string Code,
-    string NameKey,
+    string Name,
+    string? NameKey,
     CustomFieldDataType DataType,
     FieldSlot Slot,
     int OrderNo,
@@ -32,7 +34,8 @@ public sealed record FieldDefinitionDto(
 public sealed record ProjectFieldProfileDto(
     Guid ProjectUuid,
     Guid? FieldSchemeUuid,
-    List<ProjectFieldDto> Fields);
+    List<ProjectFieldDto> Fields,
+    List<FieldSlotUsageDto> SlotUsage);
 
 /// <summary>
 /// Pole w profilu projektu.
@@ -44,13 +47,25 @@ public sealed record ProjectFieldProfileDto(
 /// </summary>
 public sealed record ProjectFieldDto(
     string Code,
-    string NameKey,
+    string Name,
+    string? NameKey,
     CustomFieldDataType DataType,
     bool IsSortable,
     bool IsFilterable,
     bool IsRequired,
     int OrderNo,
     List<string> Options);
+
+/// <summary>
+/// Zajętość puli slotów danego typu danych (<c>FLD-005</c>). Front pokazuje to na ekranie
+/// zakładania pola: „zajęte 3 z 4, przez: Punkty historyjki, Godziny, Budżet" zamiast ogólnego
+/// błędu dopiero po próbie zapisu.
+/// </summary>
+public sealed record FieldSlotUsageDto(
+    CustomFieldDataType DataType,
+    int TotalSlots,
+    int UsedSlots,
+    List<string> UsedByFieldNames);
 
 /// <summary>Żądanie profilu pól projektu.</summary>
 public sealed class GetProjectFieldProfileRequest

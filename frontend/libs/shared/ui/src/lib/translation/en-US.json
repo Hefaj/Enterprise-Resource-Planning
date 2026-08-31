@@ -238,7 +238,13 @@
       "taskmgmtProjectSetFieldScheme": "Changing a project's field scheme",
       "taskmgmtIssueSetParent": "Changing an issue's parent",
       "taskmgmtIssueAddLink": "Adding a link",
-      "taskmgmtIssueRemoveLink": "Removing a link"
+      "taskmgmtIssueRemoveLink": "Removing a link",
+      "taskmgmtIssueSetType": "Issue type change",
+      "taskmgmtIssueTypeSchemeCreate": "Issue type scheme creation",
+      "taskmgmtIssueTypeSchemeAddType": "Add type to scheme",
+      "taskmgmtIssueTypeSchemeRemoveType": "Remove type from scheme",
+      "taskmgmtIssueTypeSchemeSetType": "Update type in scheme",
+      "taskmgmtProjectSetIssueTypeScheme": "Project issue type scheme change"
     },
     "toast": {
       "completed": "Finished: {{name}}",

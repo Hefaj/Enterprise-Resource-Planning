@@ -42,5 +42,42 @@
     "startedOn": "Rozpoczęto",
     "reviewer": "Recenzent",
     "notes": "Notatki"
+  },
+  "issueTypeCategory": {
+    "epic": "Epik",
+    "standard": "Standardowy",
+    "subtask": "Podzadanie"
+  },
+  "links": {
+    "parent": "Rodzic",
+    "parentPlaceholder": "Klucz zgłoszenia rodzica (np. DEV-100)",
+    "children": "Podzadania",
+    "type": "Rodzaj powiązania",
+    "targetPlaceholder": "Klucz zgłoszenia (np. DEV-100)",
+    "setParentSubmit": "Ustaw rodzica",
+    "detachParent": "Odepnij",
+    "addSubmit": "Dodaj powiązanie",
+    "remove": "Usuń",
+    "none": "Brak powiązań"
+  },
+  "fieldPanel": {
+    "state": "Stan",
+    "noTransitions": "Brak dostępnych przejść",
+    "type": "Typ"
+  },
+  "activityStream": {
+    "title": "Aktywność",
+    "empty": "Brak aktywności",
+    "commentRemoved": "Komentarz usunięty",
+    "edited": "(edytowano)",
+    "reply": "Odpowiedz",
+    "edit": "Edytuj",
+    "remove": "Usuń",
+    "filters": {
+      "all": "Wszystko",
+      "comments": "Komentarze",
+      "history": "Historia",
+      "time": "Czas"
+    }
   }
 }

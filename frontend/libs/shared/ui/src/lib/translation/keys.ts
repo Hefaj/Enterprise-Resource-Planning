@@ -244,6 +244,12 @@ export const SHARED_KEYS = {
         taskmgmtIssueSetParent: 'shared.jobs.commands.taskmgmtIssueSetParent',
         taskmgmtIssueAddLink: 'shared.jobs.commands.taskmgmtIssueAddLink',
         taskmgmtIssueRemoveLink: 'shared.jobs.commands.taskmgmtIssueRemoveLink',
+        taskmgmtIssueSetType: 'shared.jobs.commands.taskmgmtIssueSetType',
+        taskmgmtIssueTypeSchemeCreate: 'shared.jobs.commands.taskmgmtIssueTypeSchemeCreate',
+        taskmgmtIssueTypeSchemeAddType: 'shared.jobs.commands.taskmgmtIssueTypeSchemeAddType',
+        taskmgmtIssueTypeSchemeRemoveType: 'shared.jobs.commands.taskmgmtIssueTypeSchemeRemoveType',
+        taskmgmtIssueTypeSchemeSetType: 'shared.jobs.commands.taskmgmtIssueTypeSchemeSetType',
+        taskmgmtProjectSetIssueTypeScheme: 'shared.jobs.commands.taskmgmtProjectSetIssueTypeScheme',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',

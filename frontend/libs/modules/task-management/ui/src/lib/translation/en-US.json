@@ -42,5 +42,42 @@
     "startedOn": "Started on",
     "reviewer": "Reviewer",
     "notes": "Notes"
+  },
+  "issueTypeCategory": {
+    "epic": "Epic",
+    "standard": "Standard",
+    "subtask": "Subtask"
+  },
+  "links": {
+    "parent": "Parent",
+    "parentPlaceholder": "Parent issue key (e.g. DEV-100)",
+    "children": "Subtasks",
+    "type": "Link type",
+    "targetPlaceholder": "Issue key (e.g. DEV-100)",
+    "setParentSubmit": "Set parent",
+    "detachParent": "Detach",
+    "addSubmit": "Add link",
+    "remove": "Remove",
+    "none": "No links"
+  },
+  "fieldPanel": {
+    "state": "State",
+    "noTransitions": "No transitions available",
+    "type": "Type"
+  },
+  "activityStream": {
+    "title": "Activity",
+    "empty": "No activity yet",
+    "commentRemoved": "Comment removed",
+    "edited": "(edited)",
+    "reply": "Reply",
+    "edit": "Edit",
+    "remove": "Remove",
+    "filters": {
+      "all": "All",
+      "comments": "Comments",
+      "history": "History",
+      "time": "Time"
+    }
   }
 }

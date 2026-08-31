@@ -3,50 +3,55 @@ import { FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
 import { map } from 'rxjs';
 
 import {
   ErpButtonComponent,
   ErpButtonConfig,
+  ErpConfirmDialogService,
   ErpEmptyStateComponent,
   ErpRichTextBuilder,
   ErpRichTextComponent,
   ErpRichTextConfig,
+  ErpToastService,
   ErpTranslatePipe,
-  ErpUserNameComponent,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import {
+  IssueGraphService,
   IssueVM,
   ProjectWorkflowService,
   TaskManagementIssueOrchestrator,
+  TaskManagementIssueTypeSchemeOrchestrator,
   WorkflowTransitionDto,
+  IssueAttachmentContentService,
+  IssueAttachmentService,
+  createIssueRichTextUploadPort,
+  openBlockersOf,
+  openChildrenOf,
+  resolveIssueRichTextHtmlAsync,
 } from '@erp/task-management/data-access';
-import { ISSUE_PRIORITY } from '@erp/task-management/util';
-import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
+import { ISSUE_PRIORITY, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
+import { ErpFieldPanelComponent, ErpFieldPanelConfig, ErpIssueKeyComponent, TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
 import { IssueAttachmentsComponent } from './content/issue-attachments.component';
 import { IssueCustomFieldsComponent } from './content/issue-custom-fields.component';
 import { IssueLinksComponent } from './content/issue-links.component';
-import { IssueCommentsComponent } from './content/issue-comments.component';
-import { IssueHistoryComponent } from './content/issue-history.component';
+import { IssueActivityComponent } from './content/issue-activity.component';
 
 /**
  * Karta zgłoszenia — `/task-management/issue/:key`.
  *
- * <p><b>Osobna strona, nie prawy panel przy tabeli</b>: opis i (od fazy 1) komentarze oraz
- * historia muszą dominować ekran, a link `/issue/DEV-412` krąży w mailach i musi otwierać pełny
- * widok (`docs/frontend/task-management-pages.md` §2.3).</p>
+ * <p><b>Układ dwukolumnowy wg `docs/frontend/task-management-pages.md` §9.1</b>: główna
+ * kolumna niesie nagłówek, opis, załączniki, powiązania i strumień aktywności z zakotwiczonym
+ * kompozytorem; `erp-field-panel` po prawej trzyma stan i przejścia na samej górze, potem typ,
+ * metadane i pola niestandardowe projektu (`IssueCustomFieldsComponent` — projekcja przez
+ * `<ng-content>`, bo panel w `ui` nie ma prawa znać formularza budowanego z profilu pól).</p>
  *
- * <p><b>Trasa idzie po kluczu czytelnym, nie po UUID.</b> Klucze historyczne rozwiązuje backend
- * (`issue.previous_keys`), więc link sprzed przeniesienia projektu nadal otwiera właściwe
- * zgłoszenie — front nie musi o tym wiedzieć.</p>
- *
- * <p><b>Świadome odstępstwo od `feature-structure.md` §4.1:</b> ten plik leży w `page/` obok
- * `issue.component.ts`, mimo że wzorzec zakłada jeden komponent strony na agregat. Karta i lista
- * to dwie trasy tego samego agregatu, dzielące scope tłumaczeń, orkiestrator i model wiersza —
- * rozbicie ich na dwie jednostki `lib/` zdublowałoby scope i rozjechało klucze.</p>
+ * <p><b>Trasa idzie po kluczu czytelnym, nie po UUID</b> — klucze historyczne rozwiązuje
+ * backend (`issue.previous_keys`), więc link sprzed przeniesienia projektu nadal działa.</p>
  */
 @Component({
   selector: 'erp-task-management-issue-detail',
@@ -55,14 +60,14 @@ import { IssueHistoryComponent } from './content/issue-history.component';
     DatePipe,
     ErpButtonComponent,
     ErpEmptyStateComponent,
+    ErpFieldPanelComponent,
+    ErpIssueKeyComponent,
     ErpRichTextComponent,
     ErpTranslatePipe,
-    ErpUserNameComponent,
     IssueAttachmentsComponent,
-    IssueCommentsComponent,
+    IssueActivityComponent,
     IssueCustomFieldsComponent,
     IssueLinksComponent,
-    IssueHistoryComponent,
   ],
   providers: [provideIssueTranslations(), provideTaskManagementTranslations()],
   template: `
@@ -76,7 +81,7 @@ import { IssueHistoryComponent } from './content/issue-history.component';
       <div class="flex h-full min-h-0 w-full flex-col gap-4 p-6">
         <div class="flex items-center gap-3">
           <erp-button [config]="backButton" />
-          <span class="font-mono text-sm text-[var(--tui-text-secondary)]">{{ issue.key }}</span>
+          <erp-issue-key [config]="{ issueKey: issue.key, typeIcon: issue.typeIcon, typeName: issue.typeName, link: undefined }" />
           @if (issue.isRestricted) {
             <span class="rounded bg-[var(--tui-background-neutral-1)] px-2 py-0.5 text-xs">
               {{ ISSUE_KEYS.detail.sidebar.restricted | erpTranslate }}
@@ -115,82 +120,18 @@ import { IssueHistoryComponent } from './content/issue-history.component';
 
             <erp-task-management-issue-attachments [issueUuid]="issue.uuid" [canEdit]="canEdit()" />
 
-            <erp-task-management-issue-comments [issueUuid]="issue.uuid" [canWrite]="canEdit()" />
+            <erp-task-management-issue-links [issueUuid]="issue.uuid" />
 
-            <erp-task-management-issue-history [issueUuid]="issue.uuid" />
+            <erp-task-management-issue-activity [issueUuid]="issue.uuid" [canWrite]="canEdit()" />
           </div>
 
-          <aside class="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-[var(--tui-border-normal)] pl-4">
-            <div class="flex flex-col gap-1">
-              <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.sidebar.state | erpTranslate }}
-              </span>
-              <span class="font-medium">{{ stateLabel() | erpTranslate }}</span>
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.sidebar.transitions | erpTranslate }}
-              </span>
-              @if (transitionButtons().length === 0) {
-                <span class="text-sm text-[var(--tui-text-secondary)]">
-                  {{ ISSUE_KEYS.detail.sidebar.noTransitions | erpTranslate }}
-                </span>
-              } @else {
-                <div class="flex flex-wrap gap-2">
-                  @for (button of transitionButtons(); track button.id) {
-                    <erp-button [config]="button.config" />
-                  }
-                </div>
-              }
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.sidebar.project | erpTranslate }}
-              </span>
-              <span>{{ projectLabel() }}</span>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.sidebar.priority | erpTranslate }}
-              </span>
-              <span>{{ priorityKey() | erpTranslate }}</span>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.sidebar.assignee | erpTranslate }}
-              </span>
-              <erp-user-name
-                [uuid]="issue.assigneeUuid"
-                [empty]="ISSUE_KEYS.table.unassigned | erpTranslate"
-              />
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.sidebar.dueAt | erpTranslate }}
-              </span>
-              <span>{{ issue.dueAt ? (issue.dueAt | date: 'short') : (ISSUE_KEYS.table.unassigned | erpTranslate) }}</span>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <span class="text-xs uppercase text-[var(--tui-text-secondary)]">
-                {{ ISSUE_KEYS.detail.sidebar.updatedAt | erpTranslate }}
-              </span>
-              <span>{{ issue.updatedAt | date: 'short' }}</span>
-            </div>
-
-            <!-- Pola własne projektu. Sekcja znika w całości, gdy projekt nie ma schematu pól —
-                 pusty nagłówek nad niczym jest gorszy niż jego brak. -->
+          <erp-field-panel
+            [config]="this.fieldPanelConfig()"
+            (transitionClick)="this.applyTransitionAsync($event)"
+            (typeChange)="this.changeTypeAsync($event)"
+          >
             <erp-task-management-issue-custom-fields [issue]="issue" />
-
-            <!-- Pasek powiązań: rodzic, podzadania i graf. Ta sama krawędź czyta się inaczej
-                 z każdej ze stron, dlatego etykietę wybiera flaga isOutgoing. -->
-            <erp-task-management-issue-links [issueUuid]="issue.uuid" />
-          </aside>
+          </erp-field-panel>
         </div>
       </div>
     }
@@ -212,15 +153,21 @@ export class IssueDetailComponent {
   protected readonly ISSUE_KEYS = ISSUE_KEYS;
 
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
+  private readonly _typeSchemes = inject(TaskManagementIssueTypeSchemeOrchestrator);
   private readonly _workflow = inject(ProjectWorkflowService);
   private readonly _permissionStore = inject(PermissionStore);
   private readonly _router = inject(Router);
   private readonly _route = inject(ActivatedRoute);
+  private readonly _transloco = inject(TranslocoService);
+  private readonly _toasts = inject(ErpToastService);
+  private readonly _attachments = inject(IssueAttachmentService);
+  private readonly _content = inject(IssueAttachmentContentService);
+  private readonly _graphService = inject(IssueGraphService);
+  private readonly _confirm = inject(ErpConfirmDialogService);
 
   /**
    * Klucz czytelny z trasy. Czytany z `ActivatedRoute`, a NIE przez `input()` z wiązaniem
-   * parametrów — host nie włącza `withComponentInputBinding()`, a włączanie go globalnie dla
-   * jednej strony zmieniłoby sposób wiązania parametrów i `data` we wszystkich modułach naraz.
+   * parametrów — host nie włącza `withComponentInputBinding()`.
    */
   public readonly key = toSignal(
     this._route.paramMap.pipe(map((params) => params.get('key') ?? '')),
@@ -231,19 +178,47 @@ export class IssueDetailComponent {
 
   protected readonly loading = signal<boolean>(true);
 
-  /** Zgłoszenie czytane ze wspólnego cache orkiestratora — dzięki temu zmiana przychodząca
-   * przez SignalR odświeża kartę bez własnej logiki nasłuchu. */
+  /** Zgłoszenie czytane ze wspólnego cache orkiestratora — SignalR odświeża kartę bez
+   * własnej logiki nasłuchu. */
   protected readonly issue = computed<IssueVM | undefined>(() => {
     const uuid = this._uuid();
     return uuid ? this._orchestrator.getOne(uuid)() : undefined;
   });
 
-  protected readonly stateLabel = computed(() => {
+  protected readonly canEdit = computed(() =>
+    this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate),
+  );
+
+  /**
+   * Typy zawężone do schematu podpiętego do projektu zgłoszenia (`ProjectDto.issueTypeSchemeUuid`)
+   * — wybór typu spoza tego schematu i tak odrzuciłby backend (`Issue.SetType`), więc panel nie
+   * ma po co go proponować.
+   */
+  protected readonly typeOptions = computed(() => {
+    const schemeUuid = this.issue()?.project?.issueTypeSchemeUuid;
+    const scheme = schemeUuid ? this._typeSchemes.getOne(schemeUuid)() : undefined;
+
+    return (scheme?.types ?? []).map((type) => ({ value: type.uuid, label: type.name }));
+  });
+
+  protected readonly fieldPanelConfig = computed<ErpFieldPanelConfig>(() => {
     const issue = this.issue();
-    if (!issue) {
-      return '';
-    }
-    return issue.stateNameKey || issue.stateCode;
+
+    return {
+      stateLabel: issue?.stateNameKey || issue?.stateCode || '',
+      transitions: this.transitions(),
+      transitionsEnabled: this.canEdit(),
+      typeValue: issue?.typeUuid,
+      typeOptions: this.canEdit() ? this.typeOptions() : undefined,
+      typeEditable: this.canEdit(),
+      rows: [
+        { labelKey: ISSUE_KEYS.detail.sidebar.project, value: this.projectLabel() },
+        { labelKey: ISSUE_KEYS.detail.sidebar.priority, value: this._transloco.translate(this.priorityKey()) },
+        { labelKey: ISSUE_KEYS.detail.sidebar.assignee, value: issue?.assignee?.displayName ?? issue?.assigneeUuid ?? this._transloco.translate(ISSUE_KEYS.table.unassigned) },
+        { labelKey: ISSUE_KEYS.detail.sidebar.dueAt, value: issue?.dueAt ? new Date(issue.dueAt).toLocaleDateString() : this._transloco.translate(ISSUE_KEYS.table.unassigned) },
+        { labelKey: ISSUE_KEYS.detail.sidebar.updatedAt, value: issue?.updatedAt ? new Date(issue.updatedAt).toLocaleString() : '' },
+      ],
+    };
   });
 
   protected readonly projectLabel = computed(() => {
@@ -272,50 +247,50 @@ export class IssueDetailComponent {
   });
 
   /**
-   * Przyciski przejść — wyłącznie te, które schemat projektu wystawia z bieżącego stanu.
-   * Backend i tak odrzuci przejście spoza schematu (`taskmgmt.transition_not_allowed`); tutaj
-   * chodzi o to, żeby użytkownik nie musiał zgadywać, klikając i czytając błąd.
+   * Przejścia dostępne z bieżącego stanu — `id` niesie `toStateUuid`, bo panel pól go nie
+   * odróżnia od uuid przejścia (backend przyjmuje docelowy stan, nie uuid przejścia).
    */
-  protected readonly transitionButtons = computed<{ id: string; config: ErpButtonConfig }[]>(() => {
+  protected readonly transitions = computed<{ id: string; labelKey: string }[]>(() => {
     const issue = this.issue();
-    if (!issue || !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate)) {
+    if (!issue || !this.canEdit()) {
       return [];
     }
 
     return this._workflow
       .transitionsFrom(issue.projectUuid, issue.stateUuid)()
-      .map((transition: WorkflowTransitionDto) => ({
-        id: transition.uuid,
-        config: {
-          label: transition.nameKey,
-          appearance: 'secondary',
-          size: 's',
-          fn: (): Promise<void> => this._applyTransition(issue.uuid, transition.toStateUuid),
-        } satisfies ErpButtonConfig,
-      }));
+      .map((transition: WorkflowTransitionDto) => ({ id: transition.toStateUuid, labelKey: transition.nameKey }));
   });
 
   // ── Opis: podgląd ↔ edycja ───────────────────────────────────────────────────────────────
-  //
-  // Karta stoi w podglądzie (`tui-editor-socket` — ta sama typografia, zero tiptap w bundlu)
-  // i podnosi edytor dopiero na żądanie. Treść jest HTML-em, więc backend musi ją oczyścić
-  // przy zapisie — renderowanie tutaj idzie przez sanitizer Angulara, ale zapisany HTML czytają
-  // też inni konsumenci.
 
   protected readonly editingDescription = signal<boolean>(false);
 
   protected readonly descriptionControl = new FormControl<string>('');
 
-  protected readonly canEdit = computed(() =>
-    this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate),
+  /** Obrazy wklejone w opisie (`Ctrl+V`/`drop`) wgrywają się jako załącznik zgłoszenia
+   * (`ISS-005`) — port jest współdzielony z komentarzami (`erp-task-management-issue-activity`),
+   * ale każdy komponent trzyma własną instancję, bo każdy zna inną kontrolkę do podmiany `src`. */
+  private readonly _descriptionUploadPort = createIssueRichTextUploadPort(
+    this._attachments,
+    this._content,
+    () => this.issue()?.uuid,
+    () => this.descriptionControl,
   );
+
+  private readonly _resolvedDescription = signal<string>('');
 
   protected readonly descriptionPreviewConfig = computed<ErpRichTextConfig>(() =>
-    ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(this.issue()?.description ?? '')),
+    ErpRichTextBuilder.create((b) => b.setReadOnly(true).setValue(this._resolvedDescription())),
   );
 
-  protected readonly descriptionEditorConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
-    b.setToolset('standard').setMinHeight(220).setPlaceholder(ISSUE_KEYS.detail.description.placeholder),
+  protected readonly descriptionEditorConfig = computed<ErpRichTextConfig>(() =>
+    ErpRichTextBuilder.create((b) =>
+      b
+        .setToolset('standard')
+        .setMinHeight(220)
+        .setPlaceholder(ISSUE_KEYS.detail.description.placeholder)
+        .setUploadImage(this._descriptionUploadPort),
+    ),
   );
 
   protected readonly editDescriptionButton: ErpButtonConfig = {
@@ -358,6 +333,13 @@ export class IssueDetailComponent {
       const key = this.key();
       untracked(() => void this._load(key));
     });
+
+    effect(() => {
+      const description = this.issue()?.description;
+      untracked(() => void this._resolveDescriptionAsync(description));
+    });
+
+    void this._typeSchemes.searchAsync({}, { autoLoad: true });
   }
 
   private async _load(key: string): Promise<void> {
@@ -372,8 +354,7 @@ export class IssueDetailComponent {
       const issue = await this._orchestrator.loadByKeyAsync(key);
       this._uuid.set(issue?.uuid ?? null);
 
-      // Schemat projektu jest potrzebny do przycisków przejść — bez niego karta wyświetliłaby
-      // stan bez żadnej możliwości jego zmiany.
+      // Schemat projektu jest potrzebny do przycisków przejść.
       if (issue?.projectUuid) {
         await this._workflow.loadAsync(issue.projectUuid);
       }
@@ -383,6 +364,12 @@ export class IssueDetailComponent {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Podmienia adresy kanoniczne załączników na `blob:` z tokenem — bez tego wklejony
+   * zrzut ekranu dałby 401 po odświeżeniu strony (ISS-005 AC „po ponownym wejściu w edytor"). */
+  private async _resolveDescriptionAsync(description: string | undefined): Promise<void> {
+    this._resolvedDescription.set(await resolveIssueRichTextHtmlAsync(description, this._content));
   }
 
   private async _saveDescription(): Promise<void> {
@@ -402,11 +389,99 @@ export class IssueDetailComponent {
     }
   }
 
-  private async _applyTransition(uuid: string, stateUuid: string): Promise<void> {
+  /**
+   * Zastosowanie przejścia.
+   *
+   * <p><b>`WF-004` (modal pól wymaganych) nie jest tu wpięty end-to-end.</b> Backend nie ma dziś
+   * modelu „przejście X wymaga pól Y" — `WorkflowTransition` niesie wyłącznie
+   * `RequiredPermission` (`docs/backend/task-management-requirements.md` WF-003 jest 🟡,
+   * częściowa), a każda mutacja w tym systemie i tak idzie przez `job`/`BulkCommandRunner`
+   * i wraca `200` z `jobUuid` NATYCHMIAST — naruszenie reguły domenowej ujawniłoby się dopiero
+   * asynchronicznie w `job_item`, którego kod błędu front dziś nigdzie nie odczytuje (zobacz
+   * raport fazy). Ten `catch` łapie więc tylko odrzucenia na poziomie zadania
+   * (`erpAwaitJobAsync` w orkiestratorze) — siecowe/transportowe, nie „brakuje pola X".</p>
+   *
+   * <p><b>`LNK-004`/`LNK-005` są wpięte w całości</b> — to ostrzeżenia liczone WYŁĄCZNIE na
+   * froncie z grafu zgłoszenia (`docs/backend/task-management-requirements.md`: „to ostrzeżenie
+   * walidacyjne, nie reguła backendu"), więc nie zależą od tego, czego backend jeszcze nie ma.</p>
+   */
+  protected async applyTransitionAsync(toStateUuid: string): Promise<void> {
+    const issue = this.issue();
+    if (!issue) {
+      return;
+    }
+
+    if (!(await this._confirmGraphWarningsAsync(issue, toStateUuid))) {
+      return;
+    }
+
     try {
-      await this._orchestrator.setStateAsync({ uuid, stateUuid });
+      await this._orchestrator.setStateAsync({ uuid: issue.uuid, stateUuid: toStateUuid });
     } catch (error) {
       console.error('[IssueDetailComponent] Nie udało się zmienić stanu zgłoszenia.', error);
+      this._toasts.show({ message: ISSUE_KEYS.detail.transitionFailed, appearance: 'negative' });
+    }
+  }
+
+  /**
+   * `LNK-004`/`LNK-005` — ostrzeżenia grafu przed przejściem, nie blokady. Zwraca `false`,
+   * gdy użytkownik anulował którekolwiek z okien (przejście się wtedy w ogóle nie wysyła).
+   */
+  private async _confirmGraphWarningsAsync(issue: IssueVM, toStateUuid: string): Promise<boolean> {
+    const graph = this._graphService.getOne(issue.uuid)() ?? (await this._graphService.loadAsync(issue.uuid));
+
+    // LNK-005: zgłoszenie zablokowane przez inne, jeszcze nieukończone.
+    const blockers = openBlockersOf(graph);
+    if (blockers.length > 0) {
+      const confirmed = await this._confirm.confirmAsync({
+        title: ISSUE_KEYS.detail.warnings.blocked.title,
+        message: ISSUE_KEYS.detail.warnings.blocked.message,
+        confirmLabel: ISSUE_KEYS.detail.warnings.blocked.confirm,
+        details: blockers.map((link) => `${link.otherKey} — ${link.otherTitle}`),
+        appearance: 'warning',
+      });
+
+      if (!confirmed) {
+        return false;
+      }
+    }
+
+    // LNK-004: zamknięcie (przejście do kategorii `Done`) zgłoszenia z otwartymi dziećmi.
+    const targetCategory = this._workflow
+      .statesOf(issue.projectUuid)()
+      .find((state) => state.uuid === toStateUuid)?.category;
+
+    if (targetCategory === WORKFLOW_STATE_CATEGORY.Done) {
+      const openChildren = openChildrenOf(graph);
+      if (openChildren.length > 0) {
+        const confirmed = await this._confirm.confirmAsync({
+          title: ISSUE_KEYS.detail.warnings.openChildren.title,
+          message: ISSUE_KEYS.detail.warnings.openChildren.message,
+          confirmLabel: ISSUE_KEYS.detail.warnings.openChildren.confirm,
+          details: openChildren.map((child) => `${child.key} — ${child.title}`),
+          appearance: 'warning',
+        });
+
+        if (!confirmed) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  protected async changeTypeAsync(typeUuid: string): Promise<void> {
+    const issue = this.issue();
+    if (!issue || issue.typeUuid === typeUuid) {
+      return;
+    }
+
+    try {
+      await this._orchestrator.setTypeAsync({ uuid: issue.uuid, typeUuid });
+    } catch (error) {
+      console.error('[IssueDetailComponent] Nie udało się zmienić typu zgłoszenia.', error);
+      this._toasts.show({ message: ISSUE_KEYS.detail.typeChangeFailed, appearance: 'negative' });
     }
   }
 }

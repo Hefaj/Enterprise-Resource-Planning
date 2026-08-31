@@ -15,5 +15,17 @@
   "move": {
     "failed": "Nie udało się przestawić karty — pokazuję aktualny stan tablicy.",
     "blocked": "Przejście do tej kolumny nie istnieje w schemacie projektu."
+  },
+  "warnings": {
+    "openChildren": {
+      "title": "Otwarte podzadania",
+      "message": "To zgłoszenie ma podzadania, które nie są jeszcze ukończone. Przenieść mimo to?",
+      "confirm": "Przenieś mimo to"
+    },
+    "blocked": {
+      "title": "Zgłoszenie zablokowane",
+      "message": "To zgłoszenie jest blokowane przez inne, nieukończone zgłoszenia. Przenieść mimo to?",
+      "confirm": "Przenieś mimo to"
+    }
   }
 }

@@ -74,6 +74,7 @@
       "modalTitle": "Nowe zgłoszenie",
       "submitButton": "Utwórz",
       "projectLabel": "Projekt",
+      "typeLabel": "Typ",
       "titleLabel": "Tytuł",
       "titlePlaceholder": "Co trzeba zrobić?",
       "descriptionLabel": "Opis",
@@ -95,6 +96,7 @@
     },
     "loading": "Wczytywanie zgłoszenia…",
     "backToList": "Wróć do listy",
+    "typeChangeFailed": "Nie udało się zmienić typu zgłoszenia.",
     "description": {
       "label": "Opis",
       "empty": "Bez opisu.",
@@ -200,6 +202,19 @@
         "placeholder": "Klucz rodzica, np. DEV-1",
         "submit": "Ustaw rodzica",
         "detach": "Odepnij rodzica"
+      }
+    },
+    "transitionFailed": "Nie udało się zmienić stanu zgłoszenia.",
+    "warnings": {
+      "openChildren": {
+        "title": "Otwarte podzadania",
+        "message": "To zgłoszenie ma podzadania, które nie są jeszcze ukończone. Zamknąć mimo to?",
+        "confirm": "Zamknij mimo to"
+      },
+      "blocked": {
+        "title": "Zgłoszenie zablokowane",
+        "message": "To zgłoszenie jest blokowane przez inne, nieukończone zgłoszenia. Zmienić stan mimo to?",
+        "confirm": "Zmień mimo to"
       }
     }
   }

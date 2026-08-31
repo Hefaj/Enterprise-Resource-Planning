@@ -74,6 +74,7 @@
       "modalTitle": "New issue",
       "submitButton": "Create",
       "projectLabel": "Project",
+      "typeLabel": "Type",
       "titleLabel": "Title",
       "titlePlaceholder": "What needs to be done?",
       "descriptionLabel": "Description",
@@ -200,6 +201,20 @@
         "placeholder": "Parent key, e.g. DEV-1",
         "submit": "Set parent",
         "detach": "Detach parent"
+      }
+    },
+    "typeChangeFailed": "Failed to change the issue type.",
+    "transitionFailed": "Failed to change the issue state.",
+    "warnings": {
+      "openChildren": {
+        "title": "Open subtasks",
+        "message": "This issue has subtasks that aren't done yet. Close it anyway?",
+        "confirm": "Close anyway"
+      },
+      "blocked": {
+        "title": "Issue is blocked",
+        "message": "This issue is blocked by other, unfinished issues. Change the state anyway?",
+        "confirm": "Change anyway"
       }
     }
   }

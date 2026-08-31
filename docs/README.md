@@ -42,3 +42,5 @@ Dokumenty opisują **stan bieżący**, nie historię zmian ani planów — od te
 | Raporty — biblioteka zamiast mikroserwisu, `ReportRun`, izolacja zasobów ciężkich przebiegów (📐 plan) | [backend/reporting.md](./backend/reporting.md) |
 | Wyjście na produkcję — obrazy, sekrety, gateway, backup (📐 plan) | [backend/production.md](./backend/production.md) |
 | Obserwowalność — health checks, alerty, korelacja śladów, zapobieganie awariom (📐 plan) | [backend/observability.md](./backend/observability.md) |
+| Task Management — model domenowy, klucz czytelny, automat stanów, kolejność na tablicy | [backend/task-management.md](./backend/task-management.md) |
+| Task Management — wymagania produktowe i funkcjonalne, kryteria akceptacji, zakres MVP (📐 spec) | [backend/task-management-requirements.md](./backend/task-management-requirements.md) |

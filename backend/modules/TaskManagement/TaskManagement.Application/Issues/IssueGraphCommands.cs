@@ -3,6 +3,7 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 
 namespace TaskManagement.Application.Issues;
@@ -22,6 +23,7 @@ public sealed class IssueSetParentCommandHandler : CommandHandler<IssueSetParent
 {
     private readonly IIssueRepository _issues;
     private readonly IIssueGraphQueries _graph;
+    private readonly IIssueTypeSchemeRepository _issueTypeSchemes;
     private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
@@ -29,12 +31,14 @@ public sealed class IssueSetParentCommandHandler : CommandHandler<IssueSetParent
     public IssueSetParentCommandHandler(
         IIssueRepository issues,
         IIssueGraphQueries graph,
+        IIssueTypeSchemeRepository issueTypeSchemes,
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
         IClock clock)
     {
         _issues = issues;
         _graph = graph;
+        _issueTypeSchemes = issueTypeSchemes;
         _activity = activity;
         _executionContext = executionContext;
         _clock = clock;
@@ -71,8 +75,18 @@ public sealed class IssueSetParentCommandHandler : CommandHandler<IssueSetParent
             }
         }
 
+        // Kategorie typów wchodzą jako parametry, bo agregat nie ma jak sam sięgnąć po
+        // `IssueTypeScheme` — tak samo jak schemat stanów przy `SetState` (TYP-001, LNK-001 AC2).
+        // Rodzic i dziecko mogą teoretycznie należeć do schematów o różnych zestawach typów,
+        // ale są w tym samym projekcie (sprawdzone wyżej), więc mają ten sam schemat typów.
+        var scheme = await _issueTypeSchemes.FindByProjectAsync(issue.ProjectUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), issue.ProjectUuid);
+
+        var thisTypeCategory = scheme.FindByUuid(issue.TypeUuid)?.Category ?? IssueTypeCategory.Standard;
+        var parentTypeCategory = parent is null ? (IssueTypeCategory?)null : scheme.FindByUuid(parent.TypeUuid)?.Category;
+
         var now = _clock.UtcNow;
-        issue.SetParent(parent, now);
+        issue.SetParent(parent, thisTypeCategory, parentTypeCategory, now);
 
         _activity.Add(IssueActivity.Record(
             issue.Uuid,

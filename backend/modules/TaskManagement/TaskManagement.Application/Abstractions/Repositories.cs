@@ -1,6 +1,7 @@
 using TaskManagement.Application.Issues;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -120,6 +121,30 @@ public interface IWorkflowSchemeRepository
     Task<WorkflowScheme?> FindByProjectAsync(Guid projectUuid, CancellationToken cancellationToken);
 
     void Add(WorkflowScheme scheme);
+}
+
+/// <summary>Dostęp do agregatu <see cref="IssueTypeScheme"/> — wzorzec identyczny jak
+/// <see cref="IWorkflowSchemeRepository"/>: po stronie zapisu głównie do odczytu przez komendy
+/// zgłoszenia i projektu, schemat jest daną konfiguracyjną (TYP-001).</summary>
+public interface IIssueTypeSchemeRepository
+{
+    Task<IssueTypeScheme?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    /// <summary>Schemat wskazany przez projekt — jedno zapytanie zamiast dwóch po stronie
+    /// każdego handlera komendy zgłoszenia.</summary>
+    Task<IssueTypeScheme?> FindByProjectAsync(Guid projectUuid, CancellationToken cancellationToken);
+
+    void Add(IssueTypeScheme scheme);
+}
+
+/// <summary>
+/// Pytanie „ile zgłoszeń używa tego typu" — sonda poza granicą agregatu, analogicznie do
+/// <see cref="IFieldUsageProbe"/>. Egzekwuje TYP-004: usunięcie typu w użyciu jest odrzucane,
+/// a komunikat niesie liczbę zgłoszeń, nie ogólny błąd.
+/// </summary>
+public interface IIssueTypeUsageProbe
+{
+    Task<int> CountByTypeAsync(Guid typeUuid, CancellationToken cancellationToken);
 }
 
 /// <summary>Dostęp do agregatu <see cref="FieldScheme"/> po stronie zapisu — ładuje schemat

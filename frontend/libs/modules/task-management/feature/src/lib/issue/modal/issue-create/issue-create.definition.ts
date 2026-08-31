@@ -3,6 +3,7 @@ import { ErpModalBuilder, ErpModalConfig, ErpModalDefinition } from '@erp/shared
 import {
   IssueCreateCommand,
   TaskManagementIssueOrchestrator,
+  TaskManagementIssueTypeSchemeOrchestrator,
   TaskManagementProjectOrchestrator,
 } from '@erp/task-management/data-access';
 import { ISSUE_CREATE_MODAL_ID } from '@erp/task-management/util';
@@ -30,6 +31,7 @@ export class IssueCreateModalDefinition implements ErpModalDefinition<IssueCreat
 
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
+  private readonly _typeSchemes = inject(TaskManagementIssueTypeSchemeOrchestrator);
 
   public build(
     command: IssueCreateCommand,
@@ -39,6 +41,13 @@ export class IssueCreateModalDefinition implements ErpModalDefinition<IssueCreat
     this._projects
       .searchAsync({ page: 1, pageSize: 200 })
       .catch((err: unknown) => console.error('[IssueCreateModalDefinition] Nie udało się pobrać projektów.', err));
+
+    // Typy jadą tą samą drogą — schematów jest kilka, każdy niesie swoje typy razem z sobą.
+    // Krok zawęża listę do schematu wybranego projektu (`ProjectDto.issueTypeSchemeUuid`),
+    // więc wszystkie schematy muszą być w cache, zanim użytkownik wybierze projekt.
+    this._typeSchemes
+      .searchAsync({}, { autoLoad: true })
+      .catch((err: unknown) => console.error('[IssueCreateModalDefinition] Nie udało się pobrać typów zgłoszeń.', err));
 
     return ErpModalBuilder.modal<IssueCreateCommand, IssueCreateMetadata>((b) =>
       b

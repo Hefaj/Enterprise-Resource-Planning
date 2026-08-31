@@ -2,7 +2,7 @@ import { TuiEditorTool, TuiEditorToolType } from '@taiga-ui/editor';
 
 import { ErpInputBaseBuilder } from '../../base/erp-input-base';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
-import { ErpRichTextConfig, ErpRichTextToolset } from './erp-rich-text.types';
+import { ErpRichTextConfig, ErpRichTextImageUploadPort, ErpRichTextToolset } from './erp-rich-text.types';
 
 /**
  * Nazwane zestawy narzędzi paska formatowania.
@@ -12,11 +12,11 @@ import { ErpRichTextConfig, ErpRichTextToolset } from './erp-rich-text.types';
  * wyrównanie i linia pozioma. <b>`full`</b> — dokładka dla treści redakcyjnej: tabele, kolory,
  * indeksy, szczegóły rozwijane.</p>
  *
- * <p>Obrazków (`TuiEditorTool.Img`) <b>celowo nie ma w żadnym zestawie</b>: wstawienie obrazka
+ * <p>Żaden z nazwanych zestawów nie zawiera `TuiEditorTool.Img` na stałe: wstawienie obrazka
  * wymaga wgrania pliku do magazynu modułu i referencji, po której da się posprzątać
- * (`docs/backend/media-storage.md`). Dopóki moduł tego nie ma, przycisk produkowałby obrazki
- * osadzone jako `data:` w treści albo martwe odnośniki. Dokłada się go jawnie przez
- * <c>setTools</c> razem z obsługą wgrywania.</p>
+ * (`docs/backend/media-storage.md`). Komponent dokłada przycisk obrazka do zestawu sam,
+ * gdy konfiguracja dostanie {@link ErpRichTextImageUploadPort} przez `setUploadImage` — bez
+ * portu wklejenie czy przeciągnięcie obrazka jest cicho ignorowane, tak jak dziś.</p>
  */
 const TOOLSETS: Record<ErpRichTextToolset, readonly TuiEditorToolType[]> = {
   basic: [TuiEditorTool.Undo, TuiEditorTool.Bold, TuiEditorTool.Italic, TuiEditorTool.List, TuiEditorTool.Link],
@@ -95,6 +95,12 @@ export class ErpRichTextBuilder extends ErpInputBaseBuilder<ErpRichTextConfig> {
 
   public setMinHeight(minHeight: MaybeSignal<number>): this {
     this._data.minHeight = minHeight;
+    return this;
+  }
+
+  /** Port wgrywania obrazków wklejonych/przeciągniętych — patrz {@link ErpRichTextImageUploadPort}. */
+  public setUploadImage(uploadImage: MaybeSignal<ErpRichTextImageUploadPort | undefined>): this {
+    this._data.uploadImage = uploadImage;
     return this;
   }
 }

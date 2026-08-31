@@ -72,6 +72,7 @@ public sealed class BoardQueries : IBoardQueries
         var query =
             from issue in _dbContext.Issues.AsNoTracking().VisibleTo(_dbContext, userUuid)
             where issue.ProjectUuid == board.ProjectUuid
+            join type in _dbContext.IssueTypes.AsNoTracking() on issue.TypeUuid equals type.Uuid
             join card in _dbContext.BoardCards.AsNoTracking().Where(c => c.BoardUuid == board.Uuid)
                 on issue.Uuid equals card.IssueUuid into cards
             from card in cards.DefaultIfEmpty()
@@ -83,6 +84,10 @@ public sealed class BoardQueries : IBoardQueries
                 card != null ? card.SprintUuid : null,
                 issue.Key,
                 issue.Title,
+                issue.TypeUuid,
+                type.Name,
+                type.Category,
+                type.Icon,
                 issue.StateUuid,
                 issue.Priority,
                 issue.AssigneeUuid,

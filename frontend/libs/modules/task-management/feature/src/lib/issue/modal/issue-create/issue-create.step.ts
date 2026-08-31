@@ -8,7 +8,11 @@ import {
   ErpStepContentComponent,
   ErpStepContentConfig,
 } from '@erp/shared/ui';
-import { IssueCreateCommand, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
+import {
+  IssueCreateCommand,
+  TaskManagementIssueTypeSchemeOrchestrator,
+  TaskManagementProjectOrchestrator,
+} from '@erp/task-management/data-access';
 import { ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
@@ -47,6 +51,7 @@ export class IssueCreateStepComponent extends ErpModalStepBase<IssueCreateComman
     // więc jakikolwiek NATYCHMIASTOWY odczyt `this.pole` rzuca `ReferenceError`. Domknięcia
     // (`value: () => this...`) są bezpieczne, bo ich ciało wykona się po konstrukcji.
     const projects = inject(TaskManagementProjectOrchestrator);
+    const typeSchemes = inject(TaskManagementIssueTypeSchemeOrchestrator);
     const transloco = inject(TranslocoService);
 
     const projectOptions = computed(() =>
@@ -55,6 +60,17 @@ export class IssueCreateStepComponent extends ErpModalStepBase<IssueCreateComman
         label: `${project.code} — ${project.name}`,
       })),
     );
+
+    // Typ zawężony do schematu PODPIĘTEGO DO WYBRANEGO PROJEKTU (`ProjectDto.issueTypeSchemeUuid`)
+    // — bez wybranego projektu (albo zanim jego schemat dojedzie do cache) lista jest pusta,
+    // bo wybór typu poza schematem projektu i tak odrzuciłby backend (`Issue.SetType`).
+    const typeOptions = computed(() => {
+      const projectUuid = this.command()().projectUuid;
+      const project = projectUuid ? projects.getViewModel()().get(projectUuid) : undefined;
+      const scheme = project?.issueTypeSchemeUuid ? typeSchemes.getOne(project.issueTypeSchemeUuid)() : undefined;
+
+      return (scheme?.types ?? []).map((type) => ({ uuid: type.uuid, label: type.name }));
+    });
 
     const priorityOptions = computed(() => [
       { value: ISSUE_PRIORITY.Critical, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
@@ -81,6 +97,22 @@ export class IssueCreateStepComponent extends ErpModalStepBase<IssueCreateComman
             validators: [Validators.required],
             value: () => this.command()().projectUuid ?? null,
             onChange: (value) => this.command().update((cmd) => ({ ...cmd, projectUuid: value ?? undefined })),
+          },
+        )
+        .addFormField(
+          'typeUuid',
+          'inputPicker',
+          (f) =>
+            f
+              .setLabel(ISSUE_KEYS.commands.create.typeLabel)
+              .setItems(typeOptions)
+              .setLabelKey('label')
+              .setValueKey('uuid')
+              .setStrategy('single'),
+          {
+            validators: [Validators.required],
+            value: () => this.command()().typeUuid ?? null,
+            onChange: (value) => this.command().update((cmd) => ({ ...cmd, typeUuid: value ?? undefined })),
           },
         )
         .addFormField(

@@ -21,4 +21,16 @@ export const BOARD_KEYS = {
       failed: 'board.move.failed',
       blocked: 'board.move.blocked',
     },
+    warnings: {
+      openChildren: {
+        title: 'board.warnings.openChildren.title',
+        message: 'board.warnings.openChildren.message',
+        confirm: 'board.warnings.openChildren.confirm',
+      },
+      blocked: {
+        title: 'board.warnings.blocked.title',
+        message: 'board.warnings.blocked.message',
+        confirm: 'board.warnings.blocked.confirm',
+      },
+    },
   } as const;

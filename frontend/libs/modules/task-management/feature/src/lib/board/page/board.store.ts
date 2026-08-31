@@ -1,17 +1,21 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 
 import { JobService } from '@erp/shared/data-access';
-import { ErpToastService } from '@erp/shared/ui';
+import { ErpConfirmDialogService, ErpToastService } from '@erp/shared/ui';
 import {
   BoardCardVM,
   erpAwaitJobAsync,
   BoardColumnDto,
   BoardSetCardPositionCommand,
+  IssueGraphService,
   IssueSetStateCommand,
   ProjectWorkflowService,
   TaskManagementBoardOrchestrator,
   TaskManagementIssueOrchestrator,
+  openBlockersOf,
+  openChildrenOf,
 } from '@erp/task-management/data-access';
+import { WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
 
 import { BOARD_KEYS } from '../translation';
 
@@ -47,6 +51,8 @@ export class BoardStore {
   private readonly _workflow = inject(ProjectWorkflowService);
   private readonly _jobs = inject(JobService);
   private readonly _toast = inject(ErpToastService);
+  private readonly _graphService = inject(IssueGraphService);
+  private readonly _confirm = inject(ErpConfirmDialogService);
 
   private readonly _pendingMove = signal<PendingMove | null>(null);
   private readonly _draggedCardUuid = signal<string | null>(null);
@@ -191,12 +197,24 @@ export class BoardStore {
       return;
     }
 
+    const targetStateUuid = this._targetStateUuid(column, card.stateUuid);
+
+    // `LNK-004`/`LNK-005` — ostrzeżenia grafu PRZED optymistycznym przesunięciem karty, nie po.
+    // Anulowanie w oknie znaczy „karta nigdy się nie ruszyła" — dokładnie to samo, co `WF-004`
+    // AC1 wymaga od modala pól wymaganych: cofnięcie ma zostawić kartę tam, gdzie była PRZED
+    // przeciągnięciem, a najprostszy sposób na to jest nigdy nie ustawiać `_pendingMove`.
+    if (targetStateUuid !== card.stateUuid) {
+      const confirmed = await this._confirmGraphWarningsAsync(card.issueUuid, targetStateUuid);
+      if (!confirmed) {
+        return;
+      }
+    }
+
     // Optymistyczne przesunięcie: karta ląduje w nowym miejscu natychmiast. Zdejmujemy je
     // dopiero, gdy tablica przyjdzie z serwera — świeże dane są jednocześnie potwierdzeniem
     // i cofnięciem, zależnie od tego, czym skończyło się zadanie.
     this._pendingMove.set({ cardUuid, columnUuid, index });
 
-    const targetStateUuid = this._targetStateUuid(column, card.stateUuid);
     const { afterIssueUuid, beforeIssueUuid } = this._neighbours(columnUuid, cardUuid, index);
 
     try {
@@ -258,5 +276,53 @@ export class BoardStore {
    */
   private _runAsync(command: Promise<string>): Promise<void> {
     return command.then((jobUuid) => erpAwaitJobAsync(this._jobs, jobUuid));
+  }
+
+  /**
+   * `LNK-004`/`LNK-005` — te same dwa ostrzeżenia grafu, co na karcie zgłoszenia
+   * (`IssueDetailComponent._confirmGraphWarningsAsync`), liczone wyłącznie na froncie: to
+   * ostrzeżenie walidacyjne, backend go nie egzekwuje. Zwraca `false`, gdy użytkownik anulował
+   * którekolwiek z okien — karta wtedy w ogóle nie rusza się z miejsca.
+   */
+  private async _confirmGraphWarningsAsync(issueUuid: string, toStateUuid: string): Promise<boolean> {
+    const graph = this._graphService.getOne(issueUuid)() ?? (await this._graphService.loadAsync(issueUuid));
+
+    const blockers = openBlockersOf(graph);
+    if (blockers.length > 0) {
+      const confirmed = await this._confirm.confirmAsync({
+        title: BOARD_KEYS.warnings.blocked.title,
+        message: BOARD_KEYS.warnings.blocked.message,
+        confirmLabel: BOARD_KEYS.warnings.blocked.confirm,
+        details: blockers.map((link) => `${link.otherKey} — ${link.otherTitle}`),
+        appearance: 'warning',
+      });
+
+      if (!confirmed) {
+        return false;
+      }
+    }
+
+    const targetCategory = this._workflow
+      .statesOf(this._boards.board()?.projectUuid)()
+      .find((state) => state.uuid === toStateUuid)?.category;
+
+    if (targetCategory === WORKFLOW_STATE_CATEGORY.Done) {
+      const openChildren = openChildrenOf(graph);
+      if (openChildren.length > 0) {
+        const confirmed = await this._confirm.confirmAsync({
+          title: BOARD_KEYS.warnings.openChildren.title,
+          message: BOARD_KEYS.warnings.openChildren.message,
+          confirmLabel: BOARD_KEYS.warnings.openChildren.confirm,
+          details: openChildren.map((child) => `${child.key} — ${child.title}`),
+          appearance: 'warning',
+        });
+
+        if (!confirmed) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }

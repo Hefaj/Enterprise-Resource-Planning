@@ -20,6 +20,7 @@ import {
   FieldSchemeAddFieldCommand,
   FieldSchemeDto,
   FieldDefinitionDto,
+  FieldSlotUsageDto,
   ProjectFieldProfileService,
   ProjectVM,
   TaskManagementFieldSchemeOrchestrator,
@@ -83,7 +84,7 @@ import { PROJECT_KEYS } from '../../translation';
             @for (field of this.fields(); track field.uuid) {
               <tr class="border-t border-[var(--tui-border-normal)]">
                 <td class="py-2 font-mono text-xs">{{ field.code }}</td>
-                <td class="py-2">{{ field.nameKey | erpTranslate }}</td>
+                <td class="py-2">{{ (field.nameKey ?? field.name) | erpTranslate }}</td>
                 <td class="py-2">{{ this.typeLabel(field.dataType) | erpTranslate }}</td>
                 <td class="py-2 font-mono text-xs">{{ this.slotLabel(field.slot) }}</td>
                 <td class="py-2">{{ field.isRequired ? '✓' : '' }}</td>
@@ -106,8 +107,13 @@ import { PROJECT_KEYS } from '../../translation';
             {{ PROJECT_KEYS.detail.fields.slotWarning | erpTranslate }}
           </span>
 
+          @if (this.slotExhaustionMessage(); as message) {
+            <span class="text-xs text-[var(--tui-status-negative)]">{{ message }}</span>
+          }
+
           <div class="grid grid-cols-2 gap-3">
             <erp-input [config]="codeInput" [formControl]="codeControl" />
+            <erp-input [config]="nameInput" [formControl]="nameControl" />
             <erp-input [config]="nameKeyInput" [formControl]="nameKeyControl" />
             <erp-input-picker [config]="typePickerConfig()" [control]="typeControl" />
             <erp-input-picker [config]="slotPickerConfig()" [control]="slotControl" />
@@ -141,6 +147,7 @@ export class ProjectFieldsComponent {
 
   protected readonly schemeControl = new FormControl<string | null>(null);
   protected readonly codeControl = new FormControl<string | null>(null);
+  protected readonly nameControl = new FormControl<string | null>(null);
   protected readonly nameKeyControl = new FormControl<string | null>(null);
   protected readonly typeControl = new FormControl<number | null>(CUSTOM_FIELD_DATA_TYPE.Text);
   protected readonly slotControl = new FormControl<number | null>(FIELD_SLOT.None);
@@ -222,12 +229,41 @@ export class ProjectFieldsComponent {
     );
   });
 
+  /**
+   * Komunikat o wyczerpaniu puli slotów danego typu (`FLD-005`) — mówi, ile jest zajętych
+   * i przez jakie pola, żeby użytkownik wiedział, co usunąć, zamiast zgadywać z pustej listy
+   * slotów w pickerze powyżej.
+   */
+  protected readonly slotExhaustionMessage = computed<string | undefined>(() => {
+    const usage: FieldSlotUsageDto | undefined = this._profiles
+      .getOne(this.project().uuid)()
+      ?.slotUsage?.find((u) => u.dataType === this._selectedType());
+
+    if (!usage || usage.usedSlots < usage.totalSlots) {
+      return undefined;
+    }
+
+    return this._transloco.translate(PROJECT_KEYS.detail.fields.add.slotsExhausted, {
+      used: usage.usedSlots,
+      total: usage.totalSlots,
+      fields: usage.usedByFieldNames.join(', '),
+    });
+  });
+
   protected readonly codeInput: ErpInputConfig = ErpInputBuilder.create((b) =>
     b.setLabel(PROJECT_KEYS.detail.fields.add.code).setHint(PROJECT_KEYS.detail.fields.add.codeHint),
   );
 
+  /** Nazwa jako zwykły tekst (`FLD-002`) — droga domyślna dla pola założonego z UI. Klucz
+   * tłumaczenia (poniżej) zostaje opcjonalny: nikt ręcznie zakładający pole nie ma powodu
+   * rejestrować go w `translation/*.json`, więc wymaganie klucza pokazywałoby dosłowny,
+   * nieprzetłumaczony ciąg każdemu, kto o tym zapomni. */
+  protected readonly nameInput: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setLabel(PROJECT_KEYS.detail.fields.add.name),
+  );
+
   protected readonly nameKeyInput: ErpInputConfig = ErpInputBuilder.create((b) =>
-    b.setLabel(PROJECT_KEYS.detail.fields.add.nameKey),
+    b.setLabel(PROJECT_KEYS.detail.fields.add.nameKey).setHint(PROJECT_KEYS.detail.fields.add.nameKeyHint),
   );
 
   protected readonly optionsInput: ErpInputConfig = ErpInputBuilder.create((b) =>
@@ -349,7 +385,8 @@ export class ProjectFieldsComponent {
         uuid: scheme.uuid,
         fieldUuid: crypto.randomUUID(),
         code,
-        nameKey: this.nameKeyControl.value?.trim() || code,
+        name: this.nameControl.value?.trim() || code,
+        nameKey: this.nameKeyControl.value?.trim() || undefined,
         dataType: this._selectedType(),
         slot: this.slotControl.value ?? FIELD_SLOT.None,
         orderNo: this.fields().length,
@@ -365,6 +402,7 @@ export class ProjectFieldsComponent {
       this._profiles.invalidate(this.project().uuid);
 
       this.codeControl.reset();
+      this.nameControl.reset();
       this.nameKeyControl.reset();
       this.optionsControl.reset();
       this.requiredControl.setValue(false);

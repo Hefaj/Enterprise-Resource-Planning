@@ -115,9 +115,10 @@ przeniesione z multimediów Catalogu i jedną własną:
   w tej samej transakcji ([`media-storage.md` §4c](../backend/media-storage.md)), więc backend
   nie wystawia komendy kasującej pojedynczy załącznik.
 
-**Komentarze** (`erp-task-management-issue-comments`) i **historia** (`…-issue-history`) to dwie
-osobne sekcje pod załącznikami, nie zakładki — karta czyta się w jednej kolumnie, od tego,
-czym zgłoszenie jest, do tego, co się z nim działo. Trzy rzeczy warte zapamiętania:
+**Komentarze** (`erp-task-management-issue-comments`) i **historia** (`…-issue-history`) to dziś
+dwie osobne sekcje pod załącznikami. **Faza 4 łączy je w jeden strumień aktywności z filtrem**
+(`Wszystko / Komentarze / Historia / Czas`) — powód i docelowy układ w [§9.1](#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień).
+Trzy rzeczy warte zapamiętania niezależnie od układu:
 
 - **wątek jest jednopoziomowy**, bo taka jest reguła domeny, a nie uproszczenie widoku
   ([`task-management.md` §11](../backend/task-management.md#11-historia-zmian-i-komentarze));
@@ -279,7 +280,128 @@ Trzy zbiory kluczy, których nie ma w innych modułach i o które łatwo się po
 
 ---
 
-## 9. Kolejność względem faz wdrożenia
+## 9. Układ ekranów — wzorzec YouTracka
+
+Użytkownicy przychodzą z YouTracka i mają odnaleźć elementy tam, gdzie ich szukają
+([`task-management-requirements.md` NFR-010](../backend/task-management-requirements.md#21-audyt-i-wymagania-niefunkcjonalne-nfr)).
+Ta sekcja jest **wiążąca co do rozmieszczenia**, nie co do wyglądu — kolory, odstępy i typografia
+idą z TaigaUI i Tailwinda, nie z YouTracka.
+
+### 9.1 Karta zgłoszenia — dwie kolumny, jeden strumień
+
+```
+┌──────────────────────────────────────────────┬──────────────────────┐
+│ ‹ projekt › DEV-142            [akcje: ⋯]    │  Stan  [In Progress] │
+│ ⬤ Błąd  DEV-142                              │  ▸ dostępne przejścia│
+│ Tytuł zgłoszenia (edycja inline)             │  ────────────────────│
+│ zgłosił Anna · 2 dni temu · zm. 10 min temu  │  Przypisany   [Jan]  │
+│                                              │  Priorytet  [Wysoki] │
+│ ── Opis ───────────────────────────────────  │  Typ          [Błąd] │
+│ treść, obrazy wklejone ze schowka            │  Termin   [12.09]    │
+│                                              │  Sprint   [Sprint 17]│
+│ ── Załączniki ─────────────────────────────  │  Estymata / Czas     │
+│ [kafelki]                                    │  ────────────────────│
+│                                              │  Pola własne         │
+│ ── Powiązania ─────────────────────────────  │  (z profilu projektu)│
+│ rodzic / podzadania / blokuje / realizuje    │  ────────────────────│
+│                                              │  Tagi   [wms] [pilne]│
+│ ── Aktywność ──────────────────────────────  │  Obserwujący         │
+│ [ Wszystko | Komentarze | Historia | Czas ]  │                      │
+│ …strumień chronologiczny…                    │                      │
+│ ┌ pole komentarza (zakotwiczone) ──────────┐ │                      │
+└──────────────────────────────────────────────┴──────────────────────┘
+```
+
+Cztery decyzje, które wynikają z tego układu:
+
+1. **Panel pól jest po prawej i to on trzyma stan.** Stan i dostępne przejścia stoją na samej
+   górze panelu, bo to najczęstsza akcja na karcie.
+2. **Komentarze i historia to jeden strumień z filtrem**, nie dwie sekcje pod sobą.
+   **To zmiana wobec §2.3 tego dokumentu** i jest świadoma: przy zgłoszeniu z 40 wpisami historii
+   i 8 komentarzami dwie osobne sekcje zmuszają do skakania między nimi, żeby odtworzyć
+   kolejność zdarzeń („zmienił stan, potem napisał dlaczego"). Filtr `Wszystko / Komentarze /
+   Historia / Czas` daje jedno i drugie, a domyślnie pokazuje wszystko.
+3. **Pole komentarza jest zakotwiczone na dole strumienia**, widoczne bez przewijania do końca —
+   inaczej przy długim wątku odpowiedź wymaga podróży.
+4. **Tytuł i opis edytuje się w miejscu**, bez trybu „edytuj całość". Karta nie ma przycisku
+   „zapisz zgłoszenie" — każda zmiana to osobna komenda ([`task-management.md` §11](../backend/task-management.md#11-historia-zmian-i-komentarze)).
+
+### 9.2 Lista zgłoszeń — gdzie odchodzimy od YouTracka
+
+YouTrack pokazuje wyniki jako **listę wierszy** (klucz, tytuł, meta pod tytułem), a nie tabelę
+z kolumnami. My zostajemy przy `erp-table`:
+
+| YouTrack | U nas | Powód |
+|---|---|---|
+| lista wierszy z metadanymi pod tytułem | tabela z kolumnami | kolumny pochodzą z profilu pól projektu i mają być sortowalne serwerowo ([`smart-tables.md`](./smart-tables.md)); lista wierszy to własny szablon i utrata sortowania |
+| pole zapytania DSL na całą szerokość | `erp-filter` + przełączniki zakresu i projektu | DSL wchodzi dopiero w fazie 8 ([wymagania SRCH-005](../backend/task-management-requirements.md#11-wyszukiwanie-i-filtrowanie-srch-view)) |
+| zapisane widoki w lewym panelu | zapisane widoki jako lista nad filtrem | lewy panel kolidowałby z menu modułu |
+
+Zachowujemy z YouTracka: **klucz i typ jako pierwsza kolumna**, priorytet jako kolorowy znacznik
+przy wierszu (nie tekst), tagi jako chipsy, zaznaczenie z paskiem akcji masowych nad tabelą.
+
+### 9.3 Tablica
+
+```
+[ tablica ▾ ]  [ sprint ▾ ]  [ filtr ]              [ ustawienia ]
+┌──────────────┬──────────────┬──────────────┬──────────────┐
+│ Do zrobienia │ W toku    3/5│ Review       │ Gotowe       │
+├──────────────┴──────────────┴──────────────┴──────────────┤
+│ ▾ Jan Kowalski                        (swimlane)          │
+│   [karta] [karta]  │ [karta]  │          │ [karta]        │
+│ ▾ Bez przypisania                                         │
+└───────────────────────────────────────────────────────────┘
+```
+
+Karta niesie: klucz, tytuł, znacznik typu, awatar przypisanego, tagi jako chipsy, estymatę.
+Nagłówek kolumny: nazwa + licznik kart + limit WIP, gdy ustawiony. Swimlane'y są zwijane.
+
+### 9.4 Raport godzin (faza 7)
+
+Układ tabeli przestawnej: wiersze = dział (projekt wykonawczy), kolumny = okres, rozwinięcie
+wiersza = zagadnienia. **Rozwinięcie kończy się na poziomie zagadnienia** — niżej byłyby tytuły
+zgłoszeń, do których kierownictwo nie ma dostępu
+([wymagania PERM-005](../backend/task-management-requirements.md#2-aktorzy-i-role-perm-mem)).
+
+---
+
+## 10. Skąd biorą się komponenty
+
+Reguła kolejności, obowiązująca przy każdym ekranie tego modułu:
+
+```
+1. @erp/shared/ui              — jest komponent? używamy go
+2. @erp/task-management/ui     — brakuje? robimy atom/molekułę tutaj
+3. własny szablon w feature    — dopiero gdy 1 i 2 nie mają sensu
+```
+
+Dostępne w `@erp/shared/ui` i wprost przydatne tutaj: `erp-table`, `erp-tabs`, `erp-tree`,
+`erp-drawer`, `erp-modal`, `erp-action-toolbar`, `erp-filter`, `erp-grid-layout`,
+`erp-media-preview`, `erp-empty-state`, `erp-selection-scope-banner`, `erp-rich-text`,
+`erp-input-picker`, `erp-toggle-group`, `erp-confirm-dialog`.
+
+**Brakująca zdolność komponentu współdzielonego jest dokładana do niego, nie obchodzona lokalnie.**
+Przykład wiążący dla fazy 4: wklejanie obrazów ze schowka wchodzi do `erp-rich-text`
+w `@erp/shared/ui` (z portem na wgrywanie, który moduł wypełnia własnym biletem), a nie jako
+lokalny handler `paste` na karcie zgłoszenia — inaczej DMS i Catalog dostaną drugą i trzecią
+kopię tego samego kodu.
+
+**Stan dzisiaj to dług:** `libs/modules/task-management/ui` zawiera wyłącznie tłumaczenia, a karta
+tablicy, kolumna tablicy, wątek komentarzy i historia leżą w `feature`. Kandydaci do przeniesienia
+i do powstania w fazie 4:
+
+| Komponent w `ui` | Zastępuje / obsługuje |
+|---|---|
+| `erp-issue-card` | karta na tablicy (dziś `feature/board/components/board-card`) |
+| `erp-issue-key` | klucz + ikona typu, używany w tabeli, na karcie i w powiązaniach |
+| `erp-activity-stream` | strumień aktywności z filtrem (§10.1) |
+| `erp-field-panel` | prawy panel pól budowany z profilu projektu |
+| `erp-link-list` | pasek powiązań |
+| `erp-tag-chips` | tagi na liście, karcie i kafelku |
+
+---
+
+## 11. Kolejność względem faz wdrożenia
 
 Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejność-wdrożenia).
 
@@ -289,10 +411,10 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 | 1 ✅ | Karta zgłoszenia — przejścia stanów, komentarze, historia |
 | 2 ✅ | **Tablica** (kanban, drag&drop, realtime) |
 | 3 ✅ | Kontekst projektu na liście, kolumny i filtry z profilu; Projekty i Karta projektu — zakładka pól |
-| 4 | Tryb drzewa na liście, pasek powiązań na karcie |
-| 5 | Zlecenia, odbiór; Karta projektu — SLA |
-| 6 | Backlog i planowanie sprintu, akcje masowe |
-| 7 | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki |
+| 4 | **Przebudowa układu karty wg [§9.1](#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień)** (dwie kolumny, strumień aktywności), obrazy ze schowka w opisie i komentarzu, tryb drzewa na liście, pasek powiązań, zakładka typów na karcie projektu, **wyprowadzenie komponentów do `ui` ([§10](#10-skąd-biorą-się-komponenty))** |
+| 5 | Zlecenia, odbiór; Karta projektu — SLA; obserwujący i wzmianki na karcie |
+| 6 | Backlog i planowanie sprintu, akcje masowe, tagi, **rejestracja czasu na karcie** |
+| 7 | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki, **raport rozliczenia godzin ([§9.4](#94-raport-godzin-faza-7))** |
 
 Fazy 0–2 to **trzy strony, nie dziesięć** — i to faza 2 odpowiada na pytanie, po co ten moduł
 w ogóle powstał.

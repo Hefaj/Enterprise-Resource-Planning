@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Domain;
 using Shouldly;
 using TaskManagement.Domain.FieldSchemes;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Workflow;
 using Xunit;
@@ -26,13 +27,13 @@ public class CustomFieldTests
     {
         var scheme = FieldScheme.CreateWithUuid(Guid.CreateVersion7(), "Pola zespołu", isSystem: false);
 
-        scheme.AddField(Guid.CreateVersion7(), "storyPoints", "k.points", CustomFieldDataType.Number, FieldSlot.Num1, 0);
+        scheme.AddField(Guid.CreateVersion7(), "storyPoints", "Punkty historyjki", "k.points", CustomFieldDataType.Number, FieldSlot.Num1, 0);
         scheme.AddField(
-            Guid.CreateVersion7(), "component", "k.component", CustomFieldDataType.Select, FieldSlot.Text1, 1,
+            Guid.CreateVersion7(), "component", "Komponent", "k.component", CustomFieldDataType.Select, FieldSlot.Text1, 1,
             options: ["Backend", "Frontend"]);
-        scheme.AddField(Guid.CreateVersion7(), "startedOn", "k.startedOn", CustomFieldDataType.Date, FieldSlot.Date1, 2);
-        scheme.AddField(Guid.CreateVersion7(), "reviewer", "k.reviewer", CustomFieldDataType.User, FieldSlot.User1, 3);
-        scheme.AddField(Guid.CreateVersion7(), "notes", "k.notes", CustomFieldDataType.Text, FieldSlot.None, 4);
+        scheme.AddField(Guid.CreateVersion7(), "startedOn", "Data rozpoczęcia", "k.startedOn", CustomFieldDataType.Date, FieldSlot.Date1, 2);
+        scheme.AddField(Guid.CreateVersion7(), "reviewer", "Recenzent", "k.reviewer", CustomFieldDataType.User, FieldSlot.User1, 3);
+        scheme.AddField(Guid.CreateVersion7(), "notes", "Notatki", "k.notes", CustomFieldDataType.Text, FieldSlot.None, 4);
 
         return scheme;
     }
@@ -40,21 +41,22 @@ public class CustomFieldTests
     private static Issue Issue()
     {
         var workflow = WorkflowSchemeDefaults.Build();
+        var issueType = IssueTypeSchemeDefaults.Build().DefaultType();
 
         return Domain.Issues.Issue.CreateWithUuid(
-            Guid.CreateVersion7(), ProjectUuid, "DEV-1", "Tytuł", workflow, Reporter, Now);
+            Guid.CreateVersion7(), ProjectUuid, "DEV-1", "Tytuł", workflow, issueType, Reporter, Now);
     }
 
     [Fact]
     public void Slot_nie_przyjmuje_wartosci_innego_typu()
         => Should.Throw<DomainException>(() => Scheme().AddField(
-                Guid.CreateVersion7(), "budget", "k.budget", CustomFieldDataType.Number, FieldSlot.Text3, 9))
+                Guid.CreateVersion7(), "budget", "Budżet", "k.budget", CustomFieldDataType.Number, FieldSlot.Text3, 9))
             .ErrorCode.ShouldBe("taskmgmt.field_slot_type_mismatch");
 
     [Fact]
     public void Slot_zajety_przez_inne_pole_jest_odrzucany()
         => Should.Throw<DomainException>(() => Scheme().AddField(
-                Guid.CreateVersion7(), "estimate", "k.estimate", CustomFieldDataType.Number, FieldSlot.Num1, 9))
+                Guid.CreateVersion7(), "estimate", "Szacunek", "k.estimate", CustomFieldDataType.Number, FieldSlot.Num1, 9))
             .ErrorCode.ShouldBe("taskmgmt.field_slot_taken");
 
     /// <summary>Brak slotu to nie jest brak decyzji — pole, po którym nikt nie sortuje, nie
@@ -64,7 +66,7 @@ public class CustomFieldTests
     {
         var scheme = Scheme();
 
-        scheme.AddField(Guid.CreateVersion7(), "context", "k.context", CustomFieldDataType.Text, FieldSlot.None, 9);
+        scheme.AddField(Guid.CreateVersion7(), "context", "Kontekst", "k.context", CustomFieldDataType.Text, FieldSlot.None, 9);
 
         scheme.Fields.Count(f => f.Slot == FieldSlot.None).ShouldBe(2);
     }

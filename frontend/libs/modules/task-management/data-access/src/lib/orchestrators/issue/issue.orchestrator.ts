@@ -30,6 +30,7 @@ import {
   IssueSetDueDateCommand,
   IssueSetStateCommand,
   IssueSetTitleCommand,
+  IssueSetTypeCommand,
   SearchIssueRequest,
   SearchResponse,
   TaskManagementClient,
@@ -258,6 +259,18 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   public setStateAsync(command: IssueSetStateCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueSetStateMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueState,
+      queueId,
+    });
+  }
+
+  /**
+   * Zmienia typ zgłoszenia (`TYP-003`). Backend waliduje, że typ należy do schematu projektu
+   * i mapuje stan przy zmianie schematu stanów (AC2); front nie duplikuje tej regułę — pokazuje
+   * jej wynik, w tym ewentualny błąd o brakujących polach wymaganych przez nowy typ (`WF-004`).
+   */
+  public setTypeAsync(command: IssueSetTypeCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueSetTypeMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueType,
       queueId,
     });
   }

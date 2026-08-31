@@ -34,6 +34,7 @@ import { CUSTOM_FIELD_DATA_TYPE, ISSUE_PRIORITY } from '@erp/task-management/uti
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS } from '../../../translation';
+import { IssueKeyCellComponent } from './issue-key-cell.component';
 
 /**
  * Smart tabela zgłoszeń — lista serwerowa wg [`smart-tables.md`](../../../../../../../../../docs/frontend/smart-tables.md).
@@ -143,12 +144,16 @@ export class TaskManagementIssueTableComponent {
       .addColumn((c) =>
         c
           .setId('key')
-          // W trybie drzewa klucz dostaje wcięcie wg poziomu zagnieżdżenia. Wcięcie, a nie
-          // osobna kolumna „poziom": to klucz jest tym, po czym użytkownik wodzi wzrokiem,
-          // szukając struktury, a pusta kolumna przy płaskiej liście byłaby kosztem bez zysku.
-          .setAccessorFn((row) => `${'\u00a0\u00a0\u00a0'.repeat(this._level(row))}${row.key}`)
+          .setAccessorKey('key')
+          // Ikona typu + klucz (`erp-issue-key`, `docs/frontend/task-management-pages.md` §10).
+          // W trybie drzewa dostaje wcięcie wg poziomu zagnieżdżenia — to klucz jest tym, po
+          // czym użytkownik wodzi wzrokiem, szukając struktury (`LNK-006`).
+          .setCell(IssueKeyCellComponent, {
+            getLevel: (row: IssueVM) => this._level(row),
+            matchesFilter: (row: IssueVM) => this._matchesFilter(row),
+          })
           .setHeader(ISSUE_KEYS.table.columns.key)
-          .setSize(160)
+          .setSize(180)
           .setGrow(0),
       )
       .addColumn((c) => c.setId('title').setAccessorKey('title').setHeader(ISSUE_KEYS.table.columns.title).setSize(360))
@@ -219,7 +224,11 @@ export class TaskManagementIssueTableComponent {
           // odnajduje slot. Własny identyfikator zerwałby to powiązanie.
           .setId(field.code)
           .setAccessorFn((row: IssueVM) => this._customFieldLabel(row, field))
-          .setHeader(field.nameKey)
+          // `nameKey` jest opcjonalny (`FLD-002`) — pole założone z UI ma tylko `name` jako
+          // zwykły tekst, klucza tłumaczenia nikt dla niego nie zarejestrował. `erpTranslate`
+          // na nieznanym kluczu oddaje ten sam ciąg z powrotem, więc `name` jako „klucz" działa
+          // bezpiecznie jak zwykły tekst.
+          .setHeader(field.nameKey ?? field.name)
           // Sortowanie tylko na polach ze slotem: klik w nagłówek nie może obiecywać
           // kolejności, której serwer nie wykona.
           .setEnableSorting(field.isSortable)
@@ -311,6 +320,48 @@ export class TaskManagementIssueTableComponent {
     }
 
     return level;
+  }
+
+  /**
+   * Czy wiersz sam spełnia aktywny filtr, poza samym trybem drzewa — `LNK-006` AC2.
+   *
+   * <p><b>Przybliżenie, nie powtórzenie zapytania backendu.</b> Backend w trybie drzewa dosyła
+   * całe poddrzewa niezależnie od reszty filtrów (`IssueQueries.SearchAsync`) i nie znaczy
+   * wprost, który wiersz je wywołał, a który jest tam wyłącznie dla ciągłości drzewa — dodanie
+   * takiej flagi do kontraktu jest poza zakresem frontu tej sesji. Sprawdzamy więc lokalnie te
+   * same pola, po których filtruje formularz (stan, priorytet, przypisany, tekst); zakres
+   * („moje"/„zgłoszone przeze mnie") pomijamy, bo wymagałby znajomości tożsamości bieżącego
+   * użytkownika w tym komponencie. Fałszywie dodatni wynik (wiersz pokazany jako pełny, choć
+   * technicznie nie pasuje) jest tu bezpieczniejszy niż fałszywie ujemny — to tylko podkreślenie
+   * wizualne, nie ukrywanie wiersza.</p>
+   */
+  private _matchesFilter(row: IssueVM): boolean {
+    const filters = this.filters();
+
+    if (!filters.treeMode) {
+      return true;
+    }
+
+    if (filters.stateUuid && row.stateUuid !== filters.stateUuid) {
+      return false;
+    }
+
+    if (filters.priority !== undefined && filters.priority !== null && row.priority !== filters.priority) {
+      return false;
+    }
+
+    if (filters.assigneeUuid && row.assigneeUuid !== filters.assigneeUuid) {
+      return false;
+    }
+
+    if (filters.text?.trim()) {
+      const text = filters.text.trim().toLowerCase();
+      if (!row.title.toLowerCase().includes(text) && !row.key.toLowerCase().includes(text)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private _priorityLabel(priority: number | undefined): string {

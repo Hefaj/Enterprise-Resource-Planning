@@ -4,14 +4,22 @@ import {
   computed,
   effect,
   forwardRef,
+  inject,
   input,
   untracked,
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { TuiLabel } from '@taiga-ui/core/components/label';
 import { TuiErrorComponent } from '@taiga-ui/core/components/error';
-import { TUI_EDITOR_PROVIDERS, TuiEditor, TuiEditorSocket, provideTuiEditor } from '@taiga-ui/editor';
-import { noop } from 'rxjs';
+import {
+  TUI_EDITOR_PROVIDERS,
+  TUI_IMAGE_LOADER,
+  TuiEditor,
+  TuiEditorSocket,
+  TuiEditorTool,
+  provideTuiEditor,
+} from '@taiga-ui/editor';
+import { NEVER, Observable, noop } from 'rxjs';
 
 import { ErpTranslatePipe } from '../../base/erp-translate.pipe';
 import { unwrapSignal } from '../../base/erp-signal-utils';
@@ -45,8 +53,21 @@ import { erpRichTextToolset } from './erp-rich-text.builder';
     },
     TUI_EDITOR_PROVIDERS,
     // Rozszerzenia tiptap ładowane leniwie przez `provideTuiEditor` — bez tego edytor wstaje
-    // bez żadnego formatowania, a pasek narzędzi klika w pustkę.
-    provideTuiEditor(),
+    // bez żadnego formatowania, a pasek narzędzi klika w pustkę. Rozszerzenie `image` jest
+    // włączone dla każdej instancji — to `TUI_IMAGE_LOADER` niżej decyduje, czy wklejony
+    // obrazek faktycznie się wstawi (patrz `loadImage`), więc konfiguracja bez portu
+    // wgrywania zostaje bez obrazków bez włączania/wyłączania samego rozszerzenia.
+    provideTuiEditor({ image: true }),
+    // `TUI_IMAGE_LOADER` obsługuje zarówno `Ctrl+V`, jak i przeciągnięcie pliku — oba wchodzą
+    // tą samą ścieżką w bibliotece (`pasteImage` w `@taiga-ui/editor`), więc komponent nie
+    // rozróżnia ich osobno.
+    {
+      provide: TUI_IMAGE_LOADER,
+      useFactory: () => {
+        const host = inject(ErpRichTextComponent);
+        return (file: File | Blob) => host.loadImage(file);
+      },
+    },
   ],
   template: `
     @let labelText = (_label() | erpTranslate) || '';
@@ -118,10 +139,18 @@ export class ErpRichTextComponent implements ControlValueAccessor {
   protected readonly _readOnly = computed(() => unwrapSignal(this.config().readOnly) ?? false);
   protected readonly _minHeight = computed(() => unwrapSignal(this.config().minHeight) ?? 160);
 
-  /** Jawna lista narzędzi wygrywa z zestawem nazwanym; brak obu daje `standard`. */
+  /** Jawna lista narzędzi wygrywa z zestawem nazwanym; brak obu daje `standard`. Przycisk
+   * obrazka dochodzi automatycznie, gdy konfiguracja ma port wgrywania (ISS-005) — żaden
+   * z nazwanych zestawów go nie zawiera na stałe. */
   protected readonly _tools = computed(() => {
     const explicit = unwrapSignal(this.config().tools);
-    return explicit ? [...explicit] : [...erpRichTextToolset(unwrapSignal(this.config().toolset) ?? 'standard')];
+    const base = explicit ? [...explicit] : [...erpRichTextToolset(unwrapSignal(this.config().toolset) ?? 'standard')];
+
+    if (unwrapSignal(this.config().uploadImage) && !base.includes(TuiEditorTool.Img)) {
+      return [...base, TuiEditorTool.Img];
+    }
+
+    return base;
   });
 
   protected readonly _error = computed(() => {
@@ -182,5 +211,19 @@ export class ErpRichTextComponent implements ControlValueAccessor {
     } else {
       this.internalControl.enable({ emitEvent: false });
     }
+  }
+
+  /**
+   * Wołane przez `TUI_IMAGE_LOADER` biblioteki przy `Ctrl+V` i przy przeciągnięciu pliku na
+   * edytor. Bez skonfigurowanego portu obrazek jest cicho ignorowany — `NEVER` nigdy nie
+   * emituje, więc `tui-editor` nie wstawia żadnego węzła (ISS-005, CMT-006).
+   *
+   * <p>Podmiana docelowego adresu (np. `blob:` na referencję z magazynu) po zakończeniu
+   * wgrywania <b>nie</b> jest zadaniem tej metody — port zwraca to, co ma się od razu
+   * pokazać, a moduł wywołujący sam wie, kiedy i jak podmienić `src` w treści.</p>
+   */
+  protected loadImage(file: File | Blob): Observable<string> {
+    const port = unwrapSignal(this.config().uploadImage);
+    return port ? port(file) : NEVER;
   }
 }

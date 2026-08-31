@@ -66,6 +66,9 @@ export const PROJECT_KEYS = {
           optionsHint: 'project.detail.fields.add.optionsHint',
           required: 'project.detail.fields.add.required',
           submit: 'project.detail.fields.add.submit',
+          name: 'project.detail.fields.add.name',
+          nameKeyHint: 'project.detail.fields.add.nameKeyHint',
+          slotsExhausted: 'project.detail.fields.add.slotsExhausted',
         },
         remove: {
           label: 'project.detail.fields.remove.label',
@@ -78,6 +81,33 @@ export const PROJECT_KEYS = {
           date: 'project.detail.fields.types.date',
           user: 'project.detail.fields.types.user',
           select: 'project.detail.fields.types.select',
+        },
+      },
+      types: {
+        title: 'project.detail.types.title',
+        empty: 'project.detail.types.empty',
+        scheme: {
+          label: 'project.detail.types.scheme.label',
+          placeholder: 'project.detail.types.scheme.placeholder',
+          attach: 'project.detail.types.scheme.attach',
+        },
+        columns: {
+          name: 'project.detail.types.columns.name',
+          category: 'project.detail.types.columns.category',
+          icon: 'project.detail.types.columns.icon',
+        },
+        add: {
+          title: 'project.detail.types.add.title',
+          name: 'project.detail.types.add.name',
+          icon: 'project.detail.types.add.icon',
+          iconHint: 'project.detail.types.add.iconHint',
+          category: 'project.detail.types.add.category',
+          submit: 'project.detail.types.add.submit',
+        },
+        remove: {
+          label: 'project.detail.types.remove.label',
+          confirmTitle: 'project.detail.types.remove.confirmTitle',
+          confirmMessage: 'project.detail.types.remove.confirmMessage',
         },
       },
     },

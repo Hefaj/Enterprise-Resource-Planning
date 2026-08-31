@@ -105,6 +105,22 @@ export const PROJECT_MEMBER_ROLE = {
 } as const;
 
 /**
+ * `TaskManagement.Domain.IssueTypes.IssueTypeCategory` — rodzaj typu zgłoszenia.
+ *
+ * <p>Po niej, nie po nazwie typu, liczy się reguła hierarchii z `LNK-001` AC2: rodzic o kategorii
+ * `Subtask` jest odrzucony, dziecko o kategorii `Epic` jest odrzucone. Front nie duplikuje tej
+ * reguły — sprawdza ją tylko po to, żeby pokazać komunikat PRZED wysłaniem komendy, którą backend
+ * i tak odrzuci (`docs/backend/task-management.md`).</p>
+ */
+export const ISSUE_TYPE_CATEGORY = {
+  Epic: 0,
+  Standard: 1,
+  Subtask: 2,
+} as const;
+
+export type IssueTypeCategoryValue = (typeof ISSUE_TYPE_CATEGORY)[keyof typeof ISSUE_TYPE_CATEGORY];
+
+/**
  * `TaskManagement.Application.Issues.IssueScope` — zakres listy zgłoszeń.
  * <b>Parametr, nie osobna strona</b> (patrz `docs/frontend/task-management-pages.md` §2.1).
  */

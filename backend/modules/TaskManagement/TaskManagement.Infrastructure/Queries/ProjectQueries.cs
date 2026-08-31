@@ -78,6 +78,7 @@ public sealed class ProjectQueries : IProjectQueries
                 p.Name,
                 p.Kind,
                 p.WorkflowSchemeUuid,
+                p.IssueTypeSchemeUuid,
                 p.FieldSchemeUuid,
                 p.IsPublic,
                 // Licznik otwartych zgłoszeń liczy się po KATEGORII stanu, nie po jego nazwie —

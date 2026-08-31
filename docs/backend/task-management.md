@@ -43,6 +43,9 @@ Decyzje są rozstrzygnięte — nie jest to zestaw wariantów do wyboru.
 
 **Podział na strony, nawigacja i menu frontu →
 [`docs/frontend/task-management-pages.md`](../frontend/task-management-pages.md).**
+**Wymagania funkcjonalne z kryteriami akceptacji, zakres MVP i decyzje odrzucone →
+[`task-management-requirements.md`](./task-management-requirements.md).**
+**Kolejność prac i checklisty faz 4–8 → [`PLAN-task-management.md`](../../PLAN-task-management.md).**
 
 ---
 

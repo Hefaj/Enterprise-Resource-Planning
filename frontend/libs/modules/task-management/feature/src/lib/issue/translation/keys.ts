@@ -79,6 +79,7 @@ export const ISSUE_KEYS = {
         modalTitle: 'issue.commands.create.modalTitle',
         submitButton: 'issue.commands.create.submitButton',
         projectLabel: 'issue.commands.create.projectLabel',
+        typeLabel: 'issue.commands.create.typeLabel',
         titleLabel: 'issue.commands.create.titleLabel',
         titlePlaceholder: 'issue.commands.create.titlePlaceholder',
         descriptionLabel: 'issue.commands.create.descriptionLabel',
@@ -100,6 +101,7 @@ export const ISSUE_KEYS = {
       },
       loading: 'issue.detail.loading',
       backToList: 'issue.detail.backToList',
+      typeChangeFailed: 'issue.detail.typeChangeFailed',
       description: {
         label: 'issue.detail.description.label',
         empty: 'issue.detail.description.empty',
@@ -205,6 +207,19 @@ export const ISSUE_KEYS = {
           placeholder: 'issue.detail.links.setParent.placeholder',
           submit: 'issue.detail.links.setParent.submit',
           detach: 'issue.detail.links.setParent.detach',
+        },
+      },
+      transitionFailed: 'issue.detail.transitionFailed',
+      warnings: {
+        openChildren: {
+          title: 'issue.detail.warnings.openChildren.title',
+          message: 'issue.detail.warnings.openChildren.message',
+          confirm: 'issue.detail.warnings.openChildren.confirm',
+        },
+        blocked: {
+          title: 'issue.detail.warnings.blocked.title',
+          message: 'issue.detail.warnings.blocked.message',
+          confirm: 'issue.detail.warnings.blocked.confirm',
         },
       },
     },

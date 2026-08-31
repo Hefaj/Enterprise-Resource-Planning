@@ -3,11 +3,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
-import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpTranslatePipe } from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpTabsComponent, ErpTabsConfig, ErpTranslatePipe } from '@erp/shared/ui';
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 import { PROJECT_KIND } from '@erp/task-management/util';
 
 import { ProjectFieldsComponent } from './content/project-fields.component';
+import { ProjectTypesComponent } from './content/project-types.component';
 import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 
 /**
@@ -22,7 +23,7 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 @Component({
   selector: 'erp-task-management-project-detail',
   standalone: true,
-  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe, ProjectFieldsComponent],
+  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTabsComponent, ErpTranslatePipe],
   providers: [provideProjectTranslations()],
   template: `
     @let project = this.project();
@@ -42,7 +43,7 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
           </span>
         </div>
 
-        <erp-task-management-project-fields [project]="project" />
+        <erp-tabs [config]="this.tabsConfig()" />
       </div>
     }
   `,
@@ -83,6 +84,35 @@ export class ProjectDetailComponent {
   protected readonly kindLabel = computed(() =>
     this.project()?.kind === PROJECT_KIND.Intake ? PROJECT_KEYS.filters.kind.intake : PROJECT_KEYS.filters.kind.delivery,
   );
+
+  /**
+   * Master-detail z zakładkami (`docs/frontend/task-management-pages.md` §4.2) — dziś „pola"
+   * i „typy" (`TYP-001`); pozostałe (stany, tablice, członkowie, SLA) wchodzą razem z fazami,
+   * które je wypełniają.
+   */
+  protected readonly tabsConfig = computed<ErpTabsConfig>(() => {
+    const project = this.project();
+
+    return {
+      tabs: project
+        ? [
+            {
+              id: 'fields',
+              label: PROJECT_KEYS.detail.fields.title,
+              component: ProjectFieldsComponent,
+              inputs: { project },
+            },
+            {
+              id: 'types',
+              label: PROJECT_KEYS.detail.types.title,
+              component: ProjectTypesComponent,
+              inputs: { project },
+            },
+          ]
+        : [],
+      initialValue: 'fields',
+    };
+  });
 
   protected readonly backButton: ErpButtonConfig = {
     label: PROJECT_KEYS.detail.back,

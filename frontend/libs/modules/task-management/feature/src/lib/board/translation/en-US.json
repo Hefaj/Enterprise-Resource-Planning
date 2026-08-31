@@ -15,5 +15,17 @@
   "move": {
     "failed": "The card could not be moved — showing the board as it is now.",
     "blocked": "That transition does not exist in the project's workflow scheme."
+  },
+  "warnings": {
+    "openChildren": {
+      "title": "Open subtasks",
+      "message": "This issue has subtasks that aren't done yet. Move it anyway?",
+      "confirm": "Move anyway"
+    },
+    "blocked": {
+      "title": "Issue is blocked",
+      "message": "This issue is blocked by other, unfinished issues. Move it anyway?",
+      "confirm": "Move anyway"
+    }
   }
 }

@@ -8,6 +8,7 @@ import {
   GetProjectRequest,
   ProjectDto,
   ProjectSetFieldSchemeCommand,
+  ProjectSetIssueTypeSchemeCommand,
   SearchProjectRequest,
   SearchResponse,
   TaskManagementClient,
@@ -63,6 +64,15 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
   public setFieldSchemeAsync(command: ProjectSetFieldSchemeCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetFieldSchemeMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectFieldScheme,
+      queueId,
+    });
+  }
+
+  /** Podpina schemat typów zgłoszeń (`TYP-001`) — każdy projekt musi mieć jeden, domyślnie
+   * systemowy z seeda. Zakładka „typy" karty projektu jest jedynym miejscem, które to wywołuje. */
+  public setIssueTypeSchemeAsync(command: ProjectSetIssueTypeSchemeCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetIssueTypeSchemeMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectIssueTypeScheme,
       queueId,
     });
   }

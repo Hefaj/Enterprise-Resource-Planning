@@ -13,6 +13,7 @@ public sealed record ProjectDto(
     string Name,
     ProjectKind Kind,
     Guid WorkflowSchemeUuid,
+    Guid IssueTypeSchemeUuid,
     /// <summary>Schemat pól niestandardowych albo <c>null</c> — projekt bez pól własnych to
     /// stan normalny, nie brak konfiguracji.</summary>
     Guid? FieldSchemeUuid,

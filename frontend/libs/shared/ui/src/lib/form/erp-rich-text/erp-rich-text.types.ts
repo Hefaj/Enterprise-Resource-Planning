@@ -1,7 +1,17 @@
 import { TuiEditorToolType } from '@taiga-ui/editor';
+import { Observable } from 'rxjs';
 
 import { ErpInputBase } from '../../base/erp-input-base';
 import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
+
+/**
+ * Port wgrywania obrazka wklejonego (`Ctrl+V`) albo przeciągniętego na edytor. Komponent nie
+ * wie nic o biletach, magazynie plików ani module wywołującym — dostaje plik i oddaje adres,
+ * pod którym obrazek ma się wyświetlić. Moduł odpowiada też za późniejszą podmianę adresu
+ * tymczasowego (np. `blob:`) na docelowy po zakończeniu wgrywania — komponent tego nie robi
+ * (`docs/backend/task-management-requirements.md` ISS-005, CMT-006).
+ */
+export type ErpRichTextImageUploadPort = (file: File | Blob) => Observable<string>;
 
 /**
  * Zestaw narzędzi paska formatowania. Podzbiory nazwane, a nie surowa lista `TuiEditorToolType`
@@ -33,4 +43,12 @@ export interface ErpRichTextConfig extends ErpInputBase {
 
   /** Minimalna wysokość obszaru edycji w pikselach; domyślnie 160. */
   minHeight?: MaybeSignal<number>;
+
+  /**
+   * Port wgrywania obrazków. Bez niego wklejenie albo przeciągnięcie obrazka jest cicho
+   * ignorowane — zestaw narzędzi zostaje bez `TuiEditorTool.Img`, tak jak dziś (ISS-005,
+   * CMT-006). Z portem: przycisk obrazka dochodzi do paska automatycznie, a `Ctrl+V`/`drop`
+   * pliku graficznego wgrywa go przez ten port.
+   */
+  uploadImage?: MaybeSignal<ErpRichTextImageUploadPort | undefined>;
 }

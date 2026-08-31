@@ -198,6 +198,7 @@ public sealed class IssueQueries : IIssueQueries
         => from issue in query
            join project in _dbContext.Projects.AsNoTracking() on issue.ProjectUuid equals project.Uuid
            join state in _dbContext.WorkflowStates.AsNoTracking() on issue.StateUuid equals state.Uuid
+           join type in _dbContext.IssueTypes.AsNoTracking() on issue.TypeUuid equals type.Uuid
            select new IssueDto(
                issue.Uuid,
                issue.ProjectUuid,
@@ -206,6 +207,10 @@ public sealed class IssueQueries : IIssueQueries
                issue.Title,
                issue.Description,
                issue.Priority,
+               issue.TypeUuid,
+               type.Name,
+               type.Category,
+               type.Icon,
                issue.StateUuid,
                state.Code,
                state.NameKey,

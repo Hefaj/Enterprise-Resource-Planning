@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
 
@@ -26,6 +27,9 @@ public sealed class ProjectCreateCommand : ICommand<Guid>, IAggregateCommand
     /// <summary>Schemat stanów; puste = schemat systemowy modułu.</summary>
     public Guid? WorkflowSchemeUuid { get; set; }
 
+    /// <summary>Schemat typów zgłoszeń; puste = schemat systemowy modułu (TYP-001).</summary>
+    public Guid? IssueTypeSchemeUuid { get; set; }
+
     public bool IsPublic { get; set; }
 }
 
@@ -33,15 +37,18 @@ public sealed class ProjectCreateCommandHandler : CommandHandler<ProjectCreateCo
 {
     private readonly IProjectRepository _repository;
     private readonly IWorkflowSchemeRepository _schemes;
+    private readonly IIssueTypeSchemeRepository _issueTypeSchemes;
     private readonly IProjectKeyCounterWriter _counters;
 
     public ProjectCreateCommandHandler(
         IProjectRepository repository,
         IWorkflowSchemeRepository schemes,
+        IIssueTypeSchemeRepository issueTypeSchemes,
         IProjectKeyCounterWriter counters)
     {
         _repository = repository;
         _schemes = schemes;
+        _issueTypeSchemes = issueTypeSchemes;
         _counters = counters;
     }
 
@@ -54,16 +61,60 @@ public sealed class ProjectCreateCommandHandler : CommandHandler<ProjectCreateCo
         var scheme = await _schemes.FindAsync(schemeUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Domain.Workflow.WorkflowScheme), schemeUuid);
 
+        var issueTypeSchemeUuid = command.IssueTypeSchemeUuid ?? IssueTypeSchemeDefaults.SystemSchemeUuid;
+
+        var issueTypeScheme = await _issueTypeSchemes.FindAsync(issueTypeSchemeUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(IssueTypeScheme), issueTypeSchemeUuid);
+
         var project = Project.CreateWithUuid(
             command.Uuid,
             command.Code,
             command.Name,
             command.Kind,
             scheme.Uuid,
+            issueTypeScheme.Uuid,
             command.IsPublic);
 
         _repository.Add(project);
         _counters.Add(ProjectKeyCounter.Create(project.Uuid, project.Code));
+
+        return project.Uuid;
+    }
+}
+
+/// <summary>Podmienia schemat typów zgłoszeń projektu (TYP-001). Zgłoszenia istniejące
+/// zachowują swój <see cref="Issue.TypeUuid"/> — podmiana nie migruje danych wstecz.</summary>
+public sealed class ProjectSetIssueTypeSchemeCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public Guid IssueTypeSchemeUuid { get; set; }
+}
+
+public sealed class ProjectSetIssueTypeSchemeCommandHandler : CommandHandler<ProjectSetIssueTypeSchemeCommand, Guid>
+{
+    private readonly IProjectRepository _repository;
+    private readonly IIssueTypeSchemeRepository _issueTypeSchemes;
+
+    public ProjectSetIssueTypeSchemeCommandHandler(
+        IProjectRepository repository,
+        IIssueTypeSchemeRepository issueTypeSchemes)
+    {
+        _repository = repository;
+        _issueTypeSchemes = issueTypeSchemes;
+    }
+
+    public override async Task<Guid> ExecuteAsync(ProjectSetIssueTypeSchemeCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
+
+        _ = await _issueTypeSchemes.FindAsync(command.IssueTypeSchemeUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(IssueTypeScheme), command.IssueTypeSchemeUuid);
+
+        project.SetIssueTypeScheme(command.IssueTypeSchemeUuid);
 
         return project.Uuid;
     }

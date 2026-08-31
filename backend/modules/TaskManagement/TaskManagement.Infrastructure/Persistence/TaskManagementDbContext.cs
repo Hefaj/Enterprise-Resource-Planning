@@ -3,6 +3,7 @@ using Erp.BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Infrastructure.Persistence.Graph;
 using TaskManagement.Domain.Projects;
@@ -70,6 +71,10 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     public DbSet<WorkflowState> WorkflowStates => Set<WorkflowState>();
 
     public DbSet<WorkflowTransition> WorkflowTransitions => Set<WorkflowTransition>();
+
+    public DbSet<IssueTypeScheme> IssueTypeSchemes => Set<IssueTypeScheme>();
+
+    public DbSet<IssueType> IssueTypes => Set<IssueType>();
 
     /// <inheritdoc />
     public DbSet<Job> Jobs => Set<Job>();

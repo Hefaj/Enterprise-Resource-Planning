@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -65,6 +66,7 @@ public sealed partial class TaskManagementSeeder
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var scheme = await EnsureSystemSchemeAsync(cancellationToken).ConfigureAwait(false);
+        var issueTypeScheme = await EnsureSystemIssueTypeSchemeAsync(cancellationToken).ConfigureAwait(false);
 
         if (!_options.Enabled)
         {
@@ -85,14 +87,14 @@ public sealed partial class TaskManagementSeeder
         // Schemat pól dostaje TYLKO projekt Delivery. Projekt bez pól własnych jest stanem
         // normalnym i musi być widoczny w danych przykładowych — inaczej pierwszy błąd
         // w obsłudze pustego profilu wyszedłby dopiero u kogoś na produkcji.
-        var dev = CreateProject(DevProjectUuid, "DEV", "Rozwój oprogramowania", ProjectKind.Delivery, scheme);
+        var dev = CreateProject(DevProjectUuid, "DEV", "Rozwój oprogramowania", ProjectKind.Delivery, scheme, issueTypeScheme);
         dev.SetFieldScheme(fieldScheme.Uuid);
 
-        var mkt = CreateProject(MktProjectUuid, "MKT", "Marketing — zlecenia", ProjectKind.Intake, scheme);
+        var mkt = CreateProject(MktProjectUuid, "MKT", "Marketing — zlecenia", ProjectKind.Intake, scheme, issueTypeScheme);
 
         var created = 0;
-        created += AddIssues(dev, SeedIssues, scheme, reporter, now);
-        created += AddIssues(mkt, SeedRequests, scheme, reporter, now);
+        created += AddIssues(dev, SeedIssues, scheme, issueTypeScheme, reporter, now);
+        created += AddIssues(mkt, SeedRequests, scheme, issueTypeScheme, reporter, now);
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -126,11 +128,42 @@ public sealed partial class TaskManagementSeeder
         return scheme;
     }
 
-    private Project CreateProject(Guid uuid, string code, string name, ProjectKind kind, WorkflowScheme scheme)
+    /// <summary>
+    /// Schemat systemowy typów uzgadniany po stałym identyfikatorze — wzorzec identyczny jak
+    /// <see cref="EnsureSystemSchemeAsync"/> (TYP-002).
+    /// </summary>
+    private async Task<IssueTypeScheme> EnsureSystemIssueTypeSchemeAsync(CancellationToken cancellationToken)
+    {
+        var existing = await _dbContext.IssueTypeSchemes
+            .Include(s => s.Types)
+            .FirstOrDefaultAsync(s => s.Uuid == IssueTypeSchemeDefaults.SystemSchemeUuid, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var scheme = IssueTypeSchemeDefaults.Build();
+        _dbContext.IssueTypeSchemes.Add(scheme);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        LogSystemIssueTypeSchemeCreated(_logger, scheme.Types.Count);
+
+        return scheme;
+    }
+
+    private Project CreateProject(
+        Guid uuid,
+        string code,
+        string name,
+        ProjectKind kind,
+        WorkflowScheme scheme,
+        IssueTypeScheme issueTypeScheme)
     {
         // Projekty przykładowe są publiczne, bo inaczej pierwszy zalogowany użytkownik nie widzi
         // niczego i wygląda to na zepsutą listę, a nie na działający predykat widoczności.
-        var project = Project.CreateWithUuid(uuid, code, name, kind, scheme.Uuid, isPublic: true);
+        var project = Project.CreateWithUuid(uuid, code, name, kind, scheme.Uuid, issueTypeScheme.Uuid, isPublic: true);
 
         if (_options.LeadUserUuid is { } lead)
         {
@@ -188,28 +221,28 @@ public sealed partial class TaskManagementSeeder
         var scheme = FieldScheme.CreateWithUuid(DevFieldSchemeUuid, "Pola zespołu wykonawczego", isSystem: true);
 
         scheme.AddField(
-            Guid.CreateVersion7(), "storyPoints", "taskManagement.fields.storyPoints",
+            Guid.CreateVersion7(), "storyPoints", "Punkty historyjki", "taskManagement.fields.storyPoints",
             CustomFieldDataType.Number, FieldSlot.Num1, orderNo: 0);
 
         scheme.AddField(
-            Guid.CreateVersion7(), "component", "taskManagement.fields.component",
+            Guid.CreateVersion7(), "component", "Komponent", "taskManagement.fields.component",
             CustomFieldDataType.Select, FieldSlot.Text1, orderNo: 1,
             options: ["Backend", "Frontend", "Infrastruktura", "Dokumentacja"]);
 
         scheme.AddField(
-            Guid.CreateVersion7(), "fixVersion", "taskManagement.fields.fixVersion",
+            Guid.CreateVersion7(), "fixVersion", "Wersja docelowa", "taskManagement.fields.fixVersion",
             CustomFieldDataType.Text, FieldSlot.Text2, orderNo: 2);
 
         scheme.AddField(
-            Guid.CreateVersion7(), "startedOn", "taskManagement.fields.startedOn",
+            Guid.CreateVersion7(), "startedOn", "Data rozpoczęcia", "taskManagement.fields.startedOn",
             CustomFieldDataType.Date, FieldSlot.Date1, orderNo: 3);
 
         scheme.AddField(
-            Guid.CreateVersion7(), "reviewer", "taskManagement.fields.reviewer",
+            Guid.CreateVersion7(), "reviewer", "Recenzent", "taskManagement.fields.reviewer",
             CustomFieldDataType.User, FieldSlot.User1, orderNo: 4);
 
         scheme.AddField(
-            Guid.CreateVersion7(), "notes", "taskManagement.fields.notes",
+            Guid.CreateVersion7(), "notes", "Notatki", "taskManagement.fields.notes",
             CustomFieldDataType.Text, FieldSlot.None, orderNo: 5);
 
         _dbContext.FieldSchemes.Add(scheme);
@@ -246,10 +279,16 @@ public sealed partial class TaskManagementSeeder
         Project project,
         (string Title, IssuePriority Priority, int StateStep)[] definitions,
         WorkflowScheme scheme,
+        IssueTypeScheme issueTypeScheme,
         Guid reporter,
         DateTimeOffset now)
     {
         var states = scheme.States.OrderBy(s => s.OrderNo).ToList();
+
+        // Domyślny typ (kategoria Standard) dla wszystkich zgłoszeń przykładowych — seed
+        // demonstruje zestaw typów przez sam schemat projektu, nie przez zróżnicowanie
+        // każdego zgłoszenia z osobna.
+        var defaultType = issueTypeScheme.DefaultType();
         var number = 1;
 
         foreach (var (title, priority, stateStep) in definitions)
@@ -260,6 +299,7 @@ public sealed partial class TaskManagementSeeder
                 $"{project.Code}-{number}",
                 title,
                 scheme,
+                defaultType,
                 reporter,
                 now);
 
@@ -290,4 +330,7 @@ public sealed partial class TaskManagementSeeder
 
     [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Utworzono schemat systemowy: {States} stanów, {Transitions} przejść.")]
     private static partial void LogSystemSchemeCreated(ILogger logger, int states, int transitions);
+
+    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Utworzono systemowy schemat typów zgłoszeń: {Types} typów.")]
+    private static partial void LogSystemIssueTypeSchemeCreated(ILogger logger, int types);
 }

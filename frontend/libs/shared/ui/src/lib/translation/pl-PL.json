@@ -238,7 +238,13 @@
       "taskmgmtProjectSetFieldScheme": "Zmiana schematu pól projektu",
       "taskmgmtIssueSetParent": "Zmiana rodzica zgłoszenia",
       "taskmgmtIssueAddLink": "Dopięcie powiązania",
-      "taskmgmtIssueRemoveLink": "Odpięcie powiązania"
+      "taskmgmtIssueRemoveLink": "Odpięcie powiązania",
+      "taskmgmtIssueSetType": "Zmiana typu zgłoszeń",
+      "taskmgmtIssueTypeSchemeCreate": "Utworzenie schematu typów",
+      "taskmgmtIssueTypeSchemeAddType": "Dodanie typu do schematu",
+      "taskmgmtIssueTypeSchemeRemoveType": "Usunięcie typu ze schematu",
+      "taskmgmtIssueTypeSchemeSetType": "Zmiana typu w schemacie",
+      "taskmgmtProjectSetIssueTypeScheme": "Zmiana schematu typów projektu"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

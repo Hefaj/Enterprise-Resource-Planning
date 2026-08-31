@@ -60,7 +60,10 @@
         "options": "Dopuszczalne wartości",
         "optionsHint": "oddzielone przecinkiem",
         "required": "Pole wymagane",
-        "submit": "Dodaj pole"
+        "submit": "Dodaj pole",
+        "name": "Nazwa",
+        "nameKeyHint": "opcjonalny — bez niego pole pokazuje nazwę jak wyżej, bez tłumaczenia",
+        "slotsExhausted": "Wszystkie sloty tego typu są zajęte ({{used}}/{{total}}): {{fields}}. Usuń jedno z tych pól, żeby zwolnić slot."
       },
       "remove": {
         "label": "Usuń",
@@ -73,6 +76,33 @@
         "date": "Data",
         "user": "Użytkownik",
         "select": "Lista wyboru"
+      }
+    },
+    "types": {
+      "title": "Typy zgłoszeń",
+      "empty": "Ten schemat nie ma jeszcze żadnych typów.",
+      "scheme": {
+        "label": "Schemat typów",
+        "placeholder": "Wybierz schemat",
+        "attach": "Podepnij schemat"
+      },
+      "columns": {
+        "name": "Nazwa",
+        "category": "Kategoria",
+        "icon": "Ikona"
+      },
+      "add": {
+        "title": "Nowy typ",
+        "name": "Nazwa",
+        "icon": "Ikona TaigaUI",
+        "iconHint": "np. @tui.bug",
+        "category": "Kategoria",
+        "submit": "Dodaj typ"
+      },
+      "remove": {
+        "label": "Usuń",
+        "confirmTitle": "Usunąć typ?",
+        "confirmMessage": "Backend odmówi, jeśli jakiekolwiek zgłoszenie ma jeszcze ten typ."
       }
     }
   }

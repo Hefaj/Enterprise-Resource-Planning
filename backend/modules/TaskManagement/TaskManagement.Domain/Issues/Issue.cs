@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Domain;
 using TaskManagement.Domain.FieldSchemes;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Domain.Issues;
@@ -33,6 +34,7 @@ public sealed class Issue : AggregateRoot
         Guid projectUuid,
         string key,
         string title,
+        Guid typeUuid,
         Guid stateUuid,
         Guid reporterUuid,
         DateTimeOffset createdAt)
@@ -41,6 +43,7 @@ public sealed class Issue : AggregateRoot
         ProjectUuid = projectUuid;
         Key = key;
         Title = title;
+        TypeUuid = typeUuid;
         StateUuid = stateUuid;
         ReporterUuid = reporterUuid;
         Priority = IssuePriority.Normal;
@@ -49,6 +52,12 @@ public sealed class Issue : AggregateRoot
     }
 
     public Guid ProjectUuid { get; private set; }
+
+    /// <summary>Typ zgłoszenia — steruje hierarchią (<see cref="SetParent"/>), wymagany
+    /// (TYP-001). Zmiana schematu stanów przy zmianie typu idzie osobną ścieżką w handlerze
+    /// komendy, bo wymaga mapowania stanu na nowym schemacie (TYP-003 AC2) — agregat sam
+    /// nie ma jak zgadnąć odpowiednika.</summary>
+    public Guid TypeUuid { get; private set; }
 
     /// <summary>Klucz czytelny (<c>DEV-123</c>) — unikalny globalnie, egzekwowany indeksem bazy.
     /// Użytkownik mówi „zrób DEV-412”, nie UUID-em, więc to on jest w trasie karty zgłoszenia.</summary>
@@ -140,10 +149,12 @@ public sealed class Issue : AggregateRoot
         string key,
         string title,
         WorkflowScheme scheme,
+        IssueType issueType,
         Guid reporterUuid,
         DateTimeOffset createdAt)
     {
         ArgumentNullException.ThrowIfNull(scheme);
+        ArgumentNullException.ThrowIfNull(issueType);
 
         if (projectUuid == Guid.Empty)
         {
@@ -155,7 +166,69 @@ public sealed class Issue : AggregateRoot
             throw new DomainException("taskmgmt.issue_key_empty", "Zgłoszenie musi mieć klucz czytelny.");
         }
 
-        return new Issue(uuid, projectUuid, key.Trim(), ValidateTitle(title), scheme.InitialState().Uuid, reporterUuid, createdAt);
+        return new Issue(
+            uuid,
+            projectUuid,
+            key.Trim(),
+            ValidateTitle(title),
+            issueType.Uuid,
+            scheme.InitialState().Uuid,
+            reporterUuid,
+            createdAt);
+    }
+
+    /// <summary>
+    /// Zmiana typu wg schematu projektu. Mapowanie stanu na inny schemat stanów (gdy nowy typ
+    /// nadpisuje automat) robi wołający <b>przed</b> tym wywołaniem — agregat tu tylko
+    /// podmienia typ i sprawdza, że należy do schematu (TYP-003 AC2).
+    /// </summary>
+    public void SetType(IssueTypeScheme scheme, Guid typeUuid, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(scheme);
+
+        if (!scheme.HasType(typeUuid))
+        {
+            throw new DomainException(
+                "taskmgmt.issue_type_unknown",
+                $"Typ {typeUuid} nie należy do schematu `{scheme.Name}`.");
+        }
+
+        TypeUuid = typeUuid;
+        Touch(now);
+    }
+
+    /// <summary>
+    /// Zmiana typu wraz z migracją stanu na inny schemat stanów (TYP-003 AC2).
+    ///
+    /// <para>Gdy nowy typ nadpisuje automat inny niż stary, bieżący <see cref="StateUuid"/> nie
+    /// ma odpowiednika w nowym schemacie — <paramref name="targetWorkflowScheme"/> niesie ten
+    /// nowy schemat i stan ustawia się wprost na jego <c>InitialState()</c>, z pominięciem
+    /// <see cref="SetState"/>: przejście między dwoma stanami z różnych schematów nie istnieje
+    /// w żadnym z nich, więc walidacja przejścia zawsze by je odrzuciła. Ta sama mechanika,
+    /// co przy zmianie projektu w <see cref="MoveToProject"/>. Wołający rozstrzyga, czy migracja
+    /// jest potrzebna — porównując efektywny schemat starego i nowego typu — i przekazuje
+    /// <c>null</c>, gdy nie jest (TYP-003 AC1: brak wskazania własnego schematu to dziedziczenie
+    /// po projekcie, a nie różnica).</para>
+    /// </summary>
+    public void SetType(IssueTypeScheme scheme, Guid typeUuid, WorkflowScheme? targetWorkflowScheme, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(scheme);
+
+        if (!scheme.HasType(typeUuid))
+        {
+            throw new DomainException(
+                "taskmgmt.issue_type_unknown",
+                $"Typ {typeUuid} nie należy do schematu `{scheme.Name}`.");
+        }
+
+        TypeUuid = typeUuid;
+
+        if (targetWorkflowScheme is not null)
+        {
+            StateUuid = targetWorkflowScheme.InitialState().Uuid;
+        }
+
+        Touch(now);
     }
 
     public void SetTitle(string title, DateTimeOffset now)
@@ -325,7 +398,14 @@ public sealed class Issue : AggregateRoot
     /// <c>IssueParentCycleRule</c> rekurencyjnym CTE, a handler komendy powtarza je jako drugą
     /// linię obrony — dokładnie tak samo, jak przy grafie ról w Identity (§8.2).</para>
     /// </summary>
-    public void SetParent(Issue? parent, DateTimeOffset now)
+    /// <summary>
+    /// <para>Kategorie typów wchodzą parametrami z tego samego powodu, co <paramref name="parent"/>
+    /// jako obiekt: agregat nie ma jak sam sięgnąć po <see cref="IssueTypeScheme"/>, żeby
+    /// zamienić <see cref="TypeUuid"/> na kategorię. Wołający (handler komendy) rozwiązuje
+    /// oba typy raz i przekazuje wynik — tak samo, jak dzieje się to dla schematu stanów
+    /// w <see cref="SetState"/> (TYP-001, LNK-001 AC2).</para>
+    /// </summary>
+    public void SetParent(Issue? parent, IssueTypeCategory thisTypeCategory, IssueTypeCategory? parentTypeCategory, DateTimeOffset now)
     {
         if (parent is null)
         {
@@ -346,6 +426,20 @@ public sealed class Issue : AggregateRoot
             throw new DomainException(
                 "taskmgmt.parent_other_project",
                 "Rodzic musi należeć do tego samego projektu, co zgłoszenie.");
+        }
+
+        if (thisTypeCategory == IssueTypeCategory.Epic)
+        {
+            throw new DomainException(
+                "taskmgmt.parent_epic_cannot_have_parent",
+                "Zgłoszenie typu z kategorii Epik nie może mieć rodzica.");
+        }
+
+        if (parentTypeCategory == IssueTypeCategory.Subtask)
+        {
+            throw new DomainException(
+                "taskmgmt.parent_subtask_cannot_be_parent",
+                "Zgłoszenie typu z kategorii Podzadanie nie może być rodzicem.");
         }
 
         ParentUuid = parent.Uuid;

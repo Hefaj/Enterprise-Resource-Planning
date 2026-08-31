@@ -45,6 +45,7 @@ public sealed class FieldSchemeQueries : IFieldSchemeQueries
                     .Select(f => new FieldDefinitionDto(
                         f.Uuid,
                         f.Code,
+                        f.Name,
                         f.NameKey,
                         f.DataType,
                         f.Slot,
@@ -73,27 +74,57 @@ public sealed class FieldSchemeQueries : IFieldSchemeQueries
             // Projekt bez schematu pól zwraca pustą listę, a nie 404 — „ten projekt nie ma pól
             // własnych" jest odpowiedzią, nie błędem, i front ma z niej zbudować tabelę
             // bez kolumn projekto-specyficznych.
-            return new ProjectFieldProfileDto(projectUuid, null, []);
+            return new ProjectFieldProfileDto(projectUuid, null, [], DefaultSlotUsage());
         }
 
-        var fields = await _dbContext.FieldDefinitions
+        var definitions = await _dbContext.FieldDefinitions
             .AsNoTracking()
             .Where(f => f.SchemeUuid == schemeUuid.Value)
             .OrderBy(f => f.OrderNo)
+            .Select(f => new { f.Code, f.Name, f.NameKey, f.DataType, f.Slot, f.IsRequired, f.OrderNo, Options = EF.Property<List<string>>(f, "_options") })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var fields = definitions
             .Select(f => new ProjectFieldDto(
                 f.Code,
+                f.Name,
                 f.NameKey,
                 f.DataType,
                 f.Slot != FieldSlot.None,
                 f.Slot != FieldSlot.None,
                 f.IsRequired,
                 f.OrderNo,
-                EF.Property<List<string>>(f, "_options")))
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
+                f.Options))
+            .ToList();
 
-        return new ProjectFieldProfileDto(projectUuid, schemeUuid, fields);
+        // FLD-005: front pyta „ile slotów jest zajętych i przez co" ZANIM w ogóle spróbuje
+        // zapisać pole sortowalne — ten sam schemat rodzin slotów, co `FieldSlots` w domenie.
+        FieldSlotUsageDto UsageFor(CustomFieldDataType family, int totalSlots, Func<CustomFieldDataType, bool> inFamily)
+        {
+            var occupying = definitions.Where(f => f.Slot != FieldSlot.None && inFamily(f.DataType)).ToList();
+            return new FieldSlotUsageDto(family, totalSlots, occupying.Count, occupying.Select(f => f.Name).ToList());
+        }
+
+        var slotUsage = new List<FieldSlotUsageDto>
+        {
+            UsageFor(CustomFieldDataType.Number, 4, dt => dt == CustomFieldDataType.Number),
+            UsageFor(CustomFieldDataType.Text, 4, dt => dt is CustomFieldDataType.Text or CustomFieldDataType.Select),
+            UsageFor(CustomFieldDataType.Date, 4, dt => dt == CustomFieldDataType.Date),
+            UsageFor(CustomFieldDataType.User, 2, dt => dt == CustomFieldDataType.User),
+        };
+
+        return new ProjectFieldProfileDto(projectUuid, schemeUuid, fields, slotUsage);
     }
+
+    /// <summary>Profil bez schematu pól: cztery rodziny slotów, wszystkie w pełni wolne.</summary>
+    private static List<FieldSlotUsageDto> DefaultSlotUsage() =>
+    [
+        new(CustomFieldDataType.Number, 4, 0, []),
+        new(CustomFieldDataType.Text, 4, 0, []),
+        new(CustomFieldDataType.Date, 4, 0, []),
+        new(CustomFieldDataType.User, 2, 0, []),
+    ];
 
     /// <inheritdoc />
     public async Task<IReadOnlyDictionary<string, FieldSlot>> GetProjectSlotMapAsync(

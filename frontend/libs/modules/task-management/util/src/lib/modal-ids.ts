@@ -20,3 +20,9 @@ export const ISSUE_SET_STATE_MODAL_ID = '7ecad2cd265bd4f45d1253da2ea4d7bf';
 /** Modal: seryjne przypisanie zgłoszeń do osoby. Lista osób pochodzi ze wspólnego katalogu
  * użytkowników (`ERP_USER_DIRECTORY`), nie z modułu — patrz `erp-user-picker`. */
 export const ISSUE_SET_ASSIGNEE_MODAL_ID = '45ee67c3d582d94b6502ffe26f49a1a8';
+
+/** Modal: uzupełnienie pól wymaganych przez przejście (`WorkflowTransitionDto.requiredFields`,
+ * WF-004) — otwiera się PRZED wysłaniem `IssueSetStateCommand`, gdy zgłoszeniu brakuje choć
+ * jednej wartości. Anulowanie nie zmienia niczego: karta na tablicy nie rusza się z miejsca
+ * (`docs/backend/task-management.md` §5.2, AC1). */
+export const WORKFLOW_REQUIRED_FIELDS_MODAL_ID = '7009eb9ed7477ebaee96320cabb2bd1b';

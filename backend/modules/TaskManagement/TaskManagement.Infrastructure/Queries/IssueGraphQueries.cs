@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Infrastructure.Persistence;
 using TaskManagement.Infrastructure.Persistence.Graph;
@@ -204,6 +205,27 @@ public sealed class IssueGraphQueries : IIssueGraphQueries
         var allowed = visible.ToHashSet();
 
         return [.. rows.Where(r => allowed.Contains(r.Uuid)).Select(r => (r.Uuid, r.Level, r.RootUuid))];
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<Guid, IssueTypeCategory>> GetTypeCategoriesAsync(
+        IReadOnlyCollection<Guid> issueUuids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(issueUuids);
+
+        if (issueUuids.Count == 0)
+        {
+            return new Dictionary<Guid, IssueTypeCategory>();
+        }
+
+        return await (
+                from issue in _dbContext.Issues.AsNoTracking()
+                where issueUuids.Contains(issue.Uuid)
+                join type in _dbContext.IssueTypes.AsNoTracking() on issue.TypeUuid equals type.Uuid
+                select new { issue.Uuid, type.Category })
+            .ToDictionaryAsync(x => x.Uuid, x => x.Category, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>Jedna krawędź w jedną stronę. Parametr <paramref name="isOutgoing"/> ustala

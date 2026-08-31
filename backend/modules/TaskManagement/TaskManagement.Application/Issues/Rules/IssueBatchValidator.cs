@@ -13,16 +13,24 @@ namespace TaskManagement.Application.Issues;
 public sealed class IssueBatchValidator : IBatchValidator
 {
     private readonly IssueParentCycleRule _parentCycle;
+    private readonly IssueParentCategoryRule _parentCategory;
     private readonly IssueLinkCycleRule _linkCycle;
 
-    public IssueBatchValidator(IssueParentCycleRule parentCycle, IssueLinkCycleRule linkCycle)
+    public IssueBatchValidator(
+        IssueParentCycleRule parentCycle,
+        IssueParentCategoryRule parentCategory,
+        IssueLinkCycleRule linkCycle)
     {
         _parentCycle = parentCycle;
+        _parentCategory = parentCategory;
         _linkCycle = linkCycle;
     }
 
     /// <summary>Pre-check masowej zmiany rodzica: żadna z krawędzi — ani osobno, ani łącznie
-    /// z pozostałymi w tym samym wsadzie — nie może zamknąć pętli w drzewie.</summary>
+    /// z pozostałymi w tym samym wsadzie — nie może zamknąć pętli w drzewie, a kategoria typu
+    /// (Epik/Podzadanie) musi dopuszczać taką hierarchię. Reguły są niezależne od siebie —
+    /// płasko, nie łańcuchem — więc element może dostać oba naruszenia naraz
+    /// (`docs/backend/batch-validation.md` §2 „Tryb niezależnych reguł").</summary>
     public async Task<ValidationTracker> ValidateSetParentAsync(
         IReadOnlyList<BatchTarget<IssueSetParentCommand>> targets,
         CancellationToken cancellationToken)
@@ -36,6 +44,10 @@ public sealed class IssueBatchValidator : IBatchValidator
             .ToList();
 
         await _parentCycle
+            .ExecuteAsync(items, i => i.IssueUuid, tracker, cancellationToken)
+            .ConfigureAwait(false);
+
+        await _parentCategory
             .ExecuteAsync(items, i => i.IssueUuid, tracker, cancellationToken)
             .ConfigureAwait(false);
 

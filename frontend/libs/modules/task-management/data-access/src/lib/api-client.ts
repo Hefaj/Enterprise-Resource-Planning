@@ -5129,6 +5129,7 @@ export interface WorkflowTransitionDto {
     toStateUuid: string;
     nameKey: string;
     requiredPermission: string | undefined;
+    requiredFields: string[];
 
     [key: string]: any;
 }

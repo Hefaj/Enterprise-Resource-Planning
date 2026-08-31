@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Validation;
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 
 namespace TaskManagement.Application.Issues;
@@ -116,6 +117,77 @@ public sealed class IssueParentCycleRule : IBatchRule<IssueParentTarget>
         }
 
         return false;
+    }
+}
+
+/// <summary>
+/// Reguła wsadowa: kategoria typu ogranicza hierarchię — Epik nigdy nie ma rodzica, Podzadanie
+/// nigdy nie jest rodzicem (<see cref="Issue.SetParent"/>, `docs/backend/task-management.md` §8.2).
+///
+/// <para><b>Dlaczego pre-check, a nie tylko agregat.</b> <c>Issue.SetParent</c> sprawdza dokładnie
+/// tę samą regułę, ale robi to dopiero w <c>BulkCommandRunner</c>, chunkami, nawet minuty po
+/// utworzeniu zadania — użytkownik widziałby pozorny sukces (<c>jobUuid</c>) i dowiadywał się
+/// o odrzuceniu dopiero z historii zadań. Kategoria typu NIE zmienia się przy samej zmianie
+/// rodzica (to osobna komenda, zmiana typu), więc pre-check może bezpiecznie czytać stan
+/// zacommitowany — nie potrzeba tu odpowiednika „krawędzi z tego samego wsadu"
+/// jak w <see cref="IssueParentCycleRule"/>.</para>
+///
+/// <para>Jedno zapytanie na cały wsad: <see cref="IIssueGraphQueries.GetTypeCategoriesAsync"/>
+/// dostaje uuidy WSZYSTKICH zgłoszeń z wsadu naraz — i dzieci, i kandydatów na rodzica — zamiast
+/// dwóch zapytań na element.</para>
+/// </summary>
+public sealed class IssueParentCategoryRule : IBatchRule<IssueParentTarget>
+{
+    private readonly IIssueGraphQueries _graph;
+
+    public IssueParentCategoryRule(IIssueGraphQueries graph) => _graph = graph;
+
+    /// <inheritdoc />
+    public async Task ExecuteAsync(
+        IReadOnlyList<IssueParentTarget> items,
+        Func<IssueParentTarget, Guid> idSelector,
+        ValidationTracker tracker,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(idSelector);
+        ArgumentNullException.ThrowIfNull(tracker);
+
+        var candidates = items.Where(i => i.ParentUuid is { } p && p != Guid.Empty).ToList();
+
+        if (candidates.Count == 0)
+        {
+            return;
+        }
+
+        var uuids = candidates
+            .SelectMany(c => new[] { c.IssueUuid, c.ParentUuid!.Value })
+            .Distinct()
+            .ToList();
+
+        var categories = await _graph.GetTypeCategoriesAsync(uuids, cancellationToken).ConfigureAwait(false);
+
+        foreach (var item in candidates)
+        {
+            var uuid = idSelector(item);
+
+            if (categories.TryGetValue(item.IssueUuid, out var thisCategory) && thisCategory == IssueTypeCategory.Epic)
+            {
+                tracker.AddError(
+                    uuid,
+                    "taskmgmt.parent_epic_cannot_have_parent",
+                    "Zgłoszenie typu z kategorii Epik nie może mieć rodzica.");
+                continue;
+            }
+
+            if (categories.TryGetValue(item.ParentUuid!.Value, out var parentCategory) && parentCategory == IssueTypeCategory.Subtask)
+            {
+                tracker.AddError(
+                    uuid,
+                    "taskmgmt.parent_subtask_cannot_be_parent",
+                    "Zgłoszenie typu z kategorii Podzadanie nie może być rodzicem.");
+            }
+        }
     }
 }
 

@@ -69,7 +69,8 @@ public sealed class WorkflowQueries : IWorkflowQueries
                 t.FromStateUuid,
                 t.ToStateUuid,
                 t.NameKey,
-                t.RequiredPermission))
+                t.RequiredPermission,
+                EF.Property<List<string>>(t, "_requiredFields")))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

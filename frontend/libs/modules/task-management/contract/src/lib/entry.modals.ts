@@ -2,6 +2,7 @@ import {
   ISSUE_CREATE_MODAL_ID,
   ISSUE_SET_ASSIGNEE_MODAL_ID,
   ISSUE_SET_STATE_MODAL_ID,
+  WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
 } from '@erp/task-management/util';
 
 /**
@@ -16,14 +17,23 @@ export const remoteModalIds: string[] = [
   ISSUE_CREATE_MODAL_ID,
   ISSUE_SET_STATE_MODAL_ID,
   ISSUE_SET_ASSIGNEE_MODAL_ID,
+  WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
 ];
 
 /** Leniwie ładuje tokeny DI definicji modali tego modułu. */
 export async function registerModals(): Promise<unknown[]> {
-  const { IssueCreateModalDefinition, IssueSetStateModalDefinition, IssueSetAssigneeModalDefinition } = await import(
-    '@erp/task-management/feature'
-  );
-  return [IssueCreateModalDefinition, IssueSetStateModalDefinition, IssueSetAssigneeModalDefinition];
+  const {
+    IssueCreateModalDefinition,
+    IssueSetStateModalDefinition,
+    IssueSetAssigneeModalDefinition,
+    WorkflowRequiredFieldsModalDefinition,
+  } = await import('@erp/task-management/feature');
+  return [
+    IssueCreateModalDefinition,
+    IssueSetStateModalDefinition,
+    IssueSetAssigneeModalDefinition,
+    WorkflowRequiredFieldsModalDefinition,
+  ];
 }
 
 /**

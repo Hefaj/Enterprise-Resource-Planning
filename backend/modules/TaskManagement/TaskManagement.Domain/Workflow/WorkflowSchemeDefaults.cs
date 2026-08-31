@@ -35,19 +35,33 @@ public static class WorkflowSchemeDefaults
         scheme.AddState(DoneStateUuid, "done", "taskManagement.workflow.states.done", WorkflowStateCategory.Done, 3);
 
         AddPair(scheme, TodoStateUuid, InProgressStateUuid, "start", "return");
-        AddPair(scheme, InProgressStateUuid, DoneStateUuid, "finish", "reopen");
+
+        // WF-004 — przykład wymogu przejścia: „przejście do Done bez resolution”
+        // (docs/backend/task-management.md §5.2) nie wykonuje się do końca, front otwiera modal
+        // PRZED wysłaniem komendy, a agregat (`Issue.SetState`) go egzekwuje jako backstop.
+        // Kod pola musi istnieć w schemacie pól projektu, żeby przejście dało się w ogóle
+        // ukończyć — patrz `TaskManagementSeeder.CreateDeliveryFieldScheme`.
+        AddPair(scheme, InProgressStateUuid, DoneStateUuid, "finish", "reopen", forwardRequiredFields: ["resolution"]);
+
         AddPair(scheme, TodoStateUuid, DoneStateUuid, "close", "reopenToTodo");
 
         return scheme;
     }
 
-    private static void AddPair(WorkflowScheme scheme, Guid from, Guid to, string forwardKey, string backwardKey)
+    private static void AddPair(
+        WorkflowScheme scheme,
+        Guid from,
+        Guid to,
+        string forwardKey,
+        string backwardKey,
+        IEnumerable<string>? forwardRequiredFields = null)
     {
         scheme.AddTransition(
             Guid.CreateVersion7(),
             from,
             to,
-            $"taskManagement.workflow.transitions.{forwardKey}");
+            $"taskManagement.workflow.transitions.{forwardKey}",
+            requiredFields: forwardRequiredFields);
 
         scheme.AddTransition(
             Guid.CreateVersion7(),

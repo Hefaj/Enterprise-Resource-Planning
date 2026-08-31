@@ -87,6 +87,14 @@
     },
     "unassign": {
       "label": "Zdejmij przypisanie"
+    },
+    "requiredFields": {
+      "label": "Uzupełnij pola",
+      "modalTitle": "Uzupełnij wymagane pola",
+      "submitButton": "Zapisz i przejdź",
+      "hint": "To przejście wymaga uzupełnienia poniższych pól, zanim zgłoszenie zmieni stan.",
+      "numberHint": "np. 8.5",
+      "dateHint": "RRRR-MM-DD"
     }
   },
   "detail": {

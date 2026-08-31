@@ -87,6 +87,14 @@
     },
     "unassign": {
       "label": "Unassign"
+    },
+    "requiredFields": {
+      "label": "Fill in fields",
+      "modalTitle": "Fill in required fields",
+      "submitButton": "Save and move",
+      "hint": "This transition requires the fields below before the issue can change state.",
+      "numberHint": "e.g. 8.5",
+      "dateHint": "YYYY-MM-DD"
     }
   },
   "detail": {

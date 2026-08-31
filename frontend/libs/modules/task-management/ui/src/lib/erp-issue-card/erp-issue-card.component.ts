@@ -22,7 +22,7 @@ import { ErpIssueCardConfig } from './erp-issue-card.types';
       <div class="erp-issue-card__header">
         <erp-issue-key
           [config]="{
-            issueKey: this.issueKey(),
+            issueKey: this.issueKey() ?? '',
             typeIcon: this.typeIcon(),
             typeName: this.typeName(),
             link: this.link(),

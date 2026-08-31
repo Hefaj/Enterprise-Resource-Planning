@@ -93,6 +93,14 @@ export const ISSUE_KEYS = {
       unassign: {
         label: 'issue.commands.unassign.label',
       },
+      requiredFields: {
+        label: 'issue.commands.requiredFields.label',
+        modalTitle: 'issue.commands.requiredFields.modalTitle',
+        submitButton: 'issue.commands.requiredFields.submitButton',
+        hint: 'issue.commands.requiredFields.hint',
+        numberHint: 'issue.commands.requiredFields.numberHint',
+        dateHint: 'issue.commands.requiredFields.dateHint',
+      },
     },
     detail: {
       notFound: {

@@ -12,13 +12,16 @@ public sealed record WorkflowStateDto(
     WorkflowStateCategory Category,
     int OrderNo);
 
-/// <summary>Przejście w widoku odczytu.</summary>
+/// <summary>Przejście w widoku odczytu. <c>RequiredFields</c> to kody pól niestandardowych
+/// (<c>FieldDefinition.Code</c>), które front musi zebrać przed wysłaniem komendy — pusta lista
+/// znaczy „bez dodatkowego wymogu” (WF-004).</summary>
 public sealed record WorkflowTransitionDto(
     Guid Uuid,
     Guid FromStateUuid,
     Guid ToStateUuid,
     string NameKey,
-    string? RequiredPermission);
+    string? RequiredPermission,
+    IReadOnlyList<string> RequiredFields);
 
 /// <summary>
 /// Schemat stanów projektu — <b>jedno źródło prawdy dla kolumn tablicy, przycisków przejść

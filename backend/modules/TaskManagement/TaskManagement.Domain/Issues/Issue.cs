@@ -296,6 +296,20 @@ public sealed class Issue : AggregateRoot
             return;
         }
 
+        // Backstop WF-004: front sprawdza to samo PRZED wysłaniem komendy (modal zbierający
+        // brakujące pola), ale agregat waliduje PRZED zmianą stanu niezależnie od frontu —
+        // klient API pomijający UI albo wyścig dwóch żądań nie może obejść wymogu.
+        var transition = scheme.FindTransition(StateUuid, toStateUuid);
+        var missingField = transition?.RequiredFields.FirstOrDefault(
+            code => !_customFields.TryGetValue(code, out var value) || string.IsNullOrWhiteSpace(value));
+
+        if (missingField is not null)
+        {
+            throw new DomainException(
+                "taskmgmt.required_fields_missing",
+                $"Przejście `{transition!.NameKey}` wymaga wartości pola `{missingField}`.");
+        }
+
         StateUuid = toStateUuid;
         Touch(now);
     }

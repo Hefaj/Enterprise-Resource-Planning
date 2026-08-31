@@ -78,6 +78,20 @@ public sealed class WorkflowTransitionConfiguration : IEntityTypeConfiguration<W
         builder.Property(t => t.NameKey).HasMaxLength(256).IsRequired();
         builder.Property(t => t.RequiredPermission).HasMaxLength(128);
 
+        // Lista kodów pól — ten sam wzorzec, co `options` w `field_definition`: tablica tekstów,
+        // nie jsonb, bo to prosta lista bez struktury klucz-wartość (WF-004).
+        builder.Property<List<string>>("_requiredFields")
+            .HasColumnName("required_fields")
+            .HasColumnType("text[]")
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            // Domyślnie pusta tablica, nie NULL — istniejące przejścia sprzed tej migracji
+            // dostają wartość w kolumnie NOT NULL, a „bez wymaganych pól" to pusta tablica,
+            // nie brak danych (ten sam wzorzec, co `custom_fields` w `IssueConfiguration`).
+            .HasDefaultValueSql("'{}'::text[]")
+            .IsRequired();
+
+        builder.Ignore(t => t.RequiredFields);
+
         builder.HasIndex(t => new { t.SchemeUuid, t.FromStateUuid, t.ToStateUuid }).IsUnique();
     }
 }

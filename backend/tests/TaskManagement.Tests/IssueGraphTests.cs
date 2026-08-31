@@ -181,11 +181,112 @@ public class IssueGraphTests
         }
     }
 
+    /// <summary>
+    /// Sedno pre-checku kategorii: element odrzucony na tej regule dostaje status <c>Failed</c>
+    /// razem z kodem błędu <b>przy tworzeniu zadania</b> — bez sięgania po <c>BulkCommandRunner</c>
+    /// (`docs/backend/batch-validation.md` §1). Testujemy samą regułę na atrapie zapytania grafu,
+    /// dokładnie tak jak <see cref="IssueParentCycleRule"/> obok.
+    /// </summary>
+    [Fact]
+    public async Task Epik_w_wsadzie_odpada_na_precheku_kategorii()
+    {
+        var epic = Guid.CreateVersion7();
+        var parent = Guid.CreateVersion7();
+
+        var tracker = new ValidationTracker();
+        var rule = new IssueParentCategoryRule(new StubGraph([], new()
+        {
+            [epic] = IssueTypeCategory.Epic,
+            [parent] = IssueTypeCategory.Standard,
+        }));
+
+        await rule.ExecuteAsync(
+            [new IssueParentTarget(epic, parent)],
+            item => item.IssueUuid,
+            tracker,
+            CancellationToken.None);
+
+        tracker.HasError(epic).ShouldBeTrue();
+        tracker.Errors[epic].ShouldContain(e => e.ErrorCode == "taskmgmt.parent_epic_cannot_have_parent");
+    }
+
+    [Fact]
+    public async Task Podzadanie_jako_docelowy_rodzic_odpada_na_precheku_kategorii()
+    {
+        var child = Guid.CreateVersion7();
+        var subtaskParent = Guid.CreateVersion7();
+
+        var tracker = new ValidationTracker();
+        var rule = new IssueParentCategoryRule(new StubGraph([], new()
+        {
+            [child] = IssueTypeCategory.Standard,
+            [subtaskParent] = IssueTypeCategory.Subtask,
+        }));
+
+        await rule.ExecuteAsync(
+            [new IssueParentTarget(child, subtaskParent)],
+            item => item.IssueUuid,
+            tracker,
+            CancellationToken.None);
+
+        tracker.HasError(child).ShouldBeTrue();
+        tracker.Errors[child].ShouldContain(e => e.ErrorCode == "taskmgmt.parent_subtask_cannot_be_parent");
+    }
+
+    [Fact]
+    public async Task Standardowa_para_przechodzi_precheck_kategorii()
+    {
+        var child = Guid.CreateVersion7();
+        var parent = Guid.CreateVersion7();
+
+        var tracker = new ValidationTracker();
+        var rule = new IssueParentCategoryRule(new StubGraph([], new()
+        {
+            [child] = IssueTypeCategory.Standard,
+            [parent] = IssueTypeCategory.Standard,
+        }));
+
+        await rule.ExecuteAsync(
+            [new IssueParentTarget(child, parent)],
+            item => item.IssueUuid,
+            tracker,
+            CancellationToken.None);
+
+        tracker.HasError(child).ShouldBeFalse();
+    }
+
+    /// <summary>Zdjęcie rodzica (<c>ParentUuid == null</c>) nie sprawdza kategorii wcale —
+    /// epik zdejmujący (nieistniejącego) rodzica nie powinien nigdy trafić na tę regułę.</summary>
+    [Fact]
+    public async Task Zdjecie_rodzica_pomija_precheck_kategorii()
+    {
+        var epic = Guid.CreateVersion7();
+
+        var tracker = new ValidationTracker();
+        var rule = new IssueParentCategoryRule(new StubGraph([], new()
+        {
+            [epic] = IssueTypeCategory.Epic,
+        }));
+
+        await rule.ExecuteAsync(
+            [new IssueParentTarget(epic, null)],
+            item => item.IssueUuid,
+            tracker,
+            CancellationToken.None);
+
+        tracker.HasError(epic).ShouldBeFalse();
+    }
+
     private class StubGraph : IIssueGraphQueries
     {
         private readonly Dictionary<Guid, List<Guid>> _edges;
+        private readonly Dictionary<Guid, IssueTypeCategory> _categories;
 
-        public StubGraph(Dictionary<Guid, List<Guid>> edges) => _edges = edges;
+        public StubGraph(Dictionary<Guid, List<Guid>> edges, Dictionary<Guid, IssueTypeCategory>? categories = null)
+        {
+            _edges = edges;
+            _categories = categories ?? [];
+        }
 
         public Task<IssueGraphDto> GetGraphAsync(Guid issueUuid, CancellationToken cancellationToken)
             => Task.FromResult(new IssueGraphDto(issueUuid, null, [], []));
@@ -204,6 +305,12 @@ public class IssueGraphTests
             IReadOnlyCollection<Guid> rootUuids,
             CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<(Guid, int, Guid)>>([]);
+
+        public Task<IReadOnlyDictionary<Guid, IssueTypeCategory>> GetTypeCategoriesAsync(
+            IReadOnlyCollection<Guid> issueUuids,
+            CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyDictionary<Guid, IssueTypeCategory>>(
+                _categories.Where(p => issueUuids.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value));
 
         private IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> Map()
             => _edges.ToDictionary(p => p.Key, p => (IReadOnlyList<Guid>)p.Value);

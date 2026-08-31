@@ -1,3 +1,4 @@
+using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Workflow;
 
@@ -79,5 +80,12 @@ public interface IIssueGraphQueries
     /// na liście. Zwraca pary (uuid, poziom zagnieżdżenia).</summary>
     Task<IReadOnlyList<(Guid Uuid, int Level, Guid RootUuid)>> GetSubtreeAsync(
         IReadOnlyCollection<Guid> rootUuids,
+        CancellationToken cancellationToken);
+
+    /// <summary>Kategoria typu każdego ze wskazanych zgłoszeń (<c>issue.type_uuid → issue_type.category</c>),
+    /// jednym zapytaniem dla całego wsadu — używane przez <see cref="IssueParentCategoryRule"/>,
+    /// gdzie trzeba znać kategorię zarówno dziecka, jak i kandydata na rodzica naraz.</summary>
+    Task<IReadOnlyDictionary<Guid, IssueTypeCategory>> GetTypeCategoriesAsync(
+        IReadOnlyCollection<Guid> issueUuids,
         CancellationToken cancellationToken);
 }

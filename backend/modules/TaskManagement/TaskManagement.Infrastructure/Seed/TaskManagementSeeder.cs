@@ -245,6 +245,15 @@ public sealed partial class TaskManagementSeeder
             Guid.CreateVersion7(), "notes", "Notatki", "taskManagement.fields.notes",
             CustomFieldDataType.Text, FieldSlot.None, orderNo: 5);
 
+        // WF-004 — przykład wymogu przejścia: `finish` (In Progress → Done) w schemacie
+        // systemowym wymaga tego pola (patrz `EnsureSystemSchemeAsync`), więc zgłoszenie musi
+        // mieć uzupełnioną rozdzielczość, zanim trafi do Done. Bez slotu — nikt po rozdzielczości
+        // nie sortuje ani nie filtruje listy, więc nie zajmuje zasobu rzadkiego (§6).
+        scheme.AddField(
+            Guid.CreateVersion7(), "resolution", "Rozwiązanie", "taskManagement.fields.resolution",
+            CustomFieldDataType.Select, FieldSlot.Text3, orderNo: 6,
+            options: ["Fixed", "WontFix", "Duplicate", "Invalid"]);
+
         _dbContext.FieldSchemes.Add(scheme);
 
         return scheme;

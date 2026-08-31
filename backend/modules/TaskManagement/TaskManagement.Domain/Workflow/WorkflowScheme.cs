@@ -63,7 +63,8 @@ public sealed class WorkflowScheme : AggregateRoot
         Guid fromStateUuid,
         Guid toStateUuid,
         string nameKey,
-        string? requiredPermission = null)
+        string? requiredPermission = null,
+        IEnumerable<string>? requiredFields = null)
     {
         if (!_states.Exists(s => s.Uuid == fromStateUuid) || !_states.Exists(s => s.Uuid == toStateUuid))
         {
@@ -72,7 +73,7 @@ public sealed class WorkflowScheme : AggregateRoot
                 "Przejście musi łączyć stany należące do tego samego schematu.");
         }
 
-        var transition = WorkflowTransition.Create(uuid, fromStateUuid, toStateUuid, nameKey, requiredPermission);
+        var transition = WorkflowTransition.Create(uuid, fromStateUuid, toStateUuid, nameKey, requiredPermission, requiredFields);
         _transitions.Add(transition);
         return transition;
     }
@@ -97,6 +98,12 @@ public sealed class WorkflowScheme : AggregateRoot
            || _transitions.Exists(t => t.FromStateUuid == fromStateUuid && t.ToStateUuid == toStateUuid);
 
     public bool HasState(Guid stateUuid) => _states.Exists(s => s.Uuid == stateUuid);
+
+    /// <summary>Znajduje opis przejścia między dwoma stanami — <c>null</c> dla przejście „w to
+    /// samo miejsce” (dozwolone jako operacja pusta, patrz <see cref="AllowsTransition"/>, ale
+    /// nieopisane żadnym wpisem, więc nie niesie <c>RequiredFields</c>).</summary>
+    public WorkflowTransition? FindTransition(Guid fromStateUuid, Guid toStateUuid)
+        => _transitions.Find(t => t.FromStateUuid == fromStateUuid && t.ToStateUuid == toStateUuid);
 
     private static string ValidateName(string name)
     {

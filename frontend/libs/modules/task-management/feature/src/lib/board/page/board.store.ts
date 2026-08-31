@@ -1,10 +1,11 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 
 import { JobService } from '@erp/shared/data-access';
-import { ErpConfirmDialogService, ErpToastService } from '@erp/shared/ui';
+import { ErpConfirmDialogService, ErpModalService, ErpToastService } from '@erp/shared/ui';
 import {
   BoardCardVM,
   erpAwaitJobAsync,
+  findMissingRequiredFieldCodes,
   BoardColumnDto,
   BoardSetCardPositionCommand,
   IssueGraphService,
@@ -15,9 +16,13 @@ import {
   openBlockersOf,
   openChildrenOf,
 } from '@erp/task-management/data-access';
-import { WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
+import { WORKFLOW_REQUIRED_FIELDS_MODAL_ID, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
 
 import { BOARD_KEYS } from '../translation';
+import {
+  WorkflowRequiredFieldsCommand,
+  WorkflowRequiredFieldsMetadata,
+} from '../../issue/modal/workflow-required-fields';
 
 /** Kolumna razem z kartami, które w niej leżą — model dla widoku, nie dla serwera. */
 export interface BoardColumnVM {
@@ -53,6 +58,7 @@ export class BoardStore {
   private readonly _toast = inject(ErpToastService);
   private readonly _graphService = inject(IssueGraphService);
   private readonly _confirm = inject(ErpConfirmDialogService);
+  private readonly _modals = inject(ErpModalService);
 
   private readonly _pendingMove = signal<PendingMove | null>(null);
   private readonly _draggedCardUuid = signal<string | null>(null);
@@ -208,6 +214,19 @@ export class BoardStore {
       if (!confirmed) {
         return;
       }
+
+      // WF-004 — modal otwiera się PRZED wykonaniem, dokładnie tak samo jak ostrzeżenia grafu
+      // wyżej: żadna z dwóch bramek nie ustawiła jeszcze `_pendingMove`, więc anulowanie
+      // którejkolwiek zostawia kartę dokładnie tam, gdzie była przed przeciągnięciem (AC1).
+      const fieldsReady = await this._confirmRequiredFieldsAsync(
+        board.projectUuid,
+        card.issueUuid,
+        card.stateUuid,
+        targetStateUuid,
+      );
+      if (!fieldsReady) {
+        return;
+      }
     }
 
     // Optymistyczne przesunięcie: karta ląduje w nowym miejscu natychmiast. Zdejmujemy je
@@ -276,6 +295,49 @@ export class BoardStore {
    */
   private _runAsync(command: Promise<string>): Promise<void> {
     return command.then((jobUuid) => erpAwaitJobAsync(this._jobs, jobUuid));
+  }
+
+  /**
+   * WF-004 — gdy przejście niesie `requiredFields`, a zgłoszeniu brakuje choć jednej z tych
+   * wartości, otwiera modal zbierający TYLKO brakujące pola PRZED wysłaniem
+   * `IssueSetStateCommand`. Zwraca `false`, gdy użytkownik anulował modal — dokładnie ten sam
+   * kształt, co `_confirmGraphWarningsAsync`, więc `dropAsync` nie musi rozróżniać dwóch bramek.
+   *
+   * <p>Sprawdzenie jest wyłącznie frontowe (`findMissingRequiredFieldCodes`); backend ma ten
+   * sam warunek jako backstop w `Issue.SetState` — patrz `taskmgmt.required_fields_missing`.</p>
+   */
+  private async _confirmRequiredFieldsAsync(
+    projectUuid: string,
+    issueUuid: string,
+    fromStateUuid: string,
+    toStateUuid: string,
+  ): Promise<boolean> {
+    const transition = this._workflow
+      .transitionsFrom(projectUuid, fromStateUuid)()
+      .find((item) => item.toStateUuid === toStateUuid);
+
+    if (!transition || transition.requiredFields.length === 0) {
+      return true;
+    }
+
+    // Karta na tablicy nie niesie pól niestandardowych (`BoardCardDto` — nagłówek, nie cała
+    // encja), więc zgłoszenie musi dojechać osobno, zanim da się cokolwiek sprawdzić.
+    await this._issues.loadAsync([issueUuid], {});
+    const issue = this._issues.getOne(issueUuid)();
+
+    const missing = findMissingRequiredFieldCodes(transition, issue?.customFields);
+    if (missing.length === 0) {
+      return true;
+    }
+
+    const ref = await this._modals.open<WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata>(
+      WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
+      { issueUuid, values: { ...issue?.customFields } } as WorkflowRequiredFieldsCommand,
+      { projectUuid, missingFieldCodes: missing },
+    );
+
+    const { saved } = await ref.closed;
+    return saved;
   }
 
   /**

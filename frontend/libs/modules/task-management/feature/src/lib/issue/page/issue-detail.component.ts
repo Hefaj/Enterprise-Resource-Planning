@@ -11,6 +11,7 @@ import {
   ErpButtonConfig,
   ErpConfirmDialogService,
   ErpEmptyStateComponent,
+  ErpModalService,
   ErpRichTextBuilder,
   ErpRichTextComponent,
   ErpRichTextConfig,
@@ -18,6 +19,7 @@ import {
   ErpTranslatePipe,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
+import { JobService } from '@erp/shared/data-access';
 import {
   IssueGraphService,
   IssueVM,
@@ -28,11 +30,13 @@ import {
   IssueAttachmentContentService,
   IssueAttachmentService,
   createIssueRichTextUploadPort,
+  erpAwaitJobAsync,
+  findMissingRequiredFieldCodes,
   openBlockersOf,
   openChildrenOf,
   resolveIssueRichTextHtmlAsync,
 } from '@erp/task-management/data-access';
-import { ISSUE_PRIORITY, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
+import { ISSUE_PRIORITY, WORKFLOW_REQUIRED_FIELDS_MODAL_ID, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
 import { ErpFieldPanelComponent, ErpFieldPanelConfig, ErpIssueKeyComponent, TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
@@ -40,6 +44,7 @@ import { IssueAttachmentsComponent } from './content/issue-attachments.component
 import { IssueCustomFieldsComponent } from './content/issue-custom-fields.component';
 import { IssueLinksComponent } from './content/issue-links.component';
 import { IssueActivityComponent } from './content/issue-activity.component';
+import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '../modal/workflow-required-fields';
 
 /**
  * Karta zgłoszenia — `/task-management/issue/:key`.
@@ -104,7 +109,7 @@ import { IssueActivityComponent } from './content/issue-activity.component';
               </div>
 
               @if (editingDescription()) {
-                <erp-rich-text [config]="descriptionEditorConfig" [control]="descriptionControl" />
+                <erp-rich-text [config]="descriptionEditorConfig()" [control]="descriptionControl" />
                 <div class="flex gap-2">
                   <erp-button [config]="saveDescriptionButton" />
                   <erp-button [config]="cancelDescriptionButton" />
@@ -164,6 +169,8 @@ export class IssueDetailComponent {
   private readonly _content = inject(IssueAttachmentContentService);
   private readonly _graphService = inject(IssueGraphService);
   private readonly _confirm = inject(ErpConfirmDialogService);
+  private readonly _modals = inject(ErpModalService);
+  private readonly _jobs = inject(JobService);
 
   /**
    * Klucz czytelny z trasy. Czytany z `ActivatedRoute`, a NIE przez `input()` z wiązaniem
@@ -392,18 +399,19 @@ export class IssueDetailComponent {
   /**
    * Zastosowanie przejścia.
    *
-   * <p><b>`WF-004` (modal pól wymaganych) nie jest tu wpięty end-to-end.</b> Backend nie ma dziś
-   * modelu „przejście X wymaga pól Y" — `WorkflowTransition` niesie wyłącznie
-   * `RequiredPermission` (`docs/backend/task-management-requirements.md` WF-003 jest 🟡,
-   * częściowa), a każda mutacja w tym systemie i tak idzie przez `job`/`BulkCommandRunner`
-   * i wraca `200` z `jobUuid` NATYCHMIAST — naruszenie reguły domenowej ujawniłoby się dopiero
-   * asynchronicznie w `job_item`, którego kod błędu front dziś nigdzie nie odczytuje (zobacz
-   * raport fazy). Ten `catch` łapie więc tylko odrzucenia na poziomie zadania
-   * (`erpAwaitJobAsync` w orkiestratorze) — siecowe/transportowe, nie „brakuje pola X".</p>
+   * <p><b>`WF-004` jest teraz wpięte w całości.</b> Sprawdzenie pól wymaganych jest wyłącznie
+   * frontowe (`findMissingRequiredFieldCodes`) i działa PRZED wysłaniem komendy — dokładnie ten
+   * sam gate, co `BoardStore.dropAsync` na tablicy, więc reguła nie ma dwóch niezależnych kopii.
+   * Backend ma ten sam warunek jako backstop w `Issue.SetState`
+   * (`taskmgmt.required_fields_missing`), na wypadek klienta API pomijającego UI.</p>
    *
-   * <p><b>`LNK-004`/`LNK-005` są wpięte w całości</b> — to ostrzeżenia liczone WYŁĄCZNIE na
-   * froncie z grafu zgłoszenia (`docs/backend/task-management-requirements.md`: „to ostrzeżenie
-   * walidacyjne, nie reguła backendu"), więc nie zależą od tego, czego backend jeszcze nie ma.</p>
+   * <p><b>Komenda czeka na zadanie</b> (`erpAwaitJobAsync`) — ten sam obrys, co
+   * `BoardStore._runAsync`: przycisk przejścia na karcie jest jedynym miejscem w tym komponencie,
+   * które od razu pokazuje skutek własnej mutacji, więc odświeżenie sprzed zakończenia zadania
+   * pokazywałoby stary stan.</p>
+   *
+   * <p><b>`LNK-004`/`LNK-005`</b> — ostrzeżenia liczone WYŁĄCZNIE na froncie z grafu zgłoszenia,
+   * nie zależą od backendu.</p>
    */
   protected async applyTransitionAsync(toStateUuid: string): Promise<void> {
     const issue = this.issue();
@@ -415,12 +423,47 @@ export class IssueDetailComponent {
       return;
     }
 
+    if (!(await this._confirmRequiredFieldsAsync(issue, toStateUuid))) {
+      return;
+    }
+
     try {
-      await this._orchestrator.setStateAsync({ uuid: issue.uuid, stateUuid: toStateUuid });
+      const jobUuid = await this._orchestrator.setStateAsync({ uuid: issue.uuid, stateUuid: toStateUuid });
+      await erpAwaitJobAsync(this._jobs, jobUuid);
     } catch (error) {
       console.error('[IssueDetailComponent] Nie udało się zmienić stanu zgłoszenia.', error);
       this._toasts.show({ message: ISSUE_KEYS.detail.transitionFailed, appearance: 'negative' });
     }
+  }
+
+  /**
+   * WF-004 — patrz `BoardStore._confirmRequiredFieldsAsync`, ten sam mechanizm, ten sam modal
+   * (`WORKFLOW_REQUIRED_FIELDS_MODAL_ID`). Karta zgłoszenia ma już pełne pole `customFields`
+   * wczytane razem ze zgłoszeniem, więc — w odróżnieniu od tablicy — nie ma tu dodatkowego
+   * `loadAsync` po dane.
+   */
+  private async _confirmRequiredFieldsAsync(issue: IssueVM, toStateUuid: string): Promise<boolean> {
+    const transition = this._workflow
+      .transitionsFrom(issue.projectUuid, issue.stateUuid)()
+      .find((item) => item.toStateUuid === toStateUuid);
+
+    if (!transition || transition.requiredFields.length === 0) {
+      return true;
+    }
+
+    const missing = findMissingRequiredFieldCodes(transition, issue.customFields);
+    if (missing.length === 0) {
+      return true;
+    }
+
+    const ref = await this._modals.open<WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata>(
+      WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
+      { issueUuid: issue.uuid, values: { ...issue.customFields } } as WorkflowRequiredFieldsCommand,
+      { projectUuid: issue.projectUuid, missingFieldCodes: missing },
+    );
+
+    const { saved } = await ref.closed;
+    return saved;
   }
 
   /**

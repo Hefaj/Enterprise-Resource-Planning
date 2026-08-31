@@ -6,12 +6,18 @@ namespace TaskManagement.Domain.Workflow;
 /// Jedno dozwolone przejście w schemacie. Przejście nieopisane tutaj <b>nie istnieje</b> —
 /// zgłoszenie odrzuca je błędem <c>taskmgmt.transition_not_allowed</c>.
 ///
-/// <para>Faza 0 niesie wyłącznie <see cref="RequiredPermission"/>; <c>required_fields</c>
-/// i <c>guard</c> (warunek w tym samym wąskim języku, co krawędzie gateway w DMS) dochodzą
-/// w fazie 1 — patrz <c>docs/backend/task-management.md</c> §5.2.</para>
+/// <para>Faza 0 niosła wyłącznie <see cref="RequiredPermission"/>; faza 4 dokłada
+/// <see cref="RequiredFields"/> (WF-004) — lista kodów pól, które muszą mieć niepustą wartość
+/// na zgłoszeniu, zanim przejście wykona się do końca. Front sprawdza to PRZED wysłaniem komendy
+/// (modal zbierający brakujące pola), a agregat sprawdza to samo jako backstop — patrz
+/// <see cref="Issues.Issue.SetState"/>. <c>guard</c> (warunek w tym samym wąskim języku,
+/// co krawędzie gateway w DMS) zostaje poza zakresem WF-004 — patrz
+/// <c>docs/backend/task-management.md</c> §5.2.</para>
 /// </summary>
 public sealed class WorkflowTransition : Entity
 {
+    private readonly List<string> _requiredFields = [];
+
     /// <summary>Konstruktor dla EF Core.</summary>
     private WorkflowTransition()
     {
@@ -22,13 +28,15 @@ public sealed class WorkflowTransition : Entity
         Guid fromStateUuid,
         Guid toStateUuid,
         string nameKey,
-        string? requiredPermission)
+        string? requiredPermission,
+        IEnumerable<string> requiredFields)
         : base(uuid)
     {
         FromStateUuid = fromStateUuid;
         ToStateUuid = toStateUuid;
         NameKey = nameKey;
         RequiredPermission = requiredPermission;
+        _requiredFields.AddRange(requiredFields);
     }
 
     public Guid SchemeUuid { get; private set; }
@@ -43,11 +51,17 @@ public sealed class WorkflowTransition : Entity
     /// uprawnienie do edycji zgłoszenia.</summary>
     public string? RequiredPermission { get; private set; }
 
+    /// <summary>Kody pól niestandardowych (<see cref="FieldSchemes.FieldDefinition.Code"/>),
+    /// które muszą mieć niepustą wartość na zgłoszeniu, zanim to przejście wykona się do końca
+    /// (WF-004). Pusta lista — domyślna — znaczy „bez dodatkowego wymogu”.</summary>
+    public IReadOnlyList<string> RequiredFields => _requiredFields.AsReadOnly();
+
     internal static WorkflowTransition Create(
         Guid uuid,
         Guid fromStateUuid,
         Guid toStateUuid,
         string nameKey,
-        string? requiredPermission)
-        => new(uuid, fromStateUuid, toStateUuid, nameKey, requiredPermission);
+        string? requiredPermission,
+        IEnumerable<string>? requiredFields = null)
+        => new(uuid, fromStateUuid, toStateUuid, nameKey, requiredPermission, requiredFields ?? []);
 }

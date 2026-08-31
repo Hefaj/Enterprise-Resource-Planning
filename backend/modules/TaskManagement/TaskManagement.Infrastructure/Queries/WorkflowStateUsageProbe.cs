@@ -14,6 +14,14 @@ public sealed class WorkflowStateUsageProbe : IWorkflowStateUsageProbe
                   where project.WorkflowSchemeUuid == schemeUuid
                   select issue.StateUuid).Distinct().ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyCollection<Guid>> GetUsedStateUuidsInProjectAsync(Guid projectUuid, CancellationToken cancellationToken)
+        => await _db.Issues.AsNoTracking()
+            .Where(issue => issue.ProjectUuid == projectUuid)
+            .Select(issue => issue.StateUuid)
+            .Distinct()
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
     public async Task<IReadOnlyCollection<Guid>> GetIssueUuidsInStateAsync(Guid schemeUuid, Guid stateUuid, CancellationToken cancellationToken)
         => await (from issue in _db.Issues.AsNoTracking()
                   join project in _db.Projects.AsNoTracking() on issue.ProjectUuid equals project.Uuid

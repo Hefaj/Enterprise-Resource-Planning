@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   ErpButtonBuilder,
@@ -90,6 +91,8 @@ import { WORKFLOW_SCHEME_PUBLISH_MODAL_ID } from '@erp/task-management/util';
 export class WorkflowSchemeComponent {
   protected readonly WORKFLOW_KEYS = WORKFLOW_KEYS;
   private readonly _api = inject(TaskManagementClient);
+  private readonly _route = inject(ActivatedRoute);
+  private readonly _router = inject(Router);
   private readonly _modals = inject(ErpModalService);
   private readonly _destroyRef = inject(DestroyRef);
   protected readonly schemes = signal<readonly { uuid: string; name: string; isSystem: boolean }[]>([]);
@@ -143,9 +146,26 @@ export class WorkflowSchemeComponent {
       .setFn(() => this.publishAsync()),
   );
   protected readonly removedStates = (): WorkflowStateDefinitionDto[] => this.originalStates().filter((x) => !this.states().some((state) => state.uuid === x.uuid));
+  /**
+   * Schemat jest w adresie (`/task-management/workflow-scheme/:uuid`), a nie tylko w stanie
+   * komponentu: konfiguracja obiegu jest tym, co ludzie sobie podsyłają linkiem („zobacz, co
+   * zmieniłem w schemacie zgłoszeń serwisowych"). Bez uuid-a w adresie odbiorca dostawał ekran
+   * z pustym pickerem i musiał zgadywać, o który schemat chodzi
+   * (`docs/frontend/task-management-pages.md` §4.3).
+   */
   public ngOnInit(): void {
     void this._initAsync();
-    this.selectedScheme.valueChanges.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((uuid) => void this.loadAsync(uuid ?? ''));
+
+    this._route.paramMap.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
+      const uuid = params.get('uuid') ?? '';
+      if (uuid && uuid !== this.selectedUuid()) void this.loadAsync(uuid);
+    });
+
+    this.selectedScheme.valueChanges.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((uuid) => {
+      // Adres jest źródłem prawdy; wczytanie schematu robi obsługa parametru wyżej.
+      void this._router.navigate(['/task-management/workflow-scheme', ...(uuid ? [uuid] : [])], { replaceUrl: !uuid });
+      if (!uuid) void this.loadAsync('');
+    });
   }
   private async _initAsync(): Promise<void> {
     this.schemes.set(await firstValueFrom(this._api.getWorkflowSchemes()));
@@ -156,7 +176,8 @@ export class WorkflowSchemeComponent {
     const uuid = await firstValueFrom(this._api.workflowSchemeCreateCommand({ name }));
     this.newSchemeName.setValue('');
     await this._initAsync();
-    await this.loadAsync(uuid);
+    // Przez adres, nie wprost — nowy schemat ma być od razu linkowalny.
+    await this._router.navigate(['/task-management/workflow-scheme', uuid]);
   }
   protected async loadAsync(uuid: string): Promise<void> {
     this.selectedUuid.set(uuid);

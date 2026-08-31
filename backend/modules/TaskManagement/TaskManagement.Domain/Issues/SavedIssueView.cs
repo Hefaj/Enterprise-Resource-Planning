@@ -30,7 +30,7 @@ public sealed class SavedIssueView : AggregateRoot
     public static SavedIssueView Create(Guid ownerUuid, string name, string filterJson, string columnsJson, bool isDefault, DateTimeOffset now)
         => new(NewUuid(), ownerUuid, ValidateName(name), ValidateJson(filterJson), ValidateJson(columnsJson), isDefault, now);
 
-    public void Update(string name, string filterJson, string columnsJson, bool isDefault, DateTimeOffset now)
+    public void SetDefinition(string name, string filterJson, string columnsJson, bool isDefault, DateTimeOffset now)
     {
         Name = ValidateName(name);
         FilterJson = ValidateJson(filterJson);

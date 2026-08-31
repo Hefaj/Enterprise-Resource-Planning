@@ -28,6 +28,9 @@ import { ISSUE_KEYS } from '../../translation';
         [control]="name"
       />
       <erp-button [config]="saveButton" />
+      @if (selectedView.value) {
+        <erp-button [config]="updateButton" />
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,6 +54,19 @@ export class SavedIssueViewsComponent {
       .setLabel(ISSUE_KEYS.savedViews.save)
       .setAppearance('secondary')
       .setFn(() => this._saveAsync()),
+  );
+
+  /**
+   * Nadpisanie wybranego widoku bieżącymi filtrami.
+   *
+   * <p>Bez tego jedyną drogą do poprawienia zapisanego widoku było założenie drugiego o tej samej
+   * nazwie — komenda po stronie backendu istniała od fazy 7, ale nie miała wołającego.</p>
+   */
+  protected readonly updateButton = ErpButtonBuilder.create((b) =>
+    b
+      .setLabel(ISSUE_KEYS.savedViews.update)
+      .setAppearance('flat')
+      .setFn(() => this._updateAsync()),
   );
 
   public constructor() {
@@ -90,6 +106,25 @@ export class SavedIssueViewsComponent {
       }),
     );
     this.name.reset();
+    await this._loadAsync();
+  }
+
+  private async _updateAsync(): Promise<void> {
+    const uuid = this.selectedView.value;
+    const view = this.views().find((item) => item.uuid === uuid);
+    if (!uuid || !view) {
+      return;
+    }
+
+    await firstValueFrom(
+      this._api.savedIssueViewSetDefinitionCommand({
+        uuid,
+        name: this.name.value.trim() || view.name,
+        filterJson: JSON.stringify(this._store.filters()),
+        columnsJson: JSON.stringify({ sorts: this._store.sorts() }),
+        isDefault: view.isDefault,
+      }),
+    );
     await this._loadAsync();
   }
 

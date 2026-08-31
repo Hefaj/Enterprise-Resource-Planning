@@ -18,6 +18,16 @@ public sealed class Issue : AggregateRoot
 {
     private readonly List<string> _previousKeys = [];
 
+    /// <summary>
+    /// Obserwatorzy zgłoszenia — lista identyfikatorów, nie tabela podrzędna.
+    ///
+    /// <para>Ta sama decyzja i to samo uzasadnienie, co przy <see cref="PreviousKeys"/>:
+    /// obserwacja nie ma własnych atrybutów, nikt po niej nie sortuje, a jedyne pytanie brzmi
+    /// „czy zawiera mnie". Tabela podrzędna dołożyłaby joina do każdego zapytania listy
+    /// w zamian za nic.</para>
+    /// </summary>
+    private readonly List<Guid> _watchers = [];
+
     /// <summary>Wartości pól niestandardowych w postaci kanonicznej, kluczowane kodem pola —
     /// źródło prawdy. Sloty poniżej są ich <b>duplikatem</b> utrzymywanym wyłącznie po to,
     /// żeby dało się po nich sortować i filtrować w SQL (§6).</summary>
@@ -98,6 +108,11 @@ public sealed class Issue : AggregateRoot
     /// <summary>Klucze sprzed przeniesień do innych projektów. Wyszukiwanie idzie także po nich,
     /// inaczej „DEV-412” z maila przestaje cokolwiek znajdować dzień po przeniesieniu (§4).</summary>
     public IReadOnlyList<string> PreviousKeys => _previousKeys.AsReadOnly();
+
+    /// <summary>Kto śledzi to zgłoszenie. Zakres „Obserwowane" na liście czyta wyłącznie tę
+    /// listę — obserwacja <b>nie daje dostępu</b>, predykat widoczności obowiązuje bez zmian
+    /// (§10.1).</summary>
+    public IReadOnlyList<Guid> Watchers => _watchers.AsReadOnly();
 
     /// <summary>
     /// Wartości pól niestandardowych: kod pola → wartość kanoniczna
@@ -499,6 +514,34 @@ public sealed class Issue : AggregateRoot
         Key = newKey.Trim();
         StateUuid = targetScheme.InitialState().Uuid;
         Touch(now);
+    }
+
+    /// <summary>Dopisuje obserwatora. Idempotentne — drugie kliknięcie „obserwuj" nie tworzy
+    /// duplikatu i nie jest błędem.</summary>
+    public void AddWatcher(Guid userUuid, DateTimeOffset now)
+    {
+        if (userUuid == Guid.Empty)
+        {
+            throw new DomainException("taskmgmt.issue_watcher_empty", "Obserwator musi wskazywać użytkownika.");
+        }
+
+        if (_watchers.Contains(userUuid))
+        {
+            return;
+        }
+
+        _watchers.Add(userUuid);
+        Touch(now);
+    }
+
+    /// <summary>Usuwa obserwatora. Brak obserwacji nie jest błędem — „przestań obserwować"
+    /// na czymś, czego nie obserwuję, ma dać ten sam stan końcowy, nie wyjątek.</summary>
+    public void RemoveWatcher(Guid userUuid, DateTimeOffset now)
+    {
+        if (_watchers.Remove(userUuid))
+        {
+            Touch(now);
+        }
     }
 
     private void Touch(DateTimeOffset now) => UpdatedAt = now;

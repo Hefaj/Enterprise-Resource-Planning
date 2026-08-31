@@ -30,6 +30,15 @@ export const remoteRoutes: Route[] = [
       },
       {
         path: 'workflow-scheme',
+        pathMatch: 'full',
+        data: { breadcrumb: SHARED_KEYS.menu.taskManagement.workflowSchemes },
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.SchemeManage)],
+        loadComponent: () => import('@erp/task-management/feature').then((m) => m.WorkflowSchemeComponent),
+      },
+      {
+        // Konkretny schemat jest adresowalny: link do konfiguracji obiegu krąży między ludźmi,
+        // którzy się nią zajmują (`docs/frontend/task-management-pages.md` §4.3).
+        path: 'workflow-scheme/:uuid',
         data: { breadcrumb: SHARED_KEYS.menu.taskManagement.workflowSchemes },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.SchemeManage)],
         loadComponent: () => import('@erp/task-management/feature').then((m) => m.WorkflowSchemeComponent),

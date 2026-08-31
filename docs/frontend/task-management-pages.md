@@ -1,6 +1,6 @@
 # Task Management — podział na strony
 
-**Stan: ✅ fazy 0–6 wdrożone.** Istnieją trasy listy
+**Stan: ✅ fazy 0–7 wdrożone.** Istnieją trasy listy
 `/task-management/issue` (filtr, tabela serwerowa, akcje masowe), `/task-management/request`
 (zlecenia z projektów `Intake`) i karta `/task-management/issue/:key`
 (opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki, wątek komentarzy
@@ -53,8 +53,14 @@ buduje `computed<ErpTableConfig>` z profilu ([`smart-tables.md`](./smart-tables.
 Wiersz to zawsze `Issue` (w każdym zakresie) — w odróżnieniu od listy dokumentów DMS, gdzie klucz
 wiersza zmienia się z zakresem. Tutaj nie ma czynności, więc dedup nie ma czego zgubić.
 
+Wszystkie pięć zakresów jest wdrożonych. „Obserwowane" czyta `issue.watchers`, a „Mojego zespołu"
+znaczy **projekty, w których jestem członkiem** — zespołu jako osobnego bytu ten moduł nie ma
+i mieć nie będzie ([`task-management.md` §10.3](../backend/task-management.md#103-struktura-organizacyjna--czego-tu-nie-ma)).
+
 Zaznaczenie i akcje masowe idą przez pełny [`ErpSelectionScope`](./selection-scope.md) — zmiana
-stanu, przypisanie i dodanie do sprintu na kilkuset zgłoszeniach to zwykłe zadanie masowe.
+stanu, przypisanie, dodanie do sprintu i **przeniesienie do innego projektu** na kilkuset
+zgłoszeniach to zwykłe zadanie masowe. Przeniesienie idzie przez modal, bo jako jedyna operacja
+w tym module zmienia klucz czytelny zgłoszenia i granicę jego widoczności.
 
 ### 2.2 Tablica — `/task-management/board/:uuid` ✅
 **Strona, która świadomie łamie wzorzec `erp-grid-layout` + filtr + tabela** — zapisane tutaj,
@@ -82,6 +88,12 @@ Trzy rzeczy, których nie robi dziś żaden ekran w systemie:
 
 Przejście wymagające pól (`required_fields`) otwiera modal przed potwierdzeniem ruchu — karta
 wisi w stanie „w toku" do zamknięcia modala.
+
+**Konfiguracja tablicy** (`erp-board-config`) siedzi nad kolumnami, zwinięta, wyłącznie
+z uprawnieniem `board.manage`: wybór tablicy projektu, założenie nowej i układ kolumn (nazwa,
+zestaw stanów, kolejność). Kolumny nowej tablicy backend wyprowadza ze schematu stanów projektu —
+klient ich nie podaje. Układ zapisuje się w całości, bo „przenieś stan z kolumny do kolumny" to
+dwie operacje, między którymi tablica byłaby w stanie zabronionym przez agregat.
 
 **Czego faza 2 świadomie nie dowozi**: swimlane'ów (drugi wymiar grupowania nad tym samym
 mechanizmem kolejności — nie on jest pytaniem tej fazy) i modala pól wymaganych przy przejściu
@@ -131,9 +143,14 @@ czym zgłoszenie jest, do tego, co się z nim działo. Trzy rzeczy warte zapami�
   jako parametr drugiego `erpTranslate` (Transloco nie rozwiązuje kluczy zagnieżdżonych
   w parametrach — złożenie tego w TS wypisałoby użytkownikowi surowy klucz).
 
-> **Uuid zamiast nazwiska.** Autor komentarza, aktor zmiany i przypisany pokazują się dziś jako
-> uuid — front nie ma katalogu użytkowników w żadnym module. To jedna pozycja do zrobienia,
-> nie trzy: rozwiązuje ją wspólny słownik z Identity, nie lokalne obejście na karcie.
+**Obserwowanie** ma własny przycisk w nagłówku karty: to decyzja o sobie, nie atrybut zgłoszenia.
+Obserwowanie **niczego nie odblokowuje** — zasila zakres „Obserwowane" na liście i krąg odbiorców
+powiadomień, a dostęp nadal liczy się po projekcie.
+
+**Wzmianki** wstawia picker osoby obok pola komentarza (a nie podpowiadanie po wpisaniu „@"):
+autouzupełnianie w środku edytora wymaga własnego rozszerzenia ProseMirror, a ten sam skutek —
+komentarz z `data-mention-uuid`, po którym backend wylicza odbiorców — daje picker korzystający
+z tego samego katalogu użytkowników.
 
 > **Obrazki w opisie i komentarzach.** `TuiEditorTool.Img` wgrywa obraz bezpośrednio do
 > załączników zgłoszenia, także po wklejeniu screenshota ze schowka. Edytor dostaje `blob:`-URL,
@@ -177,14 +194,27 @@ realizujące z ich stanami. Zamawiający widzi **nagłówki**, nie treść cudzy
 Lista projektów: kod, typ (`Delivery`/`Intake`), lead, liczba otwartych zgłoszeń, schemat pól,
 schemat stanów.
 
-### 4.2 Karta projektu — `/task-management/project/:uuid` 🟡 (pola + SLA)
-Master-detail z zakładkami: **pola** (definicje + **mapowanie na sloty**), **stany** (wybór
-schematu), **tablice**, **członkowie** (`project_member` z rolą), **SLA**.
+### 4.2 Karta projektu — `/task-management/project/:uuid` ✅
+Cztery sekcje: **pola** (definicje + **mapowanie na sloty**), **automat stanów** (wybór schematu
+razem z mapowaniem stanów), **członkowie** (`project_member` z rolą) i **SLA**.
+
+**Sekcje, nie zakładki** — każda mieści się w kilkunastu wierszach, a przełącznik nad czterema
+krótkimi listami kosztuje kliknięcie i nic nie oszczędza. Zakładki wchodzą, kiedy któraś sekcja
+urośnie do własnego ekranu.
+
+**Tablic tutaj nie ma i to jest decyzja**: układ kolumn ocenia się patrząc na tablicę, więc jej
+konfiguracja siedzi na samej tablicy ([§2.2](#22-tablica--task-managementboarduuid-)), za
+uprawnieniem `board.manage`.
+
+Zmiana schematu stanów zbiera **mapowanie stanów zajętych przez zgłoszenia projektu**, których
+nowy schemat nie zna (`getProjectStateUsage` mówi, których), po czym przestawia projekt i dopiero
+wtedy zleca migrację zgłoszeń zadaniem masowym. Kolejność jest odwrotna, niż podpowiada intuicja,
+bo zadanie migracyjne wybiera cele po `projekt → schemat` — dopóki projekt wskazuje stary schemat,
+filtr po nowym nie zwraca niczego.
 
 Sekcja SLA pozwala ustawić czas reakcji i realizacji w minutach albo odpiąć politykę. Termin
 realizacji nowych zgłoszeń pomija weekendy, a skaner eskalacji korzysta z częściowego indeksu
-otwartych zgłoszeń. Pozostałe zakładki wchodzą razem z fazami, które je wypełniają — pusta
-zakładka to ta sama zaślepka, którą usunęliśmy z menu w fazie 0.
+otwartych zgłoszeń.
 
 **Znany chropowaty brzeg**: pole zakładane z UI podaje `nameKey`, czyli klucz tłumaczenia.
 Klucz, którego nikt nie dopisał do `translation/*.json`, wyświetla się użytkownikowi dosłownie.
@@ -195,7 +225,7 @@ Tu żyje ostrzeżenie „slot już użyty, mapowania nie zmienisz"
 ([`task-management.md` §6](../backend/task-management.md#6-pola-niestandardowe)) — identyczne co do
 treści z ostrzeżeniem przy typach dokumentów w DMS.
 
-### 4.3 Schematy stanów — `/task-management/workflow-scheme/:uuid`
+### 4.3 Schematy stanów — `/task-management/workflow-scheme/:uuid` ✅
 Edytor stanów i przejść. **Nie canvas grafu** — automat jest sekwencyjny, więc dwie listy
 (stany, przejścia) plus macierz „z → do" są czytelniejsze i tańsze niż rysowanie
 ([`task-management.md` §5.4](../backend/task-management.md#54-dlaczego-nie-silnik-z-dms-u)).
@@ -204,6 +234,11 @@ To świadoma różnica względem edytora obiegu w DMS, nie niedoróbka.
 Publikacja zmiany otwiera **modal mapowania stanów** dla zgłoszeń siedzących w usuwanych stanach;
 zatwierdzenie uruchamia zadanie masowe z postępem
 ([`task-management.md` §5.3](../backend/task-management.md#53-zmiana-schematu-a-istniejące-zgłoszenia)).
+
+Schemat jest **w adresie**, nie tylko w stanie komponentu: link do konfiguracji obiegu krąży
+między ludźmi, którzy się nią zajmują, a bez uuid-a odbiorca dostawał ekran z pustym pickerem
+i musiał zgadywać, o który schemat chodzi. Wejście bez uuid-a (`/workflow-scheme`) pokazuje sam
+wybór schematu.
 
 ---
 
@@ -296,7 +331,7 @@ Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejnoś�
 | 4 ✅ | Tryb drzewa na liście, pasek powiązań na karcie |
 | 5 ✅ | Lista zleceń i stan realizacji, odbiór oraz Karta projektu — SLA |
 | 6 ✅ | Backlog i planowanie sprintu, akcje masowe |
-| 7 ✅ | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki |
+| 7 ✅ | Schematy stanów (edytor + mapowanie przy publikacji, trasa po uuid), zapisane widoki razem z nadpisaniem, przypisanie schematu i członkowie na karcie projektu, konfiguracja tablicy, obserwowanie zgłoszeń, przeniesienie do innego projektu |
 
 Fazy 0–2 to **trzy strony, nie dziesięć** — i to faza 2 odpowiada na pytanie, po co ten moduł
 w ogóle powstał.

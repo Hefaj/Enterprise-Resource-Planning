@@ -96,4 +96,15 @@ public class RichTextSanitizerTests
         // się zmienił" (historia zmian, faza 1) kłamie przy pustym akapicie z edytora.
         _sanitizer.Sanitize(html).ShouldBeNull();
     }
+    [Fact]
+    public void Wzmianka_przechodzi_przez_sanitizer()
+    {
+        // Bez tego atrybutu po zapisie zostałby sam tekst „@Jan Kowalski", a odbiorcy
+        // powiadomienia nie dałoby się już odtworzyć z treści komentarza (§11).
+        var html = """<p><span data-mention-uuid="0198f000-0000-7000-8000-000000000002">@Jan Kowalski</span></p>""";
+
+        var result = _sanitizer.Sanitize(html) ?? string.Empty;
+
+        result.ShouldContain("data-mention-uuid=\"0198f000-0000-7000-8000-000000000002\"");
+    }
 }

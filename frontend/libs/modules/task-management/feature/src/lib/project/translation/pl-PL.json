@@ -82,6 +82,38 @@
         "user": "Użytkownik",
         "select": "Lista wyboru"
       }
+    },
+    "workflow": {
+      "title": "Automat stanów",
+      "hint": "Zmiana schematu nie rusza stanów zgłoszeń. Stany, których nowy schemat nie zna, trzeba zmapować — po zapisie ruszy zadanie masowe, które przestawi zgłoszenia.",
+      "scheme": {
+        "label": "Schemat stanów",
+        "placeholder": "Wybierz schemat"
+      },
+      "current": "Obecny schemat",
+      "mapping": {
+        "title": "Mapowanie stanów",
+        "hint": "Te stany są zajęte przez zgłoszenia tego projektu i nie ma ich w wybranym schemacie.",
+        "target": "Stan docelowy",
+        "incomplete": "Uzupełnij stan docelowy dla każdego wypisanego stanu."
+      },
+      "noChange": "Ten schemat jest już ustawiony.",
+      "save": "Zmień schemat",
+      "migrating": "Zlecam migrację zgłoszeń…"
+    },
+    "members": {
+      "title": "Członkowie",
+      "hint": "Członkostwo decyduje o widoczności projektu, nie o uprawnieniach — te nadaje Identity.",
+      "user": "Osoba",
+      "role": "Rola",
+      "add": "Dodaj członka",
+      "remove": "Odbierz",
+      "empty": "Projekt nie ma jeszcze członków. Publiczny widzą wszyscy, niepubliczny — tylko wymienieni tutaj.",
+      "roles": {
+        "viewer": "Podgląd",
+        "contributor": "Praca",
+        "lead": "Kierownik"
+      }
     }
   }
 }

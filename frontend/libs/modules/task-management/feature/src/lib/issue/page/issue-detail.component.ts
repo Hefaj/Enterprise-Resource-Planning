@@ -88,6 +88,7 @@ import { IssueRichTextImagesService } from './content/issue-rich-text-images.ser
               {{ ISSUE_KEYS.detail.sidebar.restricted | erpTranslate }}
             </span>
           }
+          <erp-button [config]="watchButton()" />
         </div>
 
         <div class="grid min-h-0 flex-1 grid-cols-[1fr_320px] gap-6 overflow-hidden">
@@ -238,6 +239,7 @@ export class IssueDetailComponent {
   protected readonly ISSUE_KEYS = ISSUE_KEYS;
 
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
+  private readonly _watching = signal(false);
   private readonly _workflow = inject(ProjectWorkflowService);
   private readonly _richTextImages = inject(IssueRichTextImagesService);
   private readonly _permissionStore = inject(PermissionStore);
@@ -388,6 +390,27 @@ export class IssueDetailComponent {
     fn: (): void => this.editingDescription.set(false),
   };
 
+  /**
+   * Przycisk obserwowania.
+   *
+   * <p>W nagłówku karty, nie w panelu bocznym: to decyzja o <b>sobie</b>, nie atrybut zgłoszenia,
+   * i stoi obok reszty rzeczy, które użytkownik robi ze zgłoszeniem jako całością. Obserwowanie
+   * niczego nie odblokowuje — zakres „Obserwowane" na liście czyta dokładnie tę listę, a dostęp
+   * nadal liczy się po projekcie (`docs/backend/task-management.md` §10.1).</p>
+   */
+  protected readonly watchButton = computed<ErpButtonConfig>(() => {
+    const watched = this.issue()?.isWatchedByMe === true;
+
+    return {
+      label: watched ? ISSUE_KEYS.watch.stop : ISSUE_KEYS.watch.start,
+      appearance: 'flat',
+      size: 's',
+      iconStart: watched ? '@tui.eye-off' : '@tui.eye',
+      loading: this._watching,
+      fn: (): void => void this._toggleWatchAsync(watched),
+    } satisfies ErpButtonConfig;
+  });
+
   protected readonly backButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.backToList,
     appearance: 'flat',
@@ -428,6 +451,22 @@ export class IssueDetailComponent {
       this._uuid.set(null);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private async _toggleWatchAsync(watched: boolean): Promise<void> {
+    const issue = this.issue();
+    if (!issue) {
+      return;
+    }
+
+    this._watching.set(true);
+    try {
+      await (watched ? this._orchestrator.removeWatcherAsync({ uuid: issue.uuid }) : this._orchestrator.addWatcherAsync({ uuid: issue.uuid }));
+    } catch (error) {
+      console.error('[IssueDetailComponent] Nie udało się zmienić obserwowania zgłoszenia.', error);
+    } finally {
+      this._watching.set(false);
     }
   }
 

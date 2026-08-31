@@ -152,6 +152,8 @@ public sealed class IssueQueries : IIssueQueries
         {
             IssueScope.AssignedToMe => query.Where(i => i.AssigneeUuid == me),
             IssueScope.ReportedByMe => query.Where(i => i.ReporterUuid == me),
+            IssueScope.Watched => query.Where(i => EF.Property<List<Guid>>(i, "_watchers").Contains(me)),
+            IssueScope.MyProjects => query.Where(i => _dbContext.ProjectMembers.Any(m => m.ProjectUuid == i.ProjectUuid && m.UserUuid == me)),
             _ => query,
         };
 
@@ -223,7 +225,8 @@ public sealed class IssueQueries : IIssueQueries
                issue.IsRestricted,
                issue.CreatedAt,
                issue.UpdatedAt,
-               EF.Property<Dictionary<string, string>>(issue, "_customFields"));
+               EF.Property<Dictionary<string, string>>(issue, "_customFields"),
+               EF.Property<List<Guid>>(issue, "_watchers").Contains(IssueVisibility.CurrentUser(_executionContext)));
 
     /// <summary>
     /// Mapa „kod pola → slot" dla kontekstu żądania. Pusta bez wybranego projektu: dwa schematy

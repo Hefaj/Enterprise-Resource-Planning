@@ -7,8 +7,11 @@ import { TASK_MANAGEMENT_JOB_COMMAND_KEYS } from '@erp/task-management/util';
 import {
   GetProjectRequest,
   ProjectDto,
+  ProjectAddMemberCommand,
+  ProjectRemoveMemberCommand,
   ProjectSetFieldSchemeCommand,
   ProjectSetSlaPolicyCommand,
+  ProjectSetWorkflowSchemeCommand,
   SearchProjectRequest,
   SearchResponse,
   TaskManagementClient,
@@ -64,6 +67,38 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
   public setFieldSchemeAsync(command: ProjectSetFieldSchemeCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetFieldSchemeMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectFieldScheme,
+      queueId,
+    });
+  }
+
+  /**
+   * Przestawia projekt na inny automat stanów.
+   *
+   * <p><b>Migracji zgłoszeń ta metoda nie robi</b> — zgodnie z tym samym układem, co publikacja
+   * schematu (`docs/backend/task-management.md` §5.3): komenda sprawdza kompletność mapowania
+   * i przestawia projekt, a doprowadzenie zgłoszeń do stanów nowego schematu idzie osobnym
+   * zadaniem masowym, zleconym po jej powodzeniu.</p>
+   */
+  public setWorkflowSchemeAsync(command: ProjectSetWorkflowSchemeCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetWorkflowSchemeMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectWorkflowScheme,
+      queueId,
+    });
+  }
+
+  /** Dodaje członka projektu albo zmienia jego rolę — komenda jest idempotentna po użytkowniku. */
+  public addMemberAsync(command: ProjectAddMemberCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectAddMemberMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addProjectMember,
+      queueId,
+    });
+  }
+
+  /** Odbiera członkostwo. Nie rusza zgłoszeń przypisanych tej osobie — członkostwo jest
+   * atrybutem widoczności, nie właścicielstwem pracy. */
+  public removeMemberAsync(command: ProjectRemoveMemberCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectRemoveMemberMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeProjectMember,
       queueId,
     });
   }

@@ -8,11 +8,11 @@ import {
   GetSprintRequest,
   SearchResponse,
   SearchSprintRequest,
-  SprintCloseCommand,
+  SprintExecCloseCommand,
   SprintCreateCommand,
   SprintDto,
   SprintSetIssueSprintCommand,
-  SprintStartCommand,
+  SprintExecStartCommand,
   TaskManagementClient,
 } from '../../api-client';
 
@@ -42,10 +42,10 @@ export class TaskManagementSprintOrchestrator extends BaseOrchestrator<SprintDto
   public createAsync(command: SprintCreateCommand): Promise<string> {
     return this.runSingleCommandAsync((payload) => this._api.sprintCreateMultipleCommand(payload), command, { commandName: 'shared.jobs.commands.taskmgmtSprintCreate' });
   }
-  public startAsync(command: SprintStartCommand): Promise<string> {
-    return this.runSingleCommandAsync((payload) => this._api.sprintStartMultipleCommand(payload), command, { commandName: 'shared.jobs.commands.taskmgmtSprintStart' });
+  public startAsync(command: SprintExecStartCommand): Promise<string> {
+    return this.runSingleCommandAsync((payload) => this._api.sprintExecStartMultipleCommand(payload), command, { commandName: 'shared.jobs.commands.taskmgmtSprintStart' });
   }
-  public closeAsync(command: SprintCloseCommand): Promise<string> {
-    return this.runSingleCommandAsync((payload) => this._api.sprintCloseMultipleCommand(payload), command, { commandName: 'shared.jobs.commands.taskmgmtSprintClose' });
+  public closeAsync(command: SprintExecCloseCommand): Promise<string> {
+    return this.runSingleCommandAsync((payload) => this._api.sprintExecCloseMultipleCommand(payload), command, { commandName: 'shared.jobs.commands.taskmgmtSprintClose' });
   }
 }

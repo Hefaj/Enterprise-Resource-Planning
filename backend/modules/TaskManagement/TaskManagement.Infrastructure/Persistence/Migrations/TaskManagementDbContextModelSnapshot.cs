@@ -595,6 +595,11 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("previous_keys");
 
+                    b.PrimitiveCollection<List<Guid>>("_watchers")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("watchers");
+
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -620,6 +625,11 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ReporterUuid")
                         .HasDatabaseName("ix_issue_reporter_uuid");
+
+                    b.HasIndex("_watchers")
+                        .HasDatabaseName("ix_issue_watchers");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("_watchers"), "gin");
 
                     b.HasIndex("ProjectUuid", "Date1")
                         .HasDatabaseName("ix_issue_project_uuid_date_1");

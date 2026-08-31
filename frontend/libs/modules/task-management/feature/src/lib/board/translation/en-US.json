@@ -12,9 +12,38 @@
   "card": {
     "unassigned": "Unassigned"
   },
-  "backlog": { "title": "Backlog and sprint", "backlog": "Backlog", "noActive": "No active sprint", "name": "Sprint name", "start": "Start", "end": "End", "create": "Create sprint", "startSprint": "Start", "closeSprint": "Close to backlog", "closeToSprint": "Close to sprint {{name}}" },
+  "backlog": {
+    "title": "Backlog and sprint",
+    "backlog": "Backlog",
+    "noActive": "No active sprint",
+    "name": "Sprint name",
+    "start": "Start",
+    "end": "End",
+    "create": "Create sprint",
+    "startSprint": "Start",
+    "closeSprint": "Close to backlog",
+    "closeToSprint": "Close to sprint {{name}}"
+  },
   "move": {
     "failed": "The card could not be moved — showing the board as it is now.",
     "blocked": "That transition does not exist in the project's workflow scheme."
+  },
+  "config": {
+    "title": "Board configuration",
+    "boards": "Board",
+    "name": "Board name",
+    "rename": "Rename",
+    "create": "New board",
+    "createName": "New board name",
+    "columns": "Columns",
+    "columnName": "Column name",
+    "states": "States in column",
+    "statesHint": "One column can collect several states. A state not assigned to any column disappears from the board — an issue in it has nowhere to stand.",
+    "addColumn": "Add column",
+    "removeColumn": "Remove",
+    "moveUp": "Left",
+    "moveDown": "Right",
+    "saveColumns": "Save layout",
+    "toggle": "Configuration"
   }
 }

@@ -1,3 +1,5 @@
+using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Contracts;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Issues;
 using TaskManagement.Domain.Issues;
@@ -11,8 +13,10 @@ namespace TaskManagement.Infrastructure.Queries;
 public sealed class RequestDeliveryStateRecalculator : IRequestDeliveryStateRecalculator
 {
     private readonly TaskManagementDbContext _dbContext;
+    private readonly IIntegrationEventPublisher _publisher;
 
-    public RequestDeliveryStateRecalculator(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+    public RequestDeliveryStateRecalculator(TaskManagementDbContext dbContext, IIntegrationEventPublisher publisher)
+        => (_dbContext, _publisher) = (dbContext, publisher);
 
     public async Task RecalculateForDeliveryAsync(
         Guid deliveryIssueUuid,
@@ -115,6 +119,54 @@ public sealed class RequestDeliveryStateRecalculator : IRequestDeliveryStateReca
             _ => WorkflowStateCategory.Todo,
         };
 
+        var previous = request.DerivedDeliveryState;
         request.SetDerivedDeliveryState(next, now);
+
+        // Moment, na który czeka zamawiający: ostatnia realizacja właśnie wpadła w `Done`.
+        // Powiadomienie idzie STĄD, a nie z komendy zmiany stanu realizacji, bo dopiero tutaj
+        // wiadomo, że domknęła się CAŁA lista realizacji, a nie jedna z nich
+        // (`docs/backend/task-management.md` §9.2).
+        if (previous != WorkflowStateCategory.Done && next == WorkflowStateCategory.Done)
+        {
+            await NotifyRequestDeliveredAsync(request, now, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// „Zlecenie zrealizowane" do zamawiającego. Odbiorcami są zgłaszający, przypisany
+    /// i obserwujący zlecenie — czyli ci, którzy o nie pytają; wykonawcy wiedzą bez powiadomienia,
+    /// bo to oni właśnie skończyli.
+    /// </summary>
+    private async Task NotifyRequestDeliveredAsync(Issue request, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var recipients = new List<Guid> { request.ReporterUuid };
+
+        if (request.AssigneeUuid is { } assignee)
+        {
+            recipients.Add(assignee);
+        }
+
+        recipients.AddRange(request.Watchers);
+        recipients = [.. recipients.Where(uuid => uuid != Guid.Empty).Distinct()];
+
+        if (recipients.Count == 0)
+        {
+            return;
+        }
+
+        await _publisher.PublishAsync(new UserNotificationRequested(
+            recipients,
+            ActorId: null,
+            Kind: "taskmgmt.issue.request-delivered",
+            SubjectSignature: AggregateSignatures.TaskManagementIssue,
+            SubjectUuid: request.Uuid,
+            SubjectKey: request.Key,
+            TitleKey: "shared.notifications.kinds.taskmgmt.issue.request-delivered",
+            Params: new Dictionary<string, string> { ["issueKey"] = request.Key },
+            GroupKey: $"taskmgmt.issue:{request.Uuid}:delivery",
+            Link: $"/task-management/issue/{request.Key}",
+            Severity: NotificationSeverity.Info,
+            CorrelationId: Guid.NewGuid(),
+            OccurredAt: now), cancellationToken).ConfigureAwait(false);
     }
 }

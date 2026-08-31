@@ -4,14 +4,32 @@
     {
       "name": "client-monolith",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "run", "client:serve"],
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "client:serve"
+      ],
       "port": 4200
     },
     {
       "name": "catalog-monolith",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "run", "catalog:serve"],
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "catalog:serve"
+      ],
       "port": 4201
+    },
+    {
+      "name": "task-management-monolith",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "task-management:serve"
+      ],
+      "port": 4205
     }
   ]
 }

@@ -43,17 +43,17 @@ public sealed class SprintCreateCommandHandler : CommandHandler<SprintCreateComm
     }
 }
 
-public sealed class SprintStartCommand : ICommand<Guid>, IAggregateCommand
+public sealed class SprintExecStartCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
 }
 
-public sealed class SprintStartCommandHandler : CommandHandler<SprintStartCommand, Guid>
+public sealed class SprintExecStartCommandHandler : CommandHandler<SprintExecStartCommand, Guid>
 {
     private readonly ISprintRepository _sprints;
-    public SprintStartCommandHandler(ISprintRepository sprints) => _sprints = sprints;
+    public SprintExecStartCommandHandler(ISprintRepository sprints) => _sprints = sprints;
 
-    public override async Task<Guid> ExecuteAsync(SprintStartCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(SprintExecStartCommand command, CancellationToken ct = default)
     {
         var sprint = await _sprints.FindAsync(command.Uuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Sprint), command.Uuid);
@@ -116,27 +116,27 @@ public sealed class SprintSetIssueSprintCommandHandler : CommandHandler<SprintSe
 public enum SprintCloseOpenIssuesDisposition { Backlog = 0, NextSprint = 1 }
 
 /// <summary>Zamyka sprint wyłącznie z jawną decyzją o niedokończonych zgłoszeniach.</summary>
-public sealed class SprintCloseCommand : ICommand<Guid>, IAggregateCommand
+public sealed class SprintExecCloseCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
     public SprintCloseOpenIssuesDisposition OpenIssuesDisposition { get; set; }
     public Guid? NextSprintUuid { get; set; }
 }
 
-public sealed class SprintCloseCommandHandler : CommandHandler<SprintCloseCommand, Guid>
+public sealed class SprintExecCloseCommandHandler : CommandHandler<SprintExecCloseCommand, Guid>
 {
     private readonly ISprintRepository _sprints;
     private readonly IBoardCardRepository _cards;
     private readonly IClock _clock;
 
-    public SprintCloseCommandHandler(ISprintRepository sprints, IBoardCardRepository cards, IClock clock)
+    public SprintExecCloseCommandHandler(ISprintRepository sprints, IBoardCardRepository cards, IClock clock)
     {
         _sprints = sprints;
         _cards = cards;
         _clock = clock;
     }
 
-    public override async Task<Guid> ExecuteAsync(SprintCloseCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(SprintExecCloseCommand command, CancellationToken ct = default)
     {
         var sprint = await _sprints.FindAsync(command.Uuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Sprint), command.Uuid);

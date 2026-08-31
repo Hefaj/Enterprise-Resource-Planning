@@ -10,20 +10,20 @@ public sealed class SprintCreateMultipleCommandEndpoint : CreateBatchEndpointBas
     public override void Configure() { Post("batch-create"); Group<SprintGroup>(); Permissions(P.TaskManagement.BoardManage); }
 }
 
-public sealed class SprintStartMultipleCommandEndpoint : BatchEndpointBase<SprintStartCommand, SearchSprintRequest>
+public sealed class SprintExecStartMultipleCommandEndpoint : BatchEndpointBase<SprintExecStartCommand, SearchSprintRequest>
 {
     private readonly ISprintQueries _queries;
-    public SprintStartMultipleCommandEndpoint(ISprintQueries queries) => _queries = queries;
-    public override void Configure() { Post("batch-start"); Group<SprintGroup>(); Permissions(P.TaskManagement.BoardManage); }
+    public SprintExecStartMultipleCommandEndpoint(ISprintQueries queries) => _queries = queries;
+    public override void Configure() { Post("batch-exec-start"); Group<SprintGroup>(); Permissions(P.TaskManagement.BoardManage); }
     protected override async Task<IEnumerable<Guid>> GetUuidsFromFilterAsync(SearchSprintRequest filter, CancellationToken ct)
         => await _queries.GetMatchingUuidsAsync(filter, ct).ConfigureAwait(false);
 }
 
-public sealed class SprintCloseMultipleCommandEndpoint : BatchEndpointBase<SprintCloseCommand, SearchSprintRequest>
+public sealed class SprintExecCloseMultipleCommandEndpoint : BatchEndpointBase<SprintExecCloseCommand, SearchSprintRequest>
 {
     private readonly ISprintQueries _queries;
-    public SprintCloseMultipleCommandEndpoint(ISprintQueries queries) => _queries = queries;
-    public override void Configure() { Post("batch-close"); Group<SprintGroup>(); Permissions(P.TaskManagement.BoardManage); }
+    public SprintExecCloseMultipleCommandEndpoint(ISprintQueries queries) => _queries = queries;
+    public override void Configure() { Post("batch-exec-close"); Group<SprintGroup>(); Permissions(P.TaskManagement.BoardManage); }
     protected override async Task<IEnumerable<Guid>> GetUuidsFromFilterAsync(SearchSprintRequest filter, CancellationToken ct)
         => await _queries.GetMatchingUuidsAsync(filter, ct).ConfigureAwait(false);
 }

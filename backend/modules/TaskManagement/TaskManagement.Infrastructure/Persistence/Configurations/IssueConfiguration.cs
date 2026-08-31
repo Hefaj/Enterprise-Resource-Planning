@@ -64,6 +64,18 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
 
         builder.Ignore(i => i.PreviousKeys);
 
+        // Obserwatorzy — z tego samego powodu co wyżej lista, nie tabela. Indeks GIN, bo jedyne
+        // zapytanie to „zawiera mnie” na całej tabeli zgłoszeń (zakres „Obserwowane”).
+        builder.Property<List<Guid>>("_watchers")
+            .HasColumnName("watchers")
+            .HasColumnType("uuid[]")
+            .UsePropertyAccessMode(PropertyAccessMode.Field)
+            .IsRequired();
+
+        builder.HasIndex("_watchers").HasMethod("gin").HasDatabaseName("ix_issue_watchers");
+
+        builder.Ignore(i => i.Watchers);
+
         // Wartości pól niestandardowych — źródło prawdy. `jsonb`, nie `json`: pytamy o klucz
         // (`jsonb_exists` w sondzie zajętości pola), a to wymaga postaci binarnej.
         // Konwerter jest tu ŚWIADOMIE, zamiast globalnego `EnableDynamicJson()` na źródle

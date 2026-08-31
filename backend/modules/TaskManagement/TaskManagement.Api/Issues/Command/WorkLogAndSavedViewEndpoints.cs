@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Api.Commands;
 using FastEndpoints;
-using TaskManagement.Application.Issues;
+using TaskManagement.Application.SavedIssueViews;
+using TaskManagement.Application.WorkLogs;
 using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace TaskManagement.Issues.Command;
@@ -28,11 +29,11 @@ public sealed class SavedIssueViewCreateCommandEndpoint : Endpoint<SavedIssueVie
         => await Send.OkAsync(await _dispatcher.SendAsync<SavedIssueViewCreateCommand, Guid>(req, ct), ct);
 }
 
-public sealed class SavedIssueViewUpdateCommandEndpoint : Endpoint<SavedIssueViewUpdateCommand, Guid>
+public sealed class SavedIssueViewSetDefinitionCommandEndpoint : Endpoint<SavedIssueViewSetDefinitionCommand, Guid>
 {
     private readonly ICommandDispatcher _dispatcher;
-    public SavedIssueViewUpdateCommandEndpoint(ICommandDispatcher dispatcher) => _dispatcher = dispatcher;
-    public override void Configure() { Post("saved-view-update"); Group<IssueGroup>(); Permissions(P.TaskManagement.IssueRead); }
-    public override async Task HandleAsync(SavedIssueViewUpdateCommand req, CancellationToken ct)
-        => await Send.OkAsync(await _dispatcher.SendAsync<SavedIssueViewUpdateCommand, Guid>(req, ct), ct);
+    public SavedIssueViewSetDefinitionCommandEndpoint(ICommandDispatcher dispatcher) => _dispatcher = dispatcher;
+    public override void Configure() { Post("saved-view-set-definition"); Group<IssueGroup>(); Permissions(P.TaskManagement.IssueRead); }
+    public override async Task HandleAsync(SavedIssueViewSetDefinitionCommand req, CancellationToken ct)
+        => await Send.OkAsync(await _dispatcher.SendAsync<SavedIssueViewSetDefinitionCommand, Guid>(req, ct), ct);
 }

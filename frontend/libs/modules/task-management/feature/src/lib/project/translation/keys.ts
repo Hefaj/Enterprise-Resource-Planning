@@ -88,5 +88,37 @@ export const PROJECT_KEYS = {
           select: 'project.detail.fields.types.select',
         },
       },
+      workflow: {
+        title: 'project.detail.workflow.title',
+        hint: 'project.detail.workflow.hint',
+        scheme: {
+          label: 'project.detail.workflow.scheme.label',
+          placeholder: 'project.detail.workflow.scheme.placeholder',
+        },
+        current: 'project.detail.workflow.current',
+        mapping: {
+          title: 'project.detail.workflow.mapping.title',
+          hint: 'project.detail.workflow.mapping.hint',
+          target: 'project.detail.workflow.mapping.target',
+          incomplete: 'project.detail.workflow.mapping.incomplete',
+        },
+        noChange: 'project.detail.workflow.noChange',
+        save: 'project.detail.workflow.save',
+        migrating: 'project.detail.workflow.migrating',
+      },
+      members: {
+        title: 'project.detail.members.title',
+        hint: 'project.detail.members.hint',
+        user: 'project.detail.members.user',
+        role: 'project.detail.members.role',
+        add: 'project.detail.members.add',
+        remove: 'project.detail.members.remove',
+        empty: 'project.detail.members.empty',
+        roles: {
+          viewer: 'project.detail.members.roles.viewer',
+          contributor: 'project.detail.members.roles.contributor',
+          lead: 'project.detail.members.roles.lead',
+        },
+      },
     },
   } as const;

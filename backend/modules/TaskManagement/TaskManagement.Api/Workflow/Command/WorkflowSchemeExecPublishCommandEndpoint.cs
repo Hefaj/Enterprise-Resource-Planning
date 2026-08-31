@@ -6,16 +6,16 @@ using P = Erp.BuildingBlocks.Contracts.Permissions;
 namespace TaskManagement.Workflow.Command;
 
 /// <summary>Publikuje pełną definicję schematu po walidacji mapowania usuwanych stanów.</summary>
-public sealed class WorkflowSchemePublishCommandEndpoint : Endpoint<WorkflowSchemePublishCommand, Guid>
+public sealed class WorkflowSchemeExecPublishCommandEndpoint : Endpoint<WorkflowSchemeExecPublishCommand, Guid>
 {
     private readonly ICommandDispatcher _dispatcher;
-    public WorkflowSchemePublishCommandEndpoint(ICommandDispatcher dispatcher) => _dispatcher = dispatcher;
+    public WorkflowSchemeExecPublishCommandEndpoint(ICommandDispatcher dispatcher) => _dispatcher = dispatcher;
     public override void Configure()
     {
-        Post("publish");
+        Post("exec-publish");
         Group<WorkflowGroup>();
         Permissions(P.TaskManagement.SchemeManage);
     }
-    public override async Task HandleAsync(WorkflowSchemePublishCommand req, CancellationToken ct)
-        => await Send.OkAsync(await _dispatcher.SendAsync<WorkflowSchemePublishCommand, Guid>(req, ct), ct);
+    public override async Task HandleAsync(WorkflowSchemeExecPublishCommand req, CancellationToken ct)
+        => await Send.OkAsync(await _dispatcher.SendAsync<WorkflowSchemeExecPublishCommand, Guid>(req, ct), ct);
 }

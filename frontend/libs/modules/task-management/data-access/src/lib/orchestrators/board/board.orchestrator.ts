@@ -14,7 +14,11 @@ import { TASK_MANAGEMENT_JOB_COMMAND_KEYS } from '@erp/task-management/util';
 import {
   BoardCardDto,
   BoardDto,
+  BoardColumnInput,
+  BoardCreateCommand,
   BoardSetCardPositionCommand,
+  BoardSetColumnsCommand,
+  BoardSetNameCommand,
   GetBoardCardsRequest,
   GetBoardRequest,
   SearchBoardRequest,
@@ -168,6 +172,41 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
     // `{}` zamiast pominięcia opcji: `loadAsync` woła `resolveEagerDependencies` WYŁĄCZNIE,
     // gdy dostanie obiekt opcji — bez niego karty pokazałyby uuid zamiast nazwiska.
     await this.loadAsync(uuids, {});
+  }
+
+  /**
+   * Zakłada tablicę projektu. Kolumny <b>nie przychodzą z żądania</b> — backend wyprowadza je
+   * z bieżącego schematu stanów projektu, po jednej na stan
+   * (`docs/backend/task-management.md` §7.1). Kształt kolumn zmienia się dopiero
+   * <see cref="setColumnsAsync"/>.
+   */
+  public createBoardAsync(command: BoardCreateCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.boardCreateMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.createBoard,
+      queueId,
+    });
+  }
+
+  /** Nadpisuje nazwę tablicy. */
+  public setBoardNameAsync(command: BoardSetNameCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.boardSetNameMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setBoardName,
+      queueId,
+    });
+  }
+
+  /**
+   * Nadpisuje <b>całą</b> kolekcję kolumn.
+   *
+   * <p>Nie ma komendy „przenieś stan między kolumnami": między dwiema takimi operacjami tablica
+   * byłaby w stanie, którego agregat zabrania (ten sam stan w dwóch kolumnach naraz), więc
+   * układ idzie w całości.</p>
+   */
+  public setColumnsAsync(command: BoardSetColumnsCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.boardSetColumnsMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setBoardColumns,
+      queueId,
+    });
   }
 
   /**

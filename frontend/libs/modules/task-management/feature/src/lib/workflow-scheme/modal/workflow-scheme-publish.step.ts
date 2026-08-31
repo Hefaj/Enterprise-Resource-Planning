@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ErpInputPickerBuilder, ErpInputPickerComponent, ErpModalStepBase } from '@erp/shared/ui';
-import { WorkflowSchemePublishCommand } from '@erp/task-management/data-access';
+import { WorkflowSchemeExecPublishCommand } from '@erp/task-management/data-access';
 import { WORKFLOW_KEYS } from '../translation';
 import { WorkflowSchemePublishMetadata } from './workflow-scheme-publish.definition';
 
@@ -19,7 +19,7 @@ import { WorkflowSchemePublishMetadata } from './workflow-scheme-publish.definit
   </div>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WorkflowSchemePublishStepComponent extends ErpModalStepBase<WorkflowSchemePublishCommand, WorkflowSchemePublishMetadata> {
+export class WorkflowSchemePublishStepComponent extends ErpModalStepBase<WorkflowSchemeExecPublishCommand, WorkflowSchemePublishMetadata> {
   private readonly _controls = new Map<string, FormControl<string | null>>();
   private readonly _valid = signal(false);
   protected readonly config = ErpInputPickerBuilder.create((b) =>

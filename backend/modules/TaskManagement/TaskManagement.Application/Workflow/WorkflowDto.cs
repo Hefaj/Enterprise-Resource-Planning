@@ -48,6 +48,17 @@ public sealed class GetProjectWorkflowRequest
     public Guid ProjectUuid { get; set; }
 }
 
+/// <summary>
+/// Stany faktycznie zajęte przez zgłoszenia projektu.
+///
+/// <para>Osobne zapytanie, a nie pole w <see cref="ProjectWorkflowDto"/>: tamten kontrakt czyta
+/// każda lista, karta i tablica, a ten <c>DISTINCT</c> po zgłoszeniach jest potrzebny wyłącznie
+/// na zakładce „stany” karty projektu, w momencie przestawiania schematu.</para>
+/// </summary>
+public sealed record ProjectStateUsageDto(Guid ProjectUuid, IReadOnlyList<Guid> UsedStateUuids);
+
+public sealed class GetProjectStateUsageRequest { public Guid ProjectUuid { get; set; } }
+
 public sealed class GetWorkflowSchemeRequest { public Guid SchemeUuid { get; set; } }
 
 /// <summary>Odczyty konfiguracji obiegu. Implementacja w <c>TaskManagement.Infrastructure</c>.</summary>

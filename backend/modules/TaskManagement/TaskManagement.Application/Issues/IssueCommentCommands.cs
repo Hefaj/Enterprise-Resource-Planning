@@ -1,6 +1,7 @@
 using System.Globalization;
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
@@ -38,6 +39,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
     private readonly IIssueRepository _issues;
     private readonly IIssueActivityWriter _activity;
     private readonly IRichTextSanitizer _sanitizer;
+    private readonly IIntegrationEventPublisher _publisher;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
@@ -46,6 +48,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         IIssueRepository issues,
         IIssueActivityWriter activity,
         IRichTextSanitizer sanitizer,
+        IIntegrationEventPublisher publisher,
         IExecutionContext executionContext,
         IClock clock)
     {
@@ -53,6 +56,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         _issues = issues;
         _activity = activity;
         _sanitizer = sanitizer;
+        _publisher = publisher;
         _executionContext = executionContext;
         _clock = clock;
     }
@@ -103,7 +107,65 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
             _executionContext.CorrelationId,
             now));
 
+        await NotifyAsync(issue, body, author, now, ct).ConfigureAwait(false);
+
         return comment.Uuid;
+    }
+
+    /// <summary>
+    /// Prosi Notification o powiadomienie ludzi, których ten komentarz dotyczy.
+    ///
+    /// <para><b>Odbiorców ustala ten moduł</b>, nie Notification — tamten nie wie, czym jest
+    /// zgłoszenie ani kto się nim zajmuje (<c>docs/backend/user-notifications.md</c>). Krąg jest
+    /// wąski i zamknięty: zgłaszający, przypisany, obserwujący i wprost wzmiankowani. Autor
+    /// wypada zawsze — nikt nie chce powiadomienia o własnej wypowiedzi.</para>
+    ///
+    /// <para>Zdarzenie idzie przez outbox, w tej samej transakcji co komentarz: albo obie rzeczy,
+    /// albo żadna. Powiadomienie o komentarzu, którego zapis się nie powiódł, jest gorsze niż
+    /// brak powiadomienia.</para>
+    /// </summary>
+    private async Task NotifyAsync(Issue issue, string body, Guid author, DateTimeOffset now, CancellationToken ct)
+    {
+        var recipients = new List<Guid> { issue.ReporterUuid };
+
+        if (issue.AssigneeUuid is { } assignee)
+        {
+            recipients.Add(assignee);
+        }
+
+        recipients.AddRange(issue.Watchers);
+
+        var mentioned = IssueMentions.Extract(body);
+        recipients.AddRange(mentioned);
+
+        recipients = [.. recipients.Where(uuid => uuid != Guid.Empty && uuid != author).Distinct()];
+
+        if (recipients.Count == 0)
+        {
+            return;
+        }
+
+        // Wzmianka jest dla odbiorcy czymś innym niż „ktoś dopisał komentarz do zgłoszenia,
+        // które obserwujesz" — stąd osobny rodzaj, po którym da się ustawić preferencje.
+        var isMention = mentioned.Any(uuid => uuid != author);
+        var kind = isMention ? "taskmgmt.issue.comment-mention" : "taskmgmt.issue.comment-added";
+
+        await _publisher.PublishAsync(new UserNotificationRequested(
+            recipients,
+            ActorId: author,
+            Kind: kind,
+            SubjectSignature: AggregateSignatures.TaskManagementIssue,
+            SubjectUuid: issue.Uuid,
+            SubjectKey: issue.Key,
+            TitleKey: $"shared.notifications.kinds.{kind}",
+            Params: new Dictionary<string, string> { ["issueKey"] = issue.Key },
+            // Grupowanie po wątku, nie po komentarzu: dziesięć wypowiedzi w jednym zgłoszeniu ma
+            // być jedną pozycją w dzwonku, a nie dziesięcioma.
+            GroupKey: $"taskmgmt.issue:{issue.Uuid}:comments",
+            Link: $"/task-management/issue/{issue.Key}",
+            Severity: NotificationSeverity.Info,
+            CorrelationId: _executionContext.CorrelationId,
+            OccurredAt: now), ct).ConfigureAwait(false);
     }
 }
 

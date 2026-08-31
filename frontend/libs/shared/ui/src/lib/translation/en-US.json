@@ -88,7 +88,10 @@
     "kinds": {
       "taskmgmt": {
         "issue": {
-          "sla-overdue": "Issue {{issueKey}} is overdue"
+          "sla-overdue": "Issue {{issueKey}} is overdue",
+          "comment-added": "New comment on issue {{issueKey}}",
+          "comment-mention": "You were mentioned on issue {{issueKey}}",
+          "request-delivered": "Request {{issueKey}} has been delivered"
         }
       }
     }
@@ -255,6 +258,9 @@
       "taskmgmtIssueRemoveComment": "Removing a comment",
       "taskmgmtIssueSetCustomFields": "Changing custom fields",
       "taskmgmtBoardSetCardPosition": "Moving a card on the board",
+      "taskmgmtBoardCreate": "Board creation",
+      "taskmgmtBoardSetName": "Board name change",
+      "taskmgmtBoardSetColumns": "Board column layout change",
       "taskmgmtSprintSetIssueSprint": "Move issue to sprint",
       "taskmgmtSprintCreate": "Create sprint",
       "taskmgmtSprintStart": "Start sprint",
@@ -264,8 +270,14 @@
       "taskmgmtFieldSchemeRemoveField": "Removing a field from a scheme",
       "taskmgmtProjectSetFieldScheme": "Changing a project's field scheme",
       "taskmgmtProjectSetSlaPolicy": "Changing a project's SLA policy",
+      "taskmgmtProjectSetWorkflowScheme": "Project workflow scheme change",
+      "taskmgmtProjectAddMember": "Adding project member",
+      "taskmgmtProjectRemoveMember": "Removing project member",
       "taskmgmtIssueSetParent": "Changing an issue's parent",
+      "taskmgmtIssueSetProject": "Moving issues to another project",
       "taskmgmtIssueAddLink": "Adding a link",
+      "taskmgmtIssueAddWatcher": "Start watching",
+      "taskmgmtIssueRemoveWatcher": "Stop watching",
       "taskmgmtIssueRemoveLink": "Removing a link"
     },
     "toast": {

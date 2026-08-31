@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@jsverse/transloco';
 
 import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig } from '@erp/shared/ui';
@@ -20,10 +21,19 @@ export class ProjectFilterComponent {
   private readonly _store = inject(ProjectStore);
   private readonly _transloco = inject(TranslocoService);
 
-  private readonly _kindOptions = computed(() => [
-    { value: PROJECT_KIND.Delivery, label: this._transloco.translate(PROJECT_KEYS.filters.kind.delivery) },
-    { value: PROJECT_KIND.Intake, label: this._transloco.translate(PROJECT_KEYS.filters.kind.intake) },
-  ]);
+  /** Ta sama pułapka co na liście zgłoszeń: `translate()` w `computed` bez reaktywnej zależności
+   * zapamiętuje surowy klucz, jeśli scope nie zdążył dojechać. Sygnał ze zdarzeń Transloco jest
+   * tą zależnością. */
+  private readonly _translationsReady = toSignal(this._transloco.events$, { initialValue: null });
+
+  private readonly _kindOptions = computed(() => {
+    this._translationsReady();
+
+    return [
+      { value: PROJECT_KIND.Delivery, label: this._transloco.translate(PROJECT_KEYS.filters.kind.delivery) },
+      { value: PROJECT_KIND.Intake, label: this._transloco.translate(PROJECT_KEYS.filters.kind.intake) },
+    ];
+  });
 
   private readonly _initialValues = computed(() => this._store.filters());
 

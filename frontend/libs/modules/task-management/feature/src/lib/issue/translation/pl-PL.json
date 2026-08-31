@@ -8,7 +8,9 @@
       "label": "Zakres",
       "available": "Wszystkie dostępne",
       "assignedToMe": "Moje",
-      "reportedByMe": "Zgłoszone przeze mnie"
+      "reportedByMe": "Zgłoszone przeze mnie",
+      "watched": "Obserwowane",
+      "myProjects": "Mojego zespołu"
     },
     "project": {
       "label": "Projekt",
@@ -91,13 +93,22 @@
     },
     "setSprint": {
       "label": "Dodaj do aktywnego sprintu"
+    },
+    "setProject": {
+      "label": "Przenieś do projektu",
+      "modalTitle": "Przeniesienie do innego projektu",
+      "projectLabel": "Projekt docelowy",
+      "editMessage": "Przeniesiesz",
+      "submitButton": "Przenieś",
+      "hint": "Zgłoszenie dostanie nowy klucz, a stary zostanie jako historyczny — dotychczasowe linki nadal będą działać. Stan wróci do początkowego stanu schematu projektu docelowego."
     }
   },
   "savedViews": {
     "label": "Zapisane widoki",
     "select": "Wybierz widok",
     "name": "Nazwa widoku",
-    "save": "Zapisz widok"
+    "save": "Zapisz widok",
+    "update": "Nadpisz wybrany"
   },
   "detail": {
     "notFound": {
@@ -157,7 +168,12 @@
       "removed": "Komentarz usunięty.",
       "edited": "edytowany",
       "failed": "Nie udało się zapisać komentarza.",
-      "removeTitle": "Usunięcie komentarza"
+      "removeTitle": "Usunięcie komentarza",
+      "mention": {
+        "label": "Wspomnij osobę",
+        "insert": "Wstaw wzmiankę",
+        "hint": "Wzmiankowana osoba dostanie powiadomienie o tym komentarzu."
+      }
     },
     "history": {
       "label": "Historia",
@@ -222,5 +238,10 @@
         "detach": "Odepnij rodzica"
       }
     }
+  },
+  "watch": {
+    "start": "Obserwuj",
+    "stop": "Przestań obserwować",
+    "hint": "Obserwowanie nie daje dostępu — służy zakresowi listy i powiadomieniom."
   }
 }

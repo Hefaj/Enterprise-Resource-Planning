@@ -82,6 +82,38 @@
         "user": "User",
         "select": "Select list"
       }
+    },
+    "workflow": {
+      "title": "Workflow scheme",
+      "hint": "Changing the scheme does not touch issue states. States the new scheme does not know must be mapped — a bulk job moves the issues after saving.",
+      "scheme": {
+        "label": "Workflow scheme",
+        "placeholder": "Pick a scheme"
+      },
+      "current": "Current scheme",
+      "mapping": {
+        "title": "State mapping",
+        "hint": "These states are occupied by this project's issues and are missing from the selected scheme.",
+        "target": "Target state",
+        "incomplete": "Pick a target state for every listed state."
+      },
+      "noChange": "This scheme is already selected.",
+      "save": "Change scheme",
+      "migrating": "Queueing issue migration…"
+    },
+    "members": {
+      "title": "Members",
+      "hint": "Membership drives project visibility, not permissions — those come from Identity.",
+      "user": "Person",
+      "role": "Role",
+      "add": "Add member",
+      "remove": "Revoke",
+      "empty": "No members yet. A public project is visible to everyone, a private one only to the people listed here.",
+      "roles": {
+        "viewer": "Viewer",
+        "contributor": "Contributor",
+        "lead": "Lead"
+      }
     }
   }
 }

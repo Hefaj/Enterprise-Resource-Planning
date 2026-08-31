@@ -14,6 +14,8 @@ export const ISSUE_KEYS = {
         available: 'issue.filters.scope.available',
         assignedToMe: 'issue.filters.scope.assignedToMe',
         reportedByMe: 'issue.filters.scope.reportedByMe',
+        watched: 'issue.filters.scope.watched',
+        myProjects: 'issue.filters.scope.myProjects',
       },
       project: {
         label: 'issue.filters.project.label',
@@ -97,12 +99,21 @@ export const ISSUE_KEYS = {
       setSprint: {
         label: 'issue.commands.setSprint.label',
       },
+      setProject: {
+        label: 'issue.commands.setProject.label',
+        modalTitle: 'issue.commands.setProject.modalTitle',
+        projectLabel: 'issue.commands.setProject.projectLabel',
+        editMessage: 'issue.commands.setProject.editMessage',
+        submitButton: 'issue.commands.setProject.submitButton',
+        hint: 'issue.commands.setProject.hint',
+      },
     },
     savedViews: {
       label: 'issue.savedViews.label',
       select: 'issue.savedViews.select',
       name: 'issue.savedViews.name',
       save: 'issue.savedViews.save',
+      update: 'issue.savedViews.update',
     },
     detail: {
       notFound: {
@@ -163,6 +174,11 @@ export const ISSUE_KEYS = {
         edited: 'issue.detail.comments.edited',
         failed: 'issue.detail.comments.failed',
         removeTitle: 'issue.detail.comments.removeTitle',
+        mention: {
+          label: 'issue.detail.comments.mention.label',
+          insert: 'issue.detail.comments.mention.insert',
+          hint: 'issue.detail.comments.mention.hint',
+        },
       },
       history: {
         label: 'issue.detail.history.label',
@@ -227,5 +243,10 @@ export const ISSUE_KEYS = {
           detach: 'issue.detail.links.setParent.detach',
         },
       },
+    },
+    watch: {
+      start: 'issue.watch.start',
+      stop: 'issue.watch.stop',
+      hint: 'issue.watch.hint',
     },
   } as const;

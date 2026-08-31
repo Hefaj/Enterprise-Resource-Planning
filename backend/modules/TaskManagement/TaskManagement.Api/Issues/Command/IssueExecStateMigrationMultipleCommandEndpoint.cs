@@ -6,13 +6,13 @@ using P = Erp.BuildingBlocks.Contracts.Permissions;
 
 namespace TaskManagement.Issues.Command;
 
-public sealed class IssueMigrateWorkflowStateMultipleCommandEndpoint : BatchEndpointBase<IssueMigrateWorkflowStateCommand, WorkflowStateMigrationFilter>
+public sealed class IssueExecStateMigrationMultipleCommandEndpoint : BatchEndpointBase<IssueExecStateMigrationCommand, WorkflowStateMigrationFilter>
 {
     private readonly IWorkflowStateUsageProbe _usage;
-    public IssueMigrateWorkflowStateMultipleCommandEndpoint(IWorkflowStateUsageProbe usage) => _usage = usage;
+    public IssueExecStateMigrationMultipleCommandEndpoint(IWorkflowStateUsageProbe usage) => _usage = usage;
     public override void Configure()
     {
-        Post("batch-migrate-workflow-state");
+        Post("batch-exec-state-migration");
         Group<IssueGroup>();
         Permissions(P.TaskManagement.SchemeManage);
     }

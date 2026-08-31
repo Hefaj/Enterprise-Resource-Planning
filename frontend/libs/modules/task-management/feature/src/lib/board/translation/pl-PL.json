@@ -12,9 +12,38 @@
   "card": {
     "unassigned": "Nieprzypisane"
   },
-  "backlog": { "title": "Backlog i sprint", "backlog": "Backlog", "noActive": "Brak aktywnego sprintu", "name": "Nazwa sprintu", "start": "Początek", "end": "Koniec", "create": "Utwórz sprint", "startSprint": "Rozpocznij", "closeSprint": "Zamknij do backlogu", "closeToSprint": "Zamknij do sprintu {{name}}" },
+  "backlog": {
+    "title": "Backlog i sprint",
+    "backlog": "Backlog",
+    "noActive": "Brak aktywnego sprintu",
+    "name": "Nazwa sprintu",
+    "start": "Początek",
+    "end": "Koniec",
+    "create": "Utwórz sprint",
+    "startSprint": "Rozpocznij",
+    "closeSprint": "Zamknij do backlogu",
+    "closeToSprint": "Zamknij do sprintu {{name}}"
+  },
   "move": {
     "failed": "Nie udało się przestawić karty — pokazuję aktualny stan tablicy.",
     "blocked": "Przejście do tej kolumny nie istnieje w schemacie projektu."
+  },
+  "config": {
+    "title": "Konfiguracja tablicy",
+    "boards": "Tablica",
+    "name": "Nazwa tablicy",
+    "rename": "Zmień nazwę",
+    "create": "Nowa tablica",
+    "createName": "Nazwa nowej tablicy",
+    "columns": "Kolumny",
+    "columnName": "Nazwa kolumny",
+    "states": "Stany w kolumnie",
+    "statesHint": "Jedna kolumna może zbierać kilka stanów. Stan nieprzypisany do żadnej kolumny znika z tablicy — zgłoszenie w nim nie ma gdzie stanąć.",
+    "addColumn": "Dodaj kolumnę",
+    "removeColumn": "Usuń",
+    "moveUp": "W lewo",
+    "moveDown": "W prawo",
+    "saveColumns": "Zapisz układ",
+    "toggle": "Konfiguracja"
   }
 }

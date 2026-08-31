@@ -91,6 +91,21 @@ public sealed class Project : AggregateRoot
     public void SetFieldScheme(Guid? fieldSchemeUuid)
         => FieldSchemeUuid = fieldSchemeUuid == Guid.Empty ? null : fieldSchemeUuid;
 
+    /// <summary>
+    /// Przestawia projekt na inny automat stanów.
+    ///
+    /// <para><b>Nie rusza stanów zgłoszeń</b> — po zmianie siedzą one w stanach starego schematu
+    /// dokładnie tak samo, jak po opublikowaniu schematu z usuniętym stanem (§5.3). Doprowadzenie
+    /// ich do stanów nowego schematu jest osobnym zadaniem masowym
+    /// (<c>IssueExecStateMigrationCommand</c>), a kompletność mapowania sprawdza handler komendy
+    /// <b>przed</b> tą zmianą. Migracja w tej metodzie oznaczałaby wciągnięcie dowolnie wielu
+    /// zgłoszeń do jednej transakcji — czego cała reszta modułu konsekwentnie nie robi.</para>
+    /// </summary>
+    public void SetWorkflowScheme(Guid workflowSchemeUuid)
+        => WorkflowSchemeUuid = workflowSchemeUuid == Guid.Empty
+            ? throw new DomainException("taskmgmt.project_workflow_scheme_required", "Projekt musi mieć schemat stanów.")
+            : workflowSchemeUuid;
+
     public void SetSlaPolicy(int? responseMinutes, int? resolutionMinutes)
         => SlaPolicy = ProjectSlaPolicy.Create(Uuid, responseMinutes, resolutionMinutes);
 

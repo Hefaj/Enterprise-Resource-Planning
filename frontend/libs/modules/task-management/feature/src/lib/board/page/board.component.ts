@@ -7,6 +7,7 @@ import { map } from 'rxjs';
 import { ErpEmptyStateComponent, ErpTranslatePipe } from '@erp/shared/ui';
 
 import { BoardColumnComponent } from '../components/board-column.component';
+import { BoardConfigComponent } from '../components/board-config.component';
 import { BOARD_KEYS, provideBoardTranslations } from '../translation';
 import { BoardStore } from './board.store';
 
@@ -25,7 +26,7 @@ import { BoardStore } from './board.store';
 @Component({
   selector: 'erp-task-management-board',
   standalone: true,
-  imports: [BoardColumnComponent, CdkDropListGroup, ErpEmptyStateComponent, ErpTranslatePipe, RouterLink],
+  imports: [BoardColumnComponent, BoardConfigComponent, CdkDropListGroup, ErpEmptyStateComponent, ErpTranslatePipe, RouterLink],
   providers: [BoardStore, provideBoardTranslations()],
   template: `
     @let board = this.board();
@@ -37,6 +38,8 @@ import { BoardStore } from './board.store';
     } @else {
       <div class="flex h-full min-h-0 w-full flex-col gap-3 p-4">
         <div class="flex items-center justify-between"><span class="text-lg font-medium">{{ board.name | erpTranslate }}</span><a [routerLink]="['/task-management/board', board.uuid, 'backlog']">{{ BOARD_KEYS.backlog.title | erpTranslate }}</a></div>
+
+        <erp-board-config [board]="board" />
 
         @if (this.columns().length === 0) {
           <erp-empty-state [config]="{ icon: '@tui.columns-3', message: BOARD_KEYS.empty.columns }" />

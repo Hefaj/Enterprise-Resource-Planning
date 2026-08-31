@@ -28,7 +28,11 @@ public sealed record IssueDto(
     bool IsRestricted,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    Dictionary<string, string> CustomFields);
+    Dictionary<string, string> CustomFields,
+    /// <summary>Czy <b>zalogowany</b> użytkownik obserwuje to zgłoszenie. Pełnej listy
+    /// obserwatorów kontrakt nie wystawia: karta pyta wyłącznie o własny przycisk, a lista osób
+    /// śledzących cudzą pracę jest informacją, po którą nikt się nie zgłosił.</summary>
+    bool IsWatchedByMe);
 
 /// <summary>
 /// Zakres listy zgłoszeń — <b>parametr, nie osobna strona</b>. „Moje zgłoszenia” jako oddzielny
@@ -45,6 +49,20 @@ public enum IssueScope
 
     /// <summary>Zgłoszone przeze mnie.</summary>
     ReportedByMe = 2,
+
+    /// <summary>Obserwowane przeze mnie (<c>issue.watchers</c>).</summary>
+    Watched = 3,
+
+    /// <summary>
+    /// Wszystko w projektach, w których jestem członkiem.
+    ///
+    /// <para>„Zespół” w tym module <b>nie jest osobnym bytem</b> — struktury organizacyjnej tu nie
+    /// ma i mieć nie będzie (§10.3). Odpowiednikiem zespołu jest członkostwo w projekcie, więc ten
+    /// zakres znaczy dokładnie „projekty, w których pracuję”, a nie „ludzie, z którymi pracuję”.
+    /// To różnica względem <see cref="Available"/>, do którego wchodzą też projekty publiczne,
+    /// czyli cała reszta firmy.</para>
+    /// </summary>
+    MyProjects = 4,
 }
 
 /// <summary>

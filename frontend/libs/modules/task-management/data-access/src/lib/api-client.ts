@@ -18,6 +18,10 @@ export interface ITaskManagementClient {
   /**
    * @return OK
    */
+  getProjectStateUsage(body: GetProjectStateUsageRequest): Observable<ProjectStateUsageDto>;
+  /**
+   * @return OK
+   */
   getProjectWorkflow(body: GetProjectWorkflowRequest): Observable<ProjectWorkflowDto>;
   /**
    * @return OK
@@ -34,7 +38,7 @@ export interface ITaskManagementClient {
   /**
    * @return OK
    */
-  workflowSchemePublishCommand(body: WorkflowSchemePublishCommand): Observable<string>;
+  workflowSchemeExecPublishCommand(body: WorkflowSchemeExecPublishCommand): Observable<string>;
   /**
    * @return OK
    */
@@ -50,11 +54,11 @@ export interface ITaskManagementClient {
   /**
    * @return OK
    */
-  sprintStartMultipleCommand(body: BatchCommandOfSprintStartCommandAndSearchSprintRequest): Observable<BatchResult>;
+  sprintExecStartMultipleCommand(body: BatchCommandOfSprintExecStartCommandAndSearchSprintRequest): Observable<BatchResult>;
   /**
    * @return OK
    */
-  sprintCloseMultipleCommand(body: BatchCommandOfSprintCloseCommandAndSearchSprintRequest): Observable<BatchResult>;
+  sprintExecCloseMultipleCommand(body: BatchCommandOfSprintExecCloseCommandAndSearchSprintRequest): Observable<BatchResult>;
   /**
    * @return OK
    */
@@ -96,6 +100,10 @@ export interface ITaskManagementClient {
    * @return OK
    */
   projectSetSlaPolicyMultipleCommand(body: BatchCommandOfProjectSetSlaPolicyCommandAndSearchProjectRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  projectSetWorkflowSchemeMultipleCommand(body: BatchCommandOfProjectSetWorkflowSchemeCommandAndSearchProjectRequest): Observable<BatchResult>;
   /**
    * @return OK
    */
@@ -153,6 +161,10 @@ export interface ITaskManagementClient {
    */
   issueAddLinkMultipleCommand(body: BatchCommandOfIssueAddLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
   /**
+   * @return OK
+   */
+  issueAddWatcherMultipleCommand(body: BatchCommandOfIssueAddWatcherCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
    * Rejestracja wgranych załączników zgłoszenia
    * @return OK
    */
@@ -165,7 +177,7 @@ export interface ITaskManagementClient {
   /**
    * @return OK
    */
-  issueMigrateWorkflowStateMultipleCommand(body: BatchCommandOfIssueMigrateWorkflowStateCommandAndWorkflowStateMigrationFilter): Observable<BatchResult>;
+  issueExecStateMigrationMultipleCommand(body: BatchCommandOfIssueExecStateMigrationCommandAndWorkflowStateMigrationFilter): Observable<BatchResult>;
   /**
    * Usunięcie komentarzy z obsługą błędów cząstkowych
    * @return OK
@@ -176,6 +188,10 @@ export interface ITaskManagementClient {
    * @return OK
    */
   issueRemoveLinkMultipleCommand(body: BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
+   * @return OK
+   */
+  issueRemoveWatcherMultipleCommand(body: BatchCommandOfIssueRemoveWatcherCommandAndSearchIssueRequest): Observable<BatchResult>;
   /**
    * Seryjne przypisanie zgłoszeń z obsługą błędów cząstkowych
    * @return OK
@@ -212,6 +228,10 @@ export interface ITaskManagementClient {
    */
   issueSetPriorityMultipleCommand(body: BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest): Observable<BatchResult>;
   /**
+   * @return OK
+   */
+  issueSetProjectMultipleCommand(body: BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest): Observable<BatchResult>;
+  /**
    * Seryjna zmiana stanu zgłoszeń — przejście spoza schematu odpada jako błąd elementu
    * @return OK
    */
@@ -232,7 +252,7 @@ export interface ITaskManagementClient {
   /**
    * @return OK
    */
-  savedIssueViewUpdateCommand(body: SavedIssueViewUpdateCommand): Observable<string>;
+  savedIssueViewSetDefinitionCommand(body: SavedIssueViewSetDefinitionCommand): Observable<string>;
   /**
    * @return OK
    */
@@ -306,6 +326,85 @@ export class TaskManagementClient implements ITaskManagementClient {
   constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
     this.http = http;
     this.baseUrl = baseUrl ?? 'http://localhost:5290/';
+  }
+
+  /**
+   * @return OK
+   */
+  getProjectStateUsage(body: GetProjectStateUsageRequest): Observable<ProjectStateUsageDto> {
+    let url_ = this.baseUrl + '/workflow/getProjectStateUsage';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processGetProjectStateUsage(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processGetProjectStateUsage(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<ProjectStateUsageDto>;
+            }
+          } else return _observableThrow(response_) as any as Observable<ProjectStateUsageDto>;
+        }),
+      );
+  }
+
+  protected processGetProjectStateUsage(response: HttpResponseBase): Observable<ProjectStateUsageDto> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as ProjectStateUsageDto);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
   }
 
   /**
@@ -623,8 +722,8 @@ export class TaskManagementClient implements ITaskManagementClient {
   /**
    * @return OK
    */
-  workflowSchemePublishCommand(body: WorkflowSchemePublishCommand): Observable<string> {
-    let url_ = this.baseUrl + '/workflow/publish';
+  workflowSchemeExecPublishCommand(body: WorkflowSchemeExecPublishCommand): Observable<string> {
+    let url_ = this.baseUrl + '/workflow/exec-publish';
     url_ = url_.replace(/[?&]$/, '');
 
     const content_ = JSON.stringify(body);
@@ -643,14 +742,14 @@ export class TaskManagementClient implements ITaskManagementClient {
       .request('post', url_, options_)
       .pipe(
         _observableMergeMap((response_: any) => {
-          return this.processWorkflowSchemePublishCommand(response_);
+          return this.processWorkflowSchemeExecPublishCommand(response_);
         }),
       )
       .pipe(
         _observableCatch((response_: any) => {
           if (response_ instanceof HttpResponseBase) {
             try {
-              return this.processWorkflowSchemePublishCommand(response_ as any);
+              return this.processWorkflowSchemeExecPublishCommand(response_ as any);
             } catch (e) {
               return _observableThrow(e) as any as Observable<string>;
             }
@@ -659,7 +758,7 @@ export class TaskManagementClient implements ITaskManagementClient {
       );
   }
 
-  protected processWorkflowSchemePublishCommand(response: HttpResponseBase): Observable<string> {
+  protected processWorkflowSchemeExecPublishCommand(response: HttpResponseBase): Observable<string> {
     const status = response.status;
     const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
 
@@ -939,8 +1038,8 @@ export class TaskManagementClient implements ITaskManagementClient {
   /**
    * @return OK
    */
-  sprintStartMultipleCommand(body: BatchCommandOfSprintStartCommandAndSearchSprintRequest): Observable<BatchResult> {
-    let url_ = this.baseUrl + '/sprint/batch-start';
+  sprintExecStartMultipleCommand(body: BatchCommandOfSprintExecStartCommandAndSearchSprintRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/sprint/batch-exec-start';
     url_ = url_.replace(/[?&]$/, '');
 
     const content_ = JSON.stringify(body);
@@ -959,14 +1058,14 @@ export class TaskManagementClient implements ITaskManagementClient {
       .request('post', url_, options_)
       .pipe(
         _observableMergeMap((response_: any) => {
-          return this.processSprintStartMultipleCommand(response_);
+          return this.processSprintExecStartMultipleCommand(response_);
         }),
       )
       .pipe(
         _observableCatch((response_: any) => {
           if (response_ instanceof HttpResponseBase) {
             try {
-              return this.processSprintStartMultipleCommand(response_ as any);
+              return this.processSprintExecStartMultipleCommand(response_ as any);
             } catch (e) {
               return _observableThrow(e) as any as Observable<BatchResult>;
             }
@@ -975,7 +1074,7 @@ export class TaskManagementClient implements ITaskManagementClient {
       );
   }
 
-  protected processSprintStartMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+  protected processSprintExecStartMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
     const status = response.status;
     const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
 
@@ -1018,8 +1117,8 @@ export class TaskManagementClient implements ITaskManagementClient {
   /**
    * @return OK
    */
-  sprintCloseMultipleCommand(body: BatchCommandOfSprintCloseCommandAndSearchSprintRequest): Observable<BatchResult> {
-    let url_ = this.baseUrl + '/sprint/batch-close';
+  sprintExecCloseMultipleCommand(body: BatchCommandOfSprintExecCloseCommandAndSearchSprintRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/sprint/batch-exec-close';
     url_ = url_.replace(/[?&]$/, '');
 
     const content_ = JSON.stringify(body);
@@ -1038,14 +1137,14 @@ export class TaskManagementClient implements ITaskManagementClient {
       .request('post', url_, options_)
       .pipe(
         _observableMergeMap((response_: any) => {
-          return this.processSprintCloseMultipleCommand(response_);
+          return this.processSprintExecCloseMultipleCommand(response_);
         }),
       )
       .pipe(
         _observableCatch((response_: any) => {
           if (response_ instanceof HttpResponseBase) {
             try {
-              return this.processSprintCloseMultipleCommand(response_ as any);
+              return this.processSprintExecCloseMultipleCommand(response_ as any);
             } catch (e) {
               return _observableThrow(e) as any as Observable<BatchResult>;
             }
@@ -1054,7 +1153,7 @@ export class TaskManagementClient implements ITaskManagementClient {
       );
   }
 
-  protected processSprintCloseMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+  protected processSprintExecCloseMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
     const status = response.status;
     const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
 
@@ -1771,6 +1870,85 @@ export class TaskManagementClient implements ITaskManagementClient {
   }
 
   protected processProjectSetSlaPolicyMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  projectSetWorkflowSchemeMultipleCommand(body: BatchCommandOfProjectSetWorkflowSchemeCommandAndSearchProjectRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/project/batch-set-workflow-scheme';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processProjectSetWorkflowSchemeMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processProjectSetWorkflowSchemeMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processProjectSetWorkflowSchemeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
     const status = response.status;
     const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
 
@@ -2835,6 +3013,85 @@ export class TaskManagementClient implements ITaskManagementClient {
   }
 
   /**
+   * @return OK
+   */
+  issueAddWatcherMultipleCommand(body: BatchCommandOfIssueAddWatcherCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-add-watcher';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueAddWatcherMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueAddWatcherMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueAddWatcherMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
    * Rejestracja wgranych załączników zgłoszenia
    * @return OK
    */
@@ -2997,8 +3254,8 @@ export class TaskManagementClient implements ITaskManagementClient {
   /**
    * @return OK
    */
-  issueMigrateWorkflowStateMultipleCommand(body: BatchCommandOfIssueMigrateWorkflowStateCommandAndWorkflowStateMigrationFilter): Observable<BatchResult> {
-    let url_ = this.baseUrl + '/issue/batch-migrate-workflow-state';
+  issueExecStateMigrationMultipleCommand(body: BatchCommandOfIssueExecStateMigrationCommandAndWorkflowStateMigrationFilter): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-exec-state-migration';
     url_ = url_.replace(/[?&]$/, '');
 
     const content_ = JSON.stringify(body);
@@ -3017,14 +3274,14 @@ export class TaskManagementClient implements ITaskManagementClient {
       .request('post', url_, options_)
       .pipe(
         _observableMergeMap((response_: any) => {
-          return this.processIssueMigrateWorkflowStateMultipleCommand(response_);
+          return this.processIssueExecStateMigrationMultipleCommand(response_);
         }),
       )
       .pipe(
         _observableCatch((response_: any) => {
           if (response_ instanceof HttpResponseBase) {
             try {
-              return this.processIssueMigrateWorkflowStateMultipleCommand(response_ as any);
+              return this.processIssueExecStateMigrationMultipleCommand(response_ as any);
             } catch (e) {
               return _observableThrow(e) as any as Observable<BatchResult>;
             }
@@ -3033,7 +3290,7 @@ export class TaskManagementClient implements ITaskManagementClient {
       );
   }
 
-  protected processIssueMigrateWorkflowStateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+  protected processIssueExecStateMigrationMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
     const status = response.status;
     const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
 
@@ -3194,6 +3451,85 @@ export class TaskManagementClient implements ITaskManagementClient {
   }
 
   protected processIssueRemoveLinkMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
+   * @return OK
+   */
+  issueRemoveWatcherMultipleCommand(body: BatchCommandOfIssueRemoveWatcherCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-remove-watcher';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueRemoveWatcherMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueRemoveWatcherMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueRemoveWatcherMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
     const status = response.status;
     const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
 
@@ -3794,6 +4130,85 @@ export class TaskManagementClient implements ITaskManagementClient {
   }
 
   /**
+   * @return OK
+   */
+  issueSetProjectMultipleCommand(body: BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest): Observable<BatchResult> {
+    let url_ = this.baseUrl + '/issue/batch-set-project';
+    url_ = url_.replace(/[?&]$/, '');
+
+    const content_ = JSON.stringify(body);
+
+    let options_: any = {
+      body: content_,
+      observe: 'response',
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      }),
+    };
+
+    return this.http
+      .request('post', url_, options_)
+      .pipe(
+        _observableMergeMap((response_: any) => {
+          return this.processIssueSetProjectMultipleCommand(response_);
+        }),
+      )
+      .pipe(
+        _observableCatch((response_: any) => {
+          if (response_ instanceof HttpResponseBase) {
+            try {
+              return this.processIssueSetProjectMultipleCommand(response_ as any);
+            } catch (e) {
+              return _observableThrow(e) as any as Observable<BatchResult>;
+            }
+          } else return _observableThrow(response_) as any as Observable<BatchResult>;
+        }),
+      );
+  }
+
+  protected processIssueSetProjectMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+    const status = response.status;
+    const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+    let _headers: any = {};
+    if (response.headers) {
+      for (let key of response.headers.keys()) {
+        _headers[key] = response.headers.get(key);
+      }
+    }
+    if (status === 200) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          let result200: any = null;
+          result200 = _responseText === '' ? null : (JSON.parse(_responseText, this.jsonParseReviver) as BatchResult);
+          return _observableOf(result200);
+        }),
+      );
+    } else if (status === 401) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Unauthorized', status, _responseText, _headers);
+        }),
+      );
+    } else if (status === 403) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('Forbidden', status, _responseText, _headers);
+        }),
+      );
+    } else if (status !== 200 && status !== 204) {
+      return blobToText(responseBlob).pipe(
+        _observableMergeMap((_responseText: string) => {
+          return throwException('An unexpected server error occurred.', status, _responseText, _headers);
+        }),
+      );
+    }
+    return _observableOf(null as any);
+  }
+
+  /**
    * Seryjna zmiana stanu zgłoszeń — przejście spoza schematu odpada jako błąd elementu
    * @return OK
    */
@@ -4114,8 +4529,8 @@ export class TaskManagementClient implements ITaskManagementClient {
   /**
    * @return OK
    */
-  savedIssueViewUpdateCommand(body: SavedIssueViewUpdateCommand): Observable<string> {
-    let url_ = this.baseUrl + '/issue/saved-view-update';
+  savedIssueViewSetDefinitionCommand(body: SavedIssueViewSetDefinitionCommand): Observable<string> {
+    let url_ = this.baseUrl + '/issue/saved-view-set-definition';
     url_ = url_.replace(/[?&]$/, '');
 
     const content_ = JSON.stringify(body);
@@ -4134,14 +4549,14 @@ export class TaskManagementClient implements ITaskManagementClient {
       .request('post', url_, options_)
       .pipe(
         _observableMergeMap((response_: any) => {
-          return this.processSavedIssueViewUpdateCommand(response_);
+          return this.processSavedIssueViewSetDefinitionCommand(response_);
         }),
       )
       .pipe(
         _observableCatch((response_: any) => {
           if (response_ instanceof HttpResponseBase) {
             try {
-              return this.processSavedIssueViewUpdateCommand(response_ as any);
+              return this.processSavedIssueViewSetDefinitionCommand(response_ as any);
             } catch (e) {
               return _observableThrow(e) as any as Observable<string>;
             }
@@ -4150,7 +4565,7 @@ export class TaskManagementClient implements ITaskManagementClient {
       );
   }
 
-  protected processSavedIssueViewUpdateCommand(response: HttpResponseBase): Observable<string> {
+  protected processSavedIssueViewSetDefinitionCommand(response: HttpResponseBase): Observable<string> {
     const status = response.status;
     const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
 
@@ -5467,6 +5882,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIssueAddWatcherCommandAndSearchIssueRequest {
+  commands?: IssueAddWatcherCommand[] | undefined;
+  templateCommand?: IssueAddWatcherCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueCreateCommandAndSearchIssueRequest {
   commands?: IssueCreateCommand[] | undefined;
   templateCommand?: IssueCreateCommand | undefined;
@@ -5491,9 +5930,9 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfIssueMigrateWorkflowStateCommandAndWorkflowStateMigrationFilter {
-  commands?: IssueMigrateWorkflowStateCommand[] | undefined;
-  templateCommand?: IssueMigrateWorkflowStateCommand | undefined;
+export interface BatchCommandOfIssueExecStateMigrationCommandAndWorkflowStateMigrationFilter {
+  commands?: IssueExecStateMigrationCommand[] | undefined;
+  templateCommand?: IssueExecStateMigrationCommand | undefined;
   targetUuids?: string[] | undefined;
   targetFilter?: WorkflowStateMigrationFilter | undefined;
   /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -5542,6 +5981,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 export interface BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest {
   commands?: IssueRemoveLinkCommand[] | undefined;
   templateCommand?: IssueRemoveLinkCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIssueRemoveWatcherCommandAndSearchIssueRequest {
+  commands?: IssueRemoveWatcherCommand[] | undefined;
+  templateCommand?: IssueRemoveWatcherCommand | undefined;
   targetUuids?: string[] | undefined;
   targetFilter?: SearchIssueRequest | undefined;
   /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -5710,6 +6173,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 export interface BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest {
   commands?: IssueSetPriorityCommand[] | undefined;
   templateCommand?: IssueSetPriorityCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest {
+  commands?: IssueSetProjectCommand[] | undefined;
+  templateCommand?: IssueSetProjectCommand | undefined;
   targetUuids?: string[] | undefined;
   targetFilter?: SearchIssueRequest | undefined;
   /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -5923,11 +6410,11 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfSprintCloseCommandAndSearchSprintRequest {
-  commands?: SprintCloseCommand[] | undefined;
-  templateCommand?: SprintCloseCommand | undefined;
+export interface BatchCommandOfProjectSetWorkflowSchemeCommandAndSearchProjectRequest {
+  commands?: ProjectSetWorkflowSchemeCommand[] | undefined;
+  templateCommand?: ProjectSetWorkflowSchemeCommand | undefined;
   targetUuids?: string[] | undefined;
-  targetFilter?: SearchSprintRequest | undefined;
+  targetFilter?: SearchProjectRequest | undefined;
   /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
@@ -5971,11 +6458,11 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfSprintSetIssueSprintCommandAndSearchIssueRequest {
-  commands?: SprintSetIssueSprintCommand[] | undefined;
-  templateCommand?: SprintSetIssueSprintCommand | undefined;
+export interface BatchCommandOfSprintExecCloseCommandAndSearchSprintRequest {
+  commands?: SprintExecCloseCommand[] | undefined;
+  templateCommand?: SprintExecCloseCommand | undefined;
   targetUuids?: string[] | undefined;
-  targetFilter?: SearchIssueRequest | undefined;
+  targetFilter?: SearchSprintRequest | undefined;
   /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
@@ -5995,11 +6482,35 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
-export interface BatchCommandOfSprintStartCommandAndSearchSprintRequest {
-  commands?: SprintStartCommand[] | undefined;
-  templateCommand?: SprintStartCommand | undefined;
+export interface BatchCommandOfSprintExecStartCommandAndSearchSprintRequest {
+  commands?: SprintExecStartCommand[] | undefined;
+  templateCommand?: SprintExecStartCommand | undefined;
   targetUuids?: string[] | undefined;
   targetFilter?: SearchSprintRequest | undefined;
+  /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+  queueId?: string | undefined;
+  /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+  uiMetadata?: string | undefined;
+
+  [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfSprintSetIssueSprintCommandAndSearchIssueRequest {
+  commands?: SprintSetIssueSprintCommand[] | undefined;
+  templateCommand?: SprintSetIssueSprintCommand | undefined;
+  targetUuids?: string[] | undefined;
+  targetFilter?: SearchIssueRequest | undefined;
   /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
 poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
 („5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
@@ -6239,6 +6750,12 @@ export interface GetProjectRequest {
   [key: string]: any;
 }
 
+export interface GetProjectStateUsageRequest {
+  projectUuid?: string;
+
+  [key: string]: any;
+}
+
 export interface GetProjectWorkflowRequest {
   projectUuid?: string;
 
@@ -6284,6 +6801,12 @@ export interface IssueAddLinkCommand {
   linkUuid?: string;
   targetUuid?: string;
   type?: number;
+
+  [key: string]: any;
+}
+
+export interface IssueAddWatcherCommand {
+  uuid?: string;
 
   [key: string]: any;
 }
@@ -6395,6 +6918,16 @@ export interface IssueDto {
   createdAt: Date;
   updatedAt: Date;
   customFields: { [key: string]: string };
+  isWatchedByMe: boolean;
+
+  [key: string]: any;
+}
+
+export interface IssueExecStateMigrationCommand {
+  uuid?: string;
+  schemeUuid?: string;
+  fromStateUuid?: string;
+  toStateUuid?: string;
 
   [key: string]: any;
 }
@@ -6423,15 +6956,6 @@ export interface IssueLinkDto {
   [key: string]: any;
 }
 
-export interface IssueMigrateWorkflowStateCommand {
-  uuid?: string;
-  schemeUuid?: string;
-  fromStateUuid?: string;
-  toStateUuid?: string;
-
-  [key: string]: any;
-}
-
 export interface IssueRemoveCommentCommand {
   uuid?: string;
 
@@ -6441,6 +6965,12 @@ export interface IssueRemoveCommentCommand {
 export interface IssueRemoveLinkCommand {
   uuid?: string;
   linkUuid?: string;
+
+  [key: string]: any;
+}
+
+export interface IssueRemoveWatcherCommand {
+  uuid?: string;
 
   [key: string]: any;
 }
@@ -6490,6 +7020,13 @@ export interface IssueSetParentCommand {
 export interface IssueSetPriorityCommand {
   uuid?: string;
   priority?: number;
+
+  [key: string]: any;
+}
+
+export interface IssueSetProjectCommand {
+  uuid?: string;
+  projectUuid?: string;
 
   [key: string]: any;
 }
@@ -6600,9 +7137,24 @@ export interface ProjectSetSlaPolicyCommand {
   [key: string]: any;
 }
 
+export interface ProjectSetWorkflowSchemeCommand {
+  uuid?: string;
+  workflowSchemeUuid?: string;
+  stateMappings?: { [key: string]: string };
+
+  [key: string]: any;
+}
+
 export interface ProjectSlaPolicyDto {
   responseMinutes: number | undefined;
   resolutionMinutes: number | undefined;
+
+  [key: string]: any;
+}
+
+export interface ProjectStateUsageDto {
+  projectUuid: string;
+  usedStateUuids: string[];
 
   [key: string]: any;
 }
@@ -6636,7 +7188,7 @@ export interface SavedIssueViewDto {
   [key: string]: any;
 }
 
-export interface SavedIssueViewUpdateCommand {
+export interface SavedIssueViewSetDefinitionCommand {
   uuid?: string;
   name?: string;
   filterJson?: string;
@@ -6710,14 +7262,6 @@ export interface SortOption {
   [key: string]: any;
 }
 
-export interface SprintCloseCommand {
-  uuid?: string;
-  openIssuesDisposition?: number;
-  nextSprintUuid?: string | undefined;
-
-  [key: string]: any;
-}
-
 export interface SprintCreateCommand {
   uuid?: string;
   boardUuid?: string;
@@ -6739,16 +7283,24 @@ export interface SprintDto {
   [key: string]: any;
 }
 
-export interface SprintSetIssueSprintCommand {
+export interface SprintExecCloseCommand {
   uuid?: string;
-  boardUuid?: string;
-  sprintUuid?: string | undefined;
+  openIssuesDisposition?: number;
+  nextSprintUuid?: string | undefined;
 
   [key: string]: any;
 }
 
-export interface SprintStartCommand {
+export interface SprintExecStartCommand {
   uuid?: string;
+
+  [key: string]: any;
+}
+
+export interface SprintSetIssueSprintCommand {
+  uuid?: string;
+  boardUuid?: string;
+  sprintUuid?: string | undefined;
 
   [key: string]: any;
 }
@@ -6789,20 +7341,20 @@ export interface WorkflowSchemeDto {
   [key: string]: any;
 }
 
-export interface WorkflowSchemeListItemDto {
-  uuid: string;
-  name: string;
-  isSystem: boolean;
-
-  [key: string]: any;
-}
-
-export interface WorkflowSchemePublishCommand {
+export interface WorkflowSchemeExecPublishCommand {
   schemeUuid?: string;
   name?: string;
   states?: WorkflowStateDefinitionDto[];
   transitions?: WorkflowTransitionDefinitionDto[];
   removedStateMappings?: { [key: string]: string };
+
+  [key: string]: any;
+}
+
+export interface WorkflowSchemeListItemDto {
+  uuid: string;
+  name: string;
+  isSystem: boolean;
 
   [key: string]: any;
 }

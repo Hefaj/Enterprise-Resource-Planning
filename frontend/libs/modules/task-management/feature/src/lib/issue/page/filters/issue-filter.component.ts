@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@jsverse/transloco';
 
 import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig } from '@erp/shared/ui';
@@ -44,6 +45,30 @@ export class IssueFilterComponent implements OnInit {
 
   private readonly _projectUuids = signal<string[]>([]);
 
+  /**
+   * Brakująca zależność reaktywna list opcji.
+   *
+   * <p><b>Transloco nie jest sygnałem.</b> `translate()` wywołane, zanim scope modułu dojedzie,
+   * zwraca surowy klucz, a `computed` zapamiętuje ten wynik <b>na zawsze</b> — żadna jego
+   * zależność już się nie zmienia. Skutkiem była rozwijana lista pokazująca
+   * <c>issue.filters.scope.watched</c> zamiast „Obserwowane”, i to samo w priorytetach. Ten
+   * sygnał tyka przy każdym doładowaniu tłumaczeń i przy zmianie języka, więc listy przeliczają
+   * się na gotowych tekstach.</p>
+   *
+   * <p>Etykiet idących do szablonu jako klucz (label pola, placeholder) to nie dotyczy —
+   * tłumaczy je `erpTranslate` w atomie. Problem mają wyłącznie teksty składane w TS, bo
+   * `erp-input-picker` pokazuje wartość pozycji, nie klucz.</p>
+   */
+  private readonly _translationsReady = toSignal(this._transloco.events$, { initialValue: null });
+
+  /** Tłumaczenie zależne od `_translationsReady` — każde użycie w `computed` czyni je
+   * wrażliwym na doładowanie scope'u. */
+  private _t(key: string): string {
+    this._translationsReady();
+
+    return this._transloco.translate(key);
+  }
+
   private readonly _projectOptions = computed<FilterOption[]>(() => {
     const viewModels = this._projects.getViewModel()();
 
@@ -54,17 +79,19 @@ export class IssueFilterComponent implements OnInit {
   });
 
   private readonly _scopeOptions = computed<FilterOption[]>(() => [
-    { value: ISSUE_SCOPE.Available, label: this._transloco.translate(ISSUE_KEYS.filters.scope.available) },
-    { value: ISSUE_SCOPE.AssignedToMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.assignedToMe) },
-    { value: ISSUE_SCOPE.ReportedByMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.reportedByMe) },
+    { value: ISSUE_SCOPE.Available, label: this._t(ISSUE_KEYS.filters.scope.available) },
+    { value: ISSUE_SCOPE.AssignedToMe, label: this._t(ISSUE_KEYS.filters.scope.assignedToMe) },
+    { value: ISSUE_SCOPE.ReportedByMe, label: this._t(ISSUE_KEYS.filters.scope.reportedByMe) },
+    { value: ISSUE_SCOPE.Watched, label: this._t(ISSUE_KEYS.filters.scope.watched) },
+    { value: ISSUE_SCOPE.MyProjects, label: this._t(ISSUE_KEYS.filters.scope.myProjects) },
   ]);
 
   private readonly _priorityOptions = computed<FilterOption[]>(() => [
-    { value: ISSUE_PRIORITY.Critical, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
-    { value: ISSUE_PRIORITY.High, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.high) },
-    { value: ISSUE_PRIORITY.Normal, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.normal) },
-    { value: ISSUE_PRIORITY.Low, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.low) },
-    { value: ISSUE_PRIORITY.Lowest, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest) },
+    { value: ISSUE_PRIORITY.Critical, label: this._t(TASKMANAGEMENT_KEYS.priority.critical) },
+    { value: ISSUE_PRIORITY.High, label: this._t(TASKMANAGEMENT_KEYS.priority.high) },
+    { value: ISSUE_PRIORITY.Normal, label: this._t(TASKMANAGEMENT_KEYS.priority.normal) },
+    { value: ISSUE_PRIORITY.Low, label: this._t(TASKMANAGEMENT_KEYS.priority.low) },
+    { value: ISSUE_PRIORITY.Lowest, label: this._t(TASKMANAGEMENT_KEYS.priority.lowest) },
   ]);
 
   /** Stany aktywnego projektu. `nameKey` ze schematu jest kluczem tłumaczenia; stan zdefiniowany
@@ -73,7 +100,7 @@ export class IssueFilterComponent implements OnInit {
   private readonly _stateOptions = computed<FilterOption[]>(() =>
     this._store.states().map((state) => ({
       value: state.uuid,
-      label: state.nameKey ? this._transloco.translate(state.nameKey) : state.code,
+      label: state.nameKey ? this._t(state.nameKey) : state.code,
     })),
   );
 

@@ -25,6 +25,9 @@ import {
   IssueAddLinkCommand,
   IssueRemoveLinkCommand,
   IssueSetCustomFieldsCommand,
+  BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest,
+  IssueAddWatcherCommand,
+  IssueRemoveWatcherCommand,
   IssueSetParentCommand,
   IssueSetDescriptionCommand,
   IssueSetDueDateCommand,
@@ -238,6 +241,27 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
     });
   }
 
+  /**
+   * Zaczyna obserwować zgłoszenie.
+   *
+   * <p>Komenda nie niesie identyfikatora osoby — dopisuje <b>wołającego</b>. „Obserwuj za kogoś"
+   * jest zapisywaniem cudzej skrzynki i backend takiej możliwości nie wystawia.</p>
+   */
+  public addWatcherAsync(command: IssueAddWatcherCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueAddWatcherMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueWatcher,
+      queueId,
+    });
+  }
+
+  /** Przestaje obserwować. Brak obserwacji nie jest błędem — stan końcowy jest ten sam. */
+  public removeWatcherAsync(command: IssueRemoveWatcherCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveWatcherMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueWatcher,
+      queueId,
+    });
+  }
+
   /** Dopina powiązanie; `uuid` to ŹRÓDŁO krawędzi, bo kierunek jest częścią znaczenia. */
   public addLinkAsync(command: IssueAddLinkCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync(
@@ -318,6 +342,24 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   ): Promise<string> {
     return this.runBatchCommandAsync((p) => this._api.issueSetAssigneeMultipleCommand(p), payload, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueAssignee,
+      queueId,
+    });
+  }
+
+  /**
+   * Seryjne przeniesienie zgłoszeń do innego projektu.
+   *
+   * <p>Zgłoszenie dostaje <b>nowy klucz</b> z licznika projektu docelowego, a stary zostaje
+   * w kluczach historycznych — link sprzed przeniesienia nadal otwiera to samo zgłoszenie
+   * (`docs/backend/task-management.md` §4). Stan wraca do początkowego stanu schematu
+   * docelowego: automatu stanów nie da się przenieść razem ze zgłoszeniem.</p>
+   */
+  public setProjectMultipleAsync(
+    payload: BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest,
+    queueId?: string,
+  ): Promise<string> {
+    return this.runBatchCommandAsync((p) => this._api.issueSetProjectMultipleCommand(p), payload, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueProject,
       queueId,
     });
   }

@@ -112,6 +112,11 @@ export const ISSUE_SCOPE = {
   Available: 0,
   AssignedToMe: 1,
   ReportedByMe: 2,
+  Watched: 3,
+  /** Projekty, w których jestem członkiem. „Zespołu" jako bytu ten moduł nie ma i mieć nie
+   * będzie — członkostwo w projekcie jest jego odpowiednikiem
+   * (`docs/backend/task-management.md` §10.3). */
+  MyProjects: 4,
 } as const;
 
 export type IssueScopeValue = (typeof ISSUE_SCOPE)[keyof typeof ISSUE_SCOPE];

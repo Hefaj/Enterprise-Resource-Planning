@@ -3,12 +3,14 @@ import { FormControl } from '@angular/forms';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { TuiEditorTool } from '@taiga-ui/editor';
 
-import { ErpButtonComponent, ErpButtonConfig, ErpConfirmDialogService, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpToastService, ErpTranslatePipe, erpRichTextToolset } from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonConfig, ErpConfirmDialogService, ErpInputPickerComponent, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpToastService, ErpTranslatePipe, erpRichTextToolset } from '@erp/shared/ui';
 import { ErpAuthService } from '@erp/shared/auth';
+import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import { IssueCommentDto, IssueCommentService, TaskManagementIssueOrchestrator } from '@erp/task-management/data-access';
 
 import { ISSUE_KEYS } from '../../translation';
 import { TaskManagementUserNameComponent } from '../../../user/task-management-user-name.component';
+import { taskManagementUserPickerConfig } from '../../../user/task-management-user-picker';
 import { IssueRichTextImagesService } from './issue-rich-text-images.service';
 
 /** Wątek złożony z komentarza głównego i jego odpowiedzi — poziom jest dokładnie jeden. */
@@ -32,7 +34,7 @@ interface IssueCommentThread {
 @Component({
   selector: 'erp-task-management-issue-comments',
   standalone: true,
-  imports: [DatePipe, NgTemplateOutlet, ErpButtonComponent, ErpRichTextComponent, ErpTranslatePipe, TaskManagementUserNameComponent],
+  imports: [DatePipe, NgTemplateOutlet, ErpButtonComponent, ErpInputPickerComponent, ErpRichTextComponent, ErpTranslatePipe, TaskManagementUserNameComponent],
   template: `
     <section class="flex flex-col gap-3">
       <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
@@ -82,8 +84,14 @@ interface IssueCommentThread {
             [config]="composerConfig"
             [control]="composerControl"
           />
-          <div>
+          <div class="flex items-end gap-2">
             <erp-button [config]="submitButton" />
+            <erp-input-picker
+              class="w-64"
+              [config]="mentionPickerConfig"
+              [control]="mentionControl"
+            />
+            <erp-button [config]="insertMentionButton" />
           </div>
         </div>
       }
@@ -150,6 +158,9 @@ export class IssueCommentsComponent {
   private readonly _richTextImages = inject(IssueRichTextImagesService);
 
   protected readonly composerControl = new FormControl<string>('');
+
+  /** Osoba wybrana do wzmiankowania; wstawienie czyści pole, żeby dało się wskazać kolejną. */
+  protected readonly mentionControl = new FormControl<string | null>(null);
   protected readonly replyControl = new FormControl<string>('');
   protected readonly editControl = new FormControl<string>('');
 
@@ -190,6 +201,27 @@ export class IssueCommentsComponent {
     appearance: 'primary',
     size: 's',
     fn: (): Promise<void> => this._submit(this.composerControl, null),
+  };
+
+  /**
+   * Wzmianka — wybór osoby i wstawienie jej do treści.
+   *
+   * <p><b>Picker obok edytora, nie podpowiadanie po wpisaniu „@".</b> Autouzupełnianie w środku
+   * edytora wymaga własnego rozszerzenia ProseMirror i własnej nawigacji klawiaturą; ten sam
+   * skutek — komentarz z <c>data-mention-uuid</c>, po którym backend wylicza odbiorców — daje
+   * picker, który już mamy i który korzysta z tego samego katalogu użytkowników.</p>
+   */
+  private readonly _directory = inject(ERP_USER_DIRECTORY, { optional: true });
+
+  protected readonly mentionPickerConfig = taskManagementUserPickerConfig(this._directory, {
+    label: ISSUE_KEYS.detail.comments.mention.label,
+  });
+
+  protected readonly insertMentionButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.detail.comments.mention.insert,
+    appearance: 'flat',
+    size: 's',
+    fn: (): void => this._insertMention(),
   };
 
   protected readonly submitReplyButton: ErpButtonConfig = {
@@ -279,6 +311,22 @@ export class IssueCommentsComponent {
       iconStart: '@tui.trash',
       fn: (): Promise<void> => this._remove(comment),
     };
+  }
+
+  /** Wstawia wzmiankę na koniec treści. `data-mention-uuid` przechodzi przez sanitizer backendu
+   * i jest jedynym źródłem, z którego wyliczani są odbiorcy powiadomienia. */
+  private _insertMention(): void {
+    const uuid = this.mentionControl.value;
+    if (!uuid) {
+      return;
+    }
+
+    const user = this._directory?.getOne(uuid)();
+    const label = user?.displayName ?? uuid;
+    const current = this.composerControl.value ?? '';
+
+    this.composerControl.setValue(`${current}<p><span data-mention-uuid="${uuid}">@${label}</span> </p>`);
+    this.mentionControl.setValue(null);
   }
 
   private async _submit(control: FormControl<string | null>, parentUuid: string | null): Promise<void> {

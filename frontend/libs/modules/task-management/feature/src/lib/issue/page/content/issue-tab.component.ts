@@ -13,6 +13,7 @@ import {
 import { ERP_PERMISSIONS, ErpAuthService, PermissionStore } from '@erp/shared/auth';
 import {
   BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest,
+  BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest,
   BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
   IssueCreateCommand,
   IssueVM,
@@ -21,7 +22,7 @@ import {
   TaskManagementBoardOrchestrator,
   TaskManagementSprintOrchestrator,
 } from '@erp/task-management/data-access';
-import { ISSUE_CREATE_MODAL_ID, ISSUE_PRIORITY, ISSUE_SET_ASSIGNEE_MODAL_ID, ISSUE_SET_STATE_MODAL_ID } from '@erp/task-management/util';
+import { ISSUE_CREATE_MODAL_ID, ISSUE_PRIORITY, ISSUE_SET_ASSIGNEE_MODAL_ID, ISSUE_SET_PROJECT_MODAL_ID, ISSUE_SET_STATE_MODAL_ID } from '@erp/task-management/util';
 
 import { IssueStore } from '../issue.store';
 import { ISSUE_LIST_PRESET } from '../issue-list-preset';
@@ -95,6 +96,7 @@ export class IssueTabComponent {
 
   private readonly _canCreate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueCreate));
   private readonly _canUpdate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate));
+  private readonly _canBulk = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueBulk));
 
   protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
     b
@@ -162,6 +164,14 @@ export class IssueTabComponent {
           )
           .addAction((a) =>
             a
+              .setId('set-project')
+              .setLabel(ISSUE_KEYS.commands.setProject.label)
+              .setIcon('@tui.folder-symlink')
+              .setHidden(this._canBulk)
+              .setFn(() => this._openSetProject()),
+          )
+          .addAction((a) =>
+            a
               .setId('raise-priority')
               .setLabel(ISSUE_KEYS.commands.setPriority.label)
               .setIcon('@tui.chevrons-up')
@@ -206,6 +216,14 @@ export class IssueTabComponent {
   /** Wybór osoby z katalogu — jedyna z trzech dróg przypisania, która potrzebuje modalu. */
   private _openSetAssignee(): void {
     this._modalService.open<BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest>(ISSUE_SET_ASSIGNEE_MODAL_ID, erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()), {
+      targetCount: this.selectionCount(),
+    });
+  }
+
+  /** Przeniesienie zmienia klucz i granicę widoczności, więc idzie przez modal z podsumowaniem
+   * skutków, a nie jednym kliknięciem w toolbarze. */
+  private _openSetProject(): void {
+    this._modalService.open<BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest>(ISSUE_SET_PROJECT_MODAL_ID, erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()), {
       targetCount: this.selectionCount(),
     });
   }

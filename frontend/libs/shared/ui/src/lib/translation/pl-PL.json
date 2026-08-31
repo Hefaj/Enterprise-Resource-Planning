@@ -88,7 +88,10 @@
     "kinds": {
       "taskmgmt": {
         "issue": {
-          "sla-overdue": "Zgłoszenie {{issueKey}} przekroczyło termin"
+          "sla-overdue": "Zgłoszenie {{issueKey}} przekroczyło termin",
+          "comment-added": "Nowy komentarz w zgłoszeniu {{issueKey}}",
+          "comment-mention": "Wspomniano o Tobie w zgłoszeniu {{issueKey}}",
+          "request-delivered": "Zlecenie {{issueKey}} zostało zrealizowane"
         }
       }
     }
@@ -255,6 +258,9 @@
       "taskmgmtIssueRemoveComment": "Usunięcie komentarza",
       "taskmgmtIssueSetCustomFields": "Zmiana pól niestandardowych",
       "taskmgmtBoardSetCardPosition": "Przestawienie karty na tablicy",
+      "taskmgmtBoardCreate": "Utworzenie tablicy",
+      "taskmgmtBoardSetName": "Zmiana nazwy tablicy",
+      "taskmgmtBoardSetColumns": "Zmiana układu kolumn tablicy",
       "taskmgmtSprintSetIssueSprint": "Przenieś zgłoszenie do sprintu",
       "taskmgmtSprintCreate": "Utwórz sprint",
       "taskmgmtSprintStart": "Rozpocznij sprint",
@@ -264,8 +270,14 @@
       "taskmgmtFieldSchemeRemoveField": "Usunięcie pola ze schematu",
       "taskmgmtProjectSetFieldScheme": "Zmiana schematu pól projektu",
       "taskmgmtProjectSetSlaPolicy": "Zmiana polityki SLA projektu",
+      "taskmgmtProjectSetWorkflowScheme": "Zmiana schematu stanów projektu",
+      "taskmgmtProjectAddMember": "Dodanie członka projektu",
+      "taskmgmtProjectRemoveMember": "Usunięcie członka projektu",
       "taskmgmtIssueSetParent": "Zmiana rodzica zgłoszenia",
+      "taskmgmtIssueSetProject": "Przeniesienie zgłoszeń do innego projektu",
       "taskmgmtIssueAddLink": "Dopięcie powiązania",
+      "taskmgmtIssueAddWatcher": "Rozpoczęcie obserwowania",
+      "taskmgmtIssueRemoveWatcher": "Zakończenie obserwowania",
       "taskmgmtIssueRemoveLink": "Odpięcie powiązania"
     },
     "toast": {

@@ -37,6 +37,10 @@ public sealed partial class RichTextSanitizer : IRichTextSanitizer
         // sanitizer i tak filtruje właściwości CSS po własnej białej liście.
         "style",
         "class",
+        // Wzmianka jest zwykłym `<span>`-em z identyfikatorem osoby. Atrybut musi przejść przez
+        // sanitizer, inaczej po zapisie zostałby sam tekst „@Jan Kowalski", a odbiorca
+        // powiadomienia nie dałby się już odtworzyć z treści (§11).
+        "data-mention-uuid",
     ];
 
     /// <summary>

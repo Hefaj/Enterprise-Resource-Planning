@@ -8,7 +8,9 @@
       "label": "Scope",
       "available": "All available",
       "assignedToMe": "Mine",
-      "reportedByMe": "Reported by me"
+      "reportedByMe": "Reported by me",
+      "watched": "Watched",
+      "myProjects": "My team's"
     },
     "project": {
       "label": "Project",
@@ -91,13 +93,22 @@
     },
     "setSprint": {
       "label": "Add to active sprint"
+    },
+    "setProject": {
+      "label": "Move to project",
+      "modalTitle": "Move to another project",
+      "projectLabel": "Target project",
+      "editMessage": "You are moving",
+      "submitButton": "Move",
+      "hint": "The issue gets a new key and keeps the old one as historical — existing links keep working. Its state resets to the target scheme's initial state."
     }
   },
   "savedViews": {
     "label": "Saved views",
     "select": "Select a view",
     "name": "View name",
-    "save": "Save view"
+    "save": "Save view",
+    "update": "Overwrite selected"
   },
   "detail": {
     "notFound": {
@@ -157,7 +168,12 @@
       "removed": "Comment removed.",
       "edited": "edited",
       "failed": "The comment could not be saved.",
-      "removeTitle": "Remove comment"
+      "removeTitle": "Remove comment",
+      "mention": {
+        "label": "Mention someone",
+        "insert": "Insert mention",
+        "hint": "The mentioned person gets a notification about this comment."
+      }
     },
     "history": {
       "label": "History",
@@ -222,5 +238,10 @@
         "detach": "Detach parent"
       }
     }
+  },
+  "watch": {
+    "start": "Watch",
+    "stop": "Unwatch",
+    "hint": "Watching grants no access — it drives the list scope and notifications."
   }
 }

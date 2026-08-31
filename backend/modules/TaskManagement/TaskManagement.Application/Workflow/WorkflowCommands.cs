@@ -5,7 +5,7 @@ using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Application.Workflow;
 
-public sealed class WorkflowSchemePublishCommand : ICommand<Guid>
+public sealed class WorkflowSchemeExecPublishCommand : ICommand<Guid>
 {
     public Guid SchemeUuid { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -57,6 +57,11 @@ public interface IWorkflowStateUsageProbe
 {
     Task<IReadOnlyCollection<Guid>> GetUsedStateUuidsAsync(Guid schemeUuid, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<Guid>> GetIssueUuidsInStateAsync(Guid schemeUuid, Guid stateUuid, CancellationToken cancellationToken);
+
+    /// <summary>Stany faktycznie zajęte przez zgłoszenia <b>jednego</b> projektu. Zmiana schematu
+    /// projektu pyta o to zamiast o cały schemat: projektów na jednym schemacie bywa wiele,
+    /// a przestawiany jest jeden.</summary>
+    Task<IReadOnlyCollection<Guid>> GetUsedStateUuidsInProjectAsync(Guid projectUuid, CancellationToken cancellationToken);
 }
 
 /// <summary>Filtr techniczny dla zadania migracji stanu po opublikowaniu schematu.</summary>
@@ -66,14 +71,14 @@ public sealed class WorkflowStateMigrationFilter
     public Guid FromStateUuid { get; set; }
 }
 
-public sealed class WorkflowSchemePublishCommandHandler : CommandHandler<WorkflowSchemePublishCommand, Guid>
+public sealed class WorkflowSchemeExecPublishCommandHandler : CommandHandler<WorkflowSchemeExecPublishCommand, Guid>
 {
     private readonly IWorkflowSchemeRepository _schemes;
     private readonly IWorkflowStateUsageProbe _usage;
-    public WorkflowSchemePublishCommandHandler(IWorkflowSchemeRepository schemes, IWorkflowStateUsageProbe usage)
+    public WorkflowSchemeExecPublishCommandHandler(IWorkflowSchemeRepository schemes, IWorkflowStateUsageProbe usage)
         => (_schemes, _usage) = (schemes, usage);
 
-    public override async Task<Guid> ExecuteAsync(WorkflowSchemePublishCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(WorkflowSchemeExecPublishCommand command, CancellationToken ct = default)
     {
         var scheme = await _schemes.FindAsync(command.SchemeUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(WorkflowScheme), command.SchemeUuid);

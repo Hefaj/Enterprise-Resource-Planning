@@ -8,22 +8,26 @@ import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-manageme
 import { PROJECT_KIND } from '@erp/task-management/util';
 
 import { ProjectFieldsComponent } from './content/project-fields.component';
+import { ProjectMembersComponent } from './content/project-members.component';
 import { ProjectSlaComponent } from './content/project-sla.component';
+import { ProjectWorkflowComponent } from './content/project-workflow.component';
 import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 
 /**
  * Karta projektu — `/task-management/project/:uuid`.
  *
- * <p>Docelowo master-detail z zakładkami: pola, stany, tablice, członkowie, SLA
- * (`docs/frontend/task-management-pages.md` §4.2). <b>Faza 3 dowozi wyłącznie zakładkę pól</b>,
- * bo tylko ona ma dziś czym się wypełnić: wybór schematu stanów i SLA wchodzą razem z fazami,
- * które je wprowadzają, a pusta zakładka jest dokładnie tym rodzajem zaślepki, który usunęliśmy
- * z menu w fazie 0.</p>
+ * <p>Sekcje: pola (definicje + mapowanie na sloty), automat stanów, członkowie i SLA
+ * (`docs/frontend/task-management-pages.md` §4.2). Tablice zostają na własnej stronie — tam,
+ * gdzie się ich używa — a nie jako piąta sekcja konfiguracji, którą trzeba znaleźć.</p>
+ *
+ * <p>Sekcje, nie zakładki: karta projektu ma cztery obszary, z których każdy mieści się
+ * w kilkunastu wierszach, a przełącznik nad czterema krótkimi listami kosztuje kliknięcie
+ * i nic nie oszczędza. Zakładki wchodzą, kiedy któraś sekcja urośnie do własnego ekranu.</p>
  */
 @Component({
   selector: 'erp-task-management-project-detail',
   standalone: true,
-  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe, ProjectFieldsComponent, ProjectSlaComponent],
+  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe, ProjectFieldsComponent, ProjectMembersComponent, ProjectSlaComponent, ProjectWorkflowComponent],
   providers: [provideProjectTranslations()],
   template: `
     @let project = this.project();
@@ -44,6 +48,8 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
         </div>
 
         <erp-task-management-project-fields [project]="project" />
+        <erp-task-management-project-workflow [project]="project" />
+        <erp-task-management-project-members [project]="project" />
         <erp-task-management-project-sla [project]="project" />
       </div>
     }

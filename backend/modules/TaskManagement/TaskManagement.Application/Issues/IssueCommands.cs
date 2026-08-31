@@ -297,7 +297,7 @@ public sealed class IssueSetStateCommand : ICommand<Guid>, IAggregateCommand
 /// Techniczna migracja po publikacji schematu. Idzie przez <c>BatchEndpointBase</c>, więc
 /// użytkownik widzi postęp i błędy pojedynczych zgłoszeń w zwykłej historii zadań.
 /// </summary>
-public sealed class IssueMigrateWorkflowStateCommand : ICommand<Guid>, IAggregateCommand
+public sealed class IssueExecStateMigrationCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }
     public Guid SchemeUuid { get; set; }
@@ -305,7 +305,7 @@ public sealed class IssueMigrateWorkflowStateCommand : ICommand<Guid>, IAggregat
     public Guid ToStateUuid { get; set; }
 }
 
-public sealed class IssueMigrateWorkflowStateCommandHandler : CommandHandler<IssueMigrateWorkflowStateCommand, Guid>
+public sealed class IssueExecStateMigrationCommandHandler : CommandHandler<IssueExecStateMigrationCommand, Guid>
 {
     private readonly IIssueRepository _repository;
     private readonly IWorkflowSchemeRepository _schemes;
@@ -313,10 +313,10 @@ public sealed class IssueMigrateWorkflowStateCommandHandler : CommandHandler<Iss
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
-    public IssueMigrateWorkflowStateCommandHandler(IIssueRepository repository, IWorkflowSchemeRepository schemes, IIssueActivityWriter activity, IExecutionContext executionContext, IClock clock)
+    public IssueExecStateMigrationCommandHandler(IIssueRepository repository, IWorkflowSchemeRepository schemes, IIssueActivityWriter activity, IExecutionContext executionContext, IClock clock)
         => (_repository, _schemes, _activity, _executionContext, _clock) = (repository, schemes, activity, executionContext, clock);
 
-    public override async Task<Guid> ExecuteAsync(IssueMigrateWorkflowStateCommand command, CancellationToken ct = default)
+    public override async Task<Guid> ExecuteAsync(IssueExecStateMigrationCommand command, CancellationToken ct = default)
     {
         var issue = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Issue), command.Uuid);

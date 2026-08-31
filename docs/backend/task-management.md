@@ -1,6 +1,6 @@
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: ✅ fazy 0–6 wdrożone; faza 7 📐 projekt.**
+**Stan: ✅ fazy 0–7 wdrożone.**
 Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
@@ -32,7 +32,24 @@ Doszła lista projektów (`/task-management/project`) i karta projektu z **zakł
 wybór schematu, definicje z widocznym mapowaniem na sloty, dodawanie pola z ostrzeżeniem
 o niezmienności slotu i usuwanie — odmawiane, gdy pole ma wartości na zgłoszeniach.
 
-Hierarchia i powiązania są wdrożone: `issue.parent_uuid`, `issue_link`, reguły cykli i tryb drzewa listy. Zlecenia mają już osobną listę `Intake`, własny domyślny automat (`zgłoszone → w realizacji → odebrane`) oraz relację `Delivery → Intake` utrzymującą `derived_delivery_state`. Odbiór jest jawnym przejściem z `required_permission`, zablokowanym dopóki wszystkie realizacje nie są `Done`. Projekt może mieć politykę SLA konfigurowaną na karcie, a skaner pod dzierżawą klastra wysyła dzienne eskalacje przeterminowanych, otwartych zgłoszeń. Sprinty pozostają w kolejce fazy 6.
+Hierarchia i powiązania są wdrożone: `issue.parent_uuid`, `issue_link`, reguły cykli i tryb drzewa listy. Zlecenia mają już osobną listę `Intake`, własny domyślny automat (`zgłoszone → w realizacji → odebrane`) oraz relację `Delivery → Intake` utrzymującą `derived_delivery_state`. Odbiór jest jawnym przejściem z `required_permission`, zablokowanym dopóki wszystkie realizacje nie są `Done`. Projekt może mieć politykę SLA konfigurowaną na karcie, a skaner pod dzierżawą klastra wysyła dzienne eskalacje przeterminowanych, otwartych zgłoszeń.
+
+Fazy 6 i 7 są wdrożone po obu stronach: sprinty z backlogiem i zamknięciem iteracji, edytor
+schematu stanów z migracją przy publikacji, zapisane widoki i `work_log`. Doszły do tego cztery
+rzeczy, których brakowało, żeby faza 7 miała komu oddać swoją pracę:
+
+- **`ProjectSetWorkflowScheme`** — do tej pory schemat stanów dawało się ustawić wyłącznie przy
+  zakładaniu projektu, więc dało się schemat założyć i opublikować, ale nie dało się go nikomu
+  przypisać ([§5.3](#53-zmiana-schematu-a-istniejące-zgłoszenia));
+- **`IssueSetProject`** — `Issue.MoveToProject` istniało w domenie od fazy 4 bez wołającego, przez
+  co `previous_keys` nigdy się nie zapełniały, a ścieżka odczytu po kluczu historycznym była
+  nieosiągalna ([§4](#4-klucz-czytelny-dev-123), [§12](#12-operacje-masowe));
+- **obserwatorzy** (`issue.watchers`) — zakresy „Obserwowane" i „Mojego zespołu" na liście
+  ([§10.1](#101-widoczność-liczona-po-projekcie));
+- **powiadomienia dla ludzi** — nowy komentarz, wzmianka i „zlecenie zrealizowane" idą przez
+  `UserNotificationRequested` ([§11](#11-historia-zmian-i-komentarze)); wcześniej jedynym
+  powiadomieniem z tego modułu była eskalacja SLA.
+
 Obrazki można osadzać w opisach i komentarzach: front wgrywa je jako `IssueAttachment`, pokazuje
 przez autoryzowany `blob:` i zapisuje w HTML trwały adres endpointu zawartości
 ([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
@@ -59,8 +76,8 @@ wyzwań — bierze cztery, których nie ma dziś nigdzie:
 | **Uporządkowana kolekcja** — ręczna kolejność kart, przestawiana przez drag&drop | ✅ `board_card.rank`, indeksowanie ułamkowe | [§7](#7-kolejność-na-tablicy) |
 | **Współbieżna edycja tej samej kolekcji** — dwie osoby przestawiają karty w tej samej chwili | ✅ identyczny rank u obojga, porządek `(rank, uuid)` | [§7.3](#73-współbieżność-i-echo-własnej-zmiany) |
 | **Konfiguracja per projekt** — inny zestaw pól i inny automat stanów w każdym projekcie | ✅ `FieldScheme` + sloty, `WorkflowScheme` | [§5](#5-automat-stanów-jako-dana), [§6](#6-pola-niestandardowe) |
-| **Graf między encjami tego samego agregatu** — hierarchia i powiązania, z wykrywaniem cykli | 🟡 jest precedens: `RoleGraphCycleRule` w Identity | [§8](#8-hierarchia-i-powiązania) |
-| **Zlecenie przechodzące przez granicę działu** z terminem i odbiorem | 📐 | [§9](#9-zlecenia-międzydziałowe) |
+| **Graf między encjami tego samego agregatu** — hierarchia i powiązania, z wykrywaniem cykli | ✅ `issue.parent_uuid`, `issue_link`, reguły cykli | [§8](#8-hierarchia-i-powiązania) |
+| **Zlecenie przechodzące przez granicę działu** z terminem i odbiorem | ✅ projekty `Intake`, `derived_delivery_state`, SLA i eskalacje | [§9](#9-zlecenia-międzydziałowe) |
 
 Wszystko poza tym (CQRS, outbox, `job`/`job_item`, SignalR, `ProblemDetails`, idempotencja
 `X-Request-Id`, walidacja wsadowa) jest **ponownym użyciem** — nie piszemy nowej infrastruktury.
@@ -235,6 +252,14 @@ docelowego dla zgłoszeń, które w nim siedzą. Wykonuje ją istniejący mechan
 z sukcesem częściowym ([`bulk-commands.md`](./bulk-commands.md)) — bez nowego kodu, z widocznym
 postępem. Publikacja bez pełnego mapowania jest odrzucana walidacją, nie kończy się cichym
 osieroceniem zgłoszeń.
+
+**Przestawienie projektu na inny schemat** (`ProjectSetWorkflowScheme`) działa tak samo i z tego
+samego powodu: komenda sprawdza kompletność mapowania stanów zajętych przez zgłoszenia **tego**
+projektu, a doprowadzenie ich do stanów nowego schematu idzie osobnym zadaniem masowym.
+Kolejność jest odwrotna, niż podpowiada intuicja — **najpierw projekt, potem migracja** — bo
+zadanie migracyjne wybiera cele po `zgłoszenie → projekt → schemat`: dopóki projekt wskazuje stary
+schemat, filtr po nowym nie zwróciłby niczego. Migracja wewnątrz handlera odpadła z tego samego
+powodu, co wszędzie indziej w tym module: wciągałaby dowolnie wiele zgłoszeń do jednej transakcji.
 
 ### 5.4 Dlaczego nie silnik z DMS-u
 Zgłoszenie jest w **dokładnie jednym stanie** — to niezmiennik, na którym stoi cała tablica
@@ -453,7 +478,15 @@ project_member(project_uuid, user_uuid, role)   -- Viewer | Contributor | Lead
 ```
 
 Filtr listy to `project_uuid IN (select … from project_member where user_uuid = @me)` plus
-projekty publiczne w organizacji. To **join w SQL**, więc serwerowa paginacja i sortowanie
+projekty publiczne w organizacji. Zakres `MyProjects` („Mojego zespołu") to **ten sam predykat bez
+projektów publicznych** — zespołu jako osobnego bytu ten moduł nie ma ([§10.3](#103-struktura-organizacyjna--czego-tu-nie-ma)),
+a jego odpowiednikiem jest członkostwo w projekcie.
+
+**Obserwowanie nie jest dostępem.** `issue.watchers` to lista identyfikatorów na zgłoszeniu
+(nie tabela podrzędna — obserwacja nie ma własnych atrybutów, nikt po niej nie sortuje, a jedyne
+pytanie brzmi „czy zawiera mnie", stąd `uuid[]` z indeksem GIN, jak przy `previous_keys`).
+Zasila zakres „Obserwowane" i krąg odbiorców powiadomień; predykat widoczności obowiązuje bez
+zmian, więc dopisanie się do listy nie otwiera niczego, czego użytkownik i tak by nie zobaczył. To **join w SQL**, więc serwerowa paginacja i sortowanie
 działają — a to jest ten sam wymóg, który w DMS wymusił materializowany `document_acl`.
 
 Materializowanego ACL per zgłoszenie **tu nie ma**, bo liczba projektów jest o rzędy wielkości
@@ -503,7 +536,16 @@ Automatyczny skan nie zna znaczenia pól niestandardowych ani nie odróżnia zmi
 technicznej, więc zapis jest jawny — w komendzie, nie w infrastrukturze.
 
 Komentarze to osobna tabela z wątkowaniem jednopoziomowym i wzmiankami (`@user`), które
-generują zdarzenie → Notification. Edycja komentarza zachowuje poprzednią treść (przy sporze
+generują zdarzenie → Notification.
+
+**Wzmianka mieszka w treści, nie w osobnym polu komendy** (`<span data-mention-uuid="…">`, atrybut
+przechodzi przez sanitizer). Osobna lista odbiorców rozjechałaby się z tekstem przy pierwszej
+edycji: użytkownik kasuje „@Jan", a Jan nadal dostaje powiadomienia o wątku, w którym już nie
+występuje. Odbiorców powiadomienia o komentarzu ustala **ten moduł** — zgłaszający, przypisany,
+obserwujący i wprost wzmiankowani, zawsze bez autora — bo Notification nie wie, czym jest
+zgłoszenie ani kto się nim zajmuje. Wzmianka ma osobny `kind` od zwykłego komentarza, żeby dało
+się ustawić na niej inną preferencję. Zdarzenie idzie przez outbox w tej samej transakcji co
+komentarz: powiadomienie o wypowiedzi, której zapis się nie powiódł, jest gorsze niż jego brak. Edycja komentarza zachowuje poprzednią treść (przy sporze
 „ale on to napisał" liczy się oryginał).
 
 Praca zalogowana (`work_log`) — jedna tabela, agregowana do rodzica. Wchodzi w późnej fazie
@@ -521,7 +563,7 @@ Wpadają w istniejący kontrakt bez nowego mechanizmu — `BatchCommand<T,TFilte
 |---|---|
 | Zmiana stanu wielu zgłoszeń | Przejście dozwolone w schemacie, uprawnienie na przejściu, pola wymagane wypełnione |
 | Przypisanie / zmiana priorytetu / dodanie do sprintu | Członkostwo w projekcie, sprint aktywny lub planowany |
-| Przeniesienie do innego projektu | Zgodność schematu pól, mapowanie stanów, nadanie nowych kluczy |
+| Przeniesienie do innego projektu (`IssueSetProject`) | Nowy klucz z licznika projektu docelowego, stan wraca do początkowego stanu docelowego schematu, wartości pól własnych zostają w `custom_fields`; zgłoszenie z rodzicem jest odrzucane |
 | Migracja stanów po publikacji schematu ([§5.3](#53-zmiana-schematu-a-istniejące-zgłoszenia)) | Kompletność mapowania |
 
 Reguła „metoda agregatu waliduje **przed** zmianą stanu" obowiązuje jak wszędzie — na tym stoi
@@ -540,7 +582,7 @@ częściowy sukces.
 | 4 ✅ | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
 | 5 ✅ | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, lista zleceń, odbiór, polityka SLA na karcie projektu i dzienne eskalacje | Zlecenia przez granicę działu |
 | 6 ✅ | Sprinty, backlog, zamknięcie iteracji, operacje masowe na zgłoszeniach | Dojrzałość narzędzia |
-| 7 ✅ | Edytor schematu stanów, migracja stanów przy publikacji, zapisane widoki, `work_log` | Konfiguracja z UI, nie z seeda |
+| 7 ✅ | Edytor schematu stanów, migracja stanów przy publikacji, przypisanie schematu do projektu, zapisane widoki, `work_log`, obserwatorzy, przeniesienie między projektami, powiadomienia o komentarzach i wzmiankach | Konfiguracja z UI, nie z seeda |
 
 Faza 2 sama odpowiada na główne pytanie architektoniczne. Fazy 0–1 to fundament, reszta jest
 rozbudową.

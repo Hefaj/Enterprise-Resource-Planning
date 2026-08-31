@@ -52,7 +52,7 @@ interface MissingFieldControl {
 
       @for (item of controls(); track item.field.code) {
         @if (item.pickerConfig && item.field.dataType === USER_TYPE) {
-          <erp-user-picker [config]="{ label: item.field.name }" [control]="item.control" />
+          <erp-user-picker [config]="{ label: item.field.nameKey ?? item.field.name }" [control]="item.control" />
         } @else if (item.pickerConfig) {
           <erp-input-picker [config]="item.pickerConfig" [control]="item.control" />
         } @else if (item.inputConfig) {
@@ -145,7 +145,7 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
         control,
         pickerConfig: ErpInputPickerBuilder.create((b) =>
           b
-            .setLabel(field.name)
+            .setLabel(field.nameKey ?? field.name)
             .setItems(field.options.map((option) => ({ value: option, label: option })))
             .setLabelKey('label')
             .setValueKey('value')
@@ -158,7 +158,7 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
       field,
       control,
       inputConfig: ErpInputBuilder.create((b) =>
-        b.setLabel(field.name).setPlaceholder(this._placeholder(field))),
+        b.setLabel(field.nameKey ?? field.name).setPlaceholder(this._placeholder(field))),
     };
   }
 

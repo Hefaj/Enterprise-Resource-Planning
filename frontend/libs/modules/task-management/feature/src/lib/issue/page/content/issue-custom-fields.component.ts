@@ -65,7 +65,7 @@ interface CustomFieldControl {
         <div class="flex flex-col gap-3">
           @for (item of this.controls(); track item.field.code) {
             @if (item.pickerConfig && item.field.dataType === USER_TYPE) {
-              <erp-user-picker [config]="{ label: item.field.name }" [control]="item.control" />
+              <erp-user-picker [config]="{ label: item.field.nameKey ?? item.field.name }" [control]="item.control" />
             } @else if (item.pickerConfig) {
               <erp-input-picker [config]="item.pickerConfig" [control]="item.control" />
             } @else if (item.inputConfig) {
@@ -138,7 +138,7 @@ export class IssueCustomFieldsComponent {
         control,
         pickerConfig: ErpInputPickerBuilder.create((b) =>
           b
-            .setLabel(field.name)
+            .setLabel(field.nameKey ?? field.name)
             .setItems(field.options.map((option) => ({ value: option, label: option })))
             .setLabelKey('label')
             .setValueKey('value')
@@ -157,7 +157,7 @@ export class IssueCustomFieldsComponent {
           // i tak samo waliduje je backend (`task-management.md` §6). Pole liczbowe z własnym
           // typem HTML wymagałoby `erp-input-number`, a wtedy „8.5" i „8,5" zaczęłyby zależeć
           // od ustawień przeglądarki.
-          .setLabel(field.name)
+          .setLabel(field.nameKey ?? field.name)
           .setPlaceholder(this._placeholder(field)),
       ),
     };

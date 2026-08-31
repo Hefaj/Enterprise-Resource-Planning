@@ -41,7 +41,8 @@
     "fixVersion": "Wersja naprawcza",
     "startedOn": "Rozpoczęto",
     "reviewer": "Recenzent",
-    "notes": "Notatki"
+    "notes": "Notatki",
+    "resolution": "Rozwiązanie"
   },
   "issueTypeCategory": {
     "epic": "Epik",

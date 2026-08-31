@@ -195,14 +195,18 @@ export class IssueFilterComponent implements OnInit {
    * i nie ma tu zakresów — te wejdą razem z zapisanymi widokami (faza 7). */
   private _addCustomFieldFilter(builder: ErpFilterBuilder, field: ProjectFieldDto): void {
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.User) {
-      builder.addFormField(field.code, 'inputPicker', erpUserPickerField(this._directory, { label: field.name }));
+      builder.addFormField(
+        field.code,
+        'inputPicker',
+        erpUserPickerField(this._directory, { label: field.nameKey ?? field.name }),
+      );
       return;
     }
 
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.Select) {
       builder.addFormField(field.code, 'inputPicker', (f) =>
         f
-          .setLabel(field.name)
+          .setLabel(field.nameKey ?? field.name)
           .setItems(field.options.map((option) => ({ value: option, label: option })))
           .setLabelKey('label')
           .setValueKey('value')
@@ -211,7 +215,7 @@ export class IssueFilterComponent implements OnInit {
       return;
     }
 
-    builder.addFormField(field.code, 'text', (f) => f.setLabel(field.name));
+    builder.addFormField(field.code, 'text', (f) => f.setLabel(field.nameKey ?? field.name));
   }
 
   /** Projektów są dziesiątki, nie tysiące — jedno pobranie na wejście na stronę wystarcza,

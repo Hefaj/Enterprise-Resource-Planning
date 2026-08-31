@@ -41,7 +41,8 @@
     "fixVersion": "Fix version",
     "startedOn": "Started on",
     "reviewer": "Reviewer",
-    "notes": "Notes"
+    "notes": "Notes",
+    "resolution": "Resolution"
   },
   "issueTypeCategory": {
     "epic": "Epic",

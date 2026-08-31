@@ -47,6 +47,7 @@ export const TASKMANAGEMENT_KEYS = {
       startedOn: 'taskManagement.fields.startedOn',
       reviewer: 'taskManagement.fields.reviewer',
       notes: 'taskManagement.fields.notes',
+      resolution: 'taskManagement.fields.resolution',
     },
     issueTypeCategory: {
       epic: 'taskManagement.issueTypeCategory.epic',

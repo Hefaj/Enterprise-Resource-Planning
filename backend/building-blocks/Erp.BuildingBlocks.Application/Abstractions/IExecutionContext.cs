@@ -36,6 +36,24 @@ public interface IExecutionContext
     /// a jego elementy mają własną ochronę przed powtórzeniem w <c>job_item.status</c>.</para>
     /// </summary>
     string? RequestId { get; }
+
+    /// <summary>
+    /// Efektywne kody uprawnień wołającego, dokładnie te, które <c>PermissionClaimsTransformation</c>
+    /// dokłada do <c>ClaimsPrincipal</c> żądania (patrz <c>Erp.BuildingBlocks.Api.Auth</c>).
+    ///
+    /// <para>Istnieje po to, żeby reguła wsadowa (<c>IBatchRule&lt;T&gt;</c>) mogła sprawdzić
+    /// dynamiczny <c>required_permission</c> zapisany na danych (np. na krawędzi przejścia
+    /// automatu stanów w Task Management) — czego statyczny atrybut <c>Permissions(...)</c>
+    /// endpointu nie umie, bo nie zna wymaganego kodu w chwili kompilacji. Sprawdzenie musi
+    /// biec w pre-checku (żądanie HTTP), NIE w <c>BulkCommandRunner</c>: wykonanie chunka dzieje
+    /// się później, w tle, bez ClaimsPrincipal — patrz <c>docs/backend/batch-validation.md</c>.</para>
+    ///
+    /// <para><b>Puste przy wykonaniu w tle</b>, z tego samego powodu co <see cref="RequestId"/>
+    /// — <c>BulkCommandRunner</c> odtwarza kontekst zleceniodawcy z wiersza <c>job</c>, który nie
+    /// niesie uprawnień. Handler komendy NIE ma więc jak dynamicznie sprawdzić uprawnienia do
+    /// przejścia przy faktycznym wykonaniu — to świadoma granica tego mechanizmu, nie przeoczenie.</para>
+    /// </summary>
+    IReadOnlyCollection<string> Permissions { get; }
 }
 
 /// <summary>
@@ -57,12 +75,21 @@ public sealed class MutableExecutionContext : IExecutionContext
     /// <inheritdoc />
     public string? RequestId { get; private set; }
 
+    /// <inheritdoc />
+    public IReadOnlyCollection<string> Permissions { get; private set; } = [];
+
     /// <summary>Ustawia kontekst wykonania dla bieżącego scope'u.</summary>
-    public void Set(string? userId, string? clientId, Guid? correlationId = null, string? requestId = null)
+    public void Set(
+        string? userId,
+        string? clientId,
+        Guid? correlationId = null,
+        string? requestId = null,
+        IReadOnlyCollection<string>? permissions = null)
     {
         UserId = userId;
         ClientId = clientId;
         CorrelationId = correlationId ?? Guid.CreateVersion7();
         RequestId = requestId;
+        Permissions = permissions ?? [];
     }
 }

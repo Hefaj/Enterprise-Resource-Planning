@@ -241,6 +241,13 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
   public isPending(cardUuid: string): boolean {
     return this._pendingCardUuids.has(cardUuid);
   }
+
+  /** Pomija odświeżenie SignalR dla karty, dla której leci własna, jeszcze niepotwierdzona
+   * komenda — bez tego echo własnego ruchu przestawiałoby kartę pod kursorem w trakcie
+   * przeciągania (§7.3). */
+  protected override shouldSkipSignalRRefresh(cardUuid: string): boolean {
+    return this.isPending(cardUuid);
+  }
 }
 
 /**

@@ -378,6 +378,7 @@
       "taskmgmtProjectNameEmpty": "Project name cannot be empty.",
       "taskmgmtProjectWorkflowSchemeEmpty": "A project must point at a workflow scheme.",
       "taskmgmtTransitionNotAllowed": "This transition does not exist in the project's workflow scheme.",
+      "taskmgmtTransitionForbidden": "You don't have permission to perform this transition.",
       "taskmgmtRequestDeliveryIncomplete": "The request cannot be accepted until all of its deliveries are complete.",
       "taskmgmtTransitionUnknownState": "The requested state does not belong to the project's scheme.",
       "taskmgmtWorkflowSchemeNameEmpty": "Workflow scheme name cannot be empty.",

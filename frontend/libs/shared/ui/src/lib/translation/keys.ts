@@ -383,6 +383,7 @@ export const SHARED_KEYS = {
         taskmgmtProjectNameEmpty: 'shared.errors.codes.taskmgmtProjectNameEmpty',
         taskmgmtProjectWorkflowSchemeEmpty: 'shared.errors.codes.taskmgmtProjectWorkflowSchemeEmpty',
         taskmgmtTransitionNotAllowed: 'shared.errors.codes.taskmgmtTransitionNotAllowed',
+        taskmgmtTransitionForbidden: 'shared.errors.codes.taskmgmtTransitionForbidden',
         taskmgmtRequestDeliveryIncomplete: 'shared.errors.codes.taskmgmtRequestDeliveryIncomplete',
         taskmgmtTransitionUnknownState: 'shared.errors.codes.taskmgmtTransitionUnknownState',
         taskmgmtWorkflowSchemeNameEmpty: 'shared.errors.codes.taskmgmtWorkflowSchemeNameEmpty',

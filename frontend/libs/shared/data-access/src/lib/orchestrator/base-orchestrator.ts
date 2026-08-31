@@ -308,6 +308,18 @@ export abstract class BaseOrchestrator<
     return {};
   }
 
+  /**
+   * Nadpisz, aby pominąć odświeżenie KONKRETNEGO uuid mimo przyjścia zdarzenia SignalR dla
+   * niego — np. gdy dla tej karty leci jeszcze własna, niepotwierdzona komenda i odświeżenie
+   * przestawiłoby ją pod kursorem w trakcie przeciągania
+   * (`TaskManagementBoardOrchestrator.isPending`, `docs/backend/task-management.md` §7.3).
+   * Domyślnie: nic nie pomijamy.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected shouldSkipSignalRRefresh(_uuid: string): boolean {
+    return false;
+  }
+
   // ────────────────────────────────────────────────────────────────
   // Wewnętrzne: Aktualizacje w czasie rzeczywistym SignalR
   // ────────────────────────────────────────────────────────────────
@@ -339,8 +351,11 @@ export abstract class BaseOrchestrator<
   }
 
   private async _handleSignalRUpdate(uuids: string[]): Promise<void> {
-    // Odświeżaj tylko te agregaty, które aktualnie mamy w cache
-    const cachedUuids = uuids.filter(uuid => this.identityMap.has(uuid));
+    // Odświeżaj tylko te agregaty, które aktualnie mamy w cache i których podklasa nie każe
+    // pominąć (echo własnej, jeszcze niepotwierdzonej zmiany — `shouldSkipSignalRRefresh`).
+    const cachedUuids = uuids.filter(
+      uuid => this.identityMap.has(uuid) && !this.shouldSkipSignalRRefresh(uuid),
+    );
     if (cachedUuids.length === 0) return;
 
     // Zapobiegaj zduplikowanym próbom odświeżenia

@@ -378,6 +378,7 @@
       "taskmgmtProjectNameEmpty": "Nazwa projektu nie może być pusta.",
       "taskmgmtProjectWorkflowSchemeEmpty": "Projekt musi wskazywać schemat stanów.",
       "taskmgmtTransitionNotAllowed": "To przejście nie istnieje w schemacie stanów projektu.",
+      "taskmgmtTransitionForbidden": "Nie masz uprawnienia do wykonania tego przejścia.",
       "taskmgmtRequestDeliveryIncomplete": "Nie można odebrać zlecenia, dopóki wszystkie jego realizacje nie są zakończone.",
       "taskmgmtTransitionUnknownState": "Wskazany stan nie należy do schematu projektu.",
       "taskmgmtWorkflowSchemeNameEmpty": "Nazwa schematu stanów nie może być pusta.",

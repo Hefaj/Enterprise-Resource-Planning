@@ -1,3 +1,4 @@
+using Erp.BuildingBlocks.Api.Auth;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.AspNetCore.Http;
 
@@ -63,11 +64,20 @@ public sealed class ExecutionContextMiddleware
 
             var requestId = Trimmed(context.Request.Headers[RequestIdHeader].ToString());
 
+            // Claimy `permissions` są już na `context.User` — `PermissionClaimsTransformation`
+            // biegnie w ramach uwierzytelnienia, PRZED tym middleware'em. Zero dodatkowego
+            // zapytania do Identity: to ten sam odczyt, którego FastEndpoints użyje za chwilę
+            // do statycznego `Permissions(...)` na endpoincie.
+            var permissions = context.User.FindAll(PermissionClaimsTransformation.PermissionsClaimType)
+                .Select(claim => claim.Value)
+                .ToArray();
+
             mutable.Set(
                 userId,
                 clientId,
                 correlationId,
-                requestId?.Length <= MaxRequestIdLength ? requestId : null);
+                requestId?.Length <= MaxRequestIdLength ? requestId : null,
+                permissions);
         }
 
         await _next(context).ConfigureAwait(false);

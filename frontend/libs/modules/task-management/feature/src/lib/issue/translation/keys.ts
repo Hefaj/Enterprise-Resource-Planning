@@ -49,8 +49,11 @@ export const ISSUE_KEYS = {
         deliveryState: 'issue.table.columns.deliveryState',
         dueAt: 'issue.table.columns.dueAt',
         updatedAt: 'issue.table.columns.updatedAt',
+        overdue: 'issue.table.columns.overdue',
       },
       unassigned: 'issue.table.unassigned',
+      overdueYes: 'issue.table.overdueYes',
+      overdueNo: 'issue.table.overdueNo',
     },
     commands: {
       open: {

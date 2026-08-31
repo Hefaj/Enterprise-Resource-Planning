@@ -43,9 +43,12 @@
       "assignee": "Przypisany",
       "deliveryState": "Realizacja",
       "dueAt": "Termin",
-      "updatedAt": "Zmodyfikowano"
+      "updatedAt": "Zmodyfikowano",
+      "overdue": "Po terminie"
     },
-    "unassigned": "—"
+    "unassigned": "—",
+    "overdueYes": "Tak",
+    "overdueNo": "Nie"
   },
   "commands": {
     "open": {

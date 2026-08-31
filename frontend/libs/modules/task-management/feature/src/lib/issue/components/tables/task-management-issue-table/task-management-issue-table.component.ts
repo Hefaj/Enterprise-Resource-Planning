@@ -212,15 +212,29 @@ export class TaskManagementIssueTableComponent {
       });
 
     if (this.filters().projectKind === PROJECT_KIND.Intake) {
-      builder.addColumn((column) =>
-        column
-          .setId('derivedDeliveryState')
-          .setAccessorFn((row) => this._deliveryStateLabel(row))
-          .setHeader(ISSUE_KEYS.table.columns.deliveryState)
-          .setEnableSorting(false)
-          .setSize(160)
-          .setGrow(0),
-      );
+      builder
+        .addColumn((column) =>
+          column
+            .setId('derivedDeliveryState')
+            .setAccessorFn((row) => this._deliveryStateLabel(row))
+            .setHeader(ISSUE_KEYS.table.columns.deliveryState)
+            .setEnableSorting(false)
+            .setSize(160)
+            .setGrow(0),
+        )
+        // Zlecenie „po terminie" — termin zlecenia minął, a samo zlecenie (nie realizacja)
+        // nie jest jeszcze zamknięte. Liczone lokalnie z `dueAt` + `stateCategory`, które
+        // wiersz ma już na pokładzie — bez tego jedna kolumna wymagałaby osobnego zapytania
+        // (`docs/frontend/task-management-pages.md` §3.1).
+        .addColumn((column) =>
+          column
+            .setId('overdue')
+            .setAccessorFn((row) => this._overdueLabel(row))
+            .setHeader(ISSUE_KEYS.table.columns.overdue)
+            .setEnableSorting(false)
+            .setSize(110)
+            .setGrow(0),
+        );
     }
 
     // Kolumny projekto-specyficzne dokładamy po wspólnych — pętlą, a nie w łańcuchu, bo ich
@@ -329,6 +343,13 @@ export class TaskManagementIssueTableComponent {
       default:
         return this._transloco.translate(ISSUE_KEYS.table.noDelivery);
     }
+  }
+
+  /** Termin zlecenia minął, a samo zlecenie nie jest jeszcze `Done` — niezależne od tego, w
+   * jakim stanie jest realizacja u wykonawcy (§3.1). */
+  private _overdueLabel(row: IssueVM): string {
+    const overdue = !!row.dueAt && row.stateCategory !== WORKFLOW_STATE_CATEGORY.Done && new Date(row.dueAt) < new Date();
+    return this._transloco.translate(overdue ? ISSUE_KEYS.table.overdueYes : ISSUE_KEYS.table.overdueNo);
   }
 
   private _toSorts(tableState: ErpTableState | null): SortOption[] | undefined {

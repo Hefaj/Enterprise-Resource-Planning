@@ -22,7 +22,9 @@ namespace Erp.BuildingBlocks.Api.Auth;
 /// </summary>
 public sealed class PermissionClaimsTransformation : IClaimsTransformation
 {
-    private const string PermissionsClaimType = "permissions";
+    /// <summary>Publiczny, bo <c>ExecutionContextMiddleware</c> czyta ten sam typ claimu, żeby
+    /// wypełnić <c>IExecutionContext.Permissions</c> bez drugiego, rozjeżdżającego się literału.</summary>
+    internal const string PermissionsClaimType = "permissions";
     private const string LoadedMarkerClaimType = "erp_permissions_loaded";
 
     private readonly IPermissionProvider _permissionProvider;

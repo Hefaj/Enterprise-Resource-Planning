@@ -43,9 +43,12 @@
       "assignee": "Assignee",
       "deliveryState": "Delivery",
       "dueAt": "Due",
-      "updatedAt": "Updated"
+      "updatedAt": "Updated",
+      "overdue": "Overdue"
     },
-    "unassigned": "—"
+    "unassigned": "—",
+    "overdueYes": "Yes",
+    "overdueNo": "No"
   },
   "commands": {
     "open": {

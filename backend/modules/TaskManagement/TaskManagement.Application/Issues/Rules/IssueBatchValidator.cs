@@ -14,11 +14,34 @@ public sealed class IssueBatchValidator : IBatchValidator
 {
     private readonly IssueParentCycleRule _parentCycle;
     private readonly IssueLinkCycleRule _linkCycle;
+    private readonly IssueTransitionPermissionRule _transitionPermission;
 
-    public IssueBatchValidator(IssueParentCycleRule parentCycle, IssueLinkCycleRule linkCycle)
+    public IssueBatchValidator(
+        IssueParentCycleRule parentCycle,
+        IssueLinkCycleRule linkCycle,
+        IssueTransitionPermissionRule transitionPermission)
     {
         _parentCycle = parentCycle;
         _linkCycle = linkCycle;
+        _transitionPermission = transitionPermission;
+    }
+
+    /// <summary>Pre-check masowej (w tym jednoelementowej) zmiany stanu: krawędź niosąca
+    /// <c>required_permission</c> odrzuca wołającego, który tego kodu nie ma
+    /// (<c>docs/backend/task-management.md</c> §5.2, §12).</summary>
+    public async Task<ValidationTracker> ValidateSetStateAsync(
+        IReadOnlyList<BatchTarget<IssueSetStateCommand>> targets,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+
+        var tracker = new ValidationTracker();
+
+        await _transitionPermission
+            .ExecuteAsync(targets, t => t.AggregateUuid, tracker, cancellationToken)
+            .ConfigureAwait(false);
+
+        return tracker;
     }
 
     /// <summary>Pre-check masowej zmiany rodzica: żadna z krawędzi — ani osobno, ani łącznie

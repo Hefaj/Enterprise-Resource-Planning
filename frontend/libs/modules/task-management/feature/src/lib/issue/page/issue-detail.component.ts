@@ -6,10 +6,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { TUI_EDITOR_VALUE_TRANSFORMER, TUI_IMAGE_LOADER, TuiEditorTool } from '@taiga-ui/editor';
 
-import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpTranslatePipe, erpRichTextToolset } from '@erp/shared/ui';
+import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpModalService, ErpRichTextBuilder, ErpRichTextComponent, ErpRichTextConfig, ErpTranslatePipe, erpRichTextToolset } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
-import { IssueVM, ProjectWorkflowService, TaskManagementIssueOrchestrator, WorkflowTransitionDto } from '@erp/task-management/data-access';
-import { ISSUE_PRIORITY, PROJECT_KIND, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
+import { IssueVM, ProjectFieldProfileService, ProjectWorkflowService, TaskManagementIssueOrchestrator, WorkflowTransitionDto } from '@erp/task-management/data-access';
+import { ISSUE_PRIORITY, ISSUE_SET_STATE_MODAL_ID, PROJECT_KIND, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
@@ -241,6 +241,8 @@ export class IssueDetailComponent {
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
   private readonly _watching = signal(false);
   private readonly _workflow = inject(ProjectWorkflowService);
+  private readonly _fields = inject(ProjectFieldProfileService);
+  private readonly _modals = inject(ErpModalService);
   private readonly _richTextImages = inject(IssueRichTextImagesService);
   private readonly _permissionStore = inject(PermissionStore);
   private readonly _router = inject(Router);
@@ -338,7 +340,7 @@ export class IssueDetailComponent {
             this.isRequest()
             && workflow?.states.find((state) => state.uuid === transition.toStateUuid)?.category === WORKFLOW_STATE_CATEGORY.Done
             && issue.derivedDeliveryState !== WORKFLOW_STATE_CATEGORY.Done,
-          fn: (): Promise<void> => this._applyTransition(issue.uuid, transition.toStateUuid),
+          fn: (): Promise<void> => this._applyTransition(issue.uuid, issue.projectUuid, transition),
         } satisfies ErpButtonConfig,
       }));
   });
@@ -491,9 +493,31 @@ export class IssueDetailComponent {
     }
   }
 
-  private async _applyTransition(uuid: string, stateUuid: string): Promise<void> {
+  /**
+   * Wykonuje przejście wybrane w panelu bocznym.
+   *
+   * <p>Przejście niosące <c>requiredFieldCodes</c> otwiera ten sam modal, co masowa zmiana
+   * stanu z listy i przeciągnięcie na tablicy — bez tego backend odrzuciłby komendę błędem,
+   * którego karta nie miałaby jak pokazać jako formularza (`docs/backend/task-management.md`
+   * §5.2, `docs/frontend/task-management-pages.md` §2.2).</p>
+   */
+  private async _applyTransition(uuid: string, projectUuid: string, transition: WorkflowTransitionDto): Promise<void> {
     try {
-      await this._orchestrator.setStateAsync({ uuid, stateUuid });
+      const requiredCodes = transition.requiredFieldCodes ?? [];
+
+      if (requiredCodes.length > 0) {
+        const profile = await this._fields.loadAsync(projectUuid);
+        const requiredFields = profile?.fields.filter((field) => requiredCodes.includes(field.code)) ?? [];
+        const modal = await this._modals.open(
+          ISSUE_SET_STATE_MODAL_ID,
+          { targetUuids: [uuid], templateCommand: { stateUuid: transition.toStateUuid } },
+          { targetCount: 1, projectUuid, requiredFields },
+        );
+        await modal.closed;
+        return;
+      }
+
+      await this._orchestrator.setStateAsync({ uuid, stateUuid: transition.toStateUuid });
     } catch (error) {
       console.error('[IssueDetailComponent] Nie udało się zmienić stanu zgłoszenia.', error);
     }

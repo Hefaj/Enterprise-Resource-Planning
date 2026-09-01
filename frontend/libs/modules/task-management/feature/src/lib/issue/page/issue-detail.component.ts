@@ -317,7 +317,7 @@ export class IssueDetailComponent {
   protected readonly descriptionEditorConfig = computed<ErpRichTextConfig>(() =>
     ErpRichTextBuilder.create((b) =>
       b
-        .setToolset('standard')
+        .setToolset('full')
         .setMinHeight(220)
         .setPlaceholder(ISSUE_KEYS.detail.description.placeholder)
         .setUploadImage(this._descriptionUploadPort),

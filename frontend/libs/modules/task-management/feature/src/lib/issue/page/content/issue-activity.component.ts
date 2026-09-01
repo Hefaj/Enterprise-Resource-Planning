@@ -132,7 +132,7 @@ export class IssueActivityComponent {
 
   protected readonly composerConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
     b
-      .setToolset('basic')
+      .setToolset('full')
       .setMinHeight(120)
       .setPlaceholder(ISSUE_KEYS.detail.comments.placeholder)
       .setUploadImage(this._commentUploadPort),
@@ -140,7 +140,7 @@ export class IssueActivityComponent {
 
   protected readonly replyConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
     b
-      .setToolset('basic')
+      .setToolset('full')
       .setMinHeight(100)
       .setPlaceholder(ISSUE_KEYS.detail.comments.replyPlaceholder)
       .setUploadImage(this._commentUploadPort),
@@ -148,7 +148,7 @@ export class IssueActivityComponent {
 
   protected readonly editConfig: ErpRichTextConfig = ErpRichTextBuilder.create((b) =>
     b
-      .setToolset('basic')
+      .setToolset('full')
       .setMinHeight(100)
       .setPlaceholder(ISSUE_KEYS.detail.comments.placeholder)
       .setUploadImage(this._commentUploadPort),

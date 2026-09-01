@@ -525,14 +525,17 @@ export class ErpInputPickerComponent implements ControlValueAccessor, TuiItemsHa
     });
 
     effect(() => {
-      const isDisabled = unwrapSignal(this.config().disabled);
+      const isDisabled = unwrapSignal(this.config().disabled) ?? false;
       untracked(() => {
+        const ctrl = this.activeControl();
+        if (ctrl.disabled === isDisabled) return;
+
         if (isDisabled) {
-          this.activeControl().disable({ emitEvent: false });
+          ctrl.disable({ emitEvent: false });
           this.comboControl.disable({ emitEvent: false });
           this.multiControl.disable({ emitEvent: false });
         } else {
-          this.activeControl().enable({ emitEvent: false });
+          ctrl.enable({ emitEvent: false });
           this.comboControl.enable({ emitEvent: false });
           this.multiControl.enable({ emitEvent: false });
         }
@@ -751,7 +754,8 @@ export class ErpInputPickerComponent implements ControlValueAccessor, TuiItemsHa
     this.stateTrigger.update(v => v + 1);
   }
 
-  protected readonly _items = computed(() => unwrapSignal(this.config().items) ?? []);
+  private static readonly _EMPTY: readonly any[] = [];
+  protected readonly _items = computed(() => unwrapSignal(this.config().items) ?? ErpInputPickerComponent._EMPTY);
   protected readonly _searchFn = computed(() => unwrapSignal(this.config().searchFn));
   protected readonly _getFn = computed(() => unwrapSignal(this.config().getFn));
   protected readonly _pageSize = computed(() => unwrapSignal(this.config().pageSize) ?? 50);

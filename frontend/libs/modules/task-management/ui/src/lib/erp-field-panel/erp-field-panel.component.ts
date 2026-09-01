@@ -42,18 +42,18 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
             </span>
           } @else {
             <div class="erp-field-panel__transitions">
-              @for (transition of this.transitions(); track transition.id) {
-                <erp-button [config]="this.transitionButton(transition.id, transition.labelKey)" />
+              @for (transition of this.transitionButtons(); track transition.id) {
+                <erp-button [config]="transition.config" />
               }
             </div>
           }
         }
       </section>
 
-      @if (this.typeOptions(); as options) {
+      @if (this.typePickerConfig(); as config) {
         <section class="erp-field-panel__section">
           <erp-input-picker
-            [config]="this.typePickerConfig(options)"
+            [config]="config"
             [control]="this.typeControl"
           />
         </section>
@@ -170,6 +170,29 @@ export class ErpFieldPanelComponent {
   protected readonly typeEditable = computed(() => unwrapSignal(this.config().typeEditable) ?? true);
   protected readonly rows = computed(() => unwrapSignal(this.config().rows) ?? []);
 
+  protected readonly typePickerConfig = computed<ErpInputPickerConfig | undefined>(() => {
+    const options = this.typeOptions();
+    if (!options) {
+      return undefined;
+    }
+
+    return ErpInputPickerBuilder.create((b) =>
+      b
+        .setLabel(TASKMANAGEMENT_KEYS.fieldPanel.type)
+        .setItems(options)
+        .setLabelKey('label')
+        .setValueKey('value')
+        .setStrategy('single'),
+    );
+  });
+
+  protected readonly transitionButtons = computed(() =>
+    this.transitions().map((transition) => ({
+      id: transition.id,
+      config: this._buildTransitionButton(transition.id, transition.labelKey),
+    })),
+  );
+
   protected readonly typeControl = new FormControl<string | null>(null);
 
   public constructor() {
@@ -195,18 +218,7 @@ export class ErpFieldPanelComponent {
     });
   }
 
-  protected typePickerConfig(options: readonly { value: string; label: string }[]): ErpInputPickerConfig {
-    return ErpInputPickerBuilder.create((b) =>
-      b
-        .setLabel(TASKMANAGEMENT_KEYS.fieldPanel.type)
-        .setItems(options)
-        .setLabelKey('label')
-        .setValueKey('value')
-        .setStrategy('single'),
-    );
-  }
-
-  protected transitionButton(id: string, labelKey: string): ErpButtonConfig {
+  private _buildTransitionButton(id: string, labelKey: string): ErpButtonConfig {
     return {
       label: labelKey,
       appearance: 'secondary',

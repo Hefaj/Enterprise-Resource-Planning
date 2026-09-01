@@ -12,6 +12,7 @@ import {
   ErpInputPickerConfig,
   ErpTranslatePipe,
   ErpUserPickerComponent,
+  ErpUserPickerConfig,
 } from '@erp/shared/ui';
 import {
   IssueVM,
@@ -30,6 +31,7 @@ interface CustomFieldControl {
   readonly control: FormControl<string | null>;
   readonly inputConfig?: ErpInputConfig;
   readonly pickerConfig?: ErpInputPickerConfig;
+  readonly userPickerConfig?: ErpUserPickerConfig;
 }
 
 /**
@@ -64,8 +66,8 @@ interface CustomFieldControl {
 
         <div class="flex flex-col gap-3">
           @for (item of this.controls(); track item.field.code) {
-            @if (item.pickerConfig && item.field.dataType === USER_TYPE) {
-              <erp-user-picker [config]="{ label: item.field.nameKey ?? item.field.name }" [control]="item.control" />
+            @if (item.userPickerConfig) {
+              <erp-user-picker [config]="item.userPickerConfig" [control]="item.control" />
             } @else if (item.pickerConfig) {
               <erp-input-picker [config]="item.pickerConfig" [control]="item.control" />
             } @else if (item.inputConfig) {
@@ -84,7 +86,6 @@ interface CustomFieldControl {
 })
 export class IssueCustomFieldsComponent {
   protected readonly ISSUE_KEYS = ISSUE_KEYS;
-  protected readonly USER_TYPE = CUSTOM_FIELD_DATA_TYPE.User;
 
   private readonly _fields = inject(ProjectFieldProfileService);
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
@@ -128,8 +129,7 @@ export class IssueCustomFieldsComponent {
     const control = new FormControl<string | null>(value);
 
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.User) {
-      // Konfiguracja pickera osoby powstaje w szablonie — komponent sam zna katalog.
-      return { field, control, pickerConfig: {} as ErpInputPickerConfig };
+      return { field, control, userPickerConfig: { label: field.nameKey ?? field.name } };
     }
 
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.Select) {

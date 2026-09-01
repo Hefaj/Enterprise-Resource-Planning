@@ -165,12 +165,15 @@ export class ErpInputComponent implements ControlValueAccessor {
     });
 
     effect(() => {
-      const isDisabled = unwrapSignal(this.config().disabled);
+      const isDisabled = unwrapSignal(this.config().disabled) ?? false;
       untracked(() => {
+        const ctrl = this.activeControl();
+        if (ctrl.disabled === isDisabled) return;
+
         if (isDisabled) {
-          this.activeControl().disable({ emitEvent: false });
+          ctrl.disable({ emitEvent: false });
         } else {
-          this.activeControl().enable({ emitEvent: false });
+          ctrl.enable({ emitEvent: false });
         }
         this.stateTrigger.update(v => v + 1);
       });

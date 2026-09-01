@@ -11,6 +11,7 @@ import {
   ErpModalStepBase,
   ErpTranslatePipe,
   ErpUserPickerComponent,
+  ErpUserPickerConfig,
 } from '@erp/shared/ui';
 import { ProjectFieldDto, ProjectFieldProfileService } from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE } from '@erp/task-management/util';
@@ -26,6 +27,7 @@ interface MissingFieldControl {
   readonly control: FormControl<string | null>;
   readonly inputConfig?: ErpInputConfig;
   readonly pickerConfig?: ErpInputPickerConfig;
+  readonly userPickerConfig?: ErpUserPickerConfig;
 }
 
 /**
@@ -51,8 +53,8 @@ interface MissingFieldControl {
       </p>
 
       @for (item of controls(); track item.field.code) {
-        @if (item.pickerConfig && item.field.dataType === USER_TYPE) {
-          <erp-user-picker [config]="{ label: item.field.nameKey ?? item.field.name }" [control]="item.control" />
+        @if (item.userPickerConfig) {
+          <erp-user-picker [config]="item.userPickerConfig" [control]="item.control" />
         } @else if (item.pickerConfig) {
           <erp-input-picker [config]="item.pickerConfig" [control]="item.control" />
         } @else if (item.inputConfig) {
@@ -68,7 +70,6 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
   WorkflowRequiredFieldsMetadata
 > {
   protected readonly ISSUE_KEYS = ISSUE_KEYS;
-  protected readonly USER_TYPE = CUSTOM_FIELD_DATA_TYPE.User;
 
   protected readonly controls = signal<MissingFieldControl[]>([]);
 
@@ -136,7 +137,7 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
     });
 
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.User) {
-      return { field, control, pickerConfig: {} as ErpInputPickerConfig };
+      return { field, control, userPickerConfig: { label: field.nameKey ?? field.name } };
     }
 
     if (field.dataType === CUSTOM_FIELD_DATA_TYPE.Select) {

@@ -2,9 +2,12 @@ import { TemplateRef } from '@angular/core';
 
 import { MaybeSignal } from '@erp/shared/ui';
 
-/** Filtr strumienia — `Czas` istnieje już teraz (kolumna filtra), mimo że rejestracja czasu
- * wchodzi dopiero w fazie 6; filtr po prostu nie pokazuje w tej kategorii nic, dopóki jej nie ma. */
-export type ErpActivityStreamFilter = 'all' | 'comments' | 'history' | 'time';
+/** Kategoria wpisu do zaznaczenia w filtrze — wielokrotny wybór (`docs/frontend/task-management-pages.md`
+ * §9.1), bez osobnej opcji „Wszystko": brak zaznaczenia znaczy „bez filtra", czyli to samo, co
+ * zaznaczenie wszystkich kategorii naraz. `Czas` istnieje już teraz (kolumna filtra), mimo że
+ * rejestracja czasu wchodzi dopiero w fazie 6; filtr po prostu nie pokazuje w tej kategorii nic,
+ * dopóki jej nie ma. */
+export type ErpActivityStreamFilter = 'comments' | 'history' | 'time';
 
 interface ErpActivityStreamEntryBase {
   uuid: string;

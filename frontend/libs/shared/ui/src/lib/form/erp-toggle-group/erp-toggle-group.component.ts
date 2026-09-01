@@ -45,22 +45,23 @@ import { noop } from 'rxjs';
   template: `
     <div tuiGroup [size]="groupSize()" [collapsed]="true" [orientation]="isVertical() ? 'vertical' : 'horizontal'" class="erp-toggle-group" [class.erp-toggle-group--vertical]="isVertical()">
       @for (item of items(); track item.value) {
-        @let tooltipText = (unwrap(item.tooltip) | erpTranslate) || '';
-        
+        @let itemText = (unwrap(item.text) | erpTranslate) || '';
+        @let tooltipText = (unwrap(item.tooltip) | erpTranslate) || itemText;
+
         <label tuiBlock [tuiHint]="tooltipText" [class.tui-disabled]="unwrap(item.disabled)">
           @if (isMulti()) {
-            <input 
-              tuiCheckbox 
-              type="checkbox" 
+            <input
+              tuiCheckbox
+              type="checkbox"
               [value]="item.value"
               [ngModel]="isCheckboxChecked(item.value)"
               (ngModelChange)="onCheckboxChange(item.value, $event)"
               [disabled]="unwrap(item.disabled) || disabled()"
             />
           } @else {
-            <input 
-              tuiRadio 
-              type="radio" 
+            <input
+              tuiRadio
+              type="radio"
               [name]="groupName"
               [value]="item.value"
               [ngModel]="currentValue()"
@@ -68,18 +69,20 @@ import { noop } from 'rxjs';
               [disabled]="unwrap(item.disabled) || disabled()"
             />
           }
-          
+
           @if (unwrap(item.iconStart)) {
             <tui-icon [icon]="unwrap(item.iconStart)!" />
           }
-          
-          <div tuiTitle class="erp-toggle-group__title">
-            {{ unwrap(item.text) | erpTranslate }}
-            @if (unwrap(item.subtext)) {
-              <span tuiSubtitle>{{ unwrap(item.subtext) | erpTranslate }}</span>
-            }
-          </div>
-          
+
+          @if (itemText) {
+            <div tuiTitle class="erp-toggle-group__title">
+              {{ itemText }}
+              @if (unwrap(item.subtext)) {
+                <span tuiSubtitle>{{ unwrap(item.subtext) | erpTranslate }}</span>
+              }
+            </div>
+          }
+
           @if (unwrap(item.iconEnd)) {
             <tui-icon [icon]="unwrap(item.iconEnd)!" />
           }

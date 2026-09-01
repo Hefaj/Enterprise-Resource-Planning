@@ -4,6 +4,9 @@ import { Subject, Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { getOrCreateClientId } from './client-id';
 
+/** Odstęp wolnych, bezterminowych prób po wyczerpaniu szybkiego budżetu w `_startWithRetry`. */
+const SLOW_RETRY_DELAY_MS = 15_000;
+
 export const SIGNALR_HUB_URL = new InjectionToken<string>('SIGNALR_HUB_URL', {
   providedIn: 'root',
   factory: (): string => '/hubs/sync'
@@ -130,6 +133,14 @@ export class SignalrSyncService {
    * (ten sam problem i to samo remedium co `PermissionStore.loadWithRetry`, z którym `data-access`
    * nie może się dzielić kodem — `type:data-access` nie wolno zależeć od `type:auth`, patrz
    * granice modułów w CLAUDE.md).
+   *
+   * <p><b>Po wyczerpaniu szybkiego budżetu NIE poddajemy się na stałe.</b> `withAutomaticReconnect()`
+   * łapie tylko rozłączenie PO udanym pierwszym `.start()` — porażka samego startu (token wolniejszy
+   * niż budżet, chwilowy restart Notification, sieć w trakcie ładowania karty) zostawiałaby kartę
+   * bez real-time sync do końca życia zakładki: żaden orkiestrator nigdy więcej nie dostałby
+   * `ReceiveUpdates`, więc mutacje (np. zmiana stanu zgłoszenia) przestałyby się same odświeżać,
+   * a jedynym ratunkiem byłoby przeładowanie strony. Po wyczerpaniu szybkich prób przechodzimy więc
+   * na wolne, bezterminowe ponawianie zamiast poddać się raz na zawsze.</p>
    */
   private async _startWithRetry(attempt = 1, maxAttempts = 10, delayMs = 500): Promise<void> {
     if (!this._connection) {
@@ -143,13 +154,16 @@ export class SignalrSyncService {
         this._invokeSubscribe(signature);
       }
     } catch (err) {
-      if (attempt >= maxAttempts) {
-        console.error('[SignalrSyncService] Connection error: ', err);
-        return;
+      if (attempt === maxAttempts) {
+        console.error(
+          `[SignalrSyncService] Nie udało się połączyć po ${maxAttempts} próbach — ponawiam co ${SLOW_RETRY_DELAY_MS / 1000}s.`,
+          err,
+        );
       }
 
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-      await this._startWithRetry(attempt + 1, maxAttempts, delayMs);
+      const nextDelay = attempt >= maxAttempts ? SLOW_RETRY_DELAY_MS : delayMs;
+      await new Promise((resolve) => setTimeout(resolve, nextDelay));
+      await this._startWithRetry(Math.min(attempt + 1, maxAttempts), maxAttempts, delayMs);
     }
   }
 

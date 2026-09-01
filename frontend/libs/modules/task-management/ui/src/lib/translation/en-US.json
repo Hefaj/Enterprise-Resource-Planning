@@ -75,7 +75,6 @@
     "edit": "Edit",
     "remove": "Remove",
     "filters": {
-      "all": "All",
       "comments": "Comments",
       "history": "History",
       "time": "Time"

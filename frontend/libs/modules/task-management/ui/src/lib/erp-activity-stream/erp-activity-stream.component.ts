@@ -230,41 +230,43 @@ export class ErpActivityStreamComponent {
   protected readonly composerTemplate = computed(() => this.config().composerTemplate);
   protected readonly entryExtraTemplate = computed(() => this.config().entryExtraTemplate);
 
-  protected readonly filterControl = new FormControl<ErpActivityStreamFilter>('all');
-  private readonly _filter = signal<ErpActivityStreamFilter>('all');
+  // Wielokrotny wybór, bez osobnej opcji „Wszystko" — brak zaznaczenia znaczy „bez filtra"
+  // (`visibleEntries` poniżej), więc dodatkowy przycisk pokazywałby dokładnie ten sam stan.
+  protected readonly filterControl = new FormControl<ErpActivityStreamFilter[]>([]);
+  private readonly _filters = signal<readonly ErpActivityStreamFilter[]>([]);
 
+  private readonly _entryKindByFilter: Record<ErpActivityStreamFilter, ErpActivityStreamEntry['kind']> = {
+    comments: 'comment',
+    history: 'history',
+    time: 'time',
+  };
+
+  // Same jako ikony, bez tekstu — trzy pełne etykiety obok siebie nie mieściły się w szerokości
+  // panelu (`erp-toggle-group__title` ucinał "Komentarze" w połowie); tooltip niesie etykietę dalej.
   protected readonly filterConfig: ErpToggleGroupConfig = {
-    mode: 'single',
+    mode: 'multi',
     size: 's',
     items: [
-      { value: 'all', text: TASKMANAGEMENT_KEYS.activityStream.filters.all },
-      { value: 'comments', text: TASKMANAGEMENT_KEYS.activityStream.filters.comments },
-      { value: 'history', text: TASKMANAGEMENT_KEYS.activityStream.filters.history },
-      { value: 'time', text: TASKMANAGEMENT_KEYS.activityStream.filters.time },
+      { value: 'comments', tooltip: TASKMANAGEMENT_KEYS.activityStream.filters.comments, iconStart: '@tui.message-square' },
+      { value: 'history', tooltip: TASKMANAGEMENT_KEYS.activityStream.filters.history, iconStart: '@tui.scroll-text' },
+      { value: 'time', tooltip: TASKMANAGEMENT_KEYS.activityStream.filters.time, iconStart: '@tui.clock' },
     ],
   };
 
   protected readonly visibleEntries = computed<readonly ErpActivityStreamEntry[]>(() => {
-    const filter = this._filter();
+    const filters = this._filters();
     const entries = this.entries();
 
-    if (filter === 'all') {
+    if (filters.length === 0) {
       return entries;
     }
 
-    if (filter === 'comments') {
-      return entries.filter((entry) => entry.kind === 'comment');
-    }
-
-    if (filter === 'time') {
-      return entries.filter((entry) => entry.kind === 'time');
-    }
-
-    return entries.filter((entry) => entry.kind === 'history');
+    const kinds = new Set(filters.map((filter) => this._entryKindByFilter[filter]));
+    return entries.filter((entry) => kinds.has(entry.kind));
   });
 
   public constructor() {
-    this.filterControl.valueChanges.subscribe((value) => this._filter.set(value ?? 'all'));
+    this.filterControl.valueChanges.subscribe((value) => this._filters.set(value ?? []));
   }
 
   protected replyButton(uuid: string): ErpButtonConfig {

@@ -105,6 +105,7 @@
     "loading": "Wczytywanie zgłoszenia…",
     "backToList": "Wróć do listy",
     "typeChangeFailed": "Nie udało się zmienić typu zgłoszenia.",
+    "descriptionSaveFailed": "Nie udało się zapisać opisu zgłoszenia.",
     "header": {
       "createdByLabel": "Utworzone przez"
     },

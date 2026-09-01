@@ -110,6 +110,7 @@ export const ISSUE_KEYS = {
       loading: 'issue.detail.loading',
       backToList: 'issue.detail.backToList',
       typeChangeFailed: 'issue.detail.typeChangeFailed',
+      descriptionSaveFailed: 'issue.detail.descriptionSaveFailed',
       header: {
         createdByLabel: 'issue.detail.header.createdByLabel',
       },

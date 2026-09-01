@@ -83,6 +83,30 @@ public class RichTextSanitizerTests
         result.ShouldContain("alt=\"zrzut\"");
     }
 
+    [Fact]
+    public void Zachowuje_tabele_owinieta_przez_wrapper_edytora()
+    {
+        // Edytor renderuje każdą tabelę jako `<div class="tui-table-wrapper"><table>...
+        // <colgroup><col>...</colgroup>...</table></div>`. `div`/`colgroup`/`col` nie były na
+        // białej liście, a `HtmlSanitizer` domyślnie (`KeepChildNodes = false`) po napotkaniu
+        // niedozwolonego tagu kasuje całe jego poddrzewo — czyli `<table>` w środku razem z
+        // treścią komórek, nie tylko samo opakowanie.
+        const string html =
+            "<div class=\"tui-table-wrapper\">"
+            + "<table style=\"width: 200px\">"
+            + "<colgroup><col style=\"width: 100px\"><col style=\"width: 100px\"></colgroup>"
+            + "<tbody><tr><td>A1</td><td>B1</td></tr></tbody>"
+            + "</table></div>";
+
+        var result = _sanitizer.Sanitize(html) ?? string.Empty;
+
+        result.ShouldContain("<table");
+        result.ShouldContain("<colgroup");
+        result.ShouldContain("<col ");
+        result.ShouldContain("A1");
+        result.ShouldContain("B1");
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

@@ -32,7 +32,7 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
           @if (this.stateTone(); as tone) {
             <span class="erp-field-panel__dot" [style.background]="tone"></span>
           }
-          {{ this.stateLabel() }}
+          {{ this.stateLabel() | erpTranslate }}
         </span>
 
         @if (this.transitionsEnabled()) {

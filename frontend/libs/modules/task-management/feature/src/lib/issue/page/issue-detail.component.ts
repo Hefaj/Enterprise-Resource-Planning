@@ -406,6 +406,14 @@ export class IssueDetailComponent {
     this._resolvedDescription.set(await resolveIssueRichTextHtmlAsync(description, this._content));
   }
 
+  /**
+   * Zapis opisu jest drugim miejscem (obok `applyTransitionAsync`), które od razu pokazuje
+   * skutek własnej mutacji użytkownikowi, który ją wykonał — widok wychodzi z trybu edycji
+   * i renderuje `descriptionPreviewConfig()` z pamięci orkiestratora. Bez `erpAwaitJobAsync`
+   * ten podgląd przez chwilę pokazywałby stan SPRZED zapisu (komenda wraca z `jobUuid`
+   * natychmiast, wykonuje się później w `BulkCommandRunner`) — realtime event i tak by to
+   * naprawił, ale dopiero po polling/SignalR round-tripie, co wygląda jak "zapis nie wszedł".
+   */
   private async _saveDescription(): Promise<void> {
     const issue = this.issue();
     if (!issue) {
@@ -415,13 +423,15 @@ export class IssueDetailComponent {
     try {
       const description = canonicalizeIssueRichTextHtml(this.descriptionControl.value, this._content);
 
-      await this._orchestrator.setDescriptionAsync({
+      const jobUuid = await this._orchestrator.setDescriptionAsync({
         uuid: issue.uuid,
         description: description || undefined,
       });
+      await erpAwaitJobAsync(this._jobs, jobUuid);
       this.editingDescription.set(false);
     } catch (error) {
       console.error('[IssueDetailComponent] Nie udało się zapisać opisu.', error);
+      this._toasts.show({ message: ISSUE_KEYS.detail.descriptionSaveFailed, appearance: 'negative' });
     }
   }
 
@@ -550,7 +560,8 @@ export class IssueDetailComponent {
     }
 
     try {
-      await this._orchestrator.setTypeAsync({ uuid: issue.uuid, typeUuid });
+      const jobUuid = await this._orchestrator.setTypeAsync({ uuid: issue.uuid, typeUuid });
+      await erpAwaitJobAsync(this._jobs, jobUuid);
     } catch (error) {
       console.error('[IssueDetailComponent] Nie udało się zmienić typu zgłoszenia.', error);
       this._toasts.show({ message: ISSUE_KEYS.detail.typeChangeFailed, appearance: 'negative' });

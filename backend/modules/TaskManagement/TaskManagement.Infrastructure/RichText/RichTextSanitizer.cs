@@ -21,6 +21,11 @@ public sealed partial class RichTextSanitizer : IRichTextSanitizer
         "ul", "ol", "li", "blockquote", "pre", "code", "hr",
         "h1", "h2", "h3", "h4", "h5", "h6",
         "a", "span", "sub", "sup",
+        // Edytor owija każdą tabelę w `<div class="tui-table-wrapper">` i renderuje szerokości
+        // kolumn przez `<colgroup><col>` — bez tych trzech tagów `HtmlSanitizer` (domyślnie
+        // `KeepChildNodes = false`) wycina całe poddrzewo wraz z `<table>` w środku, a nie samo
+        // opakowanie.
+        "div", "colgroup", "col",
         "table", "thead", "tbody", "tr", "th", "td",
         "details", "summary",
         // `img` jest tu z wyprzedzeniem, ale samo nie wystarczy — atrybut `src` jest zawężony

@@ -23,6 +23,7 @@ import {
   ErpToastService,
 } from '@erp/shared/ui';
 import { ErpAuthService } from '@erp/shared/auth';
+import { JobService } from '@erp/shared/data-access';
 import {
   IssueActivityDto,
   IssueActivityService,
@@ -33,6 +34,7 @@ import {
   TaskManagementIssueOrchestrator,
   canonicalizeIssueRichTextHtml,
   createIssueRichTextUploadPort,
+  erpAwaitJobAsync,
   resolveIssueRichTextHtmlAsync,
 } from '@erp/task-management/data-access';
 import { ISSUE_ACTIVITY_KIND } from '@erp/task-management/util';
@@ -104,6 +106,7 @@ export class IssueActivityComponent {
   private readonly _toasts = inject(ErpToastService);
   private readonly _auth = inject(ErpAuthService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _jobs = inject(JobService);
 
   public readonly issueUuid = input.required<string | null>();
 
@@ -330,7 +333,8 @@ export class IssueActivityComponent {
     }
 
     try {
-      await this._issues.removeCommentAsync({ uuid });
+      const jobUuid = await this._issues.removeCommentAsync({ uuid });
+      await erpAwaitJobAsync(this._jobs, jobUuid);
       await this._comments.loadAsync(issueUuid, true);
     } catch (error) {
       console.error('[IssueActivityComponent] Nie udało się usunąć komentarza.', error);
@@ -348,13 +352,16 @@ export class IssueActivityComponent {
     const body = canonicalizeIssueRichTextHtml(raw, this._content);
 
     try {
-      await this._issues.addCommentAsync({ issueUuid, parentUuid: parentUuid ?? undefined, body });
+      const jobUuid = await this._issues.addCommentAsync({ issueUuid, parentUuid: parentUuid ?? undefined, body });
 
       control.setValue('');
       this.replyingTo.set(null);
 
-      // Zadanie kończy się asynchronicznie, zdarzenie realtime dotyczy komentarza, nie
-      // zgłoszenia — jedno wymuszone odświeżenie zamyka lukę, gdyby wyprzedziło zapis.
+      // Komenda wraca z `jobUuid` natychmiast, a wykonuje się później w `BulkCommandRunner` —
+      // bez czekania na zadanie wymuszone odświeżenie poniżej wygrywałoby wyścig z zapisem
+      // i pokazywałoby listę SPRZED własnego komentarza (ten sam mechanizm co
+      // `applyTransitionAsync` w `issue-detail.component.ts`).
+      await erpAwaitJobAsync(this._jobs, jobUuid);
       await this._comments.loadAsync(issueUuid, true);
     } catch (error) {
       this._reportFailure(error);
@@ -373,7 +380,8 @@ export class IssueActivityComponent {
     const body = canonicalizeIssueRichTextHtml(raw, this._content);
 
     try {
-      await this._issues.setCommentBodyAsync({ uuid, body });
+      const jobUuid = await this._issues.setCommentBodyAsync({ uuid, body });
+      await erpAwaitJobAsync(this._jobs, jobUuid);
       this.editing.set(null);
       await this._comments.loadAsync(issueUuid, true);
     } catch (error) {

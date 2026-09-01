@@ -80,7 +80,6 @@ export const TASKMANAGEMENT_KEYS = {
       edit: 'taskManagement.activityStream.edit',
       remove: 'taskManagement.activityStream.remove',
       filters: {
-        all: 'taskManagement.activityStream.filters.all',
         comments: 'taskManagement.activityStream.filters.comments',
         history: 'taskManagement.activityStream.filters.history',
         time: 'taskManagement.activityStream.filters.time',

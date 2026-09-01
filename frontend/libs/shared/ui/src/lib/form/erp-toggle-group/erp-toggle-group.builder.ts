@@ -18,7 +18,7 @@ export class ErpToggleBuilder extends ErpInputBaseBuilder<ErpToggleItemConfig> {
   /**
    * Ustawia główny tekst wyświetlany na przycisku.
    */
-  public setText(text: MaybeSignal<Translatable>): this {
+  public setText(text: MaybeSignal<Translatable> | undefined): this {
     this._data.text = text;
     return this;
   }

@@ -3,7 +3,8 @@ import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 
 export interface ErpToggleItemConfig extends ErpInputBase {
   value: any;
-  text: MaybeSignal<Translatable>;
+  /** Pominięty dla pozycji tylko-ikona (tooltip przejmuje wtedy rolę etykiety). */
+  text?: MaybeSignal<Translatable>;
   subtext?: MaybeSignal<Translatable>;
   iconStart?: MaybeSignal<string>;
   iconEnd?: MaybeSignal<string>;

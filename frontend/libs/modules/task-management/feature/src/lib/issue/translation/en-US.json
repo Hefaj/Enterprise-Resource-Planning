@@ -217,6 +217,7 @@
       }
     },
     "typeChangeFailed": "Failed to change the issue type.",
+    "descriptionSaveFailed": "Failed to save the issue description.",
     "transitionFailed": "Failed to change the issue state.",
     "warnings": {
       "openChildren": {

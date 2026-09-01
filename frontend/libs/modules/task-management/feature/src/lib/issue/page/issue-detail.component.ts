@@ -307,7 +307,10 @@ export class IssueDetailComponent {
     size: 'xs',
     iconStart: '@tui.pencil',
     fn: (): void => {
-      this.descriptionControl.setValue(this.issue()?.description ?? '');
+      // Wchodzi w edycję z JUŻ rozwiązanej treści (`blob:` zamiast adresu kanonicznego) —
+      // surowe `issue().description` dałoby w edytorze `<img src>` bez tokenu i 401 od razu
+      // po otwarciu, dokładnie ten sam błąd co przy świeżo wklejonym obrazku.
+      this.descriptionControl.setValue(this._resolvedDescription());
       this.editingDescription.set(true);
     },
   };

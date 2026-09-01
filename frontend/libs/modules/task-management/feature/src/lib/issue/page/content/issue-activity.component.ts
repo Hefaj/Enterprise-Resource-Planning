@@ -303,7 +303,11 @@ export class IssueActivityComponent {
 
   protected startEdit(uuid: string): void {
     const comment = this._comm().find((c) => c.uuid === uuid);
-    this.editControl.setValue(comment?.body ?? '');
+
+    // Ta sama sztuczka co przy edycji opisu: `_resolvedBodies` ma już `blob:` zamiast adresu
+    // kanonicznego — surowe `comment.body` dałoby w edytorze rozbity obrazek od razu po wejściu
+    // w edycję (bare `<img src>` bez tokenu → 401).
+    this.editControl.setValue(this._resolvedBodies().get(uuid) ?? comment?.body ?? '');
     this.replyingTo.set(null);
     this.editing.set(uuid);
   }

@@ -30,23 +30,23 @@ public static class IssueTypeSchemeDefaults
 
         scheme.AddType(
             EpicTypeUuid, "epic", "Epik", "taskManagement.issueTypes.epic",
-            "tuiIconLayers", IssueTypeCategory.Epic, orderNo: 0);
+            "@tui.layers", IssueTypeCategory.Epic, orderNo: 0);
 
         scheme.AddType(
             FeatureTypeUuid, "feature", "Funkcjonalność", "taskManagement.issueTypes.feature",
-            "tuiIconBookmark", IssueTypeCategory.Standard, orderNo: 1);
+            "@tui.bookmark", IssueTypeCategory.Standard, orderNo: 1);
 
         scheme.AddType(
             TaskTypeUuid, "task", "Zadanie", "taskManagement.issueTypes.task",
-            "tuiIconCheckSquare", IssueTypeCategory.Standard, orderNo: 2);
+            "@tui.check-square", IssueTypeCategory.Standard, orderNo: 2);
 
         scheme.AddType(
             BugTypeUuid, "bug", "Błąd", "taskManagement.issueTypes.bug",
-            "tuiIconAlertCircle", IssueTypeCategory.Standard, orderNo: 3);
+            "@tui.alert-circle", IssueTypeCategory.Standard, orderNo: 3);
 
         scheme.AddType(
             SubtaskTypeUuid, "subtask", "Podzadanie", "taskManagement.issueTypes.subtask",
-            "tuiIconCornerDownRight", IssueTypeCategory.Subtask, orderNo: 4);
+            "@tui.corner-down-right", IssueTypeCategory.Subtask, orderNo: 4);
 
         return scheme;
     }

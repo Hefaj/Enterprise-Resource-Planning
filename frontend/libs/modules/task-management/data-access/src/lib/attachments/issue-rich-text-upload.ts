@@ -30,10 +30,13 @@ export interface IssueRichTextUploadControl {
  *       wstawia obrazek zaraz po pierwszej emisji Observable, więc dalsza praca idzie w tle;</li>
  *   <li>w tle wgrywa plik (bilet → `PUT` do magazynu → rejestracja jedną komendą) i rejestruje
  *       załącznik zgłoszenia;</li>
- *   <li>po zakończeniu podmienia `blob:` na adres kanoniczny (`/issue/attachment/content/{uuid}`)
- *       WEWNĄTRZ treści kontrolki — to jest ta „podmiana", której `erp-rich-text` świadomie nie
- *       robi (patrz komentarz przy `loadImage` w `erp-rich-text.component.ts`). Bez niej
- *       zrzut ekranu zniknąłby po odświeżeniu strony, bo `blob:` nie przeżywa przeładowania.</li>
+ *   <li>po zakończeniu podmienia lokalny `blob:` na `blob:` <b>autoryzowany</b> — ten sam,
+ *       którego dostarcza {@link IssueAttachmentContentService.contentUrl} kafelkom załączników.
+ *       <b>Nie</b> na goły adres kanoniczny (`/issue/attachment/content/{uuid}`): ten trafiłby
+ *       wprost do `<img src>` bez nagłówka `Authorization` i rozbiłby podgląd w TEJ SAMEJ sesji
+ *       edycji (przeglądarka dostałaby `401`, zanim użytkownik w ogóle kliknie „zapisz").
+ *       Podmiana na adres kanoniczny jest osobnym krokiem — patrz
+ *       {@link canonicalizeIssueRichTextHtml}.</li>
  * </ol>
  *
  * <p><b>Wyświetlanie w drugą stronę</b> (adres kanoniczny → `blob:` z tokenem) załatwia
@@ -75,20 +78,53 @@ export function createIssueRichTextUploadPort(
             return;
           }
 
-          const finalUrl = content.apiUrl(attachmentUuid);
-          const ctrl = control();
-          const current = ctrl?.value;
+          // Zamawia ten sam autoryzowany `blob:`, który dostałby kafelek załącznika — obrazek
+          // w edytorze zostaje widoczny przez CAŁĄ sesję edycji, nie tylko do końca wgrywania.
+          void firstDefinedAsync(content.contentUrl(attachmentUuid)).then((authenticatedBlobUrl) => {
+            if (!authenticatedBlobUrl) {
+              return;
+            }
 
-          if (ctrl && typeof current === 'string' && current.includes(blobUrl)) {
-            ctrl.setValue(current.split(blobUrl).join(finalUrl), { emitEvent: false });
-          }
+            const ctrl = control();
+            const current = ctrl?.value;
 
-          URL.revokeObjectURL(blobUrl);
+            if (ctrl && typeof current === 'string' && current.includes(blobUrl)) {
+              ctrl.setValue(current.split(blobUrl).join(authenticatedBlobUrl), { emitEvent: false });
+              URL.revokeObjectURL(blobUrl);
+            }
+          });
         })
         .catch((error: unknown) => {
           console.error('[createIssueRichTextUploadPort] Nie udało się wgrać obrazka.', error);
         });
     });
+}
+
+/** Adres `blob:` z {@link IssueAttachmentContentService.contentUrl}, dowolnej postaci. */
+const BLOB_URL_PATTERN = /blob:[^"'\s)]+/g;
+
+/**
+ * Odwrotność podmiany zrobionej przez {@link createIssueRichTextUploadPort} — zamienia w treści
+ * (opis, komentarz) każdy `blob:` rozpoznany przez {@link IssueAttachmentContentService} z powrotem
+ * na adres kanoniczny załącznika, TUŻ PRZED wysłaniem do backendu. `blob:` nie przeżywa
+ * przeładowania strony, więc zapisanie go wprost zepsułoby zrzut ekranu po odświeżeniu
+ * (`ISS-005` AC „wyświetla się po odświeżeniu strony").
+ *
+ * <p>Synchroniczna — cache `IssueAttachmentContentService` już ma wszystkie `blob:` z tej sesji
+ * edycji w pamięci, nie trzeba dopytywać serwera.</p>
+ */
+export function canonicalizeIssueRichTextHtml(
+  html: string | null | undefined,
+  content: IssueAttachmentContentService,
+): string {
+  if (!html) {
+    return html ?? '';
+  }
+
+  return html.replace(BLOB_URL_PATTERN, (match) => {
+    const uuid = content.uuidForBlobUrl(match);
+    return uuid ? content.apiUrl(uuid) : match;
+  });
 }
 
 /** Adresy kanoniczne osadzone w treści (`/issue/attachment/content/{uuid}`) — jeden na wpis. */

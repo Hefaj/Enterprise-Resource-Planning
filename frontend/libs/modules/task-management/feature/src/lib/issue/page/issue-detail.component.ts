@@ -29,6 +29,7 @@ import {
   WorkflowTransitionDto,
   IssueAttachmentContentService,
   IssueAttachmentService,
+  canonicalizeIssueRichTextHtml,
   createIssueRichTextUploadPort,
   erpAwaitJobAsync,
   findMissingRequiredFieldCodes,
@@ -386,9 +387,11 @@ export class IssueDetailComponent {
     }
 
     try {
+      const description = canonicalizeIssueRichTextHtml(this.descriptionControl.value, this._content);
+
       await this._orchestrator.setDescriptionAsync({
         uuid: issue.uuid,
-        description: this.descriptionControl.value || undefined,
+        description: description || undefined,
       });
       this.editingDescription.set(false);
     } catch (error) {

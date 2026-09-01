@@ -31,6 +31,7 @@ import {
   IssueCommentDto,
   IssueCommentService,
   TaskManagementIssueOrchestrator,
+  canonicalizeIssueRichTextHtml,
   createIssueRichTextUploadPort,
   resolveIssueRichTextHtmlAsync,
 } from '@erp/task-management/data-access';
@@ -334,11 +335,13 @@ export class IssueActivityComponent {
 
   private async _submit(control: FormControl<string | null>, parentUuid: string | null): Promise<void> {
     const issueUuid = this.issueUuid();
-    const body = control.value?.trim();
+    const raw = control.value?.trim();
 
-    if (!issueUuid || !body) {
+    if (!issueUuid || !raw) {
       return;
     }
+
+    const body = canonicalizeIssueRichTextHtml(raw, this._content);
 
     try {
       await this._issues.addCommentAsync({ issueUuid, parentUuid: parentUuid ?? undefined, body });
@@ -356,12 +359,14 @@ export class IssueActivityComponent {
 
   private async _saveEdit(): Promise<void> {
     const uuid = this.editing();
-    const body = this.editControl.value?.trim();
+    const raw = this.editControl.value?.trim();
     const issueUuid = this.issueUuid();
 
-    if (!uuid || !body || !issueUuid) {
+    if (!uuid || !raw || !issueUuid) {
       return;
     }
+
+    const body = canonicalizeIssueRichTextHtml(raw, this._content);
 
     try {
       await this._issues.setCommentBodyAsync({ uuid, body });

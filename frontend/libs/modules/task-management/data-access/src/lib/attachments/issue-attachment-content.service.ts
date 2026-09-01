@@ -52,6 +52,21 @@ export class IssueAttachmentContentService {
     return `${this._baseUrl}/issue/attachment/content/${uuid}`;
   }
 
+  /** Odwrotność {@link contentUrl} — pozwala portowi wgrywania `erp-rich-text` zamienić
+   * z powrotem `blob:` na adres kanoniczny tuż przed zapisem, bez trzymania własnej mapy
+   * (`issue-rich-text-upload.ts`, `canonicalizeIssueRichTextHtml`). Cache jest mały
+   * (`MAX_CACHED_OBJECT_URLS`), więc liniowe przejście jest tańsze niż druga mapa do
+   * utrzymania w synchronizacji z pierwszą. */
+  public uuidForBlobUrl(blobUrl: string): string | undefined {
+    for (const [uuid, url] of this._urls) {
+      if (url() === blobUrl) {
+        return uuid;
+      }
+    }
+
+    return undefined;
+  }
+
   /**
    * Adres do wyświetlenia. Pierwsze wywołanie zamawia pobranie, kolejne oddają ten sam sygnał.
    *

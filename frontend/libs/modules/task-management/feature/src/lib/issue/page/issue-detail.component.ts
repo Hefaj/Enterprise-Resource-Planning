@@ -17,6 +17,8 @@ import {
   ErpRichTextConfig,
   ErpToastService,
   ErpTranslatePipe,
+  ErpUserAvatarComponent,
+  ErpUserNameComponent,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { JobService } from '@erp/shared/data-access';
@@ -70,6 +72,8 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
     ErpIssueKeyComponent,
     ErpRichTextComponent,
     ErpTranslatePipe,
+    ErpUserAvatarComponent,
+    ErpUserNameComponent,
     IssueAttachmentsComponent,
     IssueActivityComponent,
     IssueCustomFieldsComponent,
@@ -97,7 +101,17 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
 
         <div class="grid min-h-0 flex-1 grid-cols-[1fr_320px] gap-6 overflow-hidden">
           <div class="flex min-h-0 flex-col gap-4 overflow-y-auto">
-            <h1 class="m-0 text-2xl font-semibold">{{ issue.title }}</h1>
+            <div class="flex flex-col gap-1">
+              <h1 class="m-0 text-2xl font-semibold">{{ issue.title }}</h1>
+
+              <div class="flex items-center gap-2 text-xs text-[var(--tui-text-secondary)]">
+                <erp-user-avatar size="s" [uuid]="issue.reporterUuid" />
+                <span>{{ ISSUE_KEYS.detail.header.createdByLabel | erpTranslate }}</span>
+                <erp-user-name [uuid]="issue.reporterUuid" />
+                <span>·</span>
+                <span>{{ issue.createdAt | date: 'medium' }}</span>
+              </div>
+            </div>
 
             <section class="flex flex-col gap-2">
               <div class="flex items-center gap-2">
@@ -214,6 +228,7 @@ export class IssueDetailComponent {
 
     return {
       stateLabel: issue?.stateNameKey || issue?.stateCode || '',
+      stateTone: issue ? stateCategoryTone(issue.stateCategory) : undefined,
       transitions: this.transitions(),
       transitionsEnabled: this.canEdit(),
       typeValue: issue?.typeUuid,
@@ -221,8 +236,16 @@ export class IssueDetailComponent {
       typeEditable: this.canEdit(),
       rows: [
         { labelKey: ISSUE_KEYS.detail.sidebar.project, value: this.projectLabel() },
-        { labelKey: ISSUE_KEYS.detail.sidebar.priority, value: this._transloco.translate(this.priorityKey()) },
-        { labelKey: ISSUE_KEYS.detail.sidebar.assignee, value: issue?.assignee?.displayName ?? issue?.assigneeUuid ?? this._transloco.translate(ISSUE_KEYS.table.unassigned) },
+        {
+          labelKey: ISSUE_KEYS.detail.sidebar.priority,
+          value: this._transloco.translate(this.priorityKey()),
+          tone: issue ? priorityTone(issue.priority) : undefined,
+        },
+        {
+          labelKey: ISSUE_KEYS.detail.sidebar.assignee,
+          value: issue?.assignee?.displayName ?? issue?.assigneeUuid ?? this._transloco.translate(ISSUE_KEYS.table.unassigned),
+          avatarUuid: issue?.assigneeUuid ?? undefined,
+        },
         { labelKey: ISSUE_KEYS.detail.sidebar.dueAt, value: issue?.dueAt ? new Date(issue.dueAt).toLocaleDateString() : this._transloco.translate(ISSUE_KEYS.table.unassigned) },
         { labelKey: ISSUE_KEYS.detail.sidebar.updatedAt, value: issue?.updatedAt ? new Date(issue.updatedAt).toLocaleString() : '' },
       ],
@@ -532,5 +555,33 @@ export class IssueDetailComponent {
       console.error('[IssueDetailComponent] Nie udało się zmienić typu zgłoszenia.', error);
       this._toasts.show({ message: ISSUE_KEYS.detail.typeChangeFailed, appearance: 'negative' });
     }
+  }
+}
+
+/** Kolor kropki priorytetu w panelu pól — ta sama skala co `priorityClass` w `erp-issue-card`,
+ * tylko jako gotowy `background`, nie klasa Tailwind (panel przyjmuje kolor wprost). */
+function priorityTone(priority: number): string {
+  switch (priority) {
+    case ISSUE_PRIORITY.Critical:
+    case ISSUE_PRIORITY.High:
+      return 'var(--tui-status-negative)';
+    case ISSUE_PRIORITY.Low:
+    case ISSUE_PRIORITY.Lowest:
+      return 'var(--tui-status-neutral)';
+    default:
+      return 'var(--tui-status-warning)';
+  }
+}
+
+/** Kolor kropki stanu — po kategorii (`docs/backend/task-management.md`), nie po nazwie:
+ * stan zdefiniowany przez użytkownika i tak wpada w jedną z trzech kategorii. */
+function stateCategoryTone(category: number): string {
+  switch (category) {
+    case WORKFLOW_STATE_CATEGORY.InProgress:
+      return 'var(--tui-status-warning)';
+    case WORKFLOW_STATE_CATEGORY.Done:
+      return 'var(--tui-status-positive)';
+    default:
+      return 'var(--tui-status-neutral)';
   }
 }

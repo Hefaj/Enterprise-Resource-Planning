@@ -18,6 +18,14 @@ export interface ErpFieldPanelOption {
 export interface ErpFieldPanelRow {
   labelKey: string;
   value: string;
+
+  /** Kolorowa kropka przed wartością (priorytet, kategoria stanu…) — gotowy `background`
+   * (najczęściej token `--tui-status-*`), panel nie zna znaczenia koloru. Wyklucza się
+   * z `avatarUuid` — jeden wiersz ma co najwyżej jeden znacznik przed tekstem. */
+  tone?: string;
+
+  /** Awatar osoby przed wartością (przypisany, zgłaszający) zamiast kropki. */
+  avatarUuid?: string;
 }
 
 /**
@@ -30,6 +38,9 @@ export interface ErpFieldPanelRow {
  */
 export interface ErpFieldPanelConfig {
   stateLabel: MaybeSignal<string>;
+
+  /** Kolorowa kropka przed etykietą stanu — zwykle po kategorii stanu (`Todo`/`InProgress`/`Done`). */
+  stateTone?: MaybeSignal<string>;
 
   transitions: MaybeSignal<readonly ErpFieldPanelTransition[]>;
 

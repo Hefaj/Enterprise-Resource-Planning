@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 
+import { ErpGroupCardComponent, ErpGroupCardConfig } from '@erp/shared/ui';
 import { JobService } from '@erp/shared/data-access';
 import {
   erpAwaitJobAsync,
@@ -23,15 +24,17 @@ import { ISSUE_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-issue-links',
   standalone: true,
-  imports: [ErpLinkListComponent],
+  imports: [ErpGroupCardComponent, ErpLinkListComponent],
   template: `
-    <erp-link-list
-      [config]="this.config()"
-      (setParent)="this.setParentAsync($event)"
-      (detachParent)="this.setParentAsync(undefined)"
-      (addLink)="this.addAsync($event.targetKey, $event.type)"
-      (removeLink)="this.removeAsync($event)"
-    />
+    <erp-group-card [config]="this.cardConfig()">
+      <erp-link-list
+        [config]="this.config()"
+        (setParent)="this.setParentAsync($event)"
+        (detachParent)="this.setParentAsync(undefined)"
+        (addLink)="this.addAsync($event.targetKey, $event.type)"
+        (removeLink)="this.removeAsync($event)"
+      />
+    </erp-group-card>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -69,6 +72,16 @@ export class IssueLinksComponent {
       ],
       saving: this._saving(),
       error: this.error(),
+    };
+  });
+
+  protected readonly cardConfig = computed<ErpGroupCardConfig>(() => {
+    const graph = this.graph();
+    const count = (graph?.parent ? 1 : 0) + (graph?.children.length ?? 0) + (graph?.links.length ?? 0);
+
+    return {
+      title: { key: ISSUE_KEYS.detail.links.titleWithCount, params: { count } },
+      icon: '@tui.link',
     };
   });
 

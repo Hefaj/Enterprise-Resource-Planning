@@ -110,6 +110,9 @@ export const ISSUE_KEYS = {
       loading: 'issue.detail.loading',
       backToList: 'issue.detail.backToList',
       typeChangeFailed: 'issue.detail.typeChangeFailed',
+      header: {
+        createdByLabel: 'issue.detail.header.createdByLabel',
+      },
       description: {
         label: 'issue.detail.description.label',
         empty: 'issue.detail.description.empty',
@@ -133,6 +136,7 @@ export const ISSUE_KEYS = {
       },
       attachments: {
         label: 'issue.detail.attachments.label',
+        titleWithCount: 'issue.detail.attachments.titleWithCount',
         empty: 'issue.detail.attachments.empty',
         add: 'issue.detail.attachments.add',
         dropHint: 'issue.detail.attachments.dropHint',
@@ -192,6 +196,7 @@ export const ISSUE_KEYS = {
       },
       links: {
         title: 'issue.detail.links.title',
+        titleWithCount: 'issue.detail.links.titleWithCount',
         parent: 'issue.detail.links.parent',
         children: 'issue.detail.links.children',
         none: 'issue.detail.links.none',

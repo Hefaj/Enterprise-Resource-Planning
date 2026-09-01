@@ -8,6 +8,7 @@ import {
   ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpTranslatePipe,
+  ErpUserAvatarComponent,
   unwrapSignal,
 } from '@erp/shared/ui';
 
@@ -22,12 +23,17 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 @Component({
   selector: 'erp-field-panel',
   standalone: true,
-  imports: [ErpButtonComponent, ErpInputPickerComponent, ErpTranslatePipe, ReactiveFormsModule],
+  imports: [ErpButtonComponent, ErpInputPickerComponent, ErpTranslatePipe, ErpUserAvatarComponent, ReactiveFormsModule],
   template: `
     <aside class="erp-field-panel">
       <section class="erp-field-panel__section">
         <span class="erp-field-panel__label">{{ TASKMANAGEMENT_KEYS.fieldPanel.state | erpTranslate }}</span>
-        <span class="erp-field-panel__state">{{ this.stateLabel() }}</span>
+        <span class="erp-field-panel__state">
+          @if (this.stateTone(); as tone) {
+            <span class="erp-field-panel__dot" [style.background]="tone"></span>
+          }
+          {{ this.stateLabel() }}
+        </span>
 
         @if (this.transitionsEnabled()) {
           @if (this.transitions().length === 0) {
@@ -57,7 +63,14 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
         @for (row of this.rows(); track row.labelKey) {
           <div class="erp-field-panel__row">
             <span class="erp-field-panel__label">{{ row.labelKey | erpTranslate }}</span>
-            <span class="erp-field-panel__value">{{ row.value }}</span>
+            <span class="erp-field-panel__value">
+              @if (row.avatarUuid) {
+                <erp-user-avatar size="s" [uuid]="row.avatarUuid" />
+              } @else if (row.tone) {
+                <span class="erp-field-panel__dot" [style.background]="row.tone"></span>
+              }
+              {{ row.value }}
+            </span>
           </div>
         }
       </section>
@@ -96,7 +109,18 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
       }
 
       .erp-field-panel__state {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
         font-weight: 500;
+      }
+
+      .erp-field-panel__dot {
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 999px;
+        flex-shrink: 0;
       }
 
       .erp-field-panel__transitions {
@@ -117,6 +141,9 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
       }
 
       .erp-field-panel__value {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
         font-size: 0.875rem;
       }
     `,
@@ -136,6 +163,7 @@ export class ErpFieldPanelComponent {
   public readonly typeChange = output<string>();
 
   protected readonly stateLabel = computed(() => unwrapSignal(this.config().stateLabel));
+  protected readonly stateTone = computed(() => unwrapSignal(this.config().stateTone));
   protected readonly transitions = computed(() => unwrapSignal(this.config().transitions) ?? []);
   protected readonly transitionsEnabled = computed(() => unwrapSignal(this.config().transitionsEnabled) ?? true);
   protected readonly typeOptions = computed(() => unwrapSignal(this.config().typeOptions));

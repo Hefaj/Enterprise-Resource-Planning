@@ -18,6 +18,8 @@ import { TuiFileLike, TuiFiles } from '@taiga-ui/kit';
 import {
   ErpButtonComponent,
   ErpButtonConfig,
+  ErpGroupCardComponent,
+  ErpGroupCardConfig,
   ErpMediaPreviewItem,
   ErpMediaPreviewService,
   ErpToastService,
@@ -57,13 +59,9 @@ interface IssueAttachmentRow {
 @Component({
   selector: 'erp-task-management-issue-attachments',
   standalone: true,
-  imports: [DatePipe, ReactiveFormsModule, TuiFiles, TuiIcon, ErpButtonComponent, ErpTranslatePipe],
+  imports: [DatePipe, ReactiveFormsModule, TuiFiles, TuiIcon, ErpButtonComponent, ErpGroupCardComponent, ErpTranslatePipe],
   template: `
-    <section class="flex flex-col gap-2">
-      <h2 class="m-0 text-sm font-semibold uppercase text-[var(--tui-text-secondary)]">
-        {{ ISSUE_KEYS.detail.attachments.label | erpTranslate }}
-      </h2>
-
+    <erp-group-card [config]="this.cardConfig()">
       @if (canEdit()) {
         <label tuiInputFiles>
           <input
@@ -123,7 +121,7 @@ interface IssueAttachmentRow {
           }
         </ul>
       }
-    </section>
+    </erp-group-card>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -161,6 +159,11 @@ export class IssueAttachmentsComponent {
     const urls = this._urls();
     return this._list().map((dto) => ({ dto, url: urls.get(dto.uuid)?.() }));
   });
+
+  protected readonly cardConfig = computed<ErpGroupCardConfig>(() => ({
+    title: { key: ISSUE_KEYS.detail.attachments.titleWithCount, params: { count: this.rows().length } },
+    icon: '@tui.paperclip',
+  }));
 
   public constructor() {
     effect(() => {

@@ -104,6 +104,9 @@
     },
     "loading": "Loading issue…",
     "backToList": "Back to the list",
+    "header": {
+      "createdByLabel": "Created by"
+    },
     "description": {
       "label": "Description",
       "empty": "No description.",
@@ -127,6 +130,7 @@
     },
     "attachments": {
       "label": "Attachments",
+      "titleWithCount": "Attachments ({{ count }})",
       "empty": "No attachments.",
       "add": "Add files",
       "dropHint": "Drop files here, or click to pick them.",
@@ -186,6 +190,7 @@
     },
     "links": {
       "title": "Links",
+      "titleWithCount": "Links ({{ count }})",
       "parent": "Parent",
       "children": "Sub-tasks",
       "none": "No links",

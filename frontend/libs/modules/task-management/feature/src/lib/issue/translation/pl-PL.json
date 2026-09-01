@@ -105,6 +105,9 @@
     "loading": "Wczytywanie zgłoszenia…",
     "backToList": "Wróć do listy",
     "typeChangeFailed": "Nie udało się zmienić typu zgłoszenia.",
+    "header": {
+      "createdByLabel": "Utworzone przez"
+    },
     "description": {
       "label": "Opis",
       "empty": "Bez opisu.",
@@ -128,6 +131,7 @@
     },
     "attachments": {
       "label": "Załączniki",
+      "titleWithCount": "Załączniki ({{ count }})",
       "empty": "Brak załączników.",
       "add": "Dodaj pliki",
       "dropHint": "Przeciągnij pliki tutaj albo kliknij, żeby je wybrać.",
@@ -187,6 +191,7 @@
     },
     "links": {
       "title": "Powiązania",
+      "titleWithCount": "Powiązania ({{ count }})",
       "parent": "Rodzic",
       "children": "Podzadania",
       "none": "Brak powiązań",

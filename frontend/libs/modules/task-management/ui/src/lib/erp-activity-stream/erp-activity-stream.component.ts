@@ -8,6 +8,7 @@ import {
   ErpToggleGroupConfig,
   ErpToggleGroupComponent,
   ErpTranslatePipe,
+  ErpUserAvatarComponent,
   ErpUserNameComponent,
   unwrapSignal,
 } from '@erp/shared/ui';
@@ -34,6 +35,7 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
     ErpButtonComponent,
     ErpToggleGroupComponent,
     ErpTranslatePipe,
+    ErpUserAvatarComponent,
     ErpUserNameComponent,
     ReactiveFormsModule,
   ],
@@ -53,49 +55,53 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
         @for (entry of this.visibleEntries(); track entry.uuid) {
           <article class="erp-activity-stream__entry">
-            <div class="erp-activity-stream__meta">
-              <erp-user-name class="erp-activity-stream__actor" [uuid]="entry.actorUuid" />
-              <span class="erp-activity-stream__date">{{ entry.occurredAt | date: 'short' }}</span>
-            </div>
+            <erp-user-avatar class="erp-activity-stream__avatar" [uuid]="entry.actorUuid" size="s" />
 
-            @if (entry.kind === 'comment') {
-              @if (entry.isRemoved) {
-                <p class="erp-activity-stream__removed">
-                  {{ TASKMANAGEMENT_KEYS.activityStream.commentRemoved | erpTranslate }}
-                </p>
-              } @else {
-                <div class="erp-activity-stream__body" [innerHTML]="entry.bodyHtml"></div>
-
-                @if (entry.editedAt) {
-                  <span class="erp-activity-stream__hint">
-                    {{ TASKMANAGEMENT_KEYS.activityStream.edited | erpTranslate }}
-                  </span>
-                }
-
-                @if (this.canWrite()) {
-                  <div class="erp-activity-stream__actions">
-                    <erp-button [config]="this.replyButton(entry.uuid)" />
-                    @if (entry.isAuthor) {
-                      <erp-button [config]="this.editButton(entry.uuid)" />
-                      <erp-button [config]="this.removeButton(entry.uuid)" />
-                    }
-                  </div>
-                }
-              }
-            } @else {
-              <span class="erp-activity-stream__sentence">
-                {{ entry.sentenceKey | erpTranslate: entry.params }}
-              </span>
-            }
-
-            @if (this.expandedUuid() === entry.uuid && this.entryExtraTemplate()) {
-              <div class="erp-activity-stream__extra">
-                <ng-container
-                  [ngTemplateOutlet]="this.entryExtraTemplate()!"
-                  [ngTemplateOutletContext]="{ $implicit: entry }"
-                />
+            <div class="erp-activity-stream__content">
+              <div class="erp-activity-stream__meta">
+                <erp-user-name class="erp-activity-stream__actor" [uuid]="entry.actorUuid" />
+                <span class="erp-activity-stream__date">{{ entry.occurredAt | date: 'short' }}</span>
               </div>
-            }
+
+              @if (entry.kind === 'comment') {
+                @if (entry.isRemoved) {
+                  <p class="erp-activity-stream__removed">
+                    {{ TASKMANAGEMENT_KEYS.activityStream.commentRemoved | erpTranslate }}
+                  </p>
+                } @else {
+                  <div class="erp-activity-stream__body" [innerHTML]="entry.bodyHtml"></div>
+
+                  @if (entry.editedAt) {
+                    <span class="erp-activity-stream__hint">
+                      {{ TASKMANAGEMENT_KEYS.activityStream.edited | erpTranslate }}
+                    </span>
+                  }
+
+                  @if (this.canWrite()) {
+                    <div class="erp-activity-stream__actions">
+                      <erp-button [config]="this.replyButton(entry.uuid)" />
+                      @if (entry.isAuthor) {
+                        <erp-button [config]="this.editButton(entry.uuid)" />
+                        <erp-button [config]="this.removeButton(entry.uuid)" />
+                      }
+                    </div>
+                  }
+                }
+              } @else {
+                <span class="erp-activity-stream__sentence">
+                  {{ entry.sentenceKey | erpTranslate: entry.params }}
+                </span>
+              }
+
+              @if (this.expandedUuid() === entry.uuid && this.entryExtraTemplate()) {
+                <div class="erp-activity-stream__extra">
+                  <ng-container
+                    [ngTemplateOutlet]="this.entryExtraTemplate()!"
+                    [ngTemplateOutletContext]="{ $implicit: entry }"
+                  />
+                </div>
+              }
+            </div>
           </article>
         }
       </div>
@@ -141,14 +147,26 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
       .erp-activity-stream__entry {
         display: flex;
-        flex-direction: column;
-        gap: 0.375rem;
+        align-items: flex-start;
+        gap: 0.625rem;
         border-bottom: 1px solid var(--tui-border-normal);
         padding-bottom: 0.75rem;
       }
 
       .erp-activity-stream__entry:last-child {
         border-bottom: none;
+      }
+
+      .erp-activity-stream__avatar {
+        margin-top: 0.125rem;
+      }
+
+      .erp-activity-stream__content {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        flex-direction: column;
+        gap: 0.375rem;
       }
 
       .erp-activity-stream__meta {

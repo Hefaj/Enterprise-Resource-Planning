@@ -26,6 +26,15 @@ export abstract class IssueChildCache<T> {
   private readonly _byIssue = signal<ReadonlyMap<string, readonly T[]>>(new Map());
   private readonly _inFlight = new Map<string, Promise<readonly T[]>>();
 
+  /** Stała referencja pustej listy — `itemsOf` musi zwracać ZAWSZE ten sam obiekt dla „jeszcze
+   * nic nie ma", inaczej `computed()` widziałby „zmianę" przy każdej reewaluacji `_byIssue`
+   * (nawet wywołanej przez INNE zgłoszenie) i budził wszystkich konsumentów w nieskończoność. */
+  private static readonly _EMPTY: readonly never[] = [];
+
+  /** Sygnały `itemsOf` cache’owane per uuid — bez tego każde wywołanie tworzyłoby nowy
+   * `computed()`, tracąc pamięć poprzedniej wartości i wymuszając pełną reewaluację od zera. */
+  private readonly _itemsSignals = new Map<string, Signal<readonly T[]>>();
+
   /** Pobranie kolekcji dla jednego zgłoszenia. */
   protected abstract fetchAsync(issueUuid: string): Promise<readonly T[]>;
 
@@ -38,7 +47,18 @@ export abstract class IssueChildCache<T> {
    * blokować kartę do czasu odpowiedzi.
    */
   public itemsOf(issueUuid: string | null | undefined): Signal<readonly T[]> {
-    return computed(() => (issueUuid ? (this._byIssue().get(issueUuid) ?? []) : []));
+    if (!issueUuid) {
+      return computed(() => IssueChildCache._EMPTY);
+    }
+
+    let entry = this._itemsSignals.get(issueUuid);
+
+    if (!entry) {
+      entry = computed(() => this._byIssue().get(issueUuid) ?? IssueChildCache._EMPTY);
+      this._itemsSignals.set(issueUuid, entry);
+    }
+
+    return entry;
   }
 
   /**

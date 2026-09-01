@@ -30,6 +30,11 @@ export class IssueGraphService {
   private readonly _byIssue = signal<ReadonlyMap<string, IssueGraphDto>>(new Map());
   private readonly _inFlight = new Map<string, Promise<IssueGraphDto | undefined>>();
 
+  /** Sygnały `getOne` cache’owane per uuid — jedna stała referencja `computed()` zamiast nowej
+   * przy każdym wywołaniu, inaczej konsument traci pamięć poprzedniej wartości i reewaluuje się
+   * od zera przy każdej zmianie `_byIssue`, nawet cudzej. */
+  private readonly _graphSignals = new Map<string, Signal<IssueGraphDto | undefined>>();
+
   public constructor() {
     this._sync.subscribe(LINK_SIGNATURE);
     this._sync.onUpdate(LINK_SIGNATURE).pipe(takeUntilDestroyed()).subscribe(() => void this._refreshAllAsync());
@@ -38,7 +43,18 @@ export class IssueGraphService {
 
   /** Graf zgłoszenia, jeśli jest już w cache. Nie odpala żądania — do tego jest `loadAsync`. */
   public getOne(issueUuid: string | null | undefined): Signal<IssueGraphDto | undefined> {
-    return computed(() => (issueUuid ? this._byIssue().get(issueUuid) : undefined));
+    if (!issueUuid) {
+      return computed(() => undefined);
+    }
+
+    let entry = this._graphSignals.get(issueUuid);
+
+    if (!entry) {
+      entry = computed(() => this._byIssue().get(issueUuid));
+      this._graphSignals.set(issueUuid, entry);
+    }
+
+    return entry;
   }
 
   public async loadAsync(issueUuid: string): Promise<IssueGraphDto | undefined> {
@@ -56,9 +72,23 @@ export class IssueGraphService {
     return request;
   }
 
-  /** Wymusza ponowne pobranie — po własnej komendzie zmieniającej graf. */
+  /**
+   * Wymusza ponowne pobranie — po własnej komendzie zmieniającej graf.
+   *
+   * <p>Dzieli `_inFlight` z {@link loadAsync}: bez tego własne wywołanie po komendzie i echo
+   * SignalR tej samej zmiany (backend publikuje `taskmgmt.issue_link` po zapisie) odpalały dwa
+   * równoległe żądania o ten sam graf.</p>
+   */
   public async refreshAsync(issueUuid: string): Promise<void> {
-    await this._fetch(issueUuid);
+    const pending = this._inFlight.get(issueUuid);
+    if (pending) {
+      await pending;
+      return;
+    }
+
+    const request = this._fetch(issueUuid).finally(() => this._inFlight.delete(issueUuid));
+    this._inFlight.set(issueUuid, request);
+    await request;
   }
 
   private async _refreshAllAsync(): Promise<void> {

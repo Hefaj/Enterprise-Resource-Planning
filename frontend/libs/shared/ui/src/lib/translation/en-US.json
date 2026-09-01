@@ -364,5 +364,10 @@
     "placeholder": "Pick a person",
     "searchPlaceholder": "Search by name or e-mail",
     "empty": "Nobody found."
+  },
+  "optimistic": {
+    "rollback": {
+      "generic": "Failed to save the change."
+    }
   }
 }

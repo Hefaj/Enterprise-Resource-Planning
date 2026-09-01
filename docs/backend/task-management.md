@@ -343,20 +343,20 @@ sensownego.
 
 Kolizja realna to co innego: **ktoś przeciągnął kartę, którą ktoś inny właśnie usunął z tablicy
 albo przeniósł do innego projektu**. Tu obowiązuje optymistyczna kontrola po wersji zgłoszenia —
-komenda odpada z `409`, front cofa optymistyczny ruch i pokazuje toast.
+komenda odpada z `409`, front cofa optymistyczny ruch i pokazuje toast — **BRD-003 ✅**, patrz
+[`optimistic-updates.md`](../frontend/optimistic-updates.md) (`docs/backend/task-management-requirements.md` §BRD-003).
 
-Echo — **jedno odstępstwo od projektu, wdrożone świadomie**. Hub rozsyła dziś
-`ReceiveUpdates(sygnatura, uuid-y)` i **nie niesie korelacji**, więc front nie ma jak rozpoznać
-własnego zdarzenia po stronie odbioru. Zamiast rozszerzać kontrakt realtime, orkiestrator tablicy
-pomija odświeżenie kart, dla których leci **własna, jeszcze niepotwierdzona komenda**
-(`TaskManagementBoardOrchestrator._pendingCardUuids`). Skutek jest ten sam — karta pod kursorem
-nie przeskakuje — a kontrakt zostaje nietknięty. Docelowo:
-
-Echo: `AggregateChanged` niesie `CorrelationId`
-([`AggregateChanged.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/AggregateChanged.cs)),
-a front wysyła `X-Request-Id` przy każdej komendzie. **Front pomija zdarzenie o korelacji
-odpowiadającej własnej, jeszcze niepotwierdzonej komendzie** — inaczej karta pod kursorem
-przeskakuje w trakcie przeciągania, bo przyszło echo własnego ruchu.
+**Echo własnej zmiany nie wymaga już osobnego mechanizmu.** Pierwotny projekt zakładał pomijanie
+zdarzenia SignalR o korelacji odpowiadającej własnej komendzie
+(`TaskManagementBoardOrchestrator._pendingCardUuids` + `isPending()`) — ale to rusztowanie nigdy
+nie miało wywołujących i zostało usunięte razem z wpięciem nakładki optymistycznej. Nakładka
+pozycji karty (`BoardStore`, scope `taskmgmt.board.position`, patrz
+[`optimistic-updates.md` §9](../frontend/optimistic-updates.md)) żyje POZA cache'm kart
+(`taskmgmt.board`) i wygrywa z każdymi danymi z serwera aż do własnego zdjęcia — echo, które w
+międzyczasie odświeży cache karty, nie ma wpływu na to, GDZIE karta jest narysowana, więc problem
+„karta pod kursorem przeskakuje" znika bez rozpoznawania echa po stronie odbioru. Kontrakt realtime
+(`ReceiveUpdates(sygnatura, uuid-y)` bez `CorrelationId`) zostaje więc nietknięty także docelowo —
+rozszerzenie go o korelację nie jest już potrzebne dla tego przypadku.
 
 ### 7.4 Realtime
 Sygnatury: `taskmgmt.issue`, `taskmgmt.board`, `taskmgmt.sprint`, `taskmgmt.project`.

@@ -1,6 +1,8 @@
 import { Injectable, Signal, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { Translatable } from '@erp/shared/data-access';
+
 import {
   GetIssueActivityRequest,
   GetIssueCommentsRequest,
@@ -26,6 +28,7 @@ const ISSUE_SIGNATURE = 'taskmgmt.issue';
 @Injectable({ providedIn: 'root' })
 export class IssueCommentService extends IssueChildCache<IssueCommentDto> {
   protected override readonly label = 'IssueCommentService';
+  protected override readonly signature = COMMENT_SIGNATURE;
 
   private readonly _api = inject(TaskManagementClient);
 
@@ -37,6 +40,18 @@ export class IssueCommentService extends IssueChildCache<IssueCommentDto> {
   /** Komentarze zgłoszenia w kolejności dodania; odpowiedzi w tej samej płaskiej liście. */
   public commentsOf(issueUuid: string | null | undefined): Signal<readonly IssueCommentDto[]> {
     return this.itemsOf(issueUuid);
+  }
+
+  /** Publiczne wejście do nakładki optymistycznej z `feature` — patrz
+   * `runOptimisticListCommandAsync` na klasie bazowej i `IssueActivityComponent`, jedyny dziś
+   * konsument. */
+  public runOptimisticCommentAsync(
+    issueUuid: string,
+    patch: (current: readonly IssueCommentDto[] | undefined) => readonly IssueCommentDto[] | undefined,
+    dispatchAsync: () => Promise<string>,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    return this.runOptimisticListCommandAsync(issueUuid, patch, dispatchAsync, options);
   }
 
   protected override fetchAsync(issueUuid: string): Promise<readonly IssueCommentDto[]> {
@@ -55,6 +70,7 @@ export class IssueCommentService extends IssueChildCache<IssueCommentDto> {
 @Injectable({ providedIn: 'root' })
 export class IssueActivityService extends IssueChildCache<IssueActivityDto> {
   protected override readonly label = 'IssueActivityService';
+  protected override readonly signature = ISSUE_SIGNATURE;
 
   private readonly _api = inject(TaskManagementClient);
 

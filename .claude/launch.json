@@ -12,6 +12,24 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["nx", "run", "catalog:serve"],
       "port": 4201
+    },
+    {
+      "name": "task-management-mfe",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "run", "task-management:serve-mfe-remote"],
+      "port": 4205
+    },
+    {
+      "name": "notification-mfe",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "run", "notification:serve-mfe-remote"],
+      "port": 4206
+    },
+    {
+      "name": "identity-mfe",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "run", "identity:serve-mfe-remote"],
+      "port": 4207
     }
   ]
 }

@@ -194,6 +194,22 @@ export class IdentityMapStore<TDto extends HasUuid> {
     }
   }
 
+  /**
+   * Przypina uuid — eksmisja LRU go pomija, dopóki nie zostanie odpięty przez {@link unpin}.
+   *
+   * Wołane wyłącznie z `BaseOrchestrator` w chwili, gdy nakładka optymistyczna (`ErpOptimisticStore`)
+   * zaczyna patchować ten uuid: bez tego wpis z aktywną nakładką mógłby wypaść z cache’u
+   * (`maxCacheSize`), a nakładka nie miałaby już czego przeprojektowywać.
+   */
+  public pin(uuid: string): void {
+    this._lru.pin(uuid);
+  }
+
+  /** Odpina uuid — patrz {@link pin}. */
+  public unpin(uuid: string): void {
+    this._lru.unpin(uuid);
+  }
+
   /** Wyczyść cały cache. */
   public clear(): void {
     this._entries.clear();

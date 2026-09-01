@@ -16,6 +16,10 @@ export class LruTracker {
   private readonly _head: LruNode = { key: '__HEAD__', prev: null, next: null };
   private readonly _tail: LruNode = { key: '__TAIL__', prev: null, next: null };
 
+  /** Klucze przypięte przez aktywną nakładkę optymistyczną (`ErpOptimisticStore`) — pomijane
+   * przy eksmisji, żeby LRU nie wyrzuciło wpisu, na którym nakładka wciąż ma co patchować. */
+  private readonly _pinned = new Set<string>();
+
   public constructor() {
     this._head.next = this._tail;
     this._tail.prev = this._head;
@@ -46,18 +50,26 @@ export class LruTracker {
   }
 
   /**
-   * Usuń i zwróć najdawniej używany klucz (least-recently-used).
-   * Zwraca `null`, jeśli tracker jest pusty.
+   * Usuń i zwróć najdawniej używany klucz (least-recently-used), pomijając klucze przypięte
+   * (patrz {@link pin}). Zwraca `null`, gdy tracker jest pusty albo gdy WSZYSTKIE wpisy są
+   * przypięte — w takim przypadku eksmisja po prostu nic nie robi, cache rośnie ponad limit
+   * do czasu odpięcia; przypiętych wpisów jest z natury niewiele (aktywne nakładki), więc to
+   * nie jest ścieżka, którą trzeba chronić przed nieograniczonym wzrostem.
    */
   public evictOldest(): string | null {
-    const oldest = this._head.next;
-    if (!oldest || oldest === this._tail) {
-      return null;
+    let node = this._head.next;
+
+    while (node && node !== this._tail) {
+      if (!this._pinned.has(node.key)) {
+        this._detach(node);
+        this._map.delete(node.key);
+        return node.key;
+      }
+
+      node = node.next;
     }
 
-    this._detach(oldest);
-    this._map.delete(oldest.key);
-    return oldest.key;
+    return null;
   }
 
   /**
@@ -69,6 +81,7 @@ export class LruTracker {
       this._detach(node);
       this._map.delete(key);
     }
+    this._pinned.delete(key);
   }
 
   /**
@@ -78,11 +91,22 @@ export class LruTracker {
     return this._map.has(key);
   }
 
+  /** Przypina klucz — eksmisja LRU go pomija, dopóki nie zostanie odpięty. */
+  public pin(key: string): void {
+    this._pinned.add(key);
+  }
+
+  /** Odpina klucz — znowu podlega zwykłej eksmisji LRU. */
+  public unpin(key: string): void {
+    this._pinned.delete(key);
+  }
+
   /**
    * Wyczyść wszystkie śledzone wpisy.
    */
   public clear(): void {
     this._map.clear();
+    this._pinned.clear();
     this._head.next = this._tail;
     this._tail.prev = this._head;
   }

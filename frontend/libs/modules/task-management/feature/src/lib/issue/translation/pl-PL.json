@@ -160,7 +160,8 @@
       "removed": "Komentarz usunięty.",
       "edited": "edytowany",
       "failed": "Nie udało się zapisać komentarza.",
-      "removeTitle": "Usunięcie komentarza"
+      "removeTitle": "Usunięcie komentarza",
+      "removeFailed": "Nie udało się usunąć komentarza."
     },
     "history": {
       "label": "Historia",

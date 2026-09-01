@@ -35,6 +35,7 @@ const SIGNATURE = 'taskmgmt.issue_attachment';
 @Injectable({ providedIn: 'root' })
 export class IssueAttachmentService extends IssueChildCache<IssueAttachmentDto> {
   protected override readonly label = 'IssueAttachmentService';
+  protected override readonly signature = SIGNATURE;
 
   private readonly _api = inject(TaskManagementClient);
 

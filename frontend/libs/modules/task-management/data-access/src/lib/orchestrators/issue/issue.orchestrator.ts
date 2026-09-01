@@ -6,6 +6,7 @@ import {
   LoadOptions,
   OrchestratorConfig,
   ResolvedDeps,
+  Translatable,
   UserDirectoryService,
 } from '@erp/shared/data-access';
 import { ErpUserRef } from '@erp/shared/util';
@@ -189,6 +190,20 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
     });
   }
 
+  /** Zapis opisu z natychmiastowym, optymistycznym skutkiem — patrz `setStateOptimisticAsync`. */
+  public setDescriptionOptimisticAsync(
+    uuid: string,
+    description: string | undefined,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    return this.runOptimisticCommandAsync(
+      uuid,
+      (current) => (current ? { ...current, description } : current),
+      () => this.setDescriptionAsync({ uuid, description }),
+      options,
+    );
+  }
+
   public setDueDateAsync(command: IssueSetDueDateCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueSetDueDateMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueDueDate,
@@ -264,6 +279,25 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   }
 
   /**
+   * Zmiana stanu z natychmiastowym, optymistycznym skutkiem — karta zgłoszenia przerysowuje
+   * się od razu, zamiast czekać na `BulkCommandRunner`. Patrz `runOptimisticCommandAsync` na
+   * bazie i `docs/frontend/optimistic-updates.md`. Bramki (`WF-004`, ostrzeżenia grafu) leżą
+   * PRZED wywołaniem tej metody, w komponencie — tak samo jak dziś.
+   */
+  public setStateOptimisticAsync(
+    uuid: string,
+    stateUuid: string,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    return this.runOptimisticCommandAsync(
+      uuid,
+      (current) => (current ? { ...current, stateUuid } : current),
+      () => this.setStateAsync({ uuid, stateUuid }),
+      options,
+    );
+  }
+
+  /**
    * Zmienia typ zgłoszenia (`TYP-003`). Backend waliduje, że typ należy do schematu projektu
    * i mapuje stan przy zmianie schematu stanów (AC2); front nie duplikuje tej regułę — pokazuje
    * jej wynik, w tym ewentualny błąd o brakujących polach wymaganych przez nowy typ (`WF-004`).
@@ -273,6 +307,20 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueType,
       queueId,
     });
+  }
+
+  /** Zmiana typu z natychmiastowym, optymistycznym skutkiem — patrz `setStateOptimisticAsync`. */
+  public setTypeOptimisticAsync(
+    uuid: string,
+    typeUuid: string,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    return this.runOptimisticCommandAsync(
+      uuid,
+      (current) => (current ? { ...current, typeUuid } : current),
+      () => this.setTypeAsync({ uuid, typeUuid }),
+      options,
+    );
   }
 
   // ── Komentarze ──
@@ -285,11 +333,16 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   /**
    * Dodaje komentarz. `uuid` generuje klient — tryb `Commands[]` wymaga identyfikatora
    * w payloadzie, a wątek i tak wraca z serwera.
+   *
+   * <p>`command.uuid` przechodzi bez zmian, gdy wywołujący go już podał — tak samo jak
+   * `addLinkAsync` niżej. Nakładka optymistyczna komentarzy (`IssueActivityComponent`) generuje
+   * uuid PRZED wywołaniem, żeby element wstawiony do `IssueCommentService` patchem miał
+   * dokładnie ten sam identyfikator, którym serwer w końcu odpowie.</p>
    */
   public addCommentAsync(command: IssueAddCommentCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync(
       (p) => this._api.issueAddCommentMultipleCommand(p),
-      { ...command, uuid: crypto.randomUUID() } as IssueAddCommentCommand,
+      { ...command, uuid: command.uuid || crypto.randomUUID() } as IssueAddCommentCommand,
       { commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueComment, queueId },
     );
   }

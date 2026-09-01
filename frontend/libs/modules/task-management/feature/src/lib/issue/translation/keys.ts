@@ -166,6 +166,7 @@ export const ISSUE_KEYS = {
         edited: 'issue.detail.comments.edited',
         failed: 'issue.detail.comments.failed',
         removeTitle: 'issue.detail.comments.removeTitle',
+        removeFailed: 'issue.detail.comments.removeFailed',
       },
       history: {
         label: 'issue.detail.history.label',

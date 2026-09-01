@@ -51,17 +51,6 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
   private readonly _board = signal<BoardDto | null>(null);
   private readonly _cardUuids = signal<string[]>([]);
 
-  /**
-   * Karty, dla których leci własna, jeszcze niepotwierdzona komenda.
-   *
-   * <p>Zamiennik pomijania echa po korelacji z §7.3: hub rozsyła dziś `(sygnatura, uuid-y)`
-   * i <b>nie niesie `CorrelationId`</b>, więc front nie ma jak rozpoznać własnego zdarzenia
-   * po stronie odbioru. Skutek jest ten sam — karta pod kursorem nie przeskakuje na echo
-   * własnego ruchu — a kontrakt realtime zostaje nietknięty. Gdyby hub kiedyś zaczął nieść
-   * korelację, to jest miejsce, które ma się wtedy zmienić.</p>
-   */
-  private readonly _pendingCardUuids = new Set<string>();
-
   protected override readonly signature = 'taskmgmt.board';
 
   protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
@@ -180,27 +169,11 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
    * <p>Wywołujący odpowiada za optymistyczne przesunięcie karty i za jego cofnięcie, gdy
    * zadanie odpadnie — stąd zwracany `jobUuid`.</p>
    */
-  public async setCardPositionAsync(
-    cardUuid: string,
-    command: BoardSetCardPositionCommand,
-    queueId?: string,
-  ): Promise<string> {
-    this._pendingCardUuids.add(cardUuid);
-
-    try {
-      return await this.runSingleCommandAsync((p) => this._api.boardSetCardPositionMultipleCommand(p), command, {
-        commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setBoardCardPosition,
-        queueId,
-      });
-    } finally {
-      this._pendingCardUuids.delete(cardUuid);
-    }
-  }
-
-  /** Czy dla tej karty leci własna, jeszcze niepotwierdzona komenda — patrz
-   * {@link _pendingCardUuids}. */
-  public isPending(cardUuid: string): boolean {
-    return this._pendingCardUuids.has(cardUuid);
+  public setCardPositionAsync(command: BoardSetCardPositionCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.boardSetCardPositionMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setBoardCardPosition,
+      queueId,
+    });
   }
 }
 

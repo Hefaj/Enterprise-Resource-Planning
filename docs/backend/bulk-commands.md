@@ -122,8 +122,21 @@ wznawia pracę od pierwszego nieprzetworzonego `job_item`, zamiast gubić cało�
 
 Pętla: znajdź najstarsze `Pending`/`Running` zadanie → weź do `ChunkSize` (domyślnie 500,
 `BulkJobs:ChunkSize`) jego elementów ze statusem `Pending` → przetwórz w jednej transakcji.
-Brak pracy → `Task.Delay(IdlePollingInterval)` (domyślnie 2 s) i pętla od nowa.
+Brak pracy → czekaj na [`IJobQueueSignal`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/IJobQueueSignal.cs)
+z sufitem `IdlePollingInterval` (domyślnie 2 s) i pętla od nowa.
 
+> **`IJobQueueSignal` — budzik, nie kolejka.** `JobStore.CreateAsync` woła `_signal.Signal()`
+> zaraz PO commicie `MarkAccepted()` (nigdy przed — zadanie w stanie `Draft` byłoby dla runnera
+> niewidzialne, więc obudzenie wcześniej dałoby przebudzenie na pustą kolejkę). Runner czeka
+> `_signal.WaitAsync(IdlePollingInterval, ct)` zamiast stałego `Task.Delay`, więc w zwykłym
+> przypadku podejmuje świeżo przyjęte zadanie w rzędzie milisekund, nie po pełnym oknie pollingu.
+> Poll zostaje jako **sufit, nie jedyny mechanizm** — implementacja to `SemaphoreSlim(0, 1)`
+> per proces (singleton), więc wielokrotny `Signal()` między dwoma przebudzeniami koalescuje się
+> w jedno. **Wewnątrzprocesowy, celowo**: budzi WYŁĄCZNIE runner w tym samym procesie; jeśli
+> zadanie podejmie inna instancja, znajdzie je na swoim zwykłym pollu — dokładnie jak dziś. To
+> jest podpowiedź, nie stan współdzielony, więc nie wymaga niczego dodatkowego w wieloinstancyjności
+> ([`multi-instance.md`](./multi-instance.md)).
+>
 > **Wybór zadania jest wyłączny.** Zadanie blokuje się przez `FOR UPDATE SKIP LOCKED` na wierszu
 > `job`, w **tej samej transakcji** co wykonanie chunka — jeden runner na zadanie, N runnerów nad
 > N zadaniami. Pomijanie zajętych jest tu istotne: bez niego wszystkie runnery ustawiłyby się

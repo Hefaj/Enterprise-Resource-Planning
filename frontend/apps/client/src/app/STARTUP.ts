@@ -13,6 +13,7 @@ import {
 import { ErpModalService } from '@erp/shared/ui';
 import { AppSettingsService } from '@erp/client/util';
 import { ErpJobToastBridge } from './erp-job-toast.bridge';
+import { ErpOptimisticRollbackBridge } from './erp-optimistic-rollback.bridge';
 import { ErpAuthService, PermissionStore } from '@erp/shared/auth';
 
 /** Sygnatura SignalR dla zmian uprawnień/ról użytkownika — `AggregateSignatures.IdentityUser`
@@ -28,6 +29,9 @@ export async function STARTUP(): Promise<void> {
   // Samo wstrzyknięcie uruchamia most: jego konstruktor zakłada `effect` nad feedem zadań.
   // Bez tej linijki serwis nigdy by nie powstał — nikt inny go nie wstrzykuje.
   inject(ErpJobToastBridge);
+  // Ten sam powód co wyżej: konstruktor mostu subskrybuje `ErpOptimisticStore.rollbacks$`,
+  // a nikt poza STARTUP go nie wstrzykuje.
+  inject(ErpOptimisticRollbackBridge);
   const permissionStore = inject(PermissionStore);
   const authService = inject(ErpAuthService);
   // Pobrany synchronicznie: kontekst wstrzykiwania nie przeżywa `await` niżej,

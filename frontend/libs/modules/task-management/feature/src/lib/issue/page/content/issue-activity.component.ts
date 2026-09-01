@@ -20,10 +20,8 @@ import {
   ErpRichTextBuilder,
   ErpRichTextComponent,
   ErpRichTextConfig,
-  ErpToastService,
 } from '@erp/shared/ui';
 import { ErpAuthService } from '@erp/shared/auth';
-import { JobService } from '@erp/shared/data-access';
 import {
   IssueActivityDto,
   IssueActivityService,
@@ -34,7 +32,8 @@ import {
   TaskManagementIssueOrchestrator,
   canonicalizeIssueRichTextHtml,
   createIssueRichTextUploadPort,
-  erpAwaitJobAsync,
+  insertOptimisticItem,
+  replaceOptimisticItem,
   resolveIssueRichTextHtmlAsync,
 } from '@erp/task-management/data-access';
 import { ISSUE_ACTIVITY_KIND } from '@erp/task-management/util';
@@ -103,10 +102,8 @@ export class IssueActivityComponent {
   private readonly _attachments = inject(IssueAttachmentService);
   private readonly _content = inject(IssueAttachmentContentService);
   private readonly _confirm = inject(ErpConfirmDialogService);
-  private readonly _toasts = inject(ErpToastService);
   private readonly _auth = inject(ErpAuthService);
   private readonly _transloco = inject(TranslocoService);
-  private readonly _jobs = inject(JobService);
 
   public readonly issueUuid = input.required<string | null>();
 
@@ -315,6 +312,11 @@ export class IssueActivityComponent {
     this.editing.set(uuid);
   }
 
+  /**
+   * Usunięcie jest miękkie (treść znika, wpis w wątku zostaje), więc nakładka to PODMIANA
+   * elementu (`isRemoved: true`), nie usunięcie z listy — dokładnie ten sam kształt, jaki wraca
+   * potem z serwera.
+   */
   protected async removeAsync(uuid: string): Promise<void> {
     const issueUuid = this.issueUuid();
     if (!issueUuid) {
@@ -332,15 +334,22 @@ export class IssueActivityComponent {
       return;
     }
 
-    try {
-      const jobUuid = await this._issues.removeCommentAsync({ uuid });
-      await erpAwaitJobAsync(this._jobs, jobUuid);
-      await this._comments.loadAsync(issueUuid, true);
-    } catch (error) {
-      console.error('[IssueActivityComponent] Nie udało się usunąć komentarza.', error);
-    }
+    await this._comments.runOptimisticCommentAsync(
+      issueUuid,
+      replaceOptimisticItem<IssueCommentDto>(uuid, (comment) => ({ ...comment, isRemoved: true, body: '' })),
+      () => this._issues.removeCommentAsync({ uuid }),
+      { failureMessage: ISSUE_KEYS.detail.comments.removeFailed },
+    );
   }
 
+  /**
+   * Nakładka optymistyczna (`docs/frontend/optimistic-updates.md`) zastępuje dotychczasowe
+   * `erpAwaitJobAsync` + wymuszony refetch: komentarz pojawia się na liście NATYCHMIAST po
+   * Enter, pod tym samym uuidem, którym serwer w końcu odpowie (`addCommentAsync` respektuje
+   * `command.uuid`, gdy jest podany) — dzięki temu echo `taskmgmt.issue_comment` nie dubluje
+   * wpisu. Cofnięcie (4xx, porażka zadania, wyjątek domenowy) oddaje treść z powrotem do
+   * edytora i pokazuje toast — obiema ścieżkami zajmuje się `ErpOptimisticRollbackBridge`.
+   */
   private async _submit(control: FormControl<string | null>, parentUuid: string | null): Promise<void> {
     const issueUuid = this.issueUuid();
     const raw = control.value?.trim();
@@ -350,22 +359,31 @@ export class IssueActivityComponent {
     }
 
     const body = canonicalizeIssueRichTextHtml(raw, this._content);
+    const uuid = crypto.randomUUID();
 
-    try {
-      const jobUuid = await this._issues.addCommentAsync({ issueUuid, parentUuid: parentUuid ?? undefined, body });
+    const optimisticComment: IssueCommentDto = {
+      uuid,
+      issueUuid,
+      parentUuid: parentUuid ?? undefined,
+      body,
+      authorUuid: this._me() ?? '',
+      createdAt: new Date(),
+      editedAt: undefined,
+      isRemoved: false,
+    };
 
-      control.setValue('');
-      this.replyingTo.set(null);
+    control.setValue('');
+    this.replyingTo.set(null);
 
-      // Komenda wraca z `jobUuid` natychmiast, a wykonuje się później w `BulkCommandRunner` —
-      // bez czekania na zadanie wymuszone odświeżenie poniżej wygrywałoby wyścig z zapisem
-      // i pokazywałoby listę SPRZED własnego komentarza (ten sam mechanizm co
-      // `applyTransitionAsync` w `issue-detail.component.ts`).
-      await erpAwaitJobAsync(this._jobs, jobUuid);
-      await this._comments.loadAsync(issueUuid, true);
-    } catch (error) {
-      this._reportFailure(error);
-    }
+    await this._comments.runOptimisticCommentAsync(
+      issueUuid,
+      insertOptimisticItem(optimisticComment),
+      () => this._issues.addCommentAsync({ issueUuid, parentUuid: parentUuid ?? undefined, uuid, body }),
+      {
+        onRollback: () => control.setValue(raw),
+        failureMessage: ISSUE_KEYS.detail.comments.failed,
+      },
+    );
   }
 
   private async _saveEdit(): Promise<void> {
@@ -378,20 +396,20 @@ export class IssueActivityComponent {
     }
 
     const body = canonicalizeIssueRichTextHtml(raw, this._content);
+    this.editing.set(null);
 
-    try {
-      const jobUuid = await this._issues.setCommentBodyAsync({ uuid, body });
-      await erpAwaitJobAsync(this._jobs, jobUuid);
-      this.editing.set(null);
-      await this._comments.loadAsync(issueUuid, true);
-    } catch (error) {
-      this._reportFailure(error);
-    }
-  }
-
-  private _reportFailure(error: unknown): void {
-    console.error('[IssueActivityComponent] Nie udało się zapisać komentarza.', error);
-    this._toasts.show({ message: ISSUE_KEYS.detail.comments.failed, appearance: 'negative' });
+    await this._comments.runOptimisticCommentAsync(
+      issueUuid,
+      replaceOptimisticItem<IssueCommentDto>(uuid, (comment) => ({ ...comment, body, editedAt: new Date() })),
+      () => this._issues.setCommentBodyAsync({ uuid, body }),
+      {
+        onRollback: () => {
+          this.editControl.setValue(raw);
+          this.editing.set(uuid);
+        },
+        failureMessage: ISSUE_KEYS.detail.comments.failed,
+      },
+    );
   }
 }
 

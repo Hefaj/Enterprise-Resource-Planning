@@ -56,15 +56,18 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly BulkJobOptions _options;
+    private readonly IJobQueueSignal _signal;
     private readonly ILogger<BulkCommandRunner<TContext>> _logger;
 
     public BulkCommandRunner(
         IServiceScopeFactory scopeFactory,
         IOptions<BulkJobOptions> options,
+        IJobQueueSignal signal,
         ILogger<BulkCommandRunner<TContext>> logger)
     {
         _scopeFactory = scopeFactory;
         _options = options?.Value ?? new BulkJobOptions();
+        _signal = signal;
         _logger = logger;
     }
 
@@ -96,7 +99,10 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
             {
                 try
                 {
-                    await Task.Delay(_options.IdlePollingInterval, stoppingToken).ConfigureAwait(false);
+                    // Sufit, nie jedyny mechanizm: `JobStore.CreateAsync` budzi ten sam singleton
+                    // zaraz po commicie `MarkAccepted()`, więc w normalnym przypadku runner rusza
+                    // z powrotem do pracy w rzędzie milisekund, a nie po pełnym IdlePollingInterval.
+                    await _signal.WaitAsync(_options.IdlePollingInterval, stoppingToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {

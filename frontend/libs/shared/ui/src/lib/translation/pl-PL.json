@@ -364,5 +364,10 @@
     "placeholder": "Wybierz osobę",
     "searchPlaceholder": "Szukaj po nazwisku albo e-mailu",
     "empty": "Nie znaleziono nikogo."
+  },
+  "optimistic": {
+    "rollback": {
+      "generic": "Nie udało się zapisać zmiany."
+    }
   }
 }

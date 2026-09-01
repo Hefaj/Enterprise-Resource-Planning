@@ -1,7 +1,7 @@
 import { Signal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { SignalrSyncService } from '@erp/shared/data-access';
+import { ErpOptimisticOp, ErpOptimisticStore, SignalrSyncService, Translatable } from '@erp/shared/data-access';
 
 /**
  * Wspólna baza dla kolekcji wiszących przy zgłoszeniu: załączników, komentarzy i historii.
@@ -19,9 +19,16 @@ import { SignalrSyncService } from '@erp/shared/data-access';
  * <p><b>Zdarzenie realtime niesie uuidy DZIECI, nie zgłoszeń</b> — mapowania w drugą stronę
  * front nie ma i nie ma po co dokładać. Odświeżamy więc listy trzymane w cache’u; w praktyce
  * jest to jedna otwarta karta zgłoszenia.</p>
+ *
+ * <p><b>Nakładki optymistyczne</b> (`docs/frontend/optimistic-updates.md`) — kolekcja jest
+ * zawężona do `T extends { uuid: string }`, bo klucz elementu jest wymagany do wstawienia/
+ * podmiany/usunięcia przez patch. `itemsOf` przepuszcza wynik przez `ErpOptimisticStore.project`
+ * pod sygnaturą realtime tej kolekcji ({@link signature}), więc konsument (`erp-activity-stream`)
+ * nie odróżnia elementu z serwera od elementu spod aktywnej nakładki — dostaje jedną listę.</p>
  */
-export abstract class IssueChildCache<T> {
+export abstract class IssueChildCache<T extends { uuid: string }> {
   private readonly _signalr = inject(SignalrSyncService);
+  private readonly _optimistic = inject(ErpOptimisticStore);
 
   private readonly _byIssue = signal<ReadonlyMap<string, readonly T[]>>(new Map());
   private readonly _inFlight = new Map<string, Promise<readonly T[]>>();
@@ -41,10 +48,18 @@ export abstract class IssueChildCache<T> {
   /** Nazwa serwisu w logach — używana wyłącznie przy błędzie pobrania. */
   protected abstract readonly label: string;
 
+  /** Sygnatura realtime tej kolekcji — ten sam `scope`, pod którym {@link runOptimisticListCommandAsync}
+   * rejestruje nakładki i pod którym `itemsOf` je projektuje. Zwykle ta sama sygnatura, którą
+   * subklasa podaje do `watch()`. */
+  protected abstract readonly signature: string;
+
   /**
    * Kolekcja z cache’u — <b>nie odpala żądania</b> (do tego jest {@link loadAsync}).
    * Pusta lista jest poprawnym stanem przejściowym: sekcja renderuje się bez pozycji, zamiast
    * blokować kartę do czasu odpowiedzi.
+   *
+   * <p>Przepuszczona przez {@link ErpOptimisticStore.project} — element dodany/edytowany/usunięty
+   * lokalnie jest widoczny natychmiast, zanim dojedzie potwierdzenie zadania.</p>
    */
   public itemsOf(issueUuid: string | null | undefined): Signal<readonly T[]> {
     if (!issueUuid) {
@@ -54,11 +69,44 @@ export abstract class IssueChildCache<T> {
     let entry = this._itemsSignals.get(issueUuid);
 
     if (!entry) {
-      entry = computed(() => this._byIssue().get(issueUuid) ?? IssueChildCache._EMPTY);
+      entry = computed(() => {
+        const base = this._byIssue().get(issueUuid) ?? IssueChildCache._EMPTY;
+        return this._optimistic.project<readonly T[]>(this.signature, issueUuid, base) ?? IssueChildCache._EMPTY;
+      });
       this._itemsSignals.set(issueUuid, entry);
     }
 
     return entry;
+  }
+
+  /**
+   * Uruchamia nakładkę optymistyczną na tej kolekcji — wstawienie/podmiana/usunięcie elementu,
+   * z tym samym cyklem życia co `BaseOrchestrator.runOptimisticCommandAsync` (patrz
+   * `ErpOptimisticStore.runAsync`). `dispatchAsync` woła wywołujący — kolekcja nie zna komend,
+   * bo te mieszkają w orkiestratorze zgłoszeń (agregatem jest `Issue`, nie element listy).
+   *
+   * Patch operuje na CAŁEJ liście (`readonly T[] → readonly T[]`) — patrz {@link insertOptimisticItem}/
+   * {@link replaceOptimisticItem}/{@link removeOptimisticItem} niżej po gotowe buildery.
+   */
+  protected runOptimisticListCommandAsync(
+    issueUuid: string,
+    patch: (current: readonly T[] | undefined) => readonly T[] | undefined,
+    dispatchAsync: () => Promise<string>,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    const op: ErpOptimisticOp<readonly T[]> = {
+      scope: this.signature,
+      key: issueUuid,
+      patch,
+      dispatchAsync,
+      settleAsync: async () => {
+        await this.loadAsync(issueUuid, true);
+      },
+      onRollback: options?.onRollback,
+      failureMessage: options?.failureMessage,
+    };
+
+    return this._optimistic.runAsync(op);
   }
 
   /**
@@ -136,4 +184,34 @@ export abstract class IssueChildCache<T> {
   private async _refreshCached(): Promise<void> {
     await Promise.all([...this._byIssue().keys()].map((issueUuid) => this.loadAsync(issueUuid, true)));
   }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Buildery patchy dla `runOptimisticListCommandAsync` — trzy operacje, jakich potrzebuje
+// kolekcja dziecięca: dopisanie nowego elementu, podmiana istniejącego, usunięcie.
+// ────────────────────────────────────────────────────────────────
+
+/** Dopisuje element na końcu listy — komentarz/odpowiedź pojawia się tam, gdzie skończy się
+ * wątek, bo kolejność strumienia aktywności jest rosnąca po czasie. */
+export function insertOptimisticItem<T extends { uuid: string }>(
+  item: T,
+): (current: readonly T[] | undefined) => readonly T[] {
+  return (current) => [...(current ?? []), item];
+}
+
+/** Podmienia element o danym uuid — element bez dopasowania zostaje bez zmian (np. gdy lokalna
+ * lista jeszcze go nie ma). */
+export function replaceOptimisticItem<T extends { uuid: string }>(
+  uuid: string,
+  updater: (item: T) => T,
+): (current: readonly T[] | undefined) => readonly T[] | undefined {
+  return (current) => current?.map((item) => (item.uuid === uuid ? updater(item) : item));
+}
+
+/** Usuwa element o danym uuid z listy. Dla usunięć MIĘKKICH (komentarz zostaje jako
+ * „usunięty”, nie znika z wątku) właściwym patchem jest {@link replaceOptimisticItem}, nie ten. */
+export function removeOptimisticItem<T extends { uuid: string }>(
+  uuid: string,
+): (current: readonly T[] | undefined) => readonly T[] | undefined {
+  return (current) => current?.filter((item) => item.uuid !== uuid);
 }

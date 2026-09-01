@@ -17,6 +17,7 @@ Dokumenty opisują **stan bieżący**, nie historię zmian ani planów — od te
 | Modale — lazy-loaded, rejestracja przez `ErpModalService` | [frontend/modals.md](./frontend/modals.md) |
 | Powiadomienia — toast, dzwonek, historia zadań, `ErpToastService` | [frontend/notifications.md](./frontend/notifications.md) |
 | Orkiestratory (`data-access`) — cache, wzbogacanie ViewModeli, dane hierarchiczne | [frontend/orchestrators.md](./frontend/orchestrators.md) |
+| Nakładki optymistyczne — natychmiastowy skutek mutacji z uczciwym cofnięciem | [frontend/optimistic-updates.md](./frontend/optimistic-updates.md) |
 | Multimedia — wgrywanie, miniaturki, biblioteka mediów i usuwanie zasobów | [frontend/multimedia.md](./frontend/multimedia.md) |
 | Atomy UI — wzorzec „Single Config Builder" | [frontend/atoms.md](./frontend/atoms.md) |
 | Tłumaczenia (Transloco) — zero-hardcoded-strings, DI shadowing, generator `keys.ts` | [frontend/translations.md](./frontend/translations.md) |

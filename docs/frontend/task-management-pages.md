@@ -63,18 +63,23 @@ szablonu obiegu w DMS.
 Kolumny wyprowadzone ze stanów schematu projektu, swimlane'y (po przypisanym / epiku / priorytecie),
 karty przeciągane między kolumnami i w pionie.
 
-Trzy rzeczy, których nie robi dziś żaden ekran w systemie:
+Trzy rzeczy, których nie robi dziś żaden inny ekran w systemie:
 
 1. **Optymistyczne przestawienie z cofnięciem.** Karta ląduje w nowym miejscu natychmiast, komenda
    `setBoardCardPosition` leci z `beforeUuid`/`afterUuid` (nie z wyliczonym rankiem — liczy go
    serwer, [`task-management.md` §7.2](../backend/task-management.md#72-rank-jest-łańcuchem-nie-liczbą-całkowitą)).
-   Odpowiedź `409` cofa ruch i pokazuje toast.
-2. **Pomijanie echa własnej zmiany.** Orkiestrator pomija odświeżenie kart, dla których leci
-   własna, jeszcze niepotwierdzona komenda. Bez tego karta przeskakuje pod kursorem w trakcie
-   przeciągania. **Odstępstwo od pierwotnego projektu:** miało to iść po korelacji
-   (`X-Request-Id` → `CorrelationId`), ale hub rozsyła dziś `ReceiveUpdates(sygnatura, uuid-y)`
-   bez korelacji — rozszerzanie kontraktu realtime dla jednego ekranu byłoby drożej niż zbiór
-   uuid-ów w orkiestratorze ([`task-management.md` §7.3](../backend/task-management.md#73-współbieżność-i-echo-własnej-zmiany)).
+   Odpowiedź `409` cofa ruch i pokazuje toast. Idzie przez `ErpOptimisticStore`
+   (`BoardStore.dropAsync`, [`optimistic-updates.md`](./optimistic-updates.md#9-dwie-komendy-pod-jedną-nakładką--boardstoredropasync)) —
+   nie przez lokalny sygnał, jak we wcześniejszej wersji tego ekranu.
+2. **Echo własnej zmiany nie przeskakuje kartą pod kursorem — bez rozpoznawania echa.** Nakładka
+   pozycji żyje POZA cache'm kart orkiestratora (własny scope `taskmgmt.board.position`) i wygrywa
+   z danymi z serwera aż do własnego zdjęcia, więc odświeżenie karty przez zdarzenie SignalR w
+   trakcie przeciągania nie ma wpływu na to, gdzie karta jest narysowana. **To NIE jest
+   pierwotny projekt** — miało to iść po korelacji (`X-Request-Id` → `CorrelationId`) albo przez
+   lokalny zbiór „karty z własną, niepotwierdzoną komendą"
+   (`TaskManagementBoardOrchestrator._pendingCardUuids`, dziś usunięty jako martwe rusztowanie bez
+   wywołujących) — nakładka optymistyczna rozwiązuje ten sam problem bez żadnego z tych dwóch
+   mechanizmów ([`task-management.md` §7.3](../backend/task-management.md#73-współbieżność-i-echo-własnej-zmiany)).
 3. **Przeciąganie w kolumnę, do której przejście jest niedozwolone.** Kolumna niedostępna dla
    danej karty jest wygaszana **w chwili chwycenia karty**, na podstawie przejść ze schematu.
    Poznanie tego dopiero z błędu po upuszczeniu jest wrogie użytkownikowi.
@@ -123,9 +128,13 @@ Trzy rzeczy warte zapamiętania niezależnie od układu:
 - **wątek jest jednopoziomowy**, bo taka jest reguła domeny, a nie uproszczenie widoku
   ([`task-management.md` §11](../backend/task-management.md#11-historia-zmian-i-komentarze));
   odpowiedź składa się w jednym przebiegu po płaskiej liście, bez rekurencji;
-- **po zapisie nic nie dopisujemy do listy ręcznie** — komenda idzie zadaniem, a wątek wraca
-  zdarzeniem na kanale `taskmgmt.issue_comment`, tą samą drogą, którą przychodzi cudza
-  wypowiedź; optymistyczne wstawienie dałoby przez chwilę dwa komentarze;
+- **komentarz pojawia się natychmiast, przez nakładkę optymistyczną** (`ErpOptimisticStore`,
+  [`optimistic-updates.md` §5](./optimistic-updates.md#5-wpięcie-b--kolekcje-dziecięce-issuechildcache)),
+  a nie dopiero po dojechaniu zdarzenia z kanału `taskmgmt.issue_comment`. **To zmiana wobec
+  wcześniejszej wersji tego dokumentu**, która optymistyczne wstawianie komentarzy zabraniała —
+  argument („dałoby przez chwilę dwa komentarze") przestał obowiązywać, odkąd `addCommentAsync`
+  respektuje uuid nadany PRZEZ KLIENTA: nakładka wstawia element pod tym samym uuidem, którym
+  serwer w końcu odpowie, więc echo z serwera zastępuje wpis nakładki, a nie dubluje go;
 - **zdanie w historii składa szablon, nie backend**: serwer zapisuje rodzaj wpisu, kod pola
   i surowe wartości, a nazwa pola jest kluczem tłumaczenia, więc przechodzi przez `erpTranslate`
   jako parametr drugiego `erpTranslate` (Transloco nie rozwiązuje kluczy zagnieżdżonych

@@ -24,6 +24,12 @@ public static class ErpBulkJobsExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<BulkJobOptions>(configuration.GetSection(BulkJobOptions.SectionName));
+
+        // Singleton na proces — dokładnie jeden runner tego kontekstu żyje w procesie, więc
+        // jeden budzik na proces w zupełności wystarcza (patrz IJobQueueSignal). Rejestracja
+        // idzie tutaj, a nie w Program.cs, z tego samego powodu co JobStore niżej: moduł nie
+        // ma tu wyboru do podjęcia.
+        services.AddSingleton<IJobQueueSignal, JobQueueSignal>();
         services.AddHostedService<BulkCommandRunner<TContext>>();
 
         // Magazyn zadań jest zawsze tą samą parą co runner — moduł nie ma tu żadnego wyboru

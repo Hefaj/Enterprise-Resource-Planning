@@ -158,7 +158,8 @@
       "removed": "Comment removed.",
       "edited": "edited",
       "failed": "The comment could not be saved.",
-      "removeTitle": "Remove comment"
+      "removeTitle": "Remove comment",
+      "removeFailed": "Failed to remove the comment."
     },
     "history": {
       "label": "History",

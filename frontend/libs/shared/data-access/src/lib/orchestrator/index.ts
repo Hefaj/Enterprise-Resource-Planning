@@ -12,6 +12,10 @@ export type {
   HasUuid,
   ResolvedDeps,
   SharedSearchResponse,
+  Translatable,
+  ErpBatchPayload,
+  ErpBatchResult,
+  CommandOptions,
 } from './orchestrator.types';
 
 export { DEFAULT_ORCHESTRATOR_CONFIG } from './orchestrator.types';

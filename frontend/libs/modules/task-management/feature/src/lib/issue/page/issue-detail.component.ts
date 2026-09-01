@@ -15,13 +15,11 @@ import {
   ErpRichTextBuilder,
   ErpRichTextComponent,
   ErpRichTextConfig,
-  ErpToastService,
   ErpTranslatePipe,
   ErpUserAvatarComponent,
   ErpUserNameComponent,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
-import { JobService } from '@erp/shared/data-access';
 import {
   IssueGraphService,
   IssueVM,
@@ -33,7 +31,6 @@ import {
   IssueAttachmentService,
   canonicalizeIssueRichTextHtml,
   createIssueRichTextUploadPort,
-  erpAwaitJobAsync,
   findMissingRequiredFieldCodes,
   openBlockersOf,
   openChildrenOf,
@@ -179,13 +176,11 @@ export class IssueDetailComponent {
   private readonly _router = inject(Router);
   private readonly _route = inject(ActivatedRoute);
   private readonly _transloco = inject(TranslocoService);
-  private readonly _toasts = inject(ErpToastService);
   private readonly _attachments = inject(IssueAttachmentService);
   private readonly _content = inject(IssueAttachmentContentService);
   private readonly _graphService = inject(IssueGraphService);
   private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _modals = inject(ErpModalService);
-  private readonly _jobs = inject(JobService);
 
   /**
    * Klucz czytelny z trasy. Czytany z `ActivatedRoute`, a NIE przez `input()` z wiązaniem
@@ -407,12 +402,10 @@ export class IssueDetailComponent {
   }
 
   /**
-   * Zapis opisu jest drugim miejscem (obok `applyTransitionAsync`), które od razu pokazuje
-   * skutek własnej mutacji użytkownikowi, który ją wykonał — widok wychodzi z trybu edycji
-   * i renderuje `descriptionPreviewConfig()` z pamięci orkiestratora. Bez `erpAwaitJobAsync`
-   * ten podgląd przez chwilę pokazywałby stan SPRZED zapisu (komenda wraca z `jobUuid`
-   * natychmiast, wykonuje się później w `BulkCommandRunner`) — realtime event i tak by to
-   * naprawił, ale dopiero po polling/SignalR round-tripie, co wygląda jak "zapis nie wszedł".
+   * Nakładka optymistyczna (`docs/frontend/optimistic-updates.md`) zastępuje dawne
+   * `erpAwaitJobAsync` + wymuszony refetch: podgląd renderuje się od razu z lokalnie
+   * napisanego opisu, zamiast na chwilę pokazać stan sprzed zapisu. Cofnięcie przywraca
+   * treść do edytora i wraca do trybu edycji — toast leci przez `ErpOptimisticRollbackBridge`.
    */
   private async _saveDescription(): Promise<void> {
     const issue = this.issue();
@@ -420,19 +413,18 @@ export class IssueDetailComponent {
       return;
     }
 
-    try {
-      const description = canonicalizeIssueRichTextHtml(this.descriptionControl.value, this._content);
+    const raw = this.descriptionControl.value;
+    const description = canonicalizeIssueRichTextHtml(raw, this._content);
 
-      const jobUuid = await this._orchestrator.setDescriptionAsync({
-        uuid: issue.uuid,
-        description: description || undefined,
-      });
-      await erpAwaitJobAsync(this._jobs, jobUuid);
-      this.editingDescription.set(false);
-    } catch (error) {
-      console.error('[IssueDetailComponent] Nie udało się zapisać opisu.', error);
-      this._toasts.show({ message: ISSUE_KEYS.detail.descriptionSaveFailed, appearance: 'negative' });
-    }
+    this.editingDescription.set(false);
+
+    await this._orchestrator.setDescriptionOptimisticAsync(issue.uuid, description || undefined, {
+      onRollback: () => {
+        this.descriptionControl.setValue(raw ?? '');
+        this.editingDescription.set(true);
+      },
+      failureMessage: ISSUE_KEYS.detail.descriptionSaveFailed,
+    });
   }
 
   /**
@@ -444,10 +436,10 @@ export class IssueDetailComponent {
    * Backend ma ten sam warunek jako backstop w `Issue.SetState`
    * (`taskmgmt.required_fields_missing`), na wypadek klienta API pomijającego UI.</p>
    *
-   * <p><b>Komenda czeka na zadanie</b> (`erpAwaitJobAsync`) — ten sam obrys, co
-   * `BoardStore._runAsync`: przycisk przejścia na karcie jest jedynym miejscem w tym komponencie,
-   * które od razu pokazuje skutek własnej mutacji, więc odświeżenie sprzed zakończenia zadania
-   * pokazywałoby stary stan.</p>
+   * <p><b>Komenda ma natychmiastowy, optymistyczny skutek</b> (`setStateOptimisticAsync`,
+   * `docs/frontend/optimistic-updates.md`) — karta przełącza stan od razu, zamiast czekać na
+   * `BulkCommandRunner`; przy porażce (np. `409` na wersji zgłoszenia) wraca do poprzedniego
+   * stanu i pokazuje toast przez `ErpOptimisticRollbackBridge`.</p>
    *
    * <p><b>`LNK-004`/`LNK-005`</b> — ostrzeżenia liczone WYŁĄCZNIE na froncie z grafu zgłoszenia,
    * nie zależą od backendu.</p>
@@ -466,13 +458,9 @@ export class IssueDetailComponent {
       return;
     }
 
-    try {
-      const jobUuid = await this._orchestrator.setStateAsync({ uuid: issue.uuid, stateUuid: toStateUuid });
-      await erpAwaitJobAsync(this._jobs, jobUuid);
-    } catch (error) {
-      console.error('[IssueDetailComponent] Nie udało się zmienić stanu zgłoszenia.', error);
-      this._toasts.show({ message: ISSUE_KEYS.detail.transitionFailed, appearance: 'negative' });
-    }
+    await this._orchestrator.setStateOptimisticAsync(issue.uuid, toStateUuid, {
+      failureMessage: ISSUE_KEYS.detail.transitionFailed,
+    });
   }
 
   /**
@@ -559,13 +547,9 @@ export class IssueDetailComponent {
       return;
     }
 
-    try {
-      const jobUuid = await this._orchestrator.setTypeAsync({ uuid: issue.uuid, typeUuid });
-      await erpAwaitJobAsync(this._jobs, jobUuid);
-    } catch (error) {
-      console.error('[IssueDetailComponent] Nie udało się zmienić typu zgłoszenia.', error);
-      this._toasts.show({ message: ISSUE_KEYS.detail.typeChangeFailed, appearance: 'negative' });
-    }
+    await this._orchestrator.setTypeOptimisticAsync(issue.uuid, typeUuid, {
+      failureMessage: ISSUE_KEYS.detail.typeChangeFailed,
+    });
   }
 }
 

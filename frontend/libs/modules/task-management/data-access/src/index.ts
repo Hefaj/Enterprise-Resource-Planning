@@ -9,3 +9,8 @@ export * from './lib/graph/issue-graph.service';
 export * from './lib/graph/issue-graph-warnings';
 export * from './lib/attachments';
 export * from './lib/comments/issue-comment.service';
+export {
+  insertOptimisticItem,
+  replaceOptimisticItem,
+  removeOptimisticItem,
+} from './lib/issue-child-cache';

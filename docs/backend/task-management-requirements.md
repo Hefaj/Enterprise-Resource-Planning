@@ -603,9 +603,11 @@ porządek rozstrzyga `(rank, issue_uuid)`.
 AC3: rozgłoszenie realtime niesie uuid przestawionej karty i sąsiadów, nie całej tablicy.
 
 **BRD-003 — Optymistyczne przestawienie z cofnięciem · Must · faza 2 · ✅**
-AC1: karta ląduje w nowym miejscu natychmiast; `409` cofa ruch i pokazuje toast.
-AC2: front pomija echo własnej, jeszcze niepotwierdzonej komendy — inaczej karta przeskakuje
-pod kursorem.
+AC1: karta ląduje w nowym miejscu natychmiast; `409` cofa ruch i pokazuje toast — przez
+`ErpOptimisticStore` (`docs/frontend/optimistic-updates.md`), nie ręczny lokalny sygnał.
+AC2: karta nie przeskakuje pod kursorem, gdy w międzyczasie dojdzie echo własnej zmiany —
+nakładka pozycji żyje poza cache'm kart i wygrywa z danymi z serwera aż do własnego zdjęcia, więc
+rozpoznawanie echa po stronie odbioru nie jest potrzebne (`docs/frontend/optimistic-updates.md` §9).
 
 **BRD-004 — Wygaszanie niedozwolonych kolumn · Must · faza 2 · ✅**
 AC1: kolumny, do których przejście jest niedozwolone, są wygaszane **w chwili chwycenia karty**,

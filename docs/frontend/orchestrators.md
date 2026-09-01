@@ -410,6 +410,15 @@ Cztery powody, dla których ta granica jest tam, gdzie jest:
 4. **Orkiestrator bywa wołany nie z UI** (ponowienie zadania, wywołanie z innego orkiestratora) —
    modal w środku metody `data-access` byłby wtedy zwieszką bez użytkownika.
 
+### Natychmiastowy, optymistyczny skutek — `runOptimisticCommandAsync`
+
+Warianty wyżej pokazują skutek własnej mutacji dopiero po rozstrzygnięciu zadania (`erpAwaitJobAsync`
+albo wymuszony refetch). W wybranych, pojedynczych miejscach UI — karta zgłoszenia, tablica — warto
+pokazać skutek NATYCHMIAST, z uczciwym cofnięciem, gdy zadanie odpadnie. Do tego służy
+`BaseOrchestrator.runOptimisticCommandAsync(uuid, patch, dispatchAsync, options)`, czwarty wariant
+obok tabeli wyżej — pełny opis kontraktu, cyklu życia i zasad „gdzie NIE stosować" w
+[`optimistic-updates.md`](./optimistic-updates.md).
+
 ## 7. Checklist tworzenia nowego orkiestratora
 
 0. **Sprawdź granicę agregatu (sekcja 9)** — przejdź przez pytania testowe 1–5. Jeśli wynik jest niejednoznaczny, zatrzymaj się i zapytaj użytkownika zamiast zakładać, że nowy byt zasługuje na osobny orkiestrator.
@@ -470,3 +479,4 @@ Przy tworzeniu nowego orkiestratora **jawnie przejdź przez pytania testowe 1–
 
 - Implementacja bazowa: [`base-orchestrator.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts), [`orchestrator.types.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/orchestrator.types.ts)
 - Pełny przykład wzorca z sekcji 4: [`product.view-model.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/product.view-model.ts) (definicja `ProductWarrantyVM`), [`catalog-warranty.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/warranty/catalog-warranty.orchestrator.ts) (metoda rozwiązująca `resolveWarrantyVMs`)
+- [Nakładki optymistyczne](./optimistic-updates.md) — `runOptimisticCommandAsync`, kiedy pokazywać skutek mutacji natychmiast, a kiedy nie

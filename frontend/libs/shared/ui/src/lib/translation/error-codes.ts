@@ -55,3 +55,48 @@ export function resolveErrorCodeKey(errorCode: string | null | undefined): strin
 export function translatableErrorCode(errorCode: string): string {
   return resolveErrorCodeKey(errorCode) ?? errorCode;
 }
+
+/** Jeden kod błędu z podsumowania zadania masowego wraz z liczbą elementów, które go zwróciły. */
+export interface JobErrorSummaryEntry {
+  /** Surowy kod z backendu, np. `multimedia_still_referenced`. */
+  code: string;
+  /** Ile elementów zadania odpadło z tym kodem. */
+  count: number;
+}
+
+/**
+ * Rozbiera `job.errorsSummary` na pary kod → liczba.
+ *
+ * <p>Duplikat (nie import) tej samej funkcji z `@erp/notification/util` — celowo. Host
+ * (`ErpOptimisticRollbackBridge`, `apps/client`) potrzebuje jej do tłumaczenia kodu błędu
+ * z pierwszego cofniętego zadania optymistycznego, a nie wolno mu zależeć od `@erp/notification/util`:
+ * to biblioteka `type:util` REMOTA notification, a jej statyczny import wciągnąłby remota do
+ * bundla hosta ({@link resolveErrorCodeKey} w tym samym pliku ma dokładnie to samo uzasadnienie).
+ * Kilkanaście linijek bez logiki biznesowej nie usprawiedliwia trzeciej wspólnej biblioteki tylko
+ * dla jednej funkcji — format (`"code_a: 12; code_b: 3"`) powstaje w JEDNYM miejscu w backendzie
+ * (`BulkCommandRunner.BuildErrorsSummaryAsync`) i stamtąd wędruje bez zmian, więc dwie kopie tego
+ * samego parsera nie mają się jak rozjechać.</p>
+ */
+export function parseJobErrorsSummary(summary: string | null | undefined): JobErrorSummaryEntry[] {
+  if (!summary) {
+    return [];
+  }
+
+  const entries: JobErrorSummaryEntry[] = [];
+
+  for (const part of summary.split(';')) {
+    const separatorIndex = part.lastIndexOf(':');
+    if (separatorIndex < 0) {
+      continue;
+    }
+
+    const code = part.slice(0, separatorIndex).trim();
+    const count = Number.parseInt(part.slice(separatorIndex + 1).trim(), 10);
+
+    if (code.length > 0 && Number.isFinite(count)) {
+      entries.push({ code, count });
+    }
+  }
+
+  return entries;
+}

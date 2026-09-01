@@ -48,6 +48,7 @@ public sealed class JobStore<TContext> : IJobStore
     private readonly IJobItemBulkWriter _itemWriter;
     private readonly IIdempotencyStore _idempotency;
     private readonly IClock _clock;
+    private readonly IJobQueueSignal _signal;
 
     public JobStore(
         TContext dbContext,
@@ -55,7 +56,8 @@ public sealed class JobStore<TContext> : IJobStore
         IExecutionContext executionContext,
         IJobItemBulkWriter itemWriter,
         IIdempotencyStore idempotency,
-        IClock clock)
+        IClock clock,
+        IJobQueueSignal signal)
     {
         _dbContext = dbContext;
         _publisher = publisher;
@@ -63,6 +65,7 @@ public sealed class JobStore<TContext> : IJobStore
         _itemWriter = itemWriter;
         _idempotency = idempotency;
         _clock = clock;
+        _signal = signal;
     }
 
     /// <inheritdoc />
@@ -165,6 +168,11 @@ public sealed class JobStore<TContext> : IJobStore
             cancellationToken).ConfigureAwait(false);
 
         await _publisher.SaveChangesAndFlushAsync(cancellationToken).ConfigureAwait(false);
+
+        // PO commicie, nigdy przed: przed tym momentem zadanie jest jeszcze w stanie `Draft`
+        // z punktu widzenia runnera (widoczne dopiero po `MarkAccepted()`) — obudzenie go
+        // wcześniej dałoby przebudzenie na pustą kolejkę, zero zysku poza zbędnym budzeniem.
+        _signal.Signal();
 
         return job.Uuid;
     }

@@ -1,10 +1,9 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 
-import { JobService } from '@erp/shared/data-access';
+import { ErpOptimisticStore } from '@erp/shared/data-access';
 import { ErpConfirmDialogService, ErpModalService, ErpToastService } from '@erp/shared/ui';
 import {
   BoardCardVM,
-  erpAwaitJobAsync,
   findMissingRequiredFieldCodes,
   BoardColumnDto,
   BoardSetCardPositionCommand,
@@ -41,6 +40,11 @@ interface PendingMove {
   readonly index: number;
 }
 
+/** Sygnatura pod którą nakładka pozycji tablicy żyje w `ErpOptimisticStore` — CELOWO różna od
+ * `taskmgmt.board` (sygnatury cache’u kart orkiestratora): to nie jest patch na pojedynczej
+ * karcie, tylko na „gdzie w kolumnie leży przeciągana karta”, więc ma własną przestrzeń kluczy. */
+const BOARD_POSITION_SCOPE = 'taskmgmt.board.position';
+
 /**
  * Stan strony tablicy.
  *
@@ -48,19 +52,22 @@ interface PendingMove {
  * (`docs/frontend/task-management-pages.md` §2.2): optymistyczne przestawienie z cofnięciem,
  * pomijanie własnego, jeszcze niepotwierdzonego ruchu i wygaszanie kolumn niedostępnych
  * <b>w chwili chwycenia karty</b> — a nie dopiero po upuszczeniu.</p>
+ *
+ * <p><b>Przesunięcie idzie przez `ErpOptimisticStore`</b> (`docs/frontend/optimistic-updates.md`),
+ * nie przez lokalny sygnał — daje to darmowy, spójny z resztą systemu cykl życia (cofnięcie,
+ * toast, bezpiecznik czasowy), zamiast własnej kopii tej logiki tylko dla tablicy.</p>
  */
 @Injectable()
 export class BoardStore {
   private readonly _boards = inject(TaskManagementBoardOrchestrator);
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
   private readonly _workflow = inject(ProjectWorkflowService);
-  private readonly _jobs = inject(JobService);
+  private readonly _optimistic = inject(ErpOptimisticStore);
   private readonly _toast = inject(ErpToastService);
   private readonly _graphService = inject(IssueGraphService);
   private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _modals = inject(ErpModalService);
 
-  private readonly _pendingMove = signal<PendingMove | null>(null);
   private readonly _draggedCardUuid = signal<string | null>(null);
 
   public readonly loading = signal<boolean>(true);
@@ -86,7 +93,7 @@ export class BoardStore {
     }
 
     const cards = this._boards.cards();
-    const pending = this._pendingMove();
+    const pending = this._optimistic.project<PendingMove>(BOARD_POSITION_SCOPE, board.uuid, undefined);
     const moved = pending ? cards.find((card) => card.uuid === pending.cardUuid) : undefined;
 
     return [...board.columns]
@@ -208,7 +215,7 @@ export class BoardStore {
     // `LNK-004`/`LNK-005` — ostrzeżenia grafu PRZED optymistycznym przesunięciem karty, nie po.
     // Anulowanie w oknie znaczy „karta nigdy się nie ruszyła" — dokładnie to samo, co `WF-004`
     // AC1 wymaga od modala pól wymaganych: cofnięcie ma zostawić kartę tam, gdzie była PRZED
-    // przeciągnięciem, a najprostszy sposób na to jest nigdy nie ustawiać `_pendingMove`.
+    // przeciągnięciem, a najprostszy sposób na to jest nigdy nie rejestrować nakładki pozycji.
     if (targetStateUuid !== card.stateUuid) {
       const confirmed = await this._confirmGraphWarningsAsync(card.issueUuid, targetStateUuid);
       if (!confirmed) {
@@ -216,7 +223,7 @@ export class BoardStore {
       }
 
       // WF-004 — modal otwiera się PRZED wykonaniem, dokładnie tak samo jak ostrzeżenia grafu
-      // wyżej: żadna z dwóch bramek nie ustawiła jeszcze `_pendingMove`, więc anulowanie
+      // wyżej: żadna z dwóch bramek nie zarejestrowała jeszcze nakładki pozycji, więc anulowanie
       // którejkolwiek zostawia kartę dokładnie tam, gdzie była przed przeciągnięciem (AC1).
       const fieldsReady = await this._confirmRequiredFieldsAsync(
         board.projectUuid,
@@ -229,38 +236,50 @@ export class BoardStore {
       }
     }
 
-    // Optymistyczne przesunięcie: karta ląduje w nowym miejscu natychmiast. Zdejmujemy je
-    // dopiero, gdy tablica przyjdzie z serwera — świeże dane są jednocześnie potwierdzeniem
-    // i cofnięciem, zależnie od tego, czym skończyło się zadanie.
-    this._pendingMove.set({ cardUuid, columnUuid, index });
-
+    // Sąsiedzi liczeni z aktualnego (jeszcze bez nakładki tego ruchu) stanu kolumny.
     const { afterIssueUuid, beforeIssueUuid } = this._neighbours(columnUuid, cardUuid, index);
+    const boardUuid = board.uuid;
 
-    try {
-      if (targetStateUuid !== card.stateUuid) {
-        // Pole nazywa się `stateUuid`, nie `toStateUuid` — wygenerowany interfejs ma indeks
-        // `[key: string]: any`, więc literówka w nazwie NIE jest błędem kompilacji i dociera
-        // do backendu jako pusty `Guid`. Stąd jawnie typowana zmienna zamiast rzutowania
-        // obiektu literalnego.
-        const setState: IssueSetStateCommand = { uuid: card.issueUuid, stateUuid: targetStateUuid };
+    // Optymistyczna nakładka pozycji (`docs/frontend/optimistic-updates.md`) — karta ląduje
+    // w nowym miejscu natychmiast (patrz `columns` wyżej, projektujące ją z `ErpOptimisticStore`)
+    // i schodzi dopiero, gdy `settleAsync` przeładuje tablicę z serwera: świeże dane są
+    // jednocześnie potwierdzeniem i cofnięciem, zależnie od tego, czym skończyło się zadanie.
+    await this._optimistic.runAsync<PendingMove>({
+      scope: BOARD_POSITION_SCOPE,
+      key: boardUuid,
+      patch: () => ({ cardUuid, columnUuid, index }),
+      dispatchAsync: async () => {
+        if (targetStateUuid !== card.stateUuid) {
+          // Pole nazywa się `stateUuid`, nie `toStateUuid` — wygenerowany interfejs ma indeks
+          // `[key: string]: any`, więc literówka w nazwie NIE jest błędem kompilacji i dociera
+          // do backendu jako pusty `Guid`. Stąd jawnie typowana zmienna zamiast rzutowania
+          // obiektu literalnego.
+          const setState: IssueSetStateCommand = { uuid: card.issueUuid, stateUuid: targetStateUuid };
+          const stateJobUuid = await this._issues.setStateAsync(setState);
 
-        await this._runAsync(this._issues.setStateAsync(setState));
-      }
+          // Dwie komendy pod JEDNĄ nakładką: pozycja ma sens tylko, gdy zmiana stanu się
+          // powiodła (`taskmgmt.transition_not_allowed` i podobne odrzucenia domenowe idą przez
+          // status zadania, nie przez 4xx) — stąd czekanie tutaj, zamiast wysyłać obie komendy
+          // równolegle i liczyć na to, że druga też odpadnie.
+          const stateJob = await this._optimistic.awaitJobAsync(stateJobUuid);
 
-      const setPosition: BoardSetCardPositionCommand = {
-        uuid: board.uuid,
-        issueUuid: card.issueUuid,
-        afterIssueUuid,
-        beforeIssueUuid,
-      };
+          if (!stateJob || stateJob.status !== 'completed' || stateJob.failedCount > 0) {
+            throw new Error('taskmgmt.transition_not_allowed');
+          }
+        }
 
-      await this._runAsync(this._boards.setCardPositionAsync(cardUuid, setPosition));
-    } catch {
-      this._toast.show({ message: BOARD_KEYS.move.failed, appearance: 'negative' });
-    } finally {
-      await this._boards.refreshCardsAsync();
-      this._pendingMove.set(null);
-    }
+        const setPosition: BoardSetCardPositionCommand = {
+          uuid: boardUuid,
+          issueUuid: card.issueUuid,
+          afterIssueUuid,
+          beforeIssueUuid,
+        };
+
+        return this._boards.setCardPositionAsync(setPosition);
+      },
+      settleAsync: () => this._boards.refreshCardsAsync(),
+      onRollback: () => this._toast.show({ message: BOARD_KEYS.move.failed, appearance: 'negative' }),
+    });
   }
 
   /** Stan, w który wpada karta upuszczona w tej kolumnie. Kolumna może zbierać kilka stanów —
@@ -287,14 +306,6 @@ export class BoardStore {
       afterIssueUuid: cards[index - 1]?.issueUuid,
       beforeIssueUuid: cards[index]?.issueUuid,
     };
-  }
-
-  /**
-   * Czekanie na zadanie mieszka w `erpAwaitJobAsync` — ten sam obrys obowiązuje pasek powiązań
-   * na karcie zgłoszenia, więc nie ma po co trzymać dwóch kopii.
-   */
-  private _runAsync(command: Promise<string>): Promise<void> {
-    return command.then((jobUuid) => erpAwaitJobAsync(this._jobs, jobUuid));
   }
 
   /**

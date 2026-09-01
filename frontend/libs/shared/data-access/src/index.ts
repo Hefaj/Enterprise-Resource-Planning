@@ -13,6 +13,8 @@ export * from './lib/sync/request-id.interceptor';
 
 export * from './lib/orchestrator';
 
+export * from './lib/optimistic';
+
 export * from './lib/widgets/erp-widget-registry.service';
 export * from './lib/jobs/erp-job-result-registry.service';
 

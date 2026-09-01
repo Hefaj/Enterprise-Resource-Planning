@@ -174,6 +174,7 @@ internal static class BulkTestInstance
         services.AddScoped<Erp.BuildingBlocks.Application.Commands.CommandTransactionScope>();
         services.AddScoped<JobQueueLock<BulkTestDbContext>>();
         services.AddKeyedScoped<IBulkCommandExecutor, TouchExecutor>(TouchExecutor.Command);
+        services.AddSingleton<IJobQueueSignal, JobQueueSignal>();
 
         services.Configure<BulkJobOptions>(options =>
         {

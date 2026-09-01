@@ -222,6 +222,7 @@ public sealed class BulkCommandRunnerTests
             .Select(instance => new BulkCommandRunner<BulkTestDbContext>(
                 instance.GetRequiredService<IServiceScopeFactory>(),
                 instance.GetRequiredService<IOptions<BulkJobOptions>>(),
+                instance.GetRequiredService<IJobQueueSignal>(),
                 NullLogger<BulkCommandRunner<BulkTestDbContext>>.Instance))
             .ToList();
 

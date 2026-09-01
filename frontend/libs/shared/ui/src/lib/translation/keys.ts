@@ -370,4 +370,9 @@ export const SHARED_KEYS = {
       searchPlaceholder: 'shared.userPicker.searchPlaceholder',
       empty: 'shared.userPicker.empty',
     },
+    optimistic: {
+      rollback: {
+        generic: 'shared.optimistic.rollback.generic',
+      },
+    },
   } as const;

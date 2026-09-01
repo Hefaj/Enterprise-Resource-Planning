@@ -17,6 +17,7 @@ import { DataLoader } from './data-loader';
 import { JobService } from './job.service';
 import { SignalrSyncService } from '../sync/signalr-sync.service';
 import { withRequestId } from '../sync/request-id';
+import { ErpOptimisticStore } from '../optimistic/optimistic.store';
 import {
   HasUuid,
   OrchestratorConfig,
@@ -29,6 +30,7 @@ import {
   ErpBatchPayload,
   ErpBatchResult,
   JobMeta,
+  Translatable,
 } from './orchestrator.types';
 
 /**
@@ -62,6 +64,7 @@ export abstract class BaseOrchestrator<
   protected readonly destroyRef = inject(DestroyRef);
   protected readonly jobService = inject(JobService);
   private readonly _signalrSync = inject(SignalrSyncService);
+  private readonly _optimistic = inject(ErpOptimisticStore);
 
   // ── Podstawowa infrastruktura ──
   protected readonly identityMap: IdentityMapStore<TDto>;
@@ -225,7 +228,7 @@ export abstract class BaseOrchestrator<
       const result = new Map<string, TViewModel>();
 
       for (const uuid of loaded) {
-        const dto = this.identityMap.peek(uuid);
+        const dto = this._project(uuid, this.identityMap.peek(uuid));
         if (dto) {
           result.set(uuid, this.mapToViewModel(dto, this._resolveCurrentDeps(dto)));
         }
@@ -251,7 +254,7 @@ export abstract class BaseOrchestrator<
       if (!vmSignal) {
         const dtoSignal = this.identityMap.get(uuid);
         vmSignal = computed(() => {
-          const dto = dtoSignal();
+          const dto = this._project(uuid, dtoSignal());
           if (!dto) {
             return undefined as unknown as TViewModel;
           }
@@ -270,10 +273,19 @@ export abstract class BaseOrchestrator<
    */
   public getOne(uuid: string): Signal<TViewModel | undefined> {
     return computed(() => {
-      const dto = this.identityMap.get(uuid)();
+      const dto = this._project(uuid, this.identityMap.get(uuid)());
       if (!dto) return undefined;
       return this.mapToViewModel(dto, this._resolveCurrentDeps(dto));
     });
+  }
+
+  /**
+   * Nakłada nakładkę optymistyczną aktywną dla tego uuid na `dto` — wołane tuż przed
+   * `mapToViewModel(...)` w każdym z trzech miejsc wyżej, jedynych, przez które DTO trafia do UI.
+   * Czyste i tanie (deleguje do `ErpOptimisticStore.project`), bezpieczne wewnątrz `computed()`.
+   */
+  private _project(uuid: string, dto: TDto | undefined): TDto | undefined {
+    return this._optimistic.project<TDto>(this.orchestratorConfig.signalrSignature, uuid, dto);
   }
 
   // ────────────────────────────────────────────────────────────────
@@ -495,6 +507,44 @@ export abstract class BaseOrchestrator<
         timestamp: new Date(),
       });
       throw err;
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Nakładki optymistyczne — patrz `docs/frontend/optimistic-updates.md`
+  // ────────────────────────────────────────────────────────────────
+
+  /**
+   * Uruchamia komendę mutującą JEDEN agregat z natychmiastowym, optymistycznym skutkiem —
+   * cukier łączący {@link ErpOptimisticStore.runAsync} z cache’m tego orkiestratora.
+   *
+   * <p>Przypina uuid w {@link identityMap} na czas trwania nakładki (patrz
+   * `IdentityMapStore.pin`) — bez tego wpis mógłby wypaść z LRU zanim nakładka zdąży się zdjąć,
+   * a wtedy nie miałaby już czego patchować. Odpina zawsze, także po cichym timeout-cie.</p>
+   *
+   * <p>`settleAsync` jest zawsze wymuszonym przeładowaniem TEGO agregatu — jedyny sensowny
+   * refetch po własnej mutacji agregatu, więc wywołujący go nie podaje.</p>
+   */
+  protected async runOptimisticCommandAsync(
+    uuid: string,
+    patch: (current: TDto | undefined) => TDto | undefined,
+    dispatchAsync: () => Promise<string>,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    this.identityMap.pin(uuid);
+
+    try {
+      await this._optimistic.runAsync<TDto>({
+        scope: this.orchestratorConfig.signalrSignature,
+        key: uuid,
+        patch,
+        dispatchAsync,
+        settleAsync: () => this.dataLoader.reloadAsync([uuid]),
+        onRollback: options?.onRollback,
+        failureMessage: options?.failureMessage,
+      });
+    } finally {
+      this.identityMap.unpin(uuid);
     }
   }
 

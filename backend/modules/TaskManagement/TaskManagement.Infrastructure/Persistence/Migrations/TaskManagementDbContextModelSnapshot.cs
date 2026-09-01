@@ -569,6 +569,12 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_4");
 
+                    b.Property<string>("DerivedDeliveryState")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("derived_delivery_state");
+
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
@@ -586,6 +592,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("key");
+
+                    b.Property<DateTimeOffset?>("LastOverdueNotifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_overdue_notified_at");
 
                     b.Property<decimal?>("Num1")
                         .HasColumnType("numeric")
@@ -620,6 +630,12 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ReporterUuid")
                         .HasColumnType("uuid")
                         .HasColumnName("reporter_uuid");
+
+                    b.Property<string>("StateCategory")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("state_category");
 
                     b.Property<Guid>("StateUuid")
                         .HasColumnType("uuid")
@@ -692,7 +708,8 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_issue_assignee_uuid");
 
                     b.HasIndex("DueAt")
-                        .HasDatabaseName("ix_issue_due_at");
+                        .HasDatabaseName("ix_issue_due_at")
+                        .HasFilter("state_category <> 'Done'");
 
                     b.HasIndex("Key")
                         .IsUnique()
@@ -964,6 +981,35 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("issue_link", "taskmgmt");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Issues.IssueWatcher", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<Guid>("IssueUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issue_uuid");
+
+                    b.Property<DateTimeOffset?>("OptedOutAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("opted_out_at");
+
+                    b.Property<Guid>("UserUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_uuid");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_issue_watcher");
+
+                    b.HasIndex("IssueUuid", "UserUuid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_issue_watcher_issue_uuid_user_uuid");
+
+                    b.ToTable("issue_watcher", "taskmgmt");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Projects.Project", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -1000,6 +1046,27 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
                         .HasColumnName("name");
+
+                    b.Property<int?>("SlaResolutionMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("sla_resolution_minutes");
+
+                    b.Property<int?>("SlaResponseMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("sla_response_minutes");
+
+                    b.Property<TimeOnly?>("SlaWorkEndTime")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("sla_work_end_time");
+
+                    b.Property<TimeOnly?>("SlaWorkStartTime")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("sla_work_start_time");
+
+                    b.Property<string>("SlaWorkingDays")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("sla_working_days");
 
                     b.Property<Guid>("WorkflowSchemeUuid")
                         .HasColumnType("uuid")
@@ -1371,6 +1438,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_issue_link_issue_target_uuid");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Issues.IssueWatcher", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.Issues.Issue", null)
+                        .WithMany("Watchers")
+                        .HasForeignKey("IssueUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_issue_watcher_issue_issue_uuid");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Projects.Project", b =>
                 {
                     b.HasOne("TaskManagement.Domain.FieldSchemes.FieldScheme", null)
@@ -1445,6 +1522,11 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TaskManagement.Domain.IssueTypes.IssueTypeScheme", b =>
                 {
                     b.Navigation("Types");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Issues.Issue", b =>
+                {
+                    b.Navigation("Watchers");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Projects.Project", b =>

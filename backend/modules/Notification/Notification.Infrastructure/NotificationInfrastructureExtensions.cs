@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Application.Jobs;
+using Notification.Application.UserNotifications;
 using Notification.Domain.Jobs;
+using Notification.Domain.UserNotifications;
 using Notification.Infrastructure.Persistence;
 using Notification.Infrastructure.Queries;
 using Notification.Infrastructure.Realtime;
@@ -41,6 +43,8 @@ public static class NotificationInfrastructureExtensions
         services.AddErpExclusiveLease<NotificationDbContext>();
 
         services.AddScoped<IJobQueries, JobQueries>();
+        services.AddScoped<IUserNotificationQueries, UserNotificationQueries>();
+        services.AddScoped<IUserNotificationCommands, UserNotificationCommands>();
 
         // Trwały licznik sekwencji realtime — czytany przez hub przy Subscribe, zwiększany przez
         // przekaźnik. Po rozdzieleniu ról te dwie strony mogą chodzić w różnych procesach, więc
@@ -53,6 +57,11 @@ public static class NotificationInfrastructureExtensions
         // AggregateChanged na sygnaturze `notification.job`, bez ręcznego wywołania w handlerze.
         services.AddSingleton<IAggregateSignatureMap>(
             new AggregateSignatureMap().Register<NotificationJob>(AggregateSignatures.NotificationJob));
+
+        // `UserNotification` NIE dostaje sygnatury — rozgłoszenie idzie kanałem `notifications`
+        // (uuid + licznik nieprzeczytanych, patrz UserNotificationRequestedConsumer), celowo poza
+        // konwencją `agg:{signature}` i bez koalescencji RealtimeBroadcastera
+        // (docs/backend/user-notifications.md §7).
 
         return services;
     }

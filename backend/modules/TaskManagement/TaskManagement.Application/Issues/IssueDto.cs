@@ -30,6 +30,13 @@ public sealed record IssueDto(
     DateTimeOffset? DueAt,
     Guid? ParentUuid,
     bool IsRestricted,
+    /// <summary>Wyliczony stan realizacji zlecenia (REQ-003) — <c>None</c> dla zgłoszeń,
+    /// które nie są zleceniem.</summary>
+    IssueDeliveryState DerivedDeliveryState,
+    /// <summary>Czy bieżący użytkownik aktywnie obserwuje — przełącznik „obserwuję" na karcie
+    /// czyta to pole, zamiast doładowywać całą listę obserwatorów.</summary>
+    bool IsWatchedByMe,
+    int WatcherCount,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     Dictionary<string, string> CustomFields);

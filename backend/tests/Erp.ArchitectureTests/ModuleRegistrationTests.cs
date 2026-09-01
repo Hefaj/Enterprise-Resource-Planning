@@ -1,5 +1,7 @@
 using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Api.Contracts;
+using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Domain;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
@@ -125,6 +127,24 @@ public class ModuleRegistrationTests
     }
 
     /// <summary>
+    /// Handler zdarzenia domenowego rejestruje się pod ZAMKNIĘTYM <c>IDomainEventListener&lt;TEvent&gt;</c>,
+    /// z <c>TryAddEnumerable</c> — tak samo jak walidatory komend, bo dla jednego zdarzenia może
+    /// zareagować więcej niż jeden handler i każdy z nich ma się wykonać.
+    /// </summary>
+    [Fact]
+    public void Handler_zdarzenia_domenowego_rejestruje_sie_pod_zamknietym_interfejsem()
+    {
+        var services = Scan();
+
+        var descriptor = services.SingleOrDefault(d =>
+            d.ServiceType == typeof(IDomainEventListener<SampleDomainEvent>));
+
+        descriptor.ShouldNotBeNull();
+        descriptor.ImplementationType.ShouldBe(typeof(SampleDomainEventListener));
+        descriptor.Lifetime.ShouldBe(ServiceLifetime.Scoped);
+    }
+
+    /// <summary>
     /// Wcześniejsza rejestracja jawna wygrywa z konwencją (<c>TryAdd</c>) — to jest furtka dla
     /// klas wymagających innego cyklu życia niż scoped.
     /// </summary>
@@ -179,6 +199,14 @@ internal sealed class SampleBatchRule : IBatchRule<Guid>
 }
 
 internal sealed class SampleBatchValidator : IBatchValidator;
+
+internal sealed record SampleDomainEvent(DateTimeOffset OccurredAt) : IDomainEvent;
+
+internal sealed class SampleDomainEventListener : IDomainEventListener<SampleDomainEvent>
+{
+    public Task HandleAsync(SampleDomainEvent domainEvent, CancellationToken cancellationToken)
+        => Task.CompletedTask;
+}
 
 internal interface ISampleQueries;
 

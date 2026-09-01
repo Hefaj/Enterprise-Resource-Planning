@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Notification.Domain.Jobs;
+using Notification.Domain.UserNotifications;
 
 namespace Notification.Infrastructure.Persistence;
 
@@ -24,6 +25,8 @@ public sealed class NotificationDbContext : ErpDbContext
     protected override string Schema => SchemaName;
 
     public DbSet<NotificationJob> NotificationJobs => Set<NotificationJob>();
+
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

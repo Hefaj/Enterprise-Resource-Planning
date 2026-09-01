@@ -4,8 +4,6 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using Wolverine.Runtime;
 
 namespace Internal.Generated.WolverineHandlers
 {
@@ -13,27 +11,19 @@ namespace Internal.Generated.WolverineHandlers
     [global::System.CodeDom.Compiler.GeneratedCode("JasperFx", "1.0.0")]
     public sealed class ArtifactDerivativesRequestedHandler750823070 : Wolverine.Runtime.Handlers.MessageHandler
     {
-        private readonly Erp.BuildingBlocks.Application.Abstractions.IAggregateSignatureMap _aggregateSignatureMap;
         private readonly Erp.BuildingBlocks.Application.Abstractions.IArtifactStoreResolver _artifactStoreResolver;
         private readonly Erp.BuildingBlocks.Application.Abstractions.IClock _clock;
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _serviceScopeFactory;
         private readonly Microsoft.Extensions.Logging.ILogger<Catalog.Infrastructure.Persistence.CatalogDbContext> _loggerOfCatalogDbContext;
         private readonly Microsoft.Extensions.Options.IOptions<Catalog.Application.Multimedia.MultimediaOptions> _optionsOfMultimediaOptions;
-        private readonly System.Collections.Generic.IEnumerable<Erp.BuildingBlocks.Application.Abstractions.IDomainEventTranslator> _domainEventTranslatorIEnumerable;
-        private readonly System.Collections.Generic.IEnumerable<Wolverine.EntityFrameworkCore.IDomainEventScraper> _domainEventScraperIEnumerable;
-        private readonly Wolverine.Runtime.IWolverineRuntime _wolverineRuntime;
 
-        public ArtifactDerivativesRequestedHandler750823070(Erp.BuildingBlocks.Application.Abstractions.IAggregateSignatureMap aggregateSignatureMap, Erp.BuildingBlocks.Application.Abstractions.IArtifactStoreResolver artifactStoreResolver, Erp.BuildingBlocks.Application.Abstractions.IClock clock, Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<Catalog.Infrastructure.Persistence.CatalogDbContext> loggerOfCatalogDbContext, Microsoft.Extensions.Options.IOptions<Catalog.Application.Multimedia.MultimediaOptions> optionsOfMultimediaOptions, System.Collections.Generic.IEnumerable<Erp.BuildingBlocks.Application.Abstractions.IDomainEventTranslator> domainEventTranslatorIEnumerable, System.Collections.Generic.IEnumerable<Wolverine.EntityFrameworkCore.IDomainEventScraper> domainEventScraperIEnumerable, Wolverine.Runtime.IWolverineRuntime wolverineRuntime)
+        public ArtifactDerivativesRequestedHandler750823070(Erp.BuildingBlocks.Application.Abstractions.IArtifactStoreResolver artifactStoreResolver, Erp.BuildingBlocks.Application.Abstractions.IClock clock, Microsoft.Extensions.DependencyInjection.IServiceScopeFactory serviceScopeFactory, Microsoft.Extensions.Logging.ILogger<Catalog.Infrastructure.Persistence.CatalogDbContext> loggerOfCatalogDbContext, Microsoft.Extensions.Options.IOptions<Catalog.Application.Multimedia.MultimediaOptions> optionsOfMultimediaOptions)
         {
-            _aggregateSignatureMap = aggregateSignatureMap;
             _artifactStoreResolver = artifactStoreResolver;
             _clock = clock;
             _serviceScopeFactory = serviceScopeFactory;
             _loggerOfCatalogDbContext = loggerOfCatalogDbContext;
             _optionsOfMultimediaOptions = optionsOfMultimediaOptions;
-            _domainEventTranslatorIEnumerable = domainEventTranslatorIEnumerable;
-            _domainEventScraperIEnumerable = domainEventScraperIEnumerable;
-            _wolverineRuntime = wolverineRuntime;
         }
 
 
@@ -41,13 +31,15 @@ namespace Internal.Generated.WolverineHandlers
         public override async System.Threading.Tasks.Task HandleAsync(Wolverine.Runtime.MessageContext context, System.Threading.CancellationToken cancellation)
         {
             await using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
+            var imageDerivativeGenerator = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Catalog.Application.Abstractions.IImageDerivativeGenerator>(serviceScope.ServiceProvider);
+            
+            /*
+            * Dependency: Descriptor: ServiceType: System.IServiceProvider Lifetime: Scoped ImplementationType: Microsoft.Extensions.DependencyInjection.ServiceDescriptor
+            * Your code is directly using IServiceProvider
+            */
+            var unitOfWork = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Erp.BuildingBlocks.Application.Abstractions.IUnitOfWork>(serviceScope.ServiceProvider);
             // This service has been marked as requiring service location independent of Wolverine's ability to use constructor injection of everything else
             var catalogDbContext = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Catalog.Infrastructure.Persistence.CatalogDbContext>(serviceScope.ServiceProvider);
-            var dbContextOutboxOfCatalogDbContext = new Wolverine.EntityFrameworkCore.DbContextOutbox<Catalog.Infrastructure.Persistence.CatalogDbContext>(_wolverineRuntime, catalogDbContext, _domainEventScraperIEnumerable);
-            var mutableExecutionContext = new Erp.BuildingBlocks.Application.Abstractions.MutableExecutionContext();
-            var wolverineIntegrationEventPublisherOfCatalogDbContext = new Erp.BuildingBlocks.Messaging.WolverineIntegrationEventPublisher<Catalog.Infrastructure.Persistence.CatalogDbContext>(dbContextOutboxOfCatalogDbContext);
-            var imageDerivativeGenerator = new Catalog.Infrastructure.Media.ImageDerivativeGenerator();
-            var erpUnitOfWorkOfCatalogDbContext = new Erp.BuildingBlocks.Persistence.ErpUnitOfWork<Catalog.Infrastructure.Persistence.CatalogDbContext>(catalogDbContext, wolverineIntegrationEventPublisherOfCatalogDbContext, _aggregateSignatureMap, mutableExecutionContext, _clock, _domainEventTranslatorIEnumerable);
             // The actual message body
             var artifactDerivativesRequested = (Erp.BuildingBlocks.Contracts.ArtifactDerivativesRequested)context.Envelope.Message;
 
@@ -55,7 +47,7 @@ namespace Internal.Generated.WolverineHandlers
             System.Diagnostics.Activity.Current?.SetTag("handler.type", "Catalog.Infrastructure.Consumers.ArtifactDerivativesRequestedHandler");
             
             // The actual message execution
-            await Catalog.Infrastructure.Consumers.ArtifactDerivativesRequestedHandler.HandleAsync(artifactDerivativesRequested, _artifactStoreResolver, catalogDbContext, erpUnitOfWorkOfCatalogDbContext, imageDerivativeGenerator, _clock, _optionsOfMultimediaOptions, _loggerOfCatalogDbContext, cancellation).ConfigureAwait(false);
+            await Catalog.Infrastructure.Consumers.ArtifactDerivativesRequestedHandler.HandleAsync(artifactDerivativesRequested, _artifactStoreResolver, catalogDbContext, unitOfWork, imageDerivativeGenerator, _clock, _optionsOfMultimediaOptions, _loggerOfCatalogDbContext, cancellation).ConfigureAwait(false);
 
         }
 

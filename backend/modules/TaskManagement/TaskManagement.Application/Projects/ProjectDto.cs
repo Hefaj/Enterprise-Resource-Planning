@@ -6,6 +6,15 @@ namespace TaskManagement.Application.Projects;
 /// <summary>Członek projektu w widoku odczytu.</summary>
 public sealed record ProjectMemberDto(Guid UserUuid, ProjectMemberRole Role);
 
+/// <summary>Polityka SLA projektu w widoku odczytu — <c>null</c> znaczy „nieskonfigurowana"
+/// (PRJ-006, faza 5).</summary>
+public sealed record ProjectSlaDto(
+    int ResponseMinutes,
+    int ResolutionMinutes,
+    SlaWorkingDays WorkingDays,
+    TimeOnly WorkStartTime,
+    TimeOnly WorkEndTime);
+
 /// <summary>Projekt w widoku odczytu.</summary>
 public sealed record ProjectDto(
     Guid Uuid,
@@ -19,7 +28,8 @@ public sealed record ProjectDto(
     Guid? FieldSchemeUuid,
     bool IsPublic,
     int OpenIssueCount,
-    IReadOnlyList<ProjectMemberDto> Members);
+    IReadOnlyList<ProjectMemberDto> Members,
+    ProjectSlaDto? Sla);
 
 /// <summary>Filtry wyszukiwania projektów.</summary>
 public sealed class SearchProjectRequest : PagedRequest

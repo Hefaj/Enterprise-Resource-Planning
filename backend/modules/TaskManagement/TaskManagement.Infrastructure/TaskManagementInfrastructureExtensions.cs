@@ -52,6 +52,15 @@ public static class TaskManagementInfrastructureExtensions
 
         services.AddScoped<TaskManagementSeeder>();
 
+        // Bez interfejsu własnego imienia (nie łapie go konwencja skanu) — współdzielona przez
+        // handler komendy dopięcia/odpięcia powiązania `Delivers` i przez handler zdarzenia
+        // domenowego zamknięcia zgłoszenia (REQ-003).
+        services.AddScoped<IssueDeliveryStateRecalculator>();
+
+        // Jak wyżej — bez interfejsu, wołana z pięciu miejsc (komendy pola, skan terminów,
+        // handler zamknięcia zlecenia), patrz Etap E Fazy 5.
+        services.AddScoped<IssueNotificationPublisher>();
+
         var seedOptions = configuration.GetSection(TaskManagementSeedOptions.SectionName)
             .Get<TaskManagementSeedOptions>() ?? new TaskManagementSeedOptions();
         services.AddSingleton(seedOptions);
@@ -63,6 +72,9 @@ public static class TaskManagementInfrastructureExtensions
 
         // Rebalans rangi kart — rzadki, pod dzierżawą, patrz BoardRankRebalanceService.
         services.AddHostedService<BoardRankRebalanceService>();
+
+        // Skan terminów — faza 5, REQ-005, patrz IssueOverdueScanService.
+        services.AddHostedService<IssueOverdueScanService>();
 
         // Sygnatury SignalR — kontrakt z frontendem. Muszą zgadzać się co do znaku
         // z `signalrSignature` orkiestratorów (docs/backend/realtime-signalr.md).

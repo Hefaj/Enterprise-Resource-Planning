@@ -13,10 +13,12 @@ namespace TaskManagement.Infrastructure.Queries;
 /// przy każdym kroku procesu. Tutaj liczba projektów jest o rzędy wielkości mniejsza, a dostęp
 /// jest stabilny — join wystarcza i utrzymuje serwerową paginację oraz sortowanie.</para>
 ///
-/// <para>Wyjątki są dwa i oba są wąskie: projekt publiczny w organizacji oraz zgłoszenie
-/// prywatne (<c>is_restricted</c>). <b>Gdyby wyjątków przybyło ponad te dwa, właściwą
-/// odpowiedzią jest przejście na materializowany ACL wzorem DMS</b> — nie dokładanie kolejnych
-/// warunków do tego predykatu.</para>
+/// <para>Wyjątki od widoczności projektowej są dwa: projekt publiczny w organizacji oraz
+/// zgłoszenie prywatne (<c>is_restricted</c>). Wewnątrz drugiego wyjątku krąg dopuszczonych
+/// (zgłaszający, przypisany, <c>Lead</c> projektu, aktywny obserwator — PERM-003) rośnie bez
+/// zmiany kształtu predykatu, więc to nie jest trzeci wyjątek. <b>Gdyby doszedł kolejny wyjątek
+/// od widoczności projektowej jako takiej, właściwą odpowiedzią jest przejście na
+/// materializowany ACL wzorem DMS</b> — nie dokładanie kolejnych warunków do tego predykatu.</para>
 /// </summary>
 internal static class IssueVisibility
 {
@@ -48,7 +50,11 @@ internal static class IssueVisibility
                 || dbContext.ProjectMembers.Any(m =>
                     m.ProjectUuid == i.ProjectUuid
                     && m.UserUuid == userUuid
-                    && m.Role == ProjectMemberRole.Lead)));
+                    && m.Role == ProjectMemberRole.Lead)
+                || dbContext.IssueWatchers.Any(w =>
+                    w.IssueUuid == i.Uuid
+                    && w.UserUuid == userUuid
+                    && w.OptedOutAt == null)));
     }
 
     public static IQueryable<Project> VisibleTo(

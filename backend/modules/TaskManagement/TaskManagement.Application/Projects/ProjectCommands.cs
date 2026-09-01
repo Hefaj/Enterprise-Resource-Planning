@@ -200,3 +200,43 @@ public sealed class ProjectRemoveMemberCommandHandler : CommandHandler<ProjectRe
         return project.Uuid;
     }
 }
+
+/// <summary>Zakłada albo aktualizuje politykę SLA projektu (PRJ-006, faza 5).</summary>
+public sealed class ProjectSetSlaCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public int ResponseMinutes { get; set; }
+
+    public int ResolutionMinutes { get; set; }
+
+    public SlaWorkingDays WorkingDays { get; set; }
+
+    public TimeOnly WorkStartTime { get; set; }
+
+    public TimeOnly WorkEndTime { get; set; }
+}
+
+public sealed class ProjectSetSlaCommandHandler : CommandHandler<ProjectSetSlaCommand, Guid>
+{
+    private readonly IProjectRepository _repository;
+
+    public ProjectSetSlaCommandHandler(IProjectRepository repository) => _repository = repository;
+
+    public override async Task<Guid> ExecuteAsync(ProjectSetSlaCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
+
+        project.SetSla(
+            command.ResponseMinutes,
+            command.ResolutionMinutes,
+            command.WorkingDays,
+            command.WorkStartTime,
+            command.WorkEndTime);
+
+        return project.Uuid;
+    }
+}

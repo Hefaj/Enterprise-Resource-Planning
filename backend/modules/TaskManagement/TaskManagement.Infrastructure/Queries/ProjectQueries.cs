@@ -88,7 +88,15 @@ public sealed class ProjectQueries : IProjectQueries
                         s.Uuid == i.StateUuid && s.Category != WorkflowStateCategory.Done)),
                 p.Members
                     .Select(m => new ProjectMemberDto(m.UserUuid, m.Role))
-                    .ToList()))
+                    .ToList(),
+                p.SlaResponseMinutes == null
+                    ? null
+                    : new ProjectSlaDto(
+                        p.SlaResponseMinutes!.Value,
+                        p.SlaResolutionMinutes!.Value,
+                        p.SlaWorkingDays!.Value,
+                        p.SlaWorkStartTime!.Value,
+                        p.SlaWorkEndTime!.Value)))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }

@@ -126,6 +126,7 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
     private readonly IIssueLinkRepository _links;
     private readonly IIssueGraphQueries _graph;
     private readonly IIssueActivityWriter _activity;
+    private readonly IssueDeliveryStateRecalculator _deliveryRecalculator;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
@@ -134,6 +135,7 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
         IIssueLinkRepository links,
         IIssueGraphQueries graph,
         IIssueActivityWriter activity,
+        IssueDeliveryStateRecalculator deliveryRecalculator,
         IExecutionContext executionContext,
         IClock clock)
     {
@@ -141,6 +143,7 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
         _links = links;
         _graph = graph;
         _activity = activity;
+        _deliveryRecalculator = deliveryRecalculator;
         _executionContext = executionContext;
         _clock = clock;
     }
@@ -195,6 +198,13 @@ public sealed class IssueAddLinkCommandHandler : CommandHandler<IssueAddLinkComm
             _executionContext.CorrelationId,
             now));
 
+        // Nowa realizacja zmienia zbiór, po którym liczy się stan zlecenia (REQ-003) —
+        // niezależnie od tego, czy realizacja jest akurat zamknięta.
+        if (command.Type == IssueLinkType.Delivers)
+        {
+            await _deliveryRecalculator.RecalculateAsync(command.TargetUuid, now, ct).ConfigureAwait(false);
+        }
+
         return source.Uuid;
     }
 }
@@ -212,17 +222,20 @@ public sealed class IssueRemoveLinkCommandHandler : CommandHandler<IssueRemoveLi
 {
     private readonly IIssueLinkRepository _links;
     private readonly IIssueActivityWriter _activity;
+    private readonly IssueDeliveryStateRecalculator _deliveryRecalculator;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
     public IssueRemoveLinkCommandHandler(
         IIssueLinkRepository links,
         IIssueActivityWriter activity,
+        IssueDeliveryStateRecalculator deliveryRecalculator,
         IExecutionContext executionContext,
         IClock clock)
     {
         _links = links;
         _activity = activity;
+        _deliveryRecalculator = deliveryRecalculator;
         _executionContext = executionContext;
         _clock = clock;
     }
@@ -245,6 +258,8 @@ public sealed class IssueRemoveLinkCommandHandler : CommandHandler<IssueRemoveLi
 
         _links.Remove(link);
 
+        var now = _clock.UtcNow;
+
         _activity.Add(IssueActivity.Record(
             command.Uuid,
             IssueActivityKind.FieldChanged,
@@ -253,7 +268,13 @@ public sealed class IssueRemoveLinkCommandHandler : CommandHandler<IssueRemoveLi
             null,
             IssueCreateCommandHandler.ActorUuid(_executionContext),
             _executionContext.CorrelationId,
-            _clock.UtcNow));
+            now));
+
+        // Odpięcie realizacji też zmienia zbiór, po którym liczy się stan zlecenia (REQ-003).
+        if (link.Type == IssueLinkType.Delivers)
+        {
+            await _deliveryRecalculator.RecalculateAsync(link.TargetUuid, now, ct).ConfigureAwait(false);
+        }
 
         return command.Uuid;
     }

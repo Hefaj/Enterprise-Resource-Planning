@@ -66,6 +66,7 @@ public sealed partial class TaskManagementSeeder
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var scheme = await EnsureSystemSchemeAsync(cancellationToken).ConfigureAwait(false);
+        var intakeScheme = await EnsureIntakeSchemeAsync(cancellationToken).ConfigureAwait(false);
         var issueTypeScheme = await EnsureSystemIssueTypeSchemeAsync(cancellationToken).ConfigureAwait(false);
 
         if (!_options.Enabled)
@@ -90,11 +91,11 @@ public sealed partial class TaskManagementSeeder
         var dev = CreateProject(DevProjectUuid, "DEV", "Rozwój oprogramowania", ProjectKind.Delivery, scheme, issueTypeScheme);
         dev.SetFieldScheme(fieldScheme.Uuid);
 
-        var mkt = CreateProject(MktProjectUuid, "MKT", "Marketing — zlecenia", ProjectKind.Intake, scheme, issueTypeScheme);
+        var mkt = CreateProject(MktProjectUuid, "MKT", "Marketing — zlecenia", ProjectKind.Intake, intakeScheme, issueTypeScheme);
 
         var created = 0;
         created += AddIssues(dev, SeedIssues, scheme, issueTypeScheme, reporter, now);
-        created += AddIssues(mkt, SeedRequests, scheme, issueTypeScheme, reporter, now);
+        created += AddIssues(mkt, SeedRequests, intakeScheme, issueTypeScheme, reporter, now);
 
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -120,6 +121,32 @@ public sealed partial class TaskManagementSeeder
         }
 
         var scheme = WorkflowSchemeDefaults.Build();
+        _dbContext.WorkflowSchemes.Add(scheme);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        LogSystemSchemeCreated(_logger, scheme.States.Count, scheme.Transitions.Count);
+
+        return scheme;
+    }
+
+    /// <summary>
+    /// Schemat systemowy dla projektów <c>Intake</c> — wzorzec identyczny jak
+    /// <see cref="EnsureSystemSchemeAsync"/>, osobny identyfikator (faza 5, §9).
+    /// </summary>
+    private async Task<WorkflowScheme> EnsureIntakeSchemeAsync(CancellationToken cancellationToken)
+    {
+        var existing = await _dbContext.WorkflowSchemes
+            .Include(s => s.States)
+            .Include(s => s.Transitions)
+            .FirstOrDefaultAsync(s => s.Uuid == IntakeSchemeDefaults.SchemeUuid, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var scheme = IntakeSchemeDefaults.Build();
         _dbContext.WorkflowSchemes.Add(scheme);
         await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

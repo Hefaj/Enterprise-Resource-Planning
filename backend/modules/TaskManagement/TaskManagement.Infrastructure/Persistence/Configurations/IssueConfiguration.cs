@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Infrastructure.Persistence.Configurations;
 
@@ -52,8 +53,16 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         builder.Property(i => i.Description);
         builder.Property(i => i.Priority).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(i => i.StateUuid).IsRequired();
+
+        // Duplikat `WorkflowState.Category` — patrz komentarz przy właściwości. Istnieje
+        // wyłącznie po to, żeby dało się założyć filtrowany indeks pod skan terminów (faza 5),
+        // bo Postgres nie umie indeksu częściowego odwołującego się do innej tabeli.
+        builder.Property(i => i.StateCategory).HasConversion<string>().HasMaxLength(16).IsRequired();
+
         builder.Property(i => i.ReporterUuid).IsRequired();
         builder.Property(i => i.IsRestricted).IsRequired();
+        builder.Property(i => i.DerivedDeliveryState).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(i => i.LastOverdueNotifiedAt);
         builder.Property(i => i.CreatedAt).IsRequired();
         builder.Property(i => i.UpdatedAt).IsRequired();
 
@@ -134,7 +143,10 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
 
         // Skan terminów (faza 5) idzie po tym indeksie, nie po wpisie harmonogramu per zgłoszenie —
         // rozdzielczość jest dzienna, więc drugi mechanizm z DMS-u byłby kosztem bez zysku (§9.3).
-        builder.HasIndex(i => i.DueAt);
+        // Filtrowany: zgłoszenia już zamknięte nie mają terminu, o który skan miałby pytać —
+        // `state_category` jest duplikatem właśnie po to, żeby ten `HasFilter` mógł istnieć.
+        builder.HasIndex(i => i.DueAt)
+            .HasFilter($"state_category <> '{nameof(WorkflowStateCategory.Done)}'");
 
         builder.HasOne<Project>()
             .WithMany()
@@ -153,5 +165,31 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         // Rodzic bez klucza obcego do samego siebie z kaskadą: usunięcie epiku nie może
         // wykasować podzadań po cichu. Hierarchię wypełnia faza 4.
         builder.HasIndex(i => i.ParentUuid);
+
+        builder.HasMany(i => i.Watchers)
+            .WithOne()
+            .HasForeignKey(w => w.IssueUuid)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(i => i.Watchers).UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+/// <summary>Mapowanie obserwatora. Unikalność po parze (zgłoszenie, użytkownik) jest w bazie —
+/// wzorem <c>ProjectMemberConfiguration</c>.</summary>
+public sealed class IssueWatcherConfiguration : IEntityTypeConfiguration<IssueWatcher>
+{
+    public void Configure(EntityTypeBuilder<IssueWatcher> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ToTable("issue_watcher");
+        builder.HasKey(w => w.Uuid);
+
+        builder.Property(w => w.IssueUuid).IsRequired();
+        builder.Property(w => w.UserUuid).IsRequired();
+        builder.Property(w => w.OptedOutAt);
+
+        builder.HasIndex(w => new { w.IssueUuid, w.UserUuid }).IsUnique();
     }
 }

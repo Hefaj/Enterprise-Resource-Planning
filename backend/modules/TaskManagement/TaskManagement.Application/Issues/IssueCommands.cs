@@ -246,26 +246,62 @@ public sealed class IssueSetAssigneeCommand : ICommand<Guid>, IAggregateCommand
     public Guid? AssigneeUuid { get; set; }
 }
 
-public sealed class IssueSetAssigneeCommandHandler : IssueCommandHandlerBase<IssueSetAssigneeCommand>
+/// <summary>
+/// Poza wspólnym szkieletem <see cref="IssueCommandHandlerBase{TCommand}"/> — jedyna komenda
+/// pola, po której trzeba coś opublikować (<c>taskmgmt.issue.assigned</c>, NTF-002), a
+/// <see cref="IssueCommandHandlerBase{TCommand}.Apply"/> jest synchroniczna i nie ma jak
+/// zawołać publishera.
+/// </summary>
+public sealed class IssueSetAssigneeCommandHandler : CommandHandler<IssueSetAssigneeCommand, Guid>
 {
+    private readonly IIssueRepository _repository;
+    private readonly IIssueActivityWriter _activity;
+    private readonly IssueNotificationPublisher _notifications;
+    private readonly IExecutionContext _executionContext;
+    private readonly IClock _clock;
+
     public IssueSetAssigneeCommandHandler(
         IIssueRepository repository,
         IIssueActivityWriter activity,
+        IssueNotificationPublisher notifications,
         IExecutionContext executionContext,
         IClock clock)
-        : base(repository, activity, executionContext, clock)
     {
+        _repository = repository;
+        _activity = activity;
+        _notifications = notifications;
+        _executionContext = executionContext;
+        _clock = clock;
     }
 
-    protected override IssueFieldChange Apply(Issue issue, IssueSetAssigneeCommand command, DateTimeOffset now)
+    public override async Task<Guid> ExecuteAsync(IssueSetAssigneeCommand command, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var issue = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Issue), command.Uuid);
+
+        var now = _clock.UtcNow;
+        var actor = IssueCreateCommandHandler.ActorUuid(_executionContext);
         var previous = issue.AssigneeUuid;
+
         issue.SetAssignee(command.AssigneeUuid, now);
 
-        return IssueFieldChange.Of(
-            "assignee",
-            IssueActivityValue.From(previous),
-            IssueActivityValue.From(issue.AssigneeUuid));
+        var change = IssueFieldChange.Of(
+            "assignee", IssueActivityValue.From(previous), IssueActivityValue.From(issue.AssigneeUuid));
+
+        if (change.Changed)
+        {
+            _activity.Add(IssueActivity.Record(
+                issue.Uuid, IssueActivityKind.FieldChanged, change.FieldCode, change.OldValue, change.NewValue,
+                actor, _executionContext.CorrelationId, now));
+
+            await _notifications
+                .PublishAssignedAsync(issue, actor, now, _executionContext.CorrelationId, ct)
+                .ConfigureAwait(false);
+        }
+
+        return issue.Uuid;
     }
 }
 
@@ -409,6 +445,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
     private readonly IIssueRepository _repository;
     private readonly IWorkflowSchemeRepository _schemes;
     private readonly IIssueActivityWriter _activity;
+    private readonly IssueNotificationPublisher _notifications;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
@@ -416,12 +453,14 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         IIssueRepository repository,
         IWorkflowSchemeRepository schemes,
         IIssueActivityWriter activity,
+        IssueNotificationPublisher notifications,
         IExecutionContext executionContext,
         IClock clock)
     {
         _repository = repository;
         _schemes = schemes;
         _activity = activity;
+        _notifications = notifications;
         _executionContext = executionContext;
         _clock = clock;
     }
@@ -446,15 +485,21 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         // miejsce” agregat pomija po cichu i historia ma je pominąć tak samo.
         if (previous != issue.StateUuid)
         {
+            var actor = IssueCreateCommandHandler.ActorUuid(_executionContext);
+
             _activity.Add(IssueActivity.Record(
                 issue.Uuid,
                 IssueActivityKind.StateChanged,
                 "state",
                 previous.ToString(),
                 issue.StateUuid.ToString(),
-                IssueCreateCommandHandler.ActorUuid(_executionContext),
+                actor,
                 _executionContext.CorrelationId,
                 now));
+
+            await _notifications
+                .PublishStateChangedAsync(issue, actor, now, _executionContext.CorrelationId, ct)
+                .ConfigureAwait(false);
         }
 
         return issue.Uuid;

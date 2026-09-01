@@ -59,6 +59,8 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     /// (<c>docs/backend/task-management.md</c> §8.1).</summary>
     public DbSet<IssueLink> IssueLinks => Set<IssueLink>();
 
+    public DbSet<IssueWatcher> IssueWatchers => Set<IssueWatcher>();
+
     /// <summary>Historia zmian zgłoszeń — tylko do dopisywania i do czytania w karcie.</summary>
     public DbSet<IssueActivity> IssueActivities => Set<IssueActivity>();
 

@@ -46,6 +46,7 @@ public static class ErpModuleRegistrationExtensions
     private static readonly Type CommandHandlerWithoutResult = typeof(ICommandHandler<>);
     private static readonly Type BatchRuleDefinition = typeof(IBatchRule<>);
     private static readonly Type ValidatorDefinition = typeof(IValidator<>);
+    private static readonly Type DomainEventListenerDefinition = typeof(Application.Abstractions.IDomainEventListener<>);
 
     /// <summary>
     /// Skanuje zestawy modułu i rejestruje wykryte usługi jako <c>Scoped</c>.
@@ -82,6 +83,7 @@ public static class ErpModuleRegistrationExtensions
             RegisterCommandHandlers(services, type, handledCommands);
             RegisterBatchValidation(services, type);
             RegisterCommandValidators(services, type);
+            RegisterDomainEventListeners(services, type);
             RegisterMatchingInterface(services, type);
         }
 
@@ -163,6 +165,22 @@ public static class ErpModuleRegistrationExtensions
         foreach (var contract in type.GetInterfaces())
         {
             if (contract.IsGenericType && contract.GetGenericTypeDefinition() == ValidatorDefinition)
+            {
+                services.TryAddEnumerable(ServiceDescriptor.Scoped(contract, type));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handlery zdarzeń domenowych pod <c>IDomainEventListener&lt;TEvent&gt;</c>. <c>TryAddEnumerable</c>,
+    /// bo dla jednego zdarzenia może zareagować więcej niż jeden handler — tak samo jak przy
+    /// walidatorach komend, każdy z nich ma się wykonać, a nie tylko pierwszy z brzegu.
+    /// </summary>
+    private static void RegisterDomainEventListeners(IServiceCollection services, Type type)
+    {
+        foreach (var contract in type.GetInterfaces())
+        {
+            if (contract.IsGenericType && contract.GetGenericTypeDefinition() == DomainEventListenerDefinition)
             {
                 services.TryAddEnumerable(ServiceDescriptor.Scoped(contract, type));
             }

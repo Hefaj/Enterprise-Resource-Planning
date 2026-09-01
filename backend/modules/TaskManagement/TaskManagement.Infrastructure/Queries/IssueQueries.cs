@@ -195,34 +195,41 @@ public sealed class IssueQueries : IIssueQueries
     }
 
     private IQueryable<IssueDto> Project(IQueryable<Issue> query)
-        => from issue in query
-           join project in _dbContext.Projects.AsNoTracking() on issue.ProjectUuid equals project.Uuid
-           join state in _dbContext.WorkflowStates.AsNoTracking() on issue.StateUuid equals state.Uuid
-           join type in _dbContext.IssueTypes.AsNoTracking() on issue.TypeUuid equals type.Uuid
-           select new IssueDto(
-               issue.Uuid,
-               issue.ProjectUuid,
-               project.Code,
-               issue.Key,
-               issue.Title,
-               issue.Description,
-               issue.Priority,
-               issue.TypeUuid,
-               type.Name,
-               type.Category,
-               type.Icon,
-               issue.StateUuid,
-               state.Code,
-               state.NameKey,
-               state.Category,
-               issue.ReporterUuid,
-               issue.AssigneeUuid,
-               issue.DueAt,
-               issue.ParentUuid,
-               issue.IsRestricted,
-               issue.CreatedAt,
-               issue.UpdatedAt,
-               EF.Property<Dictionary<string, string>>(issue, "_customFields"));
+    {
+        var me = IssueVisibility.CurrentUser(_executionContext);
+
+        return from issue in query
+               join project in _dbContext.Projects.AsNoTracking() on issue.ProjectUuid equals project.Uuid
+               join state in _dbContext.WorkflowStates.AsNoTracking() on issue.StateUuid equals state.Uuid
+               join type in _dbContext.IssueTypes.AsNoTracking() on issue.TypeUuid equals type.Uuid
+               select new IssueDto(
+                   issue.Uuid,
+                   issue.ProjectUuid,
+                   project.Code,
+                   issue.Key,
+                   issue.Title,
+                   issue.Description,
+                   issue.Priority,
+                   issue.TypeUuid,
+                   type.Name,
+                   type.Category,
+                   type.Icon,
+                   issue.StateUuid,
+                   state.Code,
+                   state.NameKey,
+                   state.Category,
+                   issue.ReporterUuid,
+                   issue.AssigneeUuid,
+                   issue.DueAt,
+                   issue.ParentUuid,
+                   issue.IsRestricted,
+                   issue.DerivedDeliveryState,
+                   _dbContext.IssueWatchers.Any(w => w.IssueUuid == issue.Uuid && w.UserUuid == me && w.OptedOutAt == null),
+                   _dbContext.IssueWatchers.Count(w => w.IssueUuid == issue.Uuid && w.OptedOutAt == null),
+                   issue.CreatedAt,
+                   issue.UpdatedAt,
+                   EF.Property<Dictionary<string, string>>(issue, "_customFields"));
+    }
 
     /// <summary>
     /// Mapa „kod pola → slot" dla kontekstu żądania. Pusta bez wybranego projektu: dwa schematy

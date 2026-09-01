@@ -68,6 +68,18 @@ public sealed class Project : AggregateRoot
 
     public IReadOnlyList<ProjectMember> Members => _members.AsReadOnly();
 
+    /// <summary>Polityka SLA — <c>null</c> znaczy „projekt bez zdefiniowanego SLA", stan
+    /// normalny, tak samo jak <see cref="FieldSchemeUuid"/> (faza 5, PRJ-006).</summary>
+    public int? SlaResponseMinutes { get; private set; }
+
+    public int? SlaResolutionMinutes { get; private set; }
+
+    public SlaWorkingDays? SlaWorkingDays { get; private set; }
+
+    public TimeOnly? SlaWorkStartTime { get; private set; }
+
+    public TimeOnly? SlaWorkEndTime { get; private set; }
+
     public static Project Create(
         string code,
         string name,
@@ -123,6 +135,53 @@ public sealed class Project : AggregateRoot
     }
 
     public void SetVisibility(bool isPublic) => IsPublic = isPublic;
+
+    /// <summary>Zakłada albo aktualizuje politykę SLA (PRJ-006). Czas realizacji krótszy niż
+    /// czas reakcji nie ma sensu — reakcja jest zawsze pierwszym krokiem realizacji.</summary>
+    public void SetSla(
+        int responseMinutes,
+        int resolutionMinutes,
+        SlaWorkingDays workingDays,
+        TimeOnly workStartTime,
+        TimeOnly workEndTime)
+    {
+        if (responseMinutes <= 0)
+        {
+            throw new DomainException("taskmgmt.sla_response_invalid", "Czas reakcji musi być dodatni.");
+        }
+
+        if (resolutionMinutes < responseMinutes)
+        {
+            throw new DomainException(
+                "taskmgmt.sla_resolution_before_response",
+                "Czas realizacji nie może być krótszy niż czas reakcji.");
+        }
+
+        if (workingDays == Projects.SlaWorkingDays.None)
+        {
+            throw new DomainException("taskmgmt.sla_working_days_empty", "Kalendarz roboczy musi mieć co najmniej jeden dzień.");
+        }
+
+        if (workEndTime <= workStartTime)
+        {
+            throw new DomainException("taskmgmt.sla_hours_invalid", "Godzina końca dnia roboczego musi być późniejsza niż godzina początku.");
+        }
+
+        SlaResponseMinutes = responseMinutes;
+        SlaResolutionMinutes = resolutionMinutes;
+        SlaWorkingDays = workingDays;
+        SlaWorkStartTime = workStartTime;
+        SlaWorkEndTime = workEndTime;
+    }
+
+    public void ClearSla()
+    {
+        SlaResponseMinutes = null;
+        SlaResolutionMinutes = null;
+        SlaWorkingDays = null;
+        SlaWorkStartTime = null;
+        SlaWorkEndTime = null;
+    }
 
     /// <summary>Podpina albo odpina schemat pól. Odpięcie <b>nie kasuje</b> wartości zapisanych
     /// na zgłoszeniach — zostają w <c>custom_fields</c> i wrócą, gdy schemat wróci. Kasowanie

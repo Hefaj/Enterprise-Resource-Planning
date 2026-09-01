@@ -38,6 +38,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
     private readonly IIssueRepository _issues;
     private readonly IIssueActivityWriter _activity;
     private readonly IRichTextSanitizer _sanitizer;
+    private readonly IssueNotificationPublisher _notifications;
     private readonly IExecutionContext _executionContext;
     private readonly IClock _clock;
 
@@ -46,6 +47,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         IIssueRepository issues,
         IIssueActivityWriter activity,
         IRichTextSanitizer sanitizer,
+        IssueNotificationPublisher notifications,
         IExecutionContext executionContext,
         IClock clock)
     {
@@ -53,6 +55,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         _issues = issues;
         _activity = activity;
         _sanitizer = sanitizer;
+        _notifications = notifications;
         _executionContext = executionContext;
         _clock = clock;
     }
@@ -102,6 +105,27 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
             author,
             _executionContext.CorrelationId,
             now));
+
+        // Wzmianka `@` dopisuje obserwatora niejawnie — respektując ewentualną wcześniejszą
+        // rezygnację (ISS-009 AC1). Wzmiankowany dostaje precyzyjne `taskmgmt.issue.mentioned`,
+        // nie ogólne `taskmgmt.issue.commented` niżej — mimo że `WatchImplicitly` właśnie
+        // dopisał go do obserwujących, którzy normalnie dostaliby to drugie.
+        var mentionedUuids = CommentMentionParser.ExtractMentionedUsers(body)
+            .Where(uuid => uuid != author)
+            .ToList();
+
+        foreach (var mentionedUuid in mentionedUuids)
+        {
+            issue.WatchImplicitly(mentionedUuid, now);
+
+            await _notifications
+                .PublishMentionedAsync(issue, mentionedUuid, author, now, _executionContext.CorrelationId, ct)
+                .ConfigureAwait(false);
+        }
+
+        await _notifications
+            .PublishCommentedAsync(issue, author, now, _executionContext.CorrelationId, ct, excludeRecipients: mentionedUuids)
+            .ConfigureAwait(false);
 
         return comment.Uuid;
     }

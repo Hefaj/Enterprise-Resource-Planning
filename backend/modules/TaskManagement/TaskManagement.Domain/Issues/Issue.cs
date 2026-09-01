@@ -1,6 +1,7 @@
 using Erp.BuildingBlocks.Domain;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.IssueTypes;
+using TaskManagement.Domain.Issues.Events;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Domain.Issues;
@@ -19,6 +20,8 @@ public sealed class Issue : AggregateRoot
 {
     private readonly List<string> _previousKeys = [];
 
+    private readonly List<IssueWatcher> _watchers = [];
+
     /// <summary>Wartości pól niestandardowych w postaci kanonicznej, kluczowane kodem pola —
     /// źródło prawdy. Sloty poniżej są ich <b>duplikatem</b> utrzymywanym wyłącznie po to,
     /// żeby dało się po nich sortować i filtrować w SQL (§6).</summary>
@@ -36,6 +39,7 @@ public sealed class Issue : AggregateRoot
         string title,
         Guid typeUuid,
         Guid stateUuid,
+        WorkflowStateCategory stateCategory,
         Guid reporterUuid,
         DateTimeOffset createdAt)
         : base(uuid)
@@ -45,6 +49,7 @@ public sealed class Issue : AggregateRoot
         Title = title;
         TypeUuid = typeUuid;
         StateUuid = stateUuid;
+        StateCategory = stateCategory;
         ReporterUuid = reporterUuid;
         Priority = IssuePriority.Normal;
         CreatedAt = createdAt;
@@ -74,6 +79,13 @@ public sealed class Issue : AggregateRoot
     /// dla którego nie da się tu użyć silnika z tokenami z DMS-u (§5.4).</summary>
     public Guid StateUuid { get; private set; }
 
+    /// <summary>Kategoria bieżącego stanu, <b>zduplikowana</b> z <c>WorkflowState.Category</c>.
+    /// Postgres nie umie filtrowanego indeksu odwołującego się do innej tabeli, a skan terminów
+    /// (faza 5) potrzebuje właśnie takiego indeksu (<c>WHERE state_category &lt;&gt; Done</c>) —
+    /// stąd duplikat, aktualizowany w każdym miejscu, które zmienia <see cref="StateUuid"/>,
+    /// nigdy osobno.</summary>
+    public WorkflowStateCategory StateCategory { get; private set; }
+
     public Guid ReporterUuid { get; private set; }
 
     public Guid? AssigneeUuid { get; private set; }
@@ -87,6 +99,17 @@ public sealed class Issue : AggregateRoot
     /// <summary>Zgłoszenie prywatne — widoczne dla zgłaszającego, przypisanego i <c>Lead</c>
     /// projektu. Jeden z dwóch (i tylko dwóch) wyjątków od widoczności projektowej (§10.1).</summary>
     public bool IsRestricted { get; private set; }
+
+    /// <summary>Stan realizacji zlecenia — wyliczany, nigdy ustawiany wprost z komendy
+    /// użytkownika (REQ-003). <see cref="IssueDeliveryState.None"/> dla zgłoszeń, które nie są
+    /// zleceniem (nie mają żadnej realizacji powiązanej przez <see cref="IssueLinkType.Delivers"/>).</summary>
+    public IssueDeliveryState DerivedDeliveryState { get; private set; }
+
+    /// <summary>Moment ostatniego powiadomienia o zbliżającym się/minionym terminie — pilnuje
+    /// skanu terminów (faza 5), żeby nie generować <c>UserNotificationRequested</c> co tick.</summary>
+    public DateTimeOffset? LastOverdueNotifiedAt { get; private set; }
+
+    public IReadOnlyList<IssueWatcher> Watchers => _watchers.AsReadOnly();
 
     /// <summary>Klucze sprzed przeniesień do innych projektów. Wyszukiwanie idzie także po nich,
     /// inaczej „DEV-412” z maila przestaje cokolwiek znajdować dzień po przeniesieniu (§4).</summary>
@@ -166,13 +189,16 @@ public sealed class Issue : AggregateRoot
             throw new DomainException("taskmgmt.issue_key_empty", "Zgłoszenie musi mieć klucz czytelny.");
         }
 
+        var initialState = scheme.InitialState();
+
         return new Issue(
             uuid,
             projectUuid,
             key.Trim(),
             ValidateTitle(title),
             issueType.Uuid,
-            scheme.InitialState().Uuid,
+            initialState.Uuid,
+            initialState.Category,
             reporterUuid,
             createdAt);
     }
@@ -225,7 +251,9 @@ public sealed class Issue : AggregateRoot
 
         if (targetWorkflowScheme is not null)
         {
-            StateUuid = targetWorkflowScheme.InitialState().Uuid;
+            var initialState = targetWorkflowScheme.InitialState();
+            StateUuid = initialState.Uuid;
+            StateCategory = initialState.Category;
         }
 
         Touch(now);
@@ -266,6 +294,64 @@ public sealed class Issue : AggregateRoot
         IsRestricted = isRestricted;
         Touch(now);
     }
+
+    /// <summary>Jawna akcja „obserwuję" — dodaje obserwatora i, jeśli wcześniej zrezygnował,
+    /// czyści rezygnację. Jedyna droga, którą rezygnacja daje się cofnąć.</summary>
+    public void Watch(Guid userUuid, DateTimeOffset now)
+    {
+        var existing = _watchers.Find(w => w.UserUuid == userUuid);
+
+        if (existing is not null)
+        {
+            existing.OptIn();
+            return;
+        }
+
+        _watchers.Add(IssueWatcher.Create(NewUuid(), userUuid));
+    }
+
+    /// <summary>Dopisanie obserwatora jako SKUTEK UBOCZNY komentarza albo wzmianki — w
+    /// odróżnieniu od <see cref="Watch"/> respektuje jawną rezygnację i po cichu nic nie robi,
+    /// gdy użytkownik już raz zrezygnował (ISS-009 AC1).</summary>
+    public void WatchImplicitly(Guid userUuid, DateTimeOffset now)
+    {
+        var existing = _watchers.Find(w => w.UserUuid == userUuid);
+
+        if (existing is not null)
+        {
+            return;
+        }
+
+        _watchers.Add(IssueWatcher.Create(NewUuid(), userUuid));
+    }
+
+    /// <summary>Jawna rezygnacja — zostawia wiersz z <see cref="IssueWatcher.OptedOutAt"/>
+    /// ustawionym, żeby kolejny komentarz nie dopisał obserwatora z powrotem.</summary>
+    public void Unwatch(Guid userUuid, DateTimeOffset now)
+    {
+        var existing = _watchers.Find(w => w.UserUuid == userUuid);
+
+        if (existing is null)
+        {
+            _watchers.Add(IssueWatcher.Create(NewUuid(), userUuid));
+            existing = _watchers[^1];
+        }
+
+        existing.OptOut(now);
+    }
+
+    /// <summary>Przelicza stan realizacji zlecenia — wołane wyłącznie przez
+    /// <c>IssueClosedRecalculateDeliveryStateHandler</c>, nigdy z komendy użytkownika
+    /// (REQ-003: zlecenie samo się nie zamyka, tylko przestawia ten wskaźnik).</summary>
+    public void SetDerivedDeliveryState(IssueDeliveryState state, DateTimeOffset now)
+    {
+        DerivedDeliveryState = state;
+        Touch(now);
+    }
+
+    /// <summary>Zapamiętuje moment ostatniego powiadomienia o terminie — skan (faza 5) czyta to
+    /// pole, żeby nie generować powiadomienia co tick.</summary>
+    public void MarkOverdueNotified(DateTimeOffset now) => LastOverdueNotifiedAt = now;
 
     /// <summary>
     /// Zmiana stanu wg schematu projektu. Schemat wchodzi parametrem, bo jest <b>osobnym
@@ -310,8 +396,16 @@ public sealed class Issue : AggregateRoot
                 $"Przejście `{transition!.NameKey}` wymaga wartości pola `{missingField}`.");
         }
 
+        var toState = scheme.States.First(s => s.Uuid == toStateUuid);
+
         StateUuid = toStateUuid;
+        StateCategory = toState.Category;
         Touch(now);
+
+        if (toState.Category == WorkflowStateCategory.Done)
+        {
+            Raise(new IssueClosed(Uuid, now));
+        }
     }
 
     /// <summary>
@@ -477,10 +571,13 @@ public sealed class Issue : AggregateRoot
             throw new DomainException("taskmgmt.issue_key_empty", "Zgłoszenie musi mieć klucz czytelny.");
         }
 
+        var initialState = targetScheme.InitialState();
+
         _previousKeys.Add(Key);
         ProjectUuid = projectUuid;
         Key = newKey.Trim();
-        StateUuid = targetScheme.InitialState().Uuid;
+        StateUuid = initialState.Uuid;
+        StateCategory = initialState.Category;
         Touch(now);
     }
 

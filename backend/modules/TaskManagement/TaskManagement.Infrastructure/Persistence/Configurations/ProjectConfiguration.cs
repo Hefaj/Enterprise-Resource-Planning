@@ -42,6 +42,15 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .HasForeignKey(p => p.IssueTypeSchemeUuid)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Polityka SLA — pięć kolumn opcjonalnych naraz, nie osobna tabela 1:1: to jedna
+        // decyzja konfiguracyjna projektu, nie kolekcja, więc dodatkowy JOIN nie kupuje niczego
+        // (PRJ-006, faza 5).
+        builder.Property(p => p.SlaResponseMinutes);
+        builder.Property(p => p.SlaResolutionMinutes);
+        builder.Property(p => p.SlaWorkingDays).HasConversion<string>().HasMaxLength(64);
+        builder.Property(p => p.SlaWorkStartTime);
+        builder.Property(p => p.SlaWorkEndTime);
+
         builder.HasIndex(p => p.Code).IsUnique();
 
         builder.HasMany(p => p.Members)

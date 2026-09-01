@@ -172,6 +172,126 @@ namespace Notification.Infrastructure.Persistence.Migrations
                     b.ToTable("job", "notification");
                 });
 
+            modelBuilder.Entity("Notification.Domain.UserNotifications.UserNotification", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("ActorId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("actor_id");
+
+                    b.Property<Guid>("CorrelationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("ExpireOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expire_on");
+
+                    b.Property<string>("GroupKey")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("group_key");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset>("LastOccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_occurred_at");
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("link");
+
+                    b.Property<int>("OccurrenceCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("occurrence_count");
+
+                    b.Property<string>("ParamsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("params_json");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<DateTimeOffset?>("SeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("seen_at");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer")
+                        .HasColumnName("severity");
+
+                    b.Property<string>("SubjectKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("subject_key");
+
+                    b.Property<string>("SubjectSignature")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("subject_signature");
+
+                    b.Property<Guid>("SubjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_uuid");
+
+                    b.Property<string>("TitleKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("title_key");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_user_notification");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_notification_user_id")
+                        .HasFilter("read_at IS NULL");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_user_notification_user_id_created_at");
+
+                    b.HasIndex("UserId", "GroupKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_notification_user_id_group_key")
+                        .HasFilter("group_key IS NOT NULL AND read_at IS NULL");
+
+                    b.HasIndex("UserId", "Kind", "SubjectUuid", "CorrelationId")
+                        .HasDatabaseName("ix_user_notification_user_id_kind_subject_uuid_correlation_id");
+
+                    b.ToTable("user_notification", "notification");
+                });
+
             modelBuilder.Entity("Notification.Infrastructure.Realtime.SignatureSequence", b =>
                 {
                     b.Property<string>("Signature")

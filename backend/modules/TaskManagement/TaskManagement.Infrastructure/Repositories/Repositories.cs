@@ -16,7 +16,9 @@ public sealed class IssueRepository : IIssueRepository
 
     /// <inheritdoc />
     public Task<Issue?> FindAsync(Guid uuid, CancellationToken cancellationToken)
-        => _dbContext.Issues.FirstOrDefaultAsync(i => i.Uuid == uuid, cancellationToken);
+        => _dbContext.Issues
+            .Include(i => i.Watchers)
+            .FirstOrDefaultAsync(i => i.Uuid == uuid, cancellationToken);
 
     /// <inheritdoc />
     public void Add(Issue issue) => _dbContext.Issues.Add(issue);

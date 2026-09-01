@@ -103,7 +103,12 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
       .erp-link-list__row {
         display: flex;
-        align-items: baseline;
+        /* flex-end, nie baseline — w wierszu z polami formularza (typ + klucz + dodaj)
+           erp-input-picker ma etykietę nad polem, a erp-input obok nie (sam placeholder),
+           więc wyrównanie po linii bazowej tekstu wypychało pola na różne wysokości. Dla
+           wierszy z samym tekstem (klucz, tytuł) różnica względem baseline jest niezauważalna
+           przy jednej linii tekstu o tej samej wysokości. */
+        align-items: flex-end;
         gap: 0.5rem;
         font-size: 0.875rem;
       }

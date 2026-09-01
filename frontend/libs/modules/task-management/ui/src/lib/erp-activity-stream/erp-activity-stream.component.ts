@@ -203,9 +203,12 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
       }
 
       .erp-activity-stream__composer {
-        position: sticky;
-        bottom: 0;
-        background: var(--tui-background-base);
+        /* Bez position: sticky i bez własnego tła. Przyklejony kompozytor potrzebowałby
+           nieprzezroczystego tła (żeby przewijana treść pod spodem nie prześwitywała), a jedyny
+           dostępny token (--tui-background-base) jest zauważalnie jaśniejszy od tła powłoki
+           aplikacji (dark:bg-zinc-900 w index.html) — stąd jasna plama, na którą trafił Rafał.
+           W zwykłym przepływie dokumentu kompozytor po prostu kończy listę aktywności, tak jak
+           w referencyjnym układzie YouTracka. */
         padding-top: 0.5rem;
       }
     `,

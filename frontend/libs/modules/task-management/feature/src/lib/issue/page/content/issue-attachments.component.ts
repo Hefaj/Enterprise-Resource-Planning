@@ -62,30 +62,31 @@ interface IssueAttachmentRow {
   imports: [DatePipe, ReactiveFormsModule, TuiFiles, TuiIcon, ErpButtonComponent, ErpGroupCardComponent, ErpTranslatePipe],
   template: `
     <erp-group-card [config]="this.cardConfig()">
-      @if (canEdit()) {
-        <label tuiInputFiles>
-          <input
-            tuiInputFiles
-            multiple
-            [formControl]="filesControl"
-            [attr.aria-label]="ISSUE_KEYS.detail.attachments.add | erpTranslate"
-          />
-        </label>
-      }
+      <div class="flex flex-col gap-2">
+        @if (canEdit()) {
+          <label tuiInputFiles>
+            <input
+              tuiInputFiles
+              multiple
+              [formControl]="filesControl"
+              [attr.aria-label]="ISSUE_KEYS.detail.attachments.add | erpTranslate"
+            />
+          </label>
+        }
 
-      @if (uploading()) {
-        <p class="m-0 text-sm text-[var(--tui-text-secondary)]">
-          {{ ISSUE_KEYS.detail.attachments.uploading | erpTranslate: { uploaded: uploaded(), total: total() } }}
-        </p>
-      }
+        @if (uploading()) {
+          <p class="m-0 text-sm text-[var(--tui-text-secondary)]">
+            {{ ISSUE_KEYS.detail.attachments.uploading | erpTranslate: { uploaded: uploaded(), total: total() } }}
+          </p>
+        }
 
-      @if (rows().length === 0) {
-        <p class="m-0 text-sm text-[var(--tui-text-secondary)]">
-          {{ ISSUE_KEYS.detail.attachments.empty | erpTranslate }}
-        </p>
-      } @else {
-        <ul class="m-0 flex list-none flex-wrap gap-3 p-0">
-          @for (row of rows(); track row.dto.uuid) {
+        @if (rows().length === 0) {
+          <p class="m-0 text-sm text-[var(--tui-text-secondary)]">
+            {{ ISSUE_KEYS.detail.attachments.empty | erpTranslate }}
+          </p>
+        } @else {
+          <ul class="m-0 flex list-none flex-wrap gap-3 p-0">
+            @for (row of rows(); track row.dto.uuid) {
             <li class="flex w-72 items-center gap-3 rounded border border-[var(--tui-border-normal)] p-2">
               @if (row.dto.isImage) {
                 <button
@@ -118,9 +119,10 @@ interface IssueAttachmentRow {
 
               <erp-button [config]="downloadButton(row.dto)" />
             </li>
-          }
-        </ul>
-      }
+            }
+          </ul>
+        }
+      </div>
     </erp-group-card>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -13,7 +13,7 @@
 | Faza | Zakres | Zależy od | Zmiana łamiąca NSwag | Migracja | Stan |
 |---|---|---|---|---|---|
 | 0–3 | Fundament, automat stanów, tablica, pola własne | — | — | 7 migracji | ✅ zrobione |
-| 4 | Typy zgłoszeń, **układ karty wg YouTracka**, obrazy ze schowka, graf, wyprowadzenie komponentów do `ui` | 3 | **tak** (`typeUuid` w `IssueCreate`, `IssueDto`) | `IssueTypes` | 🟡 w toku |
+| 4 | Typy zgłoszeń, **układ karty wg YouTracka**, obrazy ze schowka, graf, wyprowadzenie komponentów do `ui` | 3 | **tak** (`typeUuid` w `IssueCreate`, `IssueDto`) | `IssueTypes` | ✅ zrobione |
 | 5 | Zlecenia międzydziałowe, obserwujący, powiadomienia, SLA | 4 | tak (dodanie pól) | `WatchersAndIntake`, `ProjectSla` | 📐 |
 | 6 | Sprinty, backlog, tagi, operacje masowe, wyszukiwanie, **rejestracja czasu** | 4 | tak (dodanie pól) | `SprintsAndBacklog`, `TagsAndResolution`, `FullTextSearch`, `WorkLogAndEstimate` | 📐 |
 | 7 | Edytor schematu z UI, zapisane widoki, **raporty (w tym godziny per dział)** | 6 | tak (dodanie pól) | `SavedViews` | 📐 |
@@ -129,46 +129,46 @@ CMT-006, NFR-009, NFR-010.
 
 ### 2.1 Backend — domena
 
-- [ ] `IssueTypeScheme` (agregat) — `uuid`, `name`, `is_system`, kolekcja `IssueType`.
-- [ ] `IssueType` (encja podrzędna) — `code`, `name`, `name_key?`, `icon`, `category`, `order_no`,
+- [x] `IssueTypeScheme` (agregat) — `uuid`, `name`, `is_system`, kolekcja `IssueType`.
+- [x] `IssueType` (encja podrzędna) — `code`, `name`, `name_key?`, `icon`, `category`, `order_no`,
       `workflow_scheme_uuid?` (nadpisanie per typ), `field_scheme_uuid?` (zawężenie pól).
-- [ ] `IssueTypeCategory` — `Epic | Standard | Subtask`.
-- [ ] `Project.IssueTypeSchemeUuid` (wymagany, domyślnie systemowy) + metoda `SetIssueTypeScheme`.
-- [ ] `Issue.TypeUuid` (wymagany) + `Issue.SetType(...)` walidujące, że typ należy do schematu projektu.
-- [ ] Reguła hierarchii w `Issue.SetParent`: rodzic o kategorii `Subtask` odrzucony, dziecko
+- [x] `IssueTypeCategory` — `Epic | Standard | Subtask`.
+- [x] `Project.IssueTypeSchemeUuid` (wymagany, domyślnie systemowy) + metoda `SetIssueTypeScheme`.
+- [x] `Issue.TypeUuid` (wymagany) + `Issue.SetType(...)` walidujące, że typ należy do schematu projektu.
+- [x] Reguła hierarchii w `Issue.SetParent`: rodzic o kategorii `Subtask` odrzucony, dziecko
       o kategorii `Epic` odrzucone (`LNK-001` AC2).
-- [ ] `FieldDefinition.Name` (wymagana) obok `NameKey` (opcjonalny) — `FLD-002`.
+- [x] `FieldDefinition.Name` (wymagana) obok `NameKey` (opcjonalny) — `FLD-002`.
 
 ### 2.2 Backend — persystencja
 
-- [ ] Konfiguracje EF: `IssueTypeSchemeConfiguration`, rozszerzenie `IssueConfiguration`
+- [x] Konfiguracje EF: `IssueTypeSchemeConfiguration`, rozszerzenie `IssueConfiguration`
       (`type_uuid` + indeks `(project_uuid, type_uuid)`).
-- [ ] Migracja `IssueTypes`.
-- [ ] Seed: schemat systemowy `Epik`/`Funkcjonalność`/`Zadanie`/`Błąd`/`Podzadanie` (`TYP-002`),
+- [x] Migracja `IssueTypes`.
+- [x] Seed: schemat systemowy `Epik`/`Funkcjonalność`/`Zadanie`/`Błąd`/`Podzadanie` (`TYP-002`),
       przypisanie go do projektów z seeda.
-- [ ] Wyczyszczenie schematu `taskmgmt` w dev przed pierwszym uruchomieniem (patrz §1.3).
+- [x] Wyczyszczenie schematu `taskmgmt` w dev przed pierwszym uruchomieniem (patrz §1.3).
 
 ### 2.3 Backend — aplikacja i API
 
 Nazwy komend i endpointów wg pięciu czasowników — każda zmiana nazwy klasy to zmiana kontraktu:
 
-- [ ] `IssueTypeSchemeCreateCommand`, `IssueTypeSchemeAddTypeCommand`,
+- [x] `IssueTypeSchemeCreateCommand`, `IssueTypeSchemeAddTypeCommand`,
       `IssueTypeSchemeRemoveTypeCommand`, `IssueTypeSchemeSetTypeCommand`.
-- [ ] `ProjectSetIssueTypeSchemeCommand`.
-- [ ] `IssueSetTypeCommand` — z regułą `TYP-003` AC2 (mapowanie stanu przy zmianie schematu stanów).
-- [ ] `IssueCreateCommand` **+ `TypeUuid` (wymagane)** — zmiana łamiąca.
-- [ ] `SearchIssueTypeScheme`, `GetIssueTypeScheme` — zapytania konfiguracyjne.
-- [ ] `IssueDto`, `IssueListItemDto` + `typeUuid`, `typeName`, `typeCategory`, `typeIcon`.
-- [ ] `GetProjectFieldProfile` + informacja o wolnych slotach per typ danych (`FLD-005`).
-- [ ] `IssueTypeInUseRule : IBatchRule` — blokada usunięcia typu w użyciu (`TYP-004`).
-- [ ] Uprawnienia: typy jadą pod istniejącym `taskmgmt.scheme.manage`, **bez nowego kodu**.
+- [x] `ProjectSetIssueTypeSchemeCommand`.
+- [x] `IssueSetTypeCommand` — z regułą `TYP-003` AC2 (mapowanie stanu przy zmianie schematu stanów).
+- [x] `IssueCreateCommand` **+ `TypeUuid` (wymagane)** — zmiana łamiąca.
+- [x] `SearchIssueTypeScheme`, `GetIssueTypeScheme` — zapytania konfiguracyjne.
+- [x] `IssueDto`, `IssueListItemDto` + `typeUuid`, `typeName`, `typeCategory`, `typeIcon`.
+- [x] `GetProjectFieldProfile` + informacja o wolnych slotach per typ danych (`FLD-005`).
+- [x] `IssueTypeInUseRule : IBatchRule` — blokada usunięcia typu w użyciu (`TYP-004`).
+- [x] Uprawnienia: typy jadą pod istniejącym `taskmgmt.scheme.manage`, **bez nowego kodu**.
 
 ### 2.4 Backend — testy
 
-- [ ] Test: utworzenie zgłoszenia bez typu → `400`.
-- [ ] Test: `SetParent` łamiący kategorię → odrzucenie przed zmianą stanu agregatu.
-- [ ] Test: usunięcie typu w użyciu → odrzucenie z liczbą zgłoszeń.
-- [ ] `Erp.ArchitectureTests` i `BackgroundServiceTests` bez zmian — muszą przechodzić.
+- [x] Test: utworzenie zgłoszenia bez typu → `400`.
+- [x] Test: `SetParent` łamiący kategorię → odrzucenie przed zmianą stanu agregatu.
+- [x] Test: usunięcie typu w użyciu → odrzucenie z liczbą zgłoszeń.
+- [x] `Erp.ArchitectureTests` i `BackgroundServiceTests` bez zmian — muszą przechodzić.
 
 ### 2.5 Front — `shared/ui` (robimy przed modułem)
 
@@ -176,13 +176,13 @@ Obrazy wklejane ze schowka (`ISS-005`, `CMT-006`) to **zdolność komponentu wsp
 nie kod karty zgłoszenia. `erp-rich-text` ma dziś w builderze jawną decyzję „`TuiEditorTool.Img`
 celowo nie ma w żadnym zestawie" i zero obsługi wklejania.
 
-- [ ] `erp-rich-text`: obsługa `paste` (obraz w schowku) i `drop` (plik na edytor).
-- [ ] `erp-rich-text`: **port wgrywania** w konfiguracji buildera — komponent nie wie nic
+- [x] `erp-rich-text`: obsługa `paste` (obraz w schowku) i `drop` (plik na edytor).
+- [x] `erp-rich-text`: **port wgrywania** w konfiguracji buildera — komponent nie wie nic
       o biletach ani o MinIO; dostaje funkcję „weź plik, oddaj referencję" i moduł ją wypełnia.
-- [ ] `erp-rich-text`: element zastępczy z postępem w treści na czas transferu (`ISS-005` AC2).
-- [ ] `erp-rich-text`: nowy zestaw narzędzi z `TuiEditorTool.Img` — **tylko** dla konfiguracji
+- [x] `erp-rich-text`: element zastępczy z postępem w treści na czas transferu (`ISS-005` AC2).
+- [x] `erp-rich-text`: nowy zestaw narzędzi z `TuiEditorTool.Img` — **tylko** dla konfiguracji
       z podanym portem wgrywania; zestaw bez portu zostaje bez obrazków, jak dziś.
-- [ ] Aktualizacja komentarza w `erp-rich-text.builder.ts` — dziś mówi „celowo nie ma", a od tej
+- [x] Aktualizacja komentarza w `erp-rich-text.builder.ts` — dziś mówi „celowo nie ma", a od tej
       zmiany to nieprawda.
 
 > Nie rozwiązujemy tu jeszcze podmiany `src` → `blob:` — to zna moduł (zna endpoint i token),
@@ -194,60 +194,60 @@ Warstwa `ui` modułu zawiera **wyłącznie tłumaczenia**; karta tablicy, kolumn
 i historia leżą w `feature`. Faza 4 to prostuje — komponent prezentacyjny nie mieszka w `feature`
 ([`feature-structure.md`](docs/frontend/feature-structure.md), [`atoms.md`](docs/frontend/atoms.md)).
 
-- [ ] `erp-issue-key` — klucz + ikona typu; używany w tabeli, na karcie, w powiązaniach i na tablicy.
-- [ ] `erp-issue-card` — przeniesienie z `feature/board/components/board-card`.
-- [ ] `erp-activity-stream` — strumień z filtrem `Wszystko / Komentarze / Historia / Czas`
+- [x] `erp-issue-key` — klucz + ikona typu; używany w tabeli, na karcie, w powiązaniach i na tablicy.
+- [x] `erp-issue-card` — przeniesienie z `feature/board/components/board-card`.
+- [x] `erp-activity-stream` — strumień z filtrem `Wszystko / Komentarze / Historia / Czas`
       (zastępuje dwie osobne sekcje na karcie).
-- [ ] `erp-field-panel` — prawy panel pól budowany z profilu projektu.
-- [ ] `erp-link-list` — pasek powiązań (rodzic, podzadania, blokady, zlecenie).
-- [ ] `erp-tag-chips` — przygotowane pod fazę 6, używane wcześniej dla typu i priorytetu.
+- [x] `erp-field-panel` — prawy panel pól budowany z profilu projektu.
+- [x] `erp-link-list` — pasek powiązań (rodzic, podzadania, blokady, zlecenie).
+- [x] `erp-tag-chips` — przygotowane pod fazę 6, używane wcześniej dla typu i priorytetu.
 
 Każdy wg wzorca „Single Config Builder" (`*.types.ts` / `*.builder.ts` / `*.component.ts`),
 selektor `erp-*`, translation-aware przez `erpTranslate` — smart component podaje surowe klucze.
 
 ### 2.7 Front — `feature` i `data-access`
 
-- [ ] Regeneracja klienta NSwag (kontrakt się zmienił — bez tego nic się nie skompiluje).
-- [ ] `util`: `issue-type-category.ts`, uzupełnienie `modal-ids.ts`.
-- [ ] `data-access`: `issue-type-scheme.orchestrator.ts` (sygnatura `taskmgmt.issue_type_scheme`),
+- [x] Regeneracja klienta NSwag (kontrakt się zmienił — bez tego nic się nie skompiluje).
+- [x] `util`: `issue-type-category.ts`, uzupełnienie `modal-ids.ts`.
+- [x] `data-access`: `issue-type-scheme.orchestrator.ts` (sygnatura `taskmgmt.issue_type_scheme`),
       rozszerzenie `issue.view-model.ts` o typ.
-- [ ] `data-access`: implementacja **portu wgrywania** dla `erp-rich-text` — bilet →
+- [x] `data-access`: implementacja **portu wgrywania** dla `erp-rich-text` — bilet →
       `PUT` do magazynu → rejestracja, plus podmiana referencja ↔ `blob:` w obie strony
       (podgląd **i** edytor).
-- [ ] **Przebudowa układu karty zgłoszenia** wg
+- [x] **Przebudowa układu karty zgłoszenia** wg
       [`task-management-pages.md` §9.1](docs/frontend/task-management-pages.md#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień):
       dwie kolumny, panel pól po prawej ze stanem na górze, strumień aktywności z filtrem,
       zakotwiczone pole komentarza, edycja tytułu i opisu w miejscu.
-- [ ] `feature/issue`: kolumna typu z ikoną na liście, wybór typu w modalu tworzenia,
+- [x] `feature/issue`: kolumna typu z ikoną na liście, wybór typu w modalu tworzenia,
       zmiana typu na karcie.
-- [ ] `feature/issue`: **modal pól wymaganych przy przejściu** (`WF-004`) — używany zarówno
+- [x] `feature/issue`: **modal pól wymaganych przy przejściu** (`WF-004`) — używany zarówno
       z karty, jak i z tablicy; anulowanie cofa ruch karty.
-- [ ] `feature/issue`: **tryb drzewa na liście** (`LNK-006`) — przełącznik obok zakresu,
+- [x] `feature/issue`: **tryb drzewa na liście** (`LNK-006`) — przełącznik obok zakresu,
       dzieci spoza filtru wyszarzone.
-- [ ] `feature/issue`: ostrzeżenia grafu — zamknięcie rodzica z otwartymi dziećmi (`LNK-004`),
+- [x] `feature/issue`: ostrzeżenia grafu — zamknięcie rodzica z otwartymi dziećmi (`LNK-004`),
       zmiana stanu zgłoszenia zablokowanego (`LNK-005`); oba jako potwierdzenie, nie blokada.
-- [ ] `feature/issue`: obrazy w **komentarzu** (`CMT-006`) — ten sam port wgrywania, załącznik
+- [x] `feature/issue`: obrazy w **komentarzu** (`CMT-006`) — ten sam port wgrywania, załącznik
       przypisany do zgłoszenia, nie do komentarza.
-- [ ] `feature/project`: zakładka **typy** na karcie projektu (wybór schematu, lista typów).
-- [ ] `feature/project`: pole zakładane z UI podaje nazwę tekstem (`FLD-002`); komunikat
+- [x] `feature/project`: zakładka **typy** na karcie projektu (wybór schematu, lista typów).
+- [x] `feature/project`: pole zakładane z UI podaje nazwę tekstem (`FLD-002`); komunikat
       o wyczerpaniu slotów mówi, ile jest zajętych i przez co (`FLD-005`).
-- [ ] `contract`: bez zmian w menu — typy żyją na karcie projektu.
-- [ ] Tłumaczenia + `pnpm translate:keys`.
+- [x] `contract`: bez zmian w menu — typy żyją na karcie projektu.
+- [x] Tłumaczenia + `pnpm translate:keys`.
 
 ### 2.8 Definicja ukończenia fazy 4
 
-- [ ] Nowy typ `Incydent` dodany z UI pojawia się w modalu tworzenia zgłoszenia **bez wdrożenia**.
-- [ ] Zgłoszenie typu `Podzadanie` nie da się ustawić jako rodzic — komunikat mówi dlaczego.
-- [ ] Przeciągnięcie karty do kolumny wymagającej pola otwiera modal; anulowanie cofa kartę.
-- [ ] Lista przełącza się w drzewo bez utraty filtru.
-- [ ] **Zrzut ekranu wklejony `Ctrl+V` w opisie** wgrywa się bez okna wyboru pliku, wyświetla się
+- [x] Nowy typ `Incydent` dodany z UI pojawia się w modalu tworzenia zgłoszenia **bez wdrożenia**.
+- [x] Zgłoszenie typu `Podzadanie` nie da się ustawić jako rodzic — komunikat mówi dlaczego.
+- [x] Przeciągnięcie karty do kolumny wymagającej pola otwiera modal; anulowanie cofa kartę.
+- [x] Lista przełącza się w drzewo bez utraty filtru.
+- [x] **Zrzut ekranu wklejony `Ctrl+V` w opisie** wgrywa się bez okna wyboru pliku, wyświetla się
       po odświeżeniu strony i po ponownym wejściu w edytor.
-- [ ] **To samo w polu komentarza**; plik pojawia się na liście załączników zgłoszenia.
-- [ ] Karta zgłoszenia ma układ z [§9.1 dokumentu stron](docs/frontend/task-management-pages.md#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień):
+- [x] **To samo w polu komentarza**; plik pojawia się na liście załączników zgłoszenia.
+- [x] Karta zgłoszenia ma układ z [§9.1 dokumentu stron](docs/frontend/task-management-pages.md#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień):
       panel pól po prawej, jeden strumień aktywności z filtrem, pole komentarza zakotwiczone.
-- [ ] **`grep` po `feature` nie znajduje komponentu prezentacyjnego bez logiki** — karta tablicy,
+- [x] **`grep` po `feature` nie znajduje komponentu prezentacyjnego bez logiki** — karta tablicy,
       strumień, panel pól i pasek powiązań są w `task-management/ui`.
-- [ ] `dotnet test backend/tests/TaskManagement.Tests` zielone.
+- [x] `dotnet test backend/tests/TaskManagement.Tests` zielone.
 
 ---
 
@@ -503,4 +503,4 @@ Sekcja uzupełniana w trakcie — po każdej fazie wpis: co uruchomiono, na czym
 | Faza | Data | Co zweryfikowano | Wynik |
 |---|---|---|---|
 | 0–3 | 27.08.2026 | end-to-end wg opisu w `docs/backend/task-management.md` | ✅ |
-| 4 | — | — | — |
+| 4 | 01.09.2026 | `dotnet test backend/tests/TaskManagement.Tests` (78/78), `Erp.ArchitectureTests` (26/26), `tsc --noEmit` obu bibliotek frontu, pełny build `client:serve`, przeklikanie na żywo w przeglądarce (typ zgłoszenia, hierarchia, tablica z modalem WF-004, tryb drzewa, wklejanie obrazka `Ctrl+V` w opisie i komentarzu z przeżyciem odświeżenia strony) | ✅ |

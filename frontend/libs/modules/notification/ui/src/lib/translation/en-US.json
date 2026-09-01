@@ -56,6 +56,15 @@
       "emptyCell": "—"
     }
   },
+  "tabs": {
+    "jobs": "Jobs",
+    "notifications": "Notifications"
+  },
+  "notifications": {
+    "empty": "No notifications.",
+    "markAllRead": "Mark all as read",
+    "unreadBadge": "{{count}} unread"
+  },
   "download": "Download",
   "downloadFailed": "Could not download the file — please try again."
 }

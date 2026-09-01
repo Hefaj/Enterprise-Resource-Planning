@@ -146,7 +146,8 @@ internal sealed class DirectSavePublisher : IIntegrationEventPublisher
 /// </summary>
 internal static class BulkTestInstance
 {
-    public static ServiceProvider Build(string connectionString, string schema)
+    public static ServiceProvider Build(
+        string connectionString, string schema, Action<IServiceCollection>? configureExtra = null)
     {
         var services = new ServiceCollection();
 
@@ -186,6 +187,8 @@ internal static class BulkTestInstance
             options.ProgressUpdateTarget = 1;
             options.IdlePollingInterval = TimeSpan.FromMilliseconds(50);
         });
+
+        configureExtra?.Invoke(services);
 
         return services.BuildServiceProvider();
     }

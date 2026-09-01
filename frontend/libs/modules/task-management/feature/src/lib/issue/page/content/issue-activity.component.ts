@@ -20,7 +20,9 @@ import {
   ErpRichTextBuilder,
   ErpRichTextComponent,
   ErpRichTextConfig,
+  ErpUserPickerComponent,
 } from '@erp/shared/ui';
+import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import { ErpAuthService } from '@erp/shared/auth';
 import {
   IssueActivityDto,
@@ -53,7 +55,7 @@ import { ISSUE_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-issue-activity',
   standalone: true,
-  imports: [ErpActivityStreamComponent, ErpButtonComponent, ErpRichTextComponent],
+  imports: [ErpActivityStreamComponent, ErpButtonComponent, ErpRichTextComponent, ErpUserPickerComponent],
   template: `
     <erp-activity-stream
       [config]="this.streamConfig()"
@@ -65,9 +67,13 @@ import { ISSUE_KEYS } from '../../translation';
     <ng-template #composerTpl>
       <div class="flex flex-col gap-2">
         <erp-rich-text [config]="this.composerConfig" [control]="this.composerControl" />
-        <div>
+        <div class="flex items-center gap-2">
           <erp-button [config]="this.submitButton" />
+          <erp-button [config]="this.mentionButton('composer')" />
         </div>
+        @if (this.mentionTarget() === 'composer') {
+          <erp-user-picker [config]="this.mentionPickerConfig" [control]="this.mentionControl" />
+        }
       </div>
     </ng-template>
 
@@ -76,18 +82,26 @@ import { ISSUE_KEYS } from '../../translation';
         @if (this.replyingTo() === entry.uuid) {
           <div class="ml-6 flex flex-col gap-2">
             <erp-rich-text [config]="this.replyConfig" [control]="this.replyControl" />
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
               <erp-button [config]="this.submitReplyButton" />
+              <erp-button [config]="this.mentionButton('reply')" />
               <erp-button [config]="this.cancelButton" />
             </div>
+            @if (this.mentionTarget() === 'reply') {
+              <erp-user-picker [config]="this.mentionPickerConfig" [control]="this.mentionControl" />
+            }
           </div>
         } @else if (this.editing() === entry.uuid) {
           <div class="flex flex-col gap-2">
             <erp-rich-text [config]="this.editConfig" [control]="this.editControl" />
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
               <erp-button [config]="this.submitEditButton" />
+              <erp-button [config]="this.mentionButton('edit')" />
               <erp-button [config]="this.cancelButton" />
             </div>
+            @if (this.mentionTarget() === 'edit') {
+              <erp-user-picker [config]="this.mentionPickerConfig" [control]="this.mentionControl" />
+            }
           </div>
         }
       }
@@ -104,6 +118,7 @@ export class IssueActivityComponent {
   private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _auth = inject(ErpAuthService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _userDirectory = inject(ERP_USER_DIRECTORY, { optional: true });
 
   public readonly issueUuid = input.required<string | null>();
 
@@ -118,6 +133,19 @@ export class IssueActivityComponent {
 
   protected readonly replyingTo = signal<string | null>(null);
   protected readonly editing = signal<string | null>(null);
+
+  /**
+   * Wzmianki `@` (`ISS-009`) — zamiast wtyczki autouzupełniania wpisanej w `tiptap` (edytor jest
+   * współdzielony w `shared/ui` i nie ma po co znać `ERP_USER_DIRECTORY`), przycisk „@” otwiera
+   * picker katalogu obok aktywnego kompozytora, a wybór dopisuje na koniec treści span w formacie
+   * kontraktu z `CommentMentionParser` (`data-mention-user-uuid`). Jeden `FormControl`
+   * przełącza cel (`composer`/`reply`/`edit`) sygnałem, żeby nie trzymać trzech pickerów naraz.
+   */
+  protected readonly mentionTarget = signal<'composer' | 'reply' | 'edit' | null>(null);
+
+  protected readonly mentionControl = new FormControl<string | null>(null);
+
+  protected readonly mentionPickerConfig = { placeholder: ISSUE_KEYS.detail.comments.mentionPlaceholder };
 
   /** Rezolucje HTML-a komentarzy (adres kanoniczny załącznika → `blob:`) — jedna mapa `uuid`
    * komentarza → treść gotowa do wyświetlenia, wypełniana asynchronicznie. */
@@ -213,6 +241,39 @@ export class IssueActivityComponent {
       const comments = this._comm();
       untracked(() => void this._resolveBodiesAsync(comments));
     });
+
+    this.mentionControl.valueChanges.subscribe((userUuid) => {
+      if (userUuid) {
+        void this._insertMentionAsync(userUuid);
+      }
+    });
+  }
+
+  protected mentionButton(target: 'composer' | 'reply' | 'edit'): ErpButtonConfig {
+    return {
+      label: ISSUE_KEYS.detail.comments.mention,
+      appearance: 'flat',
+      size: 's',
+      iconStart: '@tui.at-sign',
+      fn: (): void => {
+        this.mentionTarget.set(this.mentionTarget() === target ? null : target);
+        this.mentionControl.setValue(null);
+      },
+    };
+  }
+
+  private async _insertMentionAsync(userUuid: string): Promise<void> {
+    const target = this.mentionTarget();
+    const control = target === 'reply' ? this.replyControl : target === 'edit' ? this.editControl : this.composerControl;
+
+    const user = (await this._userDirectory?.getManyAsync([userUuid]))?.[0];
+    const displayName = _escapeHtml(user?.displayName ?? userUuid);
+
+    const mentionHtml = `<span data-mention-user-uuid="${userUuid}">@${displayName}</span>&nbsp;`;
+    control.setValue((control.value ?? '') + mentionHtml);
+
+    this.mentionTarget.set(null);
+    this.mentionControl.setValue(null);
   }
 
   private readonly _me = computed(() => this._auth.$currentUser()?.id);
@@ -411,6 +472,10 @@ export class IssueActivityComponent {
       },
     );
   }
+}
+
+function _escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /** Nazwy pól — kod pola jest techniczny (`due_at`), klucz rejestru nie. */

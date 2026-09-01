@@ -1,0 +1,20 @@
+{
+  "title": "Requests",
+  "empty": "No requests — no \"intake register\" project exists yet, or you have no access to it.",
+  "filters": {
+    "text": {
+      "label": "Search",
+      "placeholder": "Key or title"
+    },
+    "project": {
+      "label": "Register",
+      "placeholder": "Pick a request register"
+    },
+    "scope": {
+      "label": "Scope",
+      "available": "All available",
+      "reportedByMe": "Submitted by me"
+    }
+  },
+  "hint": "Receiving delivery and raising objections are state transitions on the request card — the same buttons used to change any issue's state."
+}

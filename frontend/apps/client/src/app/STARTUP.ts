@@ -168,6 +168,10 @@ export async function STARTUP(): Promise<void> {
   // Feed zadań startuje niezależnie od widżetu: badge przy dzwonku ma pokazywać prawdę
   // od pierwszej sekundy, a nie dopiero po tym, jak użytkownik kliknie.
   await bootstrapJobFeed(injector);
+
+  // Jak wyżej, dla licznika powiadomień osobistych (Faza 5, `UserNotification`) — druga
+  // zakładka tego samego popovera pod dzwonkiem.
+  await bootstrapUserNotificationFeed(injector);
 }
 
 /**
@@ -184,6 +188,19 @@ async function bootstrapJobFeed(injector: Injector): Promise<void> {
     await contract?.bootstrapJobFeed?.(injector);
   } catch (error) {
     console.warn('[STARTUP] Nie udało się uruchomić feedu zadań masowych.', error);
+  }
+}
+
+/** Jak {@link bootstrapJobFeed}, dla licznika powiadomień osobistych. */
+async function bootstrapUserNotificationFeed(injector: Injector): Promise<void> {
+  try {
+    const contract = (await loadModuleContract('notification')) as {
+      bootstrapUserNotificationFeed?: (injector: Injector) => Promise<void>;
+    };
+
+    await contract?.bootstrapUserNotificationFeed?.(injector);
+  } catch (error) {
+    console.warn('[STARTUP] Nie udało się uruchomić licznika powiadomień.', error);
   }
 }
 

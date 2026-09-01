@@ -8,15 +8,20 @@ import { ERP_PERMISSIONS } from '@erp/shared/auth';
  * Karta zgłoszenia (`/issue/:key`) nie ma pozycji w menu: wchodzi się na nią z listy albo
  * z linku (`docs/frontend/task-management-pages.md` §7). Pozycja „Tablica" prowadzi do trasy
  * bez uuid-a, która rozwiązuje tablicę domyślną i podmienia adres — menu nie ma skąd wziąć
- * identyfikatora konkretnej tablicy. Zlecenia i grupa
- * „Konfiguracja" dochodzą w swoich fazach — pozycja w menu bez działającej strony to dokładnie
- * ten błąd, który usuwamy tą zmianą.
+ * identyfikatora konkretnej tablicy. Grupa „Konfiguracja" dochodzi w swojej fazie — pozycja
+ * w menu bez działającej strony to dokładnie ten błąd, który usuwamy tą zmianą.
  */
 export const remoteMenu: ErpNavigationItem[] = [
   {
     label: 'Zgłoszenia',
     iconId: 'list-checks',
     route: 'issue',
+    requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
+  },
+  {
+    label: 'Zlecenia',
+    iconId: 'send',
+    route: 'request',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
   {

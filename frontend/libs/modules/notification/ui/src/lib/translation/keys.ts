@@ -63,4 +63,13 @@ export const JOB_KEYS = {
     },
     download: 'job.download',
     downloadFailed: 'job.downloadFailed',
+    tabs: {
+      jobs: 'job.tabs.jobs',
+      notifications: 'job.tabs.notifications',
+    },
+    notifications: {
+      empty: 'job.notifications.empty',
+      markAllRead: 'job.notifications.markAllRead',
+      unreadBadge: 'job.notifications.unreadBadge',
+    },
   } as const;

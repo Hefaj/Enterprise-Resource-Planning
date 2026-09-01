@@ -13,6 +13,7 @@ import {
   ErpUserPreferencesService,
   ErpWidgetRegistryService,
   JobService,
+  UserNotificationService,
   JOB_LIST_WIDGET_ID,
   ERP_LOGOUT_HANDLER,
 } from '@erp/shared/data-access';
@@ -76,6 +77,7 @@ export class ShellLayoutComponent {
   private readonly _userPreferences = inject(ErpUserPreferencesService);
   private readonly _widgetRegistry = inject(ErpWidgetRegistryService);
   private readonly _jobService = inject(JobService);
+  private readonly _userNotifications = inject(UserNotificationService);
   private readonly _logoutHandler = inject(ERP_LOGOUT_HANDLER);
   private readonly _authService = inject(ErpAuthService);
 
@@ -88,6 +90,13 @@ export class ShellLayoutComponent {
 
   /** Zadania, które zmieniły stan od ostatniego otwarcia panelu. */
   public readonly unreadJobs = this._jobService.unreadCount;
+
+  /** Nieprzeczytane powiadomienia osobiste (Faza 5, `UserNotification`) — druga zakładka
+   * tego samego popovera, więc dzwonek pokazuje sumę obu liczników. */
+  public readonly unreadNotificationsCount = this._userNotifications.unreadCount;
+
+  /** Suma obu liczników — dzwonek ma jeden badge, nie dwa. */
+  public readonly bellCount = computed(() => this.unreadJobs() + this.unreadNotificationsCount());
 
   /** Czy cokolwiek jeszcze się wykonuje — dzwonek zamienia wtedy ikonę na wskaźnik pracy. */
   public readonly hasActiveJobs = computed(() => this._jobService.activeCount() > 0);

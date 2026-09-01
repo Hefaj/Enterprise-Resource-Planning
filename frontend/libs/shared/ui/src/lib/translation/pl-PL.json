@@ -244,7 +244,10 @@
       "taskmgmtIssueTypeSchemeAddType": "Dodanie typu do schematu",
       "taskmgmtIssueTypeSchemeRemoveType": "Usunięcie typu ze schematu",
       "taskmgmtIssueTypeSchemeSetType": "Zmiana typu w schemacie",
-      "taskmgmtProjectSetIssueTypeScheme": "Zmiana schematu typów projektu"
+      "taskmgmtProjectSetIssueTypeScheme": "Zmiana schematu typów projektu",
+      "taskmgmtIssueAddWatcher": "Dodanie obserwującego",
+      "taskmgmtIssueRemoveWatcher": "Usunięcie obserwującego",
+      "taskmgmtProjectSetSla": "Zmiana SLA projektu"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",
@@ -368,6 +371,17 @@
   "optimistic": {
     "rollback": {
       "generic": "Nie udało się zapisać zmiany."
+    }
+  },
+  "notifications": {
+    "kinds": {
+      "taskmgmt_issue_assigned": "Przypisano Ci zgłoszenie {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_mentioned": "Wspomniano Cię w zgłoszeniu {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_commented": "Nowy komentarz w zgłoszeniu {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_state_changed": "Zmieniono stan zgłoszenia {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_due_soon": "Zbliża się termin zgłoszenia {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_overdue": "Minął termin zgłoszenia {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_request_delivered": "Zlecenie {{issueKey}} — {{issueTitle}} zostało zrealizowane"
     }
   }
 }

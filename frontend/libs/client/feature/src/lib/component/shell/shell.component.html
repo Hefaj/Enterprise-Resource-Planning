@@ -27,7 +27,7 @@
 
       <!-- Notifications -->
       <erp-notifications
-        [count]="unreadJobs()"
+        [count]="bellCount()"
         [hasActivity]="hasActiveJobs()"
         [panelComponent]="jobsWidget()?.component ?? null"
         [panelInjector]="jobsWidget()?.injector ?? null"

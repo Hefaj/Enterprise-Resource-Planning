@@ -58,6 +58,11 @@ export interface ITaskManagementClient {
      */
     projectSetNameMultipleCommand(body: BatchCommandOfProjectSetNameCommandAndSearchProjectRequest): Observable<BatchResult>;
     /**
+     * Seryjne ustawienie polityki SLA projektów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    projectSetSlaMultipleCommand(body: BatchCommandOfProjectSetSlaCommandAndSearchProjectRequest): Observable<BatchResult>;
+    /**
      * @return OK
      */
     getIssueTypeScheme(body: GetIssueTypeSchemeRequest): Observable<IssueTypeSchemeDto>;
@@ -134,6 +139,11 @@ export interface ITaskManagementClient {
      */
     issueAddLinkMultipleCommand(body: BatchCommandOfIssueAddLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
     /**
+     * Dopisanie zgłaszającego do obserwatorów zgłoszeń z obsługą błędów cząstkowych
+     * @return OK
+     */
+    issueAddWatcherMultipleCommand(body: BatchCommandOfIssueAddWatcherCommandAndSearchIssueRequest): Observable<BatchResult>;
+    /**
      * Rejestracja wgranych załączników zgłoszenia
      * @return OK
      */
@@ -153,6 +163,11 @@ export interface ITaskManagementClient {
      * @return OK
      */
     issueRemoveLinkMultipleCommand(body: BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest): Observable<BatchResult>;
+    /**
+     * Rezygnacja z obserwowania zgłoszeń z obsługą błędów cząstkowych
+     * @return OK
+     */
+    issueRemoveWatcherMultipleCommand(body: BatchCommandOfIssueRemoveWatcherCommandAndSearchIssueRequest): Observable<BatchResult>;
     /**
      * Seryjne przypisanie zgłoszeń z obsługą błędów cząstkowych
      * @return OK
@@ -814,6 +829,69 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     protected processProjectSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Seryjne ustawienie polityki SLA projektów z obsługą błędów cząstkowych
+     * @return OK
+     */
+    projectSetSlaMultipleCommand(body: BatchCommandOfProjectSetSlaCommandAndSearchProjectRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/project/batch-set-sla";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProjectSetSlaMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProjectSetSlaMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processProjectSetSlaMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1902,6 +1980,69 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     /**
+     * Dopisanie zgłaszającego do obserwatorów zgłoszeń z obsługą błędów cząstkowych
+     * @return OK
+     */
+    issueAddWatcherMultipleCommand(body: BatchCommandOfIssueAddWatcherCommandAndSearchIssueRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/issue/batch-add-watcher";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIssueAddWatcherMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIssueAddWatcherMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processIssueAddWatcherMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * Rejestracja wgranych załączników zgłoszenia
      * @return OK
      */
@@ -2125,6 +2266,69 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     protected processIssueRemoveLinkMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Rezygnacja z obserwowania zgłoszeń z obsługą błędów cząstkowych
+     * @return OK
+     */
+    issueRemoveWatcherMultipleCommand(body: BatchCommandOfIssueRemoveWatcherCommandAndSearchIssueRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/issue/batch-remove-watcher";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIssueRemoveWatcherMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIssueRemoveWatcherMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processIssueRemoveWatcherMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -3839,6 +4043,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIssueAddWatcherCommandAndSearchIssueRequest {
+    commands?: IssueAddWatcherCommand[] | undefined;
+    templateCommand?: IssueAddWatcherCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchIssueRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfIssueCreateCommandAndSearchIssueRequest {
     commands?: IssueCreateCommand[] | undefined;
     templateCommand?: IssueCreateCommand | undefined;
@@ -3890,6 +4118,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 export interface BatchCommandOfIssueRemoveLinkCommandAndSearchIssueRequest {
     commands?: IssueRemoveLinkCommand[] | undefined;
     templateCommand?: IssueRemoveLinkCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchIssueRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIssueRemoveWatcherCommandAndSearchIssueRequest {
+    commands?: IssueRemoveWatcherCommand[] | undefined;
+    templateCommand?: IssueRemoveWatcherCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchIssueRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -4390,6 +4642,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
     [key: string]: any;
 }
 
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfProjectSetSlaCommandAndSearchProjectRequest {
+    commands?: ProjectSetSlaCommand[] | undefined;
+    templateCommand?: ProjectSetSlaCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProjectRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface BatchResult {
     jobUuid?: string;
 
@@ -4663,6 +4939,12 @@ export interface IssueAddLinkCommand {
     [key: string]: any;
 }
 
+export interface IssueAddWatcherCommand {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
 export interface IssueAttachmentCreateCommand {
     uuid?: string;
     issueUuid?: string;
@@ -4771,6 +5053,9 @@ export interface IssueDto {
     dueAt: Date | undefined;
     parentUuid: string | undefined;
     isRestricted: boolean;
+    derivedDeliveryState: number;
+    isWatchedByMe: boolean;
+    watcherCount: number;
     createdAt: Date;
     updatedAt: Date;
     customFields: { [key: string]: string; };
@@ -4811,6 +5096,12 @@ export interface IssueRemoveCommentCommand {
 export interface IssueRemoveLinkCommand {
     uuid?: string;
     linkUuid?: string;
+
+    [key: string]: any;
+}
+
+export interface IssueRemoveWatcherCommand {
+    uuid?: string;
 
     [key: string]: any;
 }
@@ -4981,6 +5272,7 @@ export interface ProjectDto {
     isPublic: boolean;
     openIssueCount: number;
     members: ProjectMemberDto[];
+    sla: ProjectSlaDto | undefined;
 
     [key: string]: any;
 }
@@ -5039,6 +5331,27 @@ export interface ProjectSetIssueTypeSchemeCommand {
 export interface ProjectSetNameCommand {
     uuid?: string;
     name?: string;
+
+    [key: string]: any;
+}
+
+export interface ProjectSetSlaCommand {
+    uuid?: string;
+    responseMinutes?: number;
+    resolutionMinutes?: number;
+    workingDays?: number;
+    workStartTime?: string;
+    workEndTime?: string;
+
+    [key: string]: any;
+}
+
+export interface ProjectSlaDto {
+    responseMinutes: number;
+    resolutionMinutes: number;
+    workingDays: number;
+    workStartTime: string;
+    workEndTime: string;
 
     [key: string]: any;
 }

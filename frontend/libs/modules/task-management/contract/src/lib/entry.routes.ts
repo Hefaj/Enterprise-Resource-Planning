@@ -15,6 +15,13 @@ export const remoteRoutes: Route[] = [
         loadComponent: () => import('@erp/task-management/feature').then((m) => m.IssueComponent),
       },
       {
+        path: 'request',
+        pathMatch: 'full',
+        data: { breadcrumb: 'Zlecenia' },
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
+        loadComponent: () => import('@erp/task-management/feature').then((m) => m.RequestComponent),
+      },
+      {
         path: 'project',
         pathMatch: 'full',
         data: { breadcrumb: 'Projekty' },

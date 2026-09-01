@@ -34,4 +34,7 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   removeIssueTypeSchemeType: 'shared.jobs.commands.taskmgmtIssueTypeSchemeRemoveType',
   setIssueTypeSchemeType: 'shared.jobs.commands.taskmgmtIssueTypeSchemeSetType',
   setProjectIssueTypeScheme: 'shared.jobs.commands.taskmgmtProjectSetIssueTypeScheme',
+  addIssueWatcher: 'shared.jobs.commands.taskmgmtIssueAddWatcher',
+  removeIssueWatcher: 'shared.jobs.commands.taskmgmtIssueRemoveWatcher',
+  setProjectSla: 'shared.jobs.commands.taskmgmtProjectSetSla',
 } as const;

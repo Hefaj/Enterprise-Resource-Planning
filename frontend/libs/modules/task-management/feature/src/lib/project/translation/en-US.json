@@ -104,6 +104,27 @@
         "confirmTitle": "Remove this type?",
         "confirmMessage": "The backend refuses if any issue still has this type."
       }
+    },
+    "sla": {
+      "title": "SLA",
+      "empty": "This project has no SLA policy yet.",
+      "responseMinutes": "Response time (minutes)",
+      "resolutionMinutes": "Resolution time (minutes)",
+      "workStartTime": "Working day start",
+      "workEndTime": "Working day end",
+      "timeHint": "HH:MM",
+      "workingDays": "Working days",
+      "days": {
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun"
+      },
+      "save": "Save SLA",
+      "saveFailed": "Failed to save the project SLA."
     }
   }
 }

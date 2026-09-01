@@ -1,0 +1,20 @@
+{
+  "title": "Zlecenia",
+  "empty": "Brak zleceń — projekt typu „rejestr zleceń” jeszcze nie istnieje albo nie masz do niego dostępu.",
+  "filters": {
+    "text": {
+      "label": "Szukaj",
+      "placeholder": "Klucz albo tytuł"
+    },
+    "project": {
+      "label": "Rejestr",
+      "placeholder": "Wybierz rejestr zleceń"
+    },
+    "scope": {
+      "label": "Zakres",
+      "available": "Wszystkie dostępne",
+      "reportedByMe": "Zgłoszone przeze mnie"
+    }
+  },
+  "hint": "Odbiór realizacji i zgłoszenie zastrzeżeń to przejścia stanu na karcie zlecenia — te same przyciski, którymi zmienia się stan każdego zgłoszenia."
+}

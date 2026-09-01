@@ -18,6 +18,22 @@ export interface INotificationClient {
     /**
      * @return OK
      */
+    getUnreadCount(): Observable<GetUnreadCountResponse>;
+    /**
+     * @return OK
+     */
+    searchUserNotification(body: SearchUserNotificationRequest): Observable<SearchUserNotificationResponse>;
+    /**
+     * @return No Content
+     */
+    setAllNotificationsRead(): Observable<void>;
+    /**
+     * @return No Content
+     */
+    setNotificationRead(body: SetNotificationReadRequest): Observable<void>;
+    /**
+     * @return OK
+     */
     getJob(body: GetJobRequest): Observable<JobDto[]>;
     /**
      * @return OK
@@ -36,6 +52,224 @@ export class NotificationClient implements INotificationClient {
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
         this.baseUrl = baseUrl ?? "http://localhost:5250/";
+    }
+
+    /**
+     * @return OK
+     */
+    getUnreadCount(): Observable<GetUnreadCountResponse> {
+        let url_ = this.baseUrl + "/user-notification/getUnreadCount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUnreadCount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUnreadCount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetUnreadCountResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetUnreadCountResponse>;
+        }));
+    }
+
+    protected processGetUnreadCount(response: HttpResponseBase): Observable<GetUnreadCountResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GetUnreadCountResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    searchUserNotification(body: SearchUserNotificationRequest): Observable<SearchUserNotificationResponse> {
+        let url_ = this.baseUrl + "/user-notification/searchUserNotification";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchUserNotification(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchUserNotification(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchUserNotificationResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchUserNotificationResponse>;
+        }));
+    }
+
+    protected processSearchUserNotification(response: HttpResponseBase): Observable<SearchUserNotificationResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchUserNotificationResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    setAllNotificationsRead(): Observable<void> {
+        let url_ = this.baseUrl + "/user-notification/setAllNotificationsRead";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetAllNotificationsRead(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetAllNotificationsRead(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetAllNotificationsRead(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    setNotificationRead(body: SetNotificationReadRequest): Observable<void> {
+        let url_ = this.baseUrl + "/user-notification/setNotificationRead";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetNotificationRead(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetNotificationRead(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetNotificationRead(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
     }
 
     /**
@@ -161,6 +395,12 @@ export interface GetJobRequest {
     [key: string]: any;
 }
 
+export interface GetUnreadCountResponse {
+    count?: number;
+
+    [key: string]: any;
+}
+
 export interface JobDto {
     uuid: string;
     queueId: string | undefined;
@@ -202,9 +442,52 @@ export interface SearchResponse {
     [key: string]: any;
 }
 
+export interface SearchUserNotificationRequest {
+    onlyUnread?: boolean | undefined;
+    page?: number;
+    pageSize?: number;
+    sorts?: SortOption[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface SearchUserNotificationResponse {
+    items?: UserNotificationDto[];
+    totalCount?: number;
+
+    [key: string]: any;
+}
+
+export interface SetNotificationReadRequest {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
 export interface SortOption {
     field?: string;
     order?: number;
+
+    [key: string]: any;
+}
+
+export interface UserNotificationDto {
+    uuid: string;
+    actorId: string | undefined;
+    kind: string;
+    severity: number;
+    subjectSignature: string;
+    subjectUuid: string;
+    subjectKey: string | undefined;
+    titleKey: string;
+    params: { [key: string]: string; };
+    groupKey: string | undefined;
+    occurrenceCount: number;
+    lastOccurredAt: Date;
+    link: string;
+    createdAt: Date;
+    seenAt: Date | undefined;
+    readAt: Date | undefined;
 
     [key: string]: any;
 }

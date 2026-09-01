@@ -45,3 +45,15 @@ export async function bootstrapJobFeed(injector: Injector): Promise<void> {
 
   await injector.get(JobFeedService).bootstrap();
 }
+
+/**
+ * Startuje licznik nieprzeczytanych powiadomień osobistych (Faza 5, `UserNotification`) —
+ * ten sam wzorzec co {@link bootstrapJobFeed}: dzwonek musi znać liczbę, zanim ktokolwiek
+ * otworzy panel i pociągnie `erp-user-notification-list` (ładowany razem z `erp-job-list`,
+ * patrz {@link loadJobListComponent}).
+ */
+export async function bootstrapUserNotificationFeed(injector: Injector): Promise<void> {
+  const { UserNotificationFeedService } = await import('@erp/notification/data-access');
+
+  await injector.get(UserNotificationFeedService).bootstrapUnreadCount();
+}

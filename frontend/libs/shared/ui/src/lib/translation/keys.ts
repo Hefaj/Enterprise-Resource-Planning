@@ -250,6 +250,9 @@ export const SHARED_KEYS = {
         taskmgmtIssueTypeSchemeRemoveType: 'shared.jobs.commands.taskmgmtIssueTypeSchemeRemoveType',
         taskmgmtIssueTypeSchemeSetType: 'shared.jobs.commands.taskmgmtIssueTypeSchemeSetType',
         taskmgmtProjectSetIssueTypeScheme: 'shared.jobs.commands.taskmgmtProjectSetIssueTypeScheme',
+        taskmgmtIssueAddWatcher: 'shared.jobs.commands.taskmgmtIssueAddWatcher',
+        taskmgmtIssueRemoveWatcher: 'shared.jobs.commands.taskmgmtIssueRemoveWatcher',
+        taskmgmtProjectSetSla: 'shared.jobs.commands.taskmgmtProjectSetSla',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',
@@ -373,6 +376,17 @@ export const SHARED_KEYS = {
     optimistic: {
       rollback: {
         generic: 'shared.optimistic.rollback.generic',
+      },
+    },
+    notifications: {
+      kinds: {
+        taskmgmt_issue_assigned: 'shared.notifications.kinds.taskmgmt_issue_assigned',
+        taskmgmt_issue_mentioned: 'shared.notifications.kinds.taskmgmt_issue_mentioned',
+        taskmgmt_issue_commented: 'shared.notifications.kinds.taskmgmt_issue_commented',
+        taskmgmt_issue_state_changed: 'shared.notifications.kinds.taskmgmt_issue_state_changed',
+        taskmgmt_issue_due_soon: 'shared.notifications.kinds.taskmgmt_issue_due_soon',
+        taskmgmt_issue_overdue: 'shared.notifications.kinds.taskmgmt_issue_overdue',
+        taskmgmt_request_delivered: 'shared.notifications.kinds.taskmgmt_request_delivered',
       },
     },
   } as const;

@@ -9,6 +9,7 @@ import {
   ProjectDto,
   ProjectSetFieldSchemeCommand,
   ProjectSetIssueTypeSchemeCommand,
+  ProjectSetSlaCommand,
   SearchProjectRequest,
   SearchResponse,
   TaskManagementClient,
@@ -73,6 +74,15 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
   public setIssueTypeSchemeAsync(command: ProjectSetIssueTypeSchemeCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetIssueTypeSchemeMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectIssueTypeScheme,
+      queueId,
+    });
+  }
+
+  /** Zapisuje politykę SLA projektu (`SLA-001`, faza 5) — czas reakcji/realizacji i kalendarz
+   * roboczy minimalny (dni + godziny, bez świąt na start). */
+  public setSlaAsync(command: ProjectSetSlaCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetSlaMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectSla,
       queueId,
     });
   }

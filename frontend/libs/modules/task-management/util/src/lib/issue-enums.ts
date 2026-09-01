@@ -148,3 +148,30 @@ export const ISSUE_ACTIVITY_KIND = {
 } as const;
 
 export type IssueActivityKindValue = (typeof ISSUE_ACTIVITY_KIND)[keyof typeof ISSUE_ACTIVITY_KIND];
+
+/** `TaskManagement.Domain.Issues.IssueDeliveryState` (REQ-003) — wyliczony stan realizacji
+ * zlecenia; `None` dla zgłoszeń, które nie są zleceniem. */
+export const ISSUE_DELIVERY_STATE = {
+  None: 0,
+  InProgress: 1,
+  Delivered: 2,
+} as const;
+
+export type IssueDeliveryStateValue = (typeof ISSUE_DELIVERY_STATE)[keyof typeof ISSUE_DELIVERY_STATE];
+
+/** `TaskManagement.Domain.Projects.SlaWorkingDays` — flagi dnia roboczego (faza 5, SLA-001). */
+export const SLA_WORKING_DAYS = {
+  None: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 4,
+  Thursday: 8,
+  Friday: 16,
+  Saturday: 32,
+  Sunday: 64,
+} as const;
+
+/** Domyślny kalendarz roboczy (poniedziałek–piątek) — punkt wyjścia formularza SLA, zanim
+ * użytkownik go zmieni. */
+export const SLA_WORKING_DAYS_DEFAULT =
+  SLA_WORKING_DAYS.Monday | SLA_WORKING_DAYS.Tuesday | SLA_WORKING_DAYS.Wednesday | SLA_WORKING_DAYS.Thursday | SLA_WORKING_DAYS.Friday;

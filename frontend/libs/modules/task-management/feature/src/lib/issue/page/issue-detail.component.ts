@@ -94,6 +94,13 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
               {{ ISSUE_KEYS.detail.sidebar.restricted | erpTranslate }}
             </span>
           }
+
+          <span class="flex-1"></span>
+
+          <erp-button [config]="watchButton()" />
+          <span class="text-xs text-[var(--tui-text-secondary)]">
+            {{ ISSUE_KEYS.detail.sidebar.watcherCount | erpTranslate: { count: issue.watcherCount } }}
+          </span>
         </div>
 
         <div class="grid min-h-0 flex-1 grid-cols-[1fr_320px] gap-6 overflow-hidden">
@@ -347,6 +354,19 @@ export class IssueDetailComponent {
     fn: (): void => this.editingDescription.set(false),
   };
 
+  protected readonly watchButton = computed<ErpButtonConfig>(() => {
+    const issue = this.issue();
+    const watched = issue?.isWatchedByMe ?? false;
+
+    return {
+      label: watched ? ISSUE_KEYS.detail.sidebar.unwatch : ISSUE_KEYS.detail.sidebar.watch,
+      appearance: watched ? 'flat' : 'outline',
+      size: 'xs',
+      iconStart: watched ? '@tui.eye-off' : '@tui.eye',
+      fn: (): Promise<void> => this._toggleWatchAsync(),
+    };
+  });
+
   protected readonly backButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.backToList,
     appearance: 'flat',
@@ -539,6 +559,17 @@ export class IssueDetailComponent {
     }
 
     return true;
+  }
+
+  private async _toggleWatchAsync(): Promise<void> {
+    const issue = this.issue();
+    if (!issue) {
+      return;
+    }
+
+    await this._orchestrator.toggleWatchOptimisticAsync(issue.uuid, !issue.isWatchedByMe, {
+      failureMessage: ISSUE_KEYS.detail.watchToggleFailed,
+    });
   }
 
   protected async changeTypeAsync(typeUuid: string): Promise<void> {

@@ -110,6 +110,7 @@ export const ISSUE_KEYS = {
       loading: 'issue.detail.loading',
       backToList: 'issue.detail.backToList',
       typeChangeFailed: 'issue.detail.typeChangeFailed',
+      watchToggleFailed: 'issue.detail.watchToggleFailed',
       descriptionSaveFailed: 'issue.detail.descriptionSaveFailed',
       header: {
         createdByLabel: 'issue.detail.header.createdByLabel',
@@ -134,6 +135,9 @@ export const ISSUE_KEYS = {
         createdAt: 'issue.detail.sidebar.createdAt',
         updatedAt: 'issue.detail.sidebar.updatedAt',
         restricted: 'issue.detail.sidebar.restricted',
+        watch: 'issue.detail.sidebar.watch',
+        unwatch: 'issue.detail.sidebar.unwatch',
+        watcherCount: 'issue.detail.sidebar.watcherCount',
       },
       attachments: {
         label: 'issue.detail.attachments.label',
@@ -167,6 +171,8 @@ export const ISSUE_KEYS = {
         failed: 'issue.detail.comments.failed',
         removeTitle: 'issue.detail.comments.removeTitle',
         removeFailed: 'issue.detail.comments.removeFailed',
+        mention: 'issue.detail.comments.mention',
+        mentionPlaceholder: 'issue.detail.comments.mentionPlaceholder',
       },
       history: {
         label: 'issue.detail.history.label',

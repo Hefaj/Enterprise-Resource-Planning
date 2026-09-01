@@ -192,32 +192,52 @@ public sealed partial class BulkCommandRunner<TContext> : BackgroundService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<TContext>();
+            DbUpdateException? failure;
 
-            await using var transaction = await db.Database
-                .BeginTransactionAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            var queueLock = scope.ServiceProvider.GetRequiredService<JobQueueLock<TContext>>();
-
-            // Bez SKIP LOCKED: chodzi o TO zadanie, a nie o „jakieś wolne". Jeśli w międzyczasie
-            // podjął je inny runner, czekamy na jego commit i dopiero wtedy dokładamy swój wynik.
-            if (await queueLock.LockAsync(db, jobUuid, cancellationToken).ConfigureAwait(false) is null)
+            // ── Transakcja pojedynczego elementu ────────────────────────────────────────────
+            // Musi się domknąć PRZED wywołaniem RecordIsolatedFailureAsync poniżej. Ta ostatnia
+            // otwiera WŁASNĄ transakcję i blokuje TEN SAM wiersz zadania (bez SKIP LOCKED, więc
+            // czeka). Wywołana STĄD, zanim poniższy blok zwolni swoją blokadę, czekałaby na
+            // zwolnienie blokady, którą trzyma... to samo wywołanie — samoblokada: connection A
+            // (ta tutaj) siedzi bezczynnie w otwartej transakcji, czekając na dokończenie
+            // RecordIsolatedFailureAsync, a connection B (ta w środku RecordIsolatedFailureAsync)
+            // czeka na FOR UPDATE, którego A nie zwolni, dopóki B nie skończy. Postgres tego nie
+            // wykryje — z jego punktu widzenia A niczego nie czeka, więc żaden deadlock detector
+            // nie interweniuje; kończy się to dopiero po pełnym timeout połączenia, a zadanie
+            // stoi w miejscu w nieskończoność, bo Attempts elementu nigdy się nie zapisuje.
+            // Zamknięcie bloku `{ }` PRZED wywołaniem naprawia to tak samo, jak robi to już
+            // ProcessNextChunkAsync między swoją transakcją chunka a wejściem w IsolateAsync.
             {
-                return;
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<TContext>();
+
+                await using var transaction = await db.Database
+                    .BeginTransactionAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                var queueLock = scope.ServiceProvider.GetRequiredService<JobQueueLock<TContext>>();
+
+                // Bez SKIP LOCKED: chodzi o TO zadanie, a nie o „jakieś wolne". Jeśli w międzyczasie
+                // podjął je inny runner, czekamy na jego commit i dopiero wtedy dokładamy swój wynik.
+                if (await queueLock.LockAsync(db, jobUuid, cancellationToken).ConfigureAwait(false) is null)
+                {
+                    return;
+                }
+
+                var job = await db.Jobs.FirstOrDefaultAsync(j => j.Uuid == jobUuid, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (job is null || job.Status == JobStatus.Cancelled)
+                {
+                    return;
+                }
+
+                failure = await ProcessChunkAsync(scope, db, job, [itemUuid], cancellationToken)
+                    .ConfigureAwait(false);
             }
-
-            var job = await db.Jobs.FirstOrDefaultAsync(j => j.Uuid == jobUuid, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (job is null || job.Status == JobStatus.Cancelled)
-            {
-                return;
-            }
-
-            var failure = await ProcessChunkAsync(scope, db, job, [itemUuid], cancellationToken)
-                .ConfigureAwait(false);
+            // Transakcja i blokada zwolnione tutaj — Dispose nie-zatwierdzonej transakcji robi
+            // rollback, dokładnie jak w ProcessNextChunkAsync. RecordIsolatedFailureAsync poniżej
+            // dostaje więc czysty stół i może bez przeszkód wziąć własną blokadę tego samego wiersza.
 
             if (failure is not null)
             {

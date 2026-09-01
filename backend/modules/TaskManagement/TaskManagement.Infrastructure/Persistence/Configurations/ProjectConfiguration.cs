@@ -73,6 +73,15 @@ public sealed class ProjectMemberConfiguration : IEntityTypeConfiguration<Projec
         builder.ToTable("project_member");
         builder.HasKey(m => m.Uuid);
 
+        // Klucz nadaje aplikacja (Entity.NewUuid — UUID v7), baza nigdy go nie generuje. Bez
+        // tej deklaracji Project.AddMember() na już wczytanym (nie świeżo utworzonym) projekcie
+        // dopisuje nowego członka do śledzonej kolekcji Members bez jawnego Add() na DbContext —
+        // EF, widząc niepusty klucz przy pierwszym odkryciu encji przez fixup nawigacji, zakłada
+        // istniejący wiersz i planuje UPDATE zamiast INSERT-a, co trafia w 0 wierszy i wybucha
+        // jako DbUpdateConcurrencyException. Ten sam mechanizm i fix — patrz IssueWatcherConfiguration
+        // i komentarz przy Catalog.Domain.Products.ProductLinks.
+        builder.Property(m => m.Uuid).ValueGeneratedNever();
+
         builder.Property(m => m.ProjectUuid).IsRequired();
         builder.Property(m => m.UserUuid).IsRequired();
         builder.Property(m => m.Role).HasConversion<string>().HasMaxLength(16).IsRequired();

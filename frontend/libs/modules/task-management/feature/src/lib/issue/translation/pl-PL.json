@@ -105,6 +105,7 @@
     "loading": "Wczytywanie zgłoszenia…",
     "backToList": "Wróć do listy",
     "typeChangeFailed": "Nie udało się zmienić typu zgłoszenia.",
+    "watchToggleFailed": "Nie udało się zmienić obserwacji zgłoszenia.",
     "descriptionSaveFailed": "Nie udało się zapisać opisu zgłoszenia.",
     "header": {
       "createdByLabel": "Utworzone przez"
@@ -128,7 +129,10 @@
       "dueAt": "Termin",
       "createdAt": "Utworzono",
       "updatedAt": "Zmodyfikowano",
-      "restricted": "Zgłoszenie prywatne"
+      "restricted": "Zgłoszenie prywatne",
+      "watch": "Obserwuj",
+      "unwatch": "Przestań obserwować",
+      "watcherCount": "Obserwujący: {{ count }}"
     },
     "attachments": {
       "label": "Załączniki",
@@ -161,7 +165,9 @@
       "edited": "edytowany",
       "failed": "Nie udało się zapisać komentarza.",
       "removeTitle": "Usunięcie komentarza",
-      "removeFailed": "Nie udało się usunąć komentarza."
+      "removeFailed": "Nie udało się usunąć komentarza.",
+      "mention": "@ Wspomnij",
+      "mentionPlaceholder": "Wybierz osobę do wspomnienia…"
     },
     "history": {
       "label": "Historia",

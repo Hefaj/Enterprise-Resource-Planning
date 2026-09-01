@@ -45,6 +45,10 @@ export class SignalrSyncService {
    * zarówno na wprost wysłany `ReceiveResync`, jak i na `ReceiveInvalidation(signature, 'all')`.
    * Dla konsumenta (`BaseOrchestrator`) skutek jest identyczny, więc jeden strumień. */
   private readonly _fullRefresh$: Subject<string> = new Subject<string>();
+  /** `ReceiveNotification(notificationUuid, unreadCount)` — kanał powiadomień osobistych
+   * (`docs/backend/user-notifications.md` §7), auto-dołączony do grupy `user:{userId}` przy
+   * połączeniu; w odróżnieniu od `agg:{signature}` nie wymaga jawnego `subscribe(...)`. */
+  private readonly _notification$: Subject<{ notificationUuid: string; unreadCount: number }> = new Subject();
   private _connection: signalR.HubConnection | null = null;
 
   /** Liczba aktywnych subskrybentów (orkiestratorów) per sygnatura — hub `Subscribe`/
@@ -108,6 +112,10 @@ export class SignalrSyncService {
 
     this._connection.on('ReceiveSequence', (signature: string, sequence: number) => {
       this._lastSeenSequence.set(signature, sequence);
+    });
+
+    this._connection.on('ReceiveNotification', (notificationUuid: string, unreadCount: number) => {
+      this._notification$.next({ notificationUuid, unreadCount });
     });
 
     // Ponowne dołączenie do wszystkich subskrybowanych grup po reconnect — SignalR nie
@@ -221,6 +229,11 @@ export class SignalrSyncService {
       filter(sig => sig === signature),
       map(() => undefined)
     );
+  }
+
+  /** Powiadomienia osobiste bieżącego użytkownika — patrz `_notification$`. */
+  public onNotification(): Observable<{ notificationUuid: string; unreadCount: number }> {
+    return this._notification$.asObservable();
   }
 
   private _invokeSubscribe(signature: string): void {

@@ -244,7 +244,10 @@
       "taskmgmtIssueTypeSchemeAddType": "Add type to scheme",
       "taskmgmtIssueTypeSchemeRemoveType": "Remove type from scheme",
       "taskmgmtIssueTypeSchemeSetType": "Update type in scheme",
-      "taskmgmtProjectSetIssueTypeScheme": "Project issue type scheme change"
+      "taskmgmtProjectSetIssueTypeScheme": "Project issue type scheme change",
+      "taskmgmtIssueAddWatcher": "Add watcher",
+      "taskmgmtIssueRemoveWatcher": "Remove watcher",
+      "taskmgmtProjectSetSla": "Project SLA change"
     },
     "toast": {
       "completed": "Finished: {{name}}",
@@ -368,6 +371,17 @@
   "optimistic": {
     "rollback": {
       "generic": "Failed to save the change."
+    }
+  },
+  "notifications": {
+    "kinds": {
+      "taskmgmt_issue_assigned": "You were assigned issue {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_mentioned": "You were mentioned in issue {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_commented": "New comment on issue {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_state_changed": "State changed on issue {{issueKey}} — {{issueTitle}}",
+      "taskmgmt_issue_due_soon": "Issue {{issueKey}} — {{issueTitle}} is due soon",
+      "taskmgmt_issue_overdue": "Issue {{issueKey}} — {{issueTitle}} is overdue",
+      "taskmgmt_request_delivered": "Request {{issueKey}} — {{issueTitle}} has been delivered"
     }
   }
 }

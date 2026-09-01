@@ -24,3 +24,4 @@ export { IdentityMapStore } from './identity-map.store';
 export { DataLoader } from './data-loader';
 export { BaseOrchestrator } from './base-orchestrator';
 export { JobService } from './job.service';
+export { UserNotificationService } from './user-notification.service';

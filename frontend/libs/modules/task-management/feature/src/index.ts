@@ -8,3 +8,5 @@ export * from './lib/issue/page/issue-detail.component';
 export * from './lib/issue/components/tables/task-management-issue-table/task-management-issue-table.component';
 export * from './lib/issue/modal';
 export * from './lib/issue/translation';
+export * from './lib/request/page/request.component';
+export * from './lib/request/translation';

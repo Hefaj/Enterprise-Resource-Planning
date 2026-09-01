@@ -186,6 +186,17 @@ public sealed class IssueWatcherConfiguration : IEntityTypeConfiguration<IssueWa
         builder.ToTable("issue_watcher");
         builder.HasKey(w => w.Uuid);
 
+        // Klucz nadaje aplikacja (Entity.NewUuid — UUID v7), baza nigdy go nie generuje.
+        // Bez tej deklaracji EF Core, widząc PIERWSZY RAZ encję odkrytą przez fixup nawigacji
+        // (Issue.Watch() dopisuje ją do już śledzonej — bo wczytanej — kolekcji Watchers, bez
+        // jawnego Add() na DbContext) z NIEPUSTYM kluczem, zakłada że to JUŻ ISTNIEJĄCY wiersz
+        // i planuje UPDATE zamiast INSERT-a. UPDATE trafia w 0 wierszy (nowy wiersz nie istnieje)
+        // i wybucha jako DbUpdateConcurrencyException — pozorny konflikt, nie prawdziwy wyścig.
+        // Ten sam mechanizm i to samo rozwiązanie opisuje komentarz przy
+        // Catalog.Domain.Products.ProductLinks (tam wybrano odwrotną stronę tej samej monety:
+        // klucz zostaje domyślny, a wartość nadaje `DEFAULT gen_random_uuid()` w bazie).
+        builder.Property(w => w.Uuid).ValueGeneratedNever();
+
         builder.Property(w => w.IssueUuid).IsRequired();
         builder.Property(w => w.UserUuid).IsRequired();
         builder.Property(w => w.OptedOutAt);

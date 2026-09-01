@@ -8,17 +8,17 @@ import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-manageme
 import { PROJECT_KIND } from '@erp/task-management/util';
 
 import { ProjectFieldsComponent } from './content/project-fields.component';
+import { ProjectSlaComponent } from './content/project-sla.component';
 import { ProjectTypesComponent } from './content/project-types.component';
 import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 
 /**
  * Karta projektu — `/task-management/project/:uuid`.
  *
- * <p>Docelowo master-detail z zakładkami: pola, stany, tablice, członkowie, SLA
- * (`docs/frontend/task-management-pages.md` §4.2). <b>Faza 3 dowozi wyłącznie zakładkę pól</b>,
- * bo tylko ona ma dziś czym się wypełnić: wybór schematu stanów i SLA wchodzą razem z fazami,
- * które je wprowadzają, a pusta zakładka jest dokładnie tym rodzajem zaślepki, który usunęliśmy
- * z menu w fazie 0.</p>
+ * <p>Docelowo master-detail z zakładkami: pola, typy, SLA, stany, tablice, członkowie
+ * (`docs/frontend/task-management-pages.md` §4.2). Zakładka SLA dochodzi w fazie 5
+ * (`SLA-001`); stany, tablice i członkowie zostają zaślepką, dopóki nie wejdzie faza, która je
+ * wypełnia.</p>
  */
 @Component({
   selector: 'erp-task-management-project-detail',
@@ -106,6 +106,12 @@ export class ProjectDetailComponent {
               id: 'types',
               label: PROJECT_KEYS.detail.types.title,
               component: ProjectTypesComponent,
+              inputs: { project },
+            },
+            {
+              id: 'sla',
+              label: PROJECT_KEYS.detail.sla.title,
+              component: ProjectSlaComponent,
               inputs: { project },
             },
           ]

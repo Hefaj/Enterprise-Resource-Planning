@@ -126,7 +126,10 @@
       "dueAt": "Due",
       "createdAt": "Created",
       "updatedAt": "Updated",
-      "restricted": "Restricted issue"
+      "restricted": "Restricted issue",
+      "watch": "Watch",
+      "unwatch": "Stop watching",
+      "watcherCount": "Watchers: {{ count }}"
     },
     "attachments": {
       "label": "Attachments",
@@ -159,7 +162,9 @@
       "edited": "edited",
       "failed": "The comment could not be saved.",
       "removeTitle": "Remove comment",
-      "removeFailed": "Failed to remove the comment."
+      "removeFailed": "Failed to remove the comment.",
+      "mention": "@ Mention",
+      "mentionPlaceholder": "Pick a person to mention…"
     },
     "history": {
       "label": "History",
@@ -218,6 +223,7 @@
       }
     },
     "typeChangeFailed": "Failed to change the issue type.",
+    "watchToggleFailed": "Failed to change watch state for this issue.",
     "descriptionSaveFailed": "Failed to save the issue description.",
     "transitionFailed": "Failed to change the issue state.",
     "warnings": {

@@ -104,6 +104,27 @@
         "confirmTitle": "Usunąć typ?",
         "confirmMessage": "Backend odmówi, jeśli jakiekolwiek zgłoszenie ma jeszcze ten typ."
       }
+    },
+    "sla": {
+      "title": "SLA",
+      "empty": "Ten projekt nie ma jeszcze ustawionej polityki SLA.",
+      "responseMinutes": "Czas reakcji (minuty)",
+      "resolutionMinutes": "Czas realizacji (minuty)",
+      "workStartTime": "Początek dnia roboczego",
+      "workEndTime": "Koniec dnia roboczego",
+      "timeHint": "GG:MM",
+      "workingDays": "Dni robocze",
+      "days": {
+        "monday": "Pon",
+        "tuesday": "Wt",
+        "wednesday": "Śr",
+        "thursday": "Czw",
+        "friday": "Pt",
+        "saturday": "Sob",
+        "sunday": "Nd"
+      },
+      "save": "Zapisz SLA",
+      "saveFailed": "Nie udało się zapisać SLA projektu."
     }
   }
 }

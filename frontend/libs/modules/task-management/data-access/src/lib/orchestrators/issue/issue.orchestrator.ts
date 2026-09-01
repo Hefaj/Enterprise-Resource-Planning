@@ -19,9 +19,11 @@ import {
   GetIssueByKeyRequest,
   GetIssueRequest,
   IssueAddCommentCommand,
+  IssueAddWatcherCommand,
   IssueCreateCommand,
   IssueDto,
   IssueRemoveCommentCommand,
+  IssueRemoveWatcherCommand,
   IssueSetCommentBodyCommand,
   IssueAddLinkCommand,
   IssueRemoveLinkCommand,
@@ -396,5 +398,49 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssuePriority,
       queueId,
     });
+  }
+
+  // ── Obserwujący (ISS-009) ──
+  //
+  // Batch endpointy przyjmują jeden element (`commands: [command]`) — na karcie zgłoszenia nie
+  // ma zaznaczenia z listy, więc `targetUuids` zawsze jest puste.
+
+  public addWatcherAsync(command: IssueAddWatcherCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueAddWatcherMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueWatcher,
+      queueId,
+    });
+  }
+
+  public removeWatcherAsync(command: IssueRemoveWatcherCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveWatcherMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueWatcher,
+      queueId,
+    });
+  }
+
+  /**
+   * Przełącznik „obserwuję" z natychmiastowym, optymistycznym skutkiem — patrz
+   * `setStateOptimisticAsync`. Zawsze bieżący użytkownik: backend rozwiązuje go z tokenu
+   * (`Issue.Watch()`/`Unwatch()`), komenda nie niesie cudzego uuid.
+   */
+  public toggleWatchOptimisticAsync(
+    uuid: string,
+    watched: boolean,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    return this.runOptimisticCommandAsync(
+      uuid,
+      (current) =>
+        current
+          ? {
+              ...current,
+              isWatchedByMe: watched,
+              watcherCount: Math.max(0, current.watcherCount + (watched ? 1 : -1)),
+            }
+          : current,
+      () => (watched ? this.addWatcherAsync({ uuid }) : this.removeWatcherAsync({ uuid })),
+      options,
+    );
   }
 }

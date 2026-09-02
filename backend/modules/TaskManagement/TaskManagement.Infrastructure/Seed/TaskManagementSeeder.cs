@@ -6,7 +6,9 @@ using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Resolutions;
 using TaskManagement.Domain.Workflow;
+using TaskManagement.Domain.WorkTypes;
 using TaskManagement.Infrastructure.Persistence;
 
 namespace TaskManagement.Infrastructure.Seed;
@@ -68,6 +70,8 @@ public sealed partial class TaskManagementSeeder
         var scheme = await EnsureSystemSchemeAsync(cancellationToken).ConfigureAwait(false);
         var intakeScheme = await EnsureIntakeSchemeAsync(cancellationToken).ConfigureAwait(false);
         var issueTypeScheme = await EnsureSystemIssueTypeSchemeAsync(cancellationToken).ConfigureAwait(false);
+        await EnsureSystemResolutionsAsync(cancellationToken).ConfigureAwait(false);
+        await EnsureSystemWorkTypesAsync(cancellationToken).ConfigureAwait(false);
 
         if (!_options.Enabled)
         {
@@ -180,6 +184,51 @@ public sealed partial class TaskManagementSeeder
         return scheme;
     }
 
+    /// <summary>
+    /// Cztery rozwiązania systemowe uzgadniane po stałych identyfikatorach — wzorzec identyczny
+    /// jak <see cref="EnsureSystemIssueTypeSchemeAsync"/> (ISS-007). W odróżnieniu od schematów
+    /// to cztery OSOBNE agregaty, nie jeden z podrzędną kolekcją — brakujące dokłada się
+    /// pojedynczo, więc administrator, który usunął jedno rozwiązanie systemowe z UI, nie
+    /// dostanie go z powrotem przy restarcie razem z resztą.
+    /// </summary>
+    private async Task EnsureSystemResolutionsAsync(CancellationToken cancellationToken)
+    {
+        var existingUuids = await _dbContext.Resolutions
+            .Where(r => r.IsSystem)
+            .Select(r => r.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var missing = ResolutionDefaults.Build().Where(r => !existingUuids.Contains(r.Uuid)).ToList();
+
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        _dbContext.Resolutions.AddRange(missing);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task EnsureSystemWorkTypesAsync(CancellationToken cancellationToken)
+    {
+        var existingUuids = await _dbContext.WorkTypes
+            .Where(t => t.ProjectUuid == null)
+            .Select(t => t.Uuid)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var missing = WorkTypeDefaults.Build().Where(t => !existingUuids.Contains(t.Uuid)).ToList();
+
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        _dbContext.WorkTypes.AddRange(missing);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     private Project CreateProject(
         Guid uuid,
         string code,
@@ -272,15 +321,10 @@ public sealed partial class TaskManagementSeeder
             Guid.CreateVersion7(), "notes", "Notatki", "taskManagement.fields.notes",
             CustomFieldDataType.Text, FieldSlot.None, orderNo: 5);
 
-        // WF-004 — przykład wymogu przejścia: `finish` (In Progress → Done) w schemacie
-        // systemowym wymaga tego pola (patrz `EnsureSystemSchemeAsync`), więc zgłoszenie musi
-        // mieć uzupełnioną rozdzielczość, zanim trafi do Done. Bez slotu — nikt po rozdzielczości
-        // nie sortuje ani nie filtruje listy, więc nie zajmuje zasobu rzadkiego (§6).
-        scheme.AddField(
-            Guid.CreateVersion7(), "resolution", "Rozwiązanie", "taskManagement.fields.resolution",
-            CustomFieldDataType.Select, FieldSlot.Text3, orderNo: 6,
-            options: ["Fixed", "WontFix", "Duplicate", "Invalid"]);
-
+        // `resolution` NIE jest tu polem niestandardowym od fazy 6 (ISS-007) — wymóg przejścia
+        // `finish` (In Progress → Done) w schemacie systemowym (patrz `EnsureSystemSchemeAsync`)
+        // sprawdza teraz `Issue.ResolutionUuid`, pole pierwszej klasy z FK do słownika rozwiązań
+        // (`EnsureSystemResolutionsAsync`), nie wpis w `custom_fields`.
         _dbContext.FieldSchemes.Add(scheme);
 
         return scheme;

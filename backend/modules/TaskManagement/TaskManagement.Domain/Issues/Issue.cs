@@ -22,6 +22,10 @@ public sealed class Issue : AggregateRoot
 
     private readonly List<IssueWatcher> _watchers = [];
 
+    private readonly List<IssueTag> _tags = [];
+
+    private readonly List<IssueExternalLink> _externalLinks = [];
+
     /// <summary>Wartości pól niestandardowych w postaci kanonicznej, kluczowane kodem pola —
     /// źródło prawdy. Sloty poniżej są ich <b>duplikatem</b> utrzymywanym wyłącznie po to,
     /// żeby dało się po nich sortować i filtrować w SQL (§6).</summary>
@@ -111,6 +115,18 @@ public sealed class Issue : AggregateRoot
 
     public IReadOnlyList<IssueWatcher> Watchers => _watchers.AsReadOnly();
 
+    public IReadOnlyList<IssueTag> Tags => _tags.AsReadOnly();
+
+    /// <summary>Linki zewnętrzne (API-005) — repozytorium, PR, CI. Nigdy integracja w domenie,
+    /// wyłącznie adres z etykietą.</summary>
+    public IReadOnlyList<IssueExternalLink> ExternalLinks => _externalLinks.AsReadOnly();
+
+    /// <summary>Rozwiązanie (ISS-007) — wymagane przez przejście do kategorii <c>Done</c>
+    /// (backstop w <see cref="SetState"/>), czyszczone automatycznie przy powrocie z niej.
+    /// Pole pierwszej klasy, NIE pole niestandardowe: filtrowanie/raportowanie po rozwiązaniu
+    /// idzie po kolumnie z FK do <c>Resolutions.Resolution</c>, nie po <c>_customFields</c>.</summary>
+    public Guid? ResolutionUuid { get; private set; }
+
     /// <summary>Klucze sprzed przeniesień do innych projektów. Wyszukiwanie idzie także po nich,
     /// inaczej „DEV-412” z maila przestaje cokolwiek znajdować dzień po przeniesieniu (§4).</summary>
     public IReadOnlyList<string> PreviousKeys => _previousKeys.AsReadOnly();
@@ -156,6 +172,11 @@ public sealed class Issue : AggregateRoot
     public Guid? User1 { get; private set; }
 
     public Guid? User2 { get; private set; }
+
+    /// <summary>Szacowany czas w minutach (TIME-002) — <c>null</c> znaczy brak estymaty,
+    /// nie zero: zgłoszenie nieoszacowane i zgłoszenie oszacowane na zero minut to dwa różne
+    /// stany karty.</summary>
+    public int? EstimateMinutes { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
 
@@ -385,9 +406,13 @@ public sealed class Issue : AggregateRoot
         // Backstop WF-004: front sprawdza to samo PRZED wysłaniem komendy (modal zbierający
         // brakujące pola), ale agregat waliduje PRZED zmianą stanu niezależnie od frontu —
         // klient API pomijający UI albo wyścig dwóch żądań nie może obejść wymogu.
+        //
+        // `resolution` (ISS-007) jest jedynym kodem `RequiredFields` z polem pierwszej klasy —
+        // sprawdzany po `ResolutionUuid`, nie po `_customFields`, mimo że nazwa kodu w schemacie
+        // pozostaje ta sama string „resolution” co przed wydzieleniem rozwiązania z pól
+        // niestandardowych.
         var transition = scheme.FindTransition(StateUuid, toStateUuid);
-        var missingField = transition?.RequiredFields.FirstOrDefault(
-            code => !_customFields.TryGetValue(code, out var value) || string.IsNullOrWhiteSpace(value));
+        var missingField = transition?.RequiredFields.FirstOrDefault(code => !HasRequiredFieldValue(code));
 
         if (missingField is not null)
         {
@@ -396,6 +421,7 @@ public sealed class Issue : AggregateRoot
                 $"Przejście `{transition!.NameKey}` wymaga wartości pola `{missingField}`.");
         }
 
+        var wasDone = StateCategory == WorkflowStateCategory.Done;
         var toState = scheme.States.First(s => s.Uuid == toStateUuid);
 
         StateUuid = toStateUuid;
@@ -406,6 +432,91 @@ public sealed class Issue : AggregateRoot
         {
             Raise(new IssueClosed(Uuid, now));
         }
+        else if (wasDone)
+        {
+            // ISS-007 AC2: powrót ze stanu Done czyści rozwiązanie — inaczej zgłoszenie
+            // reotwarte niosłoby rozwiązanie sprzed ponownego otwarcia, a najbliższe
+            // zamknięcie mogłoby przejść bez wymogu `resolution` (wartość już by tam była).
+            ResolutionUuid = null;
+        }
+    }
+
+    private bool HasRequiredFieldValue(string code)
+    {
+        if (code == "resolution")
+        {
+            return ResolutionUuid.HasValue;
+        }
+
+        return _customFields.TryGetValue(code, out var value) && !string.IsNullOrWhiteSpace(value);
+    }
+
+    /// <summary>Ustawia rozwiązanie (ISS-007) — walidację przynależności do projektu robi
+    /// wołający (handler), tu tylko normalizacja <c>Guid.Empty</c> na <c>null</c>.</summary>
+    public void SetResolution(Guid? resolutionUuid, DateTimeOffset now)
+    {
+        ResolutionUuid = resolutionUuid == Guid.Empty ? null : resolutionUuid;
+        Touch(now);
+    }
+
+    /// <summary>Dopięcie tagu — idempotentne, powtórzenie tego samego tagu nic nie zmienia
+    /// (TAG-001).</summary>
+    public void AddTag(Guid tagUuid, DateTimeOffset now)
+    {
+        if (_tags.Any(t => t.TagUuid == tagUuid))
+        {
+            return;
+        }
+
+        _tags.Add(IssueTag.Create(NewUuid(), tagUuid));
+        Touch(now);
+    }
+
+    /// <summary>Odpięcie tagu — idempotentne, brak tagu nic nie zmienia.</summary>
+    public void RemoveTag(Guid tagUuid, DateTimeOffset now)
+    {
+        var existing = _tags.FirstOrDefault(t => t.TagUuid == tagUuid);
+
+        if (existing is null)
+        {
+            return;
+        }
+
+        _tags.Remove(existing);
+        Touch(now);
+    }
+
+    /// <summary>Dopina link zewnętrzny (API-005) — repozytorium, PR, CI. Bez idempotencji po
+    /// adresie: to samo repozytorium może być linkowane dwukrotnie z inną etykietą, każdy wiersz
+    /// jest osobną decyzją użytkownika.</summary>
+    public void AddExternalLink(string url, string label, DateTimeOffset now)
+    {
+        _externalLinks.Add(IssueExternalLink.Create(NewUuid(), url, label));
+        Touch(now);
+    }
+
+    public void RemoveExternalLink(Guid linkUuid, DateTimeOffset now)
+    {
+        var existing = _externalLinks.Find(l => l.Uuid == linkUuid)
+            ?? throw new DomainException(
+                "taskmgmt.issue_external_link_not_found",
+                $"Link {linkUuid} nie należy do tego zgłoszenia.");
+
+        _externalLinks.Remove(existing);
+        Touch(now);
+    }
+
+    /// <summary>Ustawia estymatę (TIME-002) — system celowo nie ostrzega o przekroczeniu wobec
+    /// sumy wpisów czasu, to decyzja lidera, nie systemu.</summary>
+    public void SetEstimate(int? minutes, DateTimeOffset now)
+    {
+        if (minutes is < 0)
+        {
+            throw new DomainException("taskmgmt.issue_estimate_negative", "Estymata nie może być ujemna.");
+        }
+
+        EstimateMinutes = minutes;
+        Touch(now);
     }
 
     /// <summary>

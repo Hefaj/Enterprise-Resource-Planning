@@ -146,6 +146,79 @@ public sealed class ProjectSetNameCommandHandler : CommandHandler<ProjectSetName
     }
 }
 
+/// <summary>Zmiana prefiksu klucza zgłoszeń (PRJ-003) — istniejące klucze zostają bez zmian,
+/// nowe zgłoszenia dostają nowy prefiks, licznik nie jest resetowany.</summary>
+public sealed class ProjectSetCodeCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public string Code { get; set; } = string.Empty;
+}
+
+public sealed class ProjectSetCodeCommandHandler : CommandHandler<ProjectSetCodeCommand, Guid>
+{
+    private readonly IProjectRepository _repository;
+    private readonly IProjectKeyCounterWriter _counters;
+
+    public ProjectSetCodeCommandHandler(IProjectRepository repository, IProjectKeyCounterWriter counters)
+    {
+        _repository = repository;
+        _counters = counters;
+    }
+
+    public override async Task<Guid> ExecuteAsync(ProjectSetCodeCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
+
+        // Walidacja formatu (myślnik, długość) jest w `Project.SetCode` — tu tylko odczytujemy
+        // znormalizowany kod z powrotem, żeby licznik dostał DOKŁADNIE to, co przyjął agregat,
+        // a nie surowe wejście komendy.
+        project.SetCode(command.Code);
+
+        await _counters.SetPrefixAsync(project.Uuid, project.Code, ct).ConfigureAwait(false);
+
+        return project.Uuid;
+    }
+}
+
+/// <summary>Archiwizacja/przywrócenie projektu (PRJ-004). Bez osobnej komendy usuwania —
+/// projektu w tym module się nie kasuje (PRJ-004 AC2).</summary>
+public sealed class ProjectSetArchivedCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public bool IsArchived { get; set; }
+}
+
+public sealed class ProjectSetArchivedCommandHandler : CommandHandler<ProjectSetArchivedCommand, Guid>
+{
+    private readonly IProjectRepository _repository;
+
+    public ProjectSetArchivedCommandHandler(IProjectRepository repository) => _repository = repository;
+
+    public override async Task<Guid> ExecuteAsync(ProjectSetArchivedCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
+
+        if (command.IsArchived)
+        {
+            project.Archive();
+        }
+        else
+        {
+            project.Unarchive();
+        }
+
+        return project.Uuid;
+    }
+}
+
 /// <summary>Nadanie roli w projekcie — <b>atrybut nadania</b>, nie kod uprawnienia (§10.2).</summary>
 public sealed class ProjectAddMemberCommand : ICommand<Guid>, IAggregateCommand
 {

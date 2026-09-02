@@ -1,7 +1,12 @@
 import {
+  ISSUE_ADD_TAG_MODAL_ID,
   ISSUE_CREATE_MODAL_ID,
+  ISSUE_REMOVE_TAG_MODAL_ID,
   ISSUE_SET_ASSIGNEE_MODAL_ID,
+  ISSUE_SET_PROJECT_MODAL_ID,
   ISSUE_SET_STATE_MODAL_ID,
+  SPRINT_CREATE_MODAL_ID,
+  SPRINT_EXEC_CLOSE_MODAL_ID,
   WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
 } from '@erp/task-management/util';
 
@@ -17,7 +22,12 @@ export const remoteModalIds: string[] = [
   ISSUE_CREATE_MODAL_ID,
   ISSUE_SET_STATE_MODAL_ID,
   ISSUE_SET_ASSIGNEE_MODAL_ID,
+  ISSUE_ADD_TAG_MODAL_ID,
+  ISSUE_REMOVE_TAG_MODAL_ID,
+  ISSUE_SET_PROJECT_MODAL_ID,
   WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
+  SPRINT_CREATE_MODAL_ID,
+  SPRINT_EXEC_CLOSE_MODAL_ID,
 ];
 
 /** Leniwie ładuje tokeny DI definicji modali tego modułu. */
@@ -26,13 +36,23 @@ export async function registerModals(): Promise<unknown[]> {
     IssueCreateModalDefinition,
     IssueSetStateModalDefinition,
     IssueSetAssigneeModalDefinition,
+    IssueAddTagModalDefinition,
+    IssueRemoveTagModalDefinition,
+    IssueSetProjectModalDefinition,
     WorkflowRequiredFieldsModalDefinition,
+    SprintCreateModalDefinition,
+    SprintExecCloseModalDefinition,
   } = await import('@erp/task-management/feature');
   return [
     IssueCreateModalDefinition,
     IssueSetStateModalDefinition,
     IssueSetAssigneeModalDefinition,
+    IssueAddTagModalDefinition,
+    IssueRemoveTagModalDefinition,
+    IssueSetProjectModalDefinition,
     WorkflowRequiredFieldsModalDefinition,
+    SprintCreateModalDefinition,
+    SprintExecCloseModalDefinition,
   ];
 }
 
@@ -44,6 +64,6 @@ export async function registerModals(): Promise<unknown[]> {
  * miejsca aplikacji został otwarty (`docs/frontend/translations.md` §3).
  */
 export async function getModalProviders(): Promise<unknown[]> {
-  const { provideIssueTranslations } = await import('@erp/task-management/feature');
-  return provideIssueTranslations();
+  const { provideIssueTranslations, provideBoardTranslations } = await import('@erp/task-management/feature');
+  return [...provideIssueTranslations(), ...provideBoardTranslations()];
 }

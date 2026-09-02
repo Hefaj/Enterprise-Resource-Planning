@@ -16,6 +16,24 @@ export const ISSUE_PRIORITY = {
 
 export type IssuePriorityValue = (typeof ISSUE_PRIORITY)[keyof typeof ISSUE_PRIORITY];
 
+/** `TaskManagement.Domain.Boards.BoardMode` — sprinty i backlog istnieją tylko na tablicach
+ * w trybie `Scrum` (SPR-001). */
+export const BOARD_MODE = {
+  Kanban: 0,
+  Scrum: 1,
+} as const;
+
+export type BoardModeValue = (typeof BOARD_MODE)[keyof typeof BOARD_MODE];
+
+/** `TaskManagement.Domain.Sprints.SprintStatus` — kolejność wartości jest znacząca. */
+export const SPRINT_STATUS = {
+  Planned: 0,
+  Active: 1,
+  Closed: 2,
+} as const;
+
+export type SprintStatusValue = (typeof SPRINT_STATUS)[keyof typeof SPRINT_STATUS];
+
 /**
  * `TaskManagement.Domain.Workflow.WorkflowStateCategory` — <b>po niej</b>, nie po nazwie stanu,
  * liczy się „czy zgłoszenie jest jeszcze w pracy".
@@ -145,9 +163,25 @@ export const ISSUE_ACTIVITY_KIND = {
   CommentAdded: 3,
   CommentRemoved: 4,
   AttachmentAdded: 5,
+  WorkLogAdded: 6,
+  WorkLogRemoved: 7,
+  AttachmentRemoved: 8,
+  ExternalLinkAdded: 9,
+  ExternalLinkRemoved: 10,
 } as const;
 
 export type IssueActivityKindValue = (typeof ISSUE_ACTIVITY_KIND)[keyof typeof ISSUE_ACTIVITY_KIND];
+
+/** `TaskManagement.Domain.Boards.BoardSwimlaneMode` (BRD-006) — oś grupowania wierszy tablicy. */
+export const BOARD_SWIMLANE_MODE = {
+  None: 0,
+  Assignee: 1,
+  Epic: 2,
+  Priority: 3,
+  CustomField: 4,
+} as const;
+
+export type BoardSwimlaneModeValue = (typeof BOARD_SWIMLANE_MODE)[keyof typeof BOARD_SWIMLANE_MODE];
 
 /** `TaskManagement.Domain.Issues.IssueDeliveryState` (REQ-003) — wyliczony stan realizacji
  * zlecenia; `None` dla zgłoszeń, które nie są zleceniem. */

@@ -13,7 +13,12 @@ import {
   ErpUserPickerComponent,
   ErpUserPickerConfig,
 } from '@erp/shared/ui';
-import { ProjectFieldDto, ProjectFieldProfileService } from '@erp/task-management/data-access';
+import {
+  ProjectFieldDto,
+  ProjectFieldProfileService,
+  ResolutionDto,
+  TaskManagementResolutionOrchestrator,
+} from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE } from '@erp/task-management/util';
 
 import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from './workflow-required-fields.definition';
@@ -41,6 +46,12 @@ interface MissingFieldControl {
  * (`ErpModalStepBase.metadata` to `input.required`, więc odczyt przed pełną inicjalizacją
  * komponentu rzuciłby błąd). Stąd własny szablon i własny `FormGroup`, budowany w `effect()` —
  * dokładnie ten sam wzorzec, co w `IssueCustomFieldsComponent`.</p>
+ *
+ * <p><b>`resolution` (ISS-007) jest kodem specjalnym</b>: mimo że nazwa w
+ * `WorkflowTransitionDto.requiredFields` brzmi tak samo jak dawne pole niestandardowe, od fazy 6
+ * jest polem pierwszej klasy (`Issue.resolutionUuid`) — nie wpisem w profilu pól projektu, więc
+ * NIGDY nie znajdzie się wśród `ProjectFieldDto` i musi mieć własną kontrolkę, osobno od pętli
+ * budującej `controls()`.</p>
  */
 @Component({
   selector: 'erp-task-management-workflow-required-fields-step',
@@ -61,6 +72,10 @@ interface MissingFieldControl {
           <erp-input [config]="item.inputConfig" [formControl]="item.control" />
         }
       }
+
+      @if (showResolution()) {
+        <erp-input-picker [config]="resolutionPickerConfig()" [control]="resolutionControl" />
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +88,23 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
 
   protected readonly controls = signal<MissingFieldControl[]>([]);
 
+  protected readonly showResolution = signal<boolean>(false);
+
+  protected readonly resolutionOptions = signal<ResolutionDto[]>([]);
+
+  protected readonly resolutionControl = new FormControl<string | null>(null, { validators: [Validators.required] });
+
+  protected readonly resolutionPickerConfig = signal<ErpInputPickerConfig>(
+    ErpInputPickerBuilder.create((b) =>
+      b
+        .setLabel(ISSUE_KEYS.commands.requiredFields.resolutionLabel)
+        .setItems([])
+        .setLabelKey('name')
+        .setValueKey('uuid')
+        .setStrategy('single'),
+    ),
+  );
+
   private readonly _valid = signal<boolean>(false);
 
   public constructor() {
@@ -81,6 +113,7 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
     super();
 
     const fields = inject(ProjectFieldProfileService);
+    const resolutions = inject(TaskManagementResolutionOrchestrator);
 
     // Kontrolki budują się z profilu pól PROJEKTU, zawężonego do kodów z metadanych. Sygnał,
     // nie `computed` — przebudowanie przy każdym odczycie wartości formularza skasowałoby to,
@@ -89,7 +122,9 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
       const metadata = this.metadata()();
       const command = this.command()();
       const projectUuid = metadata?.projectUuid;
-      const codes = metadata?.missingFieldCodes ?? [];
+      // `resolution` NIGDY nie jest w profilu pól — patrz komentarz przy klasie — więc pętla
+      // poniżej nie ma po co go szukać wśród `ProjectFieldDto`.
+      const codes = (metadata?.missingFieldCodes ?? []).filter((code) => code !== 'resolution');
 
       const profile = projectUuid ? fields.fieldsOf(projectUuid)() : [];
       const matched = profile.filter((field) => codes.includes(field.code));
@@ -102,13 +137,41 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
           .join('|');
         const nextCodes = matched.map((field) => field.code).join('|');
 
-        if (currentCodes === nextCodes && this.controls().length > 0) {
-          return;
+        if (currentCodes !== nextCodes || this.controls().length === 0) {
+          this.controls.set(matched.map((field) => this._toControl(field, command.values)));
         }
 
-        this.controls.set(matched.map((field) => this._toControl(field, command.values)));
         this._recomputeValid();
       });
+    });
+
+    // Rozwiązanie (ISS-007) — osobny efekt, bo źródło opcji (`TaskManagementResolutionOrchestrator`)
+    // nie ma nic wspólnego z profilem pól projektu.
+    effect(() => {
+      const metadata = this.metadata()();
+      const projectUuid = metadata?.projectUuid;
+      const needsResolution = (metadata?.missingFieldCodes ?? []).includes('resolution');
+
+      untracked(() => {
+        this.showResolution.set(needsResolution);
+
+        if (needsResolution && projectUuid) {
+          void this._loadResolutionsAsync(projectUuid, resolutions);
+        }
+
+        const current = this.resolutionControl.value;
+        const wanted = this.command()().resolutionUuid ?? null;
+        if (current !== wanted) {
+          this.resolutionControl.setValue(wanted, { emitEvent: false });
+        }
+
+        this._recomputeValid();
+      });
+    });
+
+    this.resolutionControl.valueChanges.subscribe((value) => {
+      this.command().update((cmd) => ({ ...cmd, resolutionUuid: value ?? undefined }));
+      this._recomputeValid();
     });
 
     // Rejestruje ważność kroku dopiero, gdy host modalu poda funkcję rejestrującą — Przycisk
@@ -119,6 +182,28 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
         register(this._valid.asReadonly());
       }
     });
+  }
+
+  private async _loadResolutionsAsync(
+    projectUuid: string,
+    resolutions: TaskManagementResolutionOrchestrator,
+  ): Promise<void> {
+    try {
+      const list = await resolutions.searchResolutionsAsync({ projectUuid });
+      this.resolutionOptions.set(list);
+      this.resolutionPickerConfig.set(
+        ErpInputPickerBuilder.create((b) =>
+          b
+            .setLabel(ISSUE_KEYS.commands.requiredFields.resolutionLabel)
+            .setItems(list)
+            .setLabelKey('name')
+            .setValueKey('uuid')
+            .setStrategy('single'),
+        ),
+      );
+    } catch (error) {
+      console.error('[WorkflowRequiredFieldsStepComponent] Nie udało się pobrać listy rozwiązań.', error);
+    }
   }
 
   private _toControl(field: ProjectFieldDto, values: Record<string, string> | undefined): MissingFieldControl {
@@ -177,6 +262,10 @@ export class WorkflowRequiredFieldsStepComponent extends ErpModalStepBase<
 
   private _recomputeValid(): void {
     const items = this.controls();
-    this._valid.set(items.length > 0 && items.every((item) => item.control.valid));
+    const itemsValid = items.every((item) => item.control.valid);
+    const resolutionValid = !this.showResolution() || this.resolutionControl.valid;
+    const hasAnything = items.length > 0 || this.showResolution();
+
+    this._valid.set(hasAnything && itemsValid && resolutionValid);
   }
 }

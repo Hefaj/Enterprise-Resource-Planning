@@ -29,6 +29,7 @@ import {
   SearchIssueRequest,
   SortOption,
   TaskManagementIssueOrchestrator,
+  TaskManagementTagOrchestrator,
 } from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE, ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
@@ -60,6 +61,7 @@ export class TaskManagementIssueTableComponent {
   private readonly _transloco = inject(TranslocoService);
   private readonly _fields = inject(ProjectFieldProfileService);
   private readonly _users = inject(UserDirectoryService);
+  private readonly _tags = inject(TaskManagementTagOrchestrator);
 
   public readonly filters = input<SearchIssueRequest>({});
   public readonly stateKey = input<string>();
@@ -109,6 +111,14 @@ export class TaskManagementIssueTableComponent {
       if (projectUuid) {
         untracked(() => void this._fields.loadAsync(projectUuid));
       }
+    });
+
+    // Tagi widoczne na projekcie — wyłącznie po to, żeby kolumna „Tagi" miała nazwy do pokazania
+    // (`IssueDto.tagUuids` niesie tylko identyfikatory). Bez wybranego projektu pokazujemy
+    // tylko tagi globalne — filtrowanie „wszystkie projekty" i tak jest rzadkim widokiem.
+    effect(() => {
+      const projectUuid = this.filters().projectUuid;
+      untracked(() => void this._tags.searchTagsAsync({ projectUuid }));
     });
 
     effect(() => {
@@ -192,6 +202,14 @@ export class TaskManagementIssueTableComponent {
           .setHeader(ISSUE_KEYS.table.columns.updatedAt)
           .setSize(160)
           .setGrow(0),
+      )
+      .addColumn((c) =>
+        c
+          .setId('tags')
+          .setAccessorFn((row: IssueVM) => this._tagLabels(row))
+          .setHeader(ISSUE_KEYS.table.columns.tags)
+          .setEnableSorting(false)
+          .setSize(180),
       )
 
       .setOnStateChange((state) => {
@@ -362,6 +380,22 @@ export class TaskManagementIssueTableComponent {
     }
 
     return true;
+  }
+
+  /** Nazwy tagów, przecinkiem — pełne chipsy wg `erp-tag-chips` idą na karcie zgłoszenia
+   * (`IssueTagsComponent`); tabela dostaje tanią odmianę tekstową, bo wiersz ma stałą wysokość
+   * i nie ma tu miejsca na zawijające się chipsy w gęstej liście. */
+  private _tagLabels(row: IssueVM): string {
+    if (!row.tagUuids?.length) {
+      return '';
+    }
+
+    const viewModels = this._tags.getViewModel()();
+
+    return row.tagUuids
+      .map((uuid) => viewModels.get(uuid)?.name)
+      .filter((name): name is string => !!name)
+      .join(', ');
   }
 
   private _priorityLabel(priority: number | undefined): string {

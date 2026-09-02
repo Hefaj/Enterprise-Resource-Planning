@@ -80,6 +80,11 @@ public sealed class Project : AggregateRoot
 
     public TimeOnly? SlaWorkEndTime { get; private set; }
 
+    /// <summary>Projekt archiwalny (PRJ-004) — tylko do odczytu, znika z domyślnych list i
+    /// z wyboru przy tworzeniu zgłoszenia, ale linki do jego zgłoszeń nadal działają. Usunięcia
+    /// projektu celowo nie ma (PRJ-004 AC2) — archiwizacja jest jedynym „wygaszeniem".</summary>
+    public bool IsArchived { get; private set; }
+
     public static Project Create(
         string code,
         string name,
@@ -135,6 +140,32 @@ public sealed class Project : AggregateRoot
     }
 
     public void SetVisibility(bool isPublic) => IsPublic = isPublic;
+
+    /// <summary>Zmienia prefiks klucza (PRJ-003). Istniejące zgłoszenia zachowują swój
+    /// <c>Key</c> bez zmian — wołający musi osobno podmienić prefiks w
+    /// <see cref="ProjectKeyCounter"/> (§4), bo to dwa oddzielne zapisy, a licznik nie jest
+    /// częścią tego agregatu.</summary>
+    public void SetCode(string code) => Code = ValidateCode(code);
+
+    /// <summary>Archiwizuje projekt — tylko do odczytu, znika z domyślnych list i z pickera
+    /// przy tworzeniu zgłoszenia (PRJ-004). Odwracalne: <see cref="Unarchive"/> przywraca projekt
+    /// do normalnego użytku, bo pomyłkowa archiwizacja nie może być bez wyjścia.</summary>
+    public void Archive() => IsArchived = true;
+
+    public void Unarchive() => IsArchived = false;
+
+    /// <summary>Odmawia operacji, które projekt archiwalny ma zablokowane — dziś wyłącznie
+    /// założenie nowego zgłoszenia (PRJ-004 AC1). Wołane z handlera komendy zakładającej
+    /// zgłoszenie: `Project` i `Issue` to dwa różne agregaty.</summary>
+    public void EnsureNotArchived()
+    {
+        if (IsArchived)
+        {
+            throw new DomainException(
+                "taskmgmt.project_archived",
+                $"Projekt {Code} jest zarchiwizowany — nie da się w nim założyć nowego zgłoszenia.");
+        }
+    }
 
     /// <summary>Zakłada albo aktualizuje politykę SLA (PRJ-006). Czas realizacji krótszy niż
     /// czas reakcji nie ma sensu — reakcja jest zawsze pierwszym krokiem realizacji.</summary>

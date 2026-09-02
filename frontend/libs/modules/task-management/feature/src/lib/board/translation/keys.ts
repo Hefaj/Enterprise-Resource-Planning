@@ -7,12 +7,33 @@ export const BOARD_KEYS = {
     title: 'board.title',
     loading: 'board.loading',
     notFound: 'board.notFound',
+    list: {
+      title: 'board.list.title',
+      loading: 'board.list.loading',
+      empty: 'board.list.empty',
+    },
     empty: {
       columns: 'board.empty.columns',
       column: 'board.empty.column',
     },
     column: {
       count: 'board.column.count',
+      wipExceeded: 'board.column.wipExceeded',
+    },
+    swimlane: {
+      unassigned: 'board.swimlane.unassigned',
+      groupBy: 'board.swimlane.groupBy',
+      mode: {
+        none: 'board.swimlane.mode.none',
+        assignee: 'board.swimlane.mode.assignee',
+        epic: 'board.swimlane.mode.epic',
+        priority: 'board.swimlane.mode.priority',
+        customField: 'board.swimlane.mode.customField',
+      },
+      fieldCode: {
+        label: 'board.swimlane.fieldCode.label',
+        placeholder: 'board.swimlane.fieldCode.placeholder',
+      },
     },
     card: {
       unassigned: 'board.card.unassigned',
@@ -31,6 +52,53 @@ export const BOARD_KEYS = {
         title: 'board.warnings.blocked.title',
         message: 'board.warnings.blocked.message',
         confirm: 'board.warnings.blocked.confirm',
+      },
+    },
+    backlog: {
+      title: 'board.backlog.title',
+      loading: 'board.backlog.loading',
+      notFound: 'board.backlog.notFound',
+      backlogColumn: {
+        title: 'board.backlog.backlogColumn.title',
+        empty: 'board.backlog.backlogColumn.empty',
+      },
+      sprintColumn: {
+        empty: 'board.backlog.sprintColumn.empty',
+        noSprint: 'board.backlog.sprintColumn.noSprint',
+      },
+      status: {
+        planned: 'board.backlog.status.planned',
+        active: 'board.backlog.status.active',
+        closed: 'board.backlog.status.closed',
+      },
+      actions: {
+        newSprint: 'board.backlog.actions.newSprint',
+        start: 'board.backlog.actions.start',
+        close: 'board.backlog.actions.close',
+        editPlan: 'board.backlog.actions.editPlan',
+      },
+      create: {
+        title: 'board.backlog.create.title',
+        name: 'board.backlog.create.name',
+        goal: 'board.backlog.create.goal',
+        startsOn: 'board.backlog.create.startsOn',
+        endsOn: 'board.backlog.create.endsOn',
+        submit: 'board.backlog.create.submit',
+      },
+      close: {
+        title: 'board.backlog.close.title',
+        message: 'board.backlog.close.message',
+        toBacklog: 'board.backlog.close.toBacklog',
+        toSprint: 'board.backlog.close.toSprint',
+        submit: 'board.backlog.close.submit',
+      },
+      start: {
+        title: 'board.backlog.start.title',
+        message: 'board.backlog.start.message',
+        confirm: 'board.backlog.start.confirm',
+      },
+      move: {
+        failed: 'board.backlog.move.failed',
       },
     },
   } as const;

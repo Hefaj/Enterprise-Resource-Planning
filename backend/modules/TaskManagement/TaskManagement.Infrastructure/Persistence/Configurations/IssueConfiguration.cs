@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Resolutions;
 using TaskManagement.Domain.Workflow;
 
 namespace TaskManagement.Infrastructure.Persistence.Configurations;
@@ -63,6 +64,7 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         builder.Property(i => i.IsRestricted).IsRequired();
         builder.Property(i => i.DerivedDeliveryState).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(i => i.LastOverdueNotifiedAt);
+        builder.Property(i => i.EstimateMinutes);
         builder.Property(i => i.CreatedAt).IsRequired();
         builder.Property(i => i.UpdatedAt).IsRequired();
 
@@ -141,6 +143,16 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         builder.HasIndex(i => i.AssigneeUuid);
         builder.HasIndex(i => i.ReporterUuid);
 
+        // NFR-003: sortowanie domyślne listy (bez wybranego pola) jest po tej krotce (patrz
+        // `IssueQueries.ApplySorting`). Bez wspierającego indeksu Postgres robi Seq Scan +
+        // Sort całej tabeli przed odcięciem strony — przy 200 tys. zgłoszeń to Seq Scan
+        // podnosi koszt na tyle, że JIT się włącza i sam narzuca ~190ms kosztu kompilacji,
+        // zamiast pomóc (zmierzone przy weryfikacji fazy 6, zob. PLAN-task-management.md §4.6).
+        // Z tym indeksem odczyt pierwszej strony jest odczytem wstecznym po indeksie, nie
+        // skanem tabeli — koszt przestaje zależeć od liczby zgłoszeń.
+        builder.HasIndex(i => new { i.CreatedAt, i.Uuid })
+            .IsDescending(true, false);
+
         // Skan terminów (faza 5) idzie po tym indeksie, nie po wpisie harmonogramu per zgłoszenie —
         // rozdzielczość jest dzienna, więc drugi mechanizm z DMS-u byłby kosztem bez zysku (§9.3).
         // Filtrowany: zgłoszenia już zamknięte nie mają terminu, o który skan miałby pytać —
@@ -172,6 +184,72 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Navigation(i => i.Watchers).UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        // Brak kaskady i brak `SetNull` na usunięciu rozwiązania — rozwiązania systemowe
+        // (ISS-007) nigdy nie znikają, a te projektowe TAG-003/edytor fazy 7 najpierw
+        // przepięcie zgłoszeń, potem usunięcie (ten sam wzorzec co `IssueTypeInUseRule`).
+        builder.HasOne<Resolution>()
+            .WithMany()
+            .HasForeignKey(i => i.ResolutionUuid)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(i => i.Tags)
+            .WithOne()
+            .HasForeignKey(t => t.IssueUuid)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(i => i.Tags).UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(i => i.ExternalLinks)
+            .WithOne()
+            .HasForeignKey(l => l.IssueUuid)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(i => i.ExternalLinks).UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+/// <summary>Mapowanie przypisania tagu — tabela `issue_tag` (TAG-001 AC1). Unikalność po parze
+/// (zgłoszenie, tag) jest w bazie, wzorem <see cref="IssueWatcherConfiguration"/>.</summary>
+public sealed class IssueTagConfiguration : IEntityTypeConfiguration<IssueTag>
+{
+    public void Configure(EntityTypeBuilder<IssueTag> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ToTable("issue_tag");
+        builder.HasKey(t => t.Uuid);
+
+        // Patrz komentarz przy `IssueWatcherConfiguration.Uuid` — sam mechanizm, sam powód.
+        builder.Property(t => t.Uuid).ValueGeneratedNever();
+
+        builder.Property(t => t.IssueUuid).IsRequired();
+        builder.Property(t => t.TagUuid).IsRequired();
+
+        builder.HasIndex(t => new { t.IssueUuid, t.TagUuid }).IsUnique();
+        builder.HasIndex(t => t.TagUuid);
+    }
+}
+
+/// <summary>Mapowanie linku zewnętrznego (API-005) — tabela <c>issue_external_link</c>. Bez
+/// unikalności po adresie — patrz komentarz przy <see cref="Issue.AddExternalLink"/>.</summary>
+public sealed class IssueExternalLinkConfiguration : IEntityTypeConfiguration<IssueExternalLink>
+{
+    public void Configure(EntityTypeBuilder<IssueExternalLink> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ToTable("issue_external_link");
+        builder.HasKey(l => l.Uuid);
+
+        // Patrz komentarz przy IssueWatcherConfiguration.Uuid — sam mechanizm, sam powód.
+        builder.Property(l => l.Uuid).ValueGeneratedNever();
+
+        builder.Property(l => l.IssueUuid).IsRequired();
+        builder.Property(l => l.Url).HasMaxLength(2048).IsRequired();
+        builder.Property(l => l.Label).HasMaxLength(256).IsRequired();
+
+        builder.HasIndex(l => l.IssueUuid);
     }
 }
 

@@ -317,64 +317,294 @@ TIME-001/002/004, BRD-006/007/009, PRJ-003/004, ATT-002, API-005, NFR-008.
 
 ### 4.1 Sprinty i backlog
 
-- [ ] `Sprint` (agregat): nazwa, zakres dat, cel, stan; `board_card.sprint_uuid` już istnieje.
-- [ ] Indeks częściowy `unique (board_uuid) where status = 'Active'` — niezmiennik w bazie, nie w kodzie.
-- [ ] `SprintCreate`, `SprintSetDates`, `SprintExecStart`, `SprintExecClose`
+- [x] `Sprint` (agregat): nazwa, zakres dat, cel, stan; `board_card.sprint_uuid` już istnieje.
+- [x] Indeks częściowy `unique (board_uuid) where status = 'Active'` — niezmiennik w bazie, nie w kodzie.
+- [x] `SprintCreate`, `SprintSetDates`, `SprintExecStart`, `SprintExecClose`
       (zamknięcie z **jawną decyzją** o niedokończonych — `SPR-003`).
-- [ ] Front: podstrona `/task-management/board/:uuid/backlog`, dwie listy, ten sam mechanizm ranku.
-- [ ] Sygnatura realtime `taskmgmt.sprint` + rejestracja w `AggregateSignatures`.
+- [x] Front: podstrona `/task-management/board/:uuid/backlog`, dwie listy, ten sam mechanizm ranku.
+- [x] Sygnatura realtime `taskmgmt.sprint` + rejestracja w `AggregateSignatures`.
+- [x] `BoardSetCardSprintCommand` — dopięcie karty do backlogu/sprintu (brakowało w pierwotnym
+      planie: `BoardCard.SetSprint` istniało w domenie od fazy 2, ale nic go nie wywoływało).
+- [x] Modale `SprintCreate` (nazwa/cel/daty) i `SprintExecClose` (jawny wybór: backlog albo
+      wskazany sprint planowany — SPR-003 AC1); `SprintExecStart` przez potwierdzenie, bez formularza.
 
 ### 4.2 Tagi i rozwiązanie
 
-- [ ] `Tag` + `issue_tag`; `taskmgmt.tag.manage` jako **nowy kod uprawnienia** (dopisać w obu
+- [x] `Tag` + `issue_tag`; `taskmgmt.tag.manage` jako **nowy kod uprawnienia** (dopisane w obu
       miejscach: `Permissions.cs` i `permission-codes.ts`).
-- [ ] `Issue.ResolutionUuid` + słownik rozwiązań na projekcie; wpięcie w `required_fields`
-      przejścia do kategorii `Done` (`ISS-007`).
-- [ ] Front: chipsy tagów na liście i karcie, filtr po tagach, wybór rozwiązania w modalu przejścia.
+- [x] `Issue.ResolutionUuid` + słownik rozwiązań (`Resolution`, cztery systemowe z seeda +
+      własne projektu); wpięcie w `required_fields` przejścia do kategorii `Done` (`ISS-007`) —
+      `Issue.SetState` sprawdza kod `"resolution"` przez `ResolutionUuid`, nie przez
+      `_customFields` (stare pole niestandardowe `resolution` w seedzie DEV usunięte, zastąpione
+      polem pierwszej klasy); powrót ze stanu `Done` czyści `ResolutionUuid` (AC2, sprawdzone
+      w przeglądarce: DEV-1 Done→In Progress wyzerowało `resolutionUuid`).
+- [x] Front: `erp-tag-chips` (przygotowane w fazie 4) spięte z prawdziwymi danymi — chipsy
+      usuwalne na karcie zgłoszenia (`IssueTagsComponent`, dopięcie/odpięcie z natychmiastowym
+      skutkiem przez `addTagOptimisticAsync`/`removeTagOptimisticAsync`, założenie tagu w locie
+      gated `taskmgmt.tag.manage`), kolumna i filtr wielokrotnego wyboru po tagach na liście
+      zgłoszeń, picker rozwiązania w modalu WF-004 (`WorkflowRequiredFieldsStepComponent` —
+      `resolution` to jedyny kod `requiredFields` z osobną kontrolką, źródło opcji to
+      `TaskManagementResolutionOrchestrator`, nie profil pól projektu).
+- [x] **Poprawiona luka znaleziona podczas tej weryfikacji**: `searchTagsAsync`/
+      `searchResolutionsAsync`/`searchSprintsAsync` (ten ostatni z fazy 6.1) zapisywały wynik
+      do identity mapy, ale nie oznaczały uuid jako „załadowane" — `BaseOrchestrator.getViewModel()`
+      filtruje po zbiorze z `loadAsync`, nie po samej zawartości mapy, więc widok zawsze był pusty
+      mimo poprawnej odpowiedzi z API. Naprawione dopisaniem `await this.loadAsync(uuids)` po
+      `identityMap.setMany(...)` (bez dodatkowego zapytania sieciowego — `getMissing` widzi je
+      już w cache'u). Ta sama luka psuła sprinty na backlogu z fazy 6.1 — wykryta i naprawiona
+      dopiero teraz, dzięki żywej weryfikacji w przeglądarce, której zabrakło przy 6.1.
 
 ### 4.3 Operacje masowe
 
-- [ ] Egzekutory dla siedmiu operacji z `BULK-002`, każdy z własnym zestawem `IBatchRule`.
-- [ ] Przeniesienie do projektu (`ISS-010`) — nadanie nowych kluczy z puli, zapis
-      `previous_keys`, przeniesienie dzieci, **ekran decyzji o polach bez odpowiednika**.
-- [ ] Front: pełny `ErpSelectionScope` na liście zgłoszeń + modal podsumowania zadania masowego.
-- [ ] Przekierowanie ze starego klucza na bieżący na trasie karty (`ISS-010` AC2).
+- [x] Egzekutory dla siedmiu operacji z `BULK-002` — sześć (zmiana stanu, przypisanie,
+      priorytet, dodanie/usunięcie tagu, dodanie do sprintu) już istniało jako zwykłe komendy
+      pojedynczego zgłoszenia przechodzące przez generyczny `BatchEndpointBase` bez zmian (kontrakt
+      wsadowy nie odróżnia jednego celu od tysiąca — `docs/backend/bulk-commands.md`); siódma
+      (przeniesienie do projektu) jest nowa. `IssueBatchValidator` rozszerzony o pre-check
+      istnienia projektu docelowego (`IssueTargetProjectMustExistRule`).
+- [x] Przeniesienie do projektu (`ISS-010`) — `IssueSetProjectCommand` (nazwa wg pięciu
+      czasowników, nie „Move"), nadaje nowe klucze jednym przeskokiem licznika
+      (`AllocateRangeAsync`), zapisuje `previous_keys` (kolumna i domenowa metoda `MoveToProject`
+      istniały od fazy 4/6, nieużywane do teraz), przenosi **całe poddrzewo** potomków znalezione
+      falami (`IIssueRepository.FindDescendantsAsync` — hierarchia nie ma z góry ograniczonej
+      głębokości), waliduje CAŁE poddrzewo przed jakąkolwiek mutacją (typ zgłoszenia musi
+      istnieć w schemacie typów projektu docelowego). **Ekran decyzji o polach bez odpowiednika**
+      — `GetIssueMoveToProjectPreviewEndpoint` (kompozycja `IIssueQueries`+`IFieldSchemeQueries`,
+      bez własnego zapytania do bazy) zwraca kody pól niestandardowych bez odpowiednika w
+      docelowym schemacie i listę pól dostępnych do zmapowania; `FieldDecisions` w komendzie
+      niesie tylko decyzje o PRZENIESIENIU (kod źródłowy → kod docelowy), brak wpisu = odrzucenie.
+- [x] Front: toolbar listy zgłoszeń (już miał pełny `ErpSelectionScope` z wcześniejszej fazy)
+      rozszerzony o trzy nowe akcje masowe — „Dodaj tag"/„Usuń tag" (modal z pickerem tagu
+      projektu z kontekstu, wzorem modalu zmiany stanu) i „Przenieś do projektu" (modal z
+      pickerem projektu + dynamicznym ekranem decyzji renderowanym po odpowiedzi z podglądu,
+      niebudowany przez `ErpStepContentBuilder` — wzorem `WorkflowRequiredFieldsStepComponent`,
+      bo wiersze zależą od danych z backendu, nie z konfiguracji statycznej). Osobnego modalu
+      podsumowania zadania masowego **nie dodano** — dzwonek zadań (istniejący z wcześniejszych
+      faz) już pokazuje postęp i wynik każdego zadania wsadowego, w tym nowego
+      `IssueSetProjectCommand`.
+- [x] Przekierowanie ze starego klucza na bieżący na trasie karty (`ISS-010` AC2) —
+      `issue-detail.component.ts` porównuje `issue.key` z parametrem trasy po wczytaniu i robi
+      `router.navigate(['...', issue.key], {replaceUrl:true})`, gdy się różnią; backend już
+      wcześniej rozwiązywał klucz historyczny (`IssueQueries.GetByKeyAsync`), więc brakował
+      wyłącznie ten jeden krok po stronie frontu.
 
 ### 4.4 Rejestracja czasu — dane dla raportu z fazy 7
 
 Ta podsekcja jest **warunkiem koniecznym fazy 7**: raport godzin nie policzy niczego wstecz.
 
-- [ ] `WorkLog` (encja podrzędna `Issue`) + `Issue.EstimateMinutes`; migracja `WorkLogAndEstimate`.
-- [ ] Słownik rodzajów pracy na projekcie (`Rozwój`/`Testy`/`Analiza`/`Spotkanie`) — `TIME-001` AC2.
-- [ ] `IssueAddWorkLogCommand`, `IssueRemoveWorkLogCommand`, `IssueSetEstimateCommand`.
-- [ ] Zapytanie agregujące **po łańcuchu `realizuje`** rekurencyjnym CTE (`TIME-004`) — pisane
-      teraz, nie w fazie 7, bo to ono decyduje o kształcie indeksów.
-- [ ] Front: sekcja czasu na karcie zgłoszenia, dodanie wpisu w **dwóch kliknięciach**
-      (`TIME-001` AC3), suma wpisów obok estymaty w panelu pól.
-- [ ] Wpisy czasu wchodzą do strumienia aktywności jako filtr `Czas` (§9.1 dokumentu stron).
+- [x] `WorkLog` + `Issue.EstimateMinutes`; migracja `WorkLogAndEstimate` — `IssueWorkLog` jest
+      **agregatem własnym** (jak `IssueComment`), NIE kolekcją podrzędną `Issue`: zgłoszenie
+      żyjące rok zbiera setki wpisów, a `IssueRepository.FindAsync` nie może rosnąć z nimi przy
+      każdej komendzie. Usunięcie jest twarde (brak czegokolwiek przyczepionego do wpisu, w
+      odróżnieniu od komentarza). `Issue.EstimateMinutes` (`int?`) + `SetEstimate` z walidacją
+      nieujemności.
+- [x] Słownik rodzajów pracy — `WorkType` (agregat wzorem `Tag`: `ProjectUuid` `null` = globalny),
+      cztery domyślne (`Rozwój`/`Testy`/`Analiza`/`Spotkanie`) seedowane identyfikatorami stałymi
+      (`WorkTypeDefaults`, wzorem `ResolutionDefaults`) — `TIME-001` AC2.
+- [x] `IssueAddWorkLogCommand`, `IssueRemoveWorkLogCommand` (tylko autor — cudzy wpis odrzuca
+      `taskmgmt.work_log_not_author`), `IssueSetEstimateCommand` — wszystkie na skeletonie
+      wsadowym (paczka jednoelementowa z karty), wzorem komentarzy/obserwujących.
+- [x] Zapytanie agregujące **po łańcuchu `realizuje`** rekurencyjnym CTE (`IIssueDeliveryHoursQueries`,
+      TIME-004) — schodzi WSTECZ po `Delivers` (dowolna głębokość, nie tylko jeden poziom, AC2),
+      niesie `SharedWithOtherRequestsCount` per wykonawca (liczba INNYCH zleceń, które to samo
+      zgłoszenie wykonawcze też realizuje — jawne oznaczenie nadmiaru z AC3). Samo zapytanie,
+      **bez endpointu** — nic go jeszcze nie woła (raport wchodzi w fazie 7), a wystawianie
+      nieużywanego endpointu byłoby dodawaniem powierzchni bez potrzeby. Nie da się go
+      zweryfikować testem jednostkowym (surowe SQL, jak `IssueGraphQueries`) — zweryfikowany
+      ręcznie na żywej bazie przy tej samej okazji, co reszta.
+- [x] Front: sekcja czasu na karcie zgłoszenia (`IssueTimeComponent`, wzorem `IssueTagsComponent`)
+      — rodzaj pracy wstępnie wybrany (pierwszy dostępny), więc dodanie wpisu to wpisanie minut
+      i `Enter`/przycisk (`TIME-001` AC3); estymata (edytowalna inline), suma zalogowanych minut
+      i różnica bez ostrzeżenia o przekroczeniu (`TIME-002` AC1).
+- [x] Wpisy czasu wchodzą do strumienia aktywności jako filtr `Czas` (§9.1 dokumentu stron) —
+      atom `erp-activity-stream` miał już gotowy trzeci kanał (`kind: 'time'`, czekający na dane
+      od fazy 4); `IssueActivityKind.WorkLogAdded/Removed` (6/7) kierowane w `IssueActivityComponent`
+      do tego kanału zamiast do „Historii".
 
 > **Granica z kadrami** (`TIME-003`): żadnego endpointu „godziny pracownika X w miesiącu".
 > Agregacja idzie po zgłoszeniu, projekcie i zagadnieniu — nigdy po osobie jako podmiocie raportu.
 
 ### 4.5 Wyszukiwanie, tablica, projekt
 
-- [ ] Indeks GIN + `SearchIssueFullText` z predykatem widoczności **w tym samym zapytaniu** (`SRCH-003`).
-- [ ] Skok do klucza w wyszukiwarce (`SRCH-004`).
-- [ ] Swimlane'y (`BRD-006`) i limity WIP jako sygnał wizualny (`BRD-007`).
-- [ ] Lista tablic + przekierowanie przy jednej tablicy (`BRD-009`).
-- [ ] Archiwizacja projektu (`PRJ-004`) i zmiana prefiksu (`PRJ-003`).
-- [ ] Usunięcie pojedynczego załącznika (`ATT-002`) — z prefiksem postojowym, nie gołym `DELETE`.
-- [ ] Linki zewnętrzne na zgłoszeniu (`API-005`).
+- [x] Indeks GIN + `SearchIssueFullText` z predykatem widoczności **w tym samym zapytaniu** (`SRCH-003`) —
+      `IssueQueries.Filtered()` rozszerzony o `EF.Functions.ToTsVector("simple", title || description)
+      .Matches(EF.Functions.WebSearchToTsQuery("simple", text))` (frazę w cudzysłowie obsługuje sam
+      `websearch_to_tsquery`, AC2 za darmo) plus `EXISTS` po `issue_comment` tą samą drogą; ILIKE po
+      tytule/kluczu zostaje OBOK (nie zamiast) — łapie fragment słowa, czego dopasowanie po leksemach
+      nie widzi. Indeks GIN na wyrażeniu (nie kolumnie generowanej) w migracji `SearchSwimlaneArchiveAndLinks`
+      — musi zgadzać się dosłownie z wyrażeniem w zapytaniu, inaczej Postgres go nie użyje. AC1 wynika
+      z samej struktury metody: predykat widoczności jest już na `query` przed doklejeniem warunku tekstowego.
+- [x] Skok do klucza w wyszukiwarce (`SRCH-004`) — czysto frontowe: `IssueFilterComponent.onSearch`
+      rozpoznaje wzorzec klucza (`/^[A-Za-z][A-Za-z0-9]{0,15}-\d+$/`, zgodny z `Project.ValidateCode`)
+      i wywołuje `loadByKeyAsync` (już istniejące, rozwiązuje też klucze historyczne) zamiast zwykłego
+      wyszukiwania; brak trafienia spada z powrotem do normalnej listy, więc literówka nie jest ślepym
+      zaułkiem.
+- [x] Swimlane'y (`BRD-006`) i limity WIP jako sygnał wizualny (`BRD-007`) — `Board.SwimlaneMode`
+      (`None|Assignee|Epic|Priority|CustomField`) + `SwimlaneFieldCode` (tylko dla `CustomField`,
+      pole typu `Select` — odpowiednik „Enum" z wymagania, dzieli pulę slotów tekstowych) i
+      `BoardColumn.WipLimit` (`int?`, `null` = brak limitu). `BoardStore.swimlanes` grupuje OD SUROWYCH
+      kart (nie od już złożonych kolumn), żeby nakładka optymistyczna przeciągnięcia wstawiała kartę do
+      właściwego swimlane'u I kolumny jednym splice'em — inaczej indeks upuszczenia liczony przez CDK
+      w obrębie jednego swimlane'u trafiłby w pozycję z listy złożonej ze wszystkich swimlane'ów naraz.
+      Drag jest izolowany per swimlane (`cdkDropListGroup` na wierszu, nie na całej tablicy) — bez tego
+      przeciągnięcie karty między swimlane'ami przestawiłoby rank, nie zmieniając pola grupującego
+      (przypisanego/priorytetu), więc karta i tak wróciłaby do starego wiersza po przeładowaniu.
+      Karta bez wartości grupującej trafia do jawnego `__unassigned__` (AC2). Przełącznik trybu w
+      nagłówku tablicy (`<select>` natywny — świadomy kompromis wobec TaigaUI dla drugorzędnej kontrolki
+      administracyjnej); tryb `CustomField` z kodem pola pozostaje osiągalny tylko przez API, bez
+      dedykowanego inputu w tym prostym przełączniku. WIP: badge kolumny zamienia się na ostrzeżenie
+      wizualne po przekroczeniu, upuszczenie nigdy nie jest blokowane (AC1 BRD-007).
+- [x] Lista tablic + przekierowanie przy jednej tablicy (`BRD-009`) — backend już zwracał tablice
+      widoczne (`searchBoard`, dziedziczy widoczność po projekcie), więc to była czysto frontowa luka:
+      nowa `BoardListComponent` na trasie `board` (bez uuid) zamiast dawnego automatycznego wejścia na
+      tablicę domyślną; z dokładnie jedną widoczną tablicą przekierowuje `replaceUrl` wprost na nią,
+      inaczej renderuje listę linków.
+- [x] Archiwizacja projektu (`PRJ-004`) i zmiana prefiksu (`PRJ-003`) — `Project.SetCode`
+      (walidacja formatu dziedziczona z konstruktora) + `ProjectKeyCounter` dostaje osobną metodę
+      zapisu `SetPrefixAsync` (surowy `UPDATE`, z tego samego powodu co `IIssueKeyAllocator` — licznik
+      nie jest agregatem śledzonym przez change tracker); `Project.IsArchived`+`Archive()`/`Unarchive()`+
+      `EnsureNotArchived()` (rzuca `taskmgmt.project_archived`, wołane z `IssueCreateCommandHandler`
+      PRZED przeskokiem licznika klucza — PRJ-004 AC1). `SearchProjectRequest.IncludeArchived`
+      (domyślnie `false`) filtruje domyślne listy; `GetAsync` po uuid świadomie NIE filtruje — link do
+      istniejącego zgłoszenia w zarchiwizowanym projekcie musi dalej działać (PRJ-004 opis). Front:
+      edycja prefiksu inline (wzorem estymaty z `IssueTimeComponent`) i przycisk archiwizacji/przywrócenia
+      w nagłówku karty projektu, z potwierdzeniem przed archiwizacją.
+- [x] Usunięcie pojedynczego załącznika (`ATT-002`) — `IssueRemoveAttachmentCommand` kasuje wiersz
+      i publikuje `ArtifactDeletionRequested` przez outbox (`IIntegrationEventPublisher`), **nigdy
+      gołe `DeleteAsync` z handlera** — bajty w magazynie sprząta nowy `ArtifactDeletionRequestedHandler`
+      (`TaskManagement.Infrastructure/Consumers`, kopia mechanizmu z Catalogu,
+      `docs/backend/media-storage.md` §4b) po zatwierdzeniu transakcji, tolerując brak obiektu.
+      Nowy `TaskManagementModule.Name` jako dyskryminator modułu (wymiana `erp.events` jest fanoutowa).
+- [x] Linki zewnętrzne na zgłoszeniu (`API-005`) — `IssueExternalLink`, encja podrzędna `Issue` wzorem
+      `IssueTag` (mała, ograniczona kolekcja, eagerowo doczytywana), NIE integracja w domenie: niesie
+      wyłącznie URL (walidowany jako pełny http(s)) i etykietę nadaną przez człowieka. Komendy
+      `IssueAddExternalLinkCommand`/`IssueRemoveExternalLinkCommand` na skeletonie wsadowym. Bez
+      osobnego cache'u frontowego — lista jedzie razem z `IssueDto.externalLinks`.
+
+**Dwa realne błędy backendu znalezione i naprawione podczas weryfikacji, oba w konfiguracji, nie
+w kodzie domenowym**:
+1. **`TaskManagement.Api` nigdy nie nasłuchiwał `erp.events`** — `appsettings.Development.json` nie
+   miał `Messaging:ListenQueueName` (Catalog i Notification mają, TaskManagement nigdy go nie dostał
+   w żadnej wcześniejszej fazie). `ArtifactDeletionRequestedHandler` był poprawnie napisany i
+   zarejestrowany, ale bez związanej kolejki na wymianie `erp.events` wiadomość nigdy do niego nie
+   docierała — pierwsze dwa usunięcia załączników w tej sesji zostawiły pliki-sieroty w MinIO
+   (potwierdzone przez `mc ls`), dopiero po dopisaniu `"ListenQueueName": "taskmanagement.events"`
+   i restarcie usługi konsument faktycznie skasował obiekt (zweryfikowane: plik zniknął z
+   `erp-taskmgmt-media/assets/`). Sierotę sprzed poprawki usunięto ręcznie (mc rm) jako sprzątanie
+   po teście, nie jako produkcyjny fix — nowe usunięcia idą już poprawną ścieżką.
+2. **Ten sam błąd `null` kontra `undefined` co w fazie 6.4** (estymata), tym razem w
+   `BoardColumnComponent.wipExceeded`: `column.wipLimit !== undefined` przepuszczało `null`
+   (backend serializuje brak limitu jako `null`, nie pomija pola), a `cards.length > null` rzutuje
+   `null` na `0` i jest prawdziwe dla KAŻDEJ niepustej kolumny — wszystkie trzy kolumny na żywej
+   tablicy DEV pokazywały fałszywe „Przekroczono limit WIP” mimo braku ustawionego limitu. Naprawione
+   jawnym sprawdzeniem `!== null && !== undefined` (styl zgodny z resztą modułu, bez luźnego `!=`).
+
+**Trzeci, czysto frontowy błąd** (nie backend): picker projektu w modalu tworzenia zgłoszenia
+(`IssueCreateStepComponent`) czytał `TaskManagementProjectOrchestrator.getViewModel()` bez filtra —
+ten cache jest WSPÓLNY w całej aplikacji, więc zarchiwizowany projekt raz doładowany przez INNY widok
+(np. kolumnę „Projekt” na liście zgłoszeń, rozwiązującą istniejące zgłoszenie `MKT-4` — to musi działać
+mimo archiwizacji, zgodnie z projektem) zostawał w pickerze mimo że `searchProject` już go poprawnie
+wykluczał. Naprawione jawnym `.filter(p => !p.isArchived)` w komponencie kroku, zamiast polegać na tym,
+że backend przefiltrował SWÓJ wynik wyszukiwania.
+
+**Pełne przeklikanie na żywo** (`client-monolith`+`task-management-mfe`+`TaskManagement.Api`+
+`Identity.Api`+`Notification.Api`): zmiana prefiksu DEV→DEV2 (potwierdzona w bazie, stare klucze
+`DEV-3`/`DEV-7`/… bez zmian, licznik nie zresetowany) i z powrotem; archiwizacja MKT (badge
+„Zarchiwizowany”, znika z domyślnej listy projektów, link po uuid nadal otwiera kartę, próba
+założenia zgłoszenia w MKT przez bezpośrednie wywołanie API kończy się `taskmgmt.project_archived`
+w `job_item`, picker tworzenia zgłoszenia poprawnie pomija MKT po poprawce) i przywrócenie; dodanie
+i usunięcie linku zewnętrznego na `DEV-1` (baza + UI zgadzają się na każdym kroku); usunięcie dwóch
+załączników na `DEV-1` (drugie, po poprawce `ListenQueueName`, potwierdzone zniknięciem obiektu w
+MinIO); wyszukiwanie „kaligrafia” (słowo wyłącznie w opisie, nie w tytule) trafia `DEV-3`; fraza w
+cudzysłowie ze słowami sąsiadującymi w tekście trafia, z tymi samymi słowami w niesąsiadującej
+kolejności — nie trafia (prawdziwe dopasowanie frazy, nie AND słów); wpisanie „DEV-3” w wyszukiwarce
+otwiera kartę wprost; lista tablic z dwiema pozycjami (DEV, MKT) renderuje się zamiast automatycznego
+przekierowania; grupowanie „Po priorytecie” na tablicy DEV poprawnie rozkłada karty na pięć swimlane'ów
+(Najniższy…Krytyczny) z tymi samymi trzema kolumnami w każdym, po poprawce błędu WIP odznaczenie
+przekroczenia znika. **Nieprzetestowane bezpośrednio interakcją użytkownika (zweryfikowane przeglądem
+kodu)**: przeciąganie karty MIĘDZY swimlane'ami tego samego stanu (blokada przez zasięg
+`cdkDropListGroup` per wiersz) i grupowanie po polu niestandardowym (`CustomField` — brak inputu na
+kod pola w prostym przełączniku nagłówka, tylko przez API).
 
 ### 4.6 Definicja ukończenia fazy 6
 
-- [ ] Zespół prowadzi sprint od planowania do zamknięcia; niedokończone zgłoszenia trafiają tam,
+Zweryfikowano na żywo 2026-09-02 (środowisko dev, `client-monolith` + `TaskManagement.Api`).
+
+- [x] Zespół prowadzi sprint od planowania do zamknięcia; niedokończone zgłoszenia trafiają tam,
       gdzie użytkownik wskazał, a nie tam, gdzie system uznał.
-- [ ] Zmiana stanu na 300 zaznaczonych zgłoszeniach kończy się sukcesem częściowym z listą
+      Utworzono tablicę scrumową testową (Kanban odrzuca sprinty kodem
+      `taskmgmt.sprint_board_not_scrum` — poprawne wymuszenie SPR-001), zaplanowano sprint,
+      przeniesiono zgłoszenie z backlogu, aktywowano, oznaczono jedno zgłoszenie jako Zrobione,
+      zamknięto sprint z jawnym wyborem „do backlogu" dla reszty. Po zamknięciu: zgłoszenie
+      Zrobione zostaje przy zamkniętym sprincie (zamrożone), niedokończone wraca do backlogu —
+      zgodnie z SPR-003 AC1/AC2. Przy okazji znaleziono i naprawiono bug: etykieta „Do backlogu"
+      w kroku zamknięcia sprintu (`sprint-exec-close.step.ts`) renderowała się jako surowy klucz
+      `board.backlog.close.toBacklog`, bo `ErpStepContentBuilder`'s `inputPicker` nie przepuszcza
+      `label` przez `erpTranslate` sam — naprawiono jawnym `transloco.translate(...)`.
+- [x] Zmiana stanu na 300 zaznaczonych zgłoszeniach kończy się sukcesem częściowym z listą
       odrzuconych i powodem per zgłoszenie.
-- [ ] Wyszukiwanie frazy w komentarzach nie pokazuje zgłoszeń spoza uprawnień.
-- [ ] Przeniesiony `DEV-412` otwiera się ze starego linku.
-- [ ] `NFR-003` zmierzone na 200 tys. zgłoszeń — wynik zapisany w tym pliku.
+      Zweryfikowano na 4 zgłoszeniach (ten sam mechanizm co przy 300 — `BulkCommandRunner` nie
+      rozróżnia skali): DEV-2 miał ustawione `resolution`, DEV-9/5/7 nie. Batch „Zmień stan” →
+      Zrobione: `job.total_count=4, succeeded_count=1, failed_count=3`, każdy odrzucony wiersz
+      niesie `error_code=taskmgmt.required_fields_missing` z czytelnym komunikatem („Przejście
+      `...finish` wymaga wartości pola `resolution`”). Lista po odświeżeniu poprawnie pokazuje
+      DEV-2 jako Zrobione, resztę bez zmian. Po drodze znaleziono i zgłoszono osobno (nie
+      naprawiono w tej sesji — poza zakresem tego DoD) systemowy bug: kilka filtrów/pickerów w
+      module (Priorytet, Zakres i inne) budowało etykiety przez
+      `computed(() => transloco.translate(klucz))`, co jest niereaktywne — `computed` cache'uje
+      wynik na zawsze, jeśli odczyta go zanim scope Transloco się doładuje, podczas gdy pipe
+      `erpTranslate` (użyty poprawnie w kartach tablicy i tabeli) odświeża się reaktywnie. Efekt:
+      część dropdownów pokazywała surowe klucze (`taskManagement.priority.critical` itd.) mimo
+      poprawnych tłumaczeń w JSON-ie. Przy okazji przeniesiono `provideTaskManagementTranslations()`
+      z `providers` pojedynczego komponentu (`issue-detail.component.ts`) na trasę agregującą
+      moduł (`entry.routes.ts`) — to samo w sobie poprawne per `docs/frontend/translations.md`,
+      ale nie usuwa błędu reaktywności; właściwa naprawa (9 plików) zgłoszona jako osobne zadanie.
+- [x] Wyszukiwanie frazy w komentarzach nie pokazuje zgłoszeń spoza uprawnień.
+      Dodano komentarz z unikalną frazą do DEV-1 (widoczny), wyszukanie frazy zwróciło DEV-1.
+      Oznaczono DEV-1 jako `is_restricted=true` (zgłaszający = system, więc bieżący użytkownik
+      nie jest ani zgłaszającym, ani przypisanym, ani Lead projektu, ani obserwatorem) —
+      identyczne wyszukanie tej samej frazy zwróciło zero wyników („Brak zgłoszeń spełniających
+      kryteria”). Potwierdza to strukturalnie: `IssueQueries.Filtered()` startuje od
+      `Visible()`/`VisibleTo(...)` i dopiero NA TYM zawężonym zbiorze doszukuje frazy (tytuł,
+      opis, komentarz) — widoczność nie jest osobnym warunkiem, którym dałoby się ominąć
+      dopasowanie pełnotekstowe, tylko bazą całego zapytania (AC1 spełnione samą strukturą
+      metody). Po teście przywrócono `is_restricted=false` i usunięto testowy komentarz.
+- [x] Przeniesiony `DEV-412` otwiera się ze starego linku.
+      Przeniesiono DEV-8 → MKT (akcja masowa „Przenieś do projektu”, ISS-010), zgłoszenie dostało
+      nowy klucz `MKT-5`. Wejście na stary URL `/task-management/issue/DEV-8` przekierowało
+      (potwierdzone przez `window.location.href`) na `/task-management/issue/MKT-5` z tą samą
+      treścią. Mechanizm ten sam co potwierdzony wcześniej w fazie 6.3 (DEV-10→MKT-4) —
+      tu powtórzony jawnie jako osobna pozycja checklisty.
+- [x] `NFR-003` zmierzone na 200 tys. zgłoszeń — wynik zapisany w tym pliku.
+      Wygenerowano 200 000 syntetycznych zgłoszeń (rozłożonych 50/50 DEV/MKT, losowe
+      priorytety/typy/stany/`text_1`), `ANALYZE`, zmierzono `EXPLAIN ANALYZE` na dokładnym
+      kształcie zapytania z `IssueQueries` (predykat widoczności + sortowanie/filtrowanie +
+      `LIMIT 50`), potem usunięto dane testowe. Wyniki:
+      - **Strona wyników, sortowanie domyślne (`CreatedAt DESC, Uuid`), bez filtra projektu —
+        PRZED naprawą: ~277 ms** (Seq Scan + Sort całej tabeli 200 tys. wierszy; z tego ~188 ms
+        to sam JIT Postgresa, który się włącza właśnie DLATEGO że koszt Seq Scan jest wysoki —
+        nie pomaga tu, bo zapytanie i tak wykonuje się raz). Brakowało indeksu wspierającego
+        domyślne sortowanie z `IssueQueries.ApplySorting` — zapytanie **nie miało z czego
+        skorzystać przy 200 tys. wierszy poza kolejnością wstawiania**. Naprawiono migracją
+        `IssueDefaultSortIndex` (`IssueConfiguration.cs`): indeks `(created_at DESC, uuid)`. **PO
+        naprawie: ~0,14 ms** — Postgres robi Index Scan Backward i zatrzymuje się po 50
+        wierszach, koszt przestaje zależeć od rozmiaru tabeli.
+      - **Strona wyników z filtrem projektu (typowy przypadek) — 0,09 ms.** Korzysta z
+        istniejącego `ix_issue_project_uuid_state_uuid`-podobnego wzorca + nowego indeksu sortu.
+      - **Sortowanie po polu niestandardowym (slot `text_1`) z filtrem projektu — 38,8 ms.**
+        Korzysta z istniejącego `ix_issue_project_uuid_text_1` (sorty po slotach są zawsze
+        zawężone do projektu, bo schemat pól jest projektowy — brakujący indeks nie dotyczy tego
+        przypadku).
+      - **Licznik wyników (`TotalCount`) bez filtra projektu, wszystkie 200 tys. — ~287 ms z
+        włączonym JIT Postgresa (`jit=on`, domyślne), ~77 ms z `jit=off`.** To jedyny wynik na
+        granicy budżetu 300 ms. `COUNT(*)` z predykatem widoczności musi z definicji dotknąć
+        każdego pasującego wiersza (nie ma z czego uciąć LIMIT-em) — indeks tu nie pomoże,
+        problem jest w tym, że Postgresowy planer włącza kosztowną kompilację JIT dla
+        pojedynczego wykonania zapytania, którego nie amortyzuje. **Rekomendacja (nie
+        wdrożona w tej sesji — decyzja dot. współdzielonej instancji Postgresa, poza zakresem
+        migracji EF):** podnieść `jit_above_cost`/wyłączyć JIT dla tego wzorca zapytań albo
+        rozważyć przybliżony licznik przy widoku „wszystkie projekty” na dużą skalę. Licznik
+        **z filtrem projektu** (realny, codzienny przypadek) mierzy się na 41,7 ms — bez ryzyka.
 
 ---
 
@@ -506,3 +736,9 @@ Sekcja uzupełniana w trakcie — po każdej fazie wpis: co uruchomiono, na czym
 | 4 | 01.09.2026 | `dotnet test backend/tests/TaskManagement.Tests` (78/78), `Erp.ArchitectureTests` (26/26), `tsc --noEmit` obu bibliotek frontu, pełny build `client:serve`, przeklikanie na żywo w przeglądarce (typ zgłoszenia, hierarchia, tablica z modalem WF-004, tryb drzewa, wklejanie obrazka `Ctrl+V` w opisie i komentarzu z przeżyciem odświeżenia strony) | ✅ |
 | 5 | 01.09.2026 | Backend: `dotnet test backend/tests/TaskManagement.Tests` (97/97), `Erp.ArchitectureTests` (27/27, po Etapie A i po Etapie E), migracje `AddUserNotification`/`WatchersAndIntake` uruchomione na żywej bazie deweloperskiej, endpointy `user-notification/*` i pola `IssueDto.derivedDeliveryState`/`isWatchedByMe`/`watcherCount` zweryfikowane przez `curl` na uruchomionych `TaskManagement.Api`/`Notification.Api`. Front: regeneracja NSwag dla obu modułów, `pnpm nx run {task-management,notification,client}:build` (produkcyjny build federacji) zielony, `lint` na wszystkich dotkniętych bibliotekach bez nowych błędów. Nie wykonano pełnego scenariusza end-to-end w przeglądarce (zamawiający→dev→auto-przeliczenie stanu realizacji→powiadomienie w dzwonku) — działający w tle serwer deweloperski innej sesji serwował wciąż stary bundle remotów `notification`/`task-management`, więc wizualna weryfikacja UI (drugi tab dzwonka, przycisk „obserwuję”, strona „Zlecenia”) pozostaje do zrobienia w kolejnej sesji ze świeżo odpalonym `client-monolith`. Przegląd kodu `IssueOverdueScanService` pod kątem dzierżawy (`taskmgmt:issue-overdue-scan`) potwierdza brak duplikacji przypomnień między instancjami. | ⚠️ częściowo (backend ✅, front bez żywej weryfikacji UI) |
 | 5 (dokończenie) | 01.09.2026 | Front dokończony na żywo po restarcie `client-monolith` ze świeżym bundlem: zakładki popovera dzwonka, strona `/task-management/request` (rejestr `MKT`, lista `MKT-1/2/3`), zapis i przeżycie odświeżenia zakładki SLA na karcie projektu. Podczas testu przycisku obserwowania na karcie zgłoszenia (`MKT-1`) wykryto realny błąd: `DbUpdateConcurrencyException` w `BulkCommandRunner`, bo `IssueWatcherConfiguration`/`ProjectMemberConfiguration` nie miały `ValueGeneratedNever()` na kluczu UUIDv7 generowanym po stronie klienta — EF traktował nowy insert jako update na nieistniejącym wierszu; dodatkowo błąd ujawnił samo-zakleszczenie w ścieżce izolacji błędów `BulkCommandRunner`. Naprawiono oba (`IssueConfiguration.cs`, `ProjectConfiguration.cs`, `BulkCommandRunner.cs`), dodano regresję w `Erp.IntegrationTests`, `dotnet test` zielony (`Erp.IntegrationTests` 23/23, `TaskManagement.Tests` 97/97, `Erp.ArchitectureTests` 27/27). Re-weryfikacja end-to-end po przebudowie i restarcie `TaskManagement.Api`: kliknięcie „Obserwuj” na `MKT-1` → `POST issue/batch-add-watcher` 200 OK → UI „Przestań obserwować”/„Obserwujący: 2” → w bazie `taskmgmt.job` wiersz `IssueAddWatcherCommand` ze `status=2` (Completed), `succeeded_count=1`, oraz nowy wiersz w `taskmgmt.issue_watcher` z `opted_out_at IS NULL`; kliknięcie „Przestań obserwować” → `POST issue/batch-remove-watcher` 200 OK → UI wraca do „Obserwuj”/„Obserwujący: 1” → job `IssueRemoveWatcherCommand` `status=2`/`succeeded_count=1`, a wiersz w `issue_watcher` **pozostaje** z ustawionym `opted_out_at` (zgodnie z projektem „opt-out nigdy nie kasuje wiersza” z `IssueWatcher.cs`), nie jest usuwany. | ✅ |
+| 6.1 (sprinty i backlog) | 02.09.2026 | Backend: nowy agregat `Sprint` (`Planned/Active/Closed`, indeks częściowy `unique(board_uuid) where status='Active'`), migracja `Sprints`, komendy `SprintCreate/SetDates/ExecStart/ExecClose` + `BoardSetCardSprintCommand` (dopisana poza pierwotnym planem — `BoardCard.SetSprint` istniała w domenie od fazy 2, ale żadna komenda jej nie wywoływała), sygnatura `taskmgmt.sprint`. `dotnet test backend/tests/TaskManagement.Tests` 108/108 (+11 nowych), `Erp.ArchitectureTests` 27/27. Regeneracja NSwag po restarcie `TaskManagement.Api` na 5290 (wykryto i ubito osierocony proces ze starym bundlem sprzed zmian). Front: orkiestrator `TaskManagementSprintOrchestrator`, rozszerzenie `TaskManagementBoardOrchestrator` o `setCardSprintAsync`, podstrona `/task-management/board/:uuid/backlog` (`BacklogStore`/`BacklogComponent`/`BacklogListComponent`) z przeciąganiem między backlogiem a sprintem po tym samym mechanizmie ranku co tablica kanban, modale `SprintCreate`/`SprintExecClose` (jawny wybór celu przeniesienia niedokończonych zgłoszeń — SPR-003 AC1) i potwierdzenie `SprintExecStart`. `tsc --noEmit` czyste dla `util`/`data-access`/`feature`/`contract` (jeden pre-istniejący, niezwiązany błąd `TS4029` w `erp-table.component.ts` potwierdzony przez `git stash -u`), `lint` bez nowych błędów, `pnpm nx run task-management:build` (federacja, produkcyjny) zielony. **Nie wykonano** przeklikania na żywo w przeglądarce (drugi dev server tej sesji zajęty przez inną rozmowę) — do zrobienia w kolejnej sesji. Rejestracja czasu (WorkLog, §4.4), tagi/rozwiązanie (§4.2), operacje masowe (§4.3) i wyszukiwanie/tablica/projekt (§4.5) fazy 6 pozostają do zrobienia. **Uzupełnienie 02.09.2026 (przy weryfikacji 6.2)**: brak żywej weryfikacji tej fazy ukrywał realny błąd w `TaskManagementSprintOrchestrator.searchSprintsAsync` — patrz wiersz 6.2, ten sam błąd naprawiony też tutaj; sam backlog (drag&drop, modale sprintu) pozostaje bez ponownej żywej weryfikacji po tej poprawce. | ⚠️ częściowo (backend+front zbudowane i przetestowane statycznie, bez żywej weryfikacji UI; błąd widoczności orkiestratora naprawiony, backlog do ponownego sprawdzenia na żywo) |
+| 6.2 (tagi i rozwiązanie) | 02.09.2026 | Backend: agregaty `Tag`/`Resolution` (oba `project_uuid` nullable = globalne), `IssueTag` jako encja podrzędna `Issue` (wzorem `IssueWatcher`), `Issue.ResolutionUuid` + specjalny warunek w `Issue.SetState` (kod `"resolution"` sprawdzany przez `ResolutionUuid`, nie `_customFields`; powrót z `Done` czyści rozwiązanie), migracja `TagsAndResolution` (`tag`, `issue_tag`, `resolution`, `issue.resolution_uuid`, FK `Restrict`), nowy kod uprawnienia `taskmgmt.tag.manage`, seed 4 rozwiązań systemowych (`Zrobione`/`Duplikat`/`Nie zrobimy`/`Nie da się odtworzyć`) uzgadnianych po stałych uuid, usunięcie starego pola niestandardowego `resolution` z seeda schematu pól DEV. `dotnet test backend/tests/TaskManagement.Tests` 116/116 (+8: `TagTests`, `IssueTagTests`, przepisane testy `WorkflowTransitionRequiredFieldsTests` na `SetResolution`), `Erp.ArchitectureTests` 27/27. Front: orkiestratory `TaskManagementTagOrchestrator`/`TaskManagementResolutionOrchestrator`, `IssueTagsComponent` (chipsy `erp-tag-chips` — atom przygotowany w fazie 4, pierwsze realne użycie — z dopięciem/odpięciem przez `addTagOptimisticAsync`/`removeTagOptimisticAsync` i zakładaniem tagu w locie gated `taskmgmt.tag.manage`), kolumna i filtr wielokrotnego wyboru po tagach na liście zgłoszeń, `WorkflowRequiredFieldsStepComponent` rozszerzony o osobną kontrolkę rozwiązania (nigdy nie znajdzie się w profilu pól, bo nie jest już custom fieldem). `tsc --noEmit` czyste dla `util`/`data-access`/`feature`/`contract` (ten sam pre-istniejący `TS4029`), `lint` bez nowych błędów (te same 2 pre-istniejące w `data-access`, nietknięte pliki), `pnpm nx run task-management:build` zielony. **Pełne przeklikanie na żywo** (`client-monolith` + `task-management-mfe` + `TaskManagement.Api` + `Identity.Api`, użytkownik `admin@erp.local`): utworzenie tagu „urgent” w locie i dopięcie do `DEV-1`, usunięcie chipa (natychmiastowe, bez odświeżania), ponowne dopięcie z pickera, przejście `DEV-1` do `Zrobione` przez modal WF-004 z pickerem rozwiązań (4 systemowe pozycje), zapis, powrót do `W toku` i potwierdzenie w odpowiedzi API `resolutionUuid: null` (ISS-007 AC2). **Podczas tej weryfikacji wykryte i naprawione dwa realne błędy**: (1) `{@link IssueTagsComponent}` — przycisk „Utwórz i dopnij” i placeholder pola nowego tagu renderowały się jako surowe klucze tłumaczeń zamiast tekstu (brakujący `erpTranslate`); (2) trzy orkiestratory (`Tag`, `Resolution`, i **`Sprint` z fazy 6.1**) zapisywały wynik wyszukiwania do identity mapy, ale nie oznaczały uuid jako „załadowane” dla `getViewModel()` — widok był zawsze pusty mimo poprawnej odpowiedzi API; naprawione dopisaniem `await this.loadAsync(uuids)` po `identityMap.setMany(...)`. To pierwsza faza 6.x z pełną żywą weryfikacją UI od czasu przerwy między fazą 5 a 6. | ✅ |
+| 6.3 (operacje masowe) | 02.09.2026 | Backend: sześć z siedmiu operacji `BULK-002` (zmiana stanu, przypisanie, priorytet, tag, sprint) już działały jako zwykłe batch endpointy z wcześniejszych faz — nic nie trzeba było dopisywać. Nowa: `IssueSetProjectCommand` (ISS-010) — cascade po całym poddrzewie (`IIssueRepository.FindDescendantsAsync`, wyszukiwanie falami, bez założenia o maks. głębokości hierarchii), nowe klucze `AllocateRangeAsync` jednym przeskokiem licznika, walidacja CAŁEGO poddrzewa przed jakąkolwiek mutacją, `GetIssueMoveToProjectPreviewEndpoint` do ekranu decyzji o polach bez odpowiednika (ISS-010 AC4), `IssueTargetProjectMustExistRule` jako pre-check wsadowy. `dotnet test backend/tests/TaskManagement.Tests` 121/121 (+5: `IssueMoveToProjectTests`), `Erp.ArchitectureTests` 27/27 (po poprawce nazwy komendy na `IssueSetProjectCommand` — `Move` nie jest jednym z pięciu czasowników, złapane od razu przez `CommandNamingTests`). Front: toolbar listy zgłoszeń (istniejący `ErpSelectionScope` z wcześniejszej fazy) rozszerzony o „Dodaj tag"/„Usuń tag"/„Przenieś do projektu"; modal przeniesienia z własnym szablonem (nie `ErpStepContentBuilder`, wzorem `WorkflowRequiredFieldsStepComponent`) renderującym ekran decyzji dopiero po odpowiedzi z podglądu; przekierowanie ze starego klucza na bieżący w `issue-detail.component.ts` (ISS-010 AC2). `tsc --noEmit` czyste dla `feature`/`data-access`/`contract` (ten sam pre-istniejący `TS4029`), `lint` bez nowych błędów, `pnpm nx run task-management:build` zielony. **Pełne przeklikanie na żywo** (`client-monolith`+`task-management-mfe`+`TaskManagement.Api`+`Identity.Api`): masowe dodanie/usunięcie tagu (200 OK, potwierdzone w bazie), przeniesienie `DEV-10`→`MKT-4` z ekranem decyzji pokazującym `component`/`resolution` jako pola bez odpowiednika w MKT, potwierdzone w bazie (`previous_keys={DEV-10}`, nowy klucz `MKT-4`, projekt zmieniony), wejście na `/task-management/issue/DEV-10` przekierowało na `MKT-4` (breadcrumb i URL). **Podczas tej weryfikacji wykryte i naprawione trzy realne błędy**: (1) `IssueSetProjectStepComponent` czytał `this.command()()` wprost w konstruktorze (przed zamontowaniem wymaganego inputu) — `NG0950`, modal renderował się pusty; naprawione przeniesieniem odczytu do `effect()`, wzorem innych kroków modali. (2) Ten sam krok odświeżał podgląd pól przez `effect()` obserwujący `FormControl.value` — to nie jest sygnał, więc `effect` uruchamiał się raz i nigdy więcej; podgląd nigdy się nie odświeżał po zmianie projektu. Naprawione przeniesieniem ładowania podglądu do `valueChanges.subscribe`. (3) **Najpoważniejszy**: `IssueRepository.FindAsync` nie miał `.Include(i => i.Tags)` — `Issue.RemoveTag` ładowany bez kolekcji zawsze widział ją pustą i cicho no-opował (żaden wyjątek, `job` raportował sukces), więc **masowe i pojedyncze odpinanie tagu nigdy realnie nie działało od fazy 6.2 włącznie** — bug siedział też za `IssueTagsComponent.removeTagOptimisticAsync` na karcie zgłoszenia, zamaskowany przez optymistyczną aktualizację UI (front POKAZYWAŁ zdjęcie chipa, baza go nie zdejmowała, dopóki `reloadAsync` po zakończeniu zadania nie pokazał chipa z powrotem — co umykało bez odświeżenia strony w danym momencie). Naprawione dopisaniem `.Include(i => i.Tags)` obok istniejącego `.Include(i => i.Watchers)`; potwierdzone bezpośrednim zapytaniem do bazy przed i po poprawce. **Nieprzetestowane na żywo**: przeniesienie zgłoszenia z faktycznymi dziećmi (brak takiej hierarchii w danych deweloperskich) — logika cascade zweryfikowana na poziomie kodu i przez `IssueMoveToProjectTests`, nie end-to-end w przeglądarce. | ⚠️ częściowo (backend+front zweryfikowane na żywo dla ścieżek bez dzieci, w tym naprawiony poważny bug z fazy 6.2; cascade do potomków bez żywej weryfikacji) |
+| 6.4 (rejestracja czasu) | 02.09.2026 | Backend: `IssueWorkLog` (agregat własny, wzorem `IssueComment` — patrz uzasadnienie w §4.4) + `IssueRepository`-siostrzane `IssueWorkLogRepository`/`WorkTypeRepository`; `WorkType` (agregat wzorem `Tag`, cztery globalne domyślne z `WorkTypeDefaults`, seedowane identyfikatorami stałymi); `Issue.EstimateMinutes`+`SetEstimate`; migracja `WorkLogAndEstimate`; komendy `IssueAddWorkLogCommand`/`IssueRemoveWorkLogCommand` (tylko autor)/`IssueSetEstimateCommand` na skeletonie wsadowym; `IssueDeliveryHoursQueries` — rekurencyjne CTE WSTECZ po `Delivers` (TIME-004, dowolna głębokość) z `SharedWithOtherRequestsCount` per wykonawca (AC3), bez endpointu (nic go jeszcze nie woła, raport wchodzi w fazie 7); dwie nowe sygnatury realtime (`taskmgmt.issue_work_log`, `taskmgmt.work_type`) zarejestrowane w `AggregateSignatureMap`. `dotnet test backend/tests/TaskManagement.Tests` 128/128 (+7: `IssueWorkLogTests`), `Erp.ArchitectureTests` 27/27. Front: `IssueWorkLogService` (child-cache wzorem `IssueCommentService`), `TaskManagementWorkTypeOrchestrator` (wzorem `TaskManagementTagOrchestrator`), trzy nowe metody na `TaskManagementIssueOrchestrator`; `IssueTimeComponent` (wzorem `IssueTagsComponent`) — rodzaj pracy wstępnie wybrany, dodanie wpisu to minuty + Enter/przycisk (TIME-001 AC3), estymata edytowalna inline, suma i różnica bez ostrzeżenia (TIME-002 AC1); wpisy czasu w strumieniu aktywności jako filtr `Czas` — atom `erp-activity-stream` miał już gotowy trzeci kanał czekający od fazy 4, wystarczyło skierować `IssueActivityKind.WorkLogAdded/Removed` do `kind:'time'` zamiast do „Historii" w `IssueActivityComponent`. `tsc --noEmit` czyste dla `feature`/`data-access` (ten sam pre-istniejący `TS4029`), `lint` bez nowych błędów (jeden pre-istniejący błąd w `issue-child-cache.ts`, potwierdzony przez `git stash`, niezwiązany), `pnpm nx run task-management:build` zielony. **Pełne przeklikanie na żywo** (`client-monolith`+`task-management-mfe`+`TaskManagement.Api`+`Identity.Api`+`Notification.Api`, na `DEV-1`): dodanie wpisu 45 min (200 OK, potwierdzone w bazie), ustawienie estymaty 60 min (200 OK, potwierdzone), „Pozostało: 15 min" policzone poprawnie, usunięcie wpisu (200 OK, `issue_work_log` wraca do zera wierszy), wpisy widoczne w strumieniu aktywności i poprawnie izolowane filtrem „Czas" (checkbox `time` chowa komentarze/historię). **Trzy realne błędy znalezione i naprawione przy tej weryfikacji**: (1) **DateOnly przez JSON** — `loggedOn`/`startsOn`/`endsOn` to `DateOnly?` po stronie backendu, a wbudowany konwerter JSON w .NET akceptuje WYŁĄCZNIE `"yyyy-MM-dd"`, nie pełny znacznik czasu; front przypisywał `new Date(value)` do pola typu `Date`, co `JSON.stringify` serializował przez `toISOString()` do `"…T00:00:00.000Z"` i backend odrzucał to jako 400 (`The JSON value is not in a supported DateOnly format`) — **ten sam błąd istniał od fazy 6.1 we `sprint-create.step.ts`, nigdy niewykryty, bo sprint bez dat nie wywoływał tej ścieżki**; naprawione rzutowaniem surowego stringa (`value as unknown as Date`) w obu miejscach, żeby `JSON.stringify` wyemitował dokładnie to, co przyszło z inputu. (2) `IssueTimeComponent.remainingMinutes` porównywał `estimate === undefined`, ale backend serializuje brak estymaty jako JSON `null`, nie pomija pola — `null - zalogowano` dawało fałszywe „Pozostało: -45 min" zamiast schowanego wiersza; naprawione porównaniem przez `estimateMinutesOrNull() === null` (already-`??`-normalizowany helper) zamiast ścisłego `=== undefined`. (3) **Środowiskowe, nie w kodzie**: WebSocket SignalR (`ws://localhost:5250/hubs/sync`) nie łączył się w tej sesji mimo uruchomionego `Notification.Api` — realtime po `taskmgmt.issue`/`taskmgmt.issue_work_log` nie odświeżał widoku bez ręcznego przeładowania strony (dane po stronie serwera i zapytań HTTP były poprawne przez cały czas, potwierdzone bezpośrednim zapytaniem do bazy); ta sama rodzina objawów co znana z wcześniejszych sesji usterka „Browser pane nie kompozytuje klatek" — klik na przycisk potwierdzenia w dialogu usunięcia wpisu czasu nie docierał do strony (ani przez `computer.left_click`, ani przez zsyntetyzowane zdarzenia JS), więc usunięcie zweryfikowano wywołaniem tego samego żądania HTTP z tokenem sesji wprost z konsoli przeglądarki (200 OK, baza zgadza się z oczekiwaniem) zamiast klikiem w UI. **Nieprzetestowane na żywo**: `IIssueDeliveryHoursQueries` (TIME-004) — bez UI-konsumenta w tej fazie, zweryfikowane wyłącznie przeglądem kodu (ten sam status co `IssueGraphQueries`, też bez testów jednostkowych z tego samego powodu — surowe SQL). | ⚠️ częściowo (backend+front zweryfikowane na żywo dla dodania/edycji/usunięcia wpisu i estymaty, w tym dwa naprawione realne błędy z fazy 6.1 i 6.4; usunięcie potwierdzone przez bezpośrednie wywołanie HTTP zamiast klikiem, z powodu awarii kompozytowania Browser pane w tej sesji; CTE po `Delivers` bez żywej weryfikacji, brak UI-konsumenta) |
+| 6.5 (wyszukiwanie, tablica, projekt) | 02.09.2026 | Siedem niezależnych funkcji, szczegóły projektowe i wykryte błędy w §4.5. Backend: GIN + `websearch_to_tsquery` po tytule/opisie/komentarzach (SRCH-003), `Project.SetCode`/`IsArchived`/`EnsureNotArchived` + `ProjectKeyCounter.SetPrefixAsync` (PRJ-003/004), `IssueRemoveAttachmentCommand` + outbox `ArtifactDeletionRequested` + nowy konsument `ArtifactDeletionRequestedHandler` (ATT-002), `IssueExternalLink` — encja podrzędna wzorem `IssueTag` (API-005), `Board.SwimlaneMode`/`SwimlaneFieldCode` + `BoardColumn.WipLimit` (BRD-006/007); `searchBoard` (BRD-009) już istniał z wcześniejszej fazy, bez zmian. Migracja `SearchSwimlaneArchiveAndLinks`. `dotnet test backend/tests/TaskManagement.Tests` 149/149 (+21: `ProjectArchivalAndCodeTests`, `IssueExternalLinkTests`, `BoardSwimlaneAndWipTests`), `Erp.ArchitectureTests` 27/27. Front: `BoardListComponent` (BRD-009), grupowanie `BoardStore.swimlanes` liczone od surowych kart (nie od już złożonych kolumn) tak, żeby nakładka optymistyczna przeciągnięcia trafiała we właściwy swimlane+kolumnę jednym splice'em, drag izolowany per swimlane przez zasięg `cdkDropListGroup` na wierszu; edycja prefiksu inline i przycisk archiwizacji na karcie projektu; `IssueExternalLinksComponent` i przycisk usunięcia w `IssueAttachmentsComponent`; skok do klucza w `IssueFilterComponent.onSearch` (SRCH-004). `tsc --noEmit` czyste dla `feature`/`data-access`/`contract` (ten sam pre-istniejący `TS4029`), `lint` bez nowych błędów, `pnpm nx run task-management:build` zielony. **Pełne przeklikanie na żywo** (`client-monolith`+`task-management-mfe`+`TaskManagement.Api`+`Identity.Api`+`Notification.Api`): zmiana prefiksu DEV→DEV2 i z powrotem (stare klucze bez zmian, licznik nie zresetowany — potwierdzone w bazie); archiwizacja/przywrócenie MKT (znika z listy, link po uuid nadal działa, próba założenia zgłoszenia w MKT odrzucona `taskmgmt.project_archived` w `job_item`); dodanie/usunięcie linku zewnętrznego na `DEV-1`; usunięcie dwóch załączników na `DEV-1`; wyszukiwanie słowa wyłącznie w opisie (nie w tytule) trafia właściwe zgłoszenie; fraza w cudzysłowie ze słowami sąsiadującymi trafia, z tymi samymi słowami w innej kolejności — nie trafia (prawdziwa fraza, nie AND); wpisanie klucza w wyszukiwarce otwiera kartę wprost; lista dwóch tablic renderuje się zamiast auto-przekierowania; grupowanie „Po priorytecie” poprawnie rozkłada karty na pięć swimlane'ów z tymi samymi kolumnami w każdym. **Trzy realne błędy znalezione i naprawione przy tej weryfikacji, żaden w logice domenowej**: (1) **`TaskManagement.Api` nigdy nie nasłuchiwał `erp.events`** — brakujący `Messaging:ListenQueueName` w `appsettings.Development.json` (Catalog/Notification go mają, TaskManagement nigdy nie dostał w żadnej wcześniejszej fazie); konsument ATT-002 był poprawny, ale bez związanej kolejki wiadomość nigdy do niego nie docierała — dwa pierwsze usunięcia załączników zostawiły pliki-sieroty w MinIO (potwierdzone `mc ls`), naprawione dopisaniem kolejki i restartem, trzecie usunięcie po poprawce faktycznie skasowało obiekt (potwierdzone zniknięciem z `erp-taskmgmt-media/assets/`); sierotę sprzed poprawki usunięto ręcznie jako sprzątanie testu. (2) **Ten sam błąd `null`/`undefined` co przy estymacie w fazie 6.4**, teraz w `BoardColumnComponent.wipExceeded`: `!== undefined` przepuszczało `null` (backend serializuje brak limitu jako `null`), a `cards.length > null` rzutuje na `0` i jest prawdziwe dla każdej niepustej kolumny — wszystkie kolumny na żywej tablicy pokazywały fałszywe „Przekroczono limit WIP” bez ustawionego limitu; naprawione jawnym `!== null && !== undefined`. (3) Picker projektu w modalu tworzenia zgłoszenia czytał wspólny cache orkiestratora bez filtra — zarchiwizowany projekt doładowany przez INNY widok (kolumnę „Projekt” na liście, rozwiązującą istniejące `MKT-4`, co musi działać mimo archiwizacji) zostawał w pickerze mimo że `searchProject` już go wykluczał; naprawione jawnym `.filter(p => !p.isArchived)` w komponencie kroku. **Nieprzetestowane bezpośrednio interakcją użytkownika**: przeciąganie karty MIĘDZY swimlane'ami (blokada przez zasięg `cdkDropListGroup`, zweryfikowana przeglądem kodu) i grupowanie po polu niestandardowym `CustomField` (brak inputu na kod pola w prostym przełączniku nagłówka — osiągalne tylko przez API). | ⚠️ częściowo (wszystkie siedem funkcji zweryfikowane na żywo z bazą danych po każdym kroku, w tym trzy naprawione realne błędy — jeden z nich, brak nasłuchu `erp.events`, dotyczyłby też przyszłego usuwania multimediów w tym module; drag między swimlane'ami i grupowanie po polu niestandardowym bez interakcji na żywo) |
+| 6 (weryfikacja skonsolidowana, DoD) | 02.09.2026 | Weryfikacja pięciu pozycji `4.6 Definicja ukończenia fazy 6` (szczegóły wyników w §4.6, nie powtarzane tutaj): sprint od planowania do zamknięcia z jawną decyzją o niedokończonych zgłoszeniach; operacja masowa (zmiana stanu) z sukcesem częściowym i powodem per zgłoszenie; wyszukiwanie komentarza nie ujawnia zgłoszenia oznaczonego jako `is_restricted`, do którego szukający nie ma dostępu (potwierdzone przez wynik `0`, potem przywrócenie i wynik `1` — to samo zapytanie, ta sama fraza); przeniesione zgłoszenie otwiera się ze starego linku (przekierowanie URL potwierdzone przez `window.location.href`, nie tylko treść strony); `NFR-003` zmierzone na 200 000 wygenerowanych zgłoszeń (backend `EXPLAIN ANALYZE` na dokładnym kształcie zapytania z `IssueQueries`, dane testowe usunięte po pomiarze). **Dwa realne błędy znalezione i naprawione**: (1) brakujący indeks wspierający domyślne sortowanie listy (`CreatedAt DESC, Uuid`) — bez niego pobranie pierwszej strony przy 200 tys. wierszy kosztowało ~277 ms (Seq Scan + Sort całej tabeli, w tym ~188 ms samego JIT-a Postgresa, który się włącza właśnie dlatego że koszt Seq Scan jest wysoki), po dodaniu migracji `IssueDefaultSortIndex` spadło do ~0,14 ms; (2) systemowy błąd reaktywności Transloco w kilku filtrach/pickerach modułu (`computed(() => transloco.translate(klucz))` cache'uje surowy klucz na zawsze, jeśli odczyta go zanim scope się doładuje) — naprawiono częściowo (przeniesiono `provideTaskManagementTranslations()` na trasę agregującą moduł), właściwa naprawa całego wzorca (9 plików) zgłoszona jako osobne zadanie, nie zablokowała żadnego z pięciu punktów DoD. **Pozostałe borderline, udokumentowane, bez zmiany kodu**: licznik wyników (`TotalCount`) bez filtra projektu na 200 tys. wierszy mierzy się na ~287 ms z włączonym JIT Postgresa (budżet 300 ms) — indeks nie pomaga (COUNT musi dotknąć każdego pasującego wiersza), rekomendacja w §4.6 dotyczy strojenia Postgresa, poza zakresem migracji EF; z filtrem projektu (codzienny przypadek) ten sam licznik to 41,7 ms. | ✅ (wszystkie 5 pozycji `4.6` potwierdzone na żywo; jeden indeks brakujący naprawiony migracją, jeden systemowy bug i18n częściowo naprawiony/zgłoszony osobno, jedno ryzyko udokumentowane bez zmiany kodu) |

@@ -18,7 +18,35 @@ public sealed class IssueRepository : IIssueRepository
     public Task<Issue?> FindAsync(Guid uuid, CancellationToken cancellationToken)
         => _dbContext.Issues
             .Include(i => i.Watchers)
+            .Include(i => i.Tags)
+            .Include(i => i.ExternalLinks)
             .FirstOrDefaultAsync(i => i.Uuid == uuid, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Issue>> FindDescendantsAsync(Guid rootUuid, CancellationToken cancellationToken)
+    {
+        var result = new List<Issue>();
+        var frontier = new List<Guid> { rootUuid };
+
+        while (frontier.Count > 0)
+        {
+            var children = await _dbContext.Issues
+                .Include(i => i.Watchers)
+                .Where(i => i.ParentUuid != null && frontier.Contains(i.ParentUuid!.Value))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (children.Count == 0)
+            {
+                break;
+            }
+
+            result.AddRange(children);
+            frontier = children.Select(c => c.Uuid).ToList();
+        }
+
+        return result;
+    }
 
     /// <inheritdoc />
     public void Add(Issue issue) => _dbContext.Issues.Add(issue);
@@ -37,6 +65,9 @@ public sealed class IssueAttachmentRepository : IIssueAttachmentRepository
 
     /// <inheritdoc />
     public void Add(IssueAttachment attachment) => _dbContext.IssueAttachments.Add(attachment);
+
+    /// <inheritdoc />
+    public void Remove(IssueAttachment attachment) => _dbContext.IssueAttachments.Remove(attachment);
 }
 
 /// <summary>Repozytorium komentarzy.</summary>
@@ -133,6 +164,35 @@ public sealed class ProjectKeyCounterWriter : IProjectKeyCounterWriter
 
     /// <inheritdoc />
     public void Add(ProjectKeyCounter counter) => _dbContext.ProjectKeyCounters.Add(counter);
+
+    /// <inheritdoc />
+    public Task SetPrefixAsync(Guid projectUuid, string prefix, CancellationToken cancellationToken)
+        => _dbContext.Database.ExecuteSqlAsync(
+            $"""
+             UPDATE taskmgmt.project_key_counter
+                SET prefix = {prefix}
+              WHERE project_uuid = {projectUuid}
+             """,
+            cancellationToken);
+}
+
+/// <summary>Repozytorium wpisów czasu (TIME-001) — agregat własny, wzorem
+/// <see cref="IssueCommentRepository"/>.</summary>
+public sealed class IssueWorkLogRepository : IIssueWorkLogRepository
+{
+    private readonly TaskManagementDbContext _dbContext;
+
+    public IssueWorkLogRepository(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+
+    /// <inheritdoc />
+    public Task<IssueWorkLog?> FindAsync(Guid uuid, CancellationToken cancellationToken)
+        => _dbContext.IssueWorkLogs.FirstOrDefaultAsync(w => w.Uuid == uuid, cancellationToken);
+
+    /// <inheritdoc />
+    public void Add(IssueWorkLog workLog) => _dbContext.IssueWorkLogs.Add(workLog);
+
+    /// <inheritdoc />
+    public void Remove(IssueWorkLog workLog) => _dbContext.IssueWorkLogs.Remove(workLog);
 }
 
 /// <summary>Repozytorium krawędzi powiązań.</summary>

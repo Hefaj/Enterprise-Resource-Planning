@@ -39,5 +39,6 @@ export const ERP_PERMISSIONS = {
     BoardManage: 'taskmgmt.board.manage',
     ProjectManage: 'taskmgmt.project.manage',
     SchemeManage: 'taskmgmt.scheme.manage',
+    TagManage: 'taskmgmt.tag.manage',
   },
 } as const;

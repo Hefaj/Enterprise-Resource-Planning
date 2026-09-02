@@ -1,10 +1,11 @@
 import { CdkDragDrop, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ErpEmptyStateComponent, ErpTranslatePipe } from '@erp/shared/ui';
+import { BOARD_MODE, BOARD_SWIMLANE_MODE } from '@erp/task-management/util';
 
 import { BoardColumnComponent } from '../components/board-column.component';
 import { BOARD_KEYS, provideBoardTranslations } from '../translation';
@@ -25,7 +26,7 @@ import { BoardStore } from './board.store';
 @Component({
   selector: 'erp-task-management-board',
   standalone: true,
-  imports: [BoardColumnComponent, CdkDropListGroup, ErpEmptyStateComponent, ErpTranslatePipe],
+  imports: [BoardColumnComponent, CdkDropListGroup, ErpEmptyStateComponent, ErpTranslatePipe, RouterLink],
   providers: [BoardStore, provideBoardTranslations()],
   template: `
     @let board = this.board();
@@ -36,20 +37,58 @@ import { BoardStore } from './board.store';
       <erp-empty-state [config]="{ icon: '@tui.search-x', message: BOARD_KEYS.notFound }" />
     } @else {
       <div class="flex h-full min-h-0 w-full flex-col gap-3 p-4">
-        <span class="text-lg font-medium">{{ board.name | erpTranslate }}</span>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-lg font-medium">{{ board.name | erpTranslate }}</span>
+
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-1 text-xs text-[var(--tui-text-tertiary)]">
+              {{ BOARD_KEYS.swimlane.groupBy | erpTranslate }}
+              <select
+                class="rounded border border-[var(--tui-border-normal)] bg-transparent px-1 py-0.5 text-xs"
+                [value]="board.swimlaneMode"
+                (change)="this.onSwimlaneModeChange(board.uuid, $any($event.target).value)"
+              >
+                <option [value]="BOARD_SWIMLANE_MODE.None">{{ BOARD_KEYS.swimlane.mode.none | erpTranslate }}</option>
+                <option [value]="BOARD_SWIMLANE_MODE.Assignee">
+                  {{ BOARD_KEYS.swimlane.mode.assignee | erpTranslate }}
+                </option>
+                <option [value]="BOARD_SWIMLANE_MODE.Epic">{{ BOARD_KEYS.swimlane.mode.epic | erpTranslate }}</option>
+                <option [value]="BOARD_SWIMLANE_MODE.Priority">
+                  {{ BOARD_KEYS.swimlane.mode.priority | erpTranslate }}
+                </option>
+              </select>
+            </label>
+
+            @if (board.mode === BOARD_MODE.Scrum) {
+              <a class="text-sm underline" [routerLink]="['/task-management/board', board.uuid, 'backlog']">
+                {{ BOARD_KEYS.backlog.title | erpTranslate }}
+              </a>
+            }
+          </div>
+        </div>
 
         @if (this.columns().length === 0) {
           <erp-empty-state [config]="{ icon: '@tui.columns-3', message: BOARD_KEYS.empty.columns }" />
         } @else {
-          <div class="flex min-h-0 flex-1 gap-3 overflow-x-auto" cdkDropListGroup>
-            @for (column of this.columns(); track column.uuid) {
-              <erp-board-column
-                [column]="column"
-                [enabled]="this.allowedColumnUuids().has(column.uuid)"
-                (dragStarted)="this.store.startDrag($event)"
-                (dragEnded)="this.store.endDrag()"
-                (dropped)="this.onDropped($event)"
-              />
+          <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+            @for (swimlane of this.swimlanes(); track swimlane.key) {
+              <div class="flex min-h-0 flex-col gap-2" cdkDropListGroup>
+                @if (swimlane.label) {
+                  <span class="px-1 text-xs font-medium text-[var(--tui-text-tertiary)]">{{ swimlane.label }}</span>
+                }
+
+                <div class="flex min-h-0 flex-1 gap-3 overflow-x-auto">
+                  @for (column of swimlane.columns; track column.uuid) {
+                    <erp-board-column
+                      [column]="column"
+                      [enabled]="this.allowedColumnUuids().has(column.uuid)"
+                      (dragStarted)="this.store.startDrag($event)"
+                      (dragEnded)="this.store.endDrag()"
+                      (dropped)="this.onDropped(swimlane.key, $event)"
+                    />
+                  }
+                </div>
+              </div>
             }
           </div>
         }
@@ -71,6 +110,8 @@ import { BoardStore } from './board.store';
 })
 export class BoardComponent {
   protected readonly BOARD_KEYS = BOARD_KEYS;
+  protected readonly BOARD_MODE = BOARD_MODE;
+  protected readonly BOARD_SWIMLANE_MODE = BOARD_SWIMLANE_MODE;
 
   protected readonly store = inject(BoardStore);
 
@@ -87,6 +128,7 @@ export class BoardComponent {
   protected readonly loading = this.store.loading;
   protected readonly board = this.store.board;
   protected readonly columns = this.store.columns;
+  protected readonly swimlanes = this.store.swimlanes;
   protected readonly allowedColumnUuids = this.store.allowedColumnUuids;
 
   public constructor() {
@@ -102,8 +144,8 @@ export class BoardComponent {
    * w tablicy nie robimy tu ręcznie: widok liczy się z sygnału kart, a optymistyczne
    * przesunięcie trzyma store, żeby cofnięcie po nieudanym zadaniu miało jedno miejsce.
    */
-  protected onDropped(event: CdkDragDrop<string>): void {
-    const cardUuid = this._cardUuidAt(event.previousContainer.data, event.previousIndex);
+  protected onDropped(swimlaneKey: string, event: CdkDragDrop<string>): void {
+    const cardUuid = this._cardUuidAt(swimlaneKey, event.previousContainer.data, event.previousIndex);
 
     this.store.endDrag();
 
@@ -111,7 +153,7 @@ export class BoardComponent {
       return;
     }
 
-    void this.store.dropAsync(event.container.data, cardUuid, event.currentIndex);
+    void this.store.dropAsync(swimlaneKey, event.container.data, cardUuid, event.currentIndex);
   }
 
   /**
@@ -130,7 +172,14 @@ export class BoardComponent {
     await this._router.navigate(['/task-management/board', uuid], { replaceUrl: true });
   }
 
-  private _cardUuidAt(columnUuid: string, index: number): string | undefined {
-    return this.columns().find((column) => column.uuid === columnUuid)?.cards[index]?.uuid;
+  /** BRD-006 — grupowanie po polu niestandardowym wymaga dodatkowo kodu pola; wybór z tego
+   * prostego przełącznika w nagłówku ogranicza się do trybów bez parametru. */
+  protected onSwimlaneModeChange(boardUuid: string, rawMode: string): void {
+    void this.store.setSwimlaneAsync({ uuid: boardUuid, mode: Number(rawMode), fieldCode: undefined });
+  }
+
+  private _cardUuidAt(swimlaneKey: string, columnUuid: string, index: number): string | undefined {
+    const swimlane = this.store.swimlanes().find((lane) => lane.key === swimlaneKey);
+    return swimlane?.columns.find((column) => column.uuid === columnUuid)?.cards[index]?.uuid;
   }
 }

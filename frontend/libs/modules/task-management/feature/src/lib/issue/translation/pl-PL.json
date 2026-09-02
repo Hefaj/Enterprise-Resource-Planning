@@ -26,6 +26,10 @@
       "label": "Priorytet",
       "placeholder": "Dowolny priorytet"
     },
+    "tags": {
+      "label": "Tagi",
+      "placeholder": "Dowolny tag"
+    },
     "treeMode": {
       "label": "Drzewo"
     }
@@ -39,7 +43,8 @@
       "priority": "Priorytet",
       "assignee": "Przypisany",
       "dueAt": "Termin",
-      "updatedAt": "Zmodyfikowano"
+      "updatedAt": "Zmodyfikowano",
+      "tags": "Tagi"
     },
     "unassigned": "—"
   },
@@ -88,13 +93,38 @@
     "unassign": {
       "label": "Zdejmij przypisanie"
     },
+    "addTag": {
+      "label": "Dodaj tag",
+      "modalTitle": "Dodanie tagu do zgłoszeń",
+      "submitButton": "Dodaj",
+      "tagLabel": "Tag",
+      "editMessage": "Dodajesz tag do"
+    },
+    "removeTag": {
+      "label": "Usuń tag",
+      "modalTitle": "Usunięcie tagu ze zgłoszeń",
+      "submitButton": "Usuń",
+      "tagLabel": "Tag",
+      "editMessage": "Usuwasz tag z"
+    },
+    "setProject": {
+      "label": "Przenieś do projektu",
+      "modalTitle": "Przeniesienie zgłoszeń do innego projektu",
+      "submitButton": "Przenieś",
+      "projectLabel": "Projekt docelowy",
+      "editMessage": "Przenosisz",
+      "unmatchedFieldsHint": "Poniższe pola niestandardowe nie mają odpowiednika w projekcie docelowym. Wybierz pole, na które przenieść wartość, albo zostaw puste, żeby ją odrzucić.",
+      "unmatchedFieldTargetPlaceholder": "Odrzuć wartość",
+      "noUnmatchedFields": "Wszystkie pola niestandardowe mają odpowiednik w projekcie docelowym."
+    },
     "requiredFields": {
       "label": "Uzupełnij pola",
       "modalTitle": "Uzupełnij wymagane pola",
       "submitButton": "Zapisz i przejdź",
       "hint": "To przejście wymaga uzupełnienia poniższych pól, zanim zgłoszenie zmieni stan.",
       "numberHint": "np. 8.5",
-      "dateHint": "RRRR-MM-DD"
+      "dateHint": "RRRR-MM-DD",
+      "resolutionLabel": "Rozwiązanie"
     }
   },
   "detail": {
@@ -117,6 +147,34 @@
       "edit": "Edytuj",
       "save": "Zapisz opis",
       "cancel": "Anuluj"
+    },
+    "tags": {
+      "titleWithCount": "Tagi ({{ count }})",
+      "addLabel": "Dopnij tag",
+      "newPlaceholder": "Nazwa nowego tagu",
+      "create": "Utwórz i dopnij",
+      "createFailed": "Nie udało się utworzyć tagu.",
+      "attachFailed": "Nie udało się dopiąć tagu."
+    },
+    "time": {
+      "titleWithCount": "Czas ({{ count }})",
+      "estimateLabel": "Estymata",
+      "loggedLabel": "Zalogowano",
+      "remainingLabel": "Pozostało",
+      "noEstimate": "Brak estymaty",
+      "editEstimate": "Ustaw estymatę",
+      "estimatePlaceholder": "np. 120",
+      "estimateSaveFailed": "Nie udało się zapisać estymaty.",
+      "workTypeLabel": "Rodzaj pracy",
+      "minutesPlaceholder": "Minuty",
+      "descriptionPlaceholder": "Notatka (opcjonalnie)",
+      "addButton": "Dodaj",
+      "addFailed": "Nie udało się dodać wpisu czasu.",
+      "removeFailed": "Nie udało się usunąć wpisu czasu.",
+      "removeConfirmTitle": "Usunięcie wpisu czasu",
+      "removeConfirmMessage": "Wpis zostanie trwale usunięty.",
+      "noEntries": "Brak wpisów czasu.",
+      "minutesFormat": "{{ minutes }} min"
     },
     "sidebar": {
       "state": "Stan",
@@ -147,7 +205,21 @@
       "downloadFailed": "Nie udało się pobrać pliku.",
       "preview": "Podgląd",
       "previewUnavailable": "Tego pliku nie da się pokazać — pobierz go, żeby otworzyć.",
-      "uploadedAt": "Wgrano {{ date }}"
+      "uploadedAt": "Wgrano {{ date }}",
+      "remove": "Usuń",
+      "removeConfirmTitle": "Usunięcie załącznika",
+      "removeConfirmMessage": "Plik zostanie trwale usunięty z magazynu."
+    },
+    "externalLinks": {
+      "titleWithCount": "Linki zewnętrzne ({{ count }})",
+      "empty": "Brak linków zewnętrznych.",
+      "urlPlaceholder": "https://…",
+      "labelPlaceholder": "Etykieta (np. PR #123)",
+      "add": "Dodaj",
+      "addFailed": "Nie udało się dodać linku — sprawdź, czy adres jest pełnym http(s) URL-em.",
+      "remove": "Usuń",
+      "removeConfirmTitle": "Usunięcie linku",
+      "removeConfirmMessage": "Link zostanie trwale usunięty ze zgłoszenia."
     },
     "comments": {
       "label": "Komentarze",
@@ -179,7 +251,9 @@
         "stateChanged": "zmienił stan",
         "commentAdded": "dodał komentarz",
         "commentRemoved": "usunął komentarz",
-        "attachmentAdded": "dodał załącznik {{ value }}"
+        "attachmentAdded": "dodał załącznik {{ value }}",
+        "workLogAdded": "zalogował {{ value }} min",
+        "workLogRemoved": "usunął wpis czasu ({{ value }} min)"
       },
       "fields": {
         "title": "tytuł",

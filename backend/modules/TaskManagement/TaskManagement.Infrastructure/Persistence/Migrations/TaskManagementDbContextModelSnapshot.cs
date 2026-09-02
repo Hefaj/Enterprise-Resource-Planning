@@ -251,6 +251,17 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("project_uuid");
 
+                    b.Property<string>("SwimlaneFieldCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("swimlane_field_code");
+
+                    b.Property<string>("SwimlaneMode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("swimlane_mode");
+
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -308,6 +319,9 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.HasIndex("IssueUuid")
                         .HasDatabaseName("ix_board_card_issue_uuid");
 
+                    b.HasIndex("SprintUuid")
+                        .HasDatabaseName("ix_board_card_sprint_uuid");
+
                     b.HasIndex("BoardUuid", "IssueUuid")
                         .IsUnique()
                         .HasDatabaseName("ix_board_card_board_uuid_issue_uuid");
@@ -337,6 +351,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<int>("OrderNo")
                         .HasColumnType("integer")
                         .HasColumnName("order_no");
+
+                    b.Property<int?>("WipLimit")
+                        .HasColumnType("integer")
+                        .HasColumnName("wip_limit");
 
                     b.PrimitiveCollection<List<Guid>>("_stateUuids")
                         .IsRequired()
@@ -583,6 +601,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("due_at");
 
+                    b.Property<int?>("EstimateMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("estimate_minutes");
+
                     b.Property<bool>("IsRestricted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_restricted");
@@ -630,6 +652,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ReporterUuid")
                         .HasColumnType("uuid")
                         .HasColumnName("reporter_uuid");
+
+                    b.Property<Guid?>("ResolutionUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolution_uuid");
 
                     b.Property<string>("StateCategory")
                         .IsRequired()
@@ -721,8 +747,15 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.HasIndex("ReporterUuid")
                         .HasDatabaseName("ix_issue_reporter_uuid");
 
+                    b.HasIndex("ResolutionUuid")
+                        .HasDatabaseName("ix_issue_resolution_uuid");
+
                     b.HasIndex("TypeUuid")
                         .HasDatabaseName("ix_issue_type_uuid");
+
+                    b.HasIndex("CreatedAt", "Uuid")
+                        .IsDescending(true, false)
+                        .HasDatabaseName("ix_issue_created_at_uuid");
 
                     b.HasIndex("ProjectUuid", "Date1")
                         .HasDatabaseName("ix_issue_project_uuid_date_1");
@@ -933,6 +966,37 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("issue_comment", "taskmgmt");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Issues.IssueExternalLink", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<Guid>("IssueUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issue_uuid");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("label");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_issue_external_link");
+
+                    b.HasIndex("IssueUuid")
+                        .HasDatabaseName("ix_issue_external_link_issue_uuid");
+
+                    b.ToTable("issue_external_link", "taskmgmt");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Issues.IssueLink", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -981,10 +1045,36 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("issue_link", "taskmgmt");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Issues.IssueTag", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<Guid>("IssueUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issue_uuid");
+
+                    b.Property<Guid>("TagUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tag_uuid");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_issue_tag");
+
+                    b.HasIndex("TagUuid")
+                        .HasDatabaseName("ix_issue_tag_tag_uuid");
+
+                    b.HasIndex("IssueUuid", "TagUuid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_issue_tag_issue_uuid_tag_uuid");
+
+                    b.ToTable("issue_tag", "taskmgmt");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Issues.IssueWatcher", b =>
                 {
                     b.Property<Guid>("Uuid")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("uuid");
 
@@ -1010,6 +1100,60 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("issue_watcher", "taskmgmt");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Issues.IssueWorkLog", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<Guid>("IssueUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issue_uuid");
+
+                    b.Property<DateOnly>("LoggedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("logged_on");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("minutes");
+
+                    b.Property<Guid>("UserUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_uuid");
+
+                    b.Property<Guid>("WorkTypeUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_type_uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_issue_work_log");
+
+                    b.HasIndex("IssueUuid")
+                        .HasDatabaseName("ix_issue_work_log_issue_uuid");
+
+                    b.HasIndex("IssueUuid", "LoggedOn")
+                        .HasDatabaseName("ix_issue_work_log_issue_uuid_logged_on");
+
+                    b.ToTable("issue_work_log", "taskmgmt");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Projects.Project", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -1026,6 +1170,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("FieldSchemeUuid")
                         .HasColumnType("uuid")
                         .HasColumnName("field_scheme_uuid");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
 
                     b.Property<bool>("IsPublic")
                         .HasColumnType("boolean")
@@ -1088,6 +1236,9 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.HasIndex("FieldSchemeUuid")
                         .HasDatabaseName("ix_project_field_scheme_uuid");
 
+                    b.HasIndex("IsArchived")
+                        .HasDatabaseName("ix_project_is_archived");
+
                     b.HasIndex("IssueTypeSchemeUuid")
                         .HasDatabaseName("ix_project_issue_type_scheme_uuid");
 
@@ -1119,7 +1270,6 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TaskManagement.Domain.Projects.ProjectMember", b =>
                 {
                     b.Property<Guid>("Uuid")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("uuid");
 
@@ -1148,6 +1298,188 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_project_member_project_uuid_user_uuid");
 
                     b.ToTable("project_member", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Resolutions.Resolution", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NameKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name_key");
+
+                    b.Property<int>("OrderNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_no");
+
+                    b.Property<Guid?>("ProjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_resolution");
+
+                    b.HasIndex("ProjectUuid", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_resolution_project_uuid_name");
+
+                    b.ToTable("resolution", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Sprints.Sprint", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<DateTimeOffset?>("ActivatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("activated_at");
+
+                    b.Property<Guid>("BoardUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("board_uuid");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<DateOnly?>("EndsOn")
+                        .HasColumnType("date")
+                        .HasColumnName("ends_on");
+
+                    b.Property<string>("Goal")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("goal");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<DateOnly?>("StartsOn")
+                        .HasColumnType("date")
+                        .HasColumnName("starts_on");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_sprint");
+
+                    b.HasIndex("BoardUuid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sprint_board_active")
+                        .HasFilter("status = 'Active'");
+
+                    b.HasIndex("BoardUuid", "Status")
+                        .HasDatabaseName("ix_sprint_board_status");
+
+                    b.ToTable("sprint", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Tags.Tag", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("color");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid?>("ProjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_tag");
+
+                    b.HasIndex("ProjectUuid", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tag_project_uuid_name");
+
+                    b.ToTable("tag", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.WorkTypes.WorkType", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid?>("ProjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_work_type");
+
+                    b.HasIndex("ProjectUuid", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_work_type_project_uuid_name");
+
+                    b.ToTable("work_type", "taskmgmt");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Workflow.WorkflowScheme", b =>
@@ -1267,6 +1599,44 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("workflow_transition", "taskmgmt");
                 });
 
+            modelBuilder.Entity("TaskManagement.Infrastructure.Persistence.Graph.DeliveryHoursRow", b =>
+                {
+                    b.Property<string>("ExecutionIssueKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("execution_issue_key");
+
+                    b.Property<Guid>("ExecutionUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("execution_uuid");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("minutes");
+
+                    b.Property<string>("ProjectCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("project_code");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("project_name");
+
+                    b.Property<Guid>("ProjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_uuid");
+
+                    b.Property<int>("SharedWithOtherRequestsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("shared_with_other_requests_count");
+
+                    b.ToTable("delivery_hours_row", "taskmgmt");
+
+                    b.ToView(null, (string)null);
+                });
+
             modelBuilder.Entity("TaskManagement.Infrastructure.Persistence.Graph.GraphEdgeRow", b =>
                 {
                     b.Property<Guid>("ReachedUuid")
@@ -1336,6 +1706,12 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_board_card_issue_issue_uuid");
+
+                    b.HasOne("TaskManagement.Domain.Sprints.Sprint", null)
+                        .WithMany()
+                        .HasForeignKey("SprintUuid")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_board_card_sprint_sprint_uuid");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Boards.BoardColumn", b =>
@@ -1376,6 +1752,12 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_issue_project_project_uuid");
+
+                    b.HasOne("TaskManagement.Domain.Resolutions.Resolution", null)
+                        .WithMany()
+                        .HasForeignKey("ResolutionUuid")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_issue_resolution_resolution_uuid");
 
                     b.HasOne("TaskManagement.Domain.IssueTypes.IssueType", null)
                         .WithMany()
@@ -1421,6 +1803,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_issue_comment_issue_comment_parent_uuid");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Issues.IssueExternalLink", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.Issues.Issue", null)
+                        .WithMany("ExternalLinks")
+                        .HasForeignKey("IssueUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_issue_external_link_issue_issue_uuid");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Issues.IssueLink", b =>
                 {
                     b.HasOne("TaskManagement.Domain.Issues.Issue", null)
@@ -1436,6 +1828,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_issue_link_issue_target_uuid");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Issues.IssueTag", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.Issues.Issue", null)
+                        .WithMany("Tags")
+                        .HasForeignKey("IssueUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_issue_tag_issue_issue_uuid");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Issues.IssueWatcher", b =>
@@ -1484,6 +1886,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_project_member_project_project_uuid");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Sprints.Sprint", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.Boards.Board", null)
+                        .WithMany()
+                        .HasForeignKey("BoardUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sprint_board_board_uuid");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Workflow.WorkflowState", b =>
                 {
                     b.HasOne("TaskManagement.Domain.Workflow.WorkflowScheme", null)
@@ -1526,6 +1938,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TaskManagement.Domain.Issues.Issue", b =>
                 {
+                    b.Navigation("ExternalLinks");
+
+                    b.Navigation("Tags");
+
                     b.Navigation("Watchers");
                 });
 

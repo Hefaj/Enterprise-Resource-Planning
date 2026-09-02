@@ -24,4 +24,19 @@ public enum IssueActivityKind
     CommentRemoved = 4,
 
     AttachmentAdded = 5,
+
+    /// <summary>Wpis czasu (TIME-001) — <c>field_code</c> niesie rodzaj pracy,
+    /// <c>new_value</c> liczbę minut. Front kieruje ten rodzaj do filtra „Czas", nie „Historia".</summary>
+    WorkLogAdded = 6,
+
+    WorkLogRemoved = 7,
+
+    /// <summary>Usunięcie pojedynczego załącznika (ATT-002).</summary>
+    AttachmentRemoved = 8,
+
+    /// <summary>Dopięcie linku zewnętrznego (API-005) — repozytorium, PR, CI. Nigdy integracja
+    /// w domenie, wyłącznie adres URL z etykietą.</summary>
+    ExternalLinkAdded = 9,
+
+    ExternalLinkRemoved = 10,
 }

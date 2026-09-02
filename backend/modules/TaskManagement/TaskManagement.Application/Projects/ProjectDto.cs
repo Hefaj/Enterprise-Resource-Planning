@@ -29,7 +29,9 @@ public sealed record ProjectDto(
     bool IsPublic,
     int OpenIssueCount,
     IReadOnlyList<ProjectMemberDto> Members,
-    ProjectSlaDto? Sla);
+    ProjectSlaDto? Sla,
+    /// <summary>Projekt archiwalny (PRJ-004) — tylko do odczytu, ukryty z domyślnych list.</summary>
+    bool IsArchived);
 
 /// <summary>Filtry wyszukiwania projektów.</summary>
 public sealed class SearchProjectRequest : PagedRequest
@@ -45,6 +47,12 @@ public sealed class SearchProjectRequest : PagedRequest
     /// wysyła <c>null</c> dla pól, których użytkownik nie tknął, a nienullowalny typ wywala
     /// deserializację żądania błędem 400 zanim dojdzie ono do zapytania.</para></summary>
     public bool? OnlyMine { get; set; }
+
+    /// <summary>Domyślnie <c>false</c> — projekt archiwalny znika z domyślnej listy i z pickera
+    /// przy tworzeniu zgłoszenia (PRJ-004). Ustawienie na <c>true</c> pokazuje WYŁĄCZNIE
+    /// archiwalne, wzorem przełącznika w karcie projektu, nie sumę obu zbiorów: karta projektu
+    /// pokazuje albo bieżące, albo archiwum, nigdy oba naraz na jednej liście.</summary>
+    public bool IncludeArchived { get; set; }
 }
 
 /// <summary>Pobranie projektów po identyfikatorach.</summary>

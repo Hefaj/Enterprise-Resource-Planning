@@ -1,7 +1,9 @@
 using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Boards;
+using TaskManagement.Application.FieldSchemes;
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Infrastructure.Persistence;
 
 namespace TaskManagement.Infrastructure.Queries;
@@ -18,11 +20,13 @@ public sealed class BoardQueries : IBoardQueries
 {
     private readonly TaskManagementDbContext _dbContext;
     private readonly IExecutionContext _executionContext;
+    private readonly IFieldSchemeQueries _fields;
 
-    public BoardQueries(TaskManagementDbContext dbContext, IExecutionContext executionContext)
+    public BoardQueries(TaskManagementDbContext dbContext, IExecutionContext executionContext, IFieldSchemeQueries fields)
     {
         _dbContext = dbContext;
         _executionContext = executionContext;
+        _fields = fields;
     }
 
     /// <inheritdoc />
@@ -57,13 +61,23 @@ public sealed class BoardQueries : IBoardQueries
 
         var board = await Visible()
             .Where(b => b.Uuid == request.BoardUuid)
-            .Select(b => new { b.Uuid, b.ProjectUuid })
+            .Select(b => new { b.Uuid, b.ProjectUuid, b.SwimlaneMode, b.SwimlaneFieldCode })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
         if (board is null)
         {
             return [];
+        }
+
+        // Slot pola niestandardowego wskazanego przez swimlane — rozwiązywany raz na żądanie,
+        // nie per karta (§6, ten sam mechanizm co przy filtrach listy zgłoszeń).
+        FieldSlot? swimlaneSlot = null;
+        if (board.SwimlaneMode == BoardSwimlaneMode.CustomField && board.SwimlaneFieldCode is { } fieldCode)
+        {
+            var slots = await _fields.GetProjectSlotMapAsync(board.ProjectUuid, cancellationToken).ConfigureAwait(false);
+            slots.TryGetValue(fieldCode, out var slot);
+            swimlaneSlot = slot;
         }
 
         // Lewe złączenie zgłoszeń z kartami: zgłoszenie, którego nikt jeszcze nie przestawiał,
@@ -76,6 +90,9 @@ public sealed class BoardQueries : IBoardQueries
             join card in _dbContext.BoardCards.AsNoTracking().Where(c => c.BoardUuid == board.Uuid)
                 on issue.Uuid equals card.IssueUuid into cards
             from card in cards.DefaultIfEmpty()
+            join parent in _dbContext.Issues.AsNoTracking()
+                on issue.ParentUuid equals parent.Uuid into parents
+            from parent in parents.DefaultIfEmpty()
             select new BoardCardDto(
                 card != null ? card.Uuid : issue.Uuid,
                 board.Uuid,
@@ -92,7 +109,16 @@ public sealed class BoardQueries : IBoardQueries
                 issue.Priority,
                 issue.AssigneeUuid,
                 issue.DueAt,
-                issue.CreatedAt);
+                issue.CreatedAt,
+                issue.ParentUuid,
+                parent != null ? parent.Title : null,
+                // Tylko sloty tekstowe: pole niestandardowe typu Select (odpowiednik „Enum")
+                // dzieli pulę ze zwykłym tekstem (§6, FieldSlots.Accepts).
+                swimlaneSlot == FieldSlot.Text1 ? issue.Text1
+                    : swimlaneSlot == FieldSlot.Text2 ? issue.Text2
+                    : swimlaneSlot == FieldSlot.Text3 ? issue.Text3
+                    : swimlaneSlot == FieldSlot.Text4 ? issue.Text4
+                    : null);
 
         if (request.Uuids is { Count: > 0 })
         {
@@ -158,6 +184,9 @@ public sealed class BoardQueries : IBoardQueries
                     c.Uuid,
                     c.Name,
                     c.OrderNo,
-                    EF.Property<List<Guid>>(c, "_stateUuids")))
-                .ToList()));
+                    EF.Property<List<Guid>>(c, "_stateUuids"),
+                    c.WipLimit))
+                .ToList(),
+            b.SwimlaneMode,
+            b.SwimlaneFieldCode));
 }

@@ -24,6 +24,10 @@ import { ISSUE_KEYS } from '../../translation';
 export interface WorkflowRequiredFieldsCommand {
   issueUuid: string;
   values: Record<string, string>;
+
+  /** Rozwiązanie (ISS-007) — pole pierwszej klasy, więc jedzie OSOBNO od `values`
+   * (`custom_fields`), mimo że kod pola w `RequiredFields` schematu to nadal `"resolution"`. */
+  resolutionUuid?: string;
 }
 
 /** Kontekst potrzebny do zbudowania formularza: projekt (profil pól) i lista kodów, których
@@ -77,6 +81,15 @@ export class WorkflowRequiredFieldsModalDefinition
           // `setOnSave` się rozwiąże, pola muszą być NAPRAWDĘ zapisane, nie tylko przyjęte
           // do kolejki (`docs/backend/task-management-requirements.md` WF-004 AC1).
           await erpAwaitJobAsync(this._jobs, jobUuid);
+
+          // Rozwiązanie jedzie OSOBNĄ komendą — pole pierwszej klasy, nie wpis w `values`.
+          if (cmd.resolutionUuid) {
+            const resolutionJobUuid = await this._issues.setResolutionAsync(
+              { uuid: cmd.issueUuid, resolutionUuid: cmd.resolutionUuid },
+              WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
+            );
+            await erpAwaitJobAsync(this._jobs, resolutionJobUuid);
+          }
         }),
     );
   }

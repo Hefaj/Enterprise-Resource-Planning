@@ -31,6 +31,18 @@
     "loading": "Wczytuję projekt…",
     "notFound": "Nie znaleziono projektu albo nie masz do niego dostępu.",
     "back": "Wróć",
+    "archivedBadge": "Zarchiwizowany",
+    "editCode": "Zmień prefiks",
+    "codePlaceholder": "np. MKT",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "archive": "Archiwizuj",
+    "unarchive": "Przywróć",
+    "archiveConfirm": {
+      "title": "Zarchiwizować projekt?",
+      "message": "Projekt zarchiwizowany jest tylko do odczytu i znika z domyślnych list oraz z wyboru przy tworzeniu zgłoszenia. Linki do jego zgłoszeń nadal będą działać.",
+      "confirm": "Archiwizuj"
+    },
     "fields": {
       "title": "Pola niestandardowe",
       "scheme": {

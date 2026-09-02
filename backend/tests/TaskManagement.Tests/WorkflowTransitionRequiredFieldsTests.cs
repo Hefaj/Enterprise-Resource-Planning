@@ -1,6 +1,5 @@
 using Erp.BuildingBlocks.Domain;
 using Shouldly;
-using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Workflow;
@@ -35,17 +34,7 @@ public class WorkflowTransitionRequiredFieldsTests
         scheme.AddTransition(Guid.CreateVersion7(), TodoUuid, InProgressUuid, "k.start");
         scheme.AddTransition(
             Guid.CreateVersion7(), InProgressUuid, DoneUuid, "k.finish", requiredFields: ["resolution"]);
-
-        return scheme;
-    }
-
-    private static FieldScheme FieldSchemeWithResolution()
-    {
-        var scheme = FieldScheme.CreateWithUuid(Guid.CreateVersion7(), "Pola", isSystem: false);
-
-        scheme.AddField(
-            Guid.CreateVersion7(), "resolution", "Rozdzielczość", "k.resolution",
-            CustomFieldDataType.Select, FieldSlot.Text1, orderNo: 0, options: ["Fixed", "WontFix"]);
+        scheme.AddTransition(Guid.CreateVersion7(), DoneUuid, InProgressUuid, "k.reopen");
 
         return scheme;
     }
@@ -78,29 +67,39 @@ public class WorkflowTransitionRequiredFieldsTests
     public void Przejscie_z_uzupelnionym_wymaganym_polem_konczy_sie_sukcesem()
     {
         var workflow = SchemeWithRequiredFieldOnFinish();
-        var fieldScheme = FieldSchemeWithResolution();
         var issue = IssueInProgress(workflow);
 
-        issue.SetCustomFields(fieldScheme, new Dictionary<string, string?> { ["resolution"] = "Fixed" }, Now);
+        // ISS-007: `resolution` jest polem pierwszej klasy (`Issue.ResolutionUuid`), nie
+        // pozycją w `custom_fields` — ustawia się przez `SetResolution`, nie `SetCustomFields`.
+        issue.SetResolution(Guid.CreateVersion7(), Now);
         issue.SetState(workflow, DoneUuid, Now);
 
         issue.StateUuid.ShouldBe(DoneUuid);
     }
 
     [Fact]
-    public void Puste_lub_biale_znaki_w_wymaganym_polu_licza_sie_jako_brak()
+    public void Brak_ustawionego_rozwiazania_liczy_sie_jako_brak()
     {
         var workflow = SchemeWithRequiredFieldOnFinish();
-        var fieldScheme = FieldSchemeWithResolution();
         var issue = IssueInProgress(workflow);
-
-        // `SetCustomFields` z pustą wartością usuwa klucz z `custom_fields` (ten sam wzorzec,
-        // co w `CustomFieldTests`) — więc pole formalnie „ustawione na puste” jest nieodróżnialne
-        // od nigdy nieustawionego, tak jak wymaga tego reguła frontowa.
-        issue.SetCustomFields(fieldScheme, new Dictionary<string, string?> { ["resolution"] = "" }, Now);
 
         Should.Throw<DomainException>(() => issue.SetState(workflow, DoneUuid, Now))
             .ErrorCode.ShouldBe("taskmgmt.required_fields_missing");
+    }
+
+    [Fact]
+    public void Powrot_ze_stanu_done_czysci_rozwiazanie()
+    {
+        var workflow = SchemeWithRequiredFieldOnFinish();
+        var issue = IssueInProgress(workflow);
+
+        issue.SetResolution(Guid.CreateVersion7(), Now);
+        issue.SetState(workflow, DoneUuid, Now);
+        issue.ResolutionUuid.ShouldNotBeNull();
+
+        issue.SetState(workflow, InProgressUuid, Now);
+
+        issue.ResolutionUuid.ShouldBeNull();
     }
 
     [Fact]

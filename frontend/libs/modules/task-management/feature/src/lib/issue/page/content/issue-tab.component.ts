@@ -12,7 +12,10 @@ import {
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, ErpAuthService, PermissionStore } from '@erp/shared/auth';
 import {
+  BatchCommandOfIssueAddTagCommandAndSearchIssueRequest,
+  BatchCommandOfIssueRemoveTagCommandAndSearchIssueRequest,
   BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest,
+  BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest,
   BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
   IssueCreateCommand,
   IssueVM,
@@ -20,9 +23,12 @@ import {
   TaskManagementIssueOrchestrator,
 } from '@erp/task-management/data-access';
 import {
+  ISSUE_ADD_TAG_MODAL_ID,
   ISSUE_CREATE_MODAL_ID,
   ISSUE_PRIORITY,
+  ISSUE_REMOVE_TAG_MODAL_ID,
   ISSUE_SET_ASSIGNEE_MODAL_ID,
+  ISSUE_SET_PROJECT_MODAL_ID,
   ISSUE_SET_STATE_MODAL_ID,
 } from '@erp/task-management/util';
 
@@ -153,6 +159,30 @@ export class IssueTabComponent {
               .setAppearance('warning')
               .setHidden(this._canUpdate)
               .setFn(() => this._raisePriority()),
+          )
+          .addAction((a) =>
+            a
+              .setId('add-tag')
+              .setLabel(ISSUE_KEYS.commands.addTag.label)
+              .setIcon('@tui.tag-plus')
+              .setHidden(this._canUpdate)
+              .setFn(() => this._openAddTagModal()),
+          )
+          .addAction((a) =>
+            a
+              .setId('remove-tag')
+              .setLabel(ISSUE_KEYS.commands.removeTag.label)
+              .setIcon('@tui.tag-x')
+              .setHidden(this._canUpdate)
+              .setFn(() => this._openRemoveTagModal()),
+          )
+          .addAction((a) =>
+            a
+              .setId('set-project')
+              .setLabel(ISSUE_KEYS.commands.setProject.label)
+              .setIcon('@tui.folder-symlink')
+              .setHidden(this._canUpdate)
+              .setFn(() => this._openSetProjectModal()),
           ),
       )
       .setSelectionCount(this.selectionCount)
@@ -214,5 +244,29 @@ export class IssueTabComponent {
         templateCommand: { priority: ISSUE_PRIORITY.High },
       })
       .catch((err: unknown) => console.error('[IssueTabComponent] Nie udało się zmienić priorytetu zgłoszeń.', err));
+  }
+
+  private _openAddTagModal(): void {
+    this._modalService.open<BatchCommandOfIssueAddTagCommandAndSearchIssueRequest, IssueSetStateMetadata>(
+      ISSUE_ADD_TAG_MODAL_ID,
+      erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
+      { targetCount: this.selectionCount(), projectUuid: this.store.projectUuid() ?? undefined },
+    );
+  }
+
+  private _openRemoveTagModal(): void {
+    this._modalService.open<BatchCommandOfIssueRemoveTagCommandAndSearchIssueRequest, IssueSetStateMetadata>(
+      ISSUE_REMOVE_TAG_MODAL_ID,
+      erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
+      { targetCount: this.selectionCount(), projectUuid: this.store.projectUuid() ?? undefined },
+    );
+  }
+
+  private _openSetProjectModal(): void {
+    this._modalService.open<BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest>(
+      ISSUE_SET_PROJECT_MODAL_ID,
+      erpBuildBatchTargets<SearchIssueRequest>(this.store.scope()),
+      { targetCount: this.selectionCount() },
+    );
   }
 }

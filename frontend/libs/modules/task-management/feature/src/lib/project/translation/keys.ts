@@ -36,6 +36,18 @@ export const PROJECT_KEYS = {
       loading: 'project.detail.loading',
       notFound: 'project.detail.notFound',
       back: 'project.detail.back',
+      archivedBadge: 'project.detail.archivedBadge',
+      editCode: 'project.detail.editCode',
+      codePlaceholder: 'project.detail.codePlaceholder',
+      save: 'project.detail.save',
+      cancel: 'project.detail.cancel',
+      archive: 'project.detail.archive',
+      unarchive: 'project.detail.unarchive',
+      archiveConfirm: {
+        title: 'project.detail.archiveConfirm.title',
+        message: 'project.detail.archiveConfirm.message',
+        confirm: 'project.detail.archiveConfirm.confirm',
+      },
       fields: {
         title: 'project.detail.fields.title',
         scheme: {

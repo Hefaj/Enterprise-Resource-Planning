@@ -164,10 +164,25 @@ public sealed class IssueQueries : IIssueQueries
             var text = request.Text.Trim();
 
             // Szukanie obejmuje klucze historyczne — inaczej „DEV-412” z maila przestaje
-            // cokolwiek znajdować dzień po przeniesieniu zgłoszenia (§4).
+            // cokolwiek znajdować dzień po przeniesieniu zgłoszenia (§4). ILIKE na tytule zostaje
+            // OBOK pełnego tekstu (nie zamiast) — dopasowuje fragment słowa („log” w „login”),
+            // czego wyszukiwanie pełnotekstowe (dopasowanie po leksemach) nie łapie.
+            //
+            // SRCH-003: `websearch_to_tsquery` sam obsługuje frazę w cudzysłowie jako frazę
+            // (AC2) — nie trzeba własnego parsera. Indeks GIN na wyrażeniu
+            // `to_tsvector('simple', coalesce(title,'') || ' ' || coalesce(description,''))`
+            // (migracja `SearchFullText`) musi zgadzać się dosłownie z wyrażeniem tutaj, inaczej
+            // Postgres go nie użyje. Predykat widoczności jest już zaaplikowany na `query` przed
+            // tym wywołaniem (`Visible()`/`VisibleTo`), więc AC1 („zawężenie w tym samym
+            // zapytaniu") jest spełnione samą strukturą metody, nie dodatkowym warunkiem.
             query = query.Where(i => EF.Functions.ILike(i.Title, $"%{text}%")
                 || EF.Functions.ILike(i.Key, $"%{text}%")
-                || EF.Property<List<string>>(i, "_previousKeys").Contains(text.ToUpperInvariant()));
+                || EF.Property<List<string>>(i, "_previousKeys").Contains(text.ToUpperInvariant())
+                || EF.Functions.ToTsVector("simple", i.Title + " " + (i.Description ?? string.Empty))
+                    .Matches(EF.Functions.WebSearchToTsQuery("simple", text))
+                || _dbContext.IssueComments.Any(c => c.IssueUuid == i.Uuid
+                    && c.RemovedAt == null
+                    && EF.Functions.ToTsVector("simple", c.Body).Matches(EF.Functions.WebSearchToTsQuery("simple", text))));
         }
 
         if (request.StateUuid is { } stateUuid)
@@ -189,6 +204,17 @@ public sealed class IssueQueries : IIssueQueries
         if (request.AssigneeUuid is { } assigneeUuid)
         {
             query = query.Where(i => i.AssigneeUuid == assigneeUuid);
+        }
+
+        if (request.TagUuids is { Count: > 0 } tagUuids)
+        {
+            // AND, nie OR: zgłoszenie musi nosić KAŻDY wskazany tag. Join na `issue_tag`
+            // (TAG-001 AC1), nie przeszukiwanie jsonb.
+            foreach (var tagUuid in tagUuids)
+            {
+                var tag = tagUuid;
+                query = query.Where(i => _dbContext.IssueTags.Any(t => t.IssueUuid == i.Uuid && t.TagUuid == tag));
+            }
         }
 
         return query;
@@ -228,7 +254,15 @@ public sealed class IssueQueries : IIssueQueries
                    _dbContext.IssueWatchers.Count(w => w.IssueUuid == issue.Uuid && w.OptedOutAt == null),
                    issue.CreatedAt,
                    issue.UpdatedAt,
-                   EF.Property<Dictionary<string, string>>(issue, "_customFields"));
+                   EF.Property<Dictionary<string, string>>(issue, "_customFields"),
+                   issue.ResolutionUuid,
+                   _dbContext.IssueTags.Where(t => t.IssueUuid == issue.Uuid).Select(t => t.TagUuid).ToList(),
+                   issue.EstimateMinutes,
+                   _dbContext.IssueWorkLogs.Where(w => w.IssueUuid == issue.Uuid).Sum(w => (int?)w.Minutes) ?? 0,
+                   _dbContext.IssueExternalLinks
+                       .Where(l => l.IssueUuid == issue.Uuid)
+                       .Select(l => new IssueExternalLinkDto(l.Uuid, l.Url, l.Label))
+                       .ToList());
     }
 
     /// <summary>

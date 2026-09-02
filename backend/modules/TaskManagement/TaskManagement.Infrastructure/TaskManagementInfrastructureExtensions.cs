@@ -10,7 +10,11 @@ using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Resolutions;
+using TaskManagement.Domain.Sprints;
+using TaskManagement.Domain.Tags;
 using TaskManagement.Domain.Workflow;
+using TaskManagement.Domain.WorkTypes;
 using TaskManagement.Infrastructure.Jobs;
 using TaskManagement.Infrastructure.Persistence;
 using TaskManagement.Infrastructure.Seed;
@@ -93,7 +97,13 @@ public static class TaskManagementInfrastructureExtensions
             // wszystkim klientom przeładować kilkuset kart (§7.4). Klient dostaje jednym
             // kanałem oba rodzaje uuid-ów i odpytuje o nie ten sam endpoint — uuid tablicy
             // nie pasuje wtedy do żadnej karty i nic nie zmienia.
-            .Register<BoardCard>(AggregateSignatures.TaskManagementBoard));
+            .Register<BoardCard>(AggregateSignatures.TaskManagementBoard)
+
+            .Register<Sprint>(AggregateSignatures.TaskManagementSprint)
+            .Register<Tag>(AggregateSignatures.TaskManagementTag)
+            .Register<Resolution>(AggregateSignatures.TaskManagementResolution)
+            .Register<IssueWorkLog>(AggregateSignatures.TaskManagementIssueWorkLog)
+            .Register<WorkType>(AggregateSignatures.TaskManagementWorkType));
 
         // `IssueActivity` świadomie NIE ma sygnatury: historia zmienia się wyłącznie razem
         // ze zgłoszeniem albo komentarzem, a te mają własne kanały. Osobny kanał oznaczałby

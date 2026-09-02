@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Sprints;
 
 namespace TaskManagement.Infrastructure.Persistence.Configurations;
 
@@ -21,6 +22,11 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
         builder.Property(b => b.Name).HasMaxLength(256).IsRequired();
         builder.Property(b => b.Mode).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(b => b.IsDefault).IsRequired();
+
+        // BRD-006 — oś grupowania wierszy. `SwimlaneFieldCode` opcjonalny: ma sens wyłącznie
+        // przy `CustomField`, w każdym innym trybie zostaje `null`.
+        builder.Property(b => b.SwimlaneMode).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(b => b.SwimlaneFieldCode).HasMaxLength(64);
 
         builder.HasIndex(b => b.ProjectUuid);
 
@@ -55,6 +61,9 @@ public sealed class BoardColumnConfiguration : IEntityTypeConfiguration<BoardCol
         builder.Property(c => c.BoardUuid).IsRequired();
         builder.Property(c => c.Name).HasMaxLength(256).IsRequired();
         builder.Property(c => c.OrderNo).IsRequired();
+
+        // BRD-007 — sygnał wyłącznie wizualny, `null` znaczy „bez limitu".
+        builder.Property(c => c.WipLimit);
 
         // Stany kolumny jako `uuid[]`, nie tabela podrzędna: nie mają własnych atrybutów,
         // nikt po nich nie sortuje, a jedyne pytanie brzmi „czy zawiera ten stan”. Tabela
@@ -108,6 +117,13 @@ public sealed class BoardCardConfiguration : IEntityTypeConfiguration<BoardCard>
             .WithMany()
             .HasForeignKey(c => c.BoardUuid)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Zamknięcie sprintu nie usuwa kart — karta wraca do backlogu (sprint = null), bo
+        // to jest jedna z dwóch jawnych decyzji SPR-003 AC1, nigdy kasowanie w kaskadzie.
+        builder.HasOne<Sprint>()
+            .WithMany()
+            .HasForeignKey(c => c.SprintUuid)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Usunięcie zgłoszenia zabiera jego karty ze wszystkich tablic. Kolejność bez
         // zgłoszenia nie znaczy nic, a osierocony wiersz zostawiałby dziurę w numeracji.

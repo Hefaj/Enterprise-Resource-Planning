@@ -55,6 +55,7 @@ public sealed class IssueCreateCommandValidator : AbstractValidator<IssueCreateC
 public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateCommand, Guid>
 {
     private readonly IIssueRepository _repository;
+    private readonly IProjectRepository _projects;
     private readonly IWorkflowSchemeRepository _schemes;
     private readonly IIssueTypeSchemeRepository _issueTypeSchemes;
     private readonly IIssueKeyAllocator _keyAllocator;
@@ -65,6 +66,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
 
     public IssueCreateCommandHandler(
         IIssueRepository repository,
+        IProjectRepository projects,
         IWorkflowSchemeRepository schemes,
         IIssueTypeSchemeRepository issueTypeSchemes,
         IIssueKeyAllocator keyAllocator,
@@ -74,6 +76,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         IClock clock)
     {
         _repository = repository;
+        _projects = projects;
         _schemes = schemes;
         _issueTypeSchemes = issueTypeSchemes;
         _keyAllocator = keyAllocator;
@@ -86,6 +89,14 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     public override async Task<Guid> ExecuteAsync(IssueCreateCommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _projects.FindAsync(command.ProjectUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), command.ProjectUuid);
+
+        // PRJ-004 AC1 — projekt archiwalny jest tylko do odczytu, nowe zgłoszenie się w nim
+        // nie zakłada. Sprawdzone PRZED przeskokiem licznika klucza — inaczej odrzucona
+        // walidacja zostawiałaby dziurę w numeracji za darmo.
+        project.EnsureNotArchived();
 
         var scheme = await _schemes.FindByProjectAsync(command.ProjectUuid, ct).ConfigureAwait(false)
             ?? throw new AggregateNotFoundException(nameof(Domain.Projects.Project), command.ProjectUuid);

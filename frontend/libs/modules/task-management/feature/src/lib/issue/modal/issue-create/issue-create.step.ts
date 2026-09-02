@@ -54,11 +54,18 @@ export class IssueCreateStepComponent extends ErpModalStepBase<IssueCreateComman
     const typeSchemes = inject(TaskManagementIssueTypeSchemeOrchestrator);
     const transloco = inject(TranslocoService);
 
+    // PRJ-004 AC1 — projekt zarchiwizowany znika z pickera tworzenia zgłoszenia. Filtr tutaj,
+    // nie na poziomie zapytania: `getViewModel()` czyta WSPÓLNY cache orkiestratora, do którego
+    // inne miejsca (np. kolumna „Projekt" na liście zgłoszeń, rozwiązująca `MKT-4` mimo że MKT
+    // jest już zarchiwizowany — linki do istniejących zgłoszeń MUSZĄ dalej działać) doładowują
+    // projekty PO UUID, bez względu na archiwizację.
     const projectOptions = computed(() =>
-      [...projects.getViewModel()().values()].map((project) => ({
-        uuid: project.uuid,
-        label: `${project.code} — ${project.name}`,
-      })),
+      [...projects.getViewModel()().values()]
+        .filter((project) => !project.isArchived)
+        .map((project) => ({
+          uuid: project.uuid,
+          label: `${project.code} — ${project.name}`,
+        })),
     );
 
     // Typ zawężony do schematu PODPIĘTEGO DO WYBRANEGO PROJEKTU (`ProjectDto.issueTypeSchemeUuid`)

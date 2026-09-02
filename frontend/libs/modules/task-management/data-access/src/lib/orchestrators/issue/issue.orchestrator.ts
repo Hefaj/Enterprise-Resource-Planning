@@ -13,24 +13,38 @@ import { ErpUserRef } from '@erp/shared/util';
 import { TASK_MANAGEMENT_JOB_COMMAND_KEYS } from '@erp/task-management/util';
 
 import {
+  BatchCommandOfIssueAddTagCommandAndSearchIssueRequest,
+  BatchCommandOfIssueRemoveTagCommandAndSearchIssueRequest,
   BatchCommandOfIssueSetAssigneeCommandAndSearchIssueRequest,
   BatchCommandOfIssueSetPriorityCommandAndSearchIssueRequest,
+  BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest,
   BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
   GetIssueByKeyRequest,
   GetIssueRequest,
   IssueAddCommentCommand,
+  IssueAddExternalLinkCommand,
+  IssueAddTagCommand,
   IssueAddWatcherCommand,
+  IssueAddWorkLogCommand,
   IssueCreateCommand,
   IssueDto,
+  IssueMoveToProjectPreviewDto,
+  IssueMoveToProjectPreviewRequest,
+  IssueRemoveAttachmentCommand,
   IssueRemoveCommentCommand,
+  IssueRemoveExternalLinkCommand,
+  IssueRemoveTagCommand,
   IssueRemoveWatcherCommand,
+  IssueRemoveWorkLogCommand,
   IssueSetCommentBodyCommand,
+  IssueSetEstimateCommand,
   IssueAddLinkCommand,
   IssueRemoveLinkCommand,
   IssueSetCustomFieldsCommand,
   IssueSetParentCommand,
   IssueSetDescriptionCommand,
   IssueSetDueDateCommand,
+  IssueSetResolutionCommand,
   IssueSetStateCommand,
   IssueSetTitleCommand,
   IssueSetTypeCommand,
@@ -400,6 +414,46 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
     });
   }
 
+  /** Seryjne dopięcie tagu (TAG-001, BULK-002) — ten sam batch endpoint co pojedyncze
+   * dopięcie z karty, wywołany z szablonem na całym zaznaczeniu. */
+  public addTagMultipleAsync(
+    payload: BatchCommandOfIssueAddTagCommandAndSearchIssueRequest,
+    queueId?: string,
+  ): Promise<string> {
+    return this.runBatchCommandAsync((p) => this._api.issueAddTagMultipleCommand(p), payload, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueTag,
+      queueId,
+    });
+  }
+
+  /** Seryjne odpięcie tagu — patrz {@link addTagMultipleAsync}. */
+  public removeTagMultipleAsync(
+    payload: BatchCommandOfIssueRemoveTagCommandAndSearchIssueRequest,
+    queueId?: string,
+  ): Promise<string> {
+    return this.runBatchCommandAsync((p) => this._api.issueRemoveTagMultipleCommand(p), payload, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueTag,
+      queueId,
+    });
+  }
+
+  /** Seryjne przeniesienie do innego projektu, razem z poddrzewem (ISS-010). */
+  public setProjectMultipleAsync(
+    payload: BatchCommandOfIssueSetProjectCommandAndSearchIssueRequest,
+    queueId?: string,
+  ): Promise<string> {
+    return this.runBatchCommandAsync((p) => this._api.issueSetProjectMultipleCommand(p), payload, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueProject,
+      queueId,
+    });
+  }
+
+  /** Podgląd pól bez odpowiednika w projekcie docelowym — ekran decyzji PRZED przeniesieniem
+   * (ISS-010 AC4). Zwykłe zapytanie, nie zadanie masowe. */
+  public previewSetProjectAsync(request: IssueMoveToProjectPreviewRequest): Promise<IssueMoveToProjectPreviewDto> {
+    return this.runDirectCommandAsync(() => this._api.getIssueMoveToProjectPreview(request));
+  }
+
   // ── Obserwujący (ISS-009) ──
   //
   // Batch endpointy przyjmują jeden element (`commands: [command]`) — na karcie zgłoszenia nie
@@ -415,6 +469,63 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   public removeWatcherAsync(command: IssueRemoveWatcherCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueRemoveWatcherMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueWatcher,
+      queueId,
+    });
+  }
+
+  // ── Rejestracja czasu (TIME-001/002) ──
+  //
+  // Batch endpointy przyjmują jeden element, tak samo jak obserwujący wyżej — sekcja czasu
+  // na karcie nie ma zaznaczenia z listy. Lista wpisów odświeża się zdarzeniem
+  // `taskmgmt.issue_work_log` przez `IssueWorkLogService`, ta sama droga co komentarze.
+
+  public addWorkLogAsync(command: IssueAddWorkLogCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync(
+      (p) => this._api.issueAddWorkLogMultipleCommand(p),
+      { ...command, uuid: command.uuid || crypto.randomUUID() } as IssueAddWorkLogCommand,
+      { commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueWorkLog, queueId },
+    );
+  }
+
+  /** Usuwa wpis czasu — wyłącznie własny, cudzy odrzuci backend (`taskmgmt.work_log_not_author`). */
+  public removeWorkLogAsync(command: IssueRemoveWorkLogCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveWorkLogMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueWorkLog,
+      queueId,
+    });
+  }
+
+  /** Ustawia estymatę (TIME-002); `estimateMinutes: undefined` czyści ją. */
+  public setEstimateAsync(command: IssueSetEstimateCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueSetEstimateMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueEstimate,
+      queueId,
+    });
+  }
+
+  /** Usuwa pojedynczy załącznik (ATT-002) — kasowanie pliku w magazynie idzie przez outbox,
+   * nie przez ten wywołanie (`docs/backend/media-storage.md` §4b). */
+  public removeAttachmentAsync(command: IssueRemoveAttachmentCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveAttachmentMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueAttachment,
+      queueId,
+    });
+  }
+
+  /** Dopina link zewnętrzny (API-005) — repozytorium, PR, CI. `command.uuid` to uuid
+   * ZGŁOSZENIA (cel operacji wsadowej, wzorem `IssueAddTagCommand`), nie linku — link dostaje
+   * własny uuid po stronie serwera (`Issue.AddExternalLink`). */
+  public addExternalLinkAsync(command: IssueAddExternalLinkCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueAddExternalLinkMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueExternalLink,
+      queueId,
+    });
+  }
+
+  /** Odpina link zewnętrzny. */
+  public removeExternalLinkAsync(command: IssueRemoveExternalLinkCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveExternalLinkMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueExternalLink,
       queueId,
     });
   }
@@ -442,5 +553,69 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
       () => (watched ? this.addWatcherAsync({ uuid }) : this.removeWatcherAsync({ uuid })),
       options,
     );
+  }
+
+  // ── Tagi (TAG-001) ──
+
+  public addTagAsync(command: IssueAddTagCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueAddTagMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.addIssueTag,
+      queueId,
+    });
+  }
+
+  public removeTagAsync(command: IssueRemoveTagCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueRemoveTagMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueTag,
+      queueId,
+    });
+  }
+
+  /**
+   * Dopięcie tagu z natychmiastowym, optymistycznym skutkiem — ten sam wzorzec, co
+   * `toggleWatchOptimisticAsync`. Karta pokazuje chip od razu, zamiast czekać na zadanie;
+   * `settleAsync` (wewnątrz `runOptimisticCommandAsync`) i tak przeładuje zgłoszenie po
+   * zakończeniu, więc rozjazd z realnym stanem (np. duplikat z drugiej karty) naprawia się sam.
+   */
+  public addTagOptimisticAsync(
+    uuid: string,
+    tagUuid: string,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    return this.runOptimisticCommandAsync(
+      uuid,
+      (current) =>
+        current
+          ? { ...current, tagUuids: current.tagUuids?.includes(tagUuid) ? current.tagUuids : [...(current.tagUuids ?? []), tagUuid] }
+          : current,
+      () => this.addTagAsync({ uuid, tagUuid }),
+      options,
+    );
+  }
+
+  /** Odpięcie tagu z natychmiastowym, optymistycznym skutkiem — patrz {@link addTagOptimisticAsync}. */
+  public removeTagOptimisticAsync(
+    uuid: string,
+    tagUuid: string,
+    options?: { onRollback?: () => void; failureMessage?: Translatable },
+  ): Promise<void> {
+    return this.runOptimisticCommandAsync(
+      uuid,
+      (current) => (current ? { ...current, tagUuids: (current.tagUuids ?? []).filter((t) => t !== tagUuid) } : current),
+      () => this.removeTagAsync({ uuid, tagUuid }),
+      options,
+    );
+  }
+
+  // ── Rozwiązanie (ISS-007) ──
+  //
+  // Pole pierwszej klasy, nie pozycja w `custom_fields` — osobna komenda od
+  // `setCustomFieldsAsync`.
+
+  public setResolutionAsync(command: IssueSetResolutionCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.issueSetResolutionMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setIssueResolution,
+      queueId,
+    });
   }
 }

@@ -96,7 +96,8 @@ public sealed class ProjectQueries : IProjectQueries
                         p.SlaResolutionMinutes!.Value,
                         p.SlaWorkingDays!.Value,
                         p.SlaWorkStartTime!.Value,
-                        p.SlaWorkEndTime!.Value)))
+                        p.SlaWorkEndTime!.Value),
+                p.IsArchived))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -105,6 +106,10 @@ public sealed class ProjectQueries : IProjectQueries
     {
         var me = IssueVisibility.CurrentUser(_executionContext);
         var query = _dbContext.Projects.AsNoTracking().VisibleTo(_dbContext, me);
+
+        // Domyślnie ukryte (PRJ-004) — `GetAsync` po uuid, używane do rozwiązania linku
+        // istniejącego zgłoszenia, celowo NIE filtruje archiwum: stary link musi dalej działać.
+        query = query.Where(p => p.IsArchived == request.IncludeArchived);
 
         if (request.OnlyMine == true)
         {

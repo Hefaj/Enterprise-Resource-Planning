@@ -26,6 +26,10 @@
       "label": "Priority",
       "placeholder": "Any priority"
     },
+    "tags": {
+      "label": "Tags",
+      "placeholder": "Any tag"
+    },
     "treeMode": {
       "label": "Tree"
     }
@@ -39,7 +43,8 @@
       "priority": "Priority",
       "assignee": "Assignee",
       "dueAt": "Due",
-      "updatedAt": "Updated"
+      "updatedAt": "Updated",
+      "tags": "Tags"
     },
     "unassigned": "—"
   },
@@ -88,13 +93,38 @@
     "unassign": {
       "label": "Unassign"
     },
+    "addTag": {
+      "label": "Add tag",
+      "modalTitle": "Add tag to issues",
+      "submitButton": "Add",
+      "tagLabel": "Tag",
+      "editMessage": "Adding tag to"
+    },
+    "removeTag": {
+      "label": "Remove tag",
+      "modalTitle": "Remove tag from issues",
+      "submitButton": "Remove",
+      "tagLabel": "Tag",
+      "editMessage": "Removing tag from"
+    },
+    "setProject": {
+      "label": "Move to project",
+      "modalTitle": "Move issues to another project",
+      "submitButton": "Move",
+      "projectLabel": "Target project",
+      "editMessage": "Moving",
+      "unmatchedFieldsHint": "The custom fields below have no equivalent in the target project. Pick a field to carry the value to, or leave it blank to discard it.",
+      "unmatchedFieldTargetPlaceholder": "Discard value",
+      "noUnmatchedFields": "All custom fields have an equivalent in the target project."
+    },
     "requiredFields": {
       "label": "Fill in fields",
       "modalTitle": "Fill in required fields",
       "submitButton": "Save and move",
       "hint": "This transition requires the fields below before the issue can change state.",
       "numberHint": "e.g. 8.5",
-      "dateHint": "YYYY-MM-DD"
+      "dateHint": "YYYY-MM-DD",
+      "resolutionLabel": "Resolution"
     }
   },
   "detail": {
@@ -114,6 +144,34 @@
       "edit": "Edit",
       "save": "Save description",
       "cancel": "Cancel"
+    },
+    "tags": {
+      "titleWithCount": "Tags ({{ count }})",
+      "addLabel": "Attach tag",
+      "newPlaceholder": "New tag name",
+      "create": "Create and attach",
+      "createFailed": "Failed to create the tag.",
+      "attachFailed": "Failed to attach the tag."
+    },
+    "time": {
+      "titleWithCount": "Time ({{ count }})",
+      "estimateLabel": "Estimate",
+      "loggedLabel": "Logged",
+      "remainingLabel": "Remaining",
+      "noEstimate": "No estimate",
+      "editEstimate": "Set estimate",
+      "estimatePlaceholder": "e.g. 120",
+      "estimateSaveFailed": "Failed to save the estimate.",
+      "workTypeLabel": "Work type",
+      "minutesPlaceholder": "Minutes",
+      "descriptionPlaceholder": "Note (optional)",
+      "addButton": "Add",
+      "addFailed": "Failed to add the work log.",
+      "removeFailed": "Failed to remove the work log.",
+      "removeConfirmTitle": "Remove work log",
+      "removeConfirmMessage": "The entry will be permanently removed.",
+      "noEntries": "No time logged yet.",
+      "minutesFormat": "{{ minutes }} min"
     },
     "sidebar": {
       "state": "State",
@@ -144,7 +202,21 @@
       "downloadFailed": "The file could not be downloaded.",
       "preview": "Preview",
       "previewUnavailable": "This file cannot be displayed — download it to open.",
-      "uploadedAt": "Uploaded {{ date }}"
+      "uploadedAt": "Uploaded {{ date }}",
+      "remove": "Remove",
+      "removeConfirmTitle": "Remove attachment",
+      "removeConfirmMessage": "The file will be permanently removed from storage."
+    },
+    "externalLinks": {
+      "titleWithCount": "External links ({{ count }})",
+      "empty": "No external links.",
+      "urlPlaceholder": "https://…",
+      "labelPlaceholder": "Label (e.g. PR #123)",
+      "add": "Add",
+      "addFailed": "Could not add the link — check that the address is a full http(s) URL.",
+      "remove": "Remove",
+      "removeConfirmTitle": "Remove link",
+      "removeConfirmMessage": "The link will be permanently removed from the issue."
     },
     "comments": {
       "label": "Comments",
@@ -176,7 +248,9 @@
         "stateChanged": "changed the state",
         "commentAdded": "added a comment",
         "commentRemoved": "removed a comment",
-        "attachmentAdded": "added attachment {{ value }}"
+        "attachmentAdded": "added attachment {{ value }}",
+        "workLogAdded": "logged {{ value }} min",
+        "workLogRemoved": "removed a work log entry ({{ value }} min)"
       },
       "fields": {
         "title": "title",

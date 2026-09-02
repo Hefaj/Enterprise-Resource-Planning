@@ -106,6 +106,11 @@ public static class Permissions
         public const string ProjectManage = "taskmgmt.project.manage";
 
         public const string SchemeManage = "taskmgmt.scheme.manage";
+
+        /// <summary>Zakładanie tagów w locie (TAG-002) — bez tego uprawnienia użytkownik wybiera
+        /// tylko z istniejących, żeby swoboda zakładania nie skończyła się listą z `backend`,
+        /// `back-end` i `Backend`.</summary>
+        public const string TagManage = "taskmgmt.tag.manage";
     }
 
     /// <summary>Pełny katalog — źródło seedu <c>permission_catalog</c> i uzgadniania przy starcie.
@@ -144,5 +149,6 @@ public static class Permissions
         new(TaskManagement.BoardManage, "taskmgmt", "board", "manage", "identity.permissions.taskmgmt.board.manage"),
         new(TaskManagement.ProjectManage, "taskmgmt", "project", "manage", "identity.permissions.taskmgmt.project.manage"),
         new(TaskManagement.SchemeManage, "taskmgmt", "scheme", "manage", "identity.permissions.taskmgmt.scheme.manage"),
+        new(TaskManagement.TagManage, "taskmgmt", "tag", "manage", "identity.permissions.taskmgmt.tag.manage"),
     ];
 }

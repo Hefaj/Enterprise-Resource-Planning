@@ -53,6 +53,10 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
 
         builder.HasIndex(p => p.Code).IsUnique();
 
+        // PRJ-004 — domyślnie `false`; ukrycie z list domyślnych filtruje po tym samym indeksie.
+        builder.Property(p => p.IsArchived).IsRequired();
+        builder.HasIndex(p => p.IsArchived);
+
         builder.HasMany(p => p.Members)
             .WithOne()
             .HasForeignKey(m => m.ProjectUuid)

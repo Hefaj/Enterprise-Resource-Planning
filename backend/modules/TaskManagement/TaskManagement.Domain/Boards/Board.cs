@@ -41,6 +41,14 @@ public sealed class Board : AggregateRoot
     /// <summary>Tablica otwierana z menu projektu, gdy nikt nie wskazał innej.</summary>
     public bool IsDefault { get; private set; }
 
+    /// <summary>Oś grupowania wierszy (BRD-006) — <see cref="BoardSwimlaneMode.None"/> domyślnie,
+    /// zgodnie ze stanem sprzed fazy 6.</summary>
+    public BoardSwimlaneMode SwimlaneMode { get; private set; } = BoardSwimlaneMode.None;
+
+    /// <summary>Kod pola niestandardowego — ustawiony wyłącznie razem z
+    /// <see cref="BoardSwimlaneMode.CustomField"/>, w każdym innym trybie <c>null</c>.</summary>
+    public string? SwimlaneFieldCode { get; private set; }
+
     public IReadOnlyList<BoardColumn> Columns => _columns.AsReadOnly();
 
     public static Board CreateWithUuid(
@@ -69,7 +77,7 @@ public sealed class Board : AggregateRoot
     /// <b>nieprzypisany do żadnej</b> kolumny jest dozwolony i oznacza „zgłoszenie znika
     /// z tablicy” — tak działa kolumna „gotowe” schowana za filtrem.
     /// </remarks>
-    public BoardColumn AddColumn(Guid uuid, string name, int orderNo, IEnumerable<Guid> stateUuids)
+    public BoardColumn AddColumn(Guid uuid, string name, int orderNo, IEnumerable<Guid> stateUuids, int? wipLimit = null)
     {
         ArgumentNullException.ThrowIfNull(stateUuids);
 
@@ -90,9 +98,39 @@ public sealed class Board : AggregateRoot
                 $"Stan {taken} jest już zmapowany na inną kolumnę tej tablicy.");
         }
 
-        var column = BoardColumn.Create(uuid, Uuid, ValidateName(name), orderNo, states);
+        if (wipLimit is < 1)
+        {
+            throw new DomainException(
+                "taskmgmt.board_column_wip_limit_invalid",
+                "Limit WIP musi być dodatni.");
+        }
+
+        var column = BoardColumn.Create(uuid, Uuid, ValidateName(name), orderNo, states, wipLimit);
         _columns.Add(column);
         return column;
+    }
+
+    /// <summary>Ustawia oś grupowania wierszy (BRD-006). Kod pola wolno podać wyłącznie razem
+    /// z <see cref="BoardSwimlaneMode.CustomField"/> — w każdym innym trybie źródło grupowania
+    /// wynika z samego trybu, drugie pole byłoby drugim źródłem prawdy.</summary>
+    public void SetSwimlane(BoardSwimlaneMode mode, string? fieldCode)
+    {
+        if (mode == BoardSwimlaneMode.CustomField && string.IsNullOrWhiteSpace(fieldCode))
+        {
+            throw new DomainException(
+                "taskmgmt.board_swimlane_field_code_required",
+                "Grupowanie po polu niestandardowym wymaga wskazania kodu pola.");
+        }
+
+        if (mode != BoardSwimlaneMode.CustomField && fieldCode is not null)
+        {
+            throw new DomainException(
+                "taskmgmt.board_swimlane_field_code_unexpected",
+                "Kod pola ma sens wyłącznie przy grupowaniu po polu niestandardowym.");
+        }
+
+        SwimlaneMode = mode;
+        SwimlaneFieldCode = mode == BoardSwimlaneMode.CustomField ? fieldCode!.Trim() : null;
     }
 
     public void RemoveColumn(Guid columnUuid)
@@ -144,12 +182,13 @@ public sealed class BoardColumn : Entity
     {
     }
 
-    private BoardColumn(Guid uuid, Guid boardUuid, string name, int orderNo, IEnumerable<Guid> stateUuids)
+    private BoardColumn(Guid uuid, Guid boardUuid, string name, int orderNo, IEnumerable<Guid> stateUuids, int? wipLimit)
         : base(uuid)
     {
         BoardUuid = boardUuid;
         Name = name;
         OrderNo = orderNo;
+        WipLimit = wipLimit;
         _stateUuids.AddRange(stateUuids);
     }
 
@@ -159,10 +198,15 @@ public sealed class BoardColumn : Entity
 
     public int OrderNo { get; private set; }
 
+    /// <summary>Limit WIP (BRD-007) — sygnał wyłącznie wizualny, przekroczenie NIE blokuje
+    /// upuszczenia karty. <c>null</c> znaczy „bez limitu", stan normalny, nie brak konfiguracji.</summary>
+    public int? WipLimit { get; private set; }
+
     public IReadOnlyList<Guid> StateUuids => _stateUuids.AsReadOnly();
 
-    internal static BoardColumn Create(Guid uuid, Guid boardUuid, string name, int orderNo, IEnumerable<Guid> stateUuids)
-        => new(uuid, boardUuid, name, orderNo, stateUuids);
+    internal static BoardColumn Create(
+        Guid uuid, Guid boardUuid, string name, int orderNo, IEnumerable<Guid> stateUuids, int? wipLimit = null)
+        => new(uuid, boardUuid, name, orderNo, stateUuids, wipLimit);
 
     public bool Handles(Guid stateUuid) => _stateUuids.Contains(stateUuid);
 }

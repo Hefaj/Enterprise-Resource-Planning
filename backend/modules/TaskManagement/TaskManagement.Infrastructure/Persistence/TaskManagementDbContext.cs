@@ -7,7 +7,11 @@ using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Infrastructure.Persistence.Graph;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Resolutions;
+using TaskManagement.Domain.Sprints;
+using TaskManagement.Domain.Tags;
 using TaskManagement.Domain.Workflow;
+using TaskManagement.Domain.WorkTypes;
 
 namespace TaskManagement.Infrastructure.Persistence;
 
@@ -50,9 +54,19 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     /// karty, nie przy założeniu zgłoszenia (<c>docs/backend/task-management.md</c> §7.1).</summary>
     public DbSet<BoardCard> BoardCards => Set<BoardCard>();
 
+    public DbSet<Sprint> Sprints => Set<Sprint>();
+
+    public DbSet<Tag> Tags => Set<Tag>();
+
+    public DbSet<Resolution> Resolutions => Set<Resolution>();
+
     public DbSet<IssueAttachment> IssueAttachments => Set<IssueAttachment>();
 
     public DbSet<IssueComment> IssueComments => Set<IssueComment>();
+
+    public DbSet<IssueWorkLog> IssueWorkLogs => Set<IssueWorkLog>();
+
+    public DbSet<WorkType> WorkTypes => Set<WorkType>();
 
     /// <summary>Krawędzie grafu powiązań. Hierarchia (<c>issue.parent_uuid</c>) mieszka OSOBNO
     /// i to jest celowe — rodzic ma inne reguły niż link
@@ -60,6 +74,11 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     public DbSet<IssueLink> IssueLinks => Set<IssueLink>();
 
     public DbSet<IssueWatcher> IssueWatchers => Set<IssueWatcher>();
+
+    public DbSet<IssueTag> IssueTags => Set<IssueTag>();
+
+    /// <summary>Linki zewnętrzne (API-005) — repozytorium, PR, CI.</summary>
+    public DbSet<IssueExternalLink> IssueExternalLinks => Set<IssueExternalLink>();
 
     /// <summary>Historia zmian zgłoszeń — tylko do dopisywania i do czytania w karcie.</summary>
     public DbSet<IssueActivity> IssueActivities => Set<IssueActivity>();
@@ -93,6 +112,7 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
         // Typy bezkluczowe pod wyniki rekurencyjnych CTE — bez tabeli i bez śladu w migracjach.
         modelBuilder.Entity<GraphEdgeRow>().HasNoKey().ToView(null);
         modelBuilder.Entity<SubtreeRow>().HasNoKey().ToView(null);
+        modelBuilder.Entity<DeliveryHoursRow>().HasNoKey().ToView(null);
 
         modelBuilder.ApplyConfiguration(new JobConfiguration());
         modelBuilder.ApplyConfiguration(new JobItemConfiguration());

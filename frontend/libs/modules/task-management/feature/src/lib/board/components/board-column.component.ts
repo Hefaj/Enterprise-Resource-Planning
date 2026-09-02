@@ -30,8 +30,16 @@ import { BOARD_KEYS } from '../translation';
     >
       <div class="flex items-baseline justify-between gap-2 px-3 py-2">
         <span class="text-sm font-medium">{{ column.name | erpTranslate }}</span>
-        <span class="text-xs text-[var(--tui-text-tertiary)]">
-          {{ BOARD_KEYS.column.count | erpTranslate: { count: column.cards.length } }}
+        <span
+          class="text-xs"
+          [class.font-medium]="this.wipExceeded(column)"
+          [style.color]="this.wipExceeded(column) ? 'var(--tui-status-warning)' : 'var(--tui-text-tertiary)'"
+        >
+          @if (this.wipExceeded(column)) {
+            {{ BOARD_KEYS.column.wipExceeded | erpTranslate: { count: column.cards.length, limit: column.wipLimit } }}
+          } @else {
+            {{ BOARD_KEYS.column.count | erpTranslate: { count: column.cards.length } }}
+          }
         </span>
       </div>
 
@@ -73,6 +81,21 @@ export class BoardColumnComponent {
   /** Predykat CDK jest zwykłą funkcją, nie sygnałem — czytamy `enabled()` w momencie
    * najechania kursorem, czyli dokładnie wtedy, gdy pytanie jest zadawane. */
   protected readonly acceptDrop = (): boolean => this.enabled();
+
+  /**
+   * BRD-007 — sygnał wyłącznie wizualny, nigdy nie blokuje upuszczenia karty.
+   *
+   * <p><b>`!= null`, nie `!== undefined`</b> — backend serializuje brak limitu jako JSON
+   * `null`, nie przez pominięcie klucza. `null !== undefined` jest `true`, więc ścisłe
+   * porównanie do `undefined` przepuszczałoby `null` dalej, a `column.cards.length > null`
+   * dawałoby `true` dla każdej niepustej kolumny (`null` rzutuje się na `0`) — dokładnie ten
+   * sam błąd, co przy estymacie w `IssueTimeComponent` (TIME-002).</p>
+   */
+  protected wipExceeded(column: BoardColumnVM): boolean {
+    return (
+      column.wipLimit !== null && column.wipLimit !== undefined && column.cards.length > column.wipLimit
+    );
+  }
 
   /**
    * Konfiguracja `erp-issue-card`. `typeIcon`/`typeName` jadą wprost z `BoardCardDto`

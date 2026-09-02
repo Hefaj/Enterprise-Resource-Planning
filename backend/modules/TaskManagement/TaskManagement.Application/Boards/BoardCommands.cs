@@ -99,6 +99,9 @@ public sealed class BoardColumnInput
     public int OrderNo { get; set; }
 
     public List<Guid> StateUuids { get; set; } = [];
+
+    /// <summary>Limit WIP (BRD-007) — <c>null</c> znaczy „bez limitu".</summary>
+    public int? WipLimit { get; set; }
 }
 
 /// <summary>
@@ -161,8 +164,39 @@ public sealed class BoardSetColumnsCommandHandler : CommandHandler<BoardSetColum
                 column.Uuid == Guid.Empty ? Entity.NewUuid() : column.Uuid,
                 column.Name,
                 column.OrderNo,
-                column.StateUuids);
+                column.StateUuids,
+                column.WipLimit);
         }
+
+        return board.Uuid;
+    }
+}
+
+/// <summary>Ustawia oś grupowania wierszy tablicy (BRD-006).</summary>
+public sealed class BoardSetSwimlaneCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public BoardSwimlaneMode Mode { get; set; } = BoardSwimlaneMode.None;
+
+    /// <summary>Wymagane wyłącznie przy <see cref="BoardSwimlaneMode.CustomField"/>.</summary>
+    public string? FieldCode { get; set; }
+}
+
+public sealed class BoardSetSwimlaneCommandHandler : CommandHandler<BoardSetSwimlaneCommand, Guid>
+{
+    private readonly IBoardRepository _boards;
+
+    public BoardSetSwimlaneCommandHandler(IBoardRepository boards) => _boards = boards;
+
+    public override async Task<Guid> ExecuteAsync(BoardSetSwimlaneCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var board = await _boards.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Board), command.Uuid);
+
+        board.SetSwimlane(command.Mode, command.FieldCode);
 
         return board.Uuid;
     }
@@ -257,6 +291,116 @@ public sealed class BoardSetCardPositionCommandHandler : CommandHandler<BoardSet
     /// <summary>Rank sąsiada. Wskazanie samej przestawianej karty jako sąsiada traktujemy jak
     /// brak sąsiada — front bywa o pół ruchu do tyłu, a ta sytuacja nie jest błędem
     /// użytkownika.</summary>
+    private static string? RankOf(IReadOnlyList<BoardCard> cards, Guid? issueUuid, BoardCard moved)
+    {
+        if (issueUuid is not { } uuid || uuid == moved.IssueUuid)
+        {
+            return null;
+        }
+
+        return cards.FirstOrDefault(c => c.IssueUuid == uuid)?.Rank;
+    }
+}
+
+/// <summary>
+/// Przenosi kartę między backlogiem (<see cref="SprintUuid"/> puste) a sprintem — i przestawia
+/// ją w docelowej liście, w jednym ruchu (SPR-002).
+///
+/// <para>Backlog i sprint dzielą <b>ten sam mechanizm ranku</b>, co kolumny tablicy
+/// (<c>docs/backend/task-management.md</c> §7.2, SPR-002 AC1): to wciąż jeden <c>board_card.rank</c>
+/// na kartę, a front filtruje widok po przynależności do sprintu. Sąsiedzi w komendzie są więc
+/// zawsze z listy, do której karta właśnie trafia — tak samo jak przy przeciąganiu na tablicy
+/// kanbanowej.</para>
+/// </summary>
+public sealed class BoardSetCardSprintCommand : ICommand<Guid>, IAggregateCommand
+{
+    /// <summary>Uuid tablicy.</summary>
+    public Guid Uuid { get; set; }
+
+    public Guid IssueUuid { get; set; }
+
+    /// <summary>Puste = karta wraca do backlogu.</summary>
+    public Guid? SprintUuid { get; set; }
+
+    public Guid? AfterIssueUuid { get; set; }
+
+    public Guid? BeforeIssueUuid { get; set; }
+}
+
+public sealed class BoardSetCardSprintCommandHandler : CommandHandler<BoardSetCardSprintCommand, Guid>
+{
+    private readonly IBoardRepository _boards;
+    private readonly IBoardCardRepository _cards;
+    private readonly IIssueRepository _issues;
+    private readonly ISprintRepository _sprints;
+    private readonly IClock _clock;
+
+    public BoardSetCardSprintCommandHandler(
+        IBoardRepository boards,
+        IBoardCardRepository cards,
+        IIssueRepository issues,
+        ISprintRepository sprints,
+        IClock clock)
+    {
+        _boards = boards;
+        _cards = cards;
+        _issues = issues;
+        _sprints = sprints;
+        _clock = clock;
+    }
+
+    public override async Task<Guid> ExecuteAsync(BoardSetCardSprintCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var board = await _boards.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Board), command.Uuid);
+
+        var issue = await _issues.FindAsync(command.IssueUuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Domain.Issues.Issue), command.IssueUuid);
+
+        if (issue.ProjectUuid != board.ProjectUuid)
+        {
+            throw new DomainException(
+                "taskmgmt.board_card_other_project",
+                "Zgłoszenie nie należy do projektu tej tablicy — ktoś przeniósł je w międzyczasie.");
+        }
+
+        if (command.SprintUuid is { } sprintUuid)
+        {
+            var sprint = await _sprints.FindAsync(sprintUuid, ct).ConfigureAwait(false)
+                ?? throw new AggregateNotFoundException(nameof(Domain.Sprints.Sprint), sprintUuid);
+
+            if (sprint.BoardUuid != board.Uuid)
+            {
+                throw new DomainException(
+                    "taskmgmt.sprint_other_board",
+                    "Sprint nie należy do tej tablicy.");
+            }
+
+            if (sprint.Status == Domain.Sprints.SprintStatus.Closed)
+            {
+                throw new DomainException(
+                    "taskmgmt.sprint_closed",
+                    "Zamknięty sprint jest tylko do odczytu — jego skład jest zamrożony na potrzeby raportu.");
+            }
+        }
+
+        var cards = await _cards.MaterializeBoardAsync(board.Uuid, _clock.UtcNow, ct).ConfigureAwait(false);
+
+        var card = cards.FirstOrDefault(c => c.IssueUuid == command.IssueUuid)
+            ?? throw new AggregateNotFoundException(nameof(BoardCard), command.IssueUuid);
+
+        card.SetSprint(command.SprintUuid, _clock.UtcNow);
+
+        var previousRank = RankOf(cards, command.AfterIssueUuid, card);
+        var nextRank = RankOf(cards, command.BeforeIssueUuid, card);
+
+        card.SetPosition(previousRank, nextRank, _clock.UtcNow);
+
+        return board.Uuid;
+    }
+
     private static string? RankOf(IReadOnlyList<BoardCard> cards, Guid? issueUuid, BoardCard moved)
     {
         if (issueUuid is not { } uuid || uuid == moved.IssueUuid)

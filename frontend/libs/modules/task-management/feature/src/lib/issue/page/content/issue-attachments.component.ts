@@ -18,6 +18,7 @@ import { TuiFileLike, TuiFiles } from '@taiga-ui/kit';
 import {
   ErpButtonComponent,
   ErpButtonConfig,
+  ErpConfirmDialogService,
   ErpGroupCardComponent,
   ErpGroupCardConfig,
   ErpMediaPreviewItem,
@@ -30,6 +31,7 @@ import {
   IssueAttachmentContentService,
   IssueAttachmentDto,
   IssueAttachmentService,
+  TaskManagementIssueOrchestrator,
 } from '@erp/task-management/data-access';
 
 import { ISSUE_KEYS } from '../../translation';
@@ -51,10 +53,9 @@ interface IssueAttachmentRow {
  * powodu: transfer trwa tyle, ile łącze użytkownika, więc schowany za przyciskiem zamieniłby
  * kartę w zawieszony ekran bez informacji zwrotnej.</p>
  *
- * <p><b>Usuwania nie ma i nie jest to przeoczenie.</b> Backend nie wystawia komendy kasującej
- * załącznik: plik należy do zgłoszenia i znika razem z nim, w tej samej transakcji
- * (<c>IssueAttachment</c>, `docs/backend/media-storage.md` §4c). Przycisk „usuń” musiałby więc
- * wołać endpoint, którego nie ma — dokłada się go razem z komendą, nie wcześniej.</p>
+ * <p><b>Usunięcie pojedynczego załącznika (ATT-002)</b> kasuje wiersz od razu, a bajty w magazynie
+ * sprząta konsument zdarzenia <c>ArtifactDeletionRequested</c> po zatwierdzeniu transakcji —
+ * nigdy gołe wywołanie <c>DeleteAsync</c> z tego miejsca (`docs/backend/media-storage.md` §4b).</p>
  */
 @Component({
   selector: 'erp-task-management-issue-attachments',
@@ -118,6 +119,9 @@ interface IssueAttachmentRow {
               </div>
 
               <erp-button [config]="downloadButton(row.dto)" />
+              @if (canEdit()) {
+                <erp-button [config]="removeButton(row.dto)" />
+              }
             </li>
             }
           </ul>
@@ -140,6 +144,8 @@ export class IssueAttachmentsComponent {
   private readonly _content = inject(IssueAttachmentContentService);
   private readonly _preview = inject(ErpMediaPreviewService);
   private readonly _toasts = inject(ErpToastService);
+  private readonly _issues = inject(TaskManagementIssueOrchestrator);
+  private readonly _confirm = inject(ErpConfirmDialogService);
 
   protected readonly filesControl = new FormControl<TuiFileLike | readonly TuiFileLike[] | null>(null);
 
@@ -208,6 +214,33 @@ export class IssueAttachmentsComponent {
         }
       },
     };
+  }
+
+  /** ATT-002 — usunięcie idzie przez prefiks postojowy/outbox po stronie backendu, nie przez
+   * gołe kasowanie w magazynie; tutaj tylko potwierdzenie i wywołanie komendy. */
+  protected removeButton(dto: IssueAttachmentDto): ErpButtonConfig {
+    return {
+      label: '',
+      appearance: 'flat',
+      size: 'xs',
+      iconStart: '@tui.trash',
+      fn: (): Promise<void> => this._removeAsync(dto.uuid),
+    };
+  }
+
+  private async _removeAsync(attachmentUuid: string): Promise<void> {
+    const confirmed = await this._confirm.confirmAsync({
+      title: ISSUE_KEYS.detail.attachments.removeConfirmTitle,
+      message: ISSUE_KEYS.detail.attachments.removeConfirmMessage,
+      confirmLabel: ISSUE_KEYS.detail.attachments.remove,
+      appearance: 'destructive',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    await this._issues.removeAttachmentAsync({ uuid: attachmentUuid });
   }
 
   /**

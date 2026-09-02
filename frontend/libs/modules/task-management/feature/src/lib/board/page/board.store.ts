@@ -1,5 +1,7 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 
+import { TranslocoService } from '@jsverse/transloco';
+
 import { ErpOptimisticStore } from '@erp/shared/data-access';
 import { ErpConfirmDialogService, ErpModalService, ErpToastService } from '@erp/shared/ui';
 import {
@@ -7,6 +9,7 @@ import {
   findMissingRequiredFieldCodes,
   BoardColumnDto,
   BoardSetCardPositionCommand,
+  BoardSetSwimlaneCommand,
   IssueGraphService,
   IssueSetStateCommand,
   ProjectWorkflowService,
@@ -15,7 +18,14 @@ import {
   openBlockersOf,
   openChildrenOf,
 } from '@erp/task-management/data-access';
-import { WORKFLOW_REQUIRED_FIELDS_MODAL_ID, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
+import {
+  BOARD_SWIMLANE_MODE,
+  BoardSwimlaneModeValue,
+  ISSUE_PRIORITY,
+  WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
+  WORKFLOW_STATE_CATEGORY,
+} from '@erp/task-management/util';
+import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { BOARD_KEYS } from '../translation';
 import {
@@ -23,12 +33,24 @@ import {
   WorkflowRequiredFieldsMetadata,
 } from '../../issue/modal/workflow-required-fields';
 
+/** Wiersz grupowania (BRD-006) — kolumny wewnątrz swimlane'u to te same kolumny tablicy,
+ * tylko z kartami zawężonymi do klucza tego wiersza. */
+export interface SwimlaneVM {
+  readonly key: string;
+  readonly label: string;
+  readonly columns: readonly BoardColumnVM[];
+}
+
+const UNASSIGNED_SWIMLANE_KEY = '__unassigned__';
+
 /** Kolumna razem z kartami, które w niej leżą — model dla widoku, nie dla serwera. */
 export interface BoardColumnVM {
   readonly uuid: string;
   readonly name: string;
   readonly stateUuids: readonly string[];
   readonly cards: readonly BoardCardVM[];
+  /** Limit WIP (BRD-007) — sygnał wyłącznie wizualny, `undefined` znaczy „bez limitu". */
+  readonly wipLimit: number | undefined;
 }
 
 /** Optymistyczne przesunięcie: karta narysowana tam, gdzie ją upuszczono, zanim serwer
@@ -36,6 +58,7 @@ export interface BoardColumnVM {
  * (`docs/backend/task-management.md` §7.2), więc front nie ma go po co udawać. */
 interface PendingMove {
   readonly cardUuid: string;
+  readonly swimlaneKey: string;
   readonly columnUuid: string;
   readonly index: number;
 }
@@ -64,6 +87,7 @@ export class BoardStore {
   private readonly _workflow = inject(ProjectWorkflowService);
   private readonly _optimistic = inject(ErpOptimisticStore);
   private readonly _toast = inject(ErpToastService);
+  private readonly _transloco = inject(TranslocoService);
   private readonly _graphService = inject(IssueGraphService);
   private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _modals = inject(ErpModalService);
@@ -112,9 +136,138 @@ export class BoardStore {
           name: column.name,
           stateUuids: column.stateUuids,
           cards: own,
+          wipLimit: column.wipLimit,
         };
       });
   });
+
+  /**
+   * Wiersze grupowania (BRD-006) nad tymi samymi kolumnami — bez drugiego mechanizmu ranku
+   * (AC1): każdy wiersz to te same {@link columns}, tylko z kartami zawężonymi do jego klucza,
+   * więc kolejność kart w obrębie wiersza to wciąż globalny `(rank, uuid)` kolumny.
+   *
+   * <p>Karta bez wartości grupującej (brak przypisanego, brak epiku, brak wartości pola) trafia
+   * do jawnego wiersza „Bez przypisania" (AC2), nie znika. Bez skonfigurowanego grupowania
+   * zwracany jest jeden wiersz bez nagłówka — komponent renderuje wtedy płaskie kolumny, jak
+   * w fazie 2.</p>
+   */
+  public readonly swimlanes = computed<SwimlaneVM[]>(() => {
+    const board = this._boards.board();
+    const columns = this.columns();
+
+    if (!board || board.swimlaneMode === BOARD_SWIMLANE_MODE.None) {
+      return [{ key: UNASSIGNED_SWIMLANE_KEY, label: '', columns }];
+    }
+
+    // Grupowanie idzie od SUROWYCH kart, nie od `columns()`: nakładka optymistyczna musi
+    // wstawić przesuwaną kartę do właściwego SWIMLANE'U i kolumny razem, jednym splice'em —
+    // inaczej indeks upuszczenia (liczony przez CDK w obrębie listy JEDNEGO swimlane'u) trafiłby
+    // w pozycję z listy złożonej ze wszystkich swimlane'ów naraz (§7.2, ale dla drugiego wymiaru).
+    const mode = board.swimlaneMode as BoardSwimlaneModeValue;
+    const cards = this._boards.cards();
+    const pending = this._optimistic.project<PendingMove>(BOARD_POSITION_SCOPE, board.uuid, undefined);
+    const moved = pending ? cards.find((card) => card.uuid === pending.cardUuid) : undefined;
+    const keyOf = (card: BoardCardVM): string => this._swimlaneKeyOf(mode, card);
+
+    const sortedColumns = [...board.columns].sort((left, right) => left.orderNo - right.orderNo);
+
+    const keys = new Set<string>();
+    for (const card of cards) {
+      keys.add(keyOf(card));
+    }
+
+    if (keys.size === 0) {
+      keys.add(UNASSIGNED_SWIMLANE_KEY);
+    }
+
+    return [...keys]
+      .sort((a, b) => {
+        if (a === UNASSIGNED_SWIMLANE_KEY) return 1;
+        if (b === UNASSIGNED_SWIMLANE_KEY) return -1;
+        return a.localeCompare(b);
+      })
+      .map((swimlaneKey) => ({
+        key: swimlaneKey,
+        label: this._swimlaneLabel(mode, swimlaneKey, cards),
+        columns: sortedColumns.map((column) => {
+          const own = cards.filter(
+            (card) =>
+              card.uuid !== moved?.uuid &&
+              column.stateUuids.includes(card.stateUuid) &&
+              keyOf(card) === swimlaneKey,
+          );
+
+          if (moved && pending?.swimlaneKey === swimlaneKey && pending?.columnUuid === column.uuid) {
+            own.splice(Math.min(pending.index, own.length), 0, moved);
+          }
+
+          return {
+            uuid: column.uuid,
+            name: column.name,
+            stateUuids: column.stateUuids,
+            cards: own,
+            wipLimit: column.wipLimit,
+          };
+        }),
+      }));
+  });
+
+  /** Klucz grupowania karty — pusty/brakujący zawsze mapuje na jawny wiersz „Bez przypisania". */
+  private _swimlaneKeyOf(mode: BoardSwimlaneModeValue, card: BoardCardVM): string {
+    switch (mode) {
+      case BOARD_SWIMLANE_MODE.Assignee:
+        return card.assigneeUuid || UNASSIGNED_SWIMLANE_KEY;
+      case BOARD_SWIMLANE_MODE.Epic:
+        return card.parentUuid || UNASSIGNED_SWIMLANE_KEY;
+      case BOARD_SWIMLANE_MODE.Priority:
+        return String(card.priority);
+      case BOARD_SWIMLANE_MODE.CustomField:
+        return card.swimlaneFieldValue?.trim() || UNASSIGNED_SWIMLANE_KEY;
+      default:
+        return UNASSIGNED_SWIMLANE_KEY;
+    }
+  }
+
+  private _swimlaneLabel(mode: BoardSwimlaneModeValue, key: string, cards: readonly BoardCardVM[]): string {
+    if (key === UNASSIGNED_SWIMLANE_KEY) {
+      return this._transloco.translate(BOARD_KEYS.swimlane.unassigned);
+    }
+
+    switch (mode) {
+      case BOARD_SWIMLANE_MODE.Assignee: {
+        const card = cards.find((c) => c.assigneeUuid === key);
+        return card?.assignee?.displayName ?? key;
+      }
+      case BOARD_SWIMLANE_MODE.Epic: {
+        const card = cards.find((c) => c.parentUuid === key);
+        return card?.parentTitle ?? key;
+      }
+      case BOARD_SWIMLANE_MODE.Priority:
+        return this._transloco.translate(this._priorityLabelKey(Number(key)));
+      default:
+        return key;
+    }
+  }
+
+  private _priorityLabelKey(priority: number): string {
+    switch (priority) {
+      case ISSUE_PRIORITY.Critical:
+        return TASKMANAGEMENT_KEYS.priority.critical;
+      case ISSUE_PRIORITY.High:
+        return TASKMANAGEMENT_KEYS.priority.high;
+      case ISSUE_PRIORITY.Low:
+        return TASKMANAGEMENT_KEYS.priority.low;
+      case ISSUE_PRIORITY.Lowest:
+        return TASKMANAGEMENT_KEYS.priority.lowest;
+      default:
+        return TASKMANAGEMENT_KEYS.priority.normal;
+    }
+  }
+
+  /** Ustawia oś grupowania wierszy (BRD-006). */
+  public setSwimlaneAsync(command: BoardSetSwimlaneCommand, queueId?: string): Promise<string> {
+    return this._boards.setSwimlaneAsync(command, queueId);
+  }
 
   /**
    * Kolumny, do których wolno upuścić chwyconą kartę.
@@ -201,7 +354,7 @@ export class BoardStore {
    * a przeciągnięcie w pionie — przestawienie karty. Jedna komenda robiąca oba naraz
    * dawałaby drugie źródło prawdy o kolumnie.</p>
    */
-  public async dropAsync(columnUuid: string, cardUuid: string, index: number): Promise<void> {
+  public async dropAsync(swimlaneKey: string, columnUuid: string, cardUuid: string, index: number): Promise<void> {
     const board = this._boards.board();
     const card = this._boards.cards().find((item) => item.uuid === cardUuid);
     const column = board?.columns.find((item) => item.uuid === columnUuid);
@@ -236,8 +389,10 @@ export class BoardStore {
       }
     }
 
-    // Sąsiedzi liczeni z aktualnego (jeszcze bez nakładki tego ruchu) stanu kolumny.
-    const { afterIssueUuid, beforeIssueUuid } = this._neighbours(columnUuid, cardUuid, index);
+    // Sąsiedzi liczeni z aktualnego (jeszcze bez nakładki tego ruchu) stanu kolumny, W OBRĘBIE
+    // tego samego swimlane'u (BRD-006 AC1) — sąsiad z innego wiersza grupowania nie jest
+    // sąsiadem w sensie tej operacji, mimo że w globalnym łańcuchu ranku mógłby nim być.
+    const { afterIssueUuid, beforeIssueUuid } = this._neighbours(swimlaneKey, columnUuid, cardUuid, index);
     const boardUuid = board.uuid;
 
     // Optymistyczna nakładka pozycji (`docs/frontend/optimistic-updates.md`) — karta ląduje
@@ -247,7 +402,7 @@ export class BoardStore {
     await this._optimistic.runAsync<PendingMove>({
       scope: BOARD_POSITION_SCOPE,
       key: boardUuid,
-      patch: () => ({ cardUuid, columnUuid, index }),
+      patch: () => ({ cardUuid, swimlaneKey, columnUuid, index }),
       dispatchAsync: async () => {
         if (targetStateUuid !== card.stateUuid) {
           // Pole nazywa się `stateUuid`, nie `toStateUuid` — wygenerowany interfejs ma indeks
@@ -294,11 +449,13 @@ export class BoardStore {
    * serwer z ich bieżących wartości, w transakcji (`docs/backend/task-management.md` §7.2).
    */
   private _neighbours(
+    swimlaneKey: string,
     columnUuid: string,
     cardUuid: string,
     index: number,
   ): { afterIssueUuid: string | undefined; beforeIssueUuid: string | undefined } {
-    const cards = (this.columns().find((column) => column.uuid === columnUuid)?.cards ?? []).filter(
+    const swimlaneColumns = this.swimlanes().find((lane) => lane.key === swimlaneKey)?.columns ?? [];
+    const cards = (swimlaneColumns.find((column) => column.uuid === columnUuid)?.cards ?? []).filter(
       (card) => card.uuid !== cardUuid,
     );
 
@@ -336,14 +493,22 @@ export class BoardStore {
     await this._issues.loadAsync([issueUuid], {});
     const issue = this._issues.getOne(issueUuid)();
 
-    const missing = findMissingRequiredFieldCodes(transition, issue?.customFields);
+    // `resolution` (ISS-007) jest polem pierwszej klasy (`Issue.resolutionUuid`), nie pozycją
+    // w `customFields` — dopisywany do tej samej mapy tylko po to, żeby jedna, wspólna funkcja
+    // `findMissingRequiredFieldCodes` mogła sprawdzić oba rodzaje pól tym samym warunkiem.
+    const fieldsWithResolution = { ...issue?.customFields, resolution: issue?.resolutionUuid ?? '' };
+    const missing = findMissingRequiredFieldCodes(transition, fieldsWithResolution);
     if (missing.length === 0) {
       return true;
     }
 
     const ref = await this._modals.open<WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata>(
       WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
-      { issueUuid, values: { ...issue?.customFields } } as WorkflowRequiredFieldsCommand,
+      {
+        issueUuid,
+        values: { ...issue?.customFields },
+        resolutionUuid: issue?.resolutionUuid,
+      } as WorkflowRequiredFieldsCommand,
       { projectUuid, missingFieldCodes: missing },
     );
 

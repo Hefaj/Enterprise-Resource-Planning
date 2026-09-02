@@ -31,6 +31,18 @@
     "loading": "Loading the project…",
     "notFound": "Project not found, or you have no access to it.",
     "back": "Back",
+    "archivedBadge": "Archived",
+    "editCode": "Change prefix",
+    "codePlaceholder": "e.g. MKT",
+    "save": "Save",
+    "cancel": "Cancel",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveConfirm": {
+      "title": "Archive this project?",
+      "message": "An archived project is read-only and disappears from default lists and from the issue-create picker. Links to its issues will keep working.",
+      "confirm": "Archive"
+    },
     "fields": {
       "title": "Custom fields",
       "scheme": {

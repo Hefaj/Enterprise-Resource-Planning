@@ -15,15 +15,18 @@ public sealed class IssueBatchValidator : IBatchValidator
     private readonly IssueParentCycleRule _parentCycle;
     private readonly IssueParentCategoryRule _parentCategory;
     private readonly IssueLinkCycleRule _linkCycle;
+    private readonly IssueTargetProjectMustExistRule _targetProjectMustExist;
 
     public IssueBatchValidator(
         IssueParentCycleRule parentCycle,
         IssueParentCategoryRule parentCategory,
-        IssueLinkCycleRule linkCycle)
+        IssueLinkCycleRule linkCycle,
+        IssueTargetProjectMustExistRule targetProjectMustExist)
     {
         _parentCycle = parentCycle;
         _parentCategory = parentCategory;
         _linkCycle = linkCycle;
+        _targetProjectMustExist = targetProjectMustExist;
     }
 
     /// <summary>Pre-check masowej zmiany rodzica: żadna z krawędzi — ani osobno, ani łącznie
@@ -70,6 +73,29 @@ public sealed class IssueBatchValidator : IBatchValidator
 
         await _linkCycle
             .ExecuteAsync(items, i => i.SourceUuid, tracker, cancellationToken)
+            .ConfigureAwait(false);
+
+        return tracker;
+    }
+
+    /// <summary>Pre-check masowego przeniesienia projektu — jedna reguła: projekt docelowy musi
+    /// istnieć. Reszta (typ zgłoszenia w schemacie docelowym, schemat pól) wymaga wczytania
+    /// poszczególnych zgłoszeń i zostaje w handlerze jako druga linia obrony
+    /// (`docs/backend/batch-validation.md`).</summary>
+    public async Task<ValidationTracker> ValidateMoveToProjectAsync(
+        IReadOnlyList<BatchTarget<IssueSetProjectCommand>> targets,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+
+        var tracker = new ValidationTracker();
+
+        var items = targets
+            .Select(t => new IssueMoveToProjectTarget(t.AggregateUuid, t.Command.TargetProjectUuid))
+            .ToList();
+
+        await _targetProjectMustExist
+            .ExecuteAsync(items, i => i.IssueUuid, tracker, cancellationToken)
             .ConfigureAwait(false);
 
         return tracker;

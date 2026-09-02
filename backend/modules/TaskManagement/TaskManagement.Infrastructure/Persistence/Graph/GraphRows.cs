@@ -30,3 +30,22 @@ public sealed class SubtreeRow
 
     public Guid RootUuid { get; set; }
 }
+
+/// <summary>Wiersz rozliczenia godzin po łańcuchu <c>Delivers</c> (TIME-004) — jedno zgłoszenie
+/// wykonawcze z sumą zalogowanych minut i informacją, czy realizuje też inne zlecenie.</summary>
+public sealed class DeliveryHoursRow
+{
+    public Guid ExecutionUuid { get; set; }
+
+    public string ExecutionIssueKey { get; set; } = string.Empty;
+
+    public Guid ProjectUuid { get; set; }
+
+    public string ProjectCode { get; set; } = string.Empty;
+
+    public string ProjectName { get; set; } = string.Empty;
+
+    public int Minutes { get; set; }
+
+    public int SharedWithOtherRequestsCount { get; set; }
+}

@@ -294,8 +294,13 @@ export class IssueActivityComponent {
       parentUuid: comment.parentUuid,
     }));
 
+    // TIME-001: wpisy czasu wchodzą do strumienia jako filtr „Czas", nie „Historia" — mimo że
+    // backend zapisuje je w tej samej tabeli `issue_activity`, co każdą inną zmianę pola.
+    const isTimeEntry = (kind: number): boolean =>
+      kind === ISSUE_ACTIVITY_KIND.WorkLogAdded || kind === ISSUE_ACTIVITY_KIND.WorkLogRemoved;
+
     const historyEntries: ErpActivityStreamEntry[] = this._hist().map((entry) => ({
-      kind: 'history' as const,
+      kind: isTimeEntry(entry.kind) ? ('time' as const) : ('history' as const),
       uuid: entry.uuid,
       actorUuid: entry.actorUuid,
       occurredAt: new Date(entry.occurredAt),
@@ -323,6 +328,10 @@ export class IssueActivityComponent {
         return { sentenceKey: keys.kind.commentRemoved };
       case ISSUE_ACTIVITY_KIND.AttachmentAdded:
         return { sentenceKey: keys.kind.attachmentAdded, params: { value: entry.newValue ?? '' } };
+      case ISSUE_ACTIVITY_KIND.WorkLogAdded:
+        return { sentenceKey: keys.kind.workLogAdded, params: { value: entry.newValue ?? '' } };
+      case ISSUE_ACTIVITY_KIND.WorkLogRemoved:
+        return { sentenceKey: keys.kind.workLogRemoved, params: { value: entry.oldValue ?? '' } };
       default: {
         const fieldKey = entry.fieldCode ? (FIELD_KEYS[entry.fieldCode] ?? entry.fieldCode) : '';
         const field = this._transloco.translate(fieldKey);

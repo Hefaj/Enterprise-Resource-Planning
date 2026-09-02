@@ -98,6 +98,25 @@ public static class AggregateSignatures
     /// (<c>docs/backend/task-management.md</c> §7.4).</summary>
     public const string TaskManagementBoard = "taskmgmt.board";
 
+    /// <summary>Sprint — iteracja tablicy scrumowej (faza 6, SPR-001). Zamknięcie przenosi karty
+    /// (<see cref="TaskManagementBoard"/> osobno), ale zmiana statusu samego sprintu jedzie
+    /// tym kanałem, żeby backlog i tablica odświeżyły nagłówek iteracji.</summary>
+    public const string TaskManagementSprint = "taskmgmt.sprint";
+
+    /// <summary>Tag — byt, nie pole niestandardowe (faza 6, TAG-001).</summary>
+    public const string TaskManagementTag = "taskmgmt.tag";
+
+    /// <summary>Rozwiązanie zgłoszenia — słownik systemowy plus projektowy (faza 6, ISS-007).</summary>
+    public const string TaskManagementResolution = "taskmgmt.resolution";
+
+    /// <summary>Wpis czasu (faza 6, TIME-001). Osobny kanał od <see cref="TaskManagementIssue"/>,
+    /// wzorem <see cref="TaskManagementIssueComment"/> — zalogowanie czasu nie zmienia samego
+    /// zgłoszenia, a sekcja czasu na karcie ma dopisać cudzy wpis bez przeładowania.</summary>
+    public const string TaskManagementIssueWorkLog = "taskmgmt.issue_work_log";
+
+    /// <summary>Rodzaj pracy — słownik globalny plus projektowy (faza 6, TIME-001 AC2).</summary>
+    public const string TaskManagementWorkType = "taskmgmt.work_type";
+
     /// <summary>Wszystkie sygnatury agregatów — do walidacji przy starcie i w testach,
     /// żeby nikt nie rozgłosił zmiany na kanał, którego nikt nie słucha.</summary>
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -123,5 +142,10 @@ public static class AggregateSignatures
         TaskManagementProject,
         TaskManagementWorkflowScheme,
         TaskManagementBoard,
+        TaskManagementSprint,
+        TaskManagementTag,
+        TaskManagementResolution,
+        TaskManagementIssueWorkLog,
+        TaskManagementWorkType,
     };
 }

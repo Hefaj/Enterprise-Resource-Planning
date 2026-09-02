@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 
 import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig, erpUserPickerField } from '@erp/shared/ui';
@@ -7,7 +8,10 @@ import {
   ProjectFieldDto,
   ProjectVM,
   SearchIssueRequest,
+  TagVM,
+  TaskManagementIssueOrchestrator,
   TaskManagementProjectOrchestrator,
+  TaskManagementTagOrchestrator,
 } from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE, ISSUE_SCOPE, ISSUE_PRIORITY } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
@@ -43,10 +47,30 @@ interface FilterOption {
 export class IssueFilterComponent implements OnInit {
   private readonly _store = inject(IssueStore);
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
+  private readonly _tags = inject(TaskManagementTagOrchestrator);
+  private readonly _issues = inject(TaskManagementIssueOrchestrator);
+  private readonly _router = inject(Router);
   private readonly _transloco = inject(TranslocoService);
   private readonly _directory = inject(ERP_USER_DIRECTORY, { optional: true });
 
+  /** SRCH-004 AC1 — wygląda jak klucz zgłoszenia (`DEV-412`): prefiks projektu (jak
+   * `Project.ValidateCode` — bez myślnika, do 16 znaków) plus numer. */
+  private static readonly _issueKeyPattern = /^[A-Za-z][A-Za-z0-9]{0,15}-\d+$/;
+
   private readonly _projectUuids = signal<string[]>([]);
+
+  private readonly _tagUuids = signal<string[]>([]);
+
+  /** Tagi widoczne w kontekście filtra — globalne plus, gdy wybrano projekt, jego własne
+   * (TAG-001 AC1: filtr jest joinem po `issue_tag`, nie przeszukiwaniem jsonb). */
+  private readonly _tagOptions = computed<FilterOption[]>(() => {
+    const viewModels = this._tags.getViewModel()();
+
+    return this._tagUuids()
+      .map((uuid) => viewModels.get(uuid))
+      .filter((vm): vm is TagVM => vm !== undefined)
+      .map((tag) => ({ value: tag.uuid, label: tag.name }));
+  });
 
   private readonly _projectOptions = computed<FilterOption[]>(() => {
     const viewModels = this._projects.getViewModel()();
@@ -135,6 +159,15 @@ export class IssueFilterComponent implements OnInit {
           .setLabelKey('label')
           .setValueKey('value')
           .setStrategy('single'),
+      )
+      .addFormField('tagUuids', 'inputPicker', (f) =>
+        f
+          .setLabel(ISSUE_KEYS.filters.tags.label)
+          .setSearchPlaceholder(ISSUE_KEYS.filters.tags.placeholder)
+          .setItems(this._tagOptions)
+          .setLabelKey('label')
+          .setValueKey('value')
+          .setStrategy('multi'),
       );
 
       // Tryb drzewa jest FILTREM, nie przełącznikiem widoku: zmienia to, co serwer zwraca
@@ -152,8 +185,24 @@ export class IssueFilterComponent implements OnInit {
     return config;
   });
 
+  public constructor() {
+    effect(() => {
+      const projectUuid = this._store.filters().projectUuid;
+      untracked(() => void this._loadTagsAsync(projectUuid));
+    });
+  }
+
   public ngOnInit(): void {
     void this._loadProjects();
+  }
+
+  private async _loadTagsAsync(projectUuid: string | undefined): Promise<void> {
+    try {
+      const tags = await this._tags.searchTagsAsync({ projectUuid });
+      this._tagUuids.set(tags.map((tag) => tag.uuid));
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się pobrać listy tagów.', error);
+    }
   }
 
   /**
@@ -164,6 +213,21 @@ export class IssueFilterComponent implements OnInit {
    * wie, które klucze formularza są polami z profilu.</p>
    */
   public onSearch(values: Record<string, unknown>): void {
+    // SRCH-004 — „DEV-412” otwiera kartę wprost, zamiast pokazywać listę wyników filtra.
+    // `loadByKeyAsync` rozwiązuje też klucze historyczne (`issue.previous_keys`), więc link
+    // sprzed przeniesienia projektu trafia w to samo miejsce.
+    const text = values?.['text'];
+    const key = typeof text === 'string' ? text.trim() : '';
+
+    if (key && IssueFilterComponent._issueKeyPattern.test(key)) {
+      void this._jumpToKeyOrSearchAsync(key, values);
+      return;
+    }
+
+    this._search(values);
+  }
+
+  private _search(values: Record<string, unknown>): void {
     const codes = new Set(this._store.filterableFields().map((f) => f.code));
     const common: Record<string, unknown> = {};
     const customFields: { code: string; value: string }[] = [];
@@ -188,6 +252,20 @@ export class IssueFilterComponent implements OnInit {
       ...(common as Partial<SearchIssueRequest>),
       customFields: customFields.length > 0 ? customFields : undefined,
     });
+  }
+
+  /** Klucz nieistniejący (literówka, cudzy projekt) po prostu nie znajduje nic —
+   * `loadByKeyAsync` zwraca wtedy `undefined`, a wpisany tekst idzie normalnym wyszukiwaniem
+   * listy zamiast przekierowania donikąd. */
+  private async _jumpToKeyOrSearchAsync(key: string, values: Record<string, unknown>): Promise<void> {
+    const issue = await this._issues.loadByKeyAsync(key);
+
+    if (issue) {
+      await this._router.navigate(['/task-management/issue', issue.key]);
+      return;
+    }
+
+    this._search(values);
   }
 
   /** Pole filtra dobrane do typu danych: słownik i użytkownik dostają picker, reszta tekst.

@@ -4,7 +4,11 @@ using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
+using TaskManagement.Domain.Resolutions;
+using TaskManagement.Domain.Sprints;
+using TaskManagement.Domain.Tags;
 using TaskManagement.Domain.Workflow;
+using TaskManagement.Domain.WorkTypes;
 
 namespace TaskManagement.Application.Abstractions;
 
@@ -12,6 +16,15 @@ namespace TaskManagement.Application.Abstractions;
 public interface IIssueRepository
 {
     Task<Issue?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    /// <summary>Całe poddrzewo potomków (rekurencyjnie, nie tylko dzieci bezpośrednie) —
+    /// przenoszenie zgłoszenia do innego projektu przenosi je razem z nim (ISS-010 AC3).
+    ///
+    /// <para>Hierarchia dopuszcza dowolną głębokość między Epikiem a Podzadaniem (zabronione
+    /// są tylko skrajne role: Epik jako dziecko, Podzadanie jako rodzic), więc odczyt idzie
+    /// falami — kolejne zapytanie po dzieci bieżącej fali, aż fala będzie pusta — zamiast
+    /// zakładać z góry maksymalną głębokość.</para></summary>
+    Task<IReadOnlyList<Issue>> FindDescendantsAsync(Guid rootUuid, CancellationToken cancellationToken);
 
     void Add(Issue issue);
 }
@@ -24,6 +37,8 @@ public interface IIssueAttachmentRepository
     Task<IssueAttachment?> FindAsync(Guid uuid, CancellationToken cancellationToken);
 
     void Add(IssueAttachment attachment);
+
+    void Remove(IssueAttachment attachment);
 }
 
 /// <summary>Dostęp do komentarzy zgłoszenia po stronie zapisu. Odpowiedź potrzebuje rodzica
@@ -98,6 +113,61 @@ public interface IBoardCardRepository
         Guid boardUuid,
         DateTimeOffset now,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Karty niedokończonych zgłoszeń (stan poza kategorią <c>Done</c>) w danym sprincie,
+    /// śledzone.
+    ///
+    /// <para>Wywoływane wyłącznie z zamknięcia sprintu (SPR-003 AC1) — użytkownik decyduje
+    /// jawnie, dokąd trafiają: do backlogu (<c>SetSprint(null, …)</c>) albo do wskazanego
+    /// następnego sprintu. Ciche przeniesienie nie istnieje, bo nikt wtedy nie ufałby
+    /// raportowi z zamkniętej iteracji.</para>
+    /// </summary>
+    Task<IReadOnlyList<BoardCard>> FindUnfinishedInSprintAsync(Guid sprintUuid, CancellationToken cancellationToken);
+}
+
+/// <summary>Dostęp do agregatu <see cref="Sprint"/> po stronie zapisu.</summary>
+public interface ISprintRepository
+{
+    Task<Sprint?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(Sprint sprint);
+}
+
+/// <summary>Dostęp do agregatu <see cref="Tag"/> po stronie zapisu (TAG-001).</summary>
+public interface ITagRepository
+{
+    Task<Tag?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(Tag tag);
+}
+
+/// <summary>Dostęp do agregatu <see cref="Resolution"/> po stronie zapisu (ISS-007).</summary>
+public interface IResolutionRepository
+{
+    Task<Resolution?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(Resolution resolution);
+}
+
+/// <summary>Dostęp do agregatu <see cref="IssueWorkLog"/> po stronie zapisu (TIME-001).
+/// Osobno od <see cref="IIssueRepository"/>, wzorem <see cref="IIssueCommentRepository"/> —
+/// patrz uzasadnienie przy <see cref="IssueWorkLog"/>.</summary>
+public interface IIssueWorkLogRepository
+{
+    Task<IssueWorkLog?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(IssueWorkLog workLog);
+
+    void Remove(IssueWorkLog workLog);
+}
+
+/// <summary>Dostęp do agregatu <see cref="WorkType"/> po stronie zapisu (TIME-001 AC2).</summary>
+public interface IWorkTypeRepository
+{
+    Task<WorkType?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(WorkType workType);
 }
 
 /// <summary>Dostęp do agregatu <see cref="Project"/> po stronie zapisu — ładuje projekt
@@ -180,6 +250,12 @@ public interface IFieldUsageProbe
 public interface IProjectKeyCounterWriter
 {
     void Add(ProjectKeyCounter counter);
+
+    /// <summary>Podmienia prefiks licznika po zmianie kodu projektu (PRJ-003) — istniejące
+    /// zgłoszenia zachowują stare klucze, nowe dostają nowy prefiks. Osobna metoda, nie
+    /// wczytanie agregatu przez EF, z tego samego powodu co <see cref="IIssueKeyAllocator"/>:
+    /// licznik nie jest agregatem śledzonym przez change tracker.</summary>
+    Task SetPrefixAsync(Guid projectUuid, string prefix, CancellationToken cancellationToken);
 }
 
 /// <summary>

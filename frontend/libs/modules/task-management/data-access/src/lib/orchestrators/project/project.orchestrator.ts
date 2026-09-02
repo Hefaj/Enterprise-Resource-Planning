@@ -7,6 +7,8 @@ import { TASK_MANAGEMENT_JOB_COMMAND_KEYS } from '@erp/task-management/util';
 import {
   GetProjectRequest,
   ProjectDto,
+  ProjectSetArchivedCommand,
+  ProjectSetCodeCommand,
   ProjectSetFieldSchemeCommand,
   ProjectSetIssueTypeSchemeCommand,
   ProjectSetSlaCommand,
@@ -83,6 +85,22 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
   public setSlaAsync(command: ProjectSetSlaCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetSlaMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectSla,
+      queueId,
+    });
+  }
+
+  /** Zmienia prefiks klucza (PRJ-003) — istniejące zgłoszenia zachowują swój klucz. */
+  public setCodeAsync(command: ProjectSetCodeCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetCodeMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectCode,
+      queueId,
+    });
+  }
+
+  /** Archiwizuje/przywraca projekt (PRJ-004) — bez komendy usuwania, projektu się nie kasuje. */
+  public setArchivedAsync(command: ProjectSetArchivedCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetArchivedMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectArchived,
       queueId,
     });
   }

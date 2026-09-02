@@ -37,12 +37,15 @@ import {
   resolveIssueRichTextHtmlAsync,
 } from '@erp/task-management/data-access';
 import { ISSUE_PRIORITY, WORKFLOW_REQUIRED_FIELDS_MODAL_ID, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
-import { ErpFieldPanelComponent, ErpFieldPanelConfig, ErpIssueKeyComponent, TASKMANAGEMENT_KEYS, provideTaskManagementTranslations } from '@erp/task-management/ui';
+import { ErpFieldPanelComponent, ErpFieldPanelConfig, ErpIssueKeyComponent, TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
 import { IssueAttachmentsComponent } from './content/issue-attachments.component';
 import { IssueCustomFieldsComponent } from './content/issue-custom-fields.component';
+import { IssueExternalLinksComponent } from './content/issue-external-links.component';
 import { IssueLinksComponent } from './content/issue-links.component';
+import { IssueTagsComponent } from './content/issue-tags.component';
+import { IssueTimeComponent } from './content/issue-time.component';
 import { IssueActivityComponent } from './content/issue-activity.component';
 import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '../modal/workflow-required-fields';
 
@@ -74,9 +77,12 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
     IssueAttachmentsComponent,
     IssueActivityComponent,
     IssueCustomFieldsComponent,
+    IssueExternalLinksComponent,
     IssueLinksComponent,
+    IssueTagsComponent,
+    IssueTimeComponent,
   ],
-  providers: [provideIssueTranslations(), provideTaskManagementTranslations()],
+  providers: [provideIssueTranslations()],
   template: `
     @let issue = this.issue();
 
@@ -142,7 +148,21 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
               }
             </section>
 
+            <erp-task-management-issue-tags [issueUuid]="issue.uuid" [projectUuid]="issue.projectUuid" [tagUuids]="issue.tagUuids" />
+
+            <erp-task-management-issue-time
+              [issueUuid]="issue.uuid"
+              [projectUuid]="issue.projectUuid"
+              [estimateMinutes]="issue.estimateMinutes"
+            />
+
             <erp-task-management-issue-attachments [issueUuid]="issue.uuid" [canEdit]="canEdit()" />
+
+            <erp-task-management-issue-external-links
+              [issueUuid]="issue.uuid"
+              [links]="issue.externalLinks"
+              [canEdit]="canEdit()"
+            />
 
             <erp-task-management-issue-links [issueUuid]="issue.uuid" />
 
@@ -403,6 +423,13 @@ export class IssueDetailComponent {
       const issue = await this._orchestrator.loadByKeyAsync(key);
       this._uuid.set(issue?.uuid ?? null);
 
+      // Klucz z trasy może być HISTORYCZNY (zgłoszenie przeniesione do innego projektu dostało
+      // nowy klucz — ISS-010) — backend go rozwiązuje przezroczyście, ale pasek adresu i link
+      // w mailu mają zostać z aktualnym kluczem, nie ze starym (ISS-010 AC2).
+      if (issue && issue.key !== key) {
+        void this._router.navigate(['/task-management/issue', issue.key], { replaceUrl: true });
+      }
+
       // Schemat projektu jest potrzebny do przycisków przejść.
       if (issue?.projectUuid) {
         await this._workflow.loadAsync(issue.projectUuid);
@@ -498,14 +525,21 @@ export class IssueDetailComponent {
       return true;
     }
 
-    const missing = findMissingRequiredFieldCodes(transition, issue.customFields);
+    // `resolution` (ISS-007) jest polem pierwszej klasy — patrz komentarz w `BoardStore`
+    // (`_confirmRequiredFieldsAsync`), ten sam mechanizm.
+    const fieldsWithResolution = { ...issue.customFields, resolution: issue.resolutionUuid ?? '' };
+    const missing = findMissingRequiredFieldCodes(transition, fieldsWithResolution);
     if (missing.length === 0) {
       return true;
     }
 
     const ref = await this._modals.open<WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata>(
       WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
-      { issueUuid: issue.uuid, values: { ...issue.customFields } } as WorkflowRequiredFieldsCommand,
+      {
+        issueUuid: issue.uuid,
+        values: { ...issue.customFields },
+        resolutionUuid: issue.resolutionUuid,
+      } as WorkflowRequiredFieldsCommand,
       { projectUuid: issue.projectUuid, missingFieldCodes: missing },
     );
 

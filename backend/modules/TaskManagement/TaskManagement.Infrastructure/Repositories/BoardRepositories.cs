@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Abstractions;
 using TaskManagement.Domain.Boards;
+using TaskManagement.Domain.Workflow;
 using TaskManagement.Infrastructure.Persistence;
 
 namespace TaskManagement.Infrastructure.Repositories;
@@ -110,5 +111,21 @@ public sealed class BoardCardRepository : IBoardCardRepository
         var byRank = string.CompareOrdinal(left.Rank, right.Rank);
 
         return byRank != 0 ? byRank : left.Uuid.CompareTo(right.Uuid);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<BoardCard>> FindUnfinishedInSprintAsync(
+        Guid sprintUuid,
+        CancellationToken cancellationToken)
+    {
+        var cards = await (
+                from card in _dbContext.BoardCards
+                join issue in _dbContext.Issues on card.IssueUuid equals issue.Uuid
+                where card.SprintUuid == sprintUuid && issue.StateCategory != WorkflowStateCategory.Done
+                select card)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return cards;
     }
 }

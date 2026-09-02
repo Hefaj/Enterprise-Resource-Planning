@@ -1,11 +1,16 @@
 import { Route } from '@angular/router';
 import { ERP_PERMISSIONS, erpAuthGuard, erpPermissionGuard } from '@erp/shared/auth';
+import { provideTaskManagementTranslations } from '@erp/task-management/ui';
 
 export const remoteRoutes: Route[] = [
   {
     path: '',
     data: { breadcrumb: 'Zarządzanie pracą' },
     canActivate: [erpAuthGuard],
+    // Scope `taskManagement` (stany/priorytety/rodzaje) jest wspólny dla listy, tablicy, karty
+    // i konfiguracji projektu — cztery różne agregaty feature. Rejestracja tutaj, na trasie
+    // agregującej moduł, a nie w dekoratorze pojedynczego komponentu (docs/frontend/translations.md).
+    providers: [provideTaskManagementTranslations()],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'issue' },
       {
@@ -37,13 +42,13 @@ export const remoteRoutes: Route[] = [
         loadComponent: () => import('@erp/task-management/feature').then((m) => m.ProjectDetailComponent),
       },
       {
-        // Wejście z menu: pozycja menu nie ma skąd wziąć uuid-a, więc strona sama rozwiązuje
-        // tablicę domyślną i podmienia adres na konkretną.
+        // Wejście z menu: lista tablic widocznych użytkownikowi (BRD-009); przy jednej
+        // widocznej tablicy strona sama przekierowuje wprost na nią.
         path: 'board',
         pathMatch: 'full',
-        data: { breadcrumb: 'Tablica' },
+        data: { breadcrumb: 'Tablice' },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
-        loadComponent: () => import('@erp/task-management/feature').then((m) => m.BoardComponent),
+        loadComponent: () => import('@erp/task-management/feature').then((m) => m.BoardListComponent),
       },
       {
         // Tablica jest adresowana UUID-em, nie kluczem: tablica nie ma nazwy czytelnej,
@@ -52,6 +57,14 @@ export const remoteRoutes: Route[] = [
         data: { breadcrumb: 'Tablica' },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
         loadComponent: () => import('@erp/task-management/feature').then((m) => m.BoardComponent),
+      },
+      {
+        // Podstrona tablicy, nie osobna pozycja w menu — sprint i backlog istnieją tylko
+        // w kontekście konkretnej tablicy scrumowej (docs/frontend/task-management-pages.md §2.4).
+        path: 'board/:uuid/backlog',
+        data: { breadcrumb: 'Backlog' },
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
+        loadComponent: () => import('@erp/task-management/feature').then((m) => m.BacklogComponent),
       },
       {
         // Trasa karty idzie po KLUCZU czytelnym (`DEV-412`), nie po uuid — ten link krąży

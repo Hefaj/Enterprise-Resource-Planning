@@ -1,9 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
-import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpTabsComponent, ErpTabsConfig, ErpTranslatePipe } from '@erp/shared/ui';
+import {
+  ErpButtonComponent,
+  ErpButtonConfig,
+  ErpConfirmDialogService,
+  ErpEmptyStateComponent,
+  ErpTabsComponent,
+  ErpTabsConfig,
+  ErpTranslatePipe,
+} from '@erp/shared/ui';
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 import { PROJECT_KIND } from '@erp/task-management/util';
 
@@ -23,7 +32,7 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 @Component({
   selector: 'erp-task-management-project-detail',
   standalone: true,
-  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTabsComponent, ErpTranslatePipe],
+  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTabsComponent, ErpTranslatePipe, ReactiveFormsModule],
   providers: [provideProjectTranslations()],
   template: `
     @let project = this.project();
@@ -34,13 +43,38 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
       <erp-empty-state [config]="{ icon: '@tui.search-x', message: PROJECT_KEYS.detail.notFound }" />
     } @else {
       <div class="flex h-full min-h-0 w-full flex-col gap-4 overflow-y-auto p-6">
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <erp-button [config]="backButton" />
-          <span class="font-mono text-sm text-[var(--tui-text-secondary)]">{{ project.code }}</span>
+
+          @if (this.editingCode()) {
+            <input
+              class="w-24 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-0.5 font-mono text-sm"
+              type="text"
+              [formControl]="this.codeControl"
+              [placeholder]="PROJECT_KEYS.detail.codePlaceholder | erpTranslate"
+              (keydown.enter)="this.saveCodeAsync(project.uuid)"
+            />
+            <erp-button [config]="this.saveCodeButton(project.uuid)" />
+            <erp-button [config]="this.cancelCodeButton" />
+          } @else {
+            <span class="font-mono text-sm text-[var(--tui-text-secondary)]">{{ project.code }}</span>
+            <erp-button [config]="this.editCodeButton" />
+          }
+
           <span class="text-lg font-medium">{{ project.name }}</span>
           <span class="text-xs text-[var(--tui-text-tertiary)]">
             {{ this.kindLabel() | erpTranslate }}
           </span>
+
+          @if (project.isArchived) {
+            <span class="rounded bg-[var(--tui-status-warning-pale)] px-2 py-0.5 text-xs text-[var(--tui-status-warning)]">
+              {{ PROJECT_KEYS.detail.archivedBadge | erpTranslate }}
+            </span>
+          }
+
+          <div class="flex-1"></div>
+
+          <erp-button [config]="this.archiveButton(project.uuid, project.isArchived)" />
         </div>
 
         <erp-tabs [config]="this.tabsConfig()" />
@@ -66,6 +100,7 @@ export class ProjectDetailComponent {
   private readonly _orchestrator = inject(TaskManagementProjectOrchestrator);
   private readonly _route = inject(ActivatedRoute);
   private readonly _router = inject(Router);
+  private readonly _confirm = inject(ErpConfirmDialogService);
 
   protected readonly uuid = toSignal(this._route.paramMap.pipe(map((params) => params.get('uuid') ?? '')), {
     initialValue: '',
@@ -127,6 +162,88 @@ export class ProjectDetailComponent {
     iconStart: '@tui.arrow-left',
     fn: () => void this._router.navigate(['/task-management/project']),
   };
+
+  // ── PRJ-003: zmiana prefiksu ──
+
+  protected readonly editingCode = signal<boolean>(false);
+  protected readonly codeControl = new FormControl<string>('', { nonNullable: true });
+
+  protected readonly editCodeButton: ErpButtonConfig = {
+    label: PROJECT_KEYS.detail.editCode,
+    appearance: 'flat',
+    size: 'xs',
+    iconStart: '@tui.pencil',
+    fn: (): void => {
+      this.codeControl.setValue(this.project()?.code ?? '');
+      this.editingCode.set(true);
+    },
+  };
+
+  protected readonly cancelCodeButton: ErpButtonConfig = {
+    label: PROJECT_KEYS.detail.cancel,
+    appearance: 'flat',
+    size: 'xs',
+    fn: (): void => this.editingCode.set(false),
+  };
+
+  protected saveCodeButton(uuid: string): ErpButtonConfig {
+    return {
+      label: PROJECT_KEYS.detail.save,
+      appearance: 'primary',
+      size: 'xs',
+      fn: (): Promise<void> => this.saveCodeAsync(uuid),
+    };
+  }
+
+  protected async saveCodeAsync(uuid: string): Promise<void> {
+    const code = this.codeControl.value.trim();
+
+    if (!code) {
+      return;
+    }
+
+    await this._orchestrator.setCodeAsync({ uuid, code });
+    this.editingCode.set(false);
+  }
+
+  // ── PRJ-004: archiwizacja ──
+
+  protected archiveButton(uuid: string, isArchived: boolean): ErpButtonConfig {
+    return isArchived
+      ? {
+          label: PROJECT_KEYS.detail.unarchive,
+          appearance: 'flat',
+          size: 's',
+          iconStart: '@tui.archive-restore',
+          fn: (): Promise<void> => this._unarchiveAsync(uuid),
+        }
+      : {
+          label: PROJECT_KEYS.detail.archive,
+          appearance: 'flat',
+          size: 's',
+          iconStart: '@tui.archive',
+          fn: (): Promise<void> => this._archiveAsync(uuid),
+        };
+  }
+
+  private async _unarchiveAsync(uuid: string): Promise<void> {
+    await this._orchestrator.setArchivedAsync({ uuid, isArchived: false });
+  }
+
+  private async _archiveAsync(uuid: string): Promise<void> {
+    const confirmed = await this._confirm.confirmAsync({
+      title: PROJECT_KEYS.detail.archiveConfirm.title,
+      message: PROJECT_KEYS.detail.archiveConfirm.message,
+      confirmLabel: PROJECT_KEYS.detail.archiveConfirm.confirm,
+      appearance: 'warning',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    await this._orchestrator.setArchivedAsync({ uuid, isArchived: true });
+  }
 
   public constructor() {
     effect(() => {

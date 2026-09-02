@@ -2,12 +2,33 @@
   "title": "Board",
   "loading": "Loading the board…",
   "notFound": "Board not found, or you have no access to it.",
+  "list": {
+    "title": "Boards",
+    "loading": "Loading the board list…",
+    "empty": "You have no access to any board."
+  },
   "empty": {
     "columns": "This board has no columns yet.",
     "column": "No cards"
   },
   "column": {
-    "count": "cards: {{count}}"
+    "count": "cards: {{count}}",
+    "wipExceeded": "WIP limit exceeded ({{count}}/{{limit}})"
+  },
+  "swimlane": {
+    "unassigned": "Unassigned",
+    "groupBy": "Group rows",
+    "mode": {
+      "none": "No grouping",
+      "assignee": "By assignee",
+      "epic": "By epic",
+      "priority": "By priority",
+      "customField": "By custom field"
+    },
+    "fieldCode": {
+      "label": "Field code",
+      "placeholder": "e.g. channel"
+    }
   },
   "card": {
     "unassigned": "Unassigned"
@@ -26,6 +47,53 @@
       "title": "Issue is blocked",
       "message": "This issue is blocked by other, unfinished issues. Move it anyway?",
       "confirm": "Move anyway"
+    }
+  },
+  "backlog": {
+    "title": "Backlog",
+    "loading": "Loading the backlog…",
+    "notFound": "This board does not support sprints — backlog only works on scrum boards.",
+    "backlogColumn": {
+      "title": "Backlog",
+      "empty": "The backlog is empty."
+    },
+    "sprintColumn": {
+      "empty": "This sprint has no issues yet.",
+      "noSprint": "This board has no sprint yet."
+    },
+    "status": {
+      "planned": "Planned",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "actions": {
+      "newSprint": "New sprint",
+      "start": "Start sprint",
+      "close": "Close sprint",
+      "editPlan": "Edit plan"
+    },
+    "create": {
+      "title": "New sprint",
+      "name": "Name",
+      "goal": "Goal (optional)",
+      "startsOn": "Start date (YYYY-MM-DD)",
+      "endsOn": "End date (YYYY-MM-DD)",
+      "submit": "Create"
+    },
+    "close": {
+      "title": "Close sprint",
+      "message": "Where should unfinished issues go?",
+      "toBacklog": "To the backlog",
+      "toSprint": "To another sprint",
+      "submit": "Close sprint"
+    },
+    "start": {
+      "title": "Start this sprint?",
+      "message": "From this moment it becomes the only active sprint on the board.",
+      "confirm": "Start"
+    },
+    "move": {
+      "failed": "The card could not be moved — showing the backlog as it is now."
     }
   }
 }

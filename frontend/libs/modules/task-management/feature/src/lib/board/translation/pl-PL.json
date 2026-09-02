@@ -2,12 +2,33 @@
   "title": "Tablica",
   "loading": "Wczytuję tablicę…",
   "notFound": "Nie znaleziono tablicy albo nie masz do niej dostępu.",
+  "list": {
+    "title": "Tablice",
+    "loading": "Wczytuję listę tablic…",
+    "empty": "Nie masz dostępu do żadnej tablicy."
+  },
   "empty": {
     "columns": "Ta tablica nie ma jeszcze żadnych kolumn.",
     "column": "Brak kart"
   },
   "column": {
-    "count": "kart: {{count}}"
+    "count": "kart: {{count}}",
+    "wipExceeded": "Przekroczono limit WIP ({{count}}/{{limit}})"
+  },
+  "swimlane": {
+    "unassigned": "Bez przypisania",
+    "groupBy": "Grupuj wiersze",
+    "mode": {
+      "none": "Bez grupowania",
+      "assignee": "Po przypisanym",
+      "epic": "Po epiku",
+      "priority": "Po priorytecie",
+      "customField": "Po polu niestandardowym"
+    },
+    "fieldCode": {
+      "label": "Kod pola",
+      "placeholder": "np. kanal"
+    }
   },
   "card": {
     "unassigned": "Nieprzypisane"
@@ -26,6 +47,53 @@
       "title": "Zgłoszenie zablokowane",
       "message": "To zgłoszenie jest blokowane przez inne, nieukończone zgłoszenia. Przenieść mimo to?",
       "confirm": "Przenieś mimo to"
+    }
+  },
+  "backlog": {
+    "title": "Backlog",
+    "loading": "Wczytuję backlog…",
+    "notFound": "Ta tablica nie obsługuje sprintów — backlog działa wyłącznie na tablicach scrumowych.",
+    "backlogColumn": {
+      "title": "Backlog",
+      "empty": "Backlog jest pusty."
+    },
+    "sprintColumn": {
+      "empty": "Ten sprint nie ma jeszcze żadnych zgłoszeń.",
+      "noSprint": "Ta tablica nie ma jeszcze żadnego sprintu."
+    },
+    "status": {
+      "planned": "Planowany",
+      "active": "Aktywny",
+      "closed": "Zamknięty"
+    },
+    "actions": {
+      "newSprint": "Nowy sprint",
+      "start": "Rozpocznij sprint",
+      "close": "Zamknij sprint",
+      "editPlan": "Edytuj plan"
+    },
+    "create": {
+      "title": "Nowy sprint",
+      "name": "Nazwa",
+      "goal": "Cel (opcjonalnie)",
+      "startsOn": "Data rozpoczęcia (RRRR-MM-DD)",
+      "endsOn": "Data zakończenia (RRRR-MM-DD)",
+      "submit": "Utwórz"
+    },
+    "close": {
+      "title": "Zamknij sprint",
+      "message": "Dokąd mają trafić niedokończone zgłoszenia?",
+      "toBacklog": "Do backlogu",
+      "toSprint": "Do innego sprintu",
+      "submit": "Zamknij sprint"
+    },
+    "start": {
+      "title": "Rozpocząć sprint?",
+      "message": "Od tego momentu ten sprint staje się jedynym aktywnym na tablicy.",
+      "confirm": "Rozpocznij"
+    },
+    "move": {
+      "failed": "Nie udało się przenieść karty — pokazuję aktualny stan backlogu."
     }
   }
 }

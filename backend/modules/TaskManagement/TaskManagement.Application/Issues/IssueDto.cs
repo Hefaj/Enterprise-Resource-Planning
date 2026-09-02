@@ -39,7 +39,22 @@ public sealed record IssueDto(
     int WatcherCount,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    Dictionary<string, string> CustomFields);
+    Dictionary<string, string> CustomFields,
+    /// <summary>Rozwiązanie (ISS-007) — pole pierwszej klasy, nie pozycja w <see cref="CustomFields"/>.</summary>
+    Guid? ResolutionUuid,
+    /// <summary>Tagi dopięte do zgłoszenia (TAG-001).</summary>
+    List<Guid> TagUuids,
+    /// <summary>Estymata w minutach (TIME-002) — <c>null</c> znaczy brak, nie zero.</summary>
+    int? EstimateMinutes,
+    /// <summary>Suma zalogowanych minut NA TYM zgłoszeniu — bez schodzenia po łańcuchu
+    /// <c>realizuje</c>, to liczy osobne zapytanie (<see cref="IIssueDeliveryHoursQueries"/>,
+    /// TIME-004).</summary>
+    int LoggedMinutes,
+    /// <summary>Linki zewnętrzne (API-005) — repozytorium, PR, CI.</summary>
+    List<IssueExternalLinkDto> ExternalLinks);
+
+/// <summary>Link zewnętrzny na zgłoszeniu (API-005).</summary>
+public sealed record IssueExternalLinkDto(Guid Uuid, string Url, string Label);
 
 /// <summary>
 /// Zakres listy zgłoszeń — <b>parametr, nie osobna strona</b>. „Moje zgłoszenia” jako oddzielny
@@ -108,6 +123,10 @@ public sealed class SearchIssueRequest : PagedRequest
     /// bez niego są pomijane w całości, bo kod pola nie ma jak zamienić się w slot.
     /// </summary>
     public List<IssueCustomFieldFilter>? CustomFields { get; set; }
+
+    /// <summary>Filtr po tagach — zgłoszenie musi mieć KAŻDY z wymienionych (AND), nie
+    /// którykolwiek. Join na <c>issue_tag</c>, nigdy przeszukiwanie jsonb (TAG-001 AC1).</summary>
+    public List<Guid>? TagUuids { get; set; }
 
     /// <summary>
     /// Tryb drzewa: stronicowanie idzie po <b>zgłoszeniach bez rodzica</b>, a odpowiedź niesie

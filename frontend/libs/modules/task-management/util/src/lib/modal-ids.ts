@@ -26,3 +26,21 @@ export const ISSUE_SET_ASSIGNEE_MODAL_ID = '45ee67c3d582d94b6502ffe26f49a1a8';
  * jednej wartości. Anulowanie nie zmienia niczego: karta na tablicy nie rusza się z miejsca
  * (`docs/backend/task-management.md` §5.2, AC1). */
 export const WORKFLOW_REQUIRED_FIELDS_MODAL_ID = '7009eb9ed7477ebaee96320cabb2bd1b';
+
+/** Modal: utworzenie sprintu (nazwa, cel, zakres dat) — SPR-001. Uuid generuje klient, tak samo
+ * jak przy utworzeniu zgłoszenia. */
+export const SPRINT_CREATE_MODAL_ID = '1aebcdeea8dd3c328b96c65a29f437dd';
+
+/** Modal: zamknięcie sprintu — jawna decyzja, dokąd trafiają niedokończone zgłoszenia
+ * (backlog albo wskazany następny sprint), SPR-003 AC1. */
+export const SPRINT_EXEC_CLOSE_MODAL_ID = 'b150748461f2ce0bad9beb25f5ae7c2a';
+
+/** Modal: seryjne dopięcie tagu do zaznaczonych zgłoszeń (BULK-002). */
+export const ISSUE_ADD_TAG_MODAL_ID = 'c3f1a1a0c7b6e6a4a6b0e6a9b7c4d2e1';
+
+/** Modal: seryjne odpięcie tagu od zaznaczonych zgłoszeń (BULK-002). */
+export const ISSUE_REMOVE_TAG_MODAL_ID = 'd4a2b2b1d8c7f7b5b7c1f7bac8d5e3f2';
+
+/** Modal: seryjne przeniesienie zgłoszeń do innego projektu, razem z poddrzewem, z ekranem
+ * decyzji o polach bez odpowiednika (ISS-010). */
+export const ISSUE_SET_PROJECT_MODAL_ID = 'e5b3c3c2e9d8080c6c8d208bc9e6f4a3';

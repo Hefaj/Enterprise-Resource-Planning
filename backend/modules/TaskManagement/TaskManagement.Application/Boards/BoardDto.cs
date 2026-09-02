@@ -12,7 +12,11 @@ public sealed record BoardDto(
     string Name,
     BoardMode Mode,
     bool IsDefault,
-    List<BoardColumnDto> Columns);
+    List<BoardColumnDto> Columns,
+    /// <summary>Oś grupowania wierszy (BRD-006) — <see cref="BoardSwimlaneMode.None"/> znaczy
+    /// „bez swimlane'ów".</summary>
+    BoardSwimlaneMode SwimlaneMode,
+    string? SwimlaneFieldCode);
 
 /// <summary>Kolumna tablicy. Stany idą listą, bo jedna kolumna może zbierać kilka stanów
 /// („w toku” = <c>InProgress</c> + <c>Review</c>).</summary>
@@ -20,7 +24,10 @@ public sealed record BoardColumnDto(
     Guid Uuid,
     string Name,
     int OrderNo,
-    List<Guid> StateUuids);
+    List<Guid> StateUuids,
+    /// <summary>Limit WIP (BRD-007) — sygnał wyłącznie wizualny, front nie blokuje upuszczenia
+    /// karty po jego przekroczeniu.</summary>
+    int? WipLimit);
 
 /// <summary>
 /// Karta na tablicy — zgłoszenie razem ze swoją pozycją.
@@ -50,7 +57,14 @@ public sealed record BoardCardDto(
     IssuePriority Priority,
     Guid? AssigneeUuid,
     DateTimeOffset? DueAt,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    /// <summary>Bezpośredni rodzic — podstawa swimlane'u „Epik" (BRD-006). Front rozstrzyga
+    /// tytuł swimlane'u po tym uuidzie tylko wtedy, gdy tablica ma włączony ten tryb.</summary>
+    Guid? ParentUuid,
+    string? ParentTitle,
+    /// <summary>Wartość pola niestandardowego wskazanego przez <c>Board.SwimlaneFieldCode</c> —
+    /// puste, gdy tablica nie grupuje po polu własnym albo zgłoszenie nie ma wartości.</summary>
+    string? SwimlaneFieldValue);
 
 /// <summary>Żądanie listy tablic. Pusty <see cref="ProjectUuid"/> zwraca wszystkie widoczne.</summary>
 public sealed class SearchBoardRequest

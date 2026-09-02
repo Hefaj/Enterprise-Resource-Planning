@@ -1,6 +1,7 @@
 using System.Globalization;
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Application.Abstractions;
+using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using Microsoft.Extensions.DependencyInjection;
@@ -131,6 +132,77 @@ public sealed class IssueAttachmentCreateCommandHandler : CommandHandler<IssueAt
         await _artifacts.PromoteAsync(command.ArtifactUuid, ct).ConfigureAwait(false);
 
         return attachment.Uuid;
+    }
+
+    private static Guid ActorUuid(IExecutionContext executionContext)
+        => Guid.TryParse(executionContext.UserId, out var actorUuid) ? actorUuid : Guid.Empty;
+}
+
+/// <summary>Usunięcie pojedynczego załącznika (ATT-002) — zgłoszenie żyjące miesiącami musi dać
+/// się posprzątać z omyłkowo wgranych plików.</summary>
+public sealed class IssueRemoveAttachmentCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+}
+
+/// <summary>
+/// Kasuje wiersz załącznika i prosi magazyn o skasowanie pliku przez outbox — <b>nie gołym
+/// wywołaniem <c>DeleteAsync</c> tutaj</b>. Baza i MinIO nie są w jednej transakcji: rollback tej
+/// komendy nie może zostawić wiszącego wywołania do magazynu, a padnięcie magazynu nie może
+/// zablokować usunięcia wiersza. <see cref="ArtifactDeletionRequested"/> idzie tą samą drogą,
+/// co w Catalogu (<c>docs/backend/media-storage.md</c> §4b) — konsument
+/// (<c>ArtifactDeletionRequestedHandler</c>) woła <c>DeleteAsync</c> po zatwierdzeniu transakcji,
+/// z ponowieniami, tolerując brak obiektu.
+/// </summary>
+public sealed class IssueRemoveAttachmentCommandHandler : CommandHandler<IssueRemoveAttachmentCommand, Guid>
+{
+    private readonly IIssueAttachmentRepository _repository;
+    private readonly IIssueActivityWriter _activity;
+    private readonly IIntegrationEventPublisher _publisher;
+    private readonly IExecutionContext _executionContext;
+    private readonly IClock _clock;
+
+    public IssueRemoveAttachmentCommandHandler(
+        IIssueAttachmentRepository repository,
+        IIssueActivityWriter activity,
+        IIntegrationEventPublisher publisher,
+        IExecutionContext executionContext,
+        IClock clock)
+    {
+        _repository = repository;
+        _activity = activity;
+        _publisher = publisher;
+        _executionContext = executionContext;
+        _clock = clock;
+    }
+
+    public override async Task<Guid> ExecuteAsync(IssueRemoveAttachmentCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var attachment = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(IssueAttachment), command.Uuid);
+
+        _repository.Remove(attachment);
+
+        var actor = ActorUuid(_executionContext);
+        var now = _clock.UtcNow;
+
+        _activity.Add(IssueActivity.Record(
+            attachment.IssueUuid,
+            IssueActivityKind.AttachmentRemoved,
+            fieldCode: null,
+            oldValue: attachment.FileName,
+            newValue: null,
+            actor,
+            _executionContext.CorrelationId,
+            now));
+
+        await _publisher.PublishAsync(
+            new ArtifactDeletionRequested(TaskManagementModule.Name, ArtifactStoreKeys.Media, attachment.ArtifactUuid),
+            ct).ConfigureAwait(false);
+
+        return attachment.IssueUuid;
     }
 
     private static Guid ActorUuid(IExecutionContext executionContext)

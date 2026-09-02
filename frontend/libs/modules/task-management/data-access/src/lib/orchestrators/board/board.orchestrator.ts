@@ -1,4 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, map } from 'rxjs';
 
 import {
@@ -6,6 +7,7 @@ import {
   LoadOptions,
   OrchestratorConfig,
   ResolvedDeps,
+  SignalrSyncService,
   UserDirectoryService,
 } from '@erp/shared/data-access';
 import { ErpUserRef } from '@erp/shared/util';
@@ -15,6 +17,8 @@ import {
   BoardCardDto,
   BoardDto,
   BoardSetCardPositionCommand,
+  BoardSetCardSprintCommand,
+  BoardSetSwimlaneCommand,
   GetBoardCardsRequest,
   GetBoardRequest,
   SearchBoardRequest,
@@ -46,6 +50,7 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
 > {
   private readonly _api = inject(TaskManagementClient);
   private readonly _users = inject(UserDirectoryService);
+  private readonly _boardSignalrSync = inject(SignalrSyncService);
 
   private readonly _boardUuid = signal<string | null>(null);
   private readonly _board = signal<BoardDto | null>(null);
@@ -57,6 +62,28 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
     signalrSignature: 'taskmgmt.board',
     maxCacheSize: 2000,
   };
+
+  public constructor() {
+    super();
+
+    // `_board` (nazwa/kolumny/swimlane) żyje POZA `identityMap` (ten trzyma karty, nie samą
+    // tablicę), więc generyczne odświeżanie SignalR bazowej klasy go nie dotyka — druga
+    // subskrypcja tego samego strumienia, filtrowana po uuid otwartej tablicy.
+    this._boardSignalrSync
+      .onUpdate('taskmgmt.board')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((uuids) => {
+        const boardUuid = this._boardUuid();
+        if (boardUuid && uuids.includes(boardUuid)) {
+          void this._reloadBoardConfigAsync(boardUuid);
+        }
+      });
+  }
+
+  private async _reloadBoardConfigAsync(boardUuid: string): Promise<void> {
+    const board = await this.runDirectCommandAsync(() => this._api.getBoard({ uuid: boardUuid } as GetBoardRequest));
+    this._board.set(board);
+  }
 
   /** Otwarta tablica razem z kolumnami — bez nich nie da się narysować ani jednej karty. */
   public readonly board: Signal<BoardDto | null> = this._board.asReadonly();
@@ -172,6 +199,25 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
   public setCardPositionAsync(command: BoardSetCardPositionCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.boardSetCardPositionMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setBoardCardPosition,
+      queueId,
+    });
+  }
+
+  /** Przenosi kartę między backlogiem (`sprintUuid` puste) a sprintem — SPR-002. Sąsiedzi
+   * i rank działają identycznie jak w {@link setCardPositionAsync}, tylko dla listy backlogu
+   * albo sprintu zamiast kolumny kanbanowej. */
+  public setCardSprintAsync(command: BoardSetCardSprintCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.boardSetCardSprintMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setBoardCardSprint,
+      queueId,
+    });
+  }
+
+  /** Ustawia oś grupowania wierszy (BRD-006). `board()` odświeży się sam, gdy zadanie się
+   * wykona — patrz subskrypcja SignalR w konstruktorze. */
+  public setSwimlaneAsync(command: BoardSetSwimlaneCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.boardSetSwimlaneMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setBoardSwimlane,
       queueId,
     });
   }

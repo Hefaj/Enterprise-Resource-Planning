@@ -11,7 +11,7 @@ namespace Catalog.Multimedia.Command;
 /// Rejestruje w katalogu pliki wgrane wcześniej prosto do magazynu.
 ///
 /// <para><b>Dlaczego to NIE jest endpoint wsadowy</b>, mimo że przyjmuje listę — drugi taki
-/// wyjątek w systemie, po <c>ExportRunCreateCommandEndpoint</c>. Zadanie masowe kupuje trzy
+/// wyjątek w systemie, po <c>ReportRunCreateCommandEndpoint</c>. Zadanie masowe kupuje trzy
 /// rzeczy: postęp, sukces częściowy i odporność na restart. Tutaj żadna z nich nie ma nabywcy:
 /// kosztowny etap (transfer bajtów) już się odbył po stronie przeglądarki, zostaje wstawienie
 /// kilkunastu wierszy, a użytkownik patrzy na modal i czeka.</para>

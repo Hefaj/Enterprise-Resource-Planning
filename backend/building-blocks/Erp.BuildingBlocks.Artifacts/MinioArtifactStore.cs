@@ -14,7 +14,7 @@ namespace Erp.BuildingBlocks.Artifacts;
 /// wygaśnięcia jadą jako metadane obiektu, bo magazyn i tak je przechowuje — osobna tabela byłaby
 /// drugim źródłem prawdy, które trzeba trzymać w zgodzie przy każdym zapisie i usunięciu.
 /// Rekordem, po którym artefakt się znajduje i autoryzuje, jest agregat modułu
-/// (<c>ExportRun.ArtifactUuid</c>, <c>MultimediaAsset.ArtifactUuid</c>).</para>
+/// (<c>ReportRun.ArtifactUuid</c>, <c>MultimediaAsset.ArtifactUuid</c>).</para>
 ///
 /// <para><b>Dwa prefiksy.</b> <see cref="StagingPrefix"/> to poczekalnia dla plików wgrywanych
 /// presigned <c>PUT</c>-em, <see cref="AssetPrefix"/> — miejsce dla zawartości potwierdzonej

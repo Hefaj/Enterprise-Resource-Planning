@@ -47,6 +47,15 @@ export const WORKFLOW_STATE_CATEGORY = {
 export type WorkflowStateCategoryValue =
   (typeof WORKFLOW_STATE_CATEGORY)[keyof typeof WORKFLOW_STATE_CATEGORY];
 
+/** `TaskManagement.Domain.SavedViews.SavedViewMode` — tryb prezentacji listy zapamiętany razem
+ * z widokiem (VIEW-001/LNK-006): lista płaska albo drzewo. */
+export const SAVED_VIEW_MODE = {
+  List: 0,
+  Tree: 1,
+} as const;
+
+export type SavedViewModeValue = (typeof SAVED_VIEW_MODE)[keyof typeof SAVED_VIEW_MODE];
+
 /**
  * `TaskManagement.Domain.FieldSchemes.CustomFieldDataType` — typ pola niestandardowego.
  *

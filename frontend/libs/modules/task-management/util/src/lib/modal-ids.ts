@@ -44,3 +44,8 @@ export const ISSUE_REMOVE_TAG_MODAL_ID = 'd4a2b2b1d8c7f7b5b7c1f7bac8d5e3f2';
 /** Modal: seryjne przeniesienie zgłoszeń do innego projektu, razem z poddrzewem, z ekranem
  * decyzji o polach bez odpowiednika (ISS-010). */
 export const ISSUE_SET_PROJECT_MODAL_ID = 'e5b3c3c2e9d8080c6c8d208bc9e6f4a3';
+
+/** Modal: publikacja usunięcia stanów ze schematu (WF-006) — ekran mapowania stanu docelowego
+ * dla każdego usuwanego stanu, który ma jeszcze otwarte zgłoszenia (`GetWorkflowSchemePublishPreview`).
+ * Stan bez zgłoszeń usuwa się wprost, bez tego modalu. */
+export const WORKFLOW_SCHEME_PUBLISH_MODAL_ID = 'c2d8cd1ed7bc6e93e91e7f35a8b0edaf';

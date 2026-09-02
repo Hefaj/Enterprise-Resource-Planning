@@ -1,13 +1,13 @@
 using Catalog.Domain.Attributes;
 using Catalog.Domain.Categories;
 using Catalog.Domain.Codes;
-using Catalog.Domain.ExportRuns;
 using Catalog.Domain.Models;
 using Catalog.Domain.Multimedia;
 using Catalog.Domain.Products;
 using Catalog.Domain.Warranties;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Persistence;
+using Erp.BuildingBlocks.Reporting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Infrastructure.Persistence;
@@ -17,7 +17,7 @@ namespace Catalog.Infrastructure.Persistence;
 /// migracji i własnymi tabelami zadań masowych, bo to Catalog wykonuje operacje zbiorcze
 /// na produktach i to on musi je wznowić po restarcie.
 /// </summary>
-public sealed class CatalogDbContext : ErpDbContext, IJobDbContext
+public sealed class CatalogDbContext : ErpDbContext, IJobDbContext, IReportRunDbContext
 {
     /// <summary>Nazwa schematu modułu.</summary>
     public const string SchemaName = "catalog";
@@ -49,8 +49,8 @@ public sealed class CatalogDbContext : ErpDbContext, IJobDbContext
     /// <summary>Słownik definicji atrybutów produktu.</summary>
     public DbSet<AttributeDefinition> AttributeDefinitions => Set<AttributeDefinition>();
 
-    /// <summary>Przebiegi eksportu — patrz docs/backend/exports-artifacts.md.</summary>
-    public DbSet<ExportRun> ExportRuns => Set<ExportRun>();
+    /// <summary>Przebiegi raportu/eksportu — patrz docs/backend/reporting.md.</summary>
+    public DbSet<ReportRun> ReportRuns => Set<ReportRun>();
 
     /// <inheritdoc />
     public DbSet<Job> Jobs => Set<Job>();
@@ -68,6 +68,10 @@ public sealed class CatalogDbContext : ErpDbContext, IJobDbContext
         // powielałby mapowanie tych samych dwóch tabel (i prędzej czy później je rozjechał).
         modelBuilder.ApplyConfiguration(new JobConfiguration());
         modelBuilder.ApplyConfiguration(new JobItemConfiguration());
+
+        // Mapowanie ReportRun żyje w BuildingBlocks (patrz docs/backend/reporting.md §3) —
+        // każdy moduł je aplikuje osobno, do własnej tabeli we własnym schemacie.
+        modelBuilder.ApplyConfiguration(new ReportRunConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }

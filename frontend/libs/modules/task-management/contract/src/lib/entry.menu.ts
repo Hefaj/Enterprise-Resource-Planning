@@ -36,4 +36,10 @@ export const remoteMenu: ErpNavigationItem[] = [
     route: 'board',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
+  {
+    label: 'Raport godzin',
+    iconId: 'chart-bar',
+    route: 'report',
+    requiredPermission: ERP_PERMISSIONS.TaskManagement.ReportReadAll,
+  },
 ];

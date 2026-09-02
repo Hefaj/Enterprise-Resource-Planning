@@ -8,6 +8,7 @@ import {
   SPRINT_CREATE_MODAL_ID,
   SPRINT_EXEC_CLOSE_MODAL_ID,
   WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
+  WORKFLOW_SCHEME_PUBLISH_MODAL_ID,
 } from '@erp/task-management/util';
 
 /**
@@ -28,6 +29,7 @@ export const remoteModalIds: string[] = [
   WORKFLOW_REQUIRED_FIELDS_MODAL_ID,
   SPRINT_CREATE_MODAL_ID,
   SPRINT_EXEC_CLOSE_MODAL_ID,
+  WORKFLOW_SCHEME_PUBLISH_MODAL_ID,
 ];
 
 /** Leniwie ładuje tokeny DI definicji modali tego modułu. */
@@ -42,6 +44,7 @@ export async function registerModals(): Promise<unknown[]> {
     WorkflowRequiredFieldsModalDefinition,
     SprintCreateModalDefinition,
     SprintExecCloseModalDefinition,
+    WorkflowSchemePublishModalDefinition,
   } = await import('@erp/task-management/feature');
   return [
     IssueCreateModalDefinition,
@@ -53,6 +56,7 @@ export async function registerModals(): Promise<unknown[]> {
     WorkflowRequiredFieldsModalDefinition,
     SprintCreateModalDefinition,
     SprintExecCloseModalDefinition,
+    WorkflowSchemePublishModalDefinition,
   ];
 }
 
@@ -64,6 +68,8 @@ export async function registerModals(): Promise<unknown[]> {
  * miejsca aplikacji został otwarty (`docs/frontend/translations.md` §3).
  */
 export async function getModalProviders(): Promise<unknown[]> {
-  const { provideIssueTranslations, provideBoardTranslations } = await import('@erp/task-management/feature');
-  return [...provideIssueTranslations(), ...provideBoardTranslations()];
+  const { provideIssueTranslations, provideBoardTranslations, provideProjectTranslations } = await import(
+    '@erp/task-management/feature'
+  );
+  return [...provideIssueTranslations(), ...provideBoardTranslations(), ...provideProjectTranslations()];
 }

@@ -7,6 +7,7 @@ using Erp.BuildingBlocks.Api;
 using Erp.BuildingBlocks.Artifacts;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
+using Erp.BuildingBlocks.Reporting;
 using JasperFx;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,11 +39,11 @@ builder.Services.AddErpCommands<CatalogDbContext>(builder.Configuration);
 
 builder.Services.AddErpBulkJobs<CatalogDbContext>(builder.Configuration);
 
-// Magazyn artefaktów (MinIO) + założenie kubełka przy starcie, oraz runner przebiegów eksportu.
-// Rejestracje jawne, bo niosą decyzję: singleton z pulą połączeń i dwie usługi hostowane —
+// Magazyn artefaktów (MinIO) + założenie kubełka przy starcie, oraz runner przebiegów raportu.
+// Rejestracje jawne, bo niosą decyzję: singleton z pulą połączeń i usługi hostowane —
 // konwencja I{Nazwa} → {Nazwa} nie zna żadnego z tych cykli życia.
 builder.Services.AddErpArtifacts(builder.Configuration);
-builder.Services.AddHostedService<ExportRunner>();
+builder.Services.AddErpReporting<CatalogDbContext>();
 
 // Audytor rozjazdu magazyn ↔ katalog. Domyślnie WYŁĄCZONY i w trybie raportowania — to
 // narzędzie diagnostyczne, a nie element normalnej pracy modułu (docs/backend/media-storage.md §4d).

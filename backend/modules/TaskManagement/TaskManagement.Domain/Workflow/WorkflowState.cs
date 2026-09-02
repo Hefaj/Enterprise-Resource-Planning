@@ -46,4 +46,14 @@ public sealed class WorkflowState : Entity
 
         return new WorkflowState(uuid, code.Trim(), nameKey, category, orderNo);
     }
+
+    /// <summary>Nadpisuje szczegóły stanu — nazwę, kategorię i kolejność. Kod pozostaje
+    /// niezmienny (wzorzec identyczny jak <see cref="IssueTypes.IssueType.SetDetails"/>),
+    /// bo jest stabilnym identyfikatorem w konfiguracji.</summary>
+    internal void SetDetails(string nameKey, WorkflowStateCategory category, int orderNo)
+    {
+        NameKey = nameKey;
+        Category = category;
+        OrderNo = orderNo;
+    }
 }

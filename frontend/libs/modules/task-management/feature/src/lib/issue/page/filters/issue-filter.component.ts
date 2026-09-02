@@ -1,25 +1,38 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 
 import {
+  ErpButtonComponent,
+  ErpButtonConfig,
+  ErpCheckboxComponent,
+  ErpConfirmDialogService,
   ErpFilterBuilder,
   ErpFilterComponent,
   ErpFilterConfig,
+  ErpInputBuilder,
+  ErpInputComponent,
+  ErpInputConfig,
+  ErpToastService,
+  ErpTranslatePipe,
   erpUserPickerField,
   injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import {
   ProjectFieldDto,
+  ProjectFieldProfileService,
   ProjectVM,
+  SavedViewDto,
   SearchIssueRequest,
   TagVM,
   TaskManagementIssueOrchestrator,
   TaskManagementProjectOrchestrator,
+  TaskManagementSavedViewOrchestrator,
   TaskManagementTagOrchestrator,
 } from '@erp/task-management/data-access';
-import { CUSTOM_FIELD_DATA_TYPE, ISSUE_SCOPE, ISSUE_PRIORITY } from '@erp/task-management/util';
+import { CUSTOM_FIELD_DATA_TYPE, ISSUE_SCOPE, ISSUE_PRIORITY, SAVED_VIEW_MODE } from '@erp/task-management/util';
 import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { IssueStore } from '../issue.store';
@@ -46,15 +59,78 @@ interface FilterOption {
 @Component({
   selector: 'erp-task-management-issue-filter',
   standalone: true,
-  imports: [ErpFilterComponent],
-  template: `<erp-filter [config]="filterConfig()" />`,
+  imports: [
+    ErpButtonComponent,
+    ErpCheckboxComponent,
+    ErpFilterComponent,
+    ErpInputComponent,
+    ErpTranslatePipe,
+    ReactiveFormsModule,
+  ],
+  template: `
+    <div class="flex flex-col gap-4">
+      <!-- VIEW-001: zapisane widoki -->
+      <div class="flex flex-col gap-2 border-b border-[var(--tui-border-normal)] pb-3">
+        <span class="text-xs font-medium uppercase text-[var(--tui-text-tertiary)]">
+          {{ ISSUE_KEYS.savedViews.title | erpTranslate }}
+        </span>
+
+        @if (this.views().length > 0) {
+          <div class="flex flex-col gap-1">
+            @for (view of this.views(); track view.uuid) {
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  class="flex-1 truncate text-left text-xs hover:underline"
+                  [title]="view.isOwn ? '' : (ISSUE_KEYS.savedViews.sharedGroup | erpTranslate)"
+                  (click)="this.applyView(view)"
+                >
+                  {{ view.name }}
+                </button>
+
+                @if (view.isOwn) {
+                  <erp-button [config]="this.removeViewButton(view)" />
+                } @else {
+                  <erp-button [config]="this.copyViewButton(view)" />
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @if (this.savingView()) {
+          <div class="flex flex-col gap-2 rounded-md border border-[var(--tui-border-normal)] p-2">
+            <erp-input [config]="this.viewNameInput" [formControl]="this.viewNameControl" />
+            <erp-checkbox
+              [config]="{ label: ISSUE_KEYS.savedViews.saveModal.scopeProject }"
+              [formControl]="this.viewSharedControl"
+            />
+            <div class="flex justify-end gap-2">
+              <erp-button [config]="this.cancelSaveViewButton" />
+              <erp-button [config]="this.confirmSaveViewButton" />
+            </div>
+          </div>
+        } @else {
+          <erp-button [config]="this.openSaveViewButton" />
+        }
+      </div>
+
+      <erp-filter [config]="filterConfig()" />
+    </div>
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IssueFilterComponent implements OnInit {
+  protected readonly ISSUE_KEYS = ISSUE_KEYS;
+
   private readonly _store = inject(IssueStore);
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
   private readonly _tags = inject(TaskManagementTagOrchestrator);
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
+  private readonly _views = inject(TaskManagementSavedViewOrchestrator);
+  private readonly _fieldProfiles = inject(ProjectFieldProfileService);
+  private readonly _toast = inject(ErpToastService);
+  private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _router = inject(Router);
   private readonly _transloco = inject(TranslocoService);
   private readonly _translationsReady = injectTranslationsReadySignal();
@@ -199,10 +275,81 @@ export class IssueFilterComponent implements OnInit {
     return config;
   });
 
+  // ── VIEW-001/VIEW-002: zapisane widoki ──
+
+  private readonly _viewUuids = signal<string[]>([]);
+
+  /** Widoki widoczne w kontekście filtra — własne (dowolny projekt) plus, gdy wybrano projekt,
+   * udostępnione temu projektowi przez kogokolwiek (`SearchSavedView`, patrz backend). */
+  protected readonly views = computed<SavedViewDto[]>(() => {
+    const viewModels = this._views.getViewModel()();
+
+    return this._viewUuids()
+      .map((uuid) => viewModels.get(uuid))
+      .filter((vm): vm is SavedViewDto => vm !== undefined)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  protected readonly savingView = signal<boolean>(false);
+
+  protected readonly viewNameControl = new FormControl<string>('', { nonNullable: true });
+  protected readonly viewSharedControl = new FormControl<boolean>(false, { nonNullable: true });
+
+  protected readonly viewNameInput: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b
+      .setLabel(ISSUE_KEYS.savedViews.saveModal.nameLabel)
+      .setPlaceholder(ISSUE_KEYS.savedViews.saveModal.namePlaceholder),
+  );
+
+  protected readonly openSaveViewButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.savedViews.save,
+    appearance: 'flat',
+    size: 's',
+    iconStart: '@tui.bookmark-plus',
+    fn: () => this.savingView.set(true),
+  };
+
+  protected readonly cancelSaveViewButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.savedViews.saveModal.cancel,
+    appearance: 'flat',
+    size: 'xs',
+    fn: () => this.savingView.set(false),
+  };
+
+  protected readonly confirmSaveViewButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.savedViews.saveModal.submit,
+    appearance: 'primary',
+    size: 'xs',
+    fn: () => this._saveViewAsync(),
+  };
+
+  protected copyViewButton(view: SavedViewDto): ErpButtonConfig {
+    return {
+      label: ISSUE_KEYS.savedViews.copyToMine,
+      appearance: 'flat',
+      size: 'xs',
+      iconStart: '@tui.copy',
+      fn: () => this._copyViewAsync(view),
+    };
+  }
+
+  protected removeViewButton(view: SavedViewDto): ErpButtonConfig {
+    return {
+      label: '',
+      appearance: 'flat',
+      size: 'xs',
+      iconStart: '@tui.trash-2',
+      fn: () => this._removeViewAsync(view),
+    };
+  }
+
   public constructor() {
     effect(() => {
       const projectUuid = this._store.filters().projectUuid;
-      untracked(() => void this._loadTagsAsync(projectUuid));
+      untracked(() => {
+        void this._loadTagsAsync(projectUuid);
+        void this._loadViewsAsync(projectUuid);
+      });
     });
   }
 
@@ -319,5 +466,156 @@ export class IssueFilterComponent implements OnInit {
     } catch (error) {
       console.error('[IssueFilterComponent] Nie udało się pobrać listy projektów.', error);
     }
+  }
+
+  // ── VIEW-001/VIEW-002: zapisane widoki ──
+
+  private async _loadViewsAsync(projectUuid: string | undefined): Promise<void> {
+    try {
+      const views = await this._views.searchViewsAsync({ projectUuid });
+      this._viewUuids.set(views.map((view) => view.uuid));
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się pobrać zapisanych widoków.', error);
+    }
+  }
+
+  /**
+   * Zapisuje obecny stan filtra/sortowania jako nowy widok (VIEW-001).
+   *
+   * <p>Kolumny zapisujemy jako kody wszystkich pól własnych aktywnego projektu, po których
+   * dziś wolno filtrować/sortować — dopóki front nie ma osobnej kontroli wyboru widocznych
+   * kolumn, to najbliższy odpowiednik „stanu tabeli" wart zapamiętania razem z widokiem.</p>
+   */
+  private async _saveViewAsync(): Promise<void> {
+    const name = this.viewNameControl.value.trim();
+
+    if (!name) {
+      return;
+    }
+
+    const filters = this._store.filters();
+    const projectUuid = filters.projectUuid;
+    const isShared = this.viewSharedControl.value && !!projectUuid;
+
+    try {
+      await this._views.createAsync({
+        name,
+        projectUuid: isShared ? projectUuid : undefined,
+        filterJson: JSON.stringify(filters ?? {}),
+        sortJson: this._store.sorts() ? JSON.stringify(this._store.sorts()) : undefined,
+        columns: this._store.filterableFields().map((field) => field.code),
+        mode: filters.treeMode ? SAVED_VIEW_MODE.Tree : SAVED_VIEW_MODE.List,
+      });
+
+      this.viewNameControl.reset('');
+      this.viewSharedControl.reset(false);
+      this.savingView.set(false);
+      void this._loadViewsAsync(projectUuid);
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się zapisać widoku.', error);
+    }
+  }
+
+  /**
+   * Stosuje zapisany widok (VIEW-001 AC2): filtry i kolumny są cross-checkowane względem
+   * <b>aktualnego</b> profilu pól projektu — kod pola, który zniknął ze schematu od czasu
+   * zapisania widoku, jest po cichu pomijany zamiast wywalać parsowanie filtra, a użytkownik
+   * dostaje toast tłumaczący, że widok został skrócony.
+   */
+  protected async applyView(view: SavedViewDto): Promise<void> {
+    const projectUuid = view.projectUuid ?? this._store.filters().projectUuid;
+
+    if (projectUuid) {
+      await this._fieldProfiles.loadAsync(projectUuid);
+    }
+
+    const validCodes = new Set(this._fieldProfiles.fieldsOf(projectUuid)().map((field) => field.code));
+
+    let droppedCode: string | null = null;
+
+    let filter: Partial<SearchIssueRequest> = {};
+    try {
+      filter = view.filterJson ? (JSON.parse(view.filterJson) as Partial<SearchIssueRequest>) : {};
+    } catch (error) {
+      console.error('[IssueFilterComponent] Widok ma nieparsowalny filtr — stosuję pusty.', error);
+    }
+
+    if (filter.customFields) {
+      filter = {
+        ...filter,
+        customFields: filter.customFields.filter((field) => {
+          const code = field.code ?? '';
+          const ok = validCodes.has(code);
+          if (!ok) {
+            droppedCode = droppedCode ?? code;
+          }
+          return ok;
+        }),
+      };
+    }
+
+    for (const code of view.columns ?? []) {
+      if (!validCodes.has(code)) {
+        droppedCode = droppedCode ?? code;
+      }
+    }
+
+    let sorts: SearchIssueRequest['sorts'];
+    try {
+      const parsedSorts = view.sortJson ? (JSON.parse(view.sortJson) as SearchIssueRequest['sorts']) : undefined;
+
+      // Wbudowane kolumny (klucz, tytuł, priorytet…) nie mają odpowiednika w profilu pól —
+      // odsiewamy tylko sortowanie po polu własnym, które faktycznie zniknęło.
+      sorts = parsedSorts?.filter((sort) => {
+        const field = sort.field ?? '';
+        return this._isBuiltInSortField(field) || validCodes.has(field);
+      });
+    } catch (error) {
+      console.error('[IssueFilterComponent] Widok ma nieparsowalne sortowanie — pomijam je.', error);
+      sorts = undefined;
+    }
+
+    this._store.updateFilters(filter);
+    this._store.setSorts(sorts);
+
+    if (droppedCode) {
+      this._toast.show({
+        message: { key: ISSUE_KEYS.savedViews.shortenedToast, params: { code: droppedCode } },
+        appearance: 'warning',
+      });
+    }
+  }
+
+  private _isBuiltInSortField(field: string): boolean {
+    return ['key', 'title', 'priority', 'assigneeUuid', 'dueDate', 'createdAt', 'updatedAt', 'stateUuid'].includes(
+      field,
+    );
+  }
+
+  /** VIEW-001 AC1 — skopiowanie cudzego udostępnionego widoku do siebie jako prywatny, jednym
+   * kliknięciem: `SavedViewCreateCopyCommand` czyta dane źródłowe po stronie backendu, front podaje
+   * tylko `sourceUuid` i nazwę. */
+  private async _copyViewAsync(view: SavedViewDto): Promise<void> {
+    try {
+      await this._views.copyAsync({ sourceUuid: view.uuid, name: view.name });
+      this._toast.show({ message: ISSUE_KEYS.savedViews.copied, appearance: 'positive' });
+      void this._loadViewsAsync(this._store.filters().projectUuid);
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się skopiować widoku.', error);
+    }
+  }
+
+  private async _removeViewAsync(view: SavedViewDto): Promise<void> {
+    await this._confirm.confirmThenAsync(
+      {
+        title: ISSUE_KEYS.savedViews.removeConfirm.title,
+        message: ISSUE_KEYS.savedViews.removeConfirm.message,
+        details: [view.name],
+      },
+      async () => {
+        await this._views.removeAsync({ uuid: view.uuid });
+        void this._loadViewsAsync(this._store.filters().projectUuid);
+      },
+    );
   }
 }

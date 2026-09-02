@@ -1,0 +1,36 @@
+{
+  "title": "Hours report",
+  "params": {
+    "dateFrom": {
+      "label": "From",
+      "placeholder": "YYYY-MM-DD"
+    },
+    "dateTo": {
+      "label": "To",
+      "placeholder": "YYYY-MM-DD"
+    },
+    "departments": {
+      "label": "Departments",
+      "placeholder": "All available"
+    },
+    "invalidRange": "Enter a valid date range (YYYY-MM-DD, \"from\" no later than \"to\").",
+    "generate": "Generate"
+  },
+  "status": {
+    "generating": "Generating report…",
+    "fetchingArtifact": "Loading result…",
+    "refresh": "Refresh"
+  },
+  "table": {
+    "department": "Department",
+    "zagadnienie": "Topic",
+    "total": "Total"
+  },
+  "empty": "Generate a report to see the hours breakdown.",
+  "noData": "The report finished with no records for the selected range.",
+  "errors": {
+    "generateFailed": "Failed to request the report.",
+    "downloadFailed": "Failed to download the report result.",
+    "runFailed": "The report run finished with an error."
+  }
+}

@@ -5,6 +5,7 @@ using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Resolutions;
+using TaskManagement.Domain.SavedViews;
 using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Tags;
 using TaskManagement.Domain.Workflow;
@@ -193,6 +194,18 @@ public interface IWorkflowSchemeRepository
     void Add(WorkflowScheme scheme);
 }
 
+/// <summary>
+/// Pytanie „ile otwartych zgłoszeń siedzi w tym stanie" (WF-006). Egzekwuje regułę
+/// analogiczną do <see cref="IIssueTypeUsageProbe"/>: usunięcie stanu przez zwykłe
+/// <see cref="WorkflowScheme.RemoveState"/> jest odrzucane, gdy sonda znajdzie choć jedno
+/// zgłoszenie — administrator musi wtedy przejść przez <see cref="WorkflowScheme.Publish"/>
+/// z mapowaniem migracji.
+/// </summary>
+public interface IWorkflowStateUsageProbe
+{
+    Task<int> CountByStateAsync(Guid stateUuid, CancellationToken cancellationToken);
+}
+
 /// <summary>Dostęp do agregatu <see cref="IssueTypeScheme"/> — wzorzec identyczny jak
 /// <see cref="IWorkflowSchemeRepository"/>: po stronie zapisu głównie do odczytu przez komendy
 /// zgłoszenia i projektu, schemat jest daną konfiguracyjną (TYP-001).</summary>
@@ -274,4 +287,14 @@ public interface IIssueKeyAllocator
     /// <summary>Rezerwuje <paramref name="count"/> kolejnych numerów jednym przeskokiem licznika
     /// i zwraca gotowe klucze — jeden chunk operacji masowej to jeden <c>UPDATE</c>, nie N.</summary>
     Task<IReadOnlyList<string>> AllocateRangeAsync(Guid projectUuid, int count, CancellationToken cancellationToken);
+}
+
+/// <summary>Dostęp do agregatu <see cref="SavedView"/> po stronie zapisu (VIEW-001).</summary>
+public interface ISavedViewRepository
+{
+    Task<SavedView?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(SavedView view);
+
+    void Remove(SavedView view);
 }

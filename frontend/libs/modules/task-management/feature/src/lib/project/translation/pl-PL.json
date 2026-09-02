@@ -137,6 +137,68 @@
       },
       "save": "Zapisz SLA",
       "saveFailed": "Nie udało się zapisać SLA projektu."
+    },
+    "workflow": {
+      "title": "Schemat stanów",
+      "noScheme": "Ten projekt nie ma jeszcze podpiętego schematu stanów.",
+      "states": {
+        "title": "Stany",
+        "empty": "Schemat nie ma jeszcze żadnych stanów.",
+        "columns": {
+          "code": "Kod",
+          "name": "Nazwa (klucz)",
+          "category": "Kategoria"
+        },
+        "category": {
+          "todo": "Do zrobienia",
+          "inProgress": "W toku",
+          "done": "Gotowe"
+        },
+        "add": {
+          "title": "Nowy stan",
+          "code": "Kod",
+          "codeHint": "litery, cyfry i podkreślenie",
+          "nameKey": "Nazwa albo klucz tłumaczenia",
+          "category": "Kategoria",
+          "submit": "Dodaj stan"
+        },
+        "remove": {
+          "label": "Usuń",
+          "confirmTitle": "Usunąć stan?",
+          "confirmMessage": "Stan nie może być używany przez żadne przejście. Zgłoszenia w tym stanie migrują dopiero po wskazaniu stanu docelowego."
+        }
+      },
+      "transitions": {
+        "title": "Przejścia",
+        "matrixHint": "Wiersz to stan startowy, kolumna to stan docelowy. Kliknij puste pole, żeby dodać przejście, albo istniejące, żeby je edytować.",
+        "empty": "Dodaj co najmniej dwa stany, żeby zobaczyć macierz przejść.",
+        "cellAdd": "Dodaj",
+        "cellPermissionBadge": "uprawnienie",
+        "cellFieldsBadge": "pola",
+        "form": {
+          "title": "Przejście {{from}} → {{to}}",
+          "nameKey": "Nazwa albo klucz tłumaczenia",
+          "requiredPermission": "Wymagane uprawnienie",
+          "requiredPermissionHint": "opcjonalne — kod uprawnienia, np. taskmgmt.issue.transition.approve",
+          "requiredFields": "Wymagane pola",
+          "requiredFieldsHint": "kody pól niestandardowych oddzielone przecinkiem, opcjonalne",
+          "submit": "Zapisz przejście",
+          "remove": "Usuń przejście",
+          "cancel": "Zamknij"
+        }
+      },
+      "publish": {
+        "confirmRemoveTitle": "Usunąć stan?",
+        "confirmRemoveMessage": "Stan nie ma otwartych zgłoszeń — usunięcie jest natychmiastowe.",
+        "modalTitle": "Migracja zgłoszeń przy publikacji",
+        "intro": "Poniższe stany mają jeszcze otwarte zgłoszenia. Wskaż, dokąd mają trafić, zanim stan zniknie ze schematu.",
+        "stateIssueCount": "{{count}} zgłoszeń w tym stanie",
+        "targetLabel": "Stan docelowy",
+        "targetPlaceholder": "Wybierz stan",
+        "submit": "Opublikuj i przenieś zgłoszenia",
+        "incompleteMapping": "Wskaż stan docelowy dla każdego usuwanego stanu.",
+        "started": "Zadanie migracji zostało założone — postęp zobaczysz w dzwonku powiadomień."
+      }
     }
   }
 }

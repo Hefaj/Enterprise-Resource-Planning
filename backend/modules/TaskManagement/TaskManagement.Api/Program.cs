@@ -3,6 +3,7 @@ using Erp.BuildingBlocks.Artifacts;
 using Erp.BuildingBlocks.Api.Commands;
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Messaging;
+using Erp.BuildingBlocks.Reporting;
 using JasperFx;
 using TaskManagement.Application.Issues;
 using TaskManagement.Infrastructure;
@@ -40,6 +41,10 @@ builder.Services.AddErpBulkJobs<TaskManagementDbContext>(builder.Configuration);
 // swoich plików, bo referencja i rekord muszą leżeć w jednej transakcji
 // (docs/backend/media-storage.md).
 builder.Services.AddErpArtifacts(builder.Configuration);
+
+// Runner przebiegów raportu — patrz docs/backend/reporting.md. Rejestracja jawna, bo niesie
+// decyzję o cyklu życia usługi hostowanej (mirror AddErpBulkJobs powyżej).
+builder.Services.AddErpReporting<TaskManagementDbContext>();
 
 builder.Services.AddOpenApi();
 

@@ -312,5 +312,30 @@
         "confirm": "Zmień mimo to"
       }
     }
+  },
+  "savedViews": {
+    "title": "Zapisane widoki",
+    "placeholder": "Wybierz widok",
+    "ownGroup": "Twoje",
+    "sharedGroup": "Udostępnione projektowi",
+    "save": "Zapisz filtr jako widok",
+    "copyToMine": "Skopiuj do siebie",
+    "copied": "Widok skopiowany do Twoich prywatnych.",
+    "shortenedToast": "Widok został skrócony, bo pole \"{{code}}\" już nie istnieje w tym projekcie.",
+    "saveModal": {
+      "title": "Zapisz obecny filtr jako widok",
+      "nameLabel": "Nazwa widoku",
+      "namePlaceholder": "np. Moje otwarte błędy",
+      "scopeLabel": "Widoczność",
+      "scopePrivate": "Prywatny (tylko ja)",
+      "scopeProject": "Udostępniony projektowi",
+      "scopeProjectHint": "Wymaga wybranego projektu w filtrze.",
+      "submit": "Zapisz widok",
+      "cancel": "Anuluj"
+    },
+    "removeConfirm": {
+      "title": "Usunąć widok?",
+      "message": "Tej operacji nie da się cofnąć."
+    }
   }
 }

@@ -40,5 +40,6 @@ export const ERP_PERMISSIONS = {
     ProjectManage: 'taskmgmt.project.manage',
     SchemeManage: 'taskmgmt.scheme.manage',
     TagManage: 'taskmgmt.tag.manage',
+    ReportReadAll: 'taskmgmt.report.read.all',
   },
 } as const;

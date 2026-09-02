@@ -228,78 +228,6 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.ToTable("code_type", "catalog");
                 });
 
-            modelBuilder.Entity("Catalog.Domain.ExportRuns.ExportRun", b =>
-                {
-                    b.Property<Guid>("Uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("uuid");
-
-                    b.Property<Guid?>("ArtifactUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("artifact_uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("ErrorCode")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("error_code");
-
-                    b.Property<DateTimeOffset?>("ExpireOn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expire_on");
-
-                    b.Property<DateTimeOffset?>("FinishedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("finished_at");
-
-                    b.Property<string>("Format")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("format");
-
-                    b.Property<DateTimeOffset?>("HeartbeatAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("heartbeat_at");
-
-                    b.Property<Guid>("JobUuid")
-                        .HasColumnType("uuid")
-                        .HasColumnName("job_uuid");
-
-                    b.Property<string>("ParametersJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("parameters_json");
-
-                    b.Property<int>("RecordCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("record_count");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Uuid")
-                        .HasName("pk_export_run");
-
-                    b.HasIndex("JobUuid")
-                        .HasDatabaseName("ix_export_run_job_uuid");
-
-                    b.HasIndex("Status", "CreatedAt")
-                        .HasDatabaseName("ix_export_run_status_created_at");
-
-                    b.ToTable("export_run", "catalog");
-                });
-
             modelBuilder.Entity("Catalog.Domain.Models.ProductModel", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -938,6 +866,87 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_idempotency_key_expires_at");
 
                     b.ToTable("idempotency_key", "catalog");
+                });
+
+            modelBuilder.Entity("Erp.BuildingBlocks.Reporting.ReportRun", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<Guid?>("ArtifactUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artifact_uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("error_code");
+
+                    b.Property<DateTimeOffset?>("ExpireOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expire_on");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_at");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("format");
+
+                    b.Property<DateTimeOffset?>("HeartbeatAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("heartbeat_at");
+
+                    b.Property<Guid>("JobUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_uuid");
+
+                    b.Property<string>("ParametersJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parameters_json");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("record_count");
+
+                    b.Property<string>("ReportKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("report_key");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_report_run");
+
+                    b.HasIndex("JobUuid")
+                        .HasDatabaseName("ix_report_run_job_uuid");
+
+                    b.HasIndex("ReportKey")
+                        .HasDatabaseName("ix_report_run_report_key");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_report_run_status_created_at");
+
+                    b.ToTable("report_run", "catalog");
                 });
 
             modelBuilder.Entity("Catalog.Domain.Attributes.AttributeOption", b =>

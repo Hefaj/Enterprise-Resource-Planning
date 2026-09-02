@@ -36,8 +36,8 @@ namespace Notification.Application.Jobs;
 /// <param name="CreatedAt">Moment przyjęcia zadania.</param>
 /// <param name="ExpireOn">Moment wygaśnięcia, jeśli ustawiony.</param>
 /// <param name="ResultRef">Referencja do wytworzonego artefaktu — <b>identyfikator, nie adres</b>.
-/// Dla eksportu jest to uuid przebiegu, z którym klient idzie po krótko ważny link do pobrania
-/// (<c>catalog: exportRun/getExportRunDownloadUrl</c>). Adres nigdy nie jedzie tędy: jest
+/// Dla raportu/eksportu jest to uuid przebiegu, z którym klient idzie po krótko ważny link do
+/// pobrania (<c>catalog: reportRun/getReportRunDownloadUrl</c>). Adres nigdy nie jedzie tędy: jest
 /// bearer-owy i ważny minuty, więc leżałby w cache długo po tym, jak przestał być potrzebny.</param>
 ///
 /// <remarks>

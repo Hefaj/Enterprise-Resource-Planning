@@ -20,7 +20,7 @@ public sealed record IssueAttachmentCreateResponse(List<Guid> Uuids);
 /// Rejestruje pliki wgrane wcześniej prosto do magazynu.
 ///
 /// <para><b>Dlaczego to NIE jest endpoint wsadowy</b>, mimo że przyjmuje listę — trzeci taki
-/// wyjątek w systemie, po <c>ExportRunCreateCommandEndpoint</c> i <c>MultimediaCreateCommandEndpoint</c>.
+/// wyjątek w systemie, po <c>ReportRunCreateCommandEndpoint</c> i <c>MultimediaCreateCommandEndpoint</c>.
 /// Zadanie masowe kupuje postęp, sukces częściowy i odporność na restart; tutaj żadna z tych
 /// rzeczy nie ma nabywcy. Kosztowny etap — transfer bajtów — już się odbył po stronie
 /// przeglądarki, zostaje wstawienie kilku wierszy, a użytkownik patrzy w edytor i czeka.</para>

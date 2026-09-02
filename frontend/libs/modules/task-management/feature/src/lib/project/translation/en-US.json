@@ -137,6 +137,68 @@
       },
       "save": "Save SLA",
       "saveFailed": "Failed to save the project SLA."
+    },
+    "workflow": {
+      "title": "Workflow scheme",
+      "noScheme": "This project has no workflow scheme attached yet.",
+      "states": {
+        "title": "States",
+        "empty": "This scheme has no states yet.",
+        "columns": {
+          "code": "Code",
+          "name": "Name (key)",
+          "category": "Category"
+        },
+        "category": {
+          "todo": "To do",
+          "inProgress": "In progress",
+          "done": "Done"
+        },
+        "add": {
+          "title": "New state",
+          "code": "Code",
+          "codeHint": "letters, digits and underscore",
+          "nameKey": "Name or translation key",
+          "category": "Category",
+          "submit": "Add state"
+        },
+        "remove": {
+          "label": "Remove",
+          "confirmTitle": "Remove this state?",
+          "confirmMessage": "The state must not be used by any transition. Issues in this state migrate only after a target state is chosen."
+        }
+      },
+      "transitions": {
+        "title": "Transitions",
+        "matrixHint": "The row is the starting state, the column is the target state. Click an empty cell to add a transition, or an existing one to edit it.",
+        "empty": "Add at least two states to see the transition matrix.",
+        "cellAdd": "Add",
+        "cellPermissionBadge": "permission",
+        "cellFieldsBadge": "fields",
+        "form": {
+          "title": "Transition {{from}} → {{to}}",
+          "nameKey": "Name or translation key",
+          "requiredPermission": "Required permission",
+          "requiredPermissionHint": "optional — permission code, e.g. taskmgmt.issue.transition.approve",
+          "requiredFields": "Required fields",
+          "requiredFieldsHint": "comma-separated custom field codes, optional",
+          "submit": "Save transition",
+          "remove": "Remove transition",
+          "cancel": "Close"
+        }
+      },
+      "publish": {
+        "confirmRemoveTitle": "Remove this state?",
+        "confirmRemoveMessage": "The state has no open issues — removal is immediate.",
+        "modalTitle": "Issue migration on publish",
+        "intro": "The states below still have open issues. Choose where they should go before the state disappears from the scheme.",
+        "stateIssueCount": "{{count}} issues in this state",
+        "targetLabel": "Target state",
+        "targetPlaceholder": "Choose a state",
+        "submit": "Publish and migrate issues",
+        "incompleteMapping": "Choose a target state for every state being removed.",
+        "started": "The migration job was started — track progress in the notification bell."
+      }
     }
   }
 }

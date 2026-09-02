@@ -1,6 +1,7 @@
 using System.Reflection;
 using Erp.BuildingBlocks.Api.Contracts;
 using Erp.BuildingBlocks.Jobs;
+using Erp.BuildingBlocks.Reporting;
 using Erp.BuildingBlocks.Validation;
 using FastEndpoints;
 using FluentValidation;
@@ -85,6 +86,7 @@ public static class ErpModuleRegistrationExtensions
             RegisterCommandValidators(services, type);
             RegisterDomainEventListeners(services, type);
             RegisterMatchingInterface(services, type);
+            RegisterReportDefinitions(services, type);
         }
 
         foreach (var command in handledCommands.Where(IsAggregateCommand))
@@ -202,6 +204,22 @@ public static class ErpModuleRegistrationExtensions
         if (contract is not null)
         {
             services.TryAddScoped(contract, type);
+        }
+    }
+
+    /// <summary>
+    /// Definicje raportów pod <c>IReportDefinition</c> — <c>TryAddEnumerable</c>, bo moduł
+    /// zwykle ma kilka definicji naraz (patrz <c>docs/backend/reporting.md</c> §4).
+    /// <see cref="ReportRunner{TContext}"/> odnajduje właściwą po
+    /// <c>IReportDefinition.Key</c> przy każdym przejęciu przebiegu — nowa definicja więc
+    /// nie dopisuje żadnej rejestracji ręcznie, wystarczy, że implementuje interfejs
+    /// i leży w zestawie modułu.
+    /// </summary>
+    private static void RegisterReportDefinitions(IServiceCollection services, Type type)
+    {
+        if (typeof(IReportDefinition).IsAssignableFrom(type))
+        {
+            services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IReportDefinition), type));
         }
     }
 

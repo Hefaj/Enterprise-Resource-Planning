@@ -155,6 +155,24 @@ public sealed class WorkflowSchemeRepository : IWorkflowSchemeRepository
             .Include(s => s.Transitions);
 }
 
+/// <summary>
+/// Sonda zajętości stanu automatu (WF-006).
+///
+/// <para>Pyta wprost o liczbę wierszy <c>issue</c> z danym <c>state_uuid</c> — wzorzec
+/// identyczny jak <see cref="IssueTypeUsageProbe"/>. Liczba jedzie wprost do komunikatu
+/// odrzucenia, tak samo jak przy usunięciu typu w użyciu (TYP-004).</para>
+/// </summary>
+public sealed class WorkflowStateUsageProbe : IWorkflowStateUsageProbe
+{
+    private readonly TaskManagementDbContext _dbContext;
+
+    public WorkflowStateUsageProbe(TaskManagementDbContext dbContext) => _dbContext = dbContext;
+
+    /// <inheritdoc />
+    public Task<int> CountByStateAsync(Guid stateUuid, CancellationToken cancellationToken)
+        => _dbContext.Issues.AsNoTracking().CountAsync(i => i.StateUuid == stateUuid, cancellationToken);
+}
+
 /// <summary>Zapis licznika numeracji zakładanego razem z projektem.</summary>
 public sealed class ProjectKeyCounterWriter : IProjectKeyCounterWriter
 {

@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Persistence;
+using Erp.BuildingBlocks.Reporting;
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
@@ -8,6 +9,7 @@ using TaskManagement.Domain.Issues;
 using TaskManagement.Infrastructure.Persistence.Graph;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Resolutions;
+using TaskManagement.Domain.SavedViews;
 using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Tags;
 using TaskManagement.Domain.Workflow;
@@ -26,7 +28,7 @@ namespace TaskManagement.Infrastructure.Persistence;
 /// w fazie 6 — dołożenie go później oznaczałoby osobną migrację na dwie tabele, których kształt
 /// jest z góry znany.</para>
 /// </summary>
-public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
+public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext, IReportRunDbContext
 {
     /// <summary>Nazwa schematu modułu.</summary>
     public const string SchemaName = "taskmgmt";
@@ -59,6 +61,8 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     public DbSet<Tag> Tags => Set<Tag>();
 
     public DbSet<Resolution> Resolutions => Set<Resolution>();
+
+    public DbSet<SavedView> SavedViews => Set<SavedView>();
 
     public DbSet<IssueAttachment> IssueAttachments => Set<IssueAttachment>();
 
@@ -103,6 +107,9 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
     /// <inheritdoc />
     public DbSet<JobItem> JobItems => Set<JobItem>();
 
+    /// <summary>Przebiegi raportu — patrz docs/backend/reporting.md.</summary>
+    public DbSet<ReportRun> ReportRuns => Set<ReportRun>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -116,6 +123,10 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext
 
         modelBuilder.ApplyConfiguration(new JobConfiguration());
         modelBuilder.ApplyConfiguration(new JobItemConfiguration());
+
+        // Mapowanie ReportRun żyje w BuildingBlocks (patrz docs/backend/reporting.md §3) —
+        // każdy moduł je aplikuje osobno, do własnej tabeli we własnym schemacie.
+        modelBuilder.ApplyConfiguration(new ReportRunConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }

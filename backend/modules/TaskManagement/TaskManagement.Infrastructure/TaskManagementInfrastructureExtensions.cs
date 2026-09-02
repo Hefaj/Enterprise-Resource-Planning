@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Persistence;
 using Erp.BuildingBlocks.Persistence.Concurrency;
+using Erp.BuildingBlocks.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Resolutions;
+using TaskManagement.Domain.SavedViews;
 using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Tags;
 using TaskManagement.Domain.Workflow;
@@ -103,7 +105,9 @@ public static class TaskManagementInfrastructureExtensions
             .Register<Tag>(AggregateSignatures.TaskManagementTag)
             .Register<Resolution>(AggregateSignatures.TaskManagementResolution)
             .Register<IssueWorkLog>(AggregateSignatures.TaskManagementIssueWorkLog)
-            .Register<WorkType>(AggregateSignatures.TaskManagementWorkType));
+            .Register<WorkType>(AggregateSignatures.TaskManagementWorkType)
+            .Register<ReportRun>(AggregateSignatures.TaskManagementReportRun)
+            .Register<SavedView>(AggregateSignatures.TaskManagementSavedView));
 
         // `IssueActivity` świadomie NIE ma sygnatury: historia zmienia się wyłącznie razem
         // ze zgłoszeniem albo komentarzem, a te mają własne kanały. Osobny kanał oznaczałby

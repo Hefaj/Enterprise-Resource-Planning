@@ -53,9 +53,9 @@ public static class Permissions
 
         public const string JobControl = "catalog.job.control";
 
-        /// <summary>Zlecenie eksportu katalogu i pobranie gotowego artefaktu —
-        /// patrz <c>docs/backend/exports-artifacts.md</c>.</summary>
-        public const string ExportRunCreate = "catalog.export_run.create";
+        /// <summary>Zlecenie raportu/eksportu katalogu i pobranie gotowego artefaktu —
+        /// patrz <c>docs/backend/reporting.md</c>.</summary>
+        public const string ReportRunCreate = "catalog.report_run.create";
     }
 
     public static class Sales
@@ -111,6 +111,11 @@ public static class Permissions
         /// tylko z istniejących, żeby swoboda zakładania nie skończyła się listą z `backend`,
         /// `back-end` i `Backend`.</summary>
         public const string TagManage = "taskmgmt.tag.manage";
+
+        /// <summary>Uruchamianie i odczyt raportów Task Management (PERM-005). Bramkuje wyłącznie
+        /// endpointy raportów — świadomie NIE wchodzi w predykat widoczności zgłoszeń
+        /// (patrz <c>docs/backend/task-management-requirements.md</c> PERM-005 AC3).</summary>
+        public const string ReportReadAll = "taskmgmt.report.read.all";
     }
 
     /// <summary>Pełny katalog — źródło seedu <c>permission_catalog</c> i uzgadniania przy starcie.
@@ -126,7 +131,7 @@ public static class Permissions
         new(Catalog.DictionaryRead, "catalog", "dictionary", "read", "identity.permissions.catalog.dictionary.read"),
         new(Catalog.MultimediaUpdate, "catalog", "multimedia", "update", "identity.permissions.catalog.multimedia.update"),
         new(Catalog.JobControl, "catalog", "job", "control", "identity.permissions.catalog.job.control"),
-        new(Catalog.ExportRunCreate, "catalog", "export_run", "create", "identity.permissions.catalog.exportRun.create"),
+        new(Catalog.ReportRunCreate, "catalog", "report_run", "create", "identity.permissions.catalog.reportRun.create"),
 
         new(Sales.CustomerRead, "sales", "customer", "read", "identity.permissions.sales.customer.read"),
         new(Sales.CustomerUpdate, "sales", "customer", "update", "identity.permissions.sales.customer.update"),
@@ -150,5 +155,6 @@ public static class Permissions
         new(TaskManagement.ProjectManage, "taskmgmt", "project", "manage", "identity.permissions.taskmgmt.project.manage"),
         new(TaskManagement.SchemeManage, "taskmgmt", "scheme", "manage", "identity.permissions.taskmgmt.scheme.manage"),
         new(TaskManagement.TagManage, "taskmgmt", "tag", "manage", "identity.permissions.taskmgmt.tag.manage"),
+        new(TaskManagement.ReportReadAll, "taskmgmt", "report", "read.all", "identity.permissions.taskmgmt.report.readAll"),
     ];
 }

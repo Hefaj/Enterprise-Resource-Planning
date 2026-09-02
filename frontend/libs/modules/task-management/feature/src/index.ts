@@ -1,5 +1,6 @@
 export * from './lib/project/page/project.component';
 export * from './lib/project/page/project-detail.component';
+export * from './lib/project/modal';
 export * from './lib/project/translation';
 export * from './lib/board/page/board.component';
 export * from './lib/board/page/board-list.component';
@@ -13,3 +14,5 @@ export * from './lib/issue/modal';
 export * from './lib/issue/translation';
 export * from './lib/request/page/request.component';
 export * from './lib/request/translation';
+export * from './lib/report/page/report.component';
+export * from './lib/report/translation';

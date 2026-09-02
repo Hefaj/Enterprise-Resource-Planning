@@ -134,7 +134,7 @@ public class CommandNamingTests
     /// <para>Dopuszczalne są dwa sufiksy. <c>MultipleCommandEndpoint</c> to reguła — praktycznie
     /// każda komenda zapisu idzie wsadem. <c>CommandEndpoint</c> jest wyjątkiem dla operacji,
     /// które same w sobie są już zbiorcze i dla których wsad po agregacie nie ma sensu (dziś:
-    /// zlecenie eksportu, patrz <c>ExportRunCreateCommandEndpoint</c>).</para>
+    /// zlecenie raportu, patrz <c>ReportRunCreateCommandEndpoint</c>).</para>
     /// </summary>
     [Fact]
     public void Komenda_i_endpoint_maja_zgodne_nazwy()

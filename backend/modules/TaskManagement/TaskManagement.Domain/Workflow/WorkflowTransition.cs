@@ -64,4 +64,15 @@ public sealed class WorkflowTransition : Entity
         string? requiredPermission,
         IEnumerable<string>? requiredFields = null)
         => new(uuid, fromStateUuid, toStateUuid, nameKey, requiredPermission, requiredFields ?? []);
+
+    /// <summary>Nadpisuje szczegóły przejścia — nazwę, uprawnienie i pola wymagane (WF-007).
+    /// <c>From</c>/<c>To</c> pozostają niezmienne: zmiana krawędzi to usunięcie starego
+    /// przejścia i dodanie nowego, nie edycja istniejącego (ten sam powód, co przy kodzie stanu).</summary>
+    internal void SetDetails(string nameKey, string? requiredPermission, IEnumerable<string>? requiredFields)
+    {
+        NameKey = nameKey;
+        RequiredPermission = requiredPermission;
+        _requiredFields.Clear();
+        _requiredFields.AddRange(requiredFields ?? []);
+    }
 }

@@ -1,7 +1,6 @@
 using Catalog.Domain.Attributes;
 using Catalog.Domain.Categories;
 using Catalog.Domain.Codes;
-using Catalog.Domain.ExportRuns;
 using Catalog.Domain.Models;
 using Catalog.Domain.Multimedia;
 using Catalog.Domain.Products;
@@ -20,6 +19,7 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
 using Erp.BuildingBlocks.Persistence;
 using Erp.BuildingBlocks.Persistence.Concurrency;
+using Erp.BuildingBlocks.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -112,5 +112,5 @@ public static class CatalogInfrastructureExtensions
             .Register<Warranty>(AggregateSignatures.CatalogWarranty)
             .Register<CodeType>(AggregateSignatures.CatalogCodeType)
             .Register<AttributeDefinition>(AggregateSignatures.CatalogAttribute)
-            .Register<ExportRun>(AggregateSignatures.CatalogExportRun);
+            .Register<ReportRun>(AggregateSignatures.CatalogReportRun);
 }

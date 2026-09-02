@@ -9,7 +9,7 @@ namespace Erp.IntegrationTests;
 ///
 /// <para><c>EnsureCreated</c> byłoby tu wygodniejsze i zarazem gorsze: budowałoby schemat wprost
 /// z modelu, omijając łańcuch migracji — a wtedy test przechodziłby również wtedy, gdy migracja
-/// dodająca <c>export_run.heartbeat_at</c> jest zepsuta albo nie istnieje. Skoro faza 1 dokłada
+/// dodająca <c>report_run.heartbeat_at</c> jest zepsuta albo nie istnieje. Skoro faza 1 dokłada
 /// kolumnę migracją, to migracja ma być częścią dowodu.</para>
 /// </summary>
 internal sealed class CatalogDatabase : IAsyncDisposable

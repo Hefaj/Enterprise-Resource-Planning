@@ -1,0 +1,36 @@
+{
+  "title": "Raport godzin",
+  "params": {
+    "dateFrom": {
+      "label": "Od",
+      "placeholder": "RRRR-MM-DD"
+    },
+    "dateTo": {
+      "label": "Do",
+      "placeholder": "RRRR-MM-DD"
+    },
+    "departments": {
+      "label": "Działy",
+      "placeholder": "Wszystkie dostępne"
+    },
+    "invalidRange": "Podaj poprawny zakres dat (RRRR-MM-DD, „od” nie później niż „do”).",
+    "generate": "Generuj"
+  },
+  "status": {
+    "generating": "Generowanie raportu…",
+    "fetchingArtifact": "Wczytywanie wyniku…",
+    "refresh": "Odśwież"
+  },
+  "table": {
+    "department": "Dział",
+    "zagadnienie": "Zagadnienie",
+    "total": "Razem"
+  },
+  "empty": "Wygeneruj raport, żeby zobaczyć zestawienie godzin.",
+  "noData": "Raport zakończył się bez żadnych rekordów w wybranym zakresie.",
+  "errors": {
+    "generateFailed": "Nie udało się zlecić raportu.",
+    "downloadFailed": "Nie udało się pobrać wyniku raportu.",
+    "runFailed": "Przebieg raportu zakończył się błędem."
+  }
+}

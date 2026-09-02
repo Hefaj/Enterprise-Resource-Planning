@@ -267,7 +267,20 @@
       "taskmgmtIssueRemoveExternalLink": "External link removed",
       "taskmgmtProjectSetCode": "Project prefix changed",
       "taskmgmtProjectSetArchived": "Project archived",
-      "taskmgmtBoardSetSwimlane": "Board grouping changed"
+      "taskmgmtBoardSetSwimlane": "Board grouping changed",
+      "taskmgmtWorkflowSchemeCreate": "Workflow scheme creation",
+      "taskmgmtWorkflowSchemeAddState": "Add state to scheme",
+      "taskmgmtWorkflowSchemeSetState": "Update state in scheme",
+      "taskmgmtWorkflowSchemeRemoveState": "Remove state from scheme",
+      "taskmgmtWorkflowSchemeAddTransition": "Add transition to scheme",
+      "taskmgmtWorkflowSchemeSetTransition": "Update transition in scheme",
+      "taskmgmtWorkflowSchemeRemoveTransition": "Remove transition from scheme",
+      "taskmgmtWorkflowSchemeExecPublish": "Publish workflow scheme",
+      "taskmgmtSavedViewCreate": "Saved view creation",
+      "taskmgmtSavedViewSet": "Saved view update",
+      "taskmgmtSavedViewRemove": "Saved view removal",
+      "taskmgmtSavedViewCopy": "Copy view to yourself",
+      "taskmgmtReportRunCreate": "Report generation"
     },
     "toast": {
       "completed": "Finished: {{name}}",

@@ -224,6 +224,87 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("idempotency_key", "taskmgmt");
                 });
 
+            modelBuilder.Entity("Erp.BuildingBlocks.Reporting.ReportRun", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<Guid?>("ArtifactUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artifact_uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("error_code");
+
+                    b.Property<DateTimeOffset?>("ExpireOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expire_on");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_at");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("format");
+
+                    b.Property<DateTimeOffset?>("HeartbeatAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("heartbeat_at");
+
+                    b.Property<Guid>("JobUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_uuid");
+
+                    b.Property<string>("ParametersJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parameters_json");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("record_count");
+
+                    b.Property<string>("ReportKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("report_key");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_report_run");
+
+                    b.HasIndex("JobUuid")
+                        .HasDatabaseName("ix_report_run_job_uuid");
+
+                    b.HasIndex("ReportKey")
+                        .HasDatabaseName("ix_report_run_report_key");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_report_run_status_created_at");
+
+                    b.ToTable("report_run", "taskmgmt");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Boards.Board", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -1344,6 +1425,65 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_resolution_project_uuid_name");
 
                     b.ToTable("resolution", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.SavedViews.SavedView", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("FilterJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("filter_json");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("mode");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OwnerUserUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_uuid");
+
+                    b.Property<Guid?>("ProjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_uuid");
+
+                    b.Property<string>("SortJson")
+                        .HasColumnType("text")
+                        .HasColumnName("sort_json");
+
+                    b.PrimitiveCollection<List<string>>("_columns")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("columns");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_saved_view");
+
+                    b.HasIndex("OwnerUserUuid")
+                        .HasDatabaseName("ix_saved_view_owner_user_uuid");
+
+                    b.HasIndex("ProjectUuid")
+                        .HasDatabaseName("ix_saved_view_project_uuid");
+
+                    b.ToTable("saved_view", "taskmgmt");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Sprints.Sprint", b =>

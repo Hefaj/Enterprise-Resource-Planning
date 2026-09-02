@@ -12,8 +12,8 @@ namespace Erp.BuildingBlocks.Persistence.Concurrency;
 /// czyli bicia serca, tolerancji na rozjazd zegarów i procedury odzysku osieroconych dzierżaw.
 /// Advisory lock nie ma tego problemu z definicji: właściciel przestaje istnieć razem ze swoją
 /// sesją TCP, więc Postgres zwalnia lock <b>sam</b>. Kolumna jest potrzebna dokładnie tam, gdzie
-/// praca trwa dłużej, niż wolno trzymać otwarte połączenie w wyłączności — czyli w eksporcie
-/// (<c>export_run.heartbeat_at</c>) i nigdzie indziej.</para>
+/// praca trwa dłużej, niż wolno trzymać otwarte połączenie w wyłączności — czyli w raporcie
+/// (<c>report_run.heartbeat_at</c>) i nigdzie indziej.</para>
 ///
 /// <para><b>Dlaczego Postgres, a nie Redis.</b> Zewnętrzny lock obok <c>job.status</c> byłby drugim
 /// źródłem prawdy, zdolnym rozjechać się z pierwszym. Postgres i tak jest transakcyjnym źródłem

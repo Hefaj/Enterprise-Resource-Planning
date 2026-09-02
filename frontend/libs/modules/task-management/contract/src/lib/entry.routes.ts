@@ -74,6 +74,16 @@ export const remoteRoutes: Route[] = [
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
         loadComponent: () => import('@erp/task-management/feature').then((m) => m.IssueDetailComponent),
       },
+      {
+        // Raport rozliczenia godzin (faza 7, RPT-002) — bramkowany osobnym uprawnieniem
+        // (PERM-005), nie `IssueRead`: gatuje same endpointy raportów, celowo poza predykatem
+        // widoczności zgłoszeń (docs/backend/task-management-requirements.md).
+        path: 'report',
+        pathMatch: 'full',
+        data: { breadcrumb: 'Raport godzin' },
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.ReportReadAll)],
+        loadComponent: () => import('@erp/task-management/feature').then((m) => m.ReportComponent),
+      },
     ],
   },
 ];

@@ -26,14 +26,14 @@ public static class AggregateSignatures
     public const string CatalogAttribute = "catalog.attribute";
 
     /// <summary>
-    /// Przebiegi eksportu (patrz <c>docs/backend/exports-artifacts.md</c>).
+    /// Przebiegi raportu/eksportu (patrz <c>docs/backend/reporting.md</c>).
     ///
     /// <para>Ten kanał służy synchronizacji cache — leci na niego zmiana statusu przebiegu
-    /// do WSZYSTKICH subskrybentów sygnatury. Powiadomieniem „twój eksport jest gotowy" jest
+    /// do WSZYSTKICH subskrybentów sygnatury. Powiadomieniem „twój raport jest gotowy" jest
     /// kanał <see cref="Jobs"/>, adresowany do grupy <c>user:{userId}</c>. Pomylenie tych dwóch
     /// daje odświeżenie danych u wszystkich i powiadomienie u nikogo.</para>
     /// </summary>
-    public const string CatalogExportRun = "catalog.export_run";
+    public const string CatalogReportRun = "catalog.report_run";
 
     public const string NotificationJob = "notification.job";
 
@@ -117,6 +117,15 @@ public static class AggregateSignatures
     /// <summary>Rodzaj pracy — słownik globalny plus projektowy (faza 6, TIME-001 AC2).</summary>
     public const string TaskManagementWorkType = "taskmgmt.work_type";
 
+    /// <summary>Przebiegi raportu Task Management (patrz <c>docs/backend/reporting.md</c>) —
+    /// mirror <see cref="CatalogReportRun"/>, jedna sygnatura per moduł wykonujący, bo
+    /// <c>ReportRun</c> mieszka we własnej tabeli własnego schematu.</summary>
+    public const string TaskManagementReportRun = "taskmgmt.report_run";
+
+    /// <summary>Zapisany widok listy zgłoszeń (faza 7, VIEW-001). Widok udostępniony projektowi
+    /// ma się zaktualizować na liście każdego, kto go widzi, bez odświeżenia strony.</summary>
+    public const string TaskManagementSavedView = "taskmgmt.saved_view";
+
     /// <summary>Wszystkie sygnatury agregatów — do walidacji przy starcie i w testach,
     /// żeby nikt nie rozgłosił zmiany na kanał, którego nikt nie słucha.</summary>
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -128,7 +137,7 @@ public static class AggregateSignatures
         CatalogWarranty,
         CatalogCodeType,
         CatalogAttribute,
-        CatalogExportRun,
+        CatalogReportRun,
         NotificationJob,
         SalesCustomer,
         Jobs,
@@ -147,5 +156,7 @@ public static class AggregateSignatures
         TaskManagementResolution,
         TaskManagementIssueWorkLog,
         TaskManagementWorkType,
+        TaskManagementReportRun,
+        TaskManagementSavedView,
     };
 }

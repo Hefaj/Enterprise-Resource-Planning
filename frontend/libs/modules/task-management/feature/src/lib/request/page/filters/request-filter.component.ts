@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
-import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig } from '@erp/shared/ui';
+import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig, injectTranslationsReadySignal } from '@erp/shared/ui';
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 import { ISSUE_SCOPE, PROJECT_KIND } from '@erp/task-management/util';
 
@@ -33,6 +33,7 @@ export class RequestFilterComponent implements OnInit {
   private readonly _store = inject(IssueStore);
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _translationsReady = injectTranslationsReadySignal();
 
   private readonly _intakeProjectUuids = signal<string[]>([]);
 
@@ -45,10 +46,13 @@ export class RequestFilterComponent implements OnInit {
       .map((project) => ({ value: project.uuid, label: `${project.code} — ${project.name}` }));
   });
 
-  private readonly _scopeOptions = computed<FilterOption[]>(() => [
-    { value: ISSUE_SCOPE.Available, label: this._transloco.translate(REQUEST_KEYS.filters.scope.available) },
-    { value: ISSUE_SCOPE.ReportedByMe, label: this._transloco.translate(REQUEST_KEYS.filters.scope.reportedByMe) },
-  ]);
+  private readonly _scopeOptions = computed<FilterOption[]>(() => {
+    this._translationsReady();
+    return [
+      { value: ISSUE_SCOPE.Available, label: this._transloco.translate(REQUEST_KEYS.filters.scope.available) },
+      { value: ISSUE_SCOPE.ReportedByMe, label: this._transloco.translate(REQUEST_KEYS.filters.scope.reportedByMe) },
+    ];
+  });
 
   private readonly _initialValues = computed(() => this._store.filters());
 

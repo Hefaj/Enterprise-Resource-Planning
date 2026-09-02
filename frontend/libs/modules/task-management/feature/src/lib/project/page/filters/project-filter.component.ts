@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
-import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig } from '@erp/shared/ui';
+import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig, injectTranslationsReadySignal } from '@erp/shared/ui';
 import { SearchProjectRequest } from '@erp/task-management/data-access';
 import { PROJECT_KIND } from '@erp/task-management/util';
 
@@ -19,11 +19,15 @@ import { PROJECT_KEYS } from '../../translation';
 export class ProjectFilterComponent {
   private readonly _store = inject(ProjectStore);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _translationsReady = injectTranslationsReadySignal();
 
-  private readonly _kindOptions = computed(() => [
-    { value: PROJECT_KIND.Delivery, label: this._transloco.translate(PROJECT_KEYS.filters.kind.delivery) },
-    { value: PROJECT_KIND.Intake, label: this._transloco.translate(PROJECT_KEYS.filters.kind.intake) },
-  ]);
+  private readonly _kindOptions = computed(() => {
+    this._translationsReady();
+    return [
+      { value: PROJECT_KIND.Delivery, label: this._transloco.translate(PROJECT_KEYS.filters.kind.delivery) },
+      { value: PROJECT_KIND.Intake, label: this._transloco.translate(PROJECT_KEYS.filters.kind.intake) },
+    ];
+  });
 
   private readonly _initialValues = computed(() => this._store.filters());
 

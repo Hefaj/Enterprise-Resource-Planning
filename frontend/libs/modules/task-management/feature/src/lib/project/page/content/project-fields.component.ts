@@ -15,6 +15,7 @@ import {
   ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpTranslatePipe,
+  injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import {
   FieldSchemeAddFieldCommand,
@@ -140,6 +141,7 @@ export class ProjectFieldsComponent {
   private readonly _profiles = inject(ProjectFieldProfileService);
   private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _translationsReady = injectTranslationsReadySignal();
 
   public readonly project = input.required<ProjectVM>();
 
@@ -235,6 +237,7 @@ export class ProjectFieldsComponent {
    * slotów w pickerze powyżej.
    */
   protected readonly slotExhaustionMessage = computed<string | undefined>(() => {
+    this._translationsReady();
     const usage: FieldSlotUsageDto | undefined = this._profiles
       .getOne(this.project().uuid)()
       ?.slotUsage?.find((u) => u.dataType === this._selectedType());

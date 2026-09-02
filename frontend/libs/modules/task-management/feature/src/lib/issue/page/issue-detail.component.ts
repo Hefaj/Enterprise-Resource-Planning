@@ -18,6 +18,7 @@ import {
   ErpTranslatePipe,
   ErpUserAvatarComponent,
   ErpUserNameComponent,
+  injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import {
@@ -203,6 +204,7 @@ export class IssueDetailComponent {
   private readonly _router = inject(Router);
   private readonly _route = inject(ActivatedRoute);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _translationsReady = injectTranslationsReadySignal();
   private readonly _attachments = inject(IssueAttachmentService);
   private readonly _content = inject(IssueAttachmentContentService);
   private readonly _graphService = inject(IssueGraphService);
@@ -246,6 +248,7 @@ export class IssueDetailComponent {
   });
 
   protected readonly fieldPanelConfig = computed<ErpFieldPanelConfig>(() => {
+    this._translationsReady();
     const issue = this.issue();
 
     return {

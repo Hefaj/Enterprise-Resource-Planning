@@ -21,6 +21,7 @@ import {
   ErpRichTextComponent,
   ErpRichTextConfig,
   ErpUserPickerComponent,
+  injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import { ErpAuthService } from '@erp/shared/auth';
@@ -118,6 +119,7 @@ export class IssueActivityComponent {
   private readonly _confirm = inject(ErpConfirmDialogService);
   private readonly _auth = inject(ErpAuthService);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _translationsReady = injectTranslationsReadySignal();
   private readonly _userDirectory = inject(ERP_USER_DIRECTORY, { optional: true });
 
   public readonly issueUuid = input.required<string | null>();
@@ -216,13 +218,16 @@ export class IssueActivityComponent {
   private readonly _comm = computed(() => this._comments.commentsOf(this.issueUuid())());
   private readonly _hist = computed(() => this._activity.entriesOf(this.issueUuid())());
 
-  protected readonly streamConfig = computed(() => ({
-    entries: this._entries(),
-    expandedUuid: this.replyingTo() ?? this.editing() ?? undefined,
-    canWrite: this.canWrite(),
-    composerTemplate: this._composerTpl(),
-    entryExtraTemplate: this._extraTpl(),
-  }));
+  protected readonly streamConfig = computed(() => {
+    this._translationsReady();
+    return {
+      entries: this._entries(),
+      expandedUuid: this.replyingTo() ?? this.editing() ?? undefined,
+      canWrite: this.canWrite(),
+      composerTemplate: this._composerTpl(),
+      entryExtraTemplate: this._extraTpl(),
+    };
+  });
 
   public constructor() {
     effect(() => {

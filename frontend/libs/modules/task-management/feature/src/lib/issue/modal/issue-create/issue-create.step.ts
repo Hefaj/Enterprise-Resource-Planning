@@ -7,6 +7,7 @@ import {
   ErpStepContentBuilder,
   ErpStepContentComponent,
   ErpStepContentConfig,
+  injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import {
   IssueCreateCommand,
@@ -53,6 +54,7 @@ export class IssueCreateStepComponent extends ErpModalStepBase<IssueCreateComman
     const projects = inject(TaskManagementProjectOrchestrator);
     const typeSchemes = inject(TaskManagementIssueTypeSchemeOrchestrator);
     const transloco = inject(TranslocoService);
+    const translationsReady = injectTranslationsReadySignal();
 
     // PRJ-004 AC1 — projekt zarchiwizowany znika z pickera tworzenia zgłoszenia. Filtr tutaj,
     // nie na poziomie zapytania: `getViewModel()` czyta WSPÓLNY cache orkiestratora, do którego
@@ -79,13 +81,16 @@ export class IssueCreateStepComponent extends ErpModalStepBase<IssueCreateComman
       return (scheme?.types ?? []).map((type) => ({ uuid: type.uuid, label: type.name }));
     });
 
-    const priorityOptions = computed(() => [
-      { value: ISSUE_PRIORITY.Critical, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
-      { value: ISSUE_PRIORITY.High, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.high) },
-      { value: ISSUE_PRIORITY.Normal, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.normal) },
-      { value: ISSUE_PRIORITY.Low, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.low) },
-      { value: ISSUE_PRIORITY.Lowest, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest) },
-    ]);
+    const priorityOptions = computed(() => {
+      translationsReady();
+      return [
+        { value: ISSUE_PRIORITY.Critical, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
+        { value: ISSUE_PRIORITY.High, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.high) },
+        { value: ISSUE_PRIORITY.Normal, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.normal) },
+        { value: ISSUE_PRIORITY.Low, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.low) },
+        { value: ISSUE_PRIORITY.Lowest, label: transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest) },
+      ];
+    });
 
     const config = ErpStepContentBuilder.create((b) =>
       b

@@ -2,7 +2,13 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, s
 import { Router } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 
-import { ErpFilterBuilder, ErpFilterComponent, ErpFilterConfig, erpUserPickerField } from '@erp/shared/ui';
+import {
+  ErpFilterBuilder,
+  ErpFilterComponent,
+  ErpFilterConfig,
+  erpUserPickerField,
+  injectTranslationsReadySignal,
+} from '@erp/shared/ui';
 import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import {
   ProjectFieldDto,
@@ -51,6 +57,7 @@ export class IssueFilterComponent implements OnInit {
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
   private readonly _router = inject(Router);
   private readonly _transloco = inject(TranslocoService);
+  private readonly _translationsReady = injectTranslationsReadySignal();
   private readonly _directory = inject(ERP_USER_DIRECTORY, { optional: true });
 
   /** SRCH-004 AC1 — wygląda jak klucz zgłoszenia (`DEV-412`): prefiks projektu (jak
@@ -81,29 +88,36 @@ export class IssueFilterComponent implements OnInit {
       .map((project) => ({ value: project.uuid, label: `${project.code} — ${project.name}` }));
   });
 
-  private readonly _scopeOptions = computed<FilterOption[]>(() => [
-    { value: ISSUE_SCOPE.Available, label: this._transloco.translate(ISSUE_KEYS.filters.scope.available) },
-    { value: ISSUE_SCOPE.AssignedToMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.assignedToMe) },
-    { value: ISSUE_SCOPE.ReportedByMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.reportedByMe) },
-  ]);
+  private readonly _scopeOptions = computed<FilterOption[]>(() => {
+    this._translationsReady();
+    return [
+      { value: ISSUE_SCOPE.Available, label: this._transloco.translate(ISSUE_KEYS.filters.scope.available) },
+      { value: ISSUE_SCOPE.AssignedToMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.assignedToMe) },
+      { value: ISSUE_SCOPE.ReportedByMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.reportedByMe) },
+    ];
+  });
 
-  private readonly _priorityOptions = computed<FilterOption[]>(() => [
-    { value: ISSUE_PRIORITY.Critical, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
-    { value: ISSUE_PRIORITY.High, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.high) },
-    { value: ISSUE_PRIORITY.Normal, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.normal) },
-    { value: ISSUE_PRIORITY.Low, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.low) },
-    { value: ISSUE_PRIORITY.Lowest, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest) },
-  ]);
+  private readonly _priorityOptions = computed<FilterOption[]>(() => {
+    this._translationsReady();
+    return [
+      { value: ISSUE_PRIORITY.Critical, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
+      { value: ISSUE_PRIORITY.High, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.high) },
+      { value: ISSUE_PRIORITY.Normal, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.normal) },
+      { value: ISSUE_PRIORITY.Low, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.low) },
+      { value: ISSUE_PRIORITY.Lowest, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest) },
+    ];
+  });
 
   /** Stany aktywnego projektu. `nameKey` ze schematu jest kluczem tłumaczenia; stan zdefiniowany
    * przez użytkownika bez klucza wyświetla własny kod — jedyne dopuszczone wyjście poza registry
    * (`docs/frontend/task-management-pages.md` §8). */
-  private readonly _stateOptions = computed<FilterOption[]>(() =>
-    this._store.states().map((state) => ({
+  private readonly _stateOptions = computed<FilterOption[]>(() => {
+    this._translationsReady();
+    return this._store.states().map((state) => ({
       value: state.uuid,
       label: state.nameKey ? this._transloco.translate(state.nameKey) : state.code,
-    })),
-  );
+    }));
+  });
 
   private readonly _initialValues = computed(() => this._store.filters());
 

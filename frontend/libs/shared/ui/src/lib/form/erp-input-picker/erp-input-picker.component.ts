@@ -371,7 +371,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       display: flex;
       align-items: center;
       padding: 0.5rem;
-      background: var(--tui-background-elevation-1, var(--tui-background-base));
+      background: var(--tui-background-elevation-3, var(--tui-background-base));
       border-bottom: 1px solid var(--tui-border-normal-subtle, rgba(0, 0, 0, 0.08));
       flex-shrink: 0;
     }

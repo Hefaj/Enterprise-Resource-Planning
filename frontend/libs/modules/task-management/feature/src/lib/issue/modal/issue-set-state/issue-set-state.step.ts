@@ -8,6 +8,7 @@ import {
   ErpStepContentBuilder,
   ErpStepContentComponent,
   ErpStepContentConfig,
+  injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import {
   BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
@@ -47,6 +48,7 @@ export class IssueSetStateStepComponent extends ErpBatchStepBase<
     const issues = inject(TaskManagementIssueOrchestrator);
     const workflow = inject(ProjectWorkflowService);
     const transloco = inject(TranslocoService);
+    const translationsReady = injectTranslationsReadySignal();
 
     /** Projekt kontekstu: z metadanych strony, z filtra celów albo — gdy cele są znane —
      * jedyny projekt wspólny dla wszystkich zaznaczonych zgłoszeń. */
@@ -68,6 +70,7 @@ export class IssueSetStateStepComponent extends ErpBatchStepBase<
     });
 
     const stateOptions = computed(() => {
+      translationsReady();
       const uuid = projectUuid();
       if (!uuid) {
         return [];

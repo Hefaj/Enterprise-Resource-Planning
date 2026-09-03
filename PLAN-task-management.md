@@ -17,7 +17,7 @@
 | 5 | Zlecenia międzydziałowe, obserwujący, powiadomienia, SLA | 4 | tak (dodanie pól) | `WatchersAndIntake`, `ProjectSla` | ✅ zrobione (plan nie był odznaczony mimo wykonanej pracy — poprawione) |
 | 6 | Sprinty, backlog, tagi, operacje masowe, wyszukiwanie, **rejestracja czasu** | 4 | tak (dodanie pól) | `SprintsAndBacklog`, `TagsAndResolution`, `FullTextSearch`, `WorkLogAndEstimate` | ✅ zrobione |
 | 7 | Edytor schematu z UI, zapisane widoki, **raporty (w tym godziny per dział)**, scalanie tagów | 6 | tak (dodanie pól) | `SavedViews`, `Reports`, `ProjectDefaultSavedView`, Catalog `ReportRunRename` | ✅ zrobione |
-| 8 | Automatyzacje, DSL, webhooki | 7 | nie | `Automations`, `Webhooks` | ⚠️ częściowo (silnik automatyzacji AUT-001/AUT-002, webhooki wychodzące API-004, burndown SPR-004 i język wyszukiwania SRCH-005 zrobione i **zweryfikowane na żywo** — patrz §6.1/§6.2/§6.3; klucz integracyjny API-003 i preferencje powiadomień NTF-003 zostają, oba wymagają osobnej decyzji architektonicznej) |
+| 8 | Automatyzacje, DSL, webhooki | 7 | nie | `Automations`, `Webhooks` | ⚠️ częściowo (silnik automatyzacji AUT-001/AUT-002, webhooki wychodzące API-004, burndown SPR-004, język wyszukiwania SRCH-005 i klucz integracyjny API-003 zrobione i **zweryfikowane na żywo** — patrz §6.1/§6.2/§6.3; tylko preferencje powiadomień NTF-003 zostają, wymagają osobnej decyzji architektonicznej) |
 
 **Faza 4 jest największa i najbardziej łamiąca**, bo wprowadza `IssueType` — pole, którego dziś
 w ogóle nie ma na zgłoszeniu, a które wchodzi jako wymagane. Reszta faz dokłada, nie przerabia.
@@ -944,11 +944,30 @@ zaktualizowane w obu modułach.
 
 ### 6.3 Reszta fazy 8 — pozostaje
 
-- [ ] Klucz integracyjny jako klient Keycloak z własnym zestawem uprawnień (API-003) — „genuinely
-      new ground" wg researchu tej sesji: dziś nie ma żadnego pojęcia tożsamości maszynowej poza
-      `erp-identity-service` wołającym siebie nawzajem; trzeba nowy klient `client_credentials`
-      + rozszerzenie `IPermissionProvider`/`PermissionClaimsTransformation` o zestaw uprawnień
-      keyowany po `client_id`, nie po `sub`.
+- [x] Klucz integracyjny jako klient Keycloak z własnym zestawem uprawnień (API-003) —
+      **mniejsza zmiana niż zakładał wcześniejszy research**: token `client_credentials` niesie
+      `sub` tak samo jak token człowieka, więc cały pipeline AuthN→AuthZ
+      (`PermissionClaimsTransformation` → `IPermissionProvider` → CTE efektywnych uprawnień w
+      `UserAccountQueries`) działa BEZ ŻADNEJ zmiany dla dowolnego `sub` mającego wiersz
+      `user_account`. `UserAccount` dostał `Kind` (`Human`/`Service`) zamiast nowego agregatu —
+      pełne reużycie `Role`/`UserRoleGrant`/`UserPermissionGrant`/`grant_audit`. ERP nie tworzy
+      klienta w Keycloaku (decyzja: admin zakłada go ręcznie, jak dziś `erp-identity-service`) —
+      nowa komenda `IntegrationClientCreateCommand` tylko rejestruje jego `sub`; nadawanie
+      ról/uprawnień idzie przez **istniejące** `UserAddRoleCommand`/`UserAddPermissionCommand`,
+      zero nowej mechaniki. Krytyczna poprawka przy okazji: `UserProvisioningService.isFirstUser`
+      liczył wszystkie konta, więc rejestracja klucza integracyjnego przed pierwszym logowaniem
+      człowieka na zawsze blokowałaby bootstrap administratora — teraz liczy tylko `Kind=Human`.
+      Front: reużycie strony Użytkownicy (filtr/kolumna `Kind`, modal „Nowy klucz integracyjny")
+      zamiast nowej strony — panel boczny ról/uprawnień bez zmian. Testy: Identity.Tests 33/33,
+      nowy `IdentityUserProvisioningTests` 2/2 (dowód poprawki bootstrapu + dowód, że CTE
+      działa dla `Kind=Service` bez zmian), Erp.ArchitectureTests 27/27. Zweryfikowane na żywo:
+      klient założony w Keycloaku przez Admin API, zarejestrowany w ERP, nadana rola
+      `administrator`, pobrany token `client_credentials` i wywołany nim chroniony endpoint ERP
+      → `200 OK`. **Świadomie poza zakresem** (odkryte, nienaprawione): niezarejestrowany token
+      maszynowy trafia dziś w JIT provisioning i pada `422 user_email_invalid` (brak claimu
+      `email`) zamiast czystego `403` — zachowanie istniejące od dawna, niezwiązane z tą zmianą.
+      Dług `GET /internal/users/{id}/permissions` (dowolny token wystarcza) świadomie nietknięty
+      — wymaga własnej tożsamości serwisowej dla każdego mikroserwisu, osobna, szersza zmiana.
 - [x] Burndown z historii zmian stanów (`SPR-004`), na tej samej infrastrukturze raportowej
       (`IReportDefinition`, wzorem `TaskManagementCycleTimeByStateCategoryReportDefinition`) —
       `TaskManagementSprintBurndownReportDefinition`: `remaining_count`/`remaining_estimate_minutes`

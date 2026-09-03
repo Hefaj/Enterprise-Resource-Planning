@@ -30,6 +30,7 @@ export const ERP_PERMISSIONS = {
     RoleRead: 'identity.role.read',
     RoleManage: 'identity.role.manage',
     PermissionRead: 'identity.permission.read',
+    IntegrationClientManage: 'identity.integration_client.manage',
   },
   TaskManagement: {
     IssueRead: 'taskmgmt.issue.read',

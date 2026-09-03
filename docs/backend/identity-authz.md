@@ -51,7 +51,7 @@ Model z pytania — *user ma role + pojedyncze uprawnienia; rola ma uprawnienia 
 Schemat `identity`, osobny `DbContext`, osobny łańcuch migracji — jak każdy moduł.
 
 ```
-user_account          uuid (= Keycloak `sub`), email, display_name, is_active, synced_at
+user_account          uuid (= Keycloak `sub`), email, display_name, is_active, kind, description, synced_at
 role                  uuid, code, name, description, is_system, created_at/by
 role_permission       role_uuid, permission_code                      (PK złożony)
 role_member           container_uuid, member_uuid                     (PK złożony — krawędź DAG)
@@ -75,6 +75,48 @@ Konsekwencje, które muszą być w kodzie:
 - **walidacja cyklu przy każdym dodaniu krawędzi** — metoda agregatu `Role.AddMember()` odrzuca, jeśli kandydat jest już przodkiem (rekursywne CTE w handlerze przed wywołaniem metody, wynik podawany do agregatu; agregat nie sięga do bazy);
 - `UNION` (nie `UNION ALL`) w rekursywnym CTE — deduplikacja domyka rekurencję nawet gdyby cykl jakimś cudem powstał;
 - **bez tabeli domknięcia w v1.** Inaczej niż kategorie produktów ([`CategoryClosureMaintainer`](../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/CategoryClosureMaintainer.cs)), ról są dziesiątki, a nie setki tysięcy, i nie są czytane w pętli renderowania drzewa. Rekursywne CTE przy wyliczaniu efektywnych uprawnień wystarcza; materializacja to optymalizacja na później, nie element projektu.
+
+### `UserAccountKind` — klucze integracyjne (API-003)
+
+`user_account.kind` (`Human` | `Service`, `varchar(16)` przez `HasConversion<string>()`, jak
+`SprintStatus`) odróżnia dwa sposoby powstania wiersza:
+
+- **Human** — projekcja JIT przy pierwszym uwierzytelnionym żądaniu człowieka
+  (`UserAccount.ProvisionFromToken`, patrz §5). Bez zmian.
+- **Service** — konto maszynowe dla poufnego klienta Keycloaka z `client_credentials`, zakładane
+  **jawnie** przez `IntegrationClientCreateCommand` (`UserAccount.CreateServiceAccount`), nie JIT.
+
+Kluczowy wgląd: token `client_credentials` niesie ten sam claim `sub` co token logowania
+człowieka, a `PermissionClaimsTransformation` czyta go generycznie. Dzięki temu cały pipeline
+AuthN→AuthZ (transformacja claimów, `IPermissionProvider`, rekursywne CTE efektywnych uprawnień
+niżej w tej sekcji) działa dla konta serwisowego **bez żadnej zmiany** — potrzebny jest tylko
+wiersz `user_account` z `Uuid` równym `sub` service-accounta.
+
+**Procedura zakładania klucza integracyjnego:**
+
+1. Administrator zakłada poufnego klienta w Keycloaku ręcznie (konsola albo Admin API) —
+   `serviceAccountsEnabled: true`, `client-credentials`. ERP nie tworzy klientów w Keycloaku i
+   nie przechowuje ich sekretów — sekret zostaje wyłącznie w Keycloaku. Przykład dev/CI:
+   `erp-integration-example` w [`backend/keycloak/realm-erp.json`](../../backend/keycloak/realm-erp.json)
+   (import działa tylko przy pierwszym starcie kontenera — na już działającym środowisku klienta
+   trzeba założyć ręcznie).
+2. Administrator kopiuje `sub` service-accounta tego klienta (`GET
+   /admin/realms/erp/clients/{id}/service-account-user` albo konsola).
+3. W ERP, na stronie Użytkownicy (`/identity/users`), przyciskiem „Nowy klucz integracyjny"
+   (gate `Identity.IntegrationClientManage`) rejestruje ten `sub` jako `UserAccount` z
+   `Kind = Service`.
+4. Nadaje kontu rolę/uprawnienia dokładnie tak jak człowiekowi — istniejące
+   `UserAddRoleCommand`/`UserAddPermissionCommand` (gate `Identity.UserManage`) działają na
+   `Uuid` bez względu na `Kind`, zero nowej mechaniki.
+
+**Bootstrap pierwszego administratora.** `UserProvisioningService.EnsureProvisionedAsync` liczy
+`isFirstUser` WYŁĄCZNIE po kontach `Kind = Human` — inaczej zarejestrowanie klucza integracyjnego
+przed pierwszym logowaniem człowieka trwale zablokowałoby automatyczne nadanie roli
+`administrator` pierwszemu prawdziwemu userowi.
+
+E-mail konta serwisowego to syntetyczny placeholder `integration+{uuid:N}@erp.local` — spełnia
+unikalny indeks na `user_account.email` i walidację `ValidateEmail` bez zmuszania admina do
+wymyślania fałszywego adresu.
 
 ### Tylko allow
 
@@ -363,6 +405,7 @@ Każda z nich jest do powtórzenia przy następnej zmianie w tym obszarze — dl
 | `perm_ver` w JWT | Prawdopodobnie nigdy | Wymagałoby niestandardowego mappera Keycloaka odpytującego Identity przy KAŻDYM wystawieniu tokenu (SPI, osobny projekt). Sam TTL=60s spełnia SLA z §4, a wymuszone wylogowanie rozwiązuje pilny przypadek przez odwołanie sesji. Konsekwencja: już wydany access token żyje do naturalnego wygaśnięcia — nie ma introspekcji |
 | ~~Aktywne unieważnianie cache'u uprawnień w Catalog/Sales~~ | **Zrobione** | `PermissionsInvalidated` na wymianie `erp.broadcast`, kolejka per instancja, handler w `Erp.BuildingBlocks.Messaging`; publikuje `GrantAuditWriter` przez outbox |
 | `UserChanged` do denormalizacji nazw użytkowników w innych modułach | Gdy jakiś moduł zacznie wyświetlać nazwiska zamiast `userId` | Kontrakt nie istnieje; dziś nikt poza Identity nie pokazuje danych użytkownika |
-| Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś **dowolny ważny token wystarcza**, żeby odpytać o cudze uprawnienia; docelowo client credentials Keycloaka albo izolacja sieciowa |
+| ~~Tożsamość maszynowa (dostęp M2M z własnym zestawem uprawnień)~~ | **Zrobione (API-003)** | `UserAccountKind.Service` + `IntegrationClientCreateCommand` — patrz §2. Token `client_credentials` Keycloaka niesie ten sam `sub` co logowanie człowieka, więc pipeline AuthZ działa bez zmian |
+| Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś **dowolny ważny token wystarcza**, żeby odpytać o cudze uprawnienia; docelowo client credentials Keycloaka albo izolacja sieciowa. **Świadomie NIE naprawione przez API-003** — wymaga własnej tożsamości serwisowej dla KAŻDEGO mikroserwisu wołającego Identity (Catalog/Sales/Notification/TaskManagement), to osobna, szeroka zmiana |
 | ~~Backplane Redis dla cache'u uprawnień~~ | **Odrzucone świadomie** | Redis na ścieżce autoryzacji każdego żądania wymagałby zaprojektowanej degradacji; propagacja idzie broadcastem RabbitMQ. Redis zostaje wyłącznie backplanem SignalR — [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) |
 | Rozszerzenie `GET /me/permissions/sources` na dowolnego użytkownika | Gdy panel „skąd" ma działać dla cudzego konta | Backend eksponuje ścieżkę dziedziczenia tylko dla `/me`; UI panelu efektywnych uprawnień już ma na to miejsce |

@@ -19,4 +19,5 @@ export const IDENTITY_JOB_COMMAND_KEYS = {
   removeRolePermission: 'shared.jobs.commands.identityRoleRemovePermission',
   addRoleMember: 'shared.jobs.commands.identityRoleAddMember',
   removeRoleMember: 'shared.jobs.commands.identityRoleRemoveMember',
+  createIntegrationClient: 'shared.jobs.commands.identityIntegrationClientCreate',
 } as const;

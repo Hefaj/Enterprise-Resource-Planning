@@ -13,7 +13,7 @@ import {
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { UserOrchestrator, SearchUserAccountRequest, BatchCommandOfUserAddRoleCommandAndSearchUserAccountRequest, BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest } from '@erp/identity/data-access';
-import { USER_ADD_ROLE_MODAL_ID, USER_ADD_PERMISSION_MODAL_ID } from '@erp/identity/util';
+import { USER_ADD_ROLE_MODAL_ID, USER_ADD_PERMISSION_MODAL_ID, INTEGRATION_CLIENT_CREATE_MODAL_ID } from '@erp/identity/util';
 
 import { UsersStore } from '../users.store';
 import { IdentityUsersTableComponent } from '../../components/tables/identity-users-table/identity-users-table.component';
@@ -64,6 +64,23 @@ export class UsersTabComponent {
   protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
     b
       .setMenuId('identity-users-toolbar')
+      .addDefaultGroup((g) =>
+        g
+          .setId('integration-clients')
+          .setLabel(USERS_KEYS.title)
+          .setIcon('@tui.plug')
+          .addAction((a) =>
+            a
+              .setId('create-integration-client')
+              .setLabel(USERS_KEYS.commands.createIntegrationClient.label)
+              .setIcon('@tui.plus')
+              .setAppearance('success')
+              .setHidden(computed(() => !this._permissionStore.has(ERP_PERMISSIONS.Identity.IntegrationClientManage)))
+              .setFn(() => {
+                this._modalService.open(INTEGRATION_CLIENT_CREATE_MODAL_ID, {});
+              }),
+          ),
+      )
       .addSelectionGroup((g) =>
         g
           .setId('user-bulk')
@@ -104,7 +121,7 @@ export class UsersTabComponent {
         this.store.clearSelection();
         this._table()?.clearSelection();
       })
-      .setPinnedActionIds(['assign-role', 'grant-permission', 'force-logout']),
+      .setPinnedActionIds(['create-integration-client', 'assign-role', 'grant-permission', 'force-logout']),
   );
 
   private _openAssignRoleModal(): void {

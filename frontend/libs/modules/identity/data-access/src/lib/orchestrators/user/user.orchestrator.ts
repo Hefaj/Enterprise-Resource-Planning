@@ -9,6 +9,7 @@ import {
   BatchCommandOfUserAddPermissionCommandAndSearchUserAccountRequest,
   BatchCommandOfUserExecForceLogoutCommandAndSearchUserAccountRequest,
   GetUserAccountRequest,
+  IntegrationClientCreateCommand,
   SearchUserAccountRequest,
   SearchResponse,
   UserAccountDto,
@@ -134,6 +135,23 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
       commandName: IDENTITY_JOB_COMMAND_KEYS.addPermission,
       queueId,
     });
+  }
+
+  /** Rejestruje konto serwisowe (klucz integracyjny, API-003). `command.uuid` jest wklejony
+   * przez admina — `sub` service-accounta klienta Keycloaka — NIE generowany po stronie
+   * klienta (inaczej niż `RoleOrchestrator.createRoleAsync`), bo backend musi zapisać wiersz
+   * z DOKŁADNIE tym identyfikatorem, żeby token `client_credentials` tego klienta trafił na
+   * istniejące uprawnienia (patrz `docs/backend/identity-authz.md` §2). */
+  public async createIntegrationClientAsync(command: IntegrationClientCreateCommand, queueId?: string): Promise<string> {
+    const jobUuid = await this.runSingleCommandAsync(
+      p => this._api.integrationClientCreateMultipleCommand(p),
+      command,
+      { commandName: IDENTITY_JOB_COMMAND_KEYS.createIntegrationClient, queueId },
+    );
+    if (command.uuid) {
+      await this.loadAsync([command.uuid]);
+    }
+    return jobUuid;
   }
 
   public execForceLogoutMultipleAsync(

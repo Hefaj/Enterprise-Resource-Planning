@@ -5,15 +5,24 @@
     "email": {
       "label": "E-mail",
       "placeholder": "np. jan.kowalski@erp.local"
+    },
+    "kind": {
+      "label": "Rodzaj konta",
+      "human": "Człowiek",
+      "service": "Serwisowe"
     }
   },
   "table": {
     "emptyMessage": "Brak użytkowników spełniających kryteria.",
+    "kindHuman": "Człowiek",
+    "kindService": "Serwisowe",
     "columns": {
       "email": "E-mail",
       "displayName": "Nazwa",
       "isActive": "Aktywny",
-      "roleCount": "Liczba ról"
+      "roleCount": "Liczba ról",
+      "kind": "Rodzaj",
+      "description": "Opis"
     }
   },
   "detail": {
@@ -104,6 +113,17 @@
       "userSuffixPlural": "użytkowników",
       "filterModeSuffix": "pasujących do bieżących filtrów.",
       "filterModeHint": "Zaznaczono wszystkie wyniki — operacja obejmie każdego użytkownika pasującego do filtrów, także z dalszych stron."
+    },
+    "createIntegrationClient": {
+      "label": "Nowy klucz integracyjny",
+      "modalTitle": "Rejestracja klucza integracyjnego",
+      "uuidLabel": "Sub service-accounta z Keycloaka",
+      "uuidPlaceholder": "np. 3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "nameLabel": "Nazwa",
+      "namePlaceholder": "np. Integracja z magazynem zewnętrznym",
+      "descriptionLabel": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Do czego służy ten klucz",
+      "submitButton": "Zarejestruj"
     }
   }
 }

@@ -5,6 +5,7 @@ export * from './lib/dashboard/translation';
 export * from './lib/users/page/users.component';
 export * from './lib/users/modal/user-add-role';
 export * from './lib/users/modal/user-add-permission';
+export * from './lib/users/modal/integration-client-create';
 
 export * from './lib/roles/page/roles.component';
 export * from './lib/roles/modal/role-create';

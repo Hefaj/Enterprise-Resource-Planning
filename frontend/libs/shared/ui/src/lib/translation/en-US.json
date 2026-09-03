@@ -215,6 +215,7 @@
       "identityRoleRemovePermission": "Permission removed from role",
       "identityRoleAddMember": "Member role added",
       "identityRoleRemoveMember": "Member role removed",
+      "identityIntegrationClientCreate": "Integration client registered",
       "catalogProductAddMultimedia": "Add multimedia",
       "catalogProductRemoveMultimedia": "Detach multimedia",
       "catalogProductSetMultimedia": "Gallery replaced",

@@ -20,9 +20,19 @@ export interface IIdentityClient {
      */
     getUser(body: GetUserAccountRequest): Observable<UserAccountDto[]>;
     /**
+     * Pozycje katalogu użytkowników po identyfikatorach
+     * @return OK
+     */
+    getUserDirectory(body: GetUserDirectoryRequest): Observable<UserDirectoryDto[]>;
+    /**
      * @return OK
      */
     searchUser(body: SearchUserAccountRequest): Observable<SearchResponse>;
+    /**
+     * Wyszukiwanie w katalogu użytkowników
+     * @return OK
+     */
+    searchUserDirectory(body: SearchUserDirectoryRequest): Observable<SearchResponse>;
     /**
      * Seryjne bezpośrednie nadanie uprawnienia użytkownikom z obsługą błędów cząstkowych
      * @return OK
@@ -106,6 +116,11 @@ export interface IIdentityClient {
      */
     getUserPermissions(id: string): Observable<string[]>;
     /**
+     * Seryjna rejestracja kont serwisowych (kluczy integracyjnych)
+     * @return OK
+     */
+    integrationClientCreateMultipleCommand(body: BatchCommandOfIntegrationClientCreateCommandAndSearchUserAccountRequest): Observable<BatchResult>;
+    /**
      * @return OK
      */
     getGrantAudit(body: GetGrantAuditRequest): Observable<GrantAuditDto[]>;
@@ -187,6 +202,65 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Pozycje katalogu użytkowników po identyfikatorach
+     * @return OK
+     */
+    getUserDirectory(body: GetUserDirectoryRequest): Observable<UserDirectoryDto[]> {
+        let url_ = this.baseUrl + "/user/getUserDirectory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUserDirectory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUserDirectory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDirectoryDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDirectoryDto[]>;
+        }));
+    }
+
+    protected processGetUserDirectory(response: HttpResponseBase): Observable<UserDirectoryDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserDirectoryDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * @return OK
      */
     searchUser(body: SearchUserAccountRequest): Observable<SearchResponse> {
@@ -220,6 +294,65 @@ export class IdentityClient implements IIdentityClient {
     }
 
     protected processSearchUser(response: HttpResponseBase): Observable<SearchResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Wyszukiwanie w katalogu użytkowników
+     * @return OK
+     */
+    searchUserDirectory(body: SearchUserDirectoryRequest): Observable<SearchResponse> {
+        let url_ = this.baseUrl + "/user/searchUserDirectory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchUserDirectory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchUserDirectory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchResponse>;
+        }));
+    }
+
+    protected processSearchUserDirectory(response: HttpResponseBase): Observable<SearchResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1334,6 +1467,69 @@ export class IdentityClient implements IIdentityClient {
     }
 
     /**
+     * Seryjna rejestracja kont serwisowych (kluczy integracyjnych)
+     * @return OK
+     */
+    integrationClientCreateMultipleCommand(body: BatchCommandOfIntegrationClientCreateCommandAndSearchUserAccountRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/integration-client/batch-create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIntegrationClientCreateMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIntegrationClientCreateMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processIntegrationClientCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * @return OK
      */
     getGrantAudit(body: GetGrantAuditRequest): Observable<GrantAuditDto[]> {
@@ -1448,6 +1644,30 @@ export class IdentityClient implements IIdentityClient {
         }
         return _observableOf(null as any);
     }
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfIntegrationClientCreateCommandAndSearchUserAccountRequest {
+    commands?: IntegrationClientCreateCommand[] | undefined;
+    templateCommand?: IntegrationClientCreateCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchUserAccountRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
@@ -1723,6 +1943,12 @@ export interface GetUserAccountRequest {
     [key: string]: any;
 }
 
+export interface GetUserDirectoryRequest {
+    uuids?: string[] | undefined;
+
+    [key: string]: any;
+}
+
 export interface GrantAuditDto {
     uuid: string;
     occurredAt: Date;
@@ -1733,6 +1959,14 @@ export interface GrantAuditDto {
     targetCode: string;
     reason: string | undefined;
     source: string;
+
+    [key: string]: any;
+}
+
+export interface IntegrationClientCreateCommand {
+    uuid?: string;
+    name?: string;
+    description?: string | undefined;
 
     [key: string]: any;
 }
@@ -1850,6 +2084,17 @@ export interface SearchUserAccountRequest {
     email?: string | undefined;
     roleUuid?: string | undefined;
     permissionCode?: string | undefined;
+    kind?: number | undefined;
+    page?: number;
+    pageSize?: number;
+    sorts?: SortOption[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface SearchUserDirectoryRequest {
+    query?: string | undefined;
+    includeInactive?: boolean;
     page?: number;
     pageSize?: number;
     sorts?: SortOption[] | undefined;
@@ -1869,6 +2114,8 @@ export interface UserAccountDto {
     email: string;
     displayName: string;
     isActive: boolean;
+    kind: number;
+    description: string | undefined;
     roleGrants: UserRoleGrantDto[];
     permissionGrants: UserPermissionGrantDto[];
 
@@ -1887,6 +2134,15 @@ export interface UserAddRoleCommand {
     uuid?: string;
     roleUuid?: string;
     expiresAt?: Date | undefined;
+
+    [key: string]: any;
+}
+
+export interface UserDirectoryDto {
+    uuid: string;
+    displayName: string;
+    email: string;
+    isActive: boolean;
 
     [key: string]: any;
 }

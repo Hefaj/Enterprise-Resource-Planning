@@ -82,6 +82,13 @@ public static class Permissions
         /// <summary>Sterowanie zadaniami masowymi Identity (`job/cancel`, `job/retry-failed`) —
         /// patrz Faza 0 w <c>docs/backend/identity-bulk-migration.md</c>.</summary>
         public const string JobControl = "identity.job.control";
+
+        /// <summary>Zakładanie kont serwisowych (kluczy integracyjnych, API-003) — gate'uje
+        /// WYŁĄCZNIE tworzenie: przeglądanie listy idzie po <see cref="UserRead"/> (to ta sama
+        /// strona Użytkownicy), a nadawanie ról/uprawnień kontu serwisowemu po
+        /// <see cref="UserManage"/> (istniejące endpointy `UserAddRole`/`UserAddPermission`
+        /// nie znają rodzaju konta). Patrz <c>docs/backend/identity-authz.md</c> §2.</summary>
+        public const string IntegrationClientManage = "identity.integration_client.manage";
     }
 
     /// <summary>
@@ -157,6 +164,9 @@ public static class Permissions
         new(Identity.RoleManage, "identity", "role", "manage", "identity.permissions.identity.role.manage"),
         new(Identity.PermissionRead, "identity", "permission", "read", "identity.permissions.identity.permission.read"),
         new(Identity.JobControl, "identity", "job", "control", "identity.permissions.identity.job.control"),
+        new(
+            Identity.IntegrationClientManage, "identity", "integration_client", "manage",
+            "identity.permissions.identity.integration_client.manage"),
 
         new(TaskManagement.IssueRead, "taskmgmt", "issue", "read", "identity.permissions.taskmgmt.issue.read"),
         new(TaskManagement.IssueCreate, "taskmgmt", "issue", "create", "identity.permissions.taskmgmt.issue.create"),

@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Api.Contracts;
+using Identity.Domain.Users;
 
 namespace Identity.Application.Users;
 
@@ -8,6 +9,8 @@ public sealed record UserAccountDto(
     string Email,
     string DisplayName,
     bool IsActive,
+    UserAccountKind Kind,
+    string? Description,
     IReadOnlyList<UserRoleGrantDto> RoleGrants,
     IReadOnlyList<UserPermissionGrantDto> PermissionGrants);
 
@@ -45,6 +48,11 @@ public sealed class SearchUserAccountRequest : PagedRequest
     /// dowolną rolę w łańcuchu dziedziczenia. Zasila "kto ma to uprawnienie" na stronie
     /// katalogu uprawnień, patrz <see cref="Identity.Infrastructure.Queries.UserAccountQueries"/>.</summary>
     public string? PermissionCode { get; set; }
+
+    /// <summary>Human vs Service (API-003) — domyślny filtr strony Użytkownicy jest
+    /// <c>Human</c>, żeby konta serwisowe nie mieszały się domyślnie z ludźmi na liście.
+    /// <c>null</c> = bez filtra po rodzaju.</summary>
+    public UserAccountKind? Kind { get; set; }
 }
 
 /// <summary>Pobranie użytkowników po identyfikatorach.</summary>

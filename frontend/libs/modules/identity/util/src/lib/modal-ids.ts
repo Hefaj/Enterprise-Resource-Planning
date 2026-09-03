@@ -24,3 +24,6 @@ export const ROLE_ADD_PERMISSION_MODAL_ID = 'e9d1b09d124c99e3038f4905d7e4ad05';
 
 /** Modal: Dodanie roli składowej do roli-kontenera */
 export const ROLE_ADD_MEMBER_MODAL_ID = '1995b125f9a951f9ac2503211844677d';
+
+/** Modal: Rejestracja klucza integracyjnego (konta serwisowego, API-003) */
+export const INTEGRATION_CLIENT_CREATE_MODAL_ID = '84b6928de66fd6ea6a8dd55986f8c280';

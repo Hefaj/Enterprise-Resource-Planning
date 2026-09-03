@@ -5,15 +5,24 @@
     "email": {
       "label": "Email",
       "placeholder": "e.g. jan.kowalski@erp.local"
+    },
+    "kind": {
+      "label": "Account kind",
+      "human": "Human",
+      "service": "Service"
     }
   },
   "table": {
     "emptyMessage": "No users match the criteria.",
+    "kindHuman": "Human",
+    "kindService": "Service",
     "columns": {
       "email": "Email",
       "displayName": "Name",
       "isActive": "Active",
-      "roleCount": "Roles"
+      "roleCount": "Roles",
+      "kind": "Kind",
+      "description": "Description"
     }
   },
   "detail": {
@@ -104,6 +113,17 @@
       "userSuffixPlural": "users",
       "filterModeSuffix": "matching the current filters.",
       "filterModeHint": "All results are selected — the operation will cover every user matching the filters, including further pages."
+    },
+    "createIntegrationClient": {
+      "label": "New integration client",
+      "modalTitle": "Register integration client",
+      "uuidLabel": "Keycloak service account sub",
+      "uuidPlaceholder": "e.g. 3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Integration with external warehouse",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "What this key is used for",
+      "submitButton": "Register"
     }
   }
 }

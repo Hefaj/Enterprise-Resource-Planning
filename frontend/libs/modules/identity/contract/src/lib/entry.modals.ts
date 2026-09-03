@@ -4,6 +4,7 @@ import {
   ROLE_CREATE_MODAL_ID,
   ROLE_ADD_PERMISSION_MODAL_ID,
   ROLE_ADD_MEMBER_MODAL_ID,
+  INTEGRATION_CLIENT_CREATE_MODAL_ID,
 } from '@erp/identity/util';
 
 /**
@@ -19,6 +20,7 @@ export const remoteModalIds: string[] = [
   ROLE_CREATE_MODAL_ID,
   ROLE_ADD_PERMISSION_MODAL_ID,
   ROLE_ADD_MEMBER_MODAL_ID,
+  INTEGRATION_CLIENT_CREATE_MODAL_ID,
 ];
 
 /**
@@ -36,6 +38,7 @@ export async function registerModals(): Promise<any[]> {
     RoleCreateModalDefinition,
     RoleAddPermissionModalDefinition,
     RoleAddMemberModalDefinition,
+    IntegrationClientCreateModalDefinition,
   } = await import('@erp/identity/feature');
   return [
     UserAddRoleModalDefinition,
@@ -43,6 +46,7 @@ export async function registerModals(): Promise<any[]> {
     RoleCreateModalDefinition,
     RoleAddPermissionModalDefinition,
     RoleAddMemberModalDefinition,
+    IntegrationClientCreateModalDefinition,
   ];
 }
 

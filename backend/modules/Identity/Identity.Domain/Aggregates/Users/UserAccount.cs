@@ -23,17 +23,28 @@ public class UserAccount : AggregateRoot
     {
     }
 
-    private UserAccount(Guid uuid, string email, string displayName, DateTimeOffset syncedAt) : base(uuid)
+    private UserAccount(
+        Guid uuid, string email, string displayName, DateTimeOffset syncedAt,
+        UserAccountKind kind = UserAccountKind.Human, string? description = null) : base(uuid)
     {
         Email = email;
         DisplayName = displayName;
         IsActive = true;
         SyncedAt = syncedAt;
+        Kind = kind;
+        Description = description;
     }
 
     public string Email { get; private set; } = string.Empty;
 
     public string DisplayName { get; private set; } = string.Empty;
+
+    /// <summary>Human (JIT z Keycloaka) czy Service (klucz integracyjny, patrz
+    /// <see cref="CreateServiceAccount"/>) — patrz <see cref="UserAccountKind"/>.</summary>
+    public UserAccountKind Kind { get; private set; } = UserAccountKind.Human;
+
+    /// <summary>Po co istnieje ten klucz integracyjny — puste dla kont ludzkich.</summary>
+    public string? Description { get; private set; }
 
     /// <summary>Dezaktywacja tu jest lokalną blokadą po stronie Identity — właściwe wyłączenie
     /// konta (i unieważnienie sesji) dzieje się w Keycloaku; to pole pozwala odciąć uprawnienia
@@ -51,6 +62,21 @@ public class UserAccount : AggregateRoot
     /// to <c>sub</c> tokenu, nie generowany lokalnie identyfikator.</summary>
     public static UserAccount ProvisionFromToken(Guid uuid, string email, string displayName, DateTimeOffset now)
         => new(uuid, ValidateEmail(email), ValidateDisplayName(displayName), now);
+
+    /// <summary>Zakłada konto serwisowe dla poufnego klienta Keycloaka z <c>client_credentials</c>
+    /// — <paramref name="uuid"/> to <c>sub</c> jego service-accounta, wklejony przez administratora
+    /// (nie losowy, ale wciąż identyfikator zakładanego agregatu — ten sam kształt kontraktu co
+    /// przy innych Create z generowanym uuid). E-mail jest syntetycznym, unikalnym placeholderem —
+    /// istniejący unikalny indeks na <see cref="Email"/> i <see cref="ValidateEmail"/> nie
+    /// wymagają od admina wymyślania fałszywego adresu.</summary>
+    public static UserAccount CreateServiceAccount(Guid uuid, string name, string? description, DateTimeOffset now)
+        => new(
+            uuid,
+            $"integration+{uuid:N}@erp.local",
+            ValidateDisplayName(name),
+            now,
+            UserAccountKind.Service,
+            description);
 
     /// <summary>Odświeża projekcję claimów przy kolejnym logowaniu — e-mail/nazwa w Keycloaku
     /// mogły się zmienić od ostatniej wizyty.</summary>

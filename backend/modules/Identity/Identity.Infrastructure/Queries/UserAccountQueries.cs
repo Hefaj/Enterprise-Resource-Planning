@@ -79,6 +79,11 @@ public sealed class UserAccountQueries : IUserAccountQueries
             query = query.Where(u => u.RoleGrants.Any(g => g.RoleUuid == roleUuid));
         }
 
+        if (request.Kind is { } kind)
+        {
+            query = query.Where(u => u.Kind == kind);
+        }
+
         if (!string.IsNullOrWhiteSpace(request.PermissionCode))
         {
             var permissionCode = request.PermissionCode;
@@ -134,6 +139,8 @@ public sealed class UserAccountQueries : IUserAccountQueries
                 u.Email,
                 u.DisplayName,
                 u.IsActive,
+                u.Kind,
+                u.Description,
                 [.. u.RoleGrants.Select(g => new UserRoleGrantDto(g.RoleUuid, g.GrantedAt, g.GrantedBy, g.ExpiresAt))],
                 [.. u.PermissionGrants.Select(g => new UserPermissionGrantDto(g.PermissionCode, g.GrantedAt, g.GrantedBy, g.Reason))]))
             .ToList();

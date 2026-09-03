@@ -11,14 +11,23 @@ export const USERS_KEYS = {
         label: 'users.filters.email.label',
         placeholder: 'users.filters.email.placeholder',
       },
+      kind: {
+        label: 'users.filters.kind.label',
+        human: 'users.filters.kind.human',
+        service: 'users.filters.kind.service',
+      },
     },
     table: {
       emptyMessage: 'users.table.emptyMessage',
+      kindHuman: 'users.table.kindHuman',
+      kindService: 'users.table.kindService',
       columns: {
         email: 'users.table.columns.email',
         displayName: 'users.table.columns.displayName',
         isActive: 'users.table.columns.isActive',
         roleCount: 'users.table.columns.roleCount',
+        kind: 'users.table.columns.kind',
+        description: 'users.table.columns.description',
       },
     },
     detail: {
@@ -109,6 +118,17 @@ export const USERS_KEYS = {
         userSuffixPlural: 'users.commands.addPermission.userSuffixPlural',
         filterModeSuffix: 'users.commands.addPermission.filterModeSuffix',
         filterModeHint: 'users.commands.addPermission.filterModeHint',
+      },
+      createIntegrationClient: {
+        label: 'users.commands.createIntegrationClient.label',
+        modalTitle: 'users.commands.createIntegrationClient.modalTitle',
+        uuidLabel: 'users.commands.createIntegrationClient.uuidLabel',
+        uuidPlaceholder: 'users.commands.createIntegrationClient.uuidPlaceholder',
+        nameLabel: 'users.commands.createIntegrationClient.nameLabel',
+        namePlaceholder: 'users.commands.createIntegrationClient.namePlaceholder',
+        descriptionLabel: 'users.commands.createIntegrationClient.descriptionLabel',
+        descriptionPlaceholder: 'users.commands.createIntegrationClient.descriptionPlaceholder',
+        submitButton: 'users.commands.createIntegrationClient.submitButton',
       },
     },
   } as const;

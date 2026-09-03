@@ -40,6 +40,19 @@
       "serviceAccountsEnabled": true,
       "clientAuthenticatorType": "client-secret",
       "secret": "erp-identity-service-secret"
+    },
+    {
+      "clientId": "erp-integration-example",
+      "name": "Erp Integration Example (API-003 dev seed)",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "erp-integration-example-secret"
     }
   ],
   "users": [
@@ -65,6 +78,11 @@
       "clientRoles": {
         "realm-management": ["manage-users"]
       }
+    },
+    {
+      "username": "service-account-erp-integration-example",
+      "enabled": true,
+      "serviceAccountClientId": "erp-integration-example"
     }
   ]
 }

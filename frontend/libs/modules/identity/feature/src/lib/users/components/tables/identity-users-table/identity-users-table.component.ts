@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, effect, untracked, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+import { TranslocoService } from '@jsverse/transloco';
+
 import { ErpTableComponent, ErpTableBuilder, ErpTableState, ErpTableConfig, ErpSelectionState, ErpSelectionMode } from '@erp/shared/ui';
 import { UserOrchestrator, UserVM, SearchUserAccountRequest } from '@erp/identity/data-access';
+import { USER_ACCOUNT_KIND } from '@erp/identity/util';
 
 import { USERS_KEYS } from '../../../translation';
 
@@ -25,6 +28,7 @@ import { USERS_KEYS } from '../../../translation';
 })
 export class IdentityUsersTableComponent {
   private readonly _orchestrator = inject(UserOrchestrator);
+  private readonly _transloco = inject(TranslocoService);
 
   public filters = input<SearchUserAccountRequest>({});
   public stateKey = input<string>();
@@ -105,6 +109,31 @@ export class IdentityUsersTableComponent {
           .setEnableSorting(false)
           .setSize(120)
           .setGrow(0),
+      )
+      // Widoczna zawsze — nawet z domyślnym filtrem `Kind = Human` warto móc odróżnić kolumnę
+      // wizualnie, gdy admin ręcznie wyczyści filtr i zobaczy oba rodzaje na liście naraz.
+      .addColumn((c) =>
+        c
+          .setId('kind')
+          .setAccessorKey('kind')
+          .setHeader(USERS_KEYS.table.columns.kind)
+          .setEnableSorting(false)
+          .setSize(140)
+          .setGrow(0)
+          .setCellFormatter((value: number) =>
+            this._transloco.translate(
+              value === USER_ACCOUNT_KIND.Service ? USERS_KEYS.table.kindService : USERS_KEYS.table.kindHuman,
+            ),
+          ),
+      )
+      .addColumn((c) =>
+        c
+          .setId('description')
+          .setAccessorKey('description')
+          .setHeader(USERS_KEYS.table.columns.description)
+          .setEnableSorting(false)
+          .setSize(240)
+          .setCellFormatter((value: string | undefined) => value ?? '—'),
       )
 
       .setOnStateChange((state) => {

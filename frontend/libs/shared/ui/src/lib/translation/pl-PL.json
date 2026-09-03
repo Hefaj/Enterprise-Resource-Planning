@@ -215,6 +215,7 @@
       "identityRoleRemovePermission": "Usunięcie uprawnienia z roli",
       "identityRoleAddMember": "Dodanie roli składowej",
       "identityRoleRemoveMember": "Usunięcie roli składowej",
+      "identityIntegrationClientCreate": "Rejestracja klucza integracyjnego",
       "catalogProductAddMultimedia": "Dodanie multimediów",
       "catalogProductRemoveMultimedia": "Odpięcie multimediów",
       "catalogProductSetMultimedia": "Podmiana galerii",

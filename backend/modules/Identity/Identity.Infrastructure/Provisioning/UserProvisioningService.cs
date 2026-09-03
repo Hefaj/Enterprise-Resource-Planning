@@ -48,8 +48,13 @@ public sealed class UserProvisioningService : IUserProvisioningService
             ?? email;
 
         // Sprawdzane PRZED dodaniem nowego użytkownika do kontekstu — inaczej AnyAsync
-        // widziałby już nasz własny, jeszcze niezapisany wiersz.
-        var isFirstUser = !await _dbContext.UserAccounts.AnyAsync(cancellationToken).ConfigureAwait(false);
+        // widziałby już nasz własny, jeszcze niezapisany wiersz. Liczymy WYŁĄCZNIE konta
+        // Kind=Human — jeśli admin zarejestruje klucz integracyjny (Kind=Service) przed
+        // pierwszym logowaniem człowieka, pierwszy prawdziwy user nadal musi dostać rolę
+        // administrator automatycznie (patrz API-003, docs/backend/identity-authz.md §2).
+        var isFirstUser = !await _dbContext.UserAccounts
+            .AnyAsync(u => u.Kind == UserAccountKind.Human, cancellationToken)
+            .ConfigureAwait(false);
 
         var user = UserAccount.ProvisionFromToken(uuid, email, displayName, _clock.UtcNow);
 

@@ -20,6 +20,8 @@ public sealed class UserAccountConfiguration : IEntityTypeConfiguration<UserAcco
         builder.Property(u => u.DisplayName).HasMaxLength(256).IsRequired();
         builder.Property(u => u.IsActive).IsRequired();
         builder.Property(u => u.SyncedAt).IsRequired();
+        builder.Property(u => u.Kind).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(u => u.Description).HasMaxLength(512);
 
         builder.HasIndex(u => u.Email).IsUnique();
 

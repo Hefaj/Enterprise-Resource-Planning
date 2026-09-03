@@ -2,6 +2,7 @@ import { Injectable, computed, effect, inject, signal, untracked } from '@angula
 import { UserOrchestrator, UserVM } from '@erp/identity/data-access';
 import { SearchUserAccountRequest } from '@erp/identity/data-access';
 import { ErpSelectionScope, ErpSelectionState, erpResolveSelectionScope, erpSelectionCount } from '@erp/shared/ui';
+import { USER_ACCOUNT_KIND } from '@erp/identity/util';
 
 /**
  * Do ilu użytkowników „Zaznacz wszystko" jest jeszcze rozwiązywane do listy identyfikatorów —
@@ -21,7 +22,10 @@ export const USER_SELECTION_MATERIALIZE_LIMIT = 100;
 export class UsersStore {
   private readonly _orchestrator = inject(UserOrchestrator);
 
-  public readonly filters = signal<Partial<SearchUserAccountRequest>>({});
+  // Domyślnie tylko konta ludzkie — konta serwisowe (klucze integracyjne, API-003) nie mieszają
+  // się z ludźmi na liście, dopóki admin świadomie nie wyczyści/zmieni filtra `kind`. Zachowuje
+  // dzisiejsze zachowanie strony sprzed API-003 (patrz `docs/backend/identity-authz.md` §2).
+  public readonly filters = signal<Partial<SearchUserAccountRequest>>({ kind: USER_ACCOUNT_KIND.Human });
   public readonly loading = signal<boolean>(false);
 
   public updateFilters(partial: Partial<SearchUserAccountRequest>): void {

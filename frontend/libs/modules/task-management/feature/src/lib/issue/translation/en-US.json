@@ -312,32 +312,5 @@
         "confirm": "Change anyway"
       }
     }
-  },
-  "savedViews": {
-    "title": "Saved views",
-    "placeholder": "Choose a view",
-    "ownGroup": "Yours",
-    "sharedGroup": "Shared with the project",
-    "save": "Save filter as view",
-    "copyToMine": "Copy to mine",
-    "copied": "View copied to your private views.",
-    "shortenedToast": "The view was shortened because field \"{{code}}\" no longer exists in this project.",
-    "saveModal": {
-      "title": "Save current filter as view",
-      "nameLabel": "View name",
-      "namePlaceholder": "e.g. My open bugs",
-      "scopeLabel": "Visibility",
-      "scopePrivate": "Private (only me)",
-      "scopeProject": "Shared with the project",
-      "scopeProjectHint": "Requires a project selected in the filter.",
-      "submit": "Save view",
-      "cancel": "Cancel"
-    },
-    "removeConfirm": {
-      "title": "Remove this view?",
-      "message": "This cannot be undone."
-    },
-    "setDefault": "Set as default",
-    "defaultBadge": "Default"
   }
 }

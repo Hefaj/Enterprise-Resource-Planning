@@ -262,15 +262,16 @@ robi się ją świadomie, a nie rozbudowuje parser.
 
 ---
 
-## 10. Skrzynka powiadomień — druga zakładka dzwonka
+## 10. Skrzynka powiadomień — osobny widżet w nagłówku
 
-**Stan: 📐 projekt.** Model, kontrakt zdarzenia i kanały →
+**Stan: ✅ wdrożone** (widżety w nagłówku i licznik z §10.2). Skrzynka pełnoekranowa
+(`/notification/inbox`, §10.5) zostaje **📐 projekt**. Model, kontrakt zdarzenia i kanały →
 [`user-notifications.md`](../backend/user-notifications.md).
 
-### 10.1 Dwie zakładki, nie jedna lista
+### 10.1 Dwa widżety w nagłówku, nie jedna lista
 
-Dzwonek zaczyna karmić się z dwóch źródeł: feedu zadań (`jobs`) i skrzynki powiadomień
-(`notifications`). Scalenie ich w jedną listę jest kuszące i **odrzucone**:
+Nagłówek karmi się z dwóch źródeł: feedu zadań (`jobs`) i skrzynki powiadomień (`notifications`).
+Scalenie ich w jedną listę jest kuszące i **odrzucone**:
 
 | | Zadania | Powiadomienia |
 |---|---|---|
@@ -281,8 +282,24 @@ Dzwonek zaczyna karmić się z dwóch źródeł: feedu zadań (`jobs`) i skrzynk
 | Skąd | replika `job` w Notification | `user_notification` |
 
 Jedna lista oznaczałaby wiersz z kolumnami pustymi dla połowy pozycji i przycisk „Pobierz", który
-raz jest, a raz go nie ma. Zakładki w popoverze, wspólny badge (suma nieprzeczytanych), osobne
-listy.
+raz jest, a raz go nie ma. Zamiast jednego popovera z zakładkami dostają więc **dwa niezależne
+widżety w nagłówku**, każdy z własnym licznikiem i własnym panelem:
+
+- **`erp-tasks`** (`@erp/client/ui`) — historia zadań masowych. Panel to `erp-job-list`
+  (`notification/feature/src/lib/job/components/lists/erp-job-list/`), licznik to
+  `JobService.unreadCount` (`shared/data-access`), widżet ładowany leniwie pod
+  `JOB_LIST_WIDGET_ID` (`ErpWidgetRegistryService`). Otwarcie panelu woła
+  `JobService.markAllSeen()` — jedyny sposób gaszenia badge'a zadań.
+- **`erp-notifications`** (`@erp/client/ui`) — powiadomienia osobiste. Panel to
+  `erp-user-notification-list` (`notification/feature/src/lib/user-notification/components/lists/erp-user-notification-list/`),
+  licznik to `UserNotificationService.unreadCount`, widżet ładowany pod
+  `USER_NOTIFICATION_WIDGET_ID`. Otwarcie panelu **nie** gasi badge'a — `UserNotificationService`
+  nie ma odpowiednika `markAllSeen()`; licznik schodzi wyłącznie przez jawne `markRead`/
+  `markAllReadAsync` w panelu (§10.2).
+
+Oba widżety mają identyczny szkielet komponentu prezentacyjnego (`count`/`hasActivity`/
+`panelComponent`/`panelInjector`/`open` model) — celowo bez wspólnej bazy/atomu, bo dwóch
+konsumentów nie uzasadnia jeszcze abstrakcji (patrz [atoms.md](./atoms.md)).
 
 ### 10.2 `NotificationStore` idzie do `shared/data-access`
 

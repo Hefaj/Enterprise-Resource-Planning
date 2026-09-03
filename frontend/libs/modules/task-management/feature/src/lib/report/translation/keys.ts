@@ -6,6 +6,9 @@
 export const REPORT_KEYS = {
     title: 'report.title',
     params: {
+      reportKey: {
+        label: 'report.params.reportKey.label',
+      },
       dateFrom: {
         label: 'report.params.dateFrom.label',
         placeholder: 'report.params.dateFrom.placeholder',
@@ -20,6 +23,34 @@ export const REPORT_KEYS = {
       },
       invalidRange: 'report.params.invalidRange',
       generate: 'report.params.generate',
+    },
+    reports: {
+      hoursByDepartment: 'report.reports.hoursByDepartment',
+      issuesByStateTypeAssignee: 'report.reports.issuesByStateTypeAssignee',
+      cycleTimeByStateCategory: 'report.reports.cycleTimeByStateCategory',
+      slaCompliance: 'report.reports.slaCompliance',
+      sprintProgress: 'report.reports.sprintProgress',
+      sprintWorkload: 'report.reports.sprintWorkload',
+    },
+    columns: {
+      projectCode: 'report.columns.projectCode',
+      stateCode: 'report.columns.stateCode',
+      typeName: 'report.columns.typeName',
+      assigneeUuid: 'report.columns.assigneeUuid',
+      count: 'report.columns.count',
+      stateCategory: 'report.columns.stateCategory',
+      period: 'report.columns.period',
+      avgHours: 'report.columns.avgHours',
+      medianHours: 'report.columns.medianHours',
+      sampleCount: 'report.columns.sampleCount',
+      totalCount: 'report.columns.totalCount',
+      withinResponseSlaCount: 'report.columns.withinResponseSlaCount',
+      withinResolutionSlaCount: 'report.columns.withinResolutionSlaCount',
+      sprintName: 'report.columns.sprintName',
+      doneCount: 'report.columns.doneCount',
+      estimateMinutesTotal: 'report.columns.estimateMinutesTotal',
+      loggedMinutesTotal: 'report.columns.loggedMinutesTotal',
+      cardCount: 'report.columns.cardCount',
     },
     status: {
       generating: 'report.status.generating',

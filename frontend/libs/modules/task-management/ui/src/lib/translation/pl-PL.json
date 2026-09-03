@@ -61,6 +61,10 @@
     "remove": "Usuń",
     "none": "Brak powiązań"
   },
+  "issueKey": {
+    "copyLink": "Kopiuj link do zgłoszenia",
+    "copied": "Skopiowano link do zgłoszenia"
+  },
   "fieldPanel": {
     "state": "Stan",
     "noTransitions": "Brak dostępnych przejść",

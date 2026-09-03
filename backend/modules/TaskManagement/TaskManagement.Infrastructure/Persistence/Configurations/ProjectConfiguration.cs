@@ -57,6 +57,13 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(p => p.IsArchived).IsRequired();
         builder.HasIndex(p => p.IsArchived);
 
+        // VIEW-002 — referencja miękka, celowo BEZ klucza obcego do `saved_view`: usunięcie
+        // widoku wskazanego jako domyślny (VIEW-001 — każdy właściciel usuwa swój widok w
+        // dowolnej chwili) nie musi być zsynchronizowane w tej samej transakcji. Front pomija
+        // auto-zastosowanie widoku, którego nie znajdzie wśród wczytanych — patrz komentarz
+        // przy `Project.DefaultSavedViewUuid`.
+        builder.Property(p => p.DefaultSavedViewUuid);
+
         builder.HasMany(p => p.Members)
             .WithOne()
             .HasForeignKey(m => m.ProjectUuid)

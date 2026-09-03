@@ -15,6 +15,7 @@ import {
   JobService,
   UserNotificationService,
   JOB_LIST_WIDGET_ID,
+  USER_NOTIFICATION_WIDGET_ID,
   ERP_LOGOUT_HANDLER,
 } from '@erp/shared/data-access';
 import { AppSettingsService } from '@erp/client/util';
@@ -88,28 +89,29 @@ export class ShellLayoutComponent {
 
   // ── Powiadomienia o zadaniach masowych ──
 
-  /** Zadania, które zmieniły stan od ostatniego otwarcia panelu. */
+  /** Zadania, które zmieniły stan od ostatniego otwarcia panelu — badge przycisku `erp-tasks`. */
   public readonly unreadJobs = this._jobService.unreadCount;
 
-  /** Nieprzeczytane powiadomienia osobiste (Faza 5, `UserNotification`) — druga zakładka
-   * tego samego popovera, więc dzwonek pokazuje sumę obu liczników. */
+  /** Nieprzeczytane powiadomienia osobiste (Faza 5, `UserNotification`) — badge dzwonka
+   * `erp-notifications`. Niezależny licznik, osobny widżet — patrz docs/frontend/notifications.md §10.1. */
   public readonly unreadNotificationsCount = this._userNotifications.unreadCount;
 
-  /** Suma obu liczników — dzwonek ma jeden badge, nie dwa. */
-  public readonly bellCount = computed(() => this.unreadJobs() + this.unreadNotificationsCount());
-
-  /** Czy cokolwiek jeszcze się wykonuje — dzwonek zamienia wtedy ikonę na wskaźnik pracy. */
+  /** Czy cokolwiek jeszcze się wykonuje — przycisk zadań zamienia wtedy ikonę na wskaźnik pracy. */
   public readonly hasActiveJobs = computed(() => this._jobService.activeCount() > 0);
 
   /**
-   * Zawartość panelu powiadomień. `null` do pierwszego otwarcia dzwonka — komponent listy
-   * mieszka w remocie `notification` i nie ma powodu ładować go przy starcie aplikacji.
-   * Licznik przy dzwonku jest niezależny: karmi go `JobService`, zasilany przy STARTUP
-   * przez `bootstrapJobFeed()`.
+   * Zawartość panelu zadań masowych. `null` do pierwszego otwarcia — komponent listy mieszka
+   * w remocie `notification` i nie ma powodu ładować go przy starcie aplikacji. Licznik przy
+   * przycisku jest niezależny: karmi go `JobService`, zasilany przy STARTUP przez `bootstrapJobFeed()`.
    */
-  public readonly jobsWidget = signal<{ component: Type<unknown>; injector: Injector } | null>(null);
+  public readonly tasksWidget = signal<{ component: Type<unknown>; injector: Injector } | null>(null);
+
+  /** Zawartość panelu powiadomień — jak wyżej, ale dla `UserNotificationService`/`erp-notifications`. */
+  public readonly notificationsWidget = signal<{ component: Type<unknown>; injector: Injector } | null>(null);
 
   public readonly notificationsOpen = signal(false);
+
+  public readonly tasksOpen = signal(false);
 
   public readonly isDarkMode = this._appSettings.isDarkMode;
   public readonly navMenu = this._navRegistry.$navMenu;
@@ -299,25 +301,38 @@ export class ShellLayoutComponent {
 
   /**
    * Otwarcie panelu powiadomień: dociąga komponent listy z remota (raz na sesję — rejestr
-   * cache'uje wynik) i zeruje licznik nieprzeczytanych.
+   * cache'uje wynik). Licznik nieprzeczytanych powiadomień gaśnie wyłącznie przez jawną akcję
+   * użytkownika w panelu (`markRead`/`markAllReadAsync`) — `UserNotificationService` nie ma
+   * odpowiednika `JobService.markAllSeen()` (patrz docs/frontend/notifications.md §10.2).
+   */
+  public async openNotifications(): Promise<void> {
+    if (this.notificationsWidget()) {
+      return;
+    }
+
+    const widget = await this._widgetRegistry.load(USER_NOTIFICATION_WIDGET_ID);
+    if (widget) {
+      this.notificationsWidget.set(widget);
+    }
+  }
+
+  /**
+   * Otwarcie panelu zadań masowych: dociąga komponent listy z remota (raz na sesję — rejestr
+   * cache'uje wynik) i zeruje licznik nieprzeczytanych zadań.
    *
    * Licznik zerujemy od razu, nie po załadowaniu widżetu: użytkownik już zobaczył, że coś
    * się wydarzyło, więc badge nie ma po co świecić, nawet gdyby remote był niedostępny.
    */
-  public async openNotifications(): Promise<void> {
+  public async openTasks(): Promise<void> {
     this._jobService.markAllSeen();
 
-    if (this.jobsWidget()) {
+    if (this.tasksWidget()) {
       return;
     }
 
     const widget = await this._widgetRegistry.load(JOB_LIST_WIDGET_ID);
     if (widget) {
-      this.jobsWidget.set(widget);
+      this.tasksWidget.set(widget);
     }
-  }
-
-  public openTasks(): void {
-    console.log('Tasks clicked');
   }
 }

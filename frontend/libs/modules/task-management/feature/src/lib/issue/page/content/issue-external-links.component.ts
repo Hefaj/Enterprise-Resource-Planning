@@ -7,6 +7,9 @@ import {
   ErpConfirmDialogService,
   ErpGroupCardComponent,
   ErpGroupCardConfig,
+  ErpInputBuilder,
+  ErpInputComponent,
+  ErpInputConfig,
   ErpToastService,
   ErpTranslatePipe,
 } from '@erp/shared/ui';
@@ -24,7 +27,7 @@ import { ISSUE_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-issue-external-links',
   standalone: true,
-  imports: [ErpButtonComponent, ErpGroupCardComponent, ErpTranslatePipe, ReactiveFormsModule],
+  imports: [ErpButtonComponent, ErpGroupCardComponent, ErpInputComponent, ErpTranslatePipe, ReactiveFormsModule],
   template: `
     <erp-group-card [config]="this.cardConfig()">
       <div class="flex flex-col gap-2">
@@ -49,17 +52,11 @@ import { ISSUE_KEYS } from '../../translation';
 
         @if (this.canEdit()) {
           <div class="flex flex-wrap items-center gap-2">
-            <input
-              class="min-w-40 flex-1 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-              type="text"
-              [formControl]="this.urlControl"
-              [placeholder]="ISSUE_KEYS.detail.externalLinks.urlPlaceholder | erpTranslate"
-            />
-            <input
-              class="min-w-32 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-              type="text"
-              [formControl]="this.labelControl"
-              [placeholder]="ISSUE_KEYS.detail.externalLinks.labelPlaceholder | erpTranslate"
+            <erp-input class="min-w-40 flex-1" [config]="this.urlInputConfig" [control]="this.urlControl" />
+            <erp-input
+              class="min-w-32"
+              [config]="this.labelInputConfig"
+              [control]="this.labelControl"
               (keydown.enter)="this.addAsync()"
             />
             <erp-button [config]="this.addButton()" />
@@ -85,6 +82,14 @@ export class IssueExternalLinksComponent {
 
   protected readonly urlControl = new FormControl<string>('', { nonNullable: true });
   protected readonly labelControl = new FormControl<string>('', { nonNullable: true });
+
+  protected readonly urlInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setType('text').setPlaceholder(ISSUE_KEYS.detail.externalLinks.urlPlaceholder),
+  );
+
+  protected readonly labelInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setType('text').setPlaceholder(ISSUE_KEYS.detail.externalLinks.labelPlaceholder),
+  );
 
   protected readonly cardConfig = computed<ErpGroupCardConfig>(() => ({
     title: { key: ISSUE_KEYS.detail.externalLinks.titleWithCount, params: { count: this.links().length } },

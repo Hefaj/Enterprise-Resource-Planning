@@ -19,6 +19,7 @@ import {
   erpUserPickerField,
   injectTranslationsReadySignal,
 } from '@erp/shared/ui';
+import { ERP_PERMISSIONS, ErpHasPermissionDirective } from '@erp/shared/auth';
 import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import {
   ProjectFieldDto,
@@ -63,6 +64,7 @@ interface FilterOption {
     ErpButtonComponent,
     ErpCheckboxComponent,
     ErpFilterComponent,
+    ErpHasPermissionDirective,
     ErpInputComponent,
     ErpTranslatePipe,
     ReactiveFormsModule,
@@ -87,6 +89,18 @@ interface FilterOption {
                 >
                   {{ view.name }}
                 </button>
+
+                @if (this.isDefaultView(view)) {
+                  <span
+                    class="rounded bg-[var(--tui-background-neutral-1)] px-1.5 py-0.5 text-[10px] uppercase text-[var(--tui-text-tertiary)]"
+                  >
+                    {{ ISSUE_KEYS.savedViews.defaultBadge | erpTranslate }}
+                  </span>
+                } @else if (this.canBeDefaultView(view)) {
+                  <ng-container *erpHasPermission="ERP_PERMISSIONS.TaskManagement.ProjectManage">
+                    <erp-button [config]="this.setDefaultViewButton(view)" />
+                  </ng-container>
+                }
 
                 @if (view.isOwn) {
                   <erp-button [config]="this.removeViewButton(view)" />
@@ -122,6 +136,7 @@ interface FilterOption {
 })
 export class IssueFilterComponent implements OnInit {
   protected readonly ISSUE_KEYS = ISSUE_KEYS;
+  protected readonly ERP_PERMISSIONS = ERP_PERMISSIONS;
 
   private readonly _store = inject(IssueStore);
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
@@ -343,10 +358,59 @@ export class IssueFilterComponent implements OnInit {
     };
   }
 
+  // ── VIEW-002: widok domyślny projektu ──
+
+  /** Ustawiane na `true` w chwili, gdy użytkownik świadomie kliknie widok w tej sesji — dopóki
+   * to nie nastąpi, zmiana projektu wciąż wolno auto-stosować jego widok domyślny. */
+  private readonly _manuallySelectedView = signal<boolean>(false);
+
+  protected isDefaultView(view: SavedViewDto): boolean {
+    const project = this._currentProject();
+    return !!project && project.defaultSavedViewUuid === view.uuid;
+  }
+
+  /** Widokiem domyślnym może zostać wyłącznie widok udostępniony BIEŻĄCEMU projektowi —
+   * ta sama reguła co po stronie backendu (`ProjectSetDefaultSavedViewCommandHandler`), tu
+   * powtórzona wyłącznie po to, żeby nie proponować przycisku, który serwer i tak odrzuci. */
+  protected canBeDefaultView(view: SavedViewDto): boolean {
+    const project = this._currentProject();
+    return !!project && view.projectUuid === project.uuid;
+  }
+
+  protected setDefaultViewButton(view: SavedViewDto): ErpButtonConfig {
+    return {
+      label: ISSUE_KEYS.savedViews.setDefault,
+      appearance: 'flat',
+      size: 'xs',
+      iconStart: '@tui.star',
+      fn: () => this._setDefaultViewAsync(view),
+    };
+  }
+
+  private readonly _currentProject = computed(() => {
+    const uuid = this._store.filters().projectUuid;
+    return uuid ? this._projects.getOne(uuid)() : undefined;
+  });
+
+  private async _setDefaultViewAsync(view: SavedViewDto): Promise<void> {
+    const project = this._currentProject();
+
+    if (!project) {
+      return;
+    }
+
+    try {
+      await this._projects.setDefaultSavedViewAsync({ uuid: project.uuid, savedViewUuid: view.uuid });
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się ustawić widoku domyślnego.', error);
+    }
+  }
+
   public constructor() {
     effect(() => {
       const projectUuid = this._store.filters().projectUuid;
       untracked(() => {
+        this._manuallySelectedView.set(false);
         void this._loadTagsAsync(projectUuid);
         void this._loadViewsAsync(projectUuid);
       });
@@ -474,6 +538,20 @@ export class IssueFilterComponent implements OnInit {
     try {
       const views = await this._views.searchViewsAsync({ projectUuid });
       this._viewUuids.set(views.map((view) => view.uuid));
+
+      // VIEW-002 — auto-zastosowanie widoku domyślnego projektu, dopóki użytkownik nie wybrał
+      // widoku ręcznie w tej sesji (`_manuallySelectedView`, zerowany przy każdej zmianie
+      // projektu). Sprawdzone DWUKROTNIE — przed i po `await` — bo w tym oknie użytkownik mógł
+      // zdążyć kliknąć inny widok.
+      if (projectUuid && !this._manuallySelectedView()) {
+        await this._projects.loadAsync([projectUuid]);
+        const defaultViewUuid = this._projects.getOne(projectUuid)()?.defaultSavedViewUuid;
+        const defaultView = defaultViewUuid ? views.find((view) => view.uuid === defaultViewUuid) : undefined;
+
+        if (defaultView && !this._manuallySelectedView()) {
+          await this._applyViewInternal(defaultView);
+        }
+      }
     } catch (error) {
       console.error('[IssueFilterComponent] Nie udało się pobrać zapisanych widoków.', error);
     }
@@ -523,6 +601,11 @@ export class IssueFilterComponent implements OnInit {
    * dostaje toast tłumaczący, że widok został skrócony.
    */
   protected async applyView(view: SavedViewDto): Promise<void> {
+    this._manuallySelectedView.set(true);
+    await this._applyViewInternal(view);
+  }
+
+  private async _applyViewInternal(view: SavedViewDto): Promise<void> {
     const projectUuid = view.projectUuid ?? this._store.filters().projectUuid;
 
     if (projectUuid) {

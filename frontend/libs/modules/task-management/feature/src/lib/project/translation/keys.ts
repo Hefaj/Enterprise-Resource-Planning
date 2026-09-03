@@ -122,6 +122,23 @@ export const PROJECT_KEYS = {
           confirmMessage: 'project.detail.types.remove.confirmMessage',
         },
       },
+      tags: {
+        title: 'project.detail.tags.title',
+        empty: 'project.detail.tags.empty',
+        rename: {
+          label: 'project.detail.tags.rename.label',
+          placeholder: 'project.detail.tags.rename.placeholder',
+        },
+        merge: {
+          label: 'project.detail.tags.merge.label',
+          modalTitle: 'project.detail.tags.merge.modalTitle',
+          targetLabel: 'project.detail.tags.merge.targetLabel',
+          targetPlaceholder: 'project.detail.tags.merge.targetPlaceholder',
+          confirmMessage: 'project.detail.tags.merge.confirmMessage',
+          submit: 'project.detail.tags.merge.submit',
+          scopeMismatch: 'project.detail.tags.merge.scopeMismatch',
+        },
+      },
       sla: {
         title: 'project.detail.sla.title',
         empty: 'project.detail.sla.empty',

@@ -286,6 +286,9 @@ export const SHARED_KEYS = {
         taskmgmtSavedViewRemove: 'shared.jobs.commands.taskmgmtSavedViewRemove',
         taskmgmtSavedViewCopy: 'shared.jobs.commands.taskmgmtSavedViewCopy',
         taskmgmtReportRunCreate: 'shared.jobs.commands.taskmgmtReportRunCreate',
+        taskmgmtTagSetName: 'shared.jobs.commands.taskmgmtTagSetName',
+        taskmgmtTagExecMerge: 'shared.jobs.commands.taskmgmtTagExecMerge',
+        taskmgmtProjectSetDefaultSavedView: 'shared.jobs.commands.taskmgmtProjectSetDefaultSavedView',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',

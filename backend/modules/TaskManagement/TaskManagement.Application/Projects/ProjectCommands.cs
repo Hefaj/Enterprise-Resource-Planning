@@ -184,6 +184,54 @@ public sealed class ProjectSetCodeCommandHandler : CommandHandler<ProjectSetCode
     }
 }
 
+/// <summary>Ustawia albo zdejmuje widok domyślny projektu (VIEW-002, `Could`). Widok musi być
+/// udostępniony TEMU projektowi — prywatny albo udostępniony innemu projektowi jest odrzucony:
+/// widok domyślny musi być widoczny dla każdego, kto widzi projekt, a prywatny widok innej osoby
+/// nie spełnia tego z definicji.</summary>
+public sealed class ProjectSetDefaultSavedViewCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public Guid? SavedViewUuid { get; set; }
+}
+
+public sealed class ProjectSetDefaultSavedViewCommandHandler : CommandHandler<ProjectSetDefaultSavedViewCommand, Guid>
+{
+    private readonly IProjectRepository _repository;
+    private readonly ISavedViewRepository _savedViews;
+
+    public ProjectSetDefaultSavedViewCommandHandler(IProjectRepository repository, ISavedViewRepository savedViews)
+    {
+        _repository = repository;
+        _savedViews = savedViews;
+    }
+
+    public override async Task<Guid> ExecuteAsync(ProjectSetDefaultSavedViewCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
+
+        if (command.SavedViewUuid is { } savedViewUuid && savedViewUuid != Guid.Empty)
+        {
+            var view = await _savedViews.FindAsync(savedViewUuid, ct).ConfigureAwait(false)
+                ?? throw new AggregateNotFoundException(nameof(Domain.SavedViews.SavedView), savedViewUuid);
+
+            if (view.ProjectUuid != project.Uuid)
+            {
+                throw new DomainException(
+                    "taskmgmt.saved_view_not_shared_with_project",
+                    "Widokiem domyślnym może zostać wyłącznie widok udostępniony temu projektowi.");
+            }
+        }
+
+        project.SetDefaultSavedView(command.SavedViewUuid);
+
+        return project.Uuid;
+    }
+}
+
 /// <summary>Archiwizacja/przywrócenie projektu (PRJ-004). Bez osobnej komendy usuwania —
 /// projektu w tym module się nie kasuje (PRJ-004 AC2).</summary>
 public sealed class ProjectSetArchivedCommand : ICommand<Guid>, IAggregateCommand

@@ -27,16 +27,22 @@
 
       <!-- Notifications -->
       <erp-notifications
-        [count]="bellCount()"
-        [hasActivity]="hasActiveJobs()"
-        [panelComponent]="jobsWidget()?.component ?? null"
-        [panelInjector]="jobsWidget()?.injector ?? null"
+        [count]="unreadNotificationsCount()"
+        [panelComponent]="notificationsWidget()?.component ?? null"
+        [panelInjector]="notificationsWidget()?.injector ?? null"
         [(open)]="notificationsOpen"
         (clickNotifications)="openNotifications()"
       />
 
       <!-- Tasks -->
-      <erp-tasks (clickTasks)="openTasks()" />
+      <erp-tasks
+        [count]="unreadJobs()"
+        [hasActivity]="hasActiveJobs()"
+        [panelComponent]="tasksWidget()?.component ?? null"
+        [panelInjector]="tasksWidget()?.injector ?? null"
+        [(open)]="tasksOpen"
+        (clickTasks)="openTasks()"
+      />
 
       <!-- Company Selector -->
       <erp-company-selector

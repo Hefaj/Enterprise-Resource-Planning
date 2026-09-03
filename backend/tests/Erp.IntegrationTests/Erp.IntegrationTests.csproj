@@ -20,6 +20,7 @@
     <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Messaging/Erp.BuildingBlocks.Messaging.csproj" />
     <ProjectReference Include="../../building-blocks/Erp.BuildingBlocks.Api/Erp.BuildingBlocks.Api.csproj" />
     <ProjectReference Include="../../modules/Catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="../../modules/TaskManagement/TaskManagement.Infrastructure/TaskManagement.Infrastructure.csproj" />
     <ProjectReference Include="../../modules/Notification/Notification.Infrastructure/Notification.Infrastructure.csproj" />
     <ProjectReference Include="../../modules/Identity/Identity.Infrastructure/Identity.Infrastructure.csproj" />
   </ItemGroup>

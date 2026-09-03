@@ -103,12 +103,7 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
       .erp-link-list__row {
         display: flex;
-        /* flex-end, nie baseline — w wierszu z polami formularza (typ + klucz + dodaj)
-           erp-input-picker ma etykietę nad polem, a erp-input obok nie (sam placeholder),
-           więc wyrównanie po linii bazowej tekstu wypychało pola na różne wysokości. Dla
-           wierszy z samym tekstem (klucz, tytuł) różnica względem baseline jest niezauważalna
-           przy jednej linii tekstu o tej samej wysokości. */
-        align-items: flex-end;
+        align-items: center;
         gap: 0.5rem;
         font-size: 0.875rem;
       }
@@ -199,8 +194,8 @@ export class ErpLinkListComponent {
 
   protected readonly setParentButton: ErpButtonConfig = {
     label: TASKMANAGEMENT_KEYS.links.setParentSubmit,
-    appearance: 'secondary',
-    size: 'm',
+    appearance: 'flat',
+    size: 'xs',
     loading: this.saving,
     fn: (): void => {
       const key = this.parentControl.value?.trim();
@@ -214,14 +209,14 @@ export class ErpLinkListComponent {
   protected readonly detachParentButton: ErpButtonConfig = {
     label: TASKMANAGEMENT_KEYS.links.detachParent,
     appearance: 'flat',
-    size: 's',
+    size: 'xs',
     fn: (): void => this.detachParent.emit(),
   };
 
   protected readonly addButton: ErpButtonConfig = {
     label: TASKMANAGEMENT_KEYS.links.addSubmit,
-    appearance: 'secondary',
-    size: 'm',
+    appearance: 'flat',
+    size: 'xs',
     loading: this.saving,
     fn: (): void => {
       const key = this.targetControl.value?.trim();
@@ -238,7 +233,7 @@ export class ErpLinkListComponent {
     return {
       label: TASKMANAGEMENT_KEYS.links.remove,
       appearance: 'flat',
-      size: 's',
+      size: 'xs',
       fn: (): void => this.removeLink.emit(uuid),
     };
   }

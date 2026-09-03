@@ -208,7 +208,7 @@ export class IssueActivityComponent {
   protected readonly cancelButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.comments.cancel,
     appearance: 'flat',
-    size: 's',
+    size: 'xs',
     fn: (): void => {
       this.replyingTo.set(null);
       this.editing.set(null);

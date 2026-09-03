@@ -16,7 +16,17 @@ export interface ErpIssueKeyConfig {
   /** Nazwa typu — tylko do `title`/hover, klucz sam w sobie wystarcza na co dzień. */
   typeName?: MaybeSignal<string | undefined>;
 
+  /** Tytuł zgłoszenia — używany wyłącznie przy kopiowaniu linku (wzorem YouTrack: `DEV-1 Tytuł`,
+   * gdzie klucz jest hiperłączem). Bez tytułu (np. w kontekstach, które go nie mają pod ręką)
+   * kopiowany zostaje sam klucz jako link. */
+  title?: MaybeSignal<string | undefined>;
+
   /** Trasa `routerLink`; brak — klucz renderuje się jako zwykły tekst (np. wewnątrz komórki,
    * która sama jest już linkiem). */
   link?: MaybeSignal<readonly unknown[] | undefined>;
+
+  /** Pokazuje ikonę kopiowania linku do zgłoszenia (wzorem YouTrack) — domyślnie ukryta, bo
+   * w tabeli/na kafelku klucz i tak jest linkiem klikalnym; ma sens tam, gdzie klucz nie jest
+   * linkiem albo prowadzi donikąd (nagłówek karty zgłoszenia — już tam jesteśmy). */
+  copyable?: MaybeSignal<boolean>;
 }

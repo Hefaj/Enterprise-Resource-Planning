@@ -56,10 +56,6 @@
       "emptyCell": "—"
     }
   },
-  "tabs": {
-    "jobs": "Jobs",
-    "notifications": "Notifications"
-  },
   "notifications": {
     "empty": "No notifications.",
     "markAllRead": "Mark all as read",

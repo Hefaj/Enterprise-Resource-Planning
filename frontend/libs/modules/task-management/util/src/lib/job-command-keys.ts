@@ -70,4 +70,7 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   removeSavedView: 'shared.jobs.commands.taskmgmtSavedViewRemove',
   copySavedView: 'shared.jobs.commands.taskmgmtSavedViewCopy',
   createReport: 'shared.jobs.commands.taskmgmtReportRunCreate',
+  setTagName: 'shared.jobs.commands.taskmgmtTagSetName',
+  execMergeTag: 'shared.jobs.commands.taskmgmtTagExecMerge',
+  setProjectDefaultSavedView: 'shared.jobs.commands.taskmgmtProjectSetDefaultSavedView',
 } as const;

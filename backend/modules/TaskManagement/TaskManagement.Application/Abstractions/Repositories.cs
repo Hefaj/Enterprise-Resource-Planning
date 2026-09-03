@@ -141,6 +141,26 @@ public interface ITagRepository
     Task<Tag?> FindAsync(Guid uuid, CancellationToken cancellationToken);
 
     void Add(Tag tag);
+
+    void Remove(Tag tag);
+}
+
+/// <summary>
+/// Przepięcie wierszy <c>issue_tag</c> poza granicą agregatu <see cref="Tag"/> (TAG-003 —
+/// scalenie). Repozytorium <see cref="Tag"/> nie widzi cudzej kolekcji podrzędnej
+/// <see cref="TaskManagement.Domain.Issues.IssueTag"/>, a liczba dotkniętych zgłoszeń jest
+/// nieograniczona (każde zgłoszenie noszące scalany tag, bez względu na to, ile ich jest) —
+/// to jeden zapis SQL, nie pętla po załadowanych agregatach <c>Issue</c>. Ten sam wzorzec co
+/// <see cref="IProjectKeyCounterWriter.SetPrefixAsync"/>: tabela nie jest adresowana jeden
+/// wiersz/agregat naraz.
+/// </summary>
+public interface IIssueTagWriter
+{
+    /// <summary>Przenosi wszystkie przypięcia z <paramref name="fromTagUuid"/> na
+    /// <paramref name="toTagUuid"/>. Zgłoszenie noszące już oba tagi traci wiersz źródłowy bez
+    /// duplikatu (unikalny indeks <c>(issue_uuid, tag_uuid)</c> odrzuciłby zwykły
+    /// <c>UPDATE</c>) — wołający usuwa potem sam agregat <see cref="Tag"/> źródłowy.</summary>
+    Task RepointAsync(Guid fromTagUuid, Guid toTagUuid, CancellationToken cancellationToken);
 }
 
 /// <summary>Dostęp do agregatu <see cref="Resolution"/> po stronie zapisu (ISS-007).</summary>

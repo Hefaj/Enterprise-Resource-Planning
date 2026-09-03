@@ -15,6 +15,9 @@ export interface ErpResolvedWidget {
 /** Identyfikator widżetu listy zadań masowych — kontrakt między hostem a remotem `notification`. */
 export const JOB_LIST_WIDGET_ID = 'notification.jobs';
 
+/** Identyfikator widżetu listy powiadomień osobistych — kontrakt między hostem a remotem `notification`. */
+export const USER_NOTIFICATION_WIDGET_ID = 'notification.userNotifications';
+
 /**
  * Rejestr komponentów, które host osadza we własnym layoucie, a które należą do remotów.
  *

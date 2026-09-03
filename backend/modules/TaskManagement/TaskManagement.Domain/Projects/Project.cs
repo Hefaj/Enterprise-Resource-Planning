@@ -68,6 +68,20 @@ public sealed class Project : AggregateRoot
 
     public IReadOnlyList<ProjectMember> Members => _members.AsReadOnly();
 
+    /// <summary>Widok domyślny projektu (VIEW-002) — automatycznie stosowany na liście zgłoszeń
+    /// przy wejściu w kontekst tego projektu, dopóki użytkownik nie wybierze innego widoku w
+    /// bieżącej sesji. <c>null</c> to stan normalny: „projekt bez widoku domyślnego" znaczy po
+    /// prostu brak filtra narzuconego z góry, tak jak <see cref="FieldSchemeUuid"/> bez wartości
+    /// znaczy „bez pól własnych". Wskazany widok musi być udostępniony TEMU projektowi — walidację
+    /// robi handler komendy (potrzebuje <c>SavedView</c>, osobnego agregatu), nie ta klasa.
+    ///
+    /// <para><b>Referencja miękka, celowo bez klucza obcego</b>: usunięcie widoku wskazanego jako
+    /// domyślny (VIEW-001, każdy właściciel może usunąć swój widok w dowolnej chwili) nie ma
+    /// obowiązku czyścić tego pola od razu — front, nie znajdując wskazanego uuida wśród
+    /// wczytanych widoków projektu, po prostu pomija auto-zastosowanie, tak samo jak VIEW-001 AC2
+    /// każe mu pomijać kod pola, którego profil już nie zna, zamiast rzucać błędem.</para></summary>
+    public Guid? DefaultSavedViewUuid { get; private set; }
+
     /// <summary>Polityka SLA — <c>null</c> znaczy „projekt bez zdefiniowanego SLA", stan
     /// normalny, tak samo jak <see cref="FieldSchemeUuid"/> (faza 5, PRJ-006).</summary>
     public int? SlaResponseMinutes { get; private set; }
@@ -220,6 +234,12 @@ public sealed class Project : AggregateRoot
     /// nieodwracalną.</summary>
     public void SetFieldScheme(Guid? fieldSchemeUuid)
         => FieldSchemeUuid = fieldSchemeUuid == Guid.Empty ? null : fieldSchemeUuid;
+
+    /// <summary>Ustawia albo zdejmuje widok domyślny (VIEW-002). Że wskazany widok istnieje i
+    /// jest udostępniony temu projektowi (nie prywatny, nie widok innego projektu) sprawdza
+    /// handler komendy — agregat <c>Project</c> nie widzi <c>SavedView</c>.</summary>
+    public void SetDefaultSavedView(Guid? savedViewUuid)
+        => DefaultSavedViewUuid = savedViewUuid == Guid.Empty ? null : savedViewUuid;
 
     /// <summary>Dodaje albo aktualizuje rolę członka. Idempotentne po użytkowniku —
     /// dwukrotne dodanie tej samej osoby zmienia rolę, nie tworzy drugiego wiersza.</summary>

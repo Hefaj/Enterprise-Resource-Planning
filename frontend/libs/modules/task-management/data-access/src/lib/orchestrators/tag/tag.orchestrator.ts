@@ -4,7 +4,15 @@ import { Observable, map } from 'rxjs';
 import { BaseOrchestrator, LoadOptions, OrchestratorConfig } from '@erp/shared/data-access';
 import { TASK_MANAGEMENT_JOB_COMMAND_KEYS } from '@erp/task-management/util';
 
-import { SearchResponse, SearchTagRequest, TagCreateCommand, TagDto, TaskManagementClient } from '../../api-client';
+import {
+  SearchResponse,
+  SearchTagRequest,
+  TagCreateCommand,
+  TagDto,
+  TagExecMergeCommand,
+  TagSetNameCommand,
+  TaskManagementClient,
+} from '../../api-client';
 import { TagVM } from './tag.view-model';
 
 /**
@@ -59,6 +67,27 @@ export class TaskManagementTagOrchestrator extends BaseOrchestrator<TagDto, TagV
   public createMultipleAsync(command: TagCreateCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.tagCreateMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.createTag,
+      queueId,
+    });
+  }
+
+  /** Zmienia nazwę tagu (TAG-003). */
+  public setNameAsync(command: TagSetNameCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.tagSetNameMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setTagName,
+      queueId,
+    });
+  }
+
+  /**
+   * Scala {@link TagExecMergeCommand.uuid} (tag źródłowy) w {@link TagExecMergeCommand.targetTagUuid}
+   * (TAG-003). Backend przepina `issue_tag` raw SQL-em, z pominięciem `AggregateChanged` dla
+   * dotkniętych zgłoszeń — wołający ma pełny `reloadAsync` listy tagów po sukcesie, zamiast
+   * polegać na realtime pojedynczego zgłoszenia (patrz `TagExecMergeCommandHandler`).
+   */
+  public execMergeAsync(command: TagExecMergeCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.tagExecMergeMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.execMergeTag,
       queueId,
     });
   }

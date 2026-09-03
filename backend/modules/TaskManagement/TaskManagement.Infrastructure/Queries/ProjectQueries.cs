@@ -97,7 +97,8 @@ public sealed class ProjectQueries : IProjectQueries
                         p.SlaWorkingDays!.Value,
                         p.SlaWorkStartTime!.Value,
                         p.SlaWorkEndTime!.Value),
-                p.IsArchived))
+                p.IsArchived,
+                p.DefaultSavedViewUuid))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }

@@ -29,6 +29,22 @@ export async function loadJobListComponent(): Promise<{
 }
 
 /**
+ * Analogiczny loader dla listy powiadomień osobistych (Faza 5, `UserNotification`) — zawartość
+ * widżetu `erp-notifications` w nagłówku, sąsiada {@link loadJobListComponent} pod `erp-tasks`.
+ */
+export async function loadUserNotificationListComponent(): Promise<{
+  component: Type<unknown>;
+  providers: Provider[];
+}> {
+  const [{ UserNotificationListComponent }, { provideJobTranslations }] = await Promise.all([
+    import('@erp/notification/feature'),
+    import('@erp/notification/ui'),
+  ]);
+
+  return { component: UserNotificationListComponent, providers: provideJobTranslations() };
+}
+
+/**
  * Startuje zasilanie feedu zadań danymi z serwera.
  *
  * Wołane przez hosta przy STARTUP, bo licznik przy dzwonku musi być prawdziwy, zanim

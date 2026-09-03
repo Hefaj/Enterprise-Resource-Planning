@@ -18,8 +18,18 @@ export class ErpIssueKeyBuilder extends ErpBaseBuilder<ErpIssueKeyConfig> {
     return this;
   }
 
+  public setTitle(value: MaybeSignal<string | undefined>): this {
+    this._data.title = value;
+    return this;
+  }
+
   public setLink(value: MaybeSignal<readonly unknown[] | undefined>): this {
     this._data.link = value;
+    return this;
+  }
+
+  public setCopyable(value: MaybeSignal<boolean>): this {
+    this._data.copyable = value;
     return this;
   }
 }

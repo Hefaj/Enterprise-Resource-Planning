@@ -7,7 +7,8 @@ namespace TaskManagement.Domain.Tags;
 /// po tagu jest joinem na <c>issue_tag</c>, nie przeszukiwaniem jsonb.
 ///
 /// <para><see cref="ProjectUuid"/> <c>null</c> znaczy tag globalny — dostępny na każdym
-/// projekcie. Scalanie i zmiana nazwy (<c>TAG-003</c>) to faza 7.</para>
+/// projekcie. Scalanie (<c>TAG-003</c>) usuwa cały agregat i przepina <c>issue_tag</c> poza jego
+/// granicą — patrz <c>TagExecMergeCommandHandler</c> — więc nie jest metodą tej klasy.</para>
 /// </summary>
 public sealed class Tag : AggregateRoot
 {
@@ -43,5 +44,18 @@ public sealed class Tag : AggregateRoot
             projectUuid == Guid.Empty ? null : projectUuid,
             name.Trim(),
             string.IsNullOrWhiteSpace(color) ? DefaultColor : color.Trim());
+    }
+
+    /// <summary>Zmienia nazwę tagu (TAG-003) — kolizja z istniejącym tagiem w tym samym zasięgu
+    /// jest sprawdzana przez wołającego (unikalny indeks bazy po parze projekt/nazwa), tu tylko
+    /// walidacja niepustości.</summary>
+    public void SetName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new DomainException("taskmgmt.tag_name_empty", "Nazwa tagu nie może być pusta.");
+        }
+
+        Name = name.Trim();
     }
 }

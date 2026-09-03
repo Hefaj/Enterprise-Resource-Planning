@@ -16,7 +16,7 @@
 | 4 | Typy zgłoszeń, **układ karty wg YouTracka**, obrazy ze schowka, graf, wyprowadzenie komponentów do `ui` | 3 | **tak** (`typeUuid` w `IssueCreate`, `IssueDto`) | `IssueTypes` | ✅ zrobione |
 | 5 | Zlecenia międzydziałowe, obserwujący, powiadomienia, SLA | 4 | tak (dodanie pól) | `WatchersAndIntake`, `ProjectSla` | ✅ zrobione |
 | 6 | Sprinty, backlog, tagi, operacje masowe, wyszukiwanie, **rejestracja czasu** | 4 | tak (dodanie pól) | `SprintsAndBacklog`, `TagsAndResolution`, `FullTextSearch`, `WorkLogAndEstimate` | ✅ zrobione |
-| 7 | Edytor schematu z UI, zapisane widoki, **raporty (w tym godziny per dział)** | 6 | tak (dodanie pól) | `SavedViews`, `Reports`, Catalog `ReportRunRename` | ⚠️ częściowo (`Must`/`Should` gotowe, `TAG-003` i 4/5 definicji `RPT-003` pominięte) |
+| 7 | Edytor schematu z UI, zapisane widoki, **raporty (w tym godziny per dział)**, scalanie tagów | 6 | tak (dodanie pól) | `SavedViews`, `Reports`, `ProjectDefaultSavedView`, Catalog `ReportRunRename` | ✅ zrobione |
 | 8 | Automatyzacje, DSL, webhooki | 7 | nie | `Automations`, `Webhooks` | 📐 |
 
 **Faza 4 jest największa i najbardziej łamiąca**, bo wprowadza `IssueType` — pole, którego dziś
@@ -623,11 +623,40 @@ Zweryfikowano na żywo 2026-09-02 (środowisko dev, `client-monolith` + `TaskMan
 - [x] `SavedView` (filtr + sortowanie + kolumny + tryb), prywatny lub projektowy (`VIEW-001`);
       widok z usuniętym polem otwiera się z komunikatem, nie błędem (sprawdzane po stronie
       frontu względem `GetProjectFieldProfile`, backend świadomie nie waliduje `FilterJson`
-      względem aktualnego schematu przy zapisie). `VIEW-002` (widok domyślny projektu, `Could`)
-      **pominięty** — czas fazy poszedł w `Must`/`Should`.
-- [ ] Scalanie i zmiana nazwy tagu (`TAG-003`) — **pominięte** (`Could`, najniższy priorytet
-      w `§5.1`; `Tag`/`taskmgmt.tag.manage` z fazy 6 działają bez zmian, brakuje wyłącznie
-      `TagSetNameCommand`/`TagMergeCommand`).
+      względem aktualnego schematu przy zapisie).
+- [x] Widok domyślny projektu (`VIEW-002`, `Could` — domknięte w sesji domykającej fazę 7).
+      `Project.DefaultSavedViewUuid` (referencja miękka, celowo bez klucza obcego do
+      `saved_view` — usunięcie widoku domyślnego nie musi być zsynchronizowane w tej samej
+      transakcji, front pomija auto-zastosowanie widoku, którego nie znajdzie wśród
+      wczytanych) + `ProjectSetDefaultSavedViewCommand` (handler odrzuca widok prywatny albo
+      należący do innego projektu — `taskmgmt.saved_view_not_shared_with_project`, pokryte
+      testem domenowym `SetDefaultSavedView`). Front: `IssueFilterComponent` auto-stosuje
+      widok domyślny przy wejściu w kontekst projektu, dopóki użytkownik nie wybierze widoku
+      ręcznie w danej sesji (`_manuallySelectedView`); przycisk „Ustaw jako domyślny"/plakietka
+      „Domyślny" przy widoku udostępnionym bieżącemu projektowi, gated `taskmgmt.project.manage`.
+      **Zweryfikowane na żywo**: zapis widoku „Zespół DEV" udostępnionego projektowi DEV,
+      ustawienie jako domyślny, przeładowanie strony, wejście w kontekst DEV — widok
+      zastosowany automatycznie (filtr projektu, plakietka „DOMYŚLNY" na widoku).
+- [x] Scalanie i zmiana nazwy tagu (`TAG-003`, `Could` — domknięte w sesji domykającej fazę 7).
+      `Tag.SetName` (domena) + `TagSetNameCommand`. Scalenie: `TagExecMergeCommand` (czasownik
+      `Exec` — usuwa jeden agregat i przepina kolekcję należącą do nieograniczonej liczby innych
+      agregatów, nie da się opisać jako `Create`/`Set`/`Add`/`Remove` na jednym z nich,
+      `docs/backend/endpoint-naming.md` §5) + `IIssueTagWriter.RepointAsync` (raw SQL z dedupem
+      przez `NOT EXISTS`, poza granicą agregatu `Tag` — ten sam wzorzec co
+      `IProjectKeyCounterWriter.SetPrefixAsync`). **Bez `AggregateChanged` dla zgłoszeń
+      dotkniętych scaleniem** (raw SQL omija ChangeTracker) — świadomie zaakceptowane, front
+      robi pełny `reloadAsync` po komendzie. Odrzuca scalenie między różnymi zasięgami
+      (`taskmgmt.tag_merge_scope_mismatch` — projektowy w globalny albo między dwoma
+      projektami). Front: nowa zakładka „Tagi" na karcie projektu (`ProjectTagsComponent`,
+      wzorem „Typy"/„SLA"), inline zmiana nazwy, panel scalenia z pickerem tagu docelowego i
+      potwierdzeniem. **Realny błąd znaleziony i naprawiony podczas weryfikacji**: odczyt
+      `this.project()` (input wymagany) wprost w konstruktorze zamiast w `effect()` — `NG0950`,
+      ten sam wzorzec błędu co przy `IssueSetProjectStepComponent` w fazie 6; naprawione
+      przeniesieniem do `effect()`. **Zweryfikowane na żywo**: utworzenie dwóch tagów z karty
+      DEV-1 (jeden dołączony sam, drugi razem z pierwszym — przypadek dedupu), zmiana nazwy
+      `back-end-old` → `legacy-backend` (zapisana w bazie), scalenie `legacy-backend` → `backend`
+      — tag źródłowy usunięty, DEV-1 pokazuje `Tagi (1)` zamiast dwóch wierszy (dedup
+      zweryfikowany bezpośrednio na zgłoszeniu, które miało oba tagi naraz).
 
 ### 5.2 Raporty — ekran kierownictwa
 
@@ -650,19 +679,68 @@ zaktualizowane w obu modułach.
       lustrzane odbicie `IssueDeliveryHoursQueries` z fazy 6, ten sam limit głębokości).
 - [x] **Zapytania raportowe nie zwracają tytułu ani opisu zgłoszenia** (`PERM-005` AC2/AC3) —
       wymuszone kształtem `HoursByDepartmentRow` (brak pola na żadne z nich), nie filtrem
-      w warstwie wyżej. **Zweryfikowane ręcznie** na żywej bazie (patrz §10) — bez
-      automatycznego testu negatywnego, co zostaje jako dług tej fazy.
+      w warstwie wyżej. Pierwotnie zweryfikowane tylko ręcznie; **od domknięcia fazy 7 pokryte
+      automatycznym testem regresyjnym** — patrz punkt „Test PERM-005" niżej.
 - [x] Rozróżnienie „brak danych" od „zero godzin" w projekcji (`RPT-002` AC4) — brak wpisów
       w okresie po prostu nie generuje wiersza (brak `LEFT JOIN` z listą wszystkich możliwych
       zagadnień), więc nieobecność wiersza jest jedynym sygnałem „brak danych".
-- [ ] Cztery pozostałe definicje z `RPT-003` — **pominięte** (`Should`); `RPT-002` (`Must`) był
-      priorytetem, reszta zostaje na kolejną sesję.
-- [x] Front: strona raportu jako tabela przestawna
+- [x] Cztery pozostałe definicje `RPT-003` (`Should`, domknięte w sesji domykającej fazę 7),
+      wszystkie jako kolejne `IReportDefinition` w `TaskManagement.Infrastructure/ReportDefinitions/`
+      — żaden nowy endpoint/komenda, rejestracja przez skan zestawu jak `hours-by-department`:
+      - `taskmgmt.issues-by-state-type-assignee` — liczność po (projekt, stan, typ, przypisany),
+        LINQ `GROUP BY`, bez zakresu dat (przekrój bieżącego stanu, nie okresu).
+      - `taskmgmt.cycle-time-by-state-category` — rekonstrukcja zamkniętych okresów z
+        `issue_activity` (`Kind=StateChanged`) przez `LAG` po `occurred_at`; okres bieżący,
+        jeszcze otwarty, świadomie pominięty (czas trwania nierozstrzygnięty). Mediana liczona
+        po stronie .NET (bucket per kombinacja projekt/kategoria/okres, nie
+        `percentile_cont` w SQL — próbek jest za mało, żeby to się opłacało). **Uproszczenie
+        udokumentowane**: mapowanie stan→kategoria bierze się z dzisiejszej definicji schematu,
+        nie z kategorii obowiązującej w chwili przejścia.
+      - `taskmgmt.sla-compliance` — wyłącznie projekty `Intake` z ustawionym SLA; proxy na
+        „pierwszą reakcję" (pierwsza aktywność inna niż `Created`) i na „realizację" (ostatnie
+        przejście do kategorii `Done`, tylko jeśli zgłoszenie nadal tam jest — reotwarcie cofa
+        do „bez rozstrzygnięcia"); zgodność liczona w minutach roboczych wg kalendarza SLA
+        projektu, iteracyjnie w C# (`WorkingMinutesBetween`), nie w SQL.
+      - `taskmgmt.sprint-progress` / `taskmgmt.sprint-workload` — join `sprint`→`board_card`→
+        `issue`+`issue_work_log`; workload grupuje dodatkowo po `AssigneeUuid` — **kontrola
+        granicy `TIME-003`** udokumentowana w komentarzu klasy (obciążenie w kontekście JEDNEGO
+        sprintu na potrzeby planowania, nie „godziny pracownika X w miesiącu"; brak jakiegokolwiek
+        parametru zakresu dat jest częścią tego rozróżnienia, nie przypadkiem).
+      Wszystkie pięć definicji objęte testem PERM-005 AC2 (patrz niżej).
+- [x] Front: strona raportu przebudowana z jednego bespoke pivotu na **selektor raportu +
+      generyczny renderer** (`ReportStore.REPORT_DEFINITIONS`, `report.component.ts`) — pivot
+      dział×zagadnienie×okres zostaje wyłącznie dla `hours-by-department`
       ([§9.4 dokumentu stron](docs/frontend/task-management-pages.md#94-raport-godzin-faza-7)),
-      eksport do artefaktu istniejącym mechanizmem (`/task-management/report`, pivot budowany
-      client-side z pobranego CSV, bez linku do karty zgłoszenia z poziomu zagadnienia).
+      pozostałe cztery renderują się generyczną tabelą nagłówek+wiersze
+      (`parseReportCsvToRows`) z tłumaczeniem nazw kolumn i rozwiązaniem `assignee_uuid` przez
+      `ERP_USER_DIRECTORY`; kolumny-duplikaty uuid obok nazwy (`type_uuid`, `sprint_uuid`) są
+      ukryte. Formularz parametrów (zakres dat / picker projektów) pokazuje się warunkowo wg
+      wybranej definicji. **Realny błąd znaleziony i naprawiony podczas weryfikacji**: dropdown
+      wyboru raportu pokazywał surowy klucz tłumaczenia zamiast nazwy — ten sam systemowy bug
+      reaktywności Transloco co w fazie 6 (`computed(() => transloco.translate(klucz))` cache'uje
+      klucz na zawsze, jeśli odczyta go zanim scope się doładuje); naprawione dopisaniem
+      `injectTranslationsReadySignal()` jako strażnika w `computed`. **Zweryfikowane na żywo**:
+      wszystkich pięć raportów w dropdownie z poprawnymi nazwami, dynamiczne pokazywanie/ukrywanie
+      pól parametrów, `issues-by-state-type-assignee` wygenerowany na realnych danych seeda
+      (DEV/MKT, stany, typ „Funkcjonalność", brak przypisanego pokazany pusty zamiast uuida),
+      `cycle-time-by-state-category` z pustym wynikiem (brak historii zmian stanu w danych seeda —
+      poprawne zachowanie stanu „brak danych", nie błąd).
 - [x] `contract`: pozycja menu „Raport godzin" z `requiredPermission` — dodana **dopiero po**
       potwierdzeniu, że strona działa (`RPT-004`).
+- [x] **Test PERM-005** (AC2 + AC3) — dotąd weryfikowane wyłącznie ręcznie, od domknięcia fazy 7
+      pokryte `Erp.IntegrationTests` (nowa referencja do `TaskManagement.Infrastructure`,
+      `InternalsVisibleTo` na `IssueVisibility` — ten sam wzorzec uzasadnienia co
+      `Erp.BuildingBlocks.Reporting.AssemblyInfo`, przepisanie predykatu w teście sprawdzałoby
+      kopię mechanizmu, nie mechanizm). `TaskManagementReportPermissionTests`: AC3 —
+      `IssueVisibility.VisibleTo` zwraca zero wyników dla zgłoszenia `is_restricted` i aktora
+      spoza kręgu, **niezależnie** od nadanych uprawnień (metoda strukturalnie nie przyjmuje
+      informacji o permisjach — test dowodzi tego przez wykonanie, nie przez odczyt sygnatury);
+      AC2 — wszystkie pięć definicji raportu uruchomione na zgłoszeniu z unikalnym tytułem,
+      żadna kolumna ani wartość nigdzie go nie ujawnia (`issues-by-state-type-assignee` czyta
+      `_dbContext.Issues` wprost, z pominięciem predykatu widoczności — to jest cały sens
+      `report.read.all` — więc zgłoszenie realnie wchodzi do agregacji i test jest dowodem przez
+      wykonanie, nie tylko kontrolą strukturalną). `dotnet test` na `Erp.IntegrationTests`:
+      26/26 (Testcontainers Postgres), w tym te dwa testy i test scalania tagów.
 
 ### 5.3 Definicja ukończenia fazy 7
 
@@ -679,9 +757,17 @@ zaktualizowane w obu modułach.
       do zagadnienia tego zlecenia, a nie tylko do projektu wykonawczego — potwierdzone wprost
       (wpis czasu na `DEV-9`, realizującym `MKT-4`, przypisany do zagadnienia `MKT-4`, dział
       `DEV`; patrz §10).
-- [x] **Kontrola granicy z kadrami** (`TIME-003`): jedyna zaimplementowana definicja
-      (`hours-by-department`) grupuje po dziale/zagadnieniu/okresie — brak jakiejkolwiek kolumny
-      czy parametru identyfikującego pracownika jako podmiot raportu.
+- [x] **Kontrola granicy z kadrami** (`TIME-003`): wszystkie pięć zaimplementowanych definicji
+      grupują po dziale/zagadnieniu/okresie/sprincie — `sprint-workload` jest jedyną, która
+      grupuje dodatkowo po osobie, ale w kontekście jednego sprintu (planowanie pracy zespołu),
+      bez jakiegokolwiek parametru zakresu dat, który przesunąłby ją w stronę „godzin pracownika
+      X w miesiącu" — rozróżnienie i uzasadnienie w komentarzu klasy
+      `TaskManagementSprintWorkloadReportDefinition`. Żadna definicja nie ma kolumny ani
+      parametru identyfikującego pracownika jako **podmiot** raportu.
+- [x] **Realne dane `work_log` w dev** (brakowały na starcie tej fazy) — środowisko odbudowane
+      od zera (`dotnet run` na świeżo wyczyszczonym schemacie `taskmgmt`, migracje + seed),
+      wszystkich pięć raportów przeklikane na żywo w przeglądarce z danymi z seeda (patrz §10),
+      w tym `issues-by-state-type-assignee` z realnymi liczbami per projekt/stan/typ.
 
 ---
 
@@ -732,6 +818,7 @@ po stronie backendu.
 | 6 | `FullTextSearch` | kolumna `tsvector` + indeks GIN + trigger |
 | 6 | `WorkLogAndEstimate` | `work_log`, `issue.estimate_minutes`, słownik rodzajów pracy |
 | 7 | `SavedViews` | `saved_view` |
+| 7 | `ProjectDefaultSavedView` | `project.default_saved_view_uuid` (nullable, referencja miękka) |
 | 8 | `Automations` | `automation_rule`, `automation_run` |
 | 8 | `Webhooks` | `webhook`, `webhook_delivery` |
 
@@ -776,3 +863,4 @@ Sekcja uzupełniana w trakcie — po każdej fazie wpis: co uruchomiono, na czym
 | 6.5 (wyszukiwanie, tablica, projekt) | 02.09.2026 | Siedem niezależnych funkcji, szczegóły projektowe i wykryte błędy w §4.5. Backend: GIN + `websearch_to_tsquery` po tytule/opisie/komentarzach (SRCH-003), `Project.SetCode`/`IsArchived`/`EnsureNotArchived` + `ProjectKeyCounter.SetPrefixAsync` (PRJ-003/004), `IssueRemoveAttachmentCommand` + outbox `ArtifactDeletionRequested` + nowy konsument `ArtifactDeletionRequestedHandler` (ATT-002), `IssueExternalLink` — encja podrzędna wzorem `IssueTag` (API-005), `Board.SwimlaneMode`/`SwimlaneFieldCode` + `BoardColumn.WipLimit` (BRD-006/007); `searchBoard` (BRD-009) już istniał z wcześniejszej fazy, bez zmian. Migracja `SearchSwimlaneArchiveAndLinks`. `dotnet test backend/tests/TaskManagement.Tests` 149/149 (+21: `ProjectArchivalAndCodeTests`, `IssueExternalLinkTests`, `BoardSwimlaneAndWipTests`), `Erp.ArchitectureTests` 27/27. Front: `BoardListComponent` (BRD-009), grupowanie `BoardStore.swimlanes` liczone od surowych kart (nie od już złożonych kolumn) tak, żeby nakładka optymistyczna przeciągnięcia trafiała we właściwy swimlane+kolumnę jednym splice'em, drag izolowany per swimlane przez zasięg `cdkDropListGroup` na wierszu; edycja prefiksu inline i przycisk archiwizacji na karcie projektu; `IssueExternalLinksComponent` i przycisk usunięcia w `IssueAttachmentsComponent`; skok do klucza w `IssueFilterComponent.onSearch` (SRCH-004). `tsc --noEmit` czyste dla `feature`/`data-access`/`contract` (ten sam pre-istniejący `TS4029`), `lint` bez nowych błędów, `pnpm nx run task-management:build` zielony. **Pełne przeklikanie na żywo** (`client-monolith`+`task-management-mfe`+`TaskManagement.Api`+`Identity.Api`+`Notification.Api`): zmiana prefiksu DEV→DEV2 i z powrotem (stare klucze bez zmian, licznik nie zresetowany — potwierdzone w bazie); archiwizacja/przywrócenie MKT (znika z listy, link po uuid nadal działa, próba założenia zgłoszenia w MKT odrzucona `taskmgmt.project_archived` w `job_item`); dodanie/usunięcie linku zewnętrznego na `DEV-1`; usunięcie dwóch załączników na `DEV-1`; wyszukiwanie słowa wyłącznie w opisie (nie w tytule) trafia właściwe zgłoszenie; fraza w cudzysłowie ze słowami sąsiadującymi trafia, z tymi samymi słowami w innej kolejności — nie trafia (prawdziwa fraza, nie AND); wpisanie klucza w wyszukiwarce otwiera kartę wprost; lista dwóch tablic renderuje się zamiast auto-przekierowania; grupowanie „Po priorytecie” poprawnie rozkłada karty na pięć swimlane'ów z tymi samymi kolumnami w każdym. **Trzy realne błędy znalezione i naprawione przy tej weryfikacji, żaden w logice domenowej**: (1) **`TaskManagement.Api` nigdy nie nasłuchiwał `erp.events`** — brakujący `Messaging:ListenQueueName` w `appsettings.Development.json` (Catalog/Notification go mają, TaskManagement nigdy nie dostał w żadnej wcześniejszej fazie); konsument ATT-002 był poprawny, ale bez związanej kolejki wiadomość nigdy do niego nie docierała — dwa pierwsze usunięcia załączników zostawiły pliki-sieroty w MinIO (potwierdzone `mc ls`), naprawione dopisaniem kolejki i restartem, trzecie usunięcie po poprawce faktycznie skasowało obiekt (potwierdzone zniknięciem z `erp-taskmgmt-media/assets/`); sierotę sprzed poprawki usunięto ręcznie jako sprzątanie testu. (2) **Ten sam błąd `null`/`undefined` co przy estymacie w fazie 6.4**, teraz w `BoardColumnComponent.wipExceeded`: `!== undefined` przepuszczało `null` (backend serializuje brak limitu jako `null`), a `cards.length > null` rzutuje na `0` i jest prawdziwe dla każdej niepustej kolumny — wszystkie kolumny na żywej tablicy pokazywały fałszywe „Przekroczono limit WIP” bez ustawionego limitu; naprawione jawnym `!== null && !== undefined`. (3) Picker projektu w modalu tworzenia zgłoszenia czytał wspólny cache orkiestratora bez filtra — zarchiwizowany projekt doładowany przez INNY widok (kolumnę „Projekt” na liście, rozwiązującą istniejące `MKT-4`, co musi działać mimo archiwizacji) zostawał w pickerze mimo że `searchProject` już go wykluczał; naprawione jawnym `.filter(p => !p.isArchived)` w komponencie kroku. **Nieprzetestowane bezpośrednio interakcją użytkownika**: przeciąganie karty MIĘDZY swimlane'ami (blokada przez zasięg `cdkDropListGroup`, zweryfikowana przeglądem kodu) i grupowanie po polu niestandardowym `CustomField` (brak inputu na kod pola w prostym przełączniku nagłówka — osiągalne tylko przez API). | ⚠️ częściowo (wszystkie siedem funkcji zweryfikowane na żywo z bazą danych po każdym kroku, w tym trzy naprawione realne błędy — jeden z nich, brak nasłuchu `erp.events`, dotyczyłby też przyszłego usuwania multimediów w tym module; drag między swimlane'ami i grupowanie po polu niestandardowym bez interakcji na żywo) |
 | 6 (weryfikacja skonsolidowana, DoD) | 02.09.2026 | Weryfikacja pięciu pozycji `4.6 Definicja ukończenia fazy 6` (szczegóły wyników w §4.6, nie powtarzane tutaj): sprint od planowania do zamknięcia z jawną decyzją o niedokończonych zgłoszeniach; operacja masowa (zmiana stanu) z sukcesem częściowym i powodem per zgłoszenie; wyszukiwanie komentarza nie ujawnia zgłoszenia oznaczonego jako `is_restricted`, do którego szukający nie ma dostępu (potwierdzone przez wynik `0`, potem przywrócenie i wynik `1` — to samo zapytanie, ta sama fraza); przeniesione zgłoszenie otwiera się ze starego linku (przekierowanie URL potwierdzone przez `window.location.href`, nie tylko treść strony); `NFR-003` zmierzone na 200 000 wygenerowanych zgłoszeń (backend `EXPLAIN ANALYZE` na dokładnym kształcie zapytania z `IssueQueries`, dane testowe usunięte po pomiarze). **Dwa realne błędy znalezione i naprawione**: (1) brakujący indeks wspierający domyślne sortowanie listy (`CreatedAt DESC, Uuid`) — bez niego pobranie pierwszej strony przy 200 tys. wierszy kosztowało ~277 ms (Seq Scan + Sort całej tabeli, w tym ~188 ms samego JIT-a Postgresa, który się włącza właśnie dlatego że koszt Seq Scan jest wysoki), po dodaniu migracji `IssueDefaultSortIndex` spadło do ~0,14 ms; (2) systemowy błąd reaktywności Transloco w kilku filtrach/pickerach modułu (`computed(() => transloco.translate(klucz))` cache'uje surowy klucz na zawsze, jeśli odczyta go zanim scope się doładuje) — naprawiono częściowo (przeniesiono `provideTaskManagementTranslations()` na trasę agregującą moduł), właściwa naprawa całego wzorca (9 plików) zgłoszona jako osobne zadanie, nie zablokowała żadnego z pięciu punktów DoD. **Pozostałe borderline, udokumentowane, bez zmiany kodu**: licznik wyników (`TotalCount`) bez filtra projektu na 200 tys. wierszy mierzy się na ~287 ms z włączonym JIT Postgresa (budżet 300 ms) — indeks nie pomaga (COUNT musi dotknąć każdego pasującego wiersza), rekomendacja w §4.6 dotyczy strojenia Postgresa, poza zakresem migracji EF; z filtrem projektu (codzienny przypadek) ten sam licznik to 41,7 ms. | ✅ (wszystkie 5 pozycji `4.6` potwierdzone na żywo; jeden indeks brakujący naprawiony migracją, jeden systemowy bug i18n częściowo naprawiony/zgłoszony osobno, jedno ryzyko udokumentowane bez zmiany kodu) |
 | 7 | 03.09.2026 | **Punkt wyjścia tej sesji**: worktree rozjechał się od `main` tuż po fazie 5 i brakowało mu całej fazy 6 (zaimplementowanej wcześniej wyłącznie na `main`, commit `9b455047`) — naprawione `git rebase main` przed startem fazy 7. Backend: `Erp.BuildingBlocks.Reporting` (nowy building block — `ReportRun` jako konkretna klasa mirror `Job`/`JobItem`, NIE generyk po module z osobnym interfejsem, po tym jak pierwsza próba tej generalizacji utknęła w błędnym projekcie z podwójnym parametrem generycznym `ReportRunner<TContext,TReportRun>`/`IReportRun`, naprawione bezpośrednio w tej sesji), `IReportRunDbContext`, `ReportRunner<TContext>`, `IReportDefinition` skanowana jak `IBulkCommandExecutor`; Catalog przepisany z `ExportRun` na tę infrastrukturę (`catalog.product-export` jako pierwsza definicja, migracja `ReportRunRename`); TaskManagement: `WorkflowScheme.AddState/SetState/RemoveState/AddTransition/SetTransition/RemoveTransition/Publish` (WF-006/007, wzorem `IssueTypeScheme` z fazy 4), `SavedView` (nowy agregat własny, VIEW-001), `taskmgmt.report.read.all` (PERM-005), `TaskManagementHoursByDepartmentReportDefinition` (RPT-002, rekurencyjne CTE W PRZÓD po `Delivers` — lustrzane odbicie `IssueDeliveryHoursQueries` z fazy 6, zweryfikowane ręcznie na żywej bazie: syntetyczny wpis 90 min na `DEV-9` realizującym `MKT-4` poprawnie przypisany do zagadnienia `MKT-4`, działu `DEV`, transakcja wycofana po teście). Migracje `Reports` (TaskManagement), `ReportRunRename` (Catalog) — bez zmian w `SavedViews` (już istniała z próby przerwanej limitem sesji). `dotnet test backend/tests/TaskManagement.Tests` 158/158, `Erp.ArchitectureTests` 27/27 (złapał i wymusił poprawkę nazwy `SavedViewCopyCommand`→`SavedViewCreateCopyCommand` — „Copy” nie jest jednym z pięciu czasowników), `Erp.IntegrationTests` 23/23. Front: zakładka „Schemat stanów” na karcie projektu (dwie listy + macierz „z→do”, bez canvasa), modal publikacji z ekranem mapowania (wzorem `IssueSetProjectStepComponent` z fazy 6), panel „Zapisane widoki” w filtrze listy zgłoszeń z obsługą VIEW-001 AC2 (pole usunięte z profilu → toast, nie błąd), strona `/task-management/report` (tabela przestawna dział×zagadnienie×okres, budowana client-side z pobranego CSV, bez linku do karty zgłoszenia z poziomu zagadnienia — PERM-005 AC2), pozycja menu „Raport godzin” dodana dopiero po potwierdzeniu działania strony. `pnpm nx run {task-management,catalog,client}:build` zielone, `lint` bez nowych błędów (te same 2 pre-istniejące, nietknięte pliki). **Pełne przeklikanie na żywo** (osobne sesje na workflow/saved-views i na stronę raportu, `TaskManagement.Api`+`Identity.Api`, ten drugi zrestartowany raz, bo `PermissionCatalogReconciler` upsertuje nowe kody uprawnień tylko przy starcie): edytor stanów/przejść z macierzą, zapis/udostępnienie/skopiowanie widoku, generowanie raportu przez prawdziwy formularz (zakres dat, wybór działów z rzeczywistych projektów DEV/MKT), pojawienie się w dzwonku zadań, pobranie i wyświetlenie pustego wyniku (środowisko dev nie ma jeszcze żadnych wpisów `work_log` — tabela była pusta na starcie tej fazy, to oczekiwane, nie błąd). **Jeden realny błąd znaleziony i naprawiony podczas weryfikacji strony raportu**: strona polegała wyłącznie na sygnaturze realtime `taskmgmt.report_run`, a WebSocket w środowisku dev łączył się cyklicznie bez utrzymania połączenia, więc status nigdy nie docierał i strona zostawała na „Generowanie raportu…” bez końca; naprawione dodaniem odpytywania (`reloadAsync`, co 1 s, limit 120 s) jako głównego mechanizmu, z SignalR jako bonusem i ręcznym przyciskiem „Odśwież” jako dodatkowym zabezpieczeniem. **Świadomie pominięte w tej fazie** (odnotowane, nie ukryte): `TAG-003` (scalanie/zmiana nazwy tagu, `Could`), cztery z pięciu definicji `RPT-003` (`Should` — zostaje tylko `hours-by-department`, `Must`), `VIEW-002` (widok domyślny projektu, `Could`), automatyczny test negatywny na brak tytułu/opisu w wierszach raportu (granica jest wymuszona kształtem DTO, zweryfikowana ręcznie, ale bez testu regresyjnego w `TaskManagement.Tests`). | ⚠️ częściowo (`Must`/`Should` z `WF-006/007`, `VIEW-001`, `PERM-005`, `RPT-001/002/004` zrobione i zweryfikowane na żywo; `TAG-003`, `VIEW-002` i 4/5 `RPT-003` świadomie pominięte; brak automatycznego testu negatywnego dla granicy PERM-005; brak rzeczywistych danych `work_log` w dev do zweryfikowania nieliczbowego przykładu z `§5.3` na żywo) |
+| 7 (domknięcie) | 03.09.2026 | **Wszystkie pięć pozycji odłożonych w poprzedniej sesji domknięte**: `TAG-003`, cztery pozostałe definicje `RPT-003`, `VIEW-002`, test regresyjny PERM-005, realne dane `work_log`. **Blokada środowiskowa napotkana i usunięta na starcie**: lokalny dev Postgres miał schemat `taskmgmt` zastosowany z zupełnie innej, dużo starszej gałęzi łańcucha migracji (nazwy migracji — `InitialTaskManagementSchema`, `AddSavedIssueViewsAndWorkLogs` — nie pasowały do żadnej migracji istniejącej w repo; brakowało m.in. `issue.type_uuid`, `tag`, `report_run`), migracja `IssueTypes` wywalała się na FK przy starcie API — **za zgodą użytkownika** schemat `taskmgmt` wyczyszczony (`DROP SCHEMA … CASCADE`, wyłącznie ten schemat, inne moduły nietknięte) i odbudowany od zera pełnym dzisiejszym łańcuchem migracji + seedem. Backend: `TaskManagementIssuesByStateTypeAssigneeReportDefinition`, `TaskManagementCycleTimeByStateCategoryReportDefinition` (rekonstrukcja okresów z `issue_activity` przez `LAG`, mediana liczona w .NET), `TaskManagementSlaComplianceReportDefinition` (minuty robocze liczone iteracyjnie wg kalendarza SLA projektu), `TaskManagementSprintProgressReportDefinition`/`TaskManagementSprintWorkloadReportDefinition` — żaden nowy endpoint/komenda, rejestracja przez skan zestawu; `Tag.SetName` + `TagSetNameCommand`; `TagExecMergeCommand` + `IIssueTagWriter.RepointAsync` (raw SQL z dedupem, poza granicą agregatu `Tag`, wzorem `IProjectKeyCounterWriter.SetPrefixAsync`); `Project.DefaultSavedViewUuid` (referencja miękka) + `ProjectSetDefaultSavedViewCommand` (odrzuca widok prywatny/spoza projektu). Migracja `ProjectDefaultSavedView`. `dotnet test backend/tests/TaskManagement.Tests` 164/164, `Erp.ArchitectureTests` 27/27. **Nowa infrastruktura testowa**: `TaskManagementDatabase` w `Erp.IntegrationTests` (referencja do `TaskManagement.Infrastructure` dopisana do projektu, `InternalsVisibleTo` na `IssueVisibility` z `TaskManagement.Infrastructure`), `TaskManagementTagMergeTests` (dedup scalenia zweryfikowany bezpośrednio na bazie: zgłoszenie z oboma tagami dostaje dokładnie jeden wiersz `issue_tag` po scaleniu, nie dwa) i `TaskManagementReportPermissionTests` (PERM-005 AC2+AC3, opisane w §5.2) — `dotnet test backend/tests/Erp.IntegrationTests`: **26/26**, Testcontainers Postgres dostępny przez `npipe://./pipe/docker_engine` mimo braku `docker` CLI w PATH tej sesji. Front: NSwag zregenerowany (API uruchomione lokalnie po odbudowie schematu), strona raportu przebudowana na selektor + generyczną tabelę (`report.store.ts`, `report.component.ts`, `parseReportCsvToRows`), nowa zakładka „Tagi” na karcie projektu (`ProjectTagsComponent`), auto-apply widoku domyślnego w `IssueFilterComponent`. `pnpm nx run {task-management,client}:build` zielone, `lint` bez błędów. **Trzy realne błędy znalezione i naprawione podczas weryfikacji**: (1) dropdown wyboru raportu pokazywał surowy klucz tłumaczenia — ten sam systemowy bug reaktywności Transloco co w fazie 6 (`computed` bez strażnika `injectTranslationsReadySignal()`); (2) `ProjectTagsComponent` czytał `this.project()` (input wymagany) wprost w konstruktorze — `NG0950`, ten sam wzorzec błędu co `IssueSetProjectStepComponent` w fazie 6, naprawione przeniesieniem do `effect()`; (3) modal potwierdzenia scalenia tagów nie podstawiał parametru `{{name}}` do tytułu/treści (`ErpConfirmDialogService.confirmThenAsync` przyjmuje `Translatable` — `{key, params}` — a nie sam klucz). **Pełne przeklikanie na żywo** (`client-monolith`+`task-management-mfe`+`TaskManagement.Api`+`Identity.Api`, ten drugi uruchomiony dopiero w tej sesji — wcześniej niedostępny, co blokowało uprawnienia i routing): wszystkich pięć raportów w dropdownie z poprawnymi nazwami po naprawie (1), formularz parametrów pokazuje/ukrywa pola wg wybranej definicji, `issues-by-state-type-assignee` z realnymi liczbami z seeda, `cycle-time-by-state-category` z poprawnym pustym wynikiem (brak historii zmian stanu w seedzie); zakładka „Tagi” — utworzenie dwóch tagów z karty DEV-1 (jeden samodzielnie, jeden razem z pierwszym — przypadek dedupu), zmiana nazwy zapisana w bazie, scalenie `legacy-backend`→`backend` usuwa tag źródłowy i DEV-1 pokazuje jeden tag zamiast dwóch (dedup potwierdzony na żywo); VIEW-002 — zapisanie widoku „Zespół DEV” udostępnionego projektowi, ustawienie jako domyślny, przeładowanie strony, wejście w kontekst DEV — widok zastosowany automatycznie (filtr projektu, plakietka „DOMYŚLNY”). **Bez zmian w danych `work_log`** ponad to, co seed już wygenerował — realne dane istniały od odbudowy schematu, nie było potrzeby oddzielnego kroku syntetycznego. | ✅ (wszystkie pięć pozycji z poprzedniej sesji domknięte i zweryfikowane na żywo z realnym backendem/frontendem/bazą, w tym 3 realne błędy znalezione i naprawione; faza 7 przechodzi z ⚠️ na ✅ w §0) |

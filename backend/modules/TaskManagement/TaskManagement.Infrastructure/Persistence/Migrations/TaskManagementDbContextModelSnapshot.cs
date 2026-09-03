@@ -1248,6 +1248,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("code");
 
+                    b.Property<Guid?>("DefaultSavedViewUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("default_saved_view_uuid");
+
                     b.Property<Guid?>("FieldSchemeUuid")
                         .HasColumnType("uuid")
                         .HasColumnName("field_scheme_uuid");

@@ -1,6 +1,9 @@
 {
-  "title": "Raport godzin",
+  "title": "Raporty",
   "params": {
+    "reportKey": {
+      "label": "Raport"
+    },
     "dateFrom": {
       "label": "Od",
       "placeholder": "RRRR-MM-DD"
@@ -16,6 +19,34 @@
     "invalidRange": "Podaj poprawny zakres dat (RRRR-MM-DD, „od” nie później niż „do”).",
     "generate": "Generuj"
   },
+  "reports": {
+    "hoursByDepartment": "Rozliczenie godzin per dział",
+    "issuesByStateTypeAssignee": "Zgłoszenia wg stanu/typu/przypisanego",
+    "cycleTimeByStateCategory": "Czas realizacji per kategoria stanu",
+    "slaCompliance": "Dotrzymanie SLA zleceń",
+    "sprintProgress": "Postęp sprintu",
+    "sprintWorkload": "Obciążenie osób w sprincie"
+  },
+  "columns": {
+    "projectCode": "Projekt",
+    "stateCode": "Stan",
+    "typeName": "Typ",
+    "assigneeUuid": "Przypisany",
+    "count": "Liczba",
+    "stateCategory": "Kategoria stanu",
+    "period": "Okres",
+    "avgHours": "Śr. godzin",
+    "medianHours": "Mediana godzin",
+    "sampleCount": "Próbek",
+    "totalCount": "Razem",
+    "withinResponseSlaCount": "W SLA reakcji",
+    "withinResolutionSlaCount": "W SLA realizacji",
+    "sprintName": "Sprint",
+    "doneCount": "Gotowe",
+    "estimateMinutesTotal": "Estymata (min)",
+    "loggedMinutesTotal": "Zalogowano (min)",
+    "cardCount": "Kart"
+  },
   "status": {
     "generating": "Generowanie raportu…",
     "fetchingArtifact": "Wczytywanie wyniku…",
@@ -26,7 +57,7 @@
     "zagadnienie": "Zagadnienie",
     "total": "Razem"
   },
-  "empty": "Wygeneruj raport, żeby zobaczyć zestawienie godzin.",
+  "empty": "Wygeneruj raport, żeby zobaczyć zestawienie.",
   "noData": "Raport zakończył się bez żadnych rekordów w wybranym zakresie.",
   "errors": {
     "generateFailed": "Nie udało się zlecić raportu.",

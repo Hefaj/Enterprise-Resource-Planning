@@ -342,5 +342,7 @@ export const ISSUE_KEYS = {
         title: 'issue.savedViews.removeConfirm.title',
         message: 'issue.savedViews.removeConfirm.message',
       },
+      setDefault: 'issue.savedViews.setDefault',
+      defaultBadge: 'issue.savedViews.defaultBadge',
     },
   } as const;

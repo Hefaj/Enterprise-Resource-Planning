@@ -9,8 +9,9 @@ import { UserNotificationDto, UserNotificationFeedService } from '@erp/notificat
 import { JOB_KEYS } from '@erp/notification/ui';
 
 /**
- * Zawartość zakładki „Powiadomienia" pod dzwonkiem (Faza 5, `UserNotification`) — sąsiadka
- * `erp-job-list`, ładowana tym samym leniwym widżetem (`entry.widgets.ts`).
+ * Zawartość panelu powiadomień (Faza 5, `UserNotification`) pod przyciskiem `erp-notifications`
+ * w nagłówku — ładowana leniwie przez osobny widżet (`entry.widgets.ts`,
+ * `loadUserNotificationListComponent()`), sąsiadka `erp-job-list` pod przyciskiem `erp-tasks`.
  *
  * <p>Klucz tytułu (`titleKey`) i parametry (`params`) przychodzą gotowe z backendu
  * (`IssueNotificationPublisher`), więc wiersz tylko je tłumaczy — front nie zna treści zdania,

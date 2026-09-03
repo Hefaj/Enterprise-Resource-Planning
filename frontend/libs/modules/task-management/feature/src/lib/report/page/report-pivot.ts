@@ -64,6 +64,36 @@ function parseCsvLine(line: string): string[] {
   return values;
 }
 
+/** Wynik generycznego parsowania — nagłówki w kolejności CSV plus wiersze jako tekst surowy
+ * (bez wiedzy o typach kolumn), do renderowania zwykłą tabelą. */
+export interface ReportRowsData {
+  readonly headers: readonly string[];
+  readonly rows: readonly (readonly string[])[];
+}
+
+/**
+ * Parser generyczny dla czterech definicji RPT-003 innych niż `hours-by-department` — w
+ * odróżnieniu od {@link parseReportCsvToPivot} nie zna z góry kształtu kolumn (każda z tych
+ * definicji ma inny), więc nie buduje pivotu, tylko zwraca nagłówek i wiersze wprost. Front
+ * (`report.component.ts`) tłumaczy nazwy kolumn na etykiety przez statyczną mapę i rozwiązuje
+ * gołe uuidy (typu, przypisanego, sprintu) na nazwy przez już wczytane orkiestratory.
+ */
+export function parseReportCsvToRows(csvText: string): ReportRowsData {
+  const lines = csvText.split(/\r\n|\n/).filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    return { headers: [], rows: [] };
+  }
+
+  const headers = parseCsvLine(lines[0]).map((h) => h.trim());
+  const rows = lines
+    .slice(1)
+    .map((line) => parseCsvLine(line))
+    .filter((cols) => !(cols.length === 1 && cols[0].trim() === ''));
+
+  return { headers, rows };
+}
+
 export function parseReportCsvToPivot(csvText: string): ReportPivotData {
   const lines = csvText.split(/\r\n|\n/).filter((line) => line.length > 0);
 

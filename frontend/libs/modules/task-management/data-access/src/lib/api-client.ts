@@ -85,6 +85,16 @@ export interface ITaskManagementClient {
      */
     tagCreateMultipleCommand(body: BatchCommandOfTagCreateCommandAndSearchTagRequest): Observable<BatchResult>;
     /**
+     * Scala tag źródłowy w tag docelowy
+     * @return OK
+     */
+    tagExecMergeMultipleCommand(body: BatchCommandOfTagExecMergeCommandAndSearchTagRequest): Observable<BatchResult>;
+    /**
+     * Zmienia nazwę tagu
+     * @return OK
+     */
+    tagSetNameMultipleCommand(body: BatchCommandOfTagSetNameCommandAndSearchTagRequest): Observable<BatchResult>;
+    /**
      * @return OK
      */
     getSprint(body: GetSprintRequest): Observable<SprintDto>;
@@ -195,6 +205,11 @@ export interface ITaskManagementClient {
      * @return OK
      */
     projectSetCodeMultipleCommand(body: BatchCommandOfProjectSetCodeCommandAndSearchProjectRequest): Observable<BatchResult>;
+    /**
+     * Ustawia widok domyślny projektu
+     * @return OK
+     */
+    projectSetDefaultSavedViewMultipleCommand(body: BatchCommandOfProjectSetDefaultSavedViewCommandAndSearchProjectRequest): Observable<BatchResult>;
     /**
      * Podpina albo odpina schemat pól projektu
      * @return OK
@@ -1425,6 +1440,132 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     protected processTagCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Scala tag źródłowy w tag docelowy
+     * @return OK
+     */
+    tagExecMergeMultipleCommand(body: BatchCommandOfTagExecMergeCommandAndSearchTagRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/tag/batch-exec-merge";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTagExecMergeMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTagExecMergeMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processTagExecMergeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Zmienia nazwę tagu
+     * @return OK
+     */
+    tagSetNameMultipleCommand(body: BatchCommandOfTagSetNameCommandAndSearchTagRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/tag/batch-set-name";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTagSetNameMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTagSetNameMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processTagSetNameMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2928,6 +3069,69 @@ export class TaskManagementClient implements ITaskManagementClient {
     }
 
     protected processProjectSetCodeMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Ustawia widok domyślny projektu
+     * @return OK
+     */
+    projectSetDefaultSavedViewMultipleCommand(body: BatchCommandOfProjectSetDefaultSavedViewCommandAndSearchProjectRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/project/batch-set-default-saved-view";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProjectSetDefaultSavedViewMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProjectSetDefaultSavedViewMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processProjectSetDefaultSavedViewMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -8075,6 +8279,30 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfProjectSetDefaultSavedViewCommandAndSearchProjectRequest {
+    commands?: ProjectSetDefaultSavedViewCommand[] | undefined;
+    templateCommand?: ProjectSetDefaultSavedViewCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchProjectRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
 export interface BatchCommandOfProjectSetFieldSchemeCommandAndSearchProjectRequest {
     commands?: ProjectSetFieldSchemeCommand[] | undefined;
     templateCommand?: ProjectSetFieldSchemeCommand | undefined;
@@ -8390,6 +8618,54 @@ przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
 export interface BatchCommandOfTagCreateCommandAndSearchTagRequest {
     commands?: TagCreateCommand[] | undefined;
     templateCommand?: TagCreateCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchTagRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfTagExecMergeCommandAndSearchTagRequest {
+    commands?: TagExecMergeCommand[] | undefined;
+    templateCommand?: TagExecMergeCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchTagRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfTagSetNameCommandAndSearchTagRequest {
+    commands?: TagSetNameCommand[] | undefined;
+    templateCommand?: TagSetNameCommand | undefined;
     targetUuids?: string[] | undefined;
     targetFilter?: SearchTagRequest | undefined;
     /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
@@ -9394,6 +9670,7 @@ export interface ProjectDto {
     members: ProjectMemberDto[];
     sla: ProjectSlaDto | undefined;
     isArchived: boolean;
+    defaultSavedViewUuid: string | undefined;
 
     [key: string]: any;
 }
@@ -9445,6 +9722,13 @@ export interface ProjectSetArchivedCommand {
 export interface ProjectSetCodeCommand {
     uuid?: string;
     code?: string;
+
+    [key: string]: any;
+}
+
+export interface ProjectSetDefaultSavedViewCommand {
+    uuid?: string;
+    savedViewUuid?: string | undefined;
 
     [key: string]: any;
 }
@@ -9777,6 +10061,20 @@ export interface TagDto {
     projectUuid: string | undefined;
     name: string;
     color: string;
+
+    [key: string]: any;
+}
+
+export interface TagExecMergeCommand {
+    uuid?: string;
+    targetTagUuid?: string;
+
+    [key: string]: any;
+}
+
+export interface TagSetNameCommand {
+    uuid?: string;
+    name?: string;
 
     [key: string]: any;
 }

@@ -137,7 +137,7 @@ Zgodne z tym dokumentem: cały `catalog/feature` (`product`, `category`) i cały
 
 Do przemigrowania przy najbliższej większej zmianie w tych plikach (nie ruszaj ich „przy okazji" innego zadania):
 
-- `notification/feature/src/lib/job/` — ma poprawne `page/`, ale z katalogiem `tabs/` zamiast `content/`, `components/notification-job-table/` bez poziomu rodzaju (`tables/`) i osobnym `job-list/` poza `page/`.
+- `notification/feature/src/lib/job/` — ma poprawne `page/`, ale z katalogiem `tabs/` zamiast `content/` i `components/notification-job-table/` bez poziomu rodzaju (`tables/`). Panel `erp-job-list` (dawniej luzem w `job-list/` poza `page/`) jest już przeniesiony do `components/lists/erp-job-list/` — patrz [notifications.md §10.1](./notifications.md#10-skrzynka-powiadomień--osobny-widżet-w-nagłówku).
 - `inventory/feature/src/lib/inventory.component.ts` i `sales/feature/src/lib/sales.component.ts` — placeholdery leżące luzem w `lib/`, wygenerowane starą wersją przepisu z [new-module.md](./new-module.md); ich miejsce to `lib/dashboard/page/dashboard.component.ts`.
 
 Odstępstwa, które **nie** są kwestią struktury katalogów i nie naprawia ich przeniesienie plików:

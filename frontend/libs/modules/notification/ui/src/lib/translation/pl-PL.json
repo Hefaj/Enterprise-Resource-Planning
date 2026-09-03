@@ -58,10 +58,6 @@
   },
   "download": "Pobierz",
   "downloadFailed": "Nie udało się pobrać pliku — spróbuj ponownie.",
-  "tabs": {
-    "jobs": "Zadania",
-    "notifications": "Powiadomienia"
-  },
   "notifications": {
     "empty": "Brak powiadomień.",
     "markAllRead": "Oznacz wszystkie jako przeczytane",

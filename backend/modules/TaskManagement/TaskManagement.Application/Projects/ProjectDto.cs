@@ -31,7 +31,9 @@ public sealed record ProjectDto(
     IReadOnlyList<ProjectMemberDto> Members,
     ProjectSlaDto? Sla,
     /// <summary>Projekt archiwalny (PRJ-004) — tylko do odczytu, ukryty z domyślnych list.</summary>
-    bool IsArchived);
+    bool IsArchived,
+    /// <summary>Widok domyślny (VIEW-002) — <c>null</c> znaczy brak, stan normalny.</summary>
+    Guid? DefaultSavedViewUuid);
 
 /// <summary>Filtry wyszukiwania projektów.</summary>
 public sealed class SearchProjectRequest : PagedRequest

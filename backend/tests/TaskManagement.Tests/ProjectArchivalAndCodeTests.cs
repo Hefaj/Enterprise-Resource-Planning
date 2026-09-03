@@ -74,4 +74,40 @@ public class ProjectArchivalAndCodeTests
 
         Should.Throw<Erp.BuildingBlocks.Domain.DomainException>(() => project.SetCode("MK-T"));
     }
+
+    [Fact]
+    public void Projekt_domyslnie_nie_ma_widoku_domyslnego()
+        => NewProject().DefaultSavedViewUuid.ShouldBeNull();
+
+    [Fact]
+    public void Ustawienie_widoku_domyslnego_zapisuje_uuid()
+    {
+        var project = NewProject();
+        var viewUuid = Guid.CreateVersion7();
+
+        project.SetDefaultSavedView(viewUuid);
+
+        project.DefaultSavedViewUuid.ShouldBe(viewUuid);
+    }
+
+    [Fact]
+    public void Guid_Empty_jako_widok_domyslny_jest_traktowany_jak_brak()
+    {
+        var project = NewProject();
+
+        project.SetDefaultSavedView(Guid.Empty);
+
+        project.DefaultSavedViewUuid.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Zdjecie_widoku_domyslnego_zeruje_pole()
+    {
+        var project = NewProject();
+        project.SetDefaultSavedView(Guid.CreateVersion7());
+
+        project.SetDefaultSavedView(null);
+
+        project.DefaultSavedViewUuid.ShouldBeNull();
+    }
 }

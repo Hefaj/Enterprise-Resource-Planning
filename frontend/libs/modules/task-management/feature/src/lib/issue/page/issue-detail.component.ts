@@ -95,7 +95,16 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
       <div class="flex h-full min-h-0 w-full flex-col gap-4 p-6">
         <div class="flex items-center gap-3">
           <erp-button [config]="backButton" />
-          <erp-issue-key [config]="{ issueKey: issue.key, typeIcon: issue.typeIcon, typeName: issue.typeName, link: undefined }" />
+          <erp-issue-key
+            [config]="{
+              issueKey: issue.key,
+              typeIcon: issue.typeIcon,
+              typeName: issue.typeName,
+              title: issue.title,
+              link: undefined,
+              copyable: true,
+            }"
+          />
           @if (issue.isRestricted) {
             <span class="rounded bg-[var(--tui-background-neutral-1)] px-2 py-0.5 text-xs">
               {{ ISSUE_KEYS.detail.sidebar.restricted | erpTranslate }}
@@ -373,7 +382,7 @@ export class IssueDetailComponent {
   protected readonly cancelDescriptionButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.description.cancel,
     appearance: 'flat',
-    size: 's',
+    size: 'xs',
     fn: (): void => this.editingDescription.set(false),
   };
 

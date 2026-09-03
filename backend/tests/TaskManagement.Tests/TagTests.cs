@@ -22,4 +22,23 @@ public class TagTests
     [Fact]
     public void Brak_koloru_dostaje_domyslny()
         => Tag.CreateWithUuid(Guid.CreateVersion7(), ProjectUuid, "backend", null).Color.ShouldNotBeNullOrWhiteSpace();
+
+    [Fact]
+    public void Zmiana_nazwy_na_pusta_jest_odrzucana()
+    {
+        var tag = Tag.CreateWithUuid(Guid.CreateVersion7(), ProjectUuid, "backend", null);
+
+        Should.Throw<DomainException>(() => tag.SetName("   "))
+            .ErrorCode.ShouldBe("taskmgmt.tag_name_empty");
+    }
+
+    [Fact]
+    public void Zmiana_nazwy_przycina_biale_znaki()
+    {
+        var tag = Tag.CreateWithUuid(Guid.CreateVersion7(), ProjectUuid, "backend", null);
+
+        tag.SetName("  back-end  ");
+
+        tag.Name.ShouldBe("back-end");
+    }
 }

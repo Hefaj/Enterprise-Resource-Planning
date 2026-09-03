@@ -3,8 +3,13 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { JobService } from '@erp/shared/data-access';
 import {
+  ErpButtonComponent,
+  ErpButtonConfig,
   ErpGroupCardComponent,
   ErpGroupCardConfig,
+  ErpInputBuilder,
+  ErpInputComponent,
+  ErpInputConfig,
   ErpInputPickerBuilder,
   ErpInputPickerComponent,
   ErpInputPickerConfig,
@@ -34,7 +39,9 @@ import { ISSUE_KEYS } from '../../translation';
   selector: 'erp-task-management-issue-tags',
   standalone: true,
   imports: [
+    ErpButtonComponent,
     ErpGroupCardComponent,
+    ErpInputComponent,
     ErpInputPickerComponent,
     ErpTagChipsComponent,
     ErpHasPermissionDirective,
@@ -51,20 +58,8 @@ import { ISSUE_KEYS } from '../../translation';
             <erp-input-picker class="min-w-40" [config]="this.pickerConfig()" [control]="this.pickerControl" />
 
             <ng-container *erpHasPermission="ERP_PERMISSIONS.TaskManagement.TagManage">
-              <input
-                class="rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-                type="text"
-                [formControl]="this.newTagControl"
-                [placeholder]="this.newTagPlaceholder | erpTranslate"
-              />
-              <button
-                type="button"
-                class="text-sm text-[var(--tui-text-action)] disabled:opacity-50"
-                [disabled]="!this.newTagControl.value?.trim() || this.creating()"
-                (click)="this.createAndAttachAsync()"
-              >
-                {{ this.createLabel | erpTranslate }}
-              </button>
+              <erp-input class="min-w-40" [config]="this.newTagInputConfig" [control]="this.newTagControl" />
+              <erp-button [config]="this.createButton()" />
             </ng-container>
           </div>
         }
@@ -94,9 +89,9 @@ export class IssueTagsComponent {
 
   protected readonly newTagControl = new FormControl<string>('');
 
-  protected readonly newTagPlaceholder = ISSUE_KEYS.detail.tags.newPlaceholder;
-
-  protected readonly createLabel = ISSUE_KEYS.detail.tags.create;
+  protected readonly newTagInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setType('text').setPlaceholder(ISSUE_KEYS.detail.tags.newPlaceholder),
+  );
 
   private readonly _projectTagUuids = signal<string[]>([]);
 
@@ -162,6 +157,17 @@ export class IssueTagsComponent {
     await this._issues.removeTagOptimisticAsync(this.issueUuid(), tagUuid, {
       failureMessage: ISSUE_KEYS.detail.tags.attachFailed,
     });
+  }
+
+  protected createButton(): ErpButtonConfig {
+    return {
+      label: ISSUE_KEYS.detail.tags.create,
+      appearance: 'flat',
+      size: 'xs',
+      disabled: !this.newTagControl.value?.trim() || this.creating(),
+      loading: this.creating(),
+      fn: (): Promise<void> => this.createAndAttachAsync(),
+    };
   }
 
   protected async createAndAttachAsync(): Promise<void> {

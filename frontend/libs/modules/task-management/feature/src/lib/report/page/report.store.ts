@@ -10,12 +10,7 @@ import {
 } from '@erp/task-management/data-access';
 
 import { REPORT_KEYS } from '../translation';
-import { ReportPivotData, parseReportCsvToPivot } from './report-pivot';
-
-/** Klucz jedynej definicji raportu istniejącej dziś (RPT-002, `Must`) — backend przyjmuje
- * wyłącznie `csv` dla tego klucza (patrz `TaskManagement.Application/Reports`). */
-const HOURS_BY_DEPARTMENT_REPORT_KEY = 'taskmgmt.hours-by-department';
-const HOURS_BY_DEPARTMENT_FORMAT = 'csv';
+import { ReportPivotData, ReportRowsData, parseReportCsvToPivot, parseReportCsvToRows } from './report-pivot';
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -23,8 +18,7 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const POLL_INTERVAL_MS = 1_000;
 
 /** Po tym czasie przestajemy odpytywać automatycznie; `refreshAsync()` z przycisku „Odśwież”
- * nadal działa. Raport dłuższy niż to nie jest typowym przypadkiem RPT-002 (agregacja, nie
- * dump), ale strona nie ma się zapętlić w nieskończoność, gdyby coś utknęło. */
+ * nadal działa. */
 const POLL_TIMEOUT_MS = 120_000;
 
 /** Kopia `ReportRunStatus` z backendu (`Erp.BuildingBlocks.Reporting/ReportRunStatus.cs`) —
@@ -37,7 +31,35 @@ const REPORT_RUN_STATUS = {
 } as const;
 
 /**
- * Store strony `/task-management/report` (faza 7, RPT-002/RPT-004).
+ * Katalog pięciu definicji raportu Task Management (RPT-002 `Must`, RPT-003 `Should`) —
+ * jedyne miejsce, które front musi dopisać, żeby nowa definicja backendu pojawiła się w
+ * dropdownie. `hasPivot` wybiera renderer wyniku: `hours-by-department` ma bespoke pivot
+ * dział×zagadnienie×okres (`parseReportCsvToPivot`), pozostałe cztery renderują się generyczną
+ * tabelą nagłówek+wiersze (`parseReportCsvToRows`) — ich kształty są naprawdę różne (liczność,
+ * mediana, zgodność SLA, postęp sprintu), więc wymuszanie ich we wspólny pivot byłoby sztuczne.
+ */
+export interface ReportDefinitionSpec {
+  readonly key: string;
+  readonly label: string;
+  readonly hasPivot: boolean;
+  readonly needsDateRange: boolean;
+  readonly needsProjects: boolean;
+}
+
+export const REPORT_DEFINITIONS: readonly ReportDefinitionSpec[] = [
+  { key: 'taskmgmt.hours-by-department', label: REPORT_KEYS.reports.hoursByDepartment, hasPivot: true, needsDateRange: true, needsProjects: true },
+  { key: 'taskmgmt.issues-by-state-type-assignee', label: REPORT_KEYS.reports.issuesByStateTypeAssignee, hasPivot: false, needsDateRange: false, needsProjects: true },
+  { key: 'taskmgmt.cycle-time-by-state-category', label: REPORT_KEYS.reports.cycleTimeByStateCategory, hasPivot: false, needsDateRange: true, needsProjects: true },
+  { key: 'taskmgmt.sla-compliance', label: REPORT_KEYS.reports.slaCompliance, hasPivot: false, needsDateRange: true, needsProjects: true },
+  { key: 'taskmgmt.sprint-progress', label: REPORT_KEYS.reports.sprintProgress, hasPivot: false, needsDateRange: false, needsProjects: false },
+  { key: 'taskmgmt.sprint-workload', label: REPORT_KEYS.reports.sprintWorkload, hasPivot: false, needsDateRange: false, needsProjects: false },
+] as const;
+
+const REPORT_FORMAT = 'csv';
+
+/**
+ * Store strony `/task-management/report` (faza 7, RPT-002/RPT-004; RPT-003 doszło w domknięciu
+ * fazy 7).
  *
  * <p>Status przebiegu raportu przychodzi realtime kanałem `taskmgmt.report_run`
  * (`TaskManagementReportRunOrchestrator`, sygnatura zarejestrowana w `AggregateSignatures`),
@@ -55,9 +77,15 @@ export class ReportStore {
   private readonly _api = inject(TaskManagementClient);
   private readonly _toast = inject(ErpToastService);
 
-  /** Projekty widoczne dla użytkownika — źródło opcji pickera „dział" (departament = projekt
-   * wykonawczy, patrz §9.4 dokumentacji stron). Ładowane raz, przy montowaniu store'u. */
+  /** Projekty widoczne dla użytkownika — źródło opcji pickera „dział"/„projekty" (departament =
+   * projekt wykonawczy, patrz §9.4 dokumentacji stron). Ładowane raz, przy montowaniu store'u. */
   public readonly departments = computed(() => [...this._projects.getViewModel()().values()]);
+
+  public readonly reportKey = signal<string>(REPORT_DEFINITIONS[0].key);
+
+  public readonly currentDefinition = computed<ReportDefinitionSpec>(
+    () => REPORT_DEFINITIONS.find((d) => d.key === this.reportKey()) ?? REPORT_DEFINITIONS[0],
+  );
 
   public readonly dateFrom = signal<string>('');
   public readonly dateTo = signal<string>('');
@@ -66,12 +94,21 @@ export class ReportStore {
   public readonly isGenerating = signal<boolean>(false);
   public readonly isFetchingArtifact = signal<boolean>(false);
   public readonly errorMessage = signal<string | null>(null);
+
+  /** Wynik pivotowy — wyłącznie dla `hours-by-department` (`currentDefinition().hasPivot`). */
   public readonly pivot = signal<ReportPivotData | null>(null);
+
+  /** Wynik generyczny nagłówek+wiersze — dla pozostałych czterech definicji RPT-003. */
+  public readonly rows = signal<ReportRowsData | null>(null);
 
   private readonly _runUuid = signal<string | null>(null);
   private _pivotFetchedForRun: string | null = null;
 
   public readonly isDateRangeValid = computed(() => {
+    if (!this.currentDefinition().needsDateRange) {
+      return true;
+    }
+
     const from = this.dateFrom();
     const to = this.dateTo();
     return ISO_DATE_RE.test(from) && ISO_DATE_RE.test(to) && from <= to;
@@ -85,7 +122,7 @@ export class ReportStore {
   public constructor() {
     // Lista projektów jest krótka (dziesiątki, nie tysiące — patrz komentarz w
     // `TaskManagementProjectOrchestrator`), więc jedno niepaginowane wyszukanie wystarcza
-    // do zasilenia pickera „dział".
+    // do zasilenia pickera „dział"/„projekty".
     void this._projects.searchAsync({} as SearchProjectRequest);
 
     effect(() => {
@@ -108,28 +145,54 @@ export class ReportStore {
     });
   }
 
+  /** Zmiana raportu w dropdownie — czyści wynik poprzedniego, żeby stara tabela nie wisiała pod
+   * nowym formularzem parametrów, którego kolumny jej nie dotyczą. */
+  public selectReport(key: string): void {
+    if (key === this.reportKey()) {
+      return;
+    }
+
+    this.reportKey.set(key);
+    this.errorMessage.set(null);
+    this.pivot.set(null);
+    this.rows.set(null);
+    this._runUuid.set(null);
+    this._pivotFetchedForRun = null;
+  }
+
   public async generateAsync(): Promise<void> {
     if (!this.isDateRangeValid() || this.isGenerating()) {
       return;
     }
 
+    const definition = this.currentDefinition();
+
     this.errorMessage.set(null);
     this.pivot.set(null);
+    this.rows.set(null);
     this._pivotFetchedForRun = null;
     this.isGenerating.set(true);
 
-    const parametersJson = JSON.stringify({
-      dateFrom: this.dateFrom(),
-      dateTo: this.dateTo(),
-      departmentUuids: this.departmentUuids().length > 0 ? this.departmentUuids() : undefined,
-    });
+    const parameters: Record<string, unknown> = {};
+
+    if (definition.needsDateRange) {
+      parameters['dateFrom'] = this.dateFrom();
+      parameters['dateTo'] = this.dateTo();
+    }
+
+    if (definition.needsProjects && this.departmentUuids().length > 0) {
+      // Backend przyjmuje ten sam kod parametru pod dwoma nazwami zależnie od definicji
+      // (`DepartmentUuids` dla hours-by-department, `ProjectUuids` dla reszty) — front wysyła
+      // oba klucze naraz, deserializacja JSON po stronie .NET jest wielkości liter niewrażliwa
+      // i ignoruje nieznane pola, więc to nie psuje żadnej z definicji.
+      parameters['departmentUuids'] = this.departmentUuids();
+      parameters['projectUuids'] = this.departmentUuids();
+    }
+
+    const parametersJson = JSON.stringify(parameters);
 
     try {
-      const { runUuid } = await this._reportRuns.createAsync(
-        HOURS_BY_DEPARTMENT_REPORT_KEY,
-        HOURS_BY_DEPARTMENT_FORMAT,
-        parametersJson,
-      );
+      const { runUuid } = await this._reportRuns.createAsync(definition.key, REPORT_FORMAT, parametersJson);
       this._runUuid.set(runUuid);
       void this._pollUntilFinishedAsync(runUuid);
     } catch (err) {
@@ -192,7 +255,12 @@ export class ReportStore {
       }
 
       const csvText = await response.text();
-      this.pivot.set(parseReportCsvToPivot(csvText));
+
+      if (this.currentDefinition().hasPivot) {
+        this.pivot.set(parseReportCsvToPivot(csvText));
+      } else {
+        this.rows.set(parseReportCsvToRows(csvText));
+      }
     } catch (err) {
       this.errorMessage.set(err instanceof Error ? err.message : String(err));
       this._toast.show({ message: REPORT_KEYS.errors.downloadFailed, appearance: 'negative' });

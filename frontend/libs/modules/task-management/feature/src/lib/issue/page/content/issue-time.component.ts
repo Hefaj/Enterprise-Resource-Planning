@@ -8,6 +8,12 @@ import {
   ErpConfirmDialogService,
   ErpGroupCardComponent,
   ErpGroupCardConfig,
+  ErpInputBuilder,
+  ErpInputComponent,
+  ErpInputConfig,
+  ErpInputNumberBuilder,
+  ErpInputNumberComponent,
+  ErpInputNumberConfig,
   ErpInputPickerBuilder,
   ErpInputPickerComponent,
   ErpInputPickerConfig,
@@ -43,6 +49,8 @@ import { ISSUE_KEYS } from '../../translation';
     DatePipe,
     ErpButtonComponent,
     ErpGroupCardComponent,
+    ErpInputComponent,
+    ErpInputNumberComponent,
     ErpInputPickerComponent,
     ErpTranslatePipe,
     ReactiveFormsModule,
@@ -54,12 +62,10 @@ import { ISSUE_KEYS } from '../../translation';
           <span>
             {{ ISSUE_KEYS.detail.time.estimateLabel | erpTranslate }}:
             @if (editingEstimate()) {
-              <input
-                class="w-20 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-0.5 text-sm"
-                type="number"
-                min="0"
-                [formControl]="this.estimateControl"
-                [placeholder]="this.ISSUE_KEYS.detail.time.estimatePlaceholder | erpTranslate"
+              <erp-input-number
+                class="w-20"
+                [config]="this.estimateInputConfig"
+                [control]="this.estimateControl"
                 (keydown.enter)="this.saveEstimateAsync()"
               />
               <erp-button [config]="this.saveEstimateButton" />
@@ -114,19 +120,16 @@ import { ISSUE_KEYS } from '../../translation';
         @if (this.canEdit()) {
           <div class="flex flex-wrap items-center gap-2">
             <erp-input-picker class="min-w-32" [config]="this.workTypePickerConfig()" [control]="this.workTypeControl" />
-            <input
-              class="w-24 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-              type="number"
-              min="1"
-              [formControl]="this.minutesControl"
-              [placeholder]="ISSUE_KEYS.detail.time.minutesPlaceholder | erpTranslate"
+            <erp-input-number
+              class="w-24"
+              [config]="this.minutesInputConfig"
+              [control]="this.minutesControl"
               (keydown.enter)="this.addWorkLogAsync()"
             />
-            <input
-              class="min-w-32 flex-1 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-              type="text"
-              [formControl]="this.descriptionControl"
-              [placeholder]="ISSUE_KEYS.detail.time.descriptionPlaceholder | erpTranslate"
+            <erp-input
+              class="min-w-32 flex-1"
+              [config]="this.descriptionInputConfig"
+              [control]="this.descriptionControl"
               (keydown.enter)="this.addWorkLogAsync()"
             />
             <erp-button [config]="this.addButton" />
@@ -187,6 +190,10 @@ export class IssueTimeComponent {
 
   protected readonly estimateControl = new FormControl<number | null>(null);
 
+  protected readonly estimateInputConfig: ErpInputNumberConfig = ErpInputNumberBuilder.create((b) =>
+    b.setMode('integer').setMin(0).setPlaceholder(ISSUE_KEYS.detail.time.estimatePlaceholder),
+  );
+
   protected readonly editEstimateButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.time.editEstimate,
     appearance: 'flat',
@@ -220,6 +227,14 @@ export class IssueTimeComponent {
 
   protected readonly descriptionControl = new FormControl<string>('');
 
+  protected readonly minutesInputConfig: ErpInputNumberConfig = ErpInputNumberBuilder.create((b) =>
+    b.setMode('integer').setMin(1).setPlaceholder(ISSUE_KEYS.detail.time.minutesPlaceholder),
+  );
+
+  protected readonly descriptionInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setType('text').setPlaceholder(ISSUE_KEYS.detail.time.descriptionPlaceholder),
+  );
+
   protected readonly workTypePickerConfig = computed<ErpInputPickerConfig>(() =>
     ErpInputPickerBuilder.create((b) =>
       b
@@ -233,8 +248,8 @@ export class IssueTimeComponent {
 
   protected readonly addButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.time.addButton,
-    appearance: 'primary',
-    size: 's',
+    appearance: 'flat',
+    size: 'xs',
     iconStart: '@tui.plus',
     fn: (): Promise<void> => this.addWorkLogAsync(),
   };

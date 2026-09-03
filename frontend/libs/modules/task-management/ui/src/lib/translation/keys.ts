@@ -66,6 +66,10 @@ export const TASKMANAGEMENT_KEYS = {
       remove: 'taskManagement.links.remove',
       none: 'taskManagement.links.none',
     },
+    issueKey: {
+      copyLink: 'taskManagement.issueKey.copyLink',
+      copied: 'taskManagement.issueKey.copied',
+    },
     fieldPanel: {
       state: 'taskManagement.fieldPanel.state',
       noTransitions: 'taskManagement.fieldPanel.noTransitions',

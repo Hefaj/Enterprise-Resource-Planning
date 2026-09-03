@@ -117,6 +117,23 @@
         "confirmMessage": "Backend odmówi, jeśli jakiekolwiek zgłoszenie ma jeszcze ten typ."
       }
     },
+    "tags": {
+      "title": "Tagi",
+      "empty": "Brak tagów widocznych w tym projekcie.",
+      "rename": {
+        "label": "Zmień nazwę",
+        "placeholder": "Nowa nazwa"
+      },
+      "merge": {
+        "label": "Scal z…",
+        "modalTitle": "Scal tag „{{name}}”",
+        "targetLabel": "Scal w",
+        "targetPlaceholder": "Wybierz tag docelowy",
+        "confirmMessage": "Tag „{{name}}” zostanie usunięty, a wszystkie zgłoszenia go noszące dostaną tag docelowy zamiast niego. Operacja jest nieodwracalna.",
+        "submit": "Scal",
+        "scopeMismatch": "Scalić można wyłącznie tagi z tego samego zasięgu — oba globalne albo oba tego samego projektu."
+      }
+    },
     "sla": {
       "title": "SLA",
       "empty": "Ten projekt nie ma jeszcze ustawionej polityki SLA.",

@@ -18,6 +18,7 @@ import { PROJECT_KIND } from '@erp/task-management/util';
 
 import { ProjectFieldsComponent } from './content/project-fields.component';
 import { ProjectSlaComponent } from './content/project-sla.component';
+import { ProjectTagsComponent } from './content/project-tags.component';
 import { ProjectTypesComponent } from './content/project-types.component';
 import { ProjectWorkflowSchemeComponent } from './content/project-workflow-scheme.component';
 import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
@@ -142,6 +143,12 @@ export class ProjectDetailComponent {
               id: 'types',
               label: PROJECT_KEYS.detail.types.title,
               component: ProjectTypesComponent,
+              inputs: { project },
+            },
+            {
+              id: 'tags',
+              label: PROJECT_KEYS.detail.tags.title,
+              component: ProjectTagsComponent,
               inputs: { project },
             },
             {

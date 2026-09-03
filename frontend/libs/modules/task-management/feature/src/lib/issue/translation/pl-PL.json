@@ -336,6 +336,8 @@
     "removeConfirm": {
       "title": "Usunąć widok?",
       "message": "Tej operacji nie da się cofnąć."
-    }
+    },
+    "setDefault": "Ustaw jako domyślny",
+    "defaultBadge": "Domyślny"
   }
 }

@@ -1,6 +1,9 @@
 {
-  "title": "Hours report",
+  "title": "Reports",
   "params": {
+    "reportKey": {
+      "label": "Report"
+    },
     "dateFrom": {
       "label": "From",
       "placeholder": "YYYY-MM-DD"
@@ -16,6 +19,34 @@
     "invalidRange": "Enter a valid date range (YYYY-MM-DD, \"from\" no later than \"to\").",
     "generate": "Generate"
   },
+  "reports": {
+    "hoursByDepartment": "Hours by department",
+    "issuesByStateTypeAssignee": "Issues by state/type/assignee",
+    "cycleTimeByStateCategory": "Cycle time by state category",
+    "slaCompliance": "SLA compliance for requests",
+    "sprintProgress": "Sprint progress",
+    "sprintWorkload": "Sprint workload"
+  },
+  "columns": {
+    "projectCode": "Project",
+    "stateCode": "State",
+    "typeName": "Type",
+    "assigneeUuid": "Assignee",
+    "count": "Count",
+    "stateCategory": "State category",
+    "period": "Period",
+    "avgHours": "Avg hours",
+    "medianHours": "Median hours",
+    "sampleCount": "Samples",
+    "totalCount": "Total",
+    "withinResponseSlaCount": "Within response SLA",
+    "withinResolutionSlaCount": "Within resolution SLA",
+    "sprintName": "Sprint",
+    "doneCount": "Done",
+    "estimateMinutesTotal": "Estimate (min)",
+    "loggedMinutesTotal": "Logged (min)",
+    "cardCount": "Cards"
+  },
   "status": {
     "generating": "Generating report…",
     "fetchingArtifact": "Loading result…",
@@ -26,7 +57,7 @@
     "zagadnienie": "Topic",
     "total": "Total"
   },
-  "empty": "Generate a report to see the hours breakdown.",
+  "empty": "Generate a report to see the breakdown.",
   "noData": "The report finished with no records for the selected range.",
   "errors": {
     "generateFailed": "Failed to request the report.",

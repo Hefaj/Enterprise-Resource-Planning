@@ -336,6 +336,8 @@
     "removeConfirm": {
       "title": "Remove this view?",
       "message": "This cannot be undone."
-    }
+    },
+    "setDefault": "Set as default",
+    "defaultBadge": "Default"
   }
 }

@@ -280,7 +280,10 @@
       "taskmgmtSavedViewSet": "Saved view update",
       "taskmgmtSavedViewRemove": "Saved view removal",
       "taskmgmtSavedViewCopy": "Copy view to yourself",
-      "taskmgmtReportRunCreate": "Report generation"
+      "taskmgmtReportRunCreate": "Report generation",
+      "taskmgmtTagSetName": "Tag rename",
+      "taskmgmtTagExecMerge": "Tag merge",
+      "taskmgmtProjectSetDefaultSavedView": "Project default view change"
     },
     "toast": {
       "completed": "Finished: {{name}}",

@@ -117,6 +117,23 @@
         "confirmMessage": "The backend refuses if any issue still has this type."
       }
     },
+    "tags": {
+      "title": "Tags",
+      "empty": "No tags visible in this project.",
+      "rename": {
+        "label": "Rename",
+        "placeholder": "New name"
+      },
+      "merge": {
+        "label": "Merge into…",
+        "modalTitle": "Merge tag \"{{name}}\"",
+        "targetLabel": "Merge into",
+        "targetPlaceholder": "Pick a target tag",
+        "confirmMessage": "Tag \"{{name}}\" will be deleted, and every issue carrying it will get the target tag instead. This cannot be undone.",
+        "submit": "Merge",
+        "scopeMismatch": "You can only merge tags from the same scope — both global, or both belonging to the same project."
+      }
+    },
     "sla": {
       "title": "SLA",
       "empty": "This project has no SLA policy yet.",

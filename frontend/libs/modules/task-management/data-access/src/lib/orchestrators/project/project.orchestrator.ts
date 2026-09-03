@@ -9,6 +9,7 @@ import {
   ProjectDto,
   ProjectSetArchivedCommand,
   ProjectSetCodeCommand,
+  ProjectSetDefaultSavedViewCommand,
   ProjectSetFieldSchemeCommand,
   ProjectSetIssueTypeSchemeCommand,
   ProjectSetSlaCommand,
@@ -101,6 +102,15 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
   public setArchivedAsync(command: ProjectSetArchivedCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetArchivedMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectArchived,
+      queueId,
+    });
+  }
+
+  /** Ustawia/zdejmuje widok domyślny projektu (VIEW-002) — musi być widokiem udostępnionym
+   * TEMU projektowi, backend odrzuca widok prywatny albo należący do innego projektu. */
+  public setDefaultSavedViewAsync(command: ProjectSetDefaultSavedViewCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetDefaultSavedViewMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectDefaultSavedView,
       queueId,
     });
   }

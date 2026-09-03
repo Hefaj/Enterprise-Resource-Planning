@@ -8,6 +8,7 @@ import {
   ErpJobResultRegistry,
   ErpJobResultResolver,
   JOB_LIST_WIDGET_ID,
+  USER_NOTIFICATION_WIDGET_ID,
   SignalrSyncService,
 } from '@erp/shared/data-access';
 import { ErpModalService } from '@erp/shared/ui';
@@ -145,6 +146,15 @@ export async function STARTUP(): Promise<void> {
       loadJobListComponent: () => Promise<ErpWidgetDefinition>;
     };
     return contract.loadJobListComponent();
+  });
+
+  // Lista powiadomień osobistych pod przyciskiem `erp-notifications` — sąsiad widżetu zadań
+  // powyżej, ładowany tą samą leniwą ścieżką rejestru.
+  widgetRegistry.register(USER_NOTIFICATION_WIDGET_ID, async () => {
+    const contract = await loadModuleContract('notification') as {
+      loadUserNotificationListComponent: () => Promise<ErpWidgetDefinition>;
+    };
+    return contract.loadUserNotificationListComponent();
   });
 
   const loadPromises = REMOTE_MODULES_CONFIG.map((config) =>

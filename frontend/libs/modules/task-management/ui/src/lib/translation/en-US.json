@@ -61,6 +61,10 @@
     "remove": "Remove",
     "none": "No links"
   },
+  "issueKey": {
+    "copyLink": "Copy issue link",
+    "copied": "Issue link copied"
+  },
   "fieldPanel": {
     "state": "State",
     "noTransitions": "No transitions available",

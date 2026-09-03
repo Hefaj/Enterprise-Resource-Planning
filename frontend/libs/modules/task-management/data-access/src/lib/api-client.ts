@@ -11208,6 +11208,7 @@ export interface SearchIssueRequest {
     customFields?: IssueCustomFieldFilter[] | undefined;
     tagUuids?: string[] | undefined;
     treeMode?: boolean;
+    dsl?: string | undefined;
     page?: number;
     pageSize?: number;
     sorts?: SortOption[] | undefined;

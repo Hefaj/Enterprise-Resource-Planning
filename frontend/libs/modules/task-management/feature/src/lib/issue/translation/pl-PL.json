@@ -3,6 +3,9 @@
   "tabs": {
     "list": "Lista"
   },
+  "errors": {
+    "searchFailed": "Nie udało się wyszukać zgłoszeń. Sprawdź wpisane filtry, w tym wyszukiwanie zaawansowane."
+  },
   "filters": {
     "scope": {
       "label": "Zakres",
@@ -32,6 +35,10 @@
     },
     "treeMode": {
       "label": "Drzewo"
+    },
+    "dsl": {
+      "label": "Wyszukiwanie zaawansowane",
+      "placeholder": "project: ERP state: Open assignee: me"
     }
   },
   "table": {

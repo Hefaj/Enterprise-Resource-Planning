@@ -14,10 +14,10 @@
 |---|---|---|---|---|---|
 | 0–3 | Fundament, automat stanów, tablica, pola własne | — | — | 7 migracji | ✅ zrobione |
 | 4 | Typy zgłoszeń, **układ karty wg YouTracka**, obrazy ze schowka, graf, wyprowadzenie komponentów do `ui` | 3 | **tak** (`typeUuid` w `IssueCreate`, `IssueDto`) | `IssueTypes` | ✅ zrobione |
-| 5 | Zlecenia międzydziałowe, obserwujący, powiadomienia, SLA | 4 | tak (dodanie pól) | `WatchersAndIntake`, `ProjectSla` | ✅ zrobione |
+| 5 | Zlecenia międzydziałowe, obserwujący, powiadomienia, SLA | 4 | tak (dodanie pól) | `WatchersAndIntake`, `ProjectSla` | ✅ zrobione (plan nie był odznaczony mimo wykonanej pracy — poprawione) |
 | 6 | Sprinty, backlog, tagi, operacje masowe, wyszukiwanie, **rejestracja czasu** | 4 | tak (dodanie pól) | `SprintsAndBacklog`, `TagsAndResolution`, `FullTextSearch`, `WorkLogAndEstimate` | ✅ zrobione |
 | 7 | Edytor schematu z UI, zapisane widoki, **raporty (w tym godziny per dział)**, scalanie tagów | 6 | tak (dodanie pól) | `SavedViews`, `Reports`, `ProjectDefaultSavedView`, Catalog `ReportRunRename` | ✅ zrobione |
-| 8 | Automatyzacje, DSL, webhooki | 7 | nie | `Automations`, `Webhooks` | ⚠️ częściowo (silnik automatyzacji AUT-001/AUT-002 i webhooki wychodzące API-004 zrobione i **zweryfikowane na żywo** — patrz §6.1/§6.2, 2 realne błędy naprawione w automatyzacji; klucz integracyjny, burndown, NTF-003, SRCH-005 zostają) |
+| 8 | Automatyzacje, DSL, webhooki | 7 | nie | `Automations`, `Webhooks` | ⚠️ częściowo (silnik automatyzacji AUT-001/AUT-002, webhooki wychodzące API-004, burndown SPR-004 i język wyszukiwania SRCH-005 zrobione i **zweryfikowane na żywo** — patrz §6.1/§6.2/§6.3; klucz integracyjny API-003 i preferencje powiadomień NTF-003 zostają, oba wymagają osobnej decyzji architektonicznej) |
 
 **Faza 4 jest największa i najbardziej łamiąca**, bo wprowadza `IssueType` — pole, którego dziś
 w ogóle nie ma na zgłoszeniu, a które wchodzi jako wymagane. Reszta faz dokłada, nie przerabia.
@@ -260,50 +260,50 @@ biznes zleca, dział wykonuje, zamawiający odbiera. To jest faza, która uzasad
 
 ### 3.1 Backend — domena i persystencja
 
-- [ ] `IssueWatcher` (encja podrzędna `Issue`) + `Issue.AddWatcher`/`RemoveWatcher`
+- [x] `IssueWatcher` (encja podrzędna `Issue`) + `Issue.AddWatcher`/`RemoveWatcher`
       z zapamiętaniem **jawnej rezygnacji** (`ISS-009` AC1 — bez tego kolejny komentarz dopisuje z powrotem).
-- [ ] `Issue.IsRestricted` już jest — dopiąć do predykatu widoczności (`PERM-003`).
-- [ ] `Issue.DerivedDeliveryState` — pole wyliczane z powiązań `realizuje` (`REQ-003`).
-- [ ] `SlaPolicy` na projekcie: czas reakcji, czas realizacji, kalendarz roboczy (`PRJ-006`).
-- [ ] Migracje `WatchersAndIntake`, `ProjectSla`.
-- [ ] Seed: schemat stanów `Intake` (`Nowe → Przyjęte → W realizacji → Do odbioru → Odebrane`
+- [x] `Issue.IsRestricted` już jest — dopiąć do predykatu widoczności (`PERM-003`).
+- [x] `Issue.DerivedDeliveryState` — pole wyliczane z powiązań `realizuje` (`REQ-003`).
+- [x] `SlaPolicy` na projekcie: czas reakcji, czas realizacji, kalendarz roboczy (`PRJ-006`).
+- [x] Migracje `WatchersAndIntake`, `ProjectSla`.
+- [x] Seed: schemat stanów `Intake` (`Nowe → Przyjęte → W realizacji → Do odbioru → Odebrane`
       + `Zastrzeżenia` z powrotem) — `REQ-004` AC3.
-- [ ] Indeks `(due_at) where state_category <> 'Done'` pod skan terminów.
+- [x] Indeks `(due_at) where state_category <> 'Done'` pod skan terminów.
 
 ### 3.2 Backend — aplikacja, API, zdarzenia
 
-- [ ] `IssueAddWatcherCommand` / `IssueRemoveWatcherCommand`.
-- [ ] Nasłuch zdarzenia domenowego zamknięcia zgłoszenia → przeliczenie `derived_delivery_state`
+- [x] `IssueAddWatcherCommand` / `IssueRemoveWatcherCommand`.
+- [x] Nasłuch zdarzenia domenowego zamknięcia zgłoszenia → przeliczenie `derived_delivery_state`
       na powiązanych zleceniach (`REQ-003`). **Zdarzenie domenowe, nie integracyjne** — ten sam moduł.
-- [ ] `IssueOverdueScanService : BackgroundService` z **`[ClusterSafe(powód)]`** i dzierżawą
+- [x] `IssueOverdueScanService : BackgroundService` z **`[ClusterSafe(powód)]`** i dzierżawą
       `taskmgmt:issue-overdue-scan` (`REQ-005`). Bez atrybutu nie przejdzie `BackgroundServiceTests`.
-- [ ] Publikacja `UserNotificationRequested` z listą odbiorców dla siedmiu zdarzeń z `NTF-002`;
+- [x] Publikacja `UserNotificationRequested` z listą odbiorców dla siedmiu zdarzeń z `NTF-002`;
       **sprawca zmiany wycięty z listy**.
-- [ ] Rozszerzenie `IssueVisibility` o `is_restricted` i o wgląd z powiązania (`PERM-004`) —
+- [x] Rozszerzenie `IssueVisibility` o `is_restricted` i o wgląd z powiązania (`PERM-004`) —
       nagłówek, nie treść: osobna projekcja `IssueHeaderDto`, nie `IssueDto` z pustymi polami.
-- [ ] Parsowanie wzmianek `@` przy zapisie komentarza → dopisanie obserwujących + powiadomienie.
+- [x] Parsowanie wzmianek `@` przy zapisie komentarza → dopisanie obserwujących + powiadomienie.
 
 ### 3.3 Front
 
-- [ ] `data-access`: rozszerzenie `issue.orchestrator` o obserwujących i `derivedDeliveryState`.
-- [ ] `feature/issue`: sekcja obserwujących na karcie (dodaj/usuń, „obserwuję" jako przełącznik).
-- [ ] `feature/issue`: wzmianki `@` w edytorze komentarza — podpowiadanie przez
+- [x] `data-access`: rozszerzenie `issue.orchestrator` o obserwujących i `derivedDeliveryState`.
+- [x] `feature/issue`: sekcja obserwujących na karcie (dodaj/usuń, „obserwuję" jako przełącznik).
+- [x] `feature/issue`: wzmianki `@` w edytorze komentarza — podpowiadanie przez
       `ERP_USER_DIRECTORY` ([`user-directory.md`](docs/frontend/user-directory.md)), nie lokalnym endpointem.
-- [ ] **Nowy agregat `request`** w `feature`: strona `/task-management/request`
+- [x] **Nowy agregat `request`** w `feature`: strona `/task-management/request`
       (`REQ-006`) + modale „złóż zlecenie", „odbierz realizację", „zgłoś zastrzeżenia".
-- [ ] `feature/issue`: pasek powiązań pokazuje nagłówki zgłoszeń realizujących (`REQ-002`).
-- [ ] `feature/project`: zakładka **SLA** (`PRJ-006`).
-- [ ] `contract`: pozycja menu „Zlecenia" → `/task-management/request` z `taskmgmt.issue.read`.
-- [ ] Tłumaczenia + `pnpm translate:keys`.
+- [x] `feature/issue`: pasek powiązań pokazuje nagłówki zgłoszeń realizujących (`REQ-002`).
+- [x] `feature/project`: zakładka **SLA** (`PRJ-006`).
+- [x] `contract`: pozycja menu „Zlecenia" → `/task-management/request` z `taskmgmt.issue.read`.
+- [x] Tłumaczenia + `pnpm translate:keys`.
 
 ### 3.4 Definicja ukończenia fazy 5
 
-- [ ] Zamawiający składa zlecenie w projekcie `Intake`, dev tworzy dwa zgłoszenia i wiąże je
+- [x] Zamawiający składa zlecenie w projekcie `Intake`, dev tworzy dwa zgłoszenia i wiąże je
       typem `realizuje`; zamknięcie obu zmienia stan realizacji na zleceniu **bez ręcznej akcji**.
-- [ ] Zlecenie **nie zamyka się samo** — dopiero odbiór człowieka je zamyka.
-- [ ] Zamawiający widzi klucz, tytuł i stan zgłoszenia dev, a `404` przy próbie wejścia na kartę.
-- [ ] Wzmianka `@` w komentarzu daje powiadomienie w dzwonku odbiorcy, a nie autorowi.
-- [ ] Druga instancja serwisu nie dubluje przypomnień o terminie.
+- [x] Zlecenie **nie zamyka się samo** — dopiero odbiór człowieka je zamyka.
+- [x] Zamawiający widzi klucz, tytuł i stan zgłoszenia dev, a `404` przy próbie wejścia na kartę.
+- [x] Wzmianka `@` w komentarzu daje powiadomienie w dzwonku odbiorcy, a nie autorowi.
+- [x] Druga instancja serwisu nie dubluje przypomnień o terminie.
 
 ---
 
@@ -949,12 +949,28 @@ zaktualizowane w obu modułach.
       `erp-identity-service` wołającym siebie nawzajem; trzeba nowy klient `client_credentials`
       + rozszerzenie `IPermissionProvider`/`PermissionClaimsTransformation` o zestaw uprawnień
       keyowany po `client_id`, nie po `sub`.
-- [ ] Burndown z historii zmian stanów (`SPR-004`), na tej samej infrastrukturze raportowej
-      (`IReportDefinition`, wzorem `TaskManagementCycleTimeByStateCategoryReportDefinition`).
+- [x] Burndown z historii zmian stanów (`SPR-004`), na tej samej infrastrukturze raportowej
+      (`IReportDefinition`, wzorem `TaskManagementCycleTimeByStateCategoryReportDefinition`) —
+      `TaskManagementSprintBurndownReportDefinition`: `remaining_count`/`remaining_estimate_minutes`
+      per dzień sprintu, liczone z `issue_activity` (pierwsze wejście w kategorię `Done`, świadomie
+      bez śledzenia powrotów — patrz komentarz XML klasy). Front: wpis w `REPORT_DEFINITIONS`,
+      generyczna tabela (bez nowej infrastruktury wykresów). Testy: 2 w `Erp.IntegrationTests`
+      (`TaskManagementSprintBurndownReportDefinitionTests`) zielone; zweryfikowane na żywo w
+      przeglądarce (raport generuje się bez błędu; brak wierszy bo dev seed nie ma sprintu
+      z ustawionymi datami — zgodne z logiką pomijania sprintów bez dat/`Planned`).
 - [ ] Preferencje powiadomień per projekt (`NTF-003`) — filtr odbiorców w `IssueNotificationPublisher`
       (ma już kontekst projektu), nowy agregat `ProjectNotificationPreference`.
-- [ ] Język wyszukiwania SRCH-005 — może teraz częściowo skorzystać z `AutomationConditionParser`
-      jako punktu wyjścia, ale target jest inny (`SearchIssueRequest`, nie AST warunku reguły).
+- [x] Język wyszukiwania SRCH-005 — `IssueSearchDslParser` (tokenizer/parser węższy niż
+      `AutomationConditionParser`, bez `and`/`or`) + `IssueSearchDslResolver` (Infrastructure,
+      rozwiązuje `project`/`state`/`priority`/`assignee`/`tag`/`text` na `SearchIssueRequest`).
+      Wpięty w `IssueQueries.SearchAsync`/`GetMatchingUuidsAsync` przez nowe opcjonalne pole
+      `SearchIssueRequest.Dsl` — **bez nowego endpointu**, ta sama ścieżka filtrowania co formularz
+      (AC2 mechanicznie zagwarantowane). Błędy (AC1) jako `IssueSearchDslParseException : DomainException`
+      z pozycją w komunikacie → `422` przez istniejący `ErpProblemDetailsHandler`, bez zmian
+      w building-blocks. Testy: 8 w `TaskManagement.Tests` (parser) + 3 w `Erp.IntegrationTests`
+      (resolver, w tym AC2 wprost) zielone; zweryfikowane na żywo w przeglądarce — `project: DEV
+      state: Done` zwrócił poprawny zestaw, nieznane pole (`foo: bar`) dało czytelny błąd
+      z pozycją w toaście, bez 500.
 
 ---
 

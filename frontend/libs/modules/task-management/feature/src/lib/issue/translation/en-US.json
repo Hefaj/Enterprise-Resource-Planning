@@ -3,6 +3,9 @@
   "tabs": {
     "list": "List"
   },
+  "errors": {
+    "searchFailed": "Couldn't search issues. Check the filters you entered, including advanced search."
+  },
   "filters": {
     "scope": {
       "label": "Scope",
@@ -32,6 +35,10 @@
     },
     "treeMode": {
       "label": "Tree"
+    },
+    "dsl": {
+      "label": "Advanced search",
+      "placeholder": "project: ERP state: Open assignee: me"
     }
   },
   "table": {

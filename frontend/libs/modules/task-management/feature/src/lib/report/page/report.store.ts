@@ -31,12 +31,12 @@ const REPORT_RUN_STATUS = {
 } as const;
 
 /**
- * Katalog pięciu definicji raportu Task Management (RPT-002 `Must`, RPT-003 `Should`) —
- * jedyne miejsce, które front musi dopisać, żeby nowa definicja backendu pojawiła się w
- * dropdownie. `hasPivot` wybiera renderer wyniku: `hours-by-department` ma bespoke pivot
- * dział×zagadnienie×okres (`parseReportCsvToPivot`), pozostałe cztery renderują się generyczną
- * tabelą nagłówek+wiersze (`parseReportCsvToRows`) — ich kształty są naprawdę różne (liczność,
- * mediana, zgodność SLA, postęp sprintu), więc wymuszanie ich we wspólny pivot byłoby sztuczne.
+ * Katalog definicji raportu Task Management (RPT-002 `Must`, RPT-003 `Should`, SPR-004
+ * `Could`) — jedyne miejsce, które front musi dopisać, żeby nowa definicja backendu pojawiła się
+ * w dropdownie. `hasPivot` wybiera renderer wyniku: `hours-by-department` ma bespoke pivot
+ * dział×zagadnienie×okres (`parseReportCsvToPivot`), pozostałe renderują się generyczną tabelą
+ * nagłówek+wiersze (`parseReportCsvToRows`) — ich kształty są naprawdę różne (liczność, mediana,
+ * zgodność SLA, postęp sprintu, burndown), więc wymuszanie ich we wspólny pivot byłoby sztuczne.
  */
 export interface ReportDefinitionSpec {
   readonly key: string;
@@ -53,6 +53,7 @@ export const REPORT_DEFINITIONS: readonly ReportDefinitionSpec[] = [
   { key: 'taskmgmt.sla-compliance', label: REPORT_KEYS.reports.slaCompliance, hasPivot: false, needsDateRange: true, needsProjects: true },
   { key: 'taskmgmt.sprint-progress', label: REPORT_KEYS.reports.sprintProgress, hasPivot: false, needsDateRange: false, needsProjects: false },
   { key: 'taskmgmt.sprint-workload', label: REPORT_KEYS.reports.sprintWorkload, hasPivot: false, needsDateRange: false, needsProjects: false },
+  { key: 'taskmgmt.sprint-burndown', label: REPORT_KEYS.reports.sprintBurndown, hasPivot: false, needsDateRange: false, needsProjects: false },
 ] as const;
 
 const REPORT_FORMAT = 'csv';

@@ -139,6 +139,16 @@ public sealed class SearchIssueRequest : PagedRequest
     /// są jednostką stronicowania.</para>
     /// </summary>
     public bool TreeMode { get; set; }
+
+    /// <summary>
+    /// Zapytanie w wąskim języku wyszukiwania (SRCH-005), np. <c>project: ERP state: Open
+    /// assignee: me</c>. Gdy podane, <see cref="IIssueQueries"/> rozwiązuje je na POCZĄTKU
+    /// wyszukiwania (<see cref="IIssueSearchDslResolver"/>) i nadpisuje nim odpowiadające pola
+    /// tego samego żądania — <see cref="Scope"/> oraz paginacja/sortowanie z
+    /// <see cref="PagedRequest"/> zostają nietknięte, bo DSL ich nie niesie. Dzięki temu wynik
+    /// DSL i wynik formularza przechodzą DOKŁADNIE tę samą ścieżkę filtrowania (AC2).
+    /// </summary>
+    public string? Dsl { get; set; }
 }
 
 /// <summary>Pobranie zgłoszeń po identyfikatorach.</summary>
@@ -168,4 +178,24 @@ public interface IIssueQueries
 
     /// <summary>Identyfikatory pasujące do filtra, bez stronicowania — zbiór celów operacji masowej.</summary>
     Task<List<Guid>> GetMatchingUuidsAsync(SearchIssueRequest request, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// Rozwiązuje DSL wyszukiwania (SRCH-005) na <see cref="SearchIssueRequest"/> — implementacja
+/// żyje w Infrastructure, bo wymaga bazy (kod projektu → uuid, nazwa tagu → uuid), czego
+/// Application świadomie nie zna (<c>docs/backend/task-management.md</c> §6).
+/// </summary>
+public interface IIssueSearchDslResolver
+{
+    /// <summary>
+    /// Parsuje <paramref name="dsl"/> i zwraca KOPIĘ <paramref name="baseRequest"/> z polami
+    /// rozpoznanymi z DSL nadpisanymi na niej — <see cref="SearchIssueRequest.Scope"/>,
+    /// paginacja i sortowanie z <paramref name="baseRequest"/> przechodzą bez zmian, bo DSL ich
+    /// nie niesie.
+    /// </summary>
+    /// <exception cref="IssueSearchDslParseException">Błąd gramatyki (AC1) albo wartości, której
+    /// nie da się rozwiązać (nieznany kod projektu, zła nazwa priorytetu itp.) — jeden typ dla
+    /// obu, każdy z pozycją w tekście.</exception>
+    Task<SearchIssueRequest> ResolveAsync(
+        string dsl, SearchIssueRequest baseRequest, CancellationToken cancellationToken);
 }

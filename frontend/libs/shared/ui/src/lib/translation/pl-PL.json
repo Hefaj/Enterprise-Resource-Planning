@@ -383,6 +383,7 @@
       "taskmgmtCommentThreadTooDeep": "Odpowiadać można wyłącznie na komentarz główny.",
       "taskmgmtIssueKeyEmpty": "Zgłoszenie musi mieć klucz czytelny.",
       "taskmgmtIssueProjectEmpty": "Zgłoszenie musi należeć do projektu.",
+      "taskmgmtIssueSearchDslInvalid": "Nieprawidłowe zapytanie wyszukiwania.",
       "taskmgmtIssueTitleEmpty": "Tytuł zgłoszenia nie może być pusty.",
       "taskmgmtIssueTitleTooLong": "Tytuł zgłoszenia może mieć najwyżej 512 znaków.",
       "taskmgmtParentEpicCannotHaveParent": "Epik nie może mieć rodzica.",

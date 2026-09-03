@@ -22,23 +22,28 @@ public sealed class IssueQueries : IIssueQueries
     private readonly IExecutionContext _executionContext;
     private readonly IFieldSchemeQueries _fields;
     private readonly IIssueGraphQueries _graph;
+    private readonly IIssueSearchDslResolver _dslResolver;
 
     public IssueQueries(
         TaskManagementDbContext dbContext,
         IExecutionContext executionContext,
         IFieldSchemeQueries fields,
-        IIssueGraphQueries graph)
+        IIssueGraphQueries graph,
+        IIssueSearchDslResolver dslResolver)
     {
         _dbContext = dbContext;
         _executionContext = executionContext;
         _fields = fields;
         _graph = graph;
+        _dslResolver = dslResolver;
     }
 
     /// <inheritdoc />
     public async Task<SearchResponse> SearchAsync(SearchIssueRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        request = await ResolveDslAsync(request, cancellationToken).ConfigureAwait(false);
 
         var slots = await SlotMapAsync(request, cancellationToken).ConfigureAwait(false);
         var query = ApplyCustomFieldFilters(Filtered(request), request, slots);
@@ -83,6 +88,8 @@ public sealed class IssueQueries : IIssueQueries
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        request = await ResolveDslAsync(request, cancellationToken).ConfigureAwait(false);
 
         var slots = await SlotMapAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -140,6 +147,22 @@ public sealed class IssueQueries : IIssueQueries
         => _dbContext.Issues
             .AsNoTracking()
             .VisibleTo(_dbContext, IssueVisibility.CurrentUser(_executionContext));
+
+    /// <summary>
+    /// Rozwiązuje <see cref="SearchIssueRequest.Dsl"/> (SRCH-005), jeśli podane — PRZED wejściem
+    /// w <see cref="Filtered"/>. Po tym wywołaniu nie ma już żadnej gałęzi kodu odróżniającej
+    /// zapytanie z DSL od zapytania z formularza (AC2): oba przechodzą dokładnie tę samą ścieżkę
+    /// filtrowania, sortowania i paginacji poniżej.
+    /// </summary>
+    private async Task<SearchIssueRequest> ResolveDslAsync(SearchIssueRequest request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Dsl))
+        {
+            return request;
+        }
+
+        return await _dslResolver.ResolveAsync(request.Dsl, request, cancellationToken).ConfigureAwait(false);
+    }
 
     private IQueryable<Issue> Filtered(SearchIssueRequest request)
     {

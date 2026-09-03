@@ -141,6 +141,14 @@ export class IssueFilterComponent implements OnInit {
       .addFormField('text', 'text', (f) =>
         f.setLabel(ISSUE_KEYS.filters.text.label).setPlaceholder(ISSUE_KEYS.filters.text.placeholder),
       )
+      // SRCH-005 — DSL wąski jak `project: ERP state: Open assignee: me`. Rozwiązywany na
+      // backendzie, w `IssueQueries.SearchAsync`, PRZED filtrowaniem strukturalnym (patrz
+      // `SearchIssueRequest.Dsl`) — pole leci do żądania automatycznie przez mechanizm w
+      // `_search()` (klucz spoza `filterableFields` trafia wprost do `common`), bez żadnej
+      // dodatkowej logiki mapowania tutaj.
+      .addFormField('dsl', 'text', (f) =>
+        f.setLabel(ISSUE_KEYS.filters.dsl.label).setPlaceholder(ISSUE_KEYS.filters.dsl.placeholder),
+      )
       .addFormField('scope', 'inputPicker', (f) =>
         f
           .setLabel(ISSUE_KEYS.filters.scope.label)

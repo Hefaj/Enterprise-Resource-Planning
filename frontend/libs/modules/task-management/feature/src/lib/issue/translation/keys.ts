@@ -8,6 +8,9 @@ export const ISSUE_KEYS = {
     tabs: {
       list: 'issue.tabs.list',
     },
+    errors: {
+      searchFailed: 'issue.errors.searchFailed',
+    },
     filters: {
       scope: {
         label: 'issue.filters.scope.label',
@@ -37,6 +40,10 @@ export const ISSUE_KEYS = {
       },
       treeMode: {
         label: 'issue.filters.treeMode.label',
+      },
+      dsl: {
+        label: 'issue.filters.dsl.label',
+        placeholder: 'issue.filters.dsl.placeholder',
       },
     },
     table: {

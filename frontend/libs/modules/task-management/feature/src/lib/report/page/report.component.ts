@@ -58,6 +58,9 @@ const COLUMN_LABEL_KEYS: Record<string, string> = {
   estimate_minutes_total: REPORT_KEYS.columns.estimateMinutesTotal,
   logged_minutes_total: REPORT_KEYS.columns.loggedMinutesTotal,
   card_count: REPORT_KEYS.columns.cardCount,
+  date: REPORT_KEYS.columns.date,
+  remaining_count: REPORT_KEYS.columns.remainingCount,
+  remaining_estimate_minutes: REPORT_KEYS.columns.remainingEstimateMinutes,
 };
 
 /**

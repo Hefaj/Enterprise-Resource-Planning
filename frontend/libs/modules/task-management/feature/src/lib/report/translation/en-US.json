@@ -25,7 +25,8 @@
     "cycleTimeByStateCategory": "Cycle time by state category",
     "slaCompliance": "SLA compliance for requests",
     "sprintProgress": "Sprint progress",
-    "sprintWorkload": "Sprint workload"
+    "sprintWorkload": "Sprint workload",
+    "sprintBurndown": "Sprint burndown"
   },
   "columns": {
     "projectCode": "Project",
@@ -45,7 +46,10 @@
     "doneCount": "Done",
     "estimateMinutesTotal": "Estimate (min)",
     "loggedMinutesTotal": "Logged (min)",
-    "cardCount": "Cards"
+    "cardCount": "Cards",
+    "date": "Day",
+    "remainingCount": "Remaining issues",
+    "remainingEstimateMinutes": "Remaining estimate (min)"
   },
   "status": {
     "generating": "Generating report…",

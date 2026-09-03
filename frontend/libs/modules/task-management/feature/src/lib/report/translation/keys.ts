@@ -31,6 +31,7 @@ export const REPORT_KEYS = {
       slaCompliance: 'report.reports.slaCompliance',
       sprintProgress: 'report.reports.sprintProgress',
       sprintWorkload: 'report.reports.sprintWorkload',
+      sprintBurndown: 'report.reports.sprintBurndown',
     },
     columns: {
       projectCode: 'report.columns.projectCode',
@@ -51,6 +52,9 @@ export const REPORT_KEYS = {
       estimateMinutesTotal: 'report.columns.estimateMinutesTotal',
       loggedMinutesTotal: 'report.columns.loggedMinutesTotal',
       cardCount: 'report.columns.cardCount',
+      date: 'report.columns.date',
+      remainingCount: 'report.columns.remainingCount',
+      remainingEstimateMinutes: 'report.columns.remainingEstimateMinutes',
     },
     status: {
       generating: 'report.status.generating',

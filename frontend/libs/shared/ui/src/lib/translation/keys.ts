@@ -388,6 +388,7 @@ export const SHARED_KEYS = {
         taskmgmtCommentThreadTooDeep: 'shared.errors.codes.taskmgmtCommentThreadTooDeep',
         taskmgmtIssueKeyEmpty: 'shared.errors.codes.taskmgmtIssueKeyEmpty',
         taskmgmtIssueProjectEmpty: 'shared.errors.codes.taskmgmtIssueProjectEmpty',
+        taskmgmtIssueSearchDslInvalid: 'shared.errors.codes.taskmgmtIssueSearchDslInvalid',
         taskmgmtIssueTitleEmpty: 'shared.errors.codes.taskmgmtIssueTitleEmpty',
         taskmgmtIssueTitleTooLong: 'shared.errors.codes.taskmgmtIssueTitleTooLong',
         taskmgmtParentEpicCannotHaveParent: 'shared.errors.codes.taskmgmtParentEpicCannotHaveParent',

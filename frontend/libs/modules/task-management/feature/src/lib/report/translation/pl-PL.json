@@ -25,7 +25,8 @@
     "cycleTimeByStateCategory": "Czas realizacji per kategoria stanu",
     "slaCompliance": "Dotrzymanie SLA zleceń",
     "sprintProgress": "Postęp sprintu",
-    "sprintWorkload": "Obciążenie osób w sprincie"
+    "sprintWorkload": "Obciążenie osób w sprincie",
+    "sprintBurndown": "Burndown sprintu"
   },
   "columns": {
     "projectCode": "Projekt",
@@ -45,7 +46,10 @@
     "doneCount": "Gotowe",
     "estimateMinutesTotal": "Estymata (min)",
     "loggedMinutesTotal": "Zalogowano (min)",
-    "cardCount": "Kart"
+    "cardCount": "Kart",
+    "date": "Dzień",
+    "remainingCount": "Pozostało zgłoszeń",
+    "remainingEstimateMinutes": "Pozostała estymata (min)"
   },
   "status": {
     "generating": "Generowanie raportu…",

@@ -21,6 +21,7 @@ import {
   ErpTableComponent,
   ErpTableConfig,
   ErpTableState,
+  ErpToastService,
 } from '@erp/shared/ui';
 import {
   IssueVM,
@@ -62,6 +63,7 @@ export class TaskManagementIssueTableComponent {
   private readonly _fields = inject(ProjectFieldProfileService);
   private readonly _users = inject(UserDirectoryService);
   private readonly _tags = inject(TaskManagementTagOrchestrator);
+  private readonly _toast = inject(ErpToastService);
 
   public readonly filters = input<SearchIssueRequest>({});
   public readonly stateKey = input<string>();
@@ -477,6 +479,9 @@ export class TaskManagementIssueTableComponent {
       await this._resolveCustomFieldUsersAsync();
     } catch (error) {
       console.error('[TaskManagementIssueTableComponent] Nie udało się pobrać listy zgłoszeń.', error);
+      // Odrzucenie DSL-a (SRCH-005 AC1 — nieznane pole/wartość) wraca tą samą ścieżką co każdy
+      // inny błąd wyszukiwania: `searchIssue` nie ma osobnego kanału na błędy walidacji zapytania.
+      this._toast.show({ message: ISSUE_KEYS.errors.searchFailed, appearance: 'negative' });
       this._currentUuids.set([]);
       this._totalCount.set(0);
     } finally {

@@ -383,6 +383,7 @@
       "taskmgmtCommentThreadTooDeep": "You can only reply to a top-level comment.",
       "taskmgmtIssueKeyEmpty": "An issue must have a readable key.",
       "taskmgmtIssueProjectEmpty": "An issue must belong to a project.",
+      "taskmgmtIssueSearchDslInvalid": "Invalid search query.",
       "taskmgmtIssueTitleEmpty": "Issue title cannot be empty.",
       "taskmgmtIssueTitleTooLong": "Issue title cannot exceed 512 characters.",
       "taskmgmtParentEpicCannotHaveParent": "An epic cannot have a parent.",

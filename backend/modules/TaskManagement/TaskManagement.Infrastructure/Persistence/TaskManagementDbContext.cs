@@ -13,6 +13,7 @@ using TaskManagement.Domain.Resolutions;
 using TaskManagement.Domain.SavedViews;
 using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Tags;
+using TaskManagement.Domain.Webhooks;
 using TaskManagement.Domain.Workflow;
 using TaskManagement.Domain.WorkTypes;
 
@@ -116,6 +117,10 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext, IRepo
     public DbSet<AutomationAction> AutomationActions => Set<AutomationAction>();
 
     public DbSet<AutomationRun> AutomationRuns => Set<AutomationRun>();
+
+    public DbSet<Webhook> Webhooks => Set<Webhook>();
+
+    public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

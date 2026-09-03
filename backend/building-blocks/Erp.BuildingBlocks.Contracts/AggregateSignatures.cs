@@ -130,6 +130,11 @@ public static class AggregateSignatures
     /// odświeżyć listę reguł na karcie projektu każdemu, kto na nią patrzy.</summary>
     public const string TaskManagementAutomationRule = "taskmgmt.automation_rule";
 
+    /// <summary>Webhook wychodzący (faza 8, API-004). Włączenie/wyłączenie (ręczne albo
+    /// automatyczne po serii błędów) i edycja mają odświeżyć listę na karcie projektu każdemu,
+    /// kto na nią patrzy — tak samo jak <see cref="TaskManagementAutomationRule"/>.</summary>
+    public const string TaskManagementWebhook = "taskmgmt.webhook";
+
     /// <summary>Wszystkie sygnatury agregatów — do walidacji przy starcie i w testach,
     /// żeby nikt nie rozgłosił zmiany na kanał, którego nikt nie słucha.</summary>
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -163,5 +168,6 @@ public static class AggregateSignatures
         TaskManagementReportRun,
         TaskManagementSavedView,
         TaskManagementAutomationRule,
+        TaskManagementWebhook,
     };
 }

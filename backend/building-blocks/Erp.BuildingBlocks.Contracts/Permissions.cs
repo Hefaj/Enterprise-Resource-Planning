@@ -122,6 +122,11 @@ public static class Permissions
         /// tworzenie/edycję/włączanie/wyłączanie/usuwanie i odczyt — kto nie zarządza
         /// automatyzacją, nie widzi logiki jej reguł.</summary>
         public const string AutomationManage = "taskmgmt.automation.manage";
+
+        /// <summary>Zarządzanie webhookami wychodzącymi (faza 8, API-004) — nowa funkcja, gates
+        /// tworzenie/edycję/włączanie/wyłączanie/usuwanie i odczyt wzorem
+        /// <see cref="AutomationManage"/>, którego jest bezpośrednim odpowiednikiem.</summary>
+        public const string WebhookManage = "taskmgmt.webhook.manage";
     }
 
     /// <summary>Pełny katalog — źródło seedu <c>permission_catalog</c> i uzgadniania przy starcie.
@@ -163,5 +168,6 @@ public static class Permissions
         new(TaskManagement.TagManage, "taskmgmt", "tag", "manage", "identity.permissions.taskmgmt.tag.manage"),
         new(TaskManagement.ReportReadAll, "taskmgmt", "report", "read.all", "identity.permissions.taskmgmt.report.readAll"),
         new(TaskManagement.AutomationManage, "taskmgmt", "automation", "manage", "identity.permissions.taskmgmt.automation.manage"),
+        new(TaskManagement.WebhookManage, "taskmgmt", "webhook", "manage", "identity.permissions.taskmgmt.webhook.manage"),
     ];
 }

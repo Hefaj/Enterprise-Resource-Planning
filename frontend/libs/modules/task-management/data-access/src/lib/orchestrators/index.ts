@@ -19,4 +19,6 @@ export * from './tag/tag.orchestrator';
 export * from './tag/tag.view-model';
 export * from './work-type/work-type.orchestrator';
 export * from './work-type/work-type.view-model';
+export * from './webhook/webhook.orchestrator';
+export * from './webhook/webhook.view-model';
 export * from './workflow-scheme/workflow-scheme.orchestrator';

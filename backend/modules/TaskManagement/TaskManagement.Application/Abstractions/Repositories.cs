@@ -9,6 +9,7 @@ using TaskManagement.Domain.Resolutions;
 using TaskManagement.Domain.SavedViews;
 using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Tags;
+using TaskManagement.Domain.Webhooks;
 using TaskManagement.Domain.Workflow;
 using TaskManagement.Domain.WorkTypes;
 
@@ -341,4 +342,28 @@ public interface IAutomationRuleRepository
 public interface IAutomationRunWriter
 {
     void Add(AutomationRun run);
+}
+
+/// <summary>Dostęp do agregatu <see cref="Webhook"/> po stronie zapisu (API-004).</summary>
+public interface IWebhookRepository
+{
+    Task<Webhook?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    /// <summary>Wszystkie webhooki projektu, włączone i wyłączone — dopasowanie do wyzwalacza
+    /// (<see cref="Webhook.Subscribes"/>) robi wołający w pamięci, bo liczba webhooków jednego
+    /// projektu nigdy nie jest duża, a `EventKinds` jest kolumną konwertowaną (`text[]`), której
+    /// LINQ-to-SQL nie przetłumaczy w `.Contains()`.</summary>
+    Task<IReadOnlyList<Webhook>> FindByProjectAsync(Guid projectUuid, CancellationToken cancellationToken);
+
+    void Add(Webhook webhook);
+
+    void Remove(Webhook webhook);
+}
+
+/// <summary>Dostęp do agregatu <see cref="WebhookDelivery"/> po stronie zapisu.</summary>
+public interface IWebhookDeliveryRepository
+{
+    Task<WebhookDelivery?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    void Add(WebhookDelivery delivery);
 }

@@ -215,6 +215,45 @@
         "actionRequired": "Reguła musi mieć co najmniej jedną akcję."
       }
     },
+    "webhooks": {
+      "title": "Webhooki",
+      "empty": "Ten projekt nie ma jeszcze żadnych webhooków.",
+      "addWebhook": "Dodaj webhook",
+      "failureCount": "Kolejne błędy: {{count}}",
+      "enable": "Włącz",
+      "disable": "Wyłącz",
+      "edit": "Edytuj",
+      "remove": "Usuń",
+      "removeConfirm": {
+        "title": "Usuń webhook",
+        "message": "Webhook zostanie trwale usunięty wraz z historią dostarczeń. Operacja jest nieodwracalna."
+      },
+      "deliveries": "Dostarczenia",
+      "deliveriesEmpty": "Webhook jeszcze nie dostarczył żadnego zdarzenia.",
+      "status": {
+        "pending": "Oczekuje",
+        "sent": "Wysłano",
+        "failed": "Błąd"
+      },
+      "event": {
+        "issueCreated": "Utworzenie zgłoszenia",
+        "issueStateChanged": "Zmiana stanu",
+        "commentAdded": "Dodanie komentarza",
+        "dueDateElapsed": "Upłynięcie terminu"
+      },
+      "editor": {
+        "urlLabel": "Adres",
+        "urlPlaceholder": "https://example.com/hook",
+        "secretLabel": "Sekret",
+        "secretHint": "Co najmniej 16 znaków — podpisuje ładunek w nagłówku X-Erp-Signature (HMAC-SHA256).",
+        "eventsLabel": "Zdarzenia",
+        "eventsHint": "Wybierz co najmniej jedno.",
+        "save": "Zapisz webhook",
+        "cancel": "Anuluj",
+        "saveFailed": "Nie udało się zapisać webhooka.",
+        "eventRequired": "Webhook musi być zapisany na co najmniej jedno zdarzenie."
+      }
+    },
     "sla": {
       "title": "SLA",
       "empty": "Ten projekt nie ma jeszcze ustawionej polityki SLA.",

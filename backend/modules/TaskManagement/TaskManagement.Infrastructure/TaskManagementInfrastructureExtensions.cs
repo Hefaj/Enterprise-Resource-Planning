@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaskManagement.Application.Automation;
 using TaskManagement.Application.Issues;
+using TaskManagement.Application.Webhooks;
 using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
@@ -17,6 +18,7 @@ using TaskManagement.Domain.Resolutions;
 using TaskManagement.Domain.SavedViews;
 using TaskManagement.Domain.Sprints;
 using TaskManagement.Domain.Tags;
+using TaskManagement.Domain.Webhooks;
 using TaskManagement.Domain.Workflow;
 using TaskManagement.Domain.WorkTypes;
 using TaskManagement.Infrastructure.Jobs;
@@ -75,6 +77,22 @@ public static class TaskManagementInfrastructureExtensions
         services.AddScoped<AutomationTriggerPublisher>();
         services.AddScoped<AutomationActionExecutor>();
 
+        // Faza 8 (API-004) — publikacja triggera webhooka obok automatyzacji, patrz
+        // WebhookTriggerPublisher. WebhookDeliveryLock bez interfejsu własnego imienia (wołany
+        // bezpośrednio przez WebhookDeliveryDispatcher, nie przez konwencję skanu), wzorem
+        // JobQueueLock w AddErpBulkJobs.
+        services.AddScoped<WebhookTriggerPublisher>();
+        services.AddScoped<WebhookDeliveryLock>();
+
+        // Klient HTTP dedykowany dostarczeniom webhooków, z twardym limitem czasu — bez niego
+        // odbiorca, który nigdy nie odpowiada, trzymałby transakcję (a razem z nią blokadę
+        // wiersza dostarczenia) otwartą w nieskończoność. Rejestracja jawna, bo niesie decyzję
+        // (nazwa, limit czasu), wzorem `AddErpReporting` powyżej.
+        services.AddHttpClient(WebhookDeliveryDispatcher.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+
         var seedOptions = configuration.GetSection(TaskManagementSeedOptions.SectionName)
             .Get<TaskManagementSeedOptions>() ?? new TaskManagementSeedOptions();
         services.AddSingleton(seedOptions);
@@ -89,6 +107,9 @@ public static class TaskManagementInfrastructureExtensions
 
         // Skan terminów — faza 5, REQ-005, patrz IssueOverdueScanService.
         services.AddHostedService<IssueOverdueScanService>();
+
+        // Dyspozytor dostarczeń webhooka — faza 8, API-004, patrz WebhookDeliveryDispatcher.
+        services.AddHostedService<WebhookDeliveryDispatcher>();
 
         // Sygnatury SignalR — kontrakt z frontendem. Muszą zgadzać się co do znaku
         // z `signalrSignature` orkiestratorów (docs/backend/realtime-signalr.md).
@@ -116,7 +137,8 @@ public static class TaskManagementInfrastructureExtensions
             .Register<WorkType>(AggregateSignatures.TaskManagementWorkType)
             .Register<ReportRun>(AggregateSignatures.TaskManagementReportRun)
             .Register<SavedView>(AggregateSignatures.TaskManagementSavedView)
-            .Register<AutomationRule>(AggregateSignatures.TaskManagementAutomationRule));
+            .Register<AutomationRule>(AggregateSignatures.TaskManagementAutomationRule)
+            .Register<Webhook>(AggregateSignatures.TaskManagementWebhook));
 
         // `IssueActivity` świadomie NIE ma sygnatury: historia zmienia się wyłącznie razem
         // ze zgłoszeniem albo komentarzem, a te mają własne kanały. Osobny kanał oznaczałby

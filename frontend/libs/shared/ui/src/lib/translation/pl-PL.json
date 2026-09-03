@@ -288,7 +288,12 @@
       "taskmgmtAutomationRuleSet": "Zmiana reguły automatyzacji",
       "taskmgmtAutomationRuleExecEnable": "Włączenie reguły automatyzacji",
       "taskmgmtAutomationRuleExecDisable": "Wyłączenie reguły automatyzacji",
-      "taskmgmtAutomationRuleRemove": "Usunięcie reguły automatyzacji"
+      "taskmgmtAutomationRuleRemove": "Usunięcie reguły automatyzacji",
+      "taskmgmtWebhookCreate": "Utworzenie webhooka",
+      "taskmgmtWebhookSet": "Zmiana webhooka",
+      "taskmgmtWebhookExecEnable": "Włączenie webhooka",
+      "taskmgmtWebhookExecDisable": "Wyłączenie webhooka",
+      "taskmgmtWebhookRemove": "Usunięcie webhooka"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

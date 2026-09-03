@@ -5,6 +5,7 @@ using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
 using TaskManagement.Application.Automation;
+using TaskManagement.Application.Webhooks;
 using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.Issues;
 
@@ -43,6 +44,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
     private readonly IssueNotificationPublisher _notifications;
     private readonly IExecutionContext _executionContext;
     private readonly AutomationTriggerPublisher _automationTriggers;
+    private readonly WebhookTriggerPublisher _webhookTriggers;
     private readonly IClock _clock;
 
     public IssueAddCommentCommandHandler(
@@ -53,6 +55,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         IssueNotificationPublisher notifications,
         IExecutionContext executionContext,
         AutomationTriggerPublisher automationTriggers,
+        WebhookTriggerPublisher webhookTriggers,
         IClock clock)
     {
         _comments = comments;
@@ -62,6 +65,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         _notifications = notifications;
         _executionContext = executionContext;
         _automationTriggers = automationTriggers;
+        _webhookTriggers = webhookTriggers;
         _clock = clock;
     }
 
@@ -134,6 +138,10 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
             .ConfigureAwait(false);
 
         await _automationTriggers
+            .PublishAsync(issue, AutomationTriggerKind.CommentAdded, _executionContext, ct)
+            .ConfigureAwait(false);
+
+        await _webhookTriggers
             .PublishAsync(issue, AutomationTriggerKind.CommentAdded, _executionContext, ct)
             .ConfigureAwait(false);
 

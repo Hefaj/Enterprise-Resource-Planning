@@ -131,8 +131,14 @@ public sealed class AutomationActionExecutor
             ct).ConfigureAwait(false);
     }
 
+    /// <summary>Front serializuje konfigurację akcji camelCase (`{"priority":4}`), rekordy niżej są
+    /// PascalCase — bez tej opcji `JsonSerializer.Deserialize` (case-sensitive domyślnie) po cichu
+    /// zostawia właściwość na wartości domyślnej zamiast rzucić błąd (np. `Priority` = `Lowest`
+    /// niezależnie od tego, co wybrano w edytorze reguły).</summary>
+    private static readonly JsonSerializerOptions ConfigJsonOptions = new() { PropertyNameCaseInsensitive = true };
+
     private static T ReadConfig<T>(string configJson)
-        => JsonSerializer.Deserialize<T>(configJson)
+        => JsonSerializer.Deserialize<T>(configJson, ConfigJsonOptions)
             ?? throw new FormatException($"Konfiguracja akcji jest pusta — oczekiwano `{typeof(T).Name}`.");
 
     private sealed record PriorityConfig(IssuePriority Priority);

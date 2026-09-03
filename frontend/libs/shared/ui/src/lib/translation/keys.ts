@@ -294,6 +294,11 @@ export const SHARED_KEYS = {
         taskmgmtAutomationRuleExecEnable: 'shared.jobs.commands.taskmgmtAutomationRuleExecEnable',
         taskmgmtAutomationRuleExecDisable: 'shared.jobs.commands.taskmgmtAutomationRuleExecDisable',
         taskmgmtAutomationRuleRemove: 'shared.jobs.commands.taskmgmtAutomationRuleRemove',
+        taskmgmtWebhookCreate: 'shared.jobs.commands.taskmgmtWebhookCreate',
+        taskmgmtWebhookSet: 'shared.jobs.commands.taskmgmtWebhookSet',
+        taskmgmtWebhookExecEnable: 'shared.jobs.commands.taskmgmtWebhookExecEnable',
+        taskmgmtWebhookExecDisable: 'shared.jobs.commands.taskmgmtWebhookExecDisable',
+        taskmgmtWebhookRemove: 'shared.jobs.commands.taskmgmtWebhookRemove',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',

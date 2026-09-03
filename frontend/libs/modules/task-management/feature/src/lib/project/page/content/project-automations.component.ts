@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { TranslocoService } from '@jsverse/transloco';
 
 import {
   ErpButtonComponent,
@@ -10,6 +11,7 @@ import {
   ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpTranslatePipe,
+  injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, ErpHasPermissionDirective } from '@erp/shared/auth';
 import {
@@ -28,6 +30,7 @@ import {
   AutomationTriggerKindValue,
   ISSUE_PRIORITY,
 } from '@erp/task-management/util';
+import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
@@ -110,7 +113,7 @@ function newActionRow(): ActionRowState {
         <div class="rounded-md border border-[var(--tui-border-normal)] p-3">
           <div class="flex flex-wrap items-center gap-3">
             <span class="font-medium" [class.opacity-50]="!rule.isEnabled">{{ rule.name }}</span>
-            <span class="text-xs text-[var(--tui-text-secondary)]">{{ this.triggerLabel(rule.triggerKind) | erpTranslate }}</span>
+            <span class="text-xs text-[var(--tui-text-secondary)]">{{ this.triggerLabel(rule.triggerKind) }}</span>
             <span class="text-xs text-[var(--tui-text-tertiary)]">
               {{ PROJECT_KEYS.detail.automations.executedCount | erpTranslate: { count: rule.executedCount } }}
             </span>
@@ -159,7 +162,7 @@ function newActionRow(): ActionRowState {
             [placeholder]="PROJECT_KEYS.detail.automations.editor.namePlaceholder | erpTranslate"
           />
 
-          <erp-input-picker class="w-64" [config]="this.triggerPickerConfig" [control]="this.triggerControl" />
+          <erp-input-picker class="w-64" [config]="this.triggerPickerConfig()" [control]="this.triggerControl" />
 
           <div class="flex flex-col gap-2">
             <span class="text-xs font-medium">{{ PROJECT_KEYS.detail.automations.editor.conditionTitle | erpTranslate }}</span>
@@ -237,7 +240,7 @@ function newActionRow(): ActionRowState {
                       [value]="action.priority"
                       (change)="this.updateAction(actionIndex, { priority: +$any($event.target).value })"
                     >
-                      @for (priority of this.priorityOptions; track priority.value) {
+                      @for (priority of this.priorityOptions(); track priority.value) {
                         <option [value]="priority.value">{{ priority.label }}</option>
                       }
                     </select>
@@ -326,6 +329,8 @@ export class ProjectAutomationsComponent {
 
   private readonly _rules = inject(TaskManagementAutomationRuleOrchestrator);
   private readonly _confirm = inject(ErpConfirmDialogService);
+  private readonly _transloco = inject(TranslocoService);
+  private readonly _translationsReady = injectTranslationsReadySignal();
 
   public readonly project = input.required<ProjectVM>();
 
@@ -380,31 +385,49 @@ export class ProjectAutomationsComponent {
     { value: AUTOMATION_ACTION_KIND.CreateSubtask, label: PROJECT_KEYS.detail.automations.editor.action.createSubtask },
   ];
 
-  protected readonly priorityOptions = [
-    { value: ISSUE_PRIORITY.Lowest, label: 'Lowest' },
-    { value: ISSUE_PRIORITY.Low, label: 'Low' },
-    { value: ISSUE_PRIORITY.Normal, label: 'Normal' },
-    { value: ISSUE_PRIORITY.High, label: 'High' },
-    { value: ISSUE_PRIORITY.Critical, label: 'Critical' },
-  ];
+  protected readonly priorityOptions = computed(() => {
+    this._translationsReady();
+    return [
+      { value: ISSUE_PRIORITY.Lowest, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest) },
+      { value: ISSUE_PRIORITY.Low, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.low) },
+      { value: ISSUE_PRIORITY.Normal, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.normal) },
+      { value: ISSUE_PRIORITY.High, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.high) },
+      { value: ISSUE_PRIORITY.Critical, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
+    ];
+  });
 
-  protected readonly triggerPickerConfig: ErpInputPickerConfig = ErpInputPickerBuilder.create((b) =>
-    b
-      .setLabel(PROJECT_KEYS.detail.automations.trigger.label)
-      .setItems([
-        { value: AUTOMATION_TRIGGER_KIND.IssueCreated, label: PROJECT_KEYS.detail.automations.trigger.issueCreated },
-        { value: AUTOMATION_TRIGGER_KIND.IssueStateChanged, label: PROJECT_KEYS.detail.automations.trigger.issueStateChanged },
-        { value: AUTOMATION_TRIGGER_KIND.CommentAdded, label: PROJECT_KEYS.detail.automations.trigger.commentAdded },
-        { value: AUTOMATION_TRIGGER_KIND.DueDateElapsed, label: PROJECT_KEYS.detail.automations.trigger.dueDateElapsed },
-      ])
-      .setLabelKey('label')
-      .setValueKey('value')
-      .setStrategy('single'),
-  );
+  protected readonly triggerPickerConfig = computed<ErpInputPickerConfig>(() => {
+    this._translationsReady();
+    return ErpInputPickerBuilder.create((b) =>
+      b
+        .setLabel(PROJECT_KEYS.detail.automations.trigger.label)
+        .setItems([
+          {
+            value: AUTOMATION_TRIGGER_KIND.IssueCreated,
+            label: this._transloco.translate(PROJECT_KEYS.detail.automations.trigger.issueCreated),
+          },
+          {
+            value: AUTOMATION_TRIGGER_KIND.IssueStateChanged,
+            label: this._transloco.translate(PROJECT_KEYS.detail.automations.trigger.issueStateChanged),
+          },
+          {
+            value: AUTOMATION_TRIGGER_KIND.CommentAdded,
+            label: this._transloco.translate(PROJECT_KEYS.detail.automations.trigger.commentAdded),
+          },
+          {
+            value: AUTOMATION_TRIGGER_KIND.DueDateElapsed,
+            label: this._transloco.translate(PROJECT_KEYS.detail.automations.trigger.dueDateElapsed),
+          },
+        ])
+        .setLabelKey('label')
+        .setValueKey('value')
+        .setStrategy('single'),
+    );
+  });
 
   protected triggerLabel(kind: number): string {
     return (
-      this.triggerPickerConfig.items as unknown as { value: number; label: string }[]
+      this.triggerPickerConfig().items as unknown as { value: number; label: string }[]
     ).find((item) => item.value === kind)?.label ?? '';
   }
 

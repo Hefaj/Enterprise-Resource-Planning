@@ -230,6 +230,16 @@ export const AUTOMATION_TRIGGER_KIND = {
 export type AutomationTriggerKindValue =
   (typeof AUTOMATION_TRIGGER_KIND)[keyof typeof AUTOMATION_TRIGGER_KIND];
 
+/** `TaskManagement.Domain.Webhooks.WebhookDeliveryStatus` (faza 8, API-004). */
+export const WEBHOOK_DELIVERY_STATUS = {
+  Pending: 0,
+  Sent: 1,
+  Failed: 2,
+} as const;
+
+export type WebhookDeliveryStatusValue =
+  (typeof WEBHOOK_DELIVERY_STATUS)[keyof typeof WEBHOOK_DELIVERY_STATUS];
+
 /** `TaskManagement.Domain.Automation.AutomationActionKind` (faza 8, AUT-001 `then`) — zamknięta
  * lista, żadnych skryptów (AC1). */
 export const AUTOMATION_ACTION_KIND = {

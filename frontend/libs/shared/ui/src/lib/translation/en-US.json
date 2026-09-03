@@ -288,7 +288,12 @@
       "taskmgmtAutomationRuleSet": "Automation rule change",
       "taskmgmtAutomationRuleExecEnable": "Automation rule enabled",
       "taskmgmtAutomationRuleExecDisable": "Automation rule disabled",
-      "taskmgmtAutomationRuleRemove": "Automation rule removal"
+      "taskmgmtAutomationRuleRemove": "Automation rule removal",
+      "taskmgmtWebhookCreate": "Webhook creation",
+      "taskmgmtWebhookSet": "Webhook change",
+      "taskmgmtWebhookExecEnable": "Webhook enabled",
+      "taskmgmtWebhookExecDisable": "Webhook disabled",
+      "taskmgmtWebhookRemove": "Webhook removal"
     },
     "toast": {
       "completed": "Finished: {{name}}",

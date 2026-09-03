@@ -78,4 +78,9 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   execEnableAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleExecEnable',
   execDisableAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleExecDisable',
   removeAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleRemove',
+  createWebhook: 'shared.jobs.commands.taskmgmtWebhookCreate',
+  setWebhook: 'shared.jobs.commands.taskmgmtWebhookSet',
+  execEnableWebhook: 'shared.jobs.commands.taskmgmtWebhookExecEnable',
+  execDisableWebhook: 'shared.jobs.commands.taskmgmtWebhookExecDisable',
+  removeWebhook: 'shared.jobs.commands.taskmgmtWebhookRemove',
 } as const;

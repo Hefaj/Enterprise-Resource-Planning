@@ -42,5 +42,6 @@ export const ERP_PERMISSIONS = {
     TagManage: 'taskmgmt.tag.manage',
     ReportReadAll: 'taskmgmt.report.read.all',
     AutomationManage: 'taskmgmt.automation.manage',
+    WebhookManage: 'taskmgmt.webhook.manage',
   },
 } as const;

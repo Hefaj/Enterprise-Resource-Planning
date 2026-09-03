@@ -215,6 +215,45 @@
         "actionRequired": "The rule needs at least one action."
       }
     },
+    "webhooks": {
+      "title": "Webhooks",
+      "empty": "This project has no webhooks yet.",
+      "addWebhook": "Add webhook",
+      "failureCount": "Consecutive failures: {{count}}",
+      "enable": "Enable",
+      "disable": "Disable",
+      "edit": "Edit",
+      "remove": "Remove",
+      "removeConfirm": {
+        "title": "Remove webhook",
+        "message": "The webhook and its delivery history will be permanently deleted. This cannot be undone."
+      },
+      "deliveries": "Deliveries",
+      "deliveriesEmpty": "This webhook hasn't delivered anything yet.",
+      "status": {
+        "pending": "Pending",
+        "sent": "Sent",
+        "failed": "Failed"
+      },
+      "event": {
+        "issueCreated": "Issue created",
+        "issueStateChanged": "State changed",
+        "commentAdded": "Comment added",
+        "dueDateElapsed": "Due date elapsed"
+      },
+      "editor": {
+        "urlLabel": "URL",
+        "urlPlaceholder": "https://example.com/hook",
+        "secretLabel": "Secret",
+        "secretHint": "At least 16 characters — signs the payload in the X-Erp-Signature header (HMAC-SHA256).",
+        "eventsLabel": "Events",
+        "eventsHint": "Select at least one.",
+        "save": "Save webhook",
+        "cancel": "Cancel",
+        "saveFailed": "Failed to save the webhook.",
+        "eventRequired": "The webhook needs at least one event."
+      }
+    },
     "sla": {
       "title": "SLA",
       "empty": "This project has no SLA policy yet.",

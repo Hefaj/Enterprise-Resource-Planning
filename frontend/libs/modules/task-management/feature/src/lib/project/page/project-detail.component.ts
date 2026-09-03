@@ -21,6 +21,7 @@ import { ProjectFieldsComponent } from './content/project-fields.component';
 import { ProjectSlaComponent } from './content/project-sla.component';
 import { ProjectTagsComponent } from './content/project-tags.component';
 import { ProjectTypesComponent } from './content/project-types.component';
+import { ProjectWebhooksComponent } from './content/project-webhooks.component';
 import { ProjectWorkflowSchemeComponent } from './content/project-workflow-scheme.component';
 import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 
@@ -168,6 +169,12 @@ export class ProjectDetailComponent {
               id: 'automations',
               label: PROJECT_KEYS.detail.automations.title,
               component: ProjectAutomationsComponent,
+              inputs: { project },
+            },
+            {
+              id: 'webhooks',
+              label: PROJECT_KEYS.detail.webhooks.title,
+              component: ProjectWebhooksComponent,
               inputs: { project },
             },
           ]

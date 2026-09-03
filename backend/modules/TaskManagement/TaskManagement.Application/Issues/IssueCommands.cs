@@ -5,6 +5,7 @@ using FastEndpoints;
 using FluentValidation;
 using TaskManagement.Application.Abstractions;
 using TaskManagement.Application.Automation;
+using TaskManagement.Application.Webhooks;
 using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
@@ -65,6 +66,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     private readonly IExecutionContext _executionContext;
     private readonly IRichTextSanitizer _sanitizer;
     private readonly AutomationTriggerPublisher _automationTriggers;
+    private readonly WebhookTriggerPublisher _webhookTriggers;
     private readonly IClock _clock;
 
     public IssueCreateCommandHandler(
@@ -77,6 +79,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         IExecutionContext executionContext,
         IRichTextSanitizer sanitizer,
         AutomationTriggerPublisher automationTriggers,
+        WebhookTriggerPublisher webhookTriggers,
         IClock clock)
     {
         _repository = repository;
@@ -88,6 +91,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         _executionContext = executionContext;
         _sanitizer = sanitizer;
         _automationTriggers = automationTriggers;
+        _webhookTriggers = webhookTriggers;
         _clock = clock;
     }
 
@@ -150,6 +154,10 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
             _executionContext.AutomationRuleUuid));
 
         await _automationTriggers
+            .PublishAsync(issue, AutomationTriggerKind.IssueCreated, _executionContext, ct)
+            .ConfigureAwait(false);
+
+        await _webhookTriggers
             .PublishAsync(issue, AutomationTriggerKind.IssueCreated, _executionContext, ct)
             .ConfigureAwait(false);
 
@@ -469,6 +477,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
     private readonly IssueNotificationPublisher _notifications;
     private readonly IExecutionContext _executionContext;
     private readonly AutomationTriggerPublisher _automationTriggers;
+    private readonly WebhookTriggerPublisher _webhookTriggers;
     private readonly IClock _clock;
 
     public IssueSetStateCommandHandler(
@@ -478,6 +487,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         IssueNotificationPublisher notifications,
         IExecutionContext executionContext,
         AutomationTriggerPublisher automationTriggers,
+        WebhookTriggerPublisher webhookTriggers,
         IClock clock)
     {
         _repository = repository;
@@ -486,6 +496,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         _notifications = notifications;
         _executionContext = executionContext;
         _automationTriggers = automationTriggers;
+        _webhookTriggers = webhookTriggers;
         _clock = clock;
     }
 
@@ -527,6 +538,10 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
                 .ConfigureAwait(false);
 
             await _automationTriggers
+                .PublishAsync(issue, AutomationTriggerKind.IssueStateChanged, _executionContext, ct)
+                .ConfigureAwait(false);
+
+            await _webhookTriggers
                 .PublishAsync(issue, AutomationTriggerKind.IssueStateChanged, _executionContext, ct)
                 .ConfigureAwait(false);
         }

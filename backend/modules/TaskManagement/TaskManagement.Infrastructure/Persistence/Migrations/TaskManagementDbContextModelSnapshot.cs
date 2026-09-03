@@ -305,6 +305,135 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("report_run", "taskmgmt");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Automation.AutomationAction", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("ConfigJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("config_json");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("kind");
+
+                    b.Property<int>("OrderNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_no");
+
+                    b.Property<Guid>("RuleUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rule_uuid");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_automation_action");
+
+                    b.HasIndex("RuleUuid")
+                        .HasDatabaseName("ix_automation_action_rule_uuid");
+
+                    b.ToTable("automation_action", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Automation.AutomationRule", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("ConditionJson")
+                        .HasColumnType("text")
+                        .HasColumnName("condition_json");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_enabled");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ProjectUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_uuid");
+
+                    b.Property<string>("TriggerKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("trigger_kind");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_automation_rule");
+
+                    b.HasIndex("ProjectUuid", "TriggerKind", "IsEnabled")
+                        .HasDatabaseName("ix_automation_rule_project_uuid_trigger_kind_is_enabled");
+
+                    b.ToTable("automation_rule", "taskmgmt");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Automation.AutomationRun", b =>
+                {
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("error_message");
+
+                    b.Property<Guid>("IssueUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issue_uuid");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("outcome");
+
+                    b.Property<Guid>("RuleUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rule_uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Uuid")
+                        .HasName("pk_automation_run");
+
+                    b.HasIndex("RuleUuid", "OccurredAt")
+                        .HasDatabaseName("ix_automation_run_rule_uuid_occurred_at");
+
+                    b.ToTable("automation_run", "taskmgmt");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Boards.Board", b =>
                 {
                     b.Property<Guid>("Uuid")
@@ -881,6 +1010,10 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ActorUuid")
                         .HasColumnType("uuid")
                         .HasColumnName("actor_uuid");
+
+                    b.Property<Guid?>("AutomationRuleUuid")
+                        .HasColumnType("uuid")
+                        .HasColumnName("automation_rule_uuid");
 
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid")
@@ -1825,6 +1958,16 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_job_item_job_job_uuid");
                 });
 
+            modelBuilder.Entity("TaskManagement.Domain.Automation.AutomationAction", b =>
+                {
+                    b.HasOne("TaskManagement.Domain.Automation.AutomationRule", null)
+                        .WithMany("Actions")
+                        .HasForeignKey("RuleUuid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_automation_action_automation_rule_rule_uuid");
+                });
+
             modelBuilder.Entity("TaskManagement.Domain.Boards.Board", b =>
                 {
                     b.HasOne("TaskManagement.Domain.Projects.Project", null)
@@ -2063,6 +2206,11 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Erp.BuildingBlocks.Jobs.Job", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("TaskManagement.Domain.Automation.AutomationRule", b =>
+                {
+                    b.Navigation("Actions");
                 });
 
             modelBuilder.Entity("TaskManagement.Domain.Boards.Board", b =>

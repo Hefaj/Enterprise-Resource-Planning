@@ -218,3 +218,67 @@ export const SLA_WORKING_DAYS = {
  * użytkownik go zmieni. */
 export const SLA_WORKING_DAYS_DEFAULT =
   SLA_WORKING_DAYS.Monday | SLA_WORKING_DAYS.Tuesday | SLA_WORKING_DAYS.Wednesday | SLA_WORKING_DAYS.Thursday | SLA_WORKING_DAYS.Friday;
+
+/** `TaskManagement.Domain.Automation.AutomationTriggerKind` (faza 8, AUT-001 `when`). */
+export const AUTOMATION_TRIGGER_KIND = {
+  IssueCreated: 0,
+  IssueStateChanged: 1,
+  CommentAdded: 2,
+  DueDateElapsed: 3,
+} as const;
+
+export type AutomationTriggerKindValue =
+  (typeof AUTOMATION_TRIGGER_KIND)[keyof typeof AUTOMATION_TRIGGER_KIND];
+
+/** `TaskManagement.Domain.Automation.AutomationActionKind` (faza 8, AUT-001 `then`) — zamknięta
+ * lista, żadnych skryptów (AC1). */
+export const AUTOMATION_ACTION_KIND = {
+  SetPriority: 0,
+  SetState: 1,
+  AssignTo: 2,
+  AddTag: 3,
+  AddComment: 4,
+  SendNotification: 5,
+  CreateSubtask: 6,
+} as const;
+
+export type AutomationActionKindValue =
+  (typeof AUTOMATION_ACTION_KIND)[keyof typeof AUTOMATION_ACTION_KIND];
+
+/** `TaskManagement.Domain.Automation.Conditions.AutomationComparisonOperator` — wąski język
+ * warunku reguły (AUT-001 `if`, ten sam co przyszłe `guard` z WF-003/DMS §4.4). */
+export const AUTOMATION_COMPARISON_OPERATOR = {
+  Eq: 0,
+  Ne: 1,
+  Gt: 2,
+  Gte: 3,
+  Lt: 4,
+  Lte: 5,
+} as const;
+
+export type AutomationComparisonOperatorValue =
+  (typeof AUTOMATION_COMPARISON_OPERATOR)[keyof typeof AUTOMATION_COMPARISON_OPERATOR];
+
+/** `TaskManagement.Domain.Automation.AutomationRunOutcome` (AUT-002 AC1) — log uruchomień
+ * reguły. */
+export const AUTOMATION_RUN_OUTCOME = {
+  Executed: 0,
+  Failed: 1,
+} as const;
+
+export type AutomationRunOutcomeValue =
+  (typeof AUTOMATION_RUN_OUTCOME)[keyof typeof AUTOMATION_RUN_OUTCOME];
+
+/** Whitelista ścieżek pola w warunku reguły — `TaskManagement.Domain.Automation.Conditions.AutomationFieldPath`.
+ * Pola niestandardowe (zależne od profilu projektu) są świadomie poza zakresem fazy 8. */
+export const AUTOMATION_FIELD_PATH = {
+  Priority: 'priority',
+  Type: 'type',
+  State: 'state',
+  StateCategory: 'state.category',
+  Assignee: 'assignee',
+  Tag: 'tag',
+} as const;
+
+export type AutomationFieldPathValue =
+  (typeof AUTOMATION_FIELD_PATH)[keyof typeof AUTOMATION_FIELD_PATH];

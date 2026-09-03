@@ -134,6 +134,87 @@
         "scopeMismatch": "Scalić można wyłącznie tagi z tego samego zasięgu — oba globalne albo oba tego samego projektu."
       }
     },
+    "automations": {
+      "title": "Automatyzacje",
+      "empty": "Ten projekt nie ma jeszcze żadnych reguł automatyzacji.",
+      "addRule": "Dodaj regułę",
+      "executedCount": "Wykonania: {{count}}",
+      "enable": "Włącz",
+      "disable": "Wyłącz",
+      "edit": "Edytuj",
+      "remove": "Usuń",
+      "removeConfirm": {
+        "title": "Usuń regułę „{{name}}”",
+        "message": "Reguła zostanie trwale usunięta wraz z logiem uruchomień. Operacja jest nieodwracalna."
+      },
+      "log": "Log",
+      "logEmpty": "Reguła jeszcze się nie wykonała.",
+      "outcome": {
+        "executed": "Wykonano",
+        "failed": "Błąd"
+      },
+      "trigger": {
+        "label": "Zdarzenie",
+        "issueCreated": "Utworzenie zgłoszenia",
+        "issueStateChanged": "Zmiana stanu",
+        "commentAdded": "Dodanie komentarza",
+        "dueDateElapsed": "Upłynięcie terminu"
+      },
+      "editor": {
+        "nameLabel": "Nazwa",
+        "namePlaceholder": "Nazwa reguły",
+        "conditionTitle": "Warunek (opcjonalnie)",
+        "conditionHint": "Reguła wykona się, gdy wszystkie warunki w którejkolwiek z grup będą prawdziwe (grupy łączy „lub”, warunki w grupie łączy „i”). Bez warunku reguła wykonuje się zawsze.",
+        "addCondition": "Dodaj warunek",
+        "addOrGroup": "Dodaj grupę „lub”",
+        "orSeparator": "LUB",
+        "field": {
+          "label": "Pole",
+          "priority": "Priorytet",
+          "type": "Typ",
+          "state": "Stan",
+          "stateCategory": "Kategoria stanu",
+          "assignee": "Przypisany",
+          "tag": "Tag"
+        },
+        "operator": {
+          "eq": "=",
+          "ne": "≠",
+          "gt": ">",
+          "gte": "≥",
+          "lt": "<",
+          "lte": "≤"
+        },
+        "literalPlaceholder": "Wartość",
+        "removeCondition": "Usuń",
+        "actionsTitle": "Akcje",
+        "addAction": "Dodaj akcję",
+        "removeAction": "Usuń",
+        "action": {
+          "label": "Rodzaj",
+          "setPriority": "Ustaw priorytet",
+          "setState": "Ustaw stan",
+          "assignTo": "Przypisz do",
+          "addTag": "Dodaj tag",
+          "addComment": "Dodaj komentarz",
+          "sendNotification": "Wyślij powiadomienie",
+          "createSubtask": "Utwórz podzadanie"
+        },
+        "config": {
+          "priority": "Priorytet",
+          "stateUuid": "Uuid stanu",
+          "assigneeUuid": "Uuid przypisanego (puste = odepnij)",
+          "tagUuid": "Uuid tagu",
+          "commentBody": "Treść komentarza",
+          "subtaskTypeUuid": "Uuid typu podzadania",
+          "subtaskTitle": "Tytuł (opcjonalnie)"
+        },
+        "save": "Zapisz regułę",
+        "cancel": "Anuluj",
+        "saveFailed": "Nie udało się zapisać reguły automatyzacji.",
+        "actionRequired": "Reguła musi mieć co najmniej jedną akcję."
+      }
+    },
     "sla": {
       "title": "SLA",
       "empty": "Ten projekt nie ma jeszcze ustawionej polityki SLA.",

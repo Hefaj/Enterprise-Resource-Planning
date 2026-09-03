@@ -13,6 +13,11 @@ interface ErpActivityStreamEntryBase {
   uuid: string;
   actorUuid: string;
   occurredAt: Date;
+
+  /** Efekt reguły automatyzacji (faza 8, AUT-001 AC2), nie zmiana użytkownika — front pokazuje
+   * znacznik zamiast awatara aktora, bo `actorUuid` jest wtedy pusty (skan/reguła nie ma
+   * sprawcy-człowieka). */
+  isAutomated?: boolean;
 }
 
 export interface ErpActivityCommentEntry extends ErpActivityStreamEntryBase {

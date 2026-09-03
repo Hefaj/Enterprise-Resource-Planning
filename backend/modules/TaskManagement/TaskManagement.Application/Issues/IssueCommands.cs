@@ -4,6 +4,8 @@ using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using FluentValidation;
 using TaskManagement.Application.Abstractions;
+using TaskManagement.Application.Automation;
+using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Issues;
 using TaskManagement.Domain.Workflow;
@@ -62,6 +64,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
     private readonly IIssueActivityWriter _activity;
     private readonly IExecutionContext _executionContext;
     private readonly IRichTextSanitizer _sanitizer;
+    private readonly AutomationTriggerPublisher _automationTriggers;
     private readonly IClock _clock;
 
     public IssueCreateCommandHandler(
@@ -73,6 +76,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         IIssueActivityWriter activity,
         IExecutionContext executionContext,
         IRichTextSanitizer sanitizer,
+        AutomationTriggerPublisher automationTriggers,
         IClock clock)
     {
         _repository = repository;
@@ -83,6 +87,7 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
         _activity = activity;
         _executionContext = executionContext;
         _sanitizer = sanitizer;
+        _automationTriggers = automationTriggers;
         _clock = clock;
     }
 
@@ -141,7 +146,12 @@ public sealed class IssueCreateCommandHandler : CommandHandler<IssueCreateComman
             newValue: issue.Key,
             actor,
             _executionContext.CorrelationId,
-            now));
+            now,
+            _executionContext.AutomationRuleUuid));
+
+        await _automationTriggers
+            .PublishAsync(issue, AutomationTriggerKind.IssueCreated, _executionContext, ct)
+            .ConfigureAwait(false);
 
         return issue.Uuid;
     }
@@ -305,7 +315,7 @@ public sealed class IssueSetAssigneeCommandHandler : CommandHandler<IssueSetAssi
         {
             _activity.Add(IssueActivity.Record(
                 issue.Uuid, IssueActivityKind.FieldChanged, change.FieldCode, change.OldValue, change.NewValue,
-                actor, _executionContext.CorrelationId, now));
+                actor, _executionContext.CorrelationId, now, _executionContext.AutomationRuleUuid));
 
             await _notifications
                 .PublishAssignedAsync(issue, actor, now, _executionContext.CorrelationId, ct)
@@ -458,6 +468,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
     private readonly IIssueActivityWriter _activity;
     private readonly IssueNotificationPublisher _notifications;
     private readonly IExecutionContext _executionContext;
+    private readonly AutomationTriggerPublisher _automationTriggers;
     private readonly IClock _clock;
 
     public IssueSetStateCommandHandler(
@@ -466,6 +477,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         IIssueActivityWriter activity,
         IssueNotificationPublisher notifications,
         IExecutionContext executionContext,
+        AutomationTriggerPublisher automationTriggers,
         IClock clock)
     {
         _repository = repository;
@@ -473,6 +485,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
         _activity = activity;
         _notifications = notifications;
         _executionContext = executionContext;
+        _automationTriggers = automationTriggers;
         _clock = clock;
     }
 
@@ -506,10 +519,15 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
                 issue.StateUuid.ToString(),
                 actor,
                 _executionContext.CorrelationId,
-                now));
+                now,
+                _executionContext.AutomationRuleUuid));
 
             await _notifications
                 .PublishStateChangedAsync(issue, actor, now, _executionContext.CorrelationId, ct)
+                .ConfigureAwait(false);
+
+            await _automationTriggers
+                .PublishAsync(issue, AutomationTriggerKind.IssueStateChanged, _executionContext, ct)
                 .ConfigureAwait(false);
         }
 
@@ -591,7 +609,8 @@ public abstract class IssueCommandHandlerBase<TCommand> : CommandHandler<TComman
                 change.NewValue,
                 IssueCreateCommandHandler.ActorUuid(_executionContext),
                 _executionContext.CorrelationId,
-                now));
+                now,
+                _executionContext.AutomationRuleUuid));
         }
 
         return issue.Uuid;

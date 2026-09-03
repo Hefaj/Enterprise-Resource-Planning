@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using TaskManagement.Application.Automation;
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.Workflow;
 using TaskManagement.Infrastructure.Persistence;
 
@@ -79,6 +81,8 @@ public sealed partial class IssueOverdueScanService : BackgroundService
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var notifications = scope.ServiceProvider.GetRequiredService<IssueNotificationPublisher>();
+        var automationTriggers = scope.ServiceProvider.GetRequiredService<AutomationTriggerPublisher>();
+        var executionContext = scope.ServiceProvider.GetRequiredService<IExecutionContext>();
 
         var now = clock.UtcNow;
         var dueSoonHorizon = now.Add(DueSoonWindow);
@@ -106,6 +110,15 @@ public sealed partial class IssueOverdueScanService : BackgroundService
             await notifications
                 .PublishDueAsync(issue, overdue, now, Guid.CreateVersion7(), ct)
                 .ConfigureAwait(false);
+
+            // AUT-001 `when: upłynięcie terminu` — tylko faktyczne przekroczenie, nie
+            // „zbliża się" (drugi, częstszy sygnał bez wartości dla automatyzacji).
+            if (overdue)
+            {
+                await automationTriggers
+                    .PublishAsync(issue, AutomationTriggerKind.DueDateElapsed, executionContext, ct)
+                    .ConfigureAwait(false);
+            }
         }
 
         await unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);

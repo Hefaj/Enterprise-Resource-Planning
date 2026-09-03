@@ -2,6 +2,7 @@ using Erp.BuildingBlocks.Jobs;
 using Erp.BuildingBlocks.Persistence;
 using Erp.BuildingBlocks.Reporting;
 using Microsoft.EntityFrameworkCore;
+using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.IssueTypes;
@@ -109,6 +110,12 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext, IRepo
 
     /// <summary>Przebiegi raportu — patrz docs/backend/reporting.md.</summary>
     public DbSet<ReportRun> ReportRuns => Set<ReportRun>();
+
+    public DbSet<AutomationRule> AutomationRules => Set<AutomationRule>();
+
+    public DbSet<AutomationAction> AutomationActions => Set<AutomationAction>();
+
+    public DbSet<AutomationRun> AutomationRuns => Set<AutomationRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

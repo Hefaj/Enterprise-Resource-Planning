@@ -79,6 +79,17 @@ public sealed class IssueNotificationPublisher
             severity: overdue ? NotificationSeverity.Warning : NotificationSeverity.Info,
             includeAssignee: true);
 
+    /// <summary>Akcja „wyślij powiadomienie" reguły automatyzacji (AUT-001 `then`) — do
+    /// obserwujących, bez sprawcy (reguła nie ma sprawcy-człowieka). Osobny rodzaj zdarzenia od
+    /// <c>taskmgmt.issue.state_changed</c> itp., żeby odbiorca widział, że to reguła, nie
+    /// organiczna zmiana.</summary>
+    public Task PublishAutomationAsync(
+        Issue issue, string ruleName, DateTimeOffset now, Guid correlationId, CancellationToken ct)
+        => PublishToWatchersAsync(
+            issue, actorUuid: null, "taskmgmt.issue.automation_triggered",
+            groupKey: null, now, correlationId, ct, includeAssignee: true,
+            extraParams: new Dictionary<string, string> { ["ruleName"] = ruleName });
+
     /// <summary>Wszystkie realizacje zlecenia zamknięte (REQ-003) — do obserwujących zlecenia.
     /// Bez sprawcy: to fakt wyliczony automatycznie, nie akcja jednej osoby.</summary>
     public Task PublishRequestDeliveredAsync(Issue request, DateTimeOffset now, Guid correlationId, CancellationToken ct)
@@ -94,7 +105,8 @@ public sealed class IssueNotificationPublisher
         CancellationToken ct,
         NotificationSeverity severity = NotificationSeverity.Info,
         bool includeAssignee = false,
-        IReadOnlyCollection<Guid>? excludeRecipients = null)
+        IReadOnlyCollection<Guid>? excludeRecipients = null,
+        IReadOnlyDictionary<string, string>? extraParams = null)
     {
         var recipients = issue.Watchers
             .Where(w => w.OptedOutAt is null)
@@ -122,7 +134,8 @@ public sealed class IssueNotificationPublisher
         }
 
         return PublishAsync(
-            recipients.Select(r => r.ToString()).ToList(), actorUuid, kind, issue, groupKey, now, correlationId, ct, severity);
+            recipients.Select(r => r.ToString()).ToList(), actorUuid, kind, issue, groupKey, now, correlationId, ct,
+            severity, extraParams);
     }
 
     private Task PublishAsync(
@@ -134,12 +147,23 @@ public sealed class IssueNotificationPublisher
         DateTimeOffset now,
         Guid correlationId,
         CancellationToken ct,
-        NotificationSeverity severity = NotificationSeverity.Info)
+        NotificationSeverity severity = NotificationSeverity.Info,
+        IReadOnlyDictionary<string, string>? extraParams = null)
     {
         // Klucz tytułu wg konwencji `shared.notifications.kinds.*` (docs/backend/
         // user-notifications.md §3) — jedna przestrzeń nazw tłumaczeń dla wszystkich modułów,
         // bo Notification (i inne moduły) nie ładują scope'u `taskmgmt`.
         var titleKey = "shared.notifications.kinds." + kind.Replace('.', '_');
+
+        var parameters = new Dictionary<string, string> { ["issueKey"] = issue.Key, ["issueTitle"] = issue.Title };
+
+        if (extraParams is not null)
+        {
+            foreach (var (key, value) in extraParams)
+            {
+                parameters[key] = value;
+            }
+        }
 
         var integrationEvent = new UserNotificationRequested(
             recipients,
@@ -149,7 +173,7 @@ public sealed class IssueNotificationPublisher
             issue.Uuid,
             issue.Key,
             titleKey,
-            new Dictionary<string, string> { ["issueKey"] = issue.Key, ["issueTitle"] = issue.Title },
+            parameters,
             groupKey,
             $"/task-management/issue/{issue.Key}",
             severity,

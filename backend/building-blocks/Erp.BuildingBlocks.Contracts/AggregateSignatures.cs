@@ -126,6 +126,10 @@ public static class AggregateSignatures
     /// ma się zaktualizować na liście każdego, kto go widzi, bez odświeżenia strony.</summary>
     public const string TaskManagementSavedView = "taskmgmt.saved_view";
 
+    /// <summary>Reguła automatyzacji (faza 8, AUT-001). Włączenie/wyłączenie i edycja treści mają
+    /// odświeżyć listę reguł na karcie projektu każdemu, kto na nią patrzy.</summary>
+    public const string TaskManagementAutomationRule = "taskmgmt.automation_rule";
+
     /// <summary>Wszystkie sygnatury agregatów — do walidacji przy starcie i w testach,
     /// żeby nikt nie rozgłosił zmiany na kanał, którego nikt nie słucha.</summary>
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(StringComparer.Ordinal)
@@ -158,5 +162,6 @@ public static class AggregateSignatures
         TaskManagementWorkType,
         TaskManagementReportRun,
         TaskManagementSavedView,
+        TaskManagementAutomationRule,
     };
 }

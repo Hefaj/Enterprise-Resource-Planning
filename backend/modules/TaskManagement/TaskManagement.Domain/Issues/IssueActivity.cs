@@ -37,7 +37,8 @@ public sealed class IssueActivity : AggregateRoot
         string? newValue,
         Guid actorUuid,
         Guid correlationId,
-        DateTimeOffset occurredAt) : base(uuid)
+        DateTimeOffset occurredAt,
+        Guid? automationRuleUuid) : base(uuid)
     {
         IssueUuid = issueUuid;
         Kind = kind;
@@ -47,6 +48,7 @@ public sealed class IssueActivity : AggregateRoot
         ActorUuid = actorUuid;
         CorrelationId = correlationId;
         OccurredAt = occurredAt;
+        AutomationRuleUuid = automationRuleUuid;
     }
 
     public Guid IssueUuid { get; private set; }
@@ -69,6 +71,15 @@ public sealed class IssueActivity : AggregateRoot
 
     public DateTimeOffset OccurredAt { get; private set; }
 
+    /// <summary>Reguła automatyzacji, której akcja wyprodukowała ten wpis — <c>null</c> dla
+    /// zmiany zainicjowanej przez człowieka. Front pokazuje przy wpisie znacznik „automatycznie"
+    /// zamiast awatara aktora, gdy to pole jest ustawione (AUT-001 AC2).</summary>
+    public Guid? AutomationRuleUuid { get; private set; }
+
+    /// <summary>Efekt reguły automatyzacji, nie zmiana użytkownika — patrz
+    /// <see cref="AutomationRuleUuid"/>.</summary>
+    public bool IsAutomated => AutomationRuleUuid is not null;
+
     /// <summary>
     /// Zapisuje wpis. Uuid nadaje ta metoda, bo wpisu historii nikt z zewnątrz nie adresuje —
     /// nie ma komendy, która by go zmieniała ani usuwała.
@@ -81,7 +92,8 @@ public sealed class IssueActivity : AggregateRoot
         string? newValue,
         Guid actorUuid,
         Guid correlationId,
-        DateTimeOffset occurredAt)
+        DateTimeOffset occurredAt,
+        Guid? automationRuleUuid = null)
     {
         if (issueUuid == Guid.Empty)
         {
@@ -99,7 +111,8 @@ public sealed class IssueActivity : AggregateRoot
             Trim(newValue),
             actorUuid,
             correlationId,
-            occurredAt);
+            occurredAt,
+            automationRuleUuid);
     }
 
     /// <summary>Wartość przycięta do <see cref="MaxValueLength"/>; pusta staje się

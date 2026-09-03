@@ -514,6 +514,39 @@ export interface ITaskManagementClient {
      * @return OK
      */
     boardSetSwimlaneMultipleCommand(body: BatchCommandOfBoardSetSwimlaneCommandAndSearchBoardRequest): Observable<BatchResult>;
+    /**
+     * @return OK
+     */
+    getAutomationRuleRuns(body: GetAutomationRuleRunsRequest): Observable<AutomationRunDto[]>;
+    /**
+     * @return OK
+     */
+    searchAutomationRule(body: SearchAutomationRuleRequest): Observable<AutomationRuleDto[]>;
+    /**
+     * Zakłada regułę automatyzacji
+     * @return OK
+     */
+    automationRuleCreateMultipleCommand(body: BatchCommandOfAutomationRuleCreateCommandAndSearchAutomationRuleRequest): Observable<BatchResult>;
+    /**
+     * Wyłącza regułę automatyzacji
+     * @return OK
+     */
+    automationRuleExecDisableMultipleCommand(body: BatchCommandOfAutomationRuleExecDisableCommandAndSearchAutomationRuleRequest): Observable<BatchResult>;
+    /**
+     * Włącza regułę automatyzacji
+     * @return OK
+     */
+    automationRuleExecEnableMultipleCommand(body: BatchCommandOfAutomationRuleExecEnableCommandAndSearchAutomationRuleRequest): Observable<BatchResult>;
+    /**
+     * Usuwa regułę automatyzacji
+     * @return OK
+     */
+    automationRuleRemoveMultipleCommand(body: BatchCommandOfAutomationRuleRemoveCommandAndSearchAutomationRuleRequest): Observable<BatchResult>;
+    /**
+     * Nadpisuje regułę automatyzacji
+     * @return OK
+     */
+    automationRuleSetMultipleCommand(body: BatchCommandOfAutomationRuleSetCommandAndSearchAutomationRuleRequest): Observable<BatchResult>;
 }
 
 @Injectable({
@@ -526,7 +559,7 @@ export class TaskManagementClient implements ITaskManagementClient {
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
-        this.baseUrl = baseUrl ?? "http://localhost:5290/";
+        this.baseUrl = baseUrl ?? "http://localhost:5291/";
     }
 
     /**
@@ -7172,6 +7205,655 @@ export class TaskManagementClient implements ITaskManagementClient {
         }
         return _observableOf(null as any);
     }
+
+    /**
+     * @return OK
+     */
+    getAutomationRuleRuns(body: GetAutomationRuleRunsRequest): Observable<AutomationRunDto[]> {
+        let url_ = this.baseUrl + "/automation-rule/getAutomationRuleRuns";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAutomationRuleRuns(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAutomationRuleRuns(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AutomationRunDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AutomationRunDto[]>;
+        }));
+    }
+
+    protected processGetAutomationRuleRuns(response: HttpResponseBase): Observable<AutomationRunDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AutomationRunDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    searchAutomationRule(body: SearchAutomationRuleRequest): Observable<AutomationRuleDto[]> {
+        let url_ = this.baseUrl + "/automation-rule/searchAutomationRule";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchAutomationRule(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchAutomationRule(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AutomationRuleDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AutomationRuleDto[]>;
+        }));
+    }
+
+    protected processSearchAutomationRule(response: HttpResponseBase): Observable<AutomationRuleDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AutomationRuleDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Zakłada regułę automatyzacji
+     * @return OK
+     */
+    automationRuleCreateMultipleCommand(body: BatchCommandOfAutomationRuleCreateCommandAndSearchAutomationRuleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/automation-rule/batch-create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAutomationRuleCreateMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAutomationRuleCreateMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processAutomationRuleCreateMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Wyłącza regułę automatyzacji
+     * @return OK
+     */
+    automationRuleExecDisableMultipleCommand(body: BatchCommandOfAutomationRuleExecDisableCommandAndSearchAutomationRuleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/automation-rule/batch-exec-disable";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAutomationRuleExecDisableMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAutomationRuleExecDisableMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processAutomationRuleExecDisableMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Włącza regułę automatyzacji
+     * @return OK
+     */
+    automationRuleExecEnableMultipleCommand(body: BatchCommandOfAutomationRuleExecEnableCommandAndSearchAutomationRuleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/automation-rule/batch-exec-enable";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAutomationRuleExecEnableMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAutomationRuleExecEnableMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processAutomationRuleExecEnableMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Usuwa regułę automatyzacji
+     * @return OK
+     */
+    automationRuleRemoveMultipleCommand(body: BatchCommandOfAutomationRuleRemoveCommandAndSearchAutomationRuleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/automation-rule/batch-remove";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAutomationRuleRemoveMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAutomationRuleRemoveMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processAutomationRuleRemoveMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Nadpisuje regułę automatyzacji
+     * @return OK
+     */
+    automationRuleSetMultipleCommand(body: BatchCommandOfAutomationRuleSetCommandAndSearchAutomationRuleRequest): Observable<BatchResult> {
+        let url_ = this.baseUrl + "/automation-rule/batch-set";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAutomationRuleSetMultipleCommand(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAutomationRuleSetMultipleCommand(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BatchResult>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BatchResult>;
+        }));
+    }
+
+    protected processAutomationRuleSetMultipleCommand(response: HttpResponseBase): Observable<BatchResult> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatchResult;
+            return _observableOf(result200);
+            }));
+        } else if (status === 401) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Unauthorized", status, _responseText, _headers);
+            }));
+        } else if (status === 403) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("Forbidden", status, _responseText, _headers);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface AutomationActionDto {
+    uuid: string;
+    kind: number;
+    configJson: string;
+    orderNo: number;
+
+    [key: string]: any;
+}
+
+export interface AutomationActionRequest {
+    uuid?: string;
+    kind?: number;
+    configJson?: string | undefined;
+    orderNo?: number;
+
+    [key: string]: any;
+}
+
+export interface AutomationComparison {
+    fieldPath: string;
+    operator: number;
+    literal: string;
+
+    [key: string]: any;
+}
+
+export interface AutomationRuleCreateCommand {
+    uuid?: string;
+    projectUuid?: string;
+    name?: string;
+    triggerKind?: number;
+    conditionGroups?: AutomationComparison[][] | undefined;
+    actions?: AutomationActionRequest[];
+
+    [key: string]: any;
+}
+
+export interface AutomationRuleDto {
+    uuid: string;
+    projectUuid: string;
+    name: string;
+    triggerKind: number;
+    conditionGroups: AutomationComparison[][];
+    actions: AutomationActionDto[];
+    isEnabled: boolean;
+    executedCount: number;
+    createdAt: Date;
+
+    [key: string]: any;
+}
+
+export interface AutomationRuleExecDisableCommand {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
+export interface AutomationRuleExecEnableCommand {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
+export interface AutomationRuleRemoveCommand {
+    uuid?: string;
+
+    [key: string]: any;
+}
+
+export interface AutomationRuleSetCommand {
+    uuid?: string;
+    name?: string;
+    triggerKind?: number;
+    conditionGroups?: AutomationComparison[][] | undefined;
+    actions?: AutomationActionRequest[];
+
+    [key: string]: any;
+}
+
+export interface AutomationRunDto {
+    uuid: string;
+    ruleUuid: string;
+    issueUuid: string;
+    outcome: number;
+    errorMessage: string | undefined;
+    occurredAt: Date;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfAutomationRuleCreateCommandAndSearchAutomationRuleRequest {
+    commands?: AutomationRuleCreateCommand[] | undefined;
+    templateCommand?: AutomationRuleCreateCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchAutomationRuleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfAutomationRuleExecDisableCommandAndSearchAutomationRuleRequest {
+    commands?: AutomationRuleExecDisableCommand[] | undefined;
+    templateCommand?: AutomationRuleExecDisableCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchAutomationRuleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfAutomationRuleExecEnableCommandAndSearchAutomationRuleRequest {
+    commands?: AutomationRuleExecEnableCommand[] | undefined;
+    templateCommand?: AutomationRuleExecEnableCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchAutomationRuleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfAutomationRuleRemoveCommandAndSearchAutomationRuleRequest {
+    commands?: AutomationRuleRemoveCommand[] | undefined;
+    templateCommand?: AutomationRuleRemoveCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchAutomationRuleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
+export interface BatchCommandOfAutomationRuleSetCommandAndSearchAutomationRuleRequest {
+    commands?: AutomationRuleSetCommand[] | undefined;
+    templateCommand?: AutomationRuleSetCommand | undefined;
+    targetUuids?: string[] | undefined;
+    targetFilter?: SearchAutomationRuleRequest | undefined;
+    /** Identyfikator wywołującego — po stronie frontendu jest to identyfikator modalu, z którego
+poszła operacja. Wraca w `JobDto.QueueId` i pozwala zgrupować powiadomienia
+(„5 zadań z modalu zmiany ceny”) oraz otworzyć ten sam modal przy ponowieniu.
+
+Backend traktuje wartość jako nieprzezroczystą etykietę — nigdy jej nie parsuje. */
+    queueId?: string | undefined;
+    /** Blob metadanych frontendu (klucz tłumaczenia komendy, kontekst modalu), przenoszony
+bez zmian do `JobAccepted.UiMetadata` i dalej do repliki w Notification.
+
+Istnieje, bo backend zna wyłącznie techniczną nazwę typu komendy
+(`ProductSetPriceCommand`), a powiadomienie ma pokazać zdanie w języku użytkownika.
+Tłumaczenie nazwy komendy na tekst jest wiedzą frontendu i tam zostaje — backend
+przechowuje ją jako `jsonb`, którego nigdy nie interpretuje. */
+    uiMetadata?: string | undefined;
+
+    [key: string]: any;
 }
 
 /** Żądanie operacji masowej: co wykonać (List&lt;TCommand&gt;? BatchCommand&lt;TCommand, TFilter&gt;.Commands albo TCommand? BatchCommand&lt;TCommand, TFilter&gt;.TemplateCommand) i na czym (List&lt;Guid&gt;? BatchCommand&lt;TCommand, TFilter&gt;.TargetUuids albo TFilter? BatchCommand&lt;TCommand, TFilter&gt;.TargetFilter) — patrz `BatchEndpointBase.ResolveTargetsAsync`. */
@@ -9060,6 +9742,13 @@ export interface FieldSlotUsageDto {
     [key: string]: any;
 }
 
+export interface GetAutomationRuleRunsRequest {
+    ruleUuid?: string;
+    limit?: number;
+
+    [key: string]: any;
+}
+
 export interface GetBoardCardsRequest {
     boardUuid?: string;
     uuids?: string[] | undefined;
@@ -9191,6 +9880,7 @@ export interface IssueActivityDto {
     newValue: string | undefined;
     actorUuid: string;
     occurredAt: Date;
+    automationRuleUuid: string | undefined;
 
     [key: string]: any;
 }
@@ -9886,6 +10576,12 @@ export interface SavedViewSetCommand {
     sortJson?: string | undefined;
     columns?: string[] | undefined;
     mode?: number;
+
+    [key: string]: any;
+}
+
+export interface SearchAutomationRuleRequest {
+    projectUuid?: string;
 
     [key: string]: any;
 }

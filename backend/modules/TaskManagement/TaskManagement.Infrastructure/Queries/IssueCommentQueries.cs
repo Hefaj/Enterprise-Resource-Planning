@@ -97,7 +97,8 @@ public sealed class IssueActivityQueries : IIssueActivityQueries
                 a.OldValue,
                 a.NewValue,
                 a.ActorUuid,
-                a.OccurredAt))
+                a.OccurredAt,
+                a.AutomationRuleUuid))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }

@@ -134,6 +134,87 @@
         "scopeMismatch": "You can only merge tags from the same scope — both global, or both belonging to the same project."
       }
     },
+    "automations": {
+      "title": "Automations",
+      "empty": "This project has no automation rules yet.",
+      "addRule": "Add rule",
+      "executedCount": "Executions: {{count}}",
+      "enable": "Enable",
+      "disable": "Disable",
+      "edit": "Edit",
+      "remove": "Remove",
+      "removeConfirm": {
+        "title": "Remove rule \"{{name}}\"",
+        "message": "The rule and its run log will be permanently deleted. This cannot be undone."
+      },
+      "log": "Log",
+      "logEmpty": "This rule hasn't run yet.",
+      "outcome": {
+        "executed": "Executed",
+        "failed": "Failed"
+      },
+      "trigger": {
+        "label": "Event",
+        "issueCreated": "Issue created",
+        "issueStateChanged": "State changed",
+        "commentAdded": "Comment added",
+        "dueDateElapsed": "Due date elapsed"
+      },
+      "editor": {
+        "nameLabel": "Name",
+        "namePlaceholder": "Rule name",
+        "conditionTitle": "Condition (optional)",
+        "conditionHint": "The rule runs when all conditions in any one group are true (groups are joined by \"or\", conditions within a group by \"and\"). Without a condition the rule always runs.",
+        "addCondition": "Add condition",
+        "addOrGroup": "Add \"or\" group",
+        "orSeparator": "OR",
+        "field": {
+          "label": "Field",
+          "priority": "Priority",
+          "type": "Type",
+          "state": "State",
+          "stateCategory": "State category",
+          "assignee": "Assignee",
+          "tag": "Tag"
+        },
+        "operator": {
+          "eq": "=",
+          "ne": "≠",
+          "gt": ">",
+          "gte": "≥",
+          "lt": "<",
+          "lte": "≤"
+        },
+        "literalPlaceholder": "Value",
+        "removeCondition": "Remove",
+        "actionsTitle": "Actions",
+        "addAction": "Add action",
+        "removeAction": "Remove",
+        "action": {
+          "label": "Kind",
+          "setPriority": "Set priority",
+          "setState": "Set state",
+          "assignTo": "Assign to",
+          "addTag": "Add tag",
+          "addComment": "Add comment",
+          "sendNotification": "Send notification",
+          "createSubtask": "Create subtask"
+        },
+        "config": {
+          "priority": "Priority",
+          "stateUuid": "State uuid",
+          "assigneeUuid": "Assignee uuid (empty = unassign)",
+          "tagUuid": "Tag uuid",
+          "commentBody": "Comment body",
+          "subtaskTypeUuid": "Subtask type uuid",
+          "subtaskTitle": "Title (optional)"
+        },
+        "save": "Save rule",
+        "cancel": "Cancel",
+        "saveFailed": "Failed to save the automation rule.",
+        "actionRequired": "The rule needs at least one action."
+      }
+    },
     "sla": {
       "title": "SLA",
       "empty": "This project has no SLA policy yet.",

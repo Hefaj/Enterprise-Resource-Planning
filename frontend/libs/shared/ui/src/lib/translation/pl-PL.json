@@ -283,7 +283,12 @@
       "taskmgmtReportRunCreate": "Wygenerowanie raportu",
       "taskmgmtTagSetName": "Zmiana nazwy tagu",
       "taskmgmtTagExecMerge": "Scalenie tagów",
-      "taskmgmtProjectSetDefaultSavedView": "Zmiana widoku domyślnego projektu"
+      "taskmgmtProjectSetDefaultSavedView": "Zmiana widoku domyślnego projektu",
+      "taskmgmtAutomationRuleCreate": "Utworzenie reguły automatyzacji",
+      "taskmgmtAutomationRuleSet": "Zmiana reguły automatyzacji",
+      "taskmgmtAutomationRuleExecEnable": "Włączenie reguły automatyzacji",
+      "taskmgmtAutomationRuleExecDisable": "Wyłączenie reguły automatyzacji",
+      "taskmgmtAutomationRuleRemove": "Usunięcie reguły automatyzacji"
     },
     "toast": {
       "completed": "Zakończono: {{name}}",

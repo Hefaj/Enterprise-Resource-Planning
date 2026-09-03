@@ -79,6 +79,7 @@ export const TASKMANAGEMENT_KEYS = {
       title: 'taskManagement.activityStream.title',
       empty: 'taskManagement.activityStream.empty',
       commentRemoved: 'taskManagement.activityStream.commentRemoved',
+      automated: 'taskManagement.activityStream.automated',
       edited: 'taskManagement.activityStream.edited',
       reply: 'taskManagement.activityStream.reply',
       edit: 'taskManagement.activityStream.edit',

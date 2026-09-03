@@ -309,6 +309,7 @@ export class IssueActivityComponent {
       uuid: entry.uuid,
       actorUuid: entry.actorUuid,
       occurredAt: new Date(entry.occurredAt),
+      isAutomated: !!entry.automationRuleUuid,
       ...this._sentenceOf(entry),
     }));
 

@@ -1,4 +1,5 @@
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.IssueTypes;
@@ -317,4 +318,27 @@ public interface ISavedViewRepository
     void Add(SavedView view);
 
     void Remove(SavedView view);
+}
+
+/// <summary>Dostęp do agregatu <see cref="AutomationRule"/> po stronie zapisu (faza 8, AUT-001).</summary>
+public interface IAutomationRuleRepository
+{
+    Task<AutomationRule?> FindAsync(Guid uuid, CancellationToken cancellationToken);
+
+    /// <summary>Reguły włączone, projektu i wyzwalacza — to, co
+    /// <c>AutomationRuleEvaluator</c> ładuje na jeden trigger. W kolejności <c>CreatedAt</c>,
+    /// żeby wykonanie było deterministyczne i powtarzalne przy debugowaniu.</summary>
+    Task<IReadOnlyList<AutomationRule>> FindEnabledByTriggerAsync(
+        Guid projectUuid, AutomationTriggerKind triggerKind, CancellationToken cancellationToken);
+
+    void Add(AutomationRule rule);
+
+    void Remove(AutomationRule rule);
+}
+
+/// <summary>Dopisywanie logu uruchomień reguły (AUT-002 AC1) — wzorem
+/// <see cref="IIssueActivityWriter"/>, tylko do dopisywania.</summary>
+public interface IAutomationRunWriter
+{
+    void Add(AutomationRun run);
 }

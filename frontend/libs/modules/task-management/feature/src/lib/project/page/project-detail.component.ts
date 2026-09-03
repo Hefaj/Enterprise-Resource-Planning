@@ -16,6 +16,7 @@ import {
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 import { PROJECT_KIND } from '@erp/task-management/util';
 
+import { ProjectAutomationsComponent } from './content/project-automations.component';
 import { ProjectFieldsComponent } from './content/project-fields.component';
 import { ProjectSlaComponent } from './content/project-sla.component';
 import { ProjectTagsComponent } from './content/project-tags.component';
@@ -161,6 +162,12 @@ export class ProjectDetailComponent {
               id: 'workflow',
               label: PROJECT_KEYS.detail.workflow.title,
               component: ProjectWorkflowSchemeComponent,
+              inputs: { project },
+            },
+            {
+              id: 'automations',
+              label: PROJECT_KEYS.detail.automations.title,
+              component: ProjectAutomationsComponent,
               inputs: { project },
             },
           ]

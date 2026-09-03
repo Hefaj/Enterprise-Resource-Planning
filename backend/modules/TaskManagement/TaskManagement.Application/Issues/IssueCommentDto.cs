@@ -29,7 +29,8 @@ public sealed record IssueActivityDto(
     string? OldValue,
     string? NewValue,
     Guid ActorUuid,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    Guid? AutomationRuleUuid);
 
 /// <summary>Żądanie listy komentarzy zgłoszenia.</summary>
 public sealed class GetIssueCommentsRequest

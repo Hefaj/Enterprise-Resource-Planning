@@ -116,6 +116,12 @@ public static class Permissions
         /// endpointy raportów — świadomie NIE wchodzi w predykat widoczności zgłoszeń
         /// (patrz <c>docs/backend/task-management-requirements.md</c> PERM-005 AC3).</summary>
         public const string ReportReadAll = "taskmgmt.report.read.all";
+
+        /// <summary>Zarządzanie regułami automatyzacji (faza 8, AUT-001) — nowa funkcja, nie
+        /// rozszerzenie istniejącego kodu (zasada z `PLAN-task-management.md` §9). Gates
+        /// tworzenie/edycję/włączanie/wyłączanie/usuwanie i odczyt — kto nie zarządza
+        /// automatyzacją, nie widzi logiki jej reguł.</summary>
+        public const string AutomationManage = "taskmgmt.automation.manage";
     }
 
     /// <summary>Pełny katalog — źródło seedu <c>permission_catalog</c> i uzgadniania przy starcie.
@@ -156,5 +162,6 @@ public static class Permissions
         new(TaskManagement.SchemeManage, "taskmgmt", "scheme", "manage", "identity.permissions.taskmgmt.scheme.manage"),
         new(TaskManagement.TagManage, "taskmgmt", "tag", "manage", "identity.permissions.taskmgmt.tag.manage"),
         new(TaskManagement.ReportReadAll, "taskmgmt", "report", "read.all", "identity.permissions.taskmgmt.report.readAll"),
+        new(TaskManagement.AutomationManage, "taskmgmt", "automation", "manage", "identity.permissions.taskmgmt.automation.manage"),
     ];
 }

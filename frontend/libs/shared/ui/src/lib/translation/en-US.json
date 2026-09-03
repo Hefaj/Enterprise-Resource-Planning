@@ -283,7 +283,12 @@
       "taskmgmtReportRunCreate": "Report generation",
       "taskmgmtTagSetName": "Tag rename",
       "taskmgmtTagExecMerge": "Tag merge",
-      "taskmgmtProjectSetDefaultSavedView": "Project default view change"
+      "taskmgmtProjectSetDefaultSavedView": "Project default view change",
+      "taskmgmtAutomationRuleCreate": "Automation rule creation",
+      "taskmgmtAutomationRuleSet": "Automation rule change",
+      "taskmgmtAutomationRuleExecEnable": "Automation rule enabled",
+      "taskmgmtAutomationRuleExecDisable": "Automation rule disabled",
+      "taskmgmtAutomationRuleRemove": "Automation rule removal"
     },
     "toast": {
       "completed": "Finished: {{name}}",

@@ -59,7 +59,13 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
             <div class="erp-activity-stream__content">
               <div class="erp-activity-stream__meta">
-                <erp-user-name class="erp-activity-stream__actor" [uuid]="entry.actorUuid" />
+                @if (entry.isAutomated) {
+                  <span class="erp-activity-stream__automated">
+                    {{ TASKMANAGEMENT_KEYS.activityStream.automated | erpTranslate }}
+                  </span>
+                } @else {
+                  <erp-user-name class="erp-activity-stream__actor" [uuid]="entry.actorUuid" />
+                }
                 <span class="erp-activity-stream__date">{{ entry.occurredAt | date: 'short' }}</span>
               </div>
 
@@ -179,6 +185,11 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
       .erp-activity-stream__sentence {
         font-size: 0.875rem;
+      }
+
+      .erp-activity-stream__automated {
+        font-weight: 600;
+        color: var(--tui-text-tertiary);
       }
 
       .erp-activity-stream__removed {

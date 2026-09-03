@@ -289,6 +289,11 @@ export const SHARED_KEYS = {
         taskmgmtTagSetName: 'shared.jobs.commands.taskmgmtTagSetName',
         taskmgmtTagExecMerge: 'shared.jobs.commands.taskmgmtTagExecMerge',
         taskmgmtProjectSetDefaultSavedView: 'shared.jobs.commands.taskmgmtProjectSetDefaultSavedView',
+        taskmgmtAutomationRuleCreate: 'shared.jobs.commands.taskmgmtAutomationRuleCreate',
+        taskmgmtAutomationRuleSet: 'shared.jobs.commands.taskmgmtAutomationRuleSet',
+        taskmgmtAutomationRuleExecEnable: 'shared.jobs.commands.taskmgmtAutomationRuleExecEnable',
+        taskmgmtAutomationRuleExecDisable: 'shared.jobs.commands.taskmgmtAutomationRuleExecDisable',
+        taskmgmtAutomationRuleRemove: 'shared.jobs.commands.taskmgmtAutomationRuleRemove',
       },
       toast: {
         completed: 'shared.jobs.toast.completed',

@@ -36,6 +36,23 @@ public interface IExecutionContext
     /// a jego elementy mają własną ochronę przed powtórzeniem w <c>job_item.status</c>.</para>
     /// </summary>
     string? RequestId { get; }
+
+    /// <summary>
+    /// Reguła automatyzacji, w imieniu której wykonuje się bieżąca komenda — <c>null</c> dla
+    /// operacji zainicjowanej przez człowieka. Ustawiane przez silnik wykonawczy automatyzacji
+    /// (<c>TaskManagement.Application.Automation.AutomationRuleEvaluator</c>) w nowym scope'ie
+    /// DI per reguła, tym samym mechanizmem co odtworzenie tożsamości zleceniodawcy w
+    /// <c>BulkCommandRunner</c>. Handlery komend czytają je, żeby oznaczyć efekt w historii
+    /// zgłoszenia jako automatyczny (AUT-001 AC2), zamiast wstrzykiwać osobny, równoległy
+    /// kontekst do kilkunastu miejsc, które i tak już znają <see cref="IExecutionContext"/>.
+    /// </summary>
+    Guid? AutomationRuleUuid { get; }
+
+    /// <summary>Głębokość łańcucha automatyzacji, który doprowadził do bieżącej komendy — <c>0</c>
+    /// dla operacji zainicjowanej przez człowieka, inaczej głębokość reguły-rodzica + 1. Kolejne
+    /// zdarzenie triggerowane z wnętrza wykonania automatycznego niesie tę wartość dalej, żeby
+    /// silnik mógł zatrzymać się na twardym limicie (AUT-001 AC3) zamiast zjeść instancję.</summary>
+    int AutomationDepth { get; }
 }
 
 /// <summary>
@@ -57,6 +74,12 @@ public sealed class MutableExecutionContext : IExecutionContext
     /// <inheritdoc />
     public string? RequestId { get; private set; }
 
+    /// <inheritdoc />
+    public Guid? AutomationRuleUuid { get; private set; }
+
+    /// <inheritdoc />
+    public int AutomationDepth { get; private set; }
+
     /// <summary>Ustawia kontekst wykonania dla bieżącego scope'u.</summary>
     public void Set(string? userId, string? clientId, Guid? correlationId = null, string? requestId = null)
     {
@@ -65,4 +88,9 @@ public sealed class MutableExecutionContext : IExecutionContext
         CorrelationId = correlationId ?? Guid.CreateVersion7();
         RequestId = requestId;
     }
+
+    /// <summary>Znaczy bieżący scope jako wykonujący akcję reguły automatyzacji — wołane
+    /// wyłącznie przez <c>AutomationRuleEvaluator</c>, w nowym scope'ie DI utworzonym per reguła
+    /// (nigdy w scope'ie żądania HTTP).</summary>
+    public void SetAutomation(Guid ruleUuid, int depth) => (AutomationRuleUuid, AutomationDepth) = (ruleUuid, depth);
 }

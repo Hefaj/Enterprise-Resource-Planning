@@ -1,3 +1,5 @@
+export * from './automation-rule/automation-rule.orchestrator';
+export * from './automation-rule/automation-rule.view-model';
 export * from './board/board.orchestrator';
 export * from './board/board.view-model';
 export * from './field-scheme/field-scheme.orchestrator';

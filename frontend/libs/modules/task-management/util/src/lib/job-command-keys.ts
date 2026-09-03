@@ -73,4 +73,9 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   setTagName: 'shared.jobs.commands.taskmgmtTagSetName',
   execMergeTag: 'shared.jobs.commands.taskmgmtTagExecMerge',
   setProjectDefaultSavedView: 'shared.jobs.commands.taskmgmtProjectSetDefaultSavedView',
+  createAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleCreate',
+  setAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleSet',
+  execEnableAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleExecEnable',
+  execDisableAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleExecDisable',
+  removeAutomationRule: 'shared.jobs.commands.taskmgmtAutomationRuleRemove',
 } as const;

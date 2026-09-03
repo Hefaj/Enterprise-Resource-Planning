@@ -6,7 +6,9 @@ using Erp.BuildingBlocks.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TaskManagement.Application.Automation;
 using TaskManagement.Application.Issues;
+using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.Boards;
 using TaskManagement.Domain.FieldSchemes;
 using TaskManagement.Domain.Issues;
@@ -67,6 +69,12 @@ public static class TaskManagementInfrastructureExtensions
         // handler zamknięcia zlecenia), patrz Etap E Fazy 5.
         services.AddScoped<IssueNotificationPublisher>();
 
+        // Faza 8 (AUT-001) — publikacja triggera automatyzacji obok powiadomień, patrz
+        // AutomationTriggerPublisher. AutomationActionExecutor bez interfejsu własnego imienia
+        // (wołany bezpośrednio przez AutomationRuleEvaluator, nie przez konwencję skanu).
+        services.AddScoped<AutomationTriggerPublisher>();
+        services.AddScoped<AutomationActionExecutor>();
+
         var seedOptions = configuration.GetSection(TaskManagementSeedOptions.SectionName)
             .Get<TaskManagementSeedOptions>() ?? new TaskManagementSeedOptions();
         services.AddSingleton(seedOptions);
@@ -107,7 +115,8 @@ public static class TaskManagementInfrastructureExtensions
             .Register<IssueWorkLog>(AggregateSignatures.TaskManagementIssueWorkLog)
             .Register<WorkType>(AggregateSignatures.TaskManagementWorkType)
             .Register<ReportRun>(AggregateSignatures.TaskManagementReportRun)
-            .Register<SavedView>(AggregateSignatures.TaskManagementSavedView));
+            .Register<SavedView>(AggregateSignatures.TaskManagementSavedView)
+            .Register<AutomationRule>(AggregateSignatures.TaskManagementAutomationRule));
 
         // `IssueActivity` świadomie NIE ma sygnatury: historia zmienia się wyłącznie razem
         // ze zgłoszeniem albo komentarzem, a te mają własne kanały. Osobny kanał oznaczałby

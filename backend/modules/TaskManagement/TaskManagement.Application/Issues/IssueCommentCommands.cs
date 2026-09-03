@@ -4,6 +4,8 @@ using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
+using TaskManagement.Application.Automation;
+using TaskManagement.Domain.Automation;
 using TaskManagement.Domain.Issues;
 
 namespace TaskManagement.Application.Issues;
@@ -40,6 +42,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
     private readonly IRichTextSanitizer _sanitizer;
     private readonly IssueNotificationPublisher _notifications;
     private readonly IExecutionContext _executionContext;
+    private readonly AutomationTriggerPublisher _automationTriggers;
     private readonly IClock _clock;
 
     public IssueAddCommentCommandHandler(
@@ -49,6 +52,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         IRichTextSanitizer sanitizer,
         IssueNotificationPublisher notifications,
         IExecutionContext executionContext,
+        AutomationTriggerPublisher automationTriggers,
         IClock clock)
     {
         _comments = comments;
@@ -57,6 +61,7 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
         _sanitizer = sanitizer;
         _notifications = notifications;
         _executionContext = executionContext;
+        _automationTriggers = automationTriggers;
         _clock = clock;
     }
 
@@ -104,7 +109,8 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
             newValue: comment.Uuid.ToString(),
             author,
             _executionContext.CorrelationId,
-            now));
+            now,
+            _executionContext.AutomationRuleUuid));
 
         // Wzmianka `@` dopisuje obserwatora niejawnie — respektując ewentualną wcześniejszą
         // rezygnację (ISS-009 AC1). Wzmiankowany dostaje precyzyjne `taskmgmt.issue.mentioned`,
@@ -125,6 +131,10 @@ public sealed class IssueAddCommentCommandHandler : CommandHandler<IssueAddComme
 
         await _notifications
             .PublishCommentedAsync(issue, author, now, _executionContext.CorrelationId, ct, excludeRecipients: mentionedUuids)
+            .ConfigureAwait(false);
+
+        await _automationTriggers
+            .PublishAsync(issue, AutomationTriggerKind.CommentAdded, _executionContext, ct)
             .ConfigureAwait(false);
 
         return comment.Uuid;

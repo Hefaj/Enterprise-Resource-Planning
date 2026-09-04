@@ -8,7 +8,10 @@
       "cache": false,
       "options": {
         "cwd": "backend/modules/Identity/Identity.Api",
-        "command": "dotnet watch --no-hot-reload"
+        "command": "dotnet watch --no-hot-reload",
+        "env": {
+          "ErpBuildSlot": "identity"
+        }
       }
     }
   }

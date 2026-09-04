@@ -193,12 +193,6 @@ export class ShellLayoutComponent {
       .setFn(() => this.menuOpen.set(true))
   );
 
-  public readonly helpButtonConfig = ErpButtonBuilder.create((builder) => builder
-    .setAppearance('icon')
-    .setIconStart('@tui.circle-question-mark')
-    .setLabel(SHARED_KEYS.documentation.help)
-    .setFn(() => this.openContextHelp()));
-
   public readonly fontSizeControl = new FormControl(this._userPreferences.fontSize || 'm');
 
   public readonly fontSizeConfig = ErpToggleGroupBuilder.create(b => b
@@ -214,7 +208,14 @@ export class ShellLayoutComponent {
   public readonly settingsMenuConfig: ErpSettingsMenuConfig = {
     items: [
       {
+        id: 'help',
+        label: SHARED_KEYS.documentation.help,
+        icon: '@tui.circle-question-mark',
+        fn: () => this.openContextHelp(),
+      },
+      {
         id: 'theme',
+        separator: true,
         label: computed(() => this.isDarkMode() ? SHARED_KEYS.settings.theme.light : SHARED_KEYS.settings.theme.dark),
         icon: computed(() => this.isDarkMode() ? '@tui.sun' : '@tui.moon'),
         fn: () => this.toggleTheme()

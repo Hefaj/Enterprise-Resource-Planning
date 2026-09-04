@@ -22,7 +22,8 @@ related:
 
 Dokument jest specyfikacją docelową modułu. Opisuje zachowania i kryteria akceptacji, ale nie ich
 harmonogram ani chwilowy procent realizacji. Bieżący zakres UI należy każdorazowo potwierdzić w kodzie
-i testach; kolejność dalszego rozwoju znajduje się w `plans/active/task-management.md`.
+i testach; historia realizacji (fazy 4–8, zamknięta) znajduje się w
+`plans/archive/2026-09-task-management-fazy-4-8.md`.
 
 ## Cel i granice
 

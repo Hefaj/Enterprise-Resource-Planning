@@ -17,7 +17,7 @@
 | 5 | Zlecenia międzydziałowe, obserwujący, powiadomienia, SLA | 4 | tak (dodanie pól) | `WatchersAndIntake`, `ProjectSla` | ✅ zrobione (plan nie był odznaczony mimo wykonanej pracy — poprawione) |
 | 6 | Sprinty, backlog, tagi, operacje masowe, wyszukiwanie, **rejestracja czasu** | 4 | tak (dodanie pól) | `SprintsAndBacklog`, `TagsAndResolution`, `FullTextSearch`, `WorkLogAndEstimate` | ✅ zrobione |
 | 7 | Edytor schematu z UI, zapisane widoki, **raporty (w tym godziny per dział)**, scalanie tagów | 6 | tak (dodanie pól) | `SavedViews`, `Reports`, `ProjectDefaultSavedView`, Catalog `ReportRunRename` | ✅ zrobione |
-| 8 | Automatyzacje, DSL, webhooki | 7 | nie | `Automations`, `Webhooks` | ⚠️ częściowo (silnik automatyzacji AUT-001/AUT-002, webhooki wychodzące API-004, burndown SPR-004, język wyszukiwania SRCH-005 i klucz integracyjny API-003 zrobione i **zweryfikowane na żywo** — patrz §6.1/§6.2/§6.3; tylko preferencje powiadomień NTF-003 zostają, wymagają osobnej decyzji architektonicznej) |
+| 8 | Automatyzacje, DSL, webhooki | 7 | nie | `Automations`, `Webhooks` | ✅ zrobione (silnik automatyzacji AUT-001/AUT-002, webhooki wychodzące API-004, burndown SPR-004, język wyszukiwania SRCH-005, klucz integracyjny API-003 i preferencje powiadomień NTF-003 zrobione i **zweryfikowane na żywo** — patrz §6.1/§6.2/§6.3; plan nie był odznaczony mimo wykonanej pracy — poprawione) |
 
 **Faza 4 jest największa i najbardziej łamiąca**, bo wprowadza `IssueType` — pole, którego dziś
 w ogóle nie ma na zgłoszeniu, a które wchodzi jako wymagane. Reszta faz dokłada, nie przerabia.
@@ -977,8 +977,14 @@ zaktualizowane w obu modułach.
       (`TaskManagementSprintBurndownReportDefinitionTests`) zielone; zweryfikowane na żywo w
       przeglądarce (raport generuje się bez błędu; brak wierszy bo dev seed nie ma sprintu
       z ustawionymi datami — zgodne z logiką pomijania sprintów bez dat/`Planned`).
-- [ ] Preferencje powiadomień per projekt (`NTF-003`) — filtr odbiorców w `IssueNotificationPublisher`
-      (ma już kontekst projektu), nowy agregat `ProjectNotificationPreference`.
+- [x] Preferencje powiadomień per projekt (`NTF-003`) — plan nie był odznaczony mimo wykonanej
+      pracy, poprawione. Zrealizowane prościej niż zakładał opis: nie osobny agregat
+      `ProjectNotificationPreference`, tylko wyciszenie projektu per użytkownik
+      (`Project.NotificationMutedByUserUuids` + `ProjectSetNotificationMutedMultipleCommandEndpoint`),
+      filtr wpięty w `IssueNotificationPublisher` (wyciszenie tłumi wszystko oprócz bezpośrednich
+      wzmianek `@`), odczyt przez `ProjectNotificationMuteQueries`, front: zakładka „Powiadomienia"
+      na karcie projektu (`project-notifications.component.ts`). Testy: `ProjectNotificationMuteTests`,
+      `IssueNotificationPublisherTests`; `dotnet test backend/tests/TaskManagement.Tests`: 226/226.
 - [x] Język wyszukiwania SRCH-005 — `IssueSearchDslParser` (tokenizer/parser węższy niż
       `AutomationConditionParser`, bez `and`/`or`) + `IssueSearchDslResolver` (Infrastructure,
       rozwiązuje `project`/`state`/`priority`/`assignee`/`tag`/`text` na `SearchIssueRequest`).

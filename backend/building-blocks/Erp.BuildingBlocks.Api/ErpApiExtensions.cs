@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Api.Auth;
+using Erp.BuildingBlocks.Api.Telemetry;
 using Erp.BuildingBlocks.Application.Abstractions;
 using FastEndpoints;
 using FastEndpoints.Swagger;
@@ -77,6 +78,9 @@ public static class ErpApiExtensions
         services.AddExceptionHandler<ErpProblemDetailsHandler>();
 
         services.AddErpAuth(configuration, enablePermissionClaims);
+
+        // Logi, metryki, ślady — jeden OTel SDK, eksport OTLP. Patrz docs/operations/observability.md.
+        services.AddErpTelemetry(serviceTitle, configuration);
 
         // Kontekst wykonania jest scoped i mutowalny: wypełnia go middleware HTTP,
         // a przy zadaniach w tle podstawia go BulkCommandRunner.

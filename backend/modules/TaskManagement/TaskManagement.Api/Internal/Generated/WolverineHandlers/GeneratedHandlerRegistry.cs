@@ -11,7 +11,7 @@ namespace Internal.Generated.WolverineHandlers
 
         public override System.Type[] HandlerTypes()
         {
-            return new System.Type[] { typeof(Erp.BuildingBlocks.Messaging.PermissionsInvalidatedHandler), typeof(Notification.Api.Realtime.AggregateChangedRelayHandler), typeof(Notification.Api.UserNotifications.UserNotificationRequestedHandler), typeof(Notification.Infrastructure.Consumers.JobAcceptedHandler), typeof(Notification.Infrastructure.Consumers.JobCompletedHandler), typeof(Notification.Infrastructure.Consumers.JobProgressedHandler) };
+            return new System.Type[] { typeof(Erp.BuildingBlocks.Messaging.PermissionsInvalidatedHandler), typeof(TaskManagement.Infrastructure.Consumers.ArtifactDeletionRequestedHandler), typeof(TaskManagement.Infrastructure.Consumers.AutomationTriggerHandler), typeof(TaskManagement.Infrastructure.Consumers.WebhookTriggerHandler) };
         }
 
 

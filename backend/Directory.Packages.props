@@ -110,6 +110,21 @@
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Obserwowalność">
+    <!-- Trzy sygnały (logi/metryki/ślady) jednym SDK, eksport przez OTLP — patrz
+         docs/operations/observability.md §2-3. Backend telemetrii (SigNoz) jest wtedy zmienną
+         środowiskową (Otel:OtlpEndpoint), nie zależnością w kodzie. -->
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
+    <!-- GC, thread pool, wyjątki procesu — sekcja 5.1 dokumentu. -->
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
+    <!-- CPU i RAM procesu — bezpośrednia odpowiedź na "ile zużywa dany mikroserwis". Wciąż RC —
+         instrumentacja procesu w opentelemetry-dotnet-contrib nie doczekała się jeszcze 1.0. -->
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Process" Version="1.18.0-rc.1" />
+  </ItemGroup>
+
   <ItemGroup Label="Testy">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />

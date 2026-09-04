@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Application.Commands;
 using Erp.BuildingBlocks.Domain;
@@ -82,6 +83,10 @@ public sealed partial class ErpProblemDetailsHandler : IExceptionHandler
         // Korelacja w treści odpowiedzi, a nie tylko w logu: bez niej zgłoszenie użytkownika
         // („wyskoczył błąd") nie ma jak trafić do konkretnego wpisu w logach serwisu.
         problem.Extensions["correlationId"] = correlationId;
+
+        // Ślad OTel tego żądania — patrz docs/operations/observability.md §6. Frontend go
+        // pokaże w toaście błędu, żeby zgłoszenie brzmiało "błąd o ID 4f2a…", nie "nie działa".
+        problem.Extensions["traceId"] = Activity.Current?.TraceId.ToString();
 
         if (problem.Status >= StatusCodes.Status500InternalServerError)
         {

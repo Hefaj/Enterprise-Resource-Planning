@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Erp.BuildingBlocks.Application.Abstractions;
 using Microsoft.AspNetCore.Http;
 
@@ -63,11 +64,17 @@ public sealed class ExecutionContextMiddleware
 
             var requestId = Trimmed(context.Request.Headers[RequestIdHeader].ToString());
 
-            mutable.Set(
-                userId,
-                clientId,
-                correlationId,
-                requestId?.Length <= MaxRequestIdLength ? requestId : null);
+            var boundedRequestId = requestId?.Length <= MaxRequestIdLength ? requestId : null;
+
+            mutable.Set(userId, clientId, correlationId, boundedRequestId);
+
+            // Spina X-Request-Id ze śladem OTel — stąd trafia automatycznie do logów przez
+            // trace_id/span_id, które logging provider dokleja do każdego wpisu tego żądania.
+            // Patrz docs/operations/observability.md §6.
+            if (boundedRequestId is not null)
+            {
+                Activity.Current?.SetTag("erp.request_id", boundedRequestId);
+            }
         }
 
         await _next(context).ConfigureAwait(false);

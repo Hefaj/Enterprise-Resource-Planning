@@ -14,7 +14,6 @@ import {
   ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpToastService,
-  ErpTranslatePipe,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, ErpHasPermissionDirective, PermissionStore } from '@erp/shared/auth';
 import {
@@ -45,7 +44,6 @@ import { ISSUE_KEYS } from '../../translation';
     ErpInputPickerComponent,
     ErpTagChipsComponent,
     ErpHasPermissionDirective,
-    ErpTranslatePipe,
     ReactiveFormsModule,
   ],
   template: `

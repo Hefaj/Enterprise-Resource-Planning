@@ -8,7 +8,7 @@
       "cache": false,
       "options": {
         "cwd": "backend/modules/Catalog/Catalog.Api",
-        "command": "dotnet watch",
+        "command": "dotnet watch --no-hot-reload",
         "env": {
           "ErpBuildSlot": "catalog"
         }

@@ -83,6 +83,38 @@ zostanie porzucone po miesiącu, a wtedy zostaje monitoring, któremu nikt nie u
 w tej architekturze dokładnie jedno zastosowanie (backplane SignalR) i ta granica jest
 w [kontrakcie wieloinstancyjności](../architecture/multi-instance.md#granice-odpowiedzialności) postawiona świadomie.
 
+### 3.1a Lokalny dev: Aspire Dashboard, nie SigNoz
+
+SigNoz zostaje rekomendacją **produkcyjną** — ale jego stos (ClickHouse + Keeper + Postgres
+metastore + collector + query service, kilka kontenerów) jest zbyt ciężki, żeby trzymać go
+uruchomionego na stałe obok kilku mikroserwisów `dotnet run` i dev-serwera Angulara na zwykłej
+maszynie deweloperskiej — wielokrotnie potwierdzone (skok RAM/swap przy logowaniu, gdy SigNoz
+chodził równolegle z Identity/Notification/TaskManagement i frontem).
+
+Do lokalnego dev-loopa: **[Aspire Dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone)**
+(`mcr.microsoft.com/dotnet/aspire-dashboard`) — jeden kontener, natywny OTLP dla logów, metryk
+i śladów jednocześnie, bez dodatkowej bazy. Dzięki temu, że eksport telemetrii jest już dziś
+czystym OTLP (§2) i konfigurowalny przez `Otel:OtlpEndpoint`, podmiana backendu nie rusza kodu —
+tylko to, co słucha na `localhost:4317`.
+
+Uruchomienie:
+
+```bash
+docker run -d --name aspire-dashboard \
+  -p 18888:18888 -p 4317:18889 -p 4318:18890 \
+  -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true \
+  mcr.microsoft.com/dotnet/aspire-dashboard:latest
+```
+
+UI pod `http://localhost:18888`, OTLP/gRPC pod `4317` — czyli dokładnie tam, gdzie domyślnie
+celuje `Otel:OtlpEndpoint`, bez zmiany konfiguracji serwisów.
+
+**Dlaczego to NIE jest zamiennik SigNoz-a na produkcji, tylko narzędzie do dev-loopa:**
+dane żyją wyłącznie w pamięci procesu (ring buffer) — restart kontenera kasuje historię, nie ma
+retencji, nie ma silnika alertów, nie ma agregacji między wieloma instancjami. Do „co się stało
+przy tym jednym logowaniu przed chwilą” wystarcza z nawiązką; do post-mortem awarii sprzed kilku
+dni albo do §1 („alert ma odpowiadać na pytanie, czy użytkownik to odczuje”) — nie nadaje się.
+
 ### 3.2 Czujka z zewnątrz
 
 **Osobna maszyna, poza tym serwerem.** Uptime Kuma (albo dowolny zewnętrzny monitor) sprawdzający

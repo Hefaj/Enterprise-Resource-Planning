@@ -1,17 +1,14 @@
 {
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "name": "Notification.Api",
+  "name": "Identity.Api",
   "targets": {
     "watch": {
       "executor": "nx:run-commands",
       "continuous": true,
       "cache": false,
       "options": {
-        "cwd": "backend/modules/Notification/Notification.Api",
-        "command": "dotnet watch --no-hot-reload",
-        "env": {
-          "ErpBuildSlot": "notification"
-        }
+        "cwd": "backend/modules/Identity/Identity.Api",
+        "command": "dotnet watch --no-hot-reload"
       }
     }
   }

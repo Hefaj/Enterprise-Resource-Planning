@@ -37,14 +37,25 @@ import { ErpDocumentationArticleConfig } from './erp-documentation-article.types
     h1:focus { outline: none; }
     .summary { margin: .75rem 0 2rem; color: var(--tui-text-secondary); font: var(--tui-font-text-l); line-height: 1.55; }
     .content { color: var(--tui-text-primary); line-height: 1.7; overflow-wrap: anywhere; }
-    .content :is(h2, h3) { scroll-margin-top: 5rem; }
-    .content h2 { margin: 2rem 0 .75rem; font: var(--tui-font-heading-5); }
-    .content h3 { margin: 1.5rem 0 .5rem; font: var(--tui-font-heading-6); }
+    .content :is(h2, h3, h4) { scroll-margin-top: 5rem; }
+    .content h2 { margin: 2.5rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--tui-border-normal); font: var(--tui-font-heading-5); }
+    .content h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+    .content h3 { margin: 1.75rem 0 .625rem; font: var(--tui-font-heading-6); }
+    .content h4, .content h5, .content h6 { margin: 1.25rem 0 .5rem; font: var(--tui-font-text-l); font-weight: 700; }
+    .content p { margin: 0 0 1rem; }
+    .content :is(ul, ol) { margin: 0 0 1rem; padding-left: 1.5rem; }
+    .content li { margin: .25rem 0; }
+    .content li::marker { color: var(--tui-text-secondary); }
+    .content blockquote { margin: 0 0 1rem; padding: .5rem 1rem; border-left: 3px solid var(--tui-border-normal); color: var(--tui-text-secondary); }
+    .content strong { font-weight: 700; }
+    .content hr { margin: 2rem 0; border: none; border-top: 1px solid var(--tui-border-normal); }
     .content :is(pre, table) { max-width: 100%; overflow-x: auto; }
     .content pre { padding: 1rem; border-radius: .75rem; background: var(--tui-background-neutral-1); }
-    .content code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .content pre code { background: none; padding: 0; }
+    .content code { padding: .125rem .375rem; border-radius: .375rem; background: var(--tui-background-neutral-1); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .9em; }
     .content img { max-width: 100%; height: auto; border-radius: .75rem; }
-    .content a { color: var(--tui-text-action); text-underline-offset: .15em; }
+    .content a { color: var(--tui-text-action); text-decoration: underline; text-underline-offset: .15em; font-weight: 500; }
+    .content a:hover { text-decoration-thickness: 2px; }
     .pager { display: flex; gap: 1rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--tui-border-normal); }
     .pager button { padding: .625rem .875rem; border: 1px solid var(--tui-border-normal); border-radius: .625rem; background: var(--tui-background-base); color: var(--tui-text-action); cursor: pointer; }
     .pager__next { margin-left: auto; }

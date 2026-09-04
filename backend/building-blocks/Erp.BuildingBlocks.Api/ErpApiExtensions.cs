@@ -1,4 +1,5 @@
 using Erp.BuildingBlocks.Api.Auth;
+using Erp.BuildingBlocks.Api.Health;
 using Erp.BuildingBlocks.Api.Telemetry;
 using Erp.BuildingBlocks.Application.Abstractions;
 using FastEndpoints;
@@ -79,6 +80,9 @@ public static class ErpApiExtensions
 
         services.AddErpAuth(configuration, enablePermissionClaims);
 
+        // /health/live, /health/ready, /health/deps — patrz docs/operations/observability.md §4.
+        services.AddErpHealthChecks();
+
         // Logi, metryki, ślady — jeden OTel SDK, eksport OTLP. Patrz docs/operations/observability.md.
         services.AddErpTelemetry(serviceTitle, configuration);
 
@@ -154,6 +158,11 @@ public static class ErpApiExtensions
         // claim "sub" z context.User, więc musi biec po tym, jak JwtBearerHandler go ustawi.
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Po auth (AllowAnonymous na /health/live i /health/ready jest metadaną endpointu,
+        // odczytywaną przez UseAuthorization — kolejność względem UseAuthentication/UseAuthorization
+        // nie ma tu znaczenia, liczy się tylko, że mapowanie idzie przez ten sam routing co reszta).
+        app.MapErpHealthChecks();
 
         // Przed endpointami, bo to one (a dokładniej BatchEndpointBase → IJobStore) czytają
         // kontekst przy tworzeniu zadania. Po CORS i auth, żeby preflight nie przechodził przez

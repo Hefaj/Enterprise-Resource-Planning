@@ -4,7 +4,7 @@ import { ErpIcon } from '../../base/erp-icon.types';
 import { ErpToastAction, ErpToastAppearance, ErpToastConfig } from './erp-toast.types';
 
 /**
- * Fluent API do złożenia konfiguracji toasta — patrz docs/frontend/atoms.md.
+ * Fluent API do złożenia konfiguracji toasta — patrz docs/guides/frontend/atoms.md.
  */
 export class ErpToastBuilder extends ErpBaseBuilder<ErpToastConfig> {
   /** Własny identyfikator, gdy toast ma być później podmieniony w miejscu. */

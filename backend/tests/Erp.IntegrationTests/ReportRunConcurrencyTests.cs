@@ -8,7 +8,7 @@ using Xunit;
 namespace Erp.IntegrationTests;
 
 /// <summary>
-/// Kryteria akceptacji fazy 1 dla raportów/eksportów (<c>docs/backend/multi-instance.md</c> §10,
+/// Kryteria akceptacji fazy 1 dla raportów/eksportów (<c>docs/architecture/multi-instance.md</c> §10,
 /// wiersze 2–3).
 ///
 /// <para>Sprawdzany jest <b>mechanizm wyłączności</b>, nie liczba plików w MinIO — i to jest

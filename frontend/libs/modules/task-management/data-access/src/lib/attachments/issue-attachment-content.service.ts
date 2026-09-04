@@ -21,7 +21,7 @@ const MAX_CACHED_OBJECT_URLS = 60;
  * nawigacja przeglądarki nie dokładają nagłówka `Authorization` — wstawienie tego adresu wprost
  * dałoby 401 przy każdej miniaturce. Plik pobiera więc `HttpClient` (interceptor dokłada token),
  * a do `src` trafia dopiero `blob:`-URL. Ta sama decyzja co w
- * `CatalogMultimediaContentService` (`docs/frontend/multimedia.md` §3).</p>
+ * `CatalogMultimediaContentService` (`docs/guides/frontend/multimedia.md` §3).</p>
  *
  * <p><b>Miniaturek nie ma.</b> Załączniki zgłoszenia nie mają wariantów pochodnych — backend
  * generuje je dla biblioteki mediów Catalogu, nie tutaj. Podgląd idzie z oryginału, dlatego

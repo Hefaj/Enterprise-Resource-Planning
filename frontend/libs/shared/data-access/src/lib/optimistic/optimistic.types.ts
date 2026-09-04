@@ -1,7 +1,7 @@
 import { Translatable } from '../orchestrator/orchestrator.types';
 
 /**
- * Jedna zarejestrowana nakładka optymistyczna — patrz `docs/frontend/optimistic-updates.md`.
+ * Jedna zarejestrowana nakładka optymistyczna — patrz `docs/guides/frontend/optimistic-updates.md`.
  *
  * Wywołujący opisuje TYLKO to, co jest lokalnym niuansem jego mutacji (jak wygląda skutek,
  * jak wysłać komendę, czym jest wymuszony refetch po rozstrzygnięciu). Cykl życia — kiedy

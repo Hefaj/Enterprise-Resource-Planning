@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { ERP_PERMISSIONS, erpAuthGuard, erpPermissionGuard } from '@erp/shared/auth';
+import { CATALOG_DOCUMENTATION_ARTICLE_IDS } from '@erp/catalog/util';
 
 export const remoteRoutes: Route[] = [
   {
@@ -14,7 +15,10 @@ export const remoteRoutes: Route[] = [
       },
       {
         path: 'products',
-        data: { breadcrumb: 'Lista produktów' },
+        data: {
+          breadcrumb: 'Lista produktów',
+          documentationArticleId: CATALOG_DOCUMENTATION_ARTICLE_IDS.products.listAndFilters,
+        },
         loadComponent: () => import('@erp/catalog/feature').then((m) => m.ProductComponent),
       },
       {
@@ -23,9 +27,22 @@ export const remoteRoutes: Route[] = [
         // (`searchMultimedia`, `getMultimedia`); samo usuwanie ma osobne uprawnienie,
         // sprawdzane na akcji toolbara i na endpointcie.
         path: 'multimedia',
-        data: { breadcrumb: 'Biblioteka mediów' },
+        data: {
+          breadcrumb: 'Biblioteka mediów',
+          documentationArticleId: CATALOG_DOCUMENTATION_ARTICLE_IDS.multimedia.library,
+        },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.Catalog.DictionaryRead)],
         loadComponent: () => import('@erp/catalog/feature').then((m) => m.MultimediaComponent),
+      },
+      {
+        path: 'documentation',
+        data: { breadcrumb: 'shared.documentation.navigationLabel' },
+        loadComponent: () => import('@erp/catalog/feature').then((module) => module.CatalogDocumentationComponent),
+      },
+      {
+        path: 'documentation/:articleSlug',
+        data: { breadcrumb: 'shared.documentation.navigationLabel' },
+        loadComponent: () => import('@erp/catalog/feature').then((module) => module.CatalogDocumentationComponent),
       },
     ],
   },

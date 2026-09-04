@@ -660,7 +660,7 @@ export class LoginComponent {
     .build();
 
   /** Przekierowuje do hostowanej strony logowania Keycloaka — hasło nigdy nie dotyka tej
-   * strony (Authorization Code + PKCE, patrz `docs/backend/identity-authz.md` §1). */
+   * strony (Authorization Code + PKCE, patrz `docs/architecture/security.md` §1). */
   protected signIn(): void {
     this.errorKey.set(null);
     this.isSubmitting.set(true);

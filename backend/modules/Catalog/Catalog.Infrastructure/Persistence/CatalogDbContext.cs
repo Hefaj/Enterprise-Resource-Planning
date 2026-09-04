@@ -49,7 +49,7 @@ public sealed class CatalogDbContext : ErpDbContext, IJobDbContext, IReportRunDb
     /// <summary>Słownik definicji atrybutów produktu.</summary>
     public DbSet<AttributeDefinition> AttributeDefinitions => Set<AttributeDefinition>();
 
-    /// <summary>Przebiegi raportu/eksportu — patrz docs/backend/reporting.md.</summary>
+    /// <summary>Przebiegi raportu/eksportu — patrz docs/architecture/reporting.md.</summary>
     public DbSet<ReportRun> ReportRuns => Set<ReportRun>();
 
     /// <inheritdoc />
@@ -69,7 +69,7 @@ public sealed class CatalogDbContext : ErpDbContext, IJobDbContext, IReportRunDb
         modelBuilder.ApplyConfiguration(new JobConfiguration());
         modelBuilder.ApplyConfiguration(new JobItemConfiguration());
 
-        // Mapowanie ReportRun żyje w BuildingBlocks (patrz docs/backend/reporting.md §3) —
+        // Mapowanie ReportRun żyje w BuildingBlocks (patrz docs/architecture/reporting.md §3) —
         // każdy moduł je aplikuje osobno, do własnej tabeli we własnym schemacie.
         modelBuilder.ApplyConfiguration(new ReportRunConfiguration());
 

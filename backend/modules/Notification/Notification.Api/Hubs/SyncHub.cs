@@ -34,7 +34,7 @@ namespace Notification.Api.Hubs;
 /// ustawia <c>SubjectUserIdProvider</c> (patrz <c>Program.cs</c>) z claimu <c>sub</c> tokenu —
 /// nie z query stringu. Do 2026-08 <c>userId</c> był czytany wprost z query stringu połączenia
 /// bez żadnej weryfikacji tożsamości; ta luka zniknęła razem z Keycloakiem (patrz
-/// <c>docs/backend/identity-authz.md</c> §5). <c>clientId</c> zostaje w query — to nie jest
+/// <c>docs/architecture/security.md</c> §5). <c>clientId</c> zostaje w query — to nie jest
 /// tożsamość, tylko identyfikator karty przeglądarki (patrz <c>ExecutionContextMiddleware</c>).</para>
 /// </summary>
 [Authorize]

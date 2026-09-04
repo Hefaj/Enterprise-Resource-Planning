@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.FieldSchemes;
 
 /// <summary>
 /// Schemat pól niestandardowych — zestaw pól, który projekt nakłada na swoje zgłoszenia
-/// (<c>docs/backend/task-management.md</c> §6). Dev chce <c>Component</c> i <c>Fix Version</c>,
+/// (<c>docs/modules/task-management/domain.md</c> §6). Dev chce <c>Component</c> i <c>Fix Version</c>,
 /// marketing <c>Kanał</c> i <c>Budżet</c>; to ten sam model, co typ dokumentu w DMS, i celowo
 /// się od niego nie różni.
 ///

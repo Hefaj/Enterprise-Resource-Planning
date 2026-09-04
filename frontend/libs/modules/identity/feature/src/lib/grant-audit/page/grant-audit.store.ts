@@ -4,7 +4,7 @@ import { SearchGrantAuditRequest } from '@erp/identity/data-access';
 /**
  * Stan strony historii nadań — wyłącznie filtry i status ładowania. Dziennik audytu jest
  * append-only i wyłącznie do odczytu (bez komend, bez zaznaczeń/akcji masowych), więc store
- * jest świadomie dużo prostszy niż `ProductStore` w Catalog (patrz `docs/frontend/selection-scope.md`
+ * jest świadomie dużo prostszy niż `ProductStore` w Catalog (patrz `docs/guides/frontend/selection-scope.md`
  * — tu nie ma czego zaznaczać).
  */
 @Injectable() // Rejestrowany na poziomie komponentu strony, żyje tylko tyle co widok

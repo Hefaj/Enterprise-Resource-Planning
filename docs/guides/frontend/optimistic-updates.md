@@ -1,3 +1,18 @@
+---
+id: frontend.optimistic-updates
+title: Nakładki optymistyczne
+summary: Nakładki optymistyczne z natychmiastowym skutkiem, rollbackiem i obsługą echa.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - optymistyczna aktualizacja
+  - ErpOptimisticStore
+related: []
+---
+
 # Nakładki optymistyczne
 
 Każdy zapis w systemie idzie przez `BatchEndpointBase` → `job`/`job_item` → `BulkCommandRunner`
@@ -18,7 +33,7 @@ Gdy piszesz komponent, który od razu pokazuje skutek własnej mutacji użytkown
 wykonał — zmiana stanu na karcie, przestawienie karty na tablicy, dodanie komentarza, zapis opisu.
 Jeśli Twój przypadek pasuje do listy w sekcji 7 ("Kiedy NIE stosować"), nie sięgaj po nakładkę —
 zwykły `runSingleCommandAsync`/`runBatchCommandAsync` z ewentualnym refetchem po zdarzeniu
-realtime wystarczy (patrz [`orchestrators.md` §6](./orchestrators.md#6-komendy-mutacje)).
+realtime wystarczy (patrz [`orchestrators.md` §6](orchestrators.md#6-komendy-mutacje)).
 
 ---
 
@@ -55,9 +70,9 @@ export interface ErpOptimisticOp<TValue> {
 }
 ```
 
-Definicja: [`optimistic.types.ts`](../../frontend/libs/shared/data-access/src/lib/optimistic/optimistic.types.ts).
+Definicja: [`optimistic.types.ts`](../../../frontend/libs/shared/data-access/src/lib/optimistic/optimistic.types.ts).
 
-Rejestr żyje w `ErpOptimisticStore` ([`optimistic.store.ts`](../../frontend/libs/shared/data-access/src/lib/optimistic/optimistic.store.ts))
+Rejestr żyje w `ErpOptimisticStore` ([`optimistic.store.ts`](../../../frontend/libs/shared/data-access/src/lib/optimistic/optimistic.store.ts))
 jako root-singleton — `signal<ReadonlyMap<string, readonly OptimisticEntry[]>>`, kluczowany
 `${scope}|${key}`. Klucz złożony, a nie zagnieżdżona mapa, bo to jedna, prosta struktura do
 przeglądania i czyszczenia — bez osobnej pętli po `scope`, gdy trzeba znaleźć jeden wpis.
@@ -207,14 +222,14 @@ public setStateOptimisticAsync(
 ```
 
 Ten sam wzorzec ma `setTypeOptimisticAsync` i `setDescriptionOptimisticAsync`
-([`issue.orchestrator.ts`](../../frontend/libs/modules/task-management/data-access/src/lib/orchestrators/issue/issue.orchestrator.ts)).
+([`issue.orchestrator.ts`](../../../frontend/libs/modules/task-management/data-access/src/lib/orchestrators/issue/issue.orchestrator.ts)).
 
 ---
 
 ## 5. Wpięcie B — kolekcje dziecięce (`IssueChildCache`)
 
 Komentarze, historia i załączniki zgłoszenia **nie są** w identity mapie — żyją w
-`IssueChildCache<T>` ([`issue-child-cache.ts`](../../frontend/libs/modules/task-management/data-access/src/lib/issue-child-cache.ts)),
+`IssueChildCache<T>` ([`issue-child-cache.ts`](../../../frontend/libs/modules/task-management/data-access/src/lib/issue-child-cache.ts)),
 zawężonym do `T extends { uuid: string }` (klucz elementu jest wymagany do wstawienia/podmiany/
 usunięcia przez patch).
 
@@ -263,7 +278,7 @@ removeOptimisticItem<T>(uuid): (current) => ...;                           // us
 ```
 
 **Usunięcie miękkie** (komentarz zostaje jako „usunięty”, treść znika, wpis w wątku zostaje —
-[`task-management.md` §11](../backend/task-management.md#11-historia-zmian-i-komentarze)) to
+[`task-management.md` §11](../../modules/task-management/domain.md#11-historia-zmian-i-komentarze)) to
 `replaceOptimisticItem`, NIE `removeOptimisticItem` — patrz `IssueActivityComponent.removeAsync`.
 `removeOptimisticItem` jest dla przyszłych kolekcji z prawdziwym twardym usunięciem.
 
@@ -276,7 +291,7 @@ wstawiony przez `insertOptimisticItem` ma DOKŁADNIE ten sam uuid, którym serwe
 na kanale `taskmgmt.issue_comment`. Dwa źródła (nakładka + echo z serwera) opisują ten sam wiersz,
 a nie dwa różne — dublowania nie ma.
 
-To znosi powód, dla którego dawniej `docs/frontend/task-management-pages.md` §2.3 zabraniał
+To znosi powód, dla którego dawniej `docs/modules/task-management/screens.md` §2.3 zabraniał
 optymistycznego wstawiania komentarzy: bez wspólnego uuid nakładka i echo byłyby dwoma różnymi
 wierszami przez chwilę widocznymi naraz.
 
@@ -287,7 +302,7 @@ wierszami przez chwilę widocznymi naraz.
 `ErpOptimisticStore` mieszka w `shared/data-access`, `ErpToastService` w `shared/ui` — te dwie
 biblioteki nie mogą się nawzajem widzieć (`type:data-access` → `{data-access, util}`, `type:ui` →
 `{ui, util}`). Most żyje więc w hoście
-([`erp-optimistic-rollback.bridge.ts`](../../frontend/apps/client/src/app/erp-optimistic-rollback.bridge.ts)),
+([`erp-optimistic-rollback.bridge.ts`](../../../frontend/apps/client/src/app/erp-optimistic-rollback.bridge.ts)),
 tym samym uzasadnieniem co `ErpJobToastBridge` — jedyna warstwa widząca obie naraz. Wstrzyknięty
 raz w `STARTUP()`, subskrybuje `rollbacks$` i tłumaczy pierwszy kod z `errorsSummary` przez
 `resolveErrorCodeKey` (`@erp/shared/ui`), z fallbackiem na `op.failureMessage`, a gdy go nie ma —
@@ -332,7 +347,7 @@ refetch po zdarzeniu realtime.
    Dla kolekcji użyj gotowego buildera z sekcji 5, jeśli pasuje.
 3. **Wystaw publiczną metodę `xxxOptimisticAsync`** na orkiestratorze/cache'u (nie wołaj
    `runOptimisticCommandAsync`/`runOptimisticListCommandAsync` wprost z `feature` — to `protected`
-   z premedytacją, patrz [`orchestrators.md` §6](./orchestrators.md#6-komendy-mutacje) o granicy
+   z premedytacją, patrz [`orchestrators.md` §6](orchestrators.md#6-komendy-mutacje) o granicy
    warstw).
 4. **W komponencie:** wykonaj bramki/potwierdzenia PRZED wywołaniem metody optymistycznej (dokładnie
    tak, jak dziś — `applyTransitionAsync` sprawdza `WF-004`/graf PRZED `setStateOptimisticAsync`).
@@ -412,10 +427,10 @@ wywołania metody `xxxOptimisticAsync` — `runAsync` nigdy nie rzuca.
 
 ## Zobacz też
 
-- [Orkiestratory (`data-access`)](./orchestrators.md) §6 — obrys komend, `runOptimisticCommandAsync`
+- [Orkiestratory (`data-access`)](orchestrators.md) §6 — obrys komend, `runOptimisticCommandAsync`
   jako czwarty wariant
 - [Operacje masowe (backend)](../backend/bulk-commands.md) §3 — `BulkCommandRunner`, `IJobQueueSignal`
-- [Podział na strony w Task Management](./task-management-pages.md) §2.2/§2.3 — pilotaż na tablicy
+- [Podział na strony w Task Management](../../modules/task-management/screens.md) §2.2/§2.3 — pilotaż na tablicy
   i karcie zgłoszenia
-- [Task Management (backend)](../backend/task-management.md) §7.3 — BRD-003, cofanie optymistycznego ruchu
-- [Powiadomienia na froncie](./notifications.md) — `ErpToastService`, `JobService`, `erpAwaitJobAsync`
+- [Task Management (backend)](../../modules/task-management/domain.md) §7.3 — BRD-003, cofanie optymistycznego ruchu
+- [Powiadomienia na froncie](notifications.md) — `ErpToastService`, `JobService`, `erpAwaitJobAsync`

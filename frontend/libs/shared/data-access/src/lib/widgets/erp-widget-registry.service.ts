@@ -54,7 +54,7 @@ export class ErpWidgetRegistryService {
    *
    * Providery lądują w child injectorze widżetu, a NIE w globalnym injectorze hosta —
    * scope Transloco remota nie może przesłaniać scope'ów pozostałych modułów
-   * (patrz docs/frontend/translations.md).
+   * (patrz docs/guides/frontend/translations.md).
    *
    * Zwraca `null`, gdy remote jest niedostępny — nagłówek ma wtedy pokazać pustą listę,
    * a nie wywalić całą aplikację.

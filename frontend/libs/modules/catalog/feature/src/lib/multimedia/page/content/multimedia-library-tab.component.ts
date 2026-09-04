@@ -77,7 +77,7 @@ export class MultimediaLibraryTabComponent {
   protected readonly currentFilters = computed(() => this.store.filters() as SearchMultimediaRequest);
   protected readonly selectionCount = computed(() => erpSelectionScopeCount(this.store.scope()));
 
-  /** Front chowa akcje, na które backend i tak odpowie 403 — patrz docs/backend/identity-authz.md §6. */
+  /** Front chowa akcje, na które backend i tak odpowie 403 — patrz docs/architecture/security.md §6. */
   private readonly canEdit = computed(() => this.permissionStore.has(ERP_PERMISSIONS.Catalog.MultimediaUpdate));
 
   protected readonly actionToolbar = ErpActionToolbarBuilder.create(b => b

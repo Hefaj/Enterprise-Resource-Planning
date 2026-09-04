@@ -17,7 +17,7 @@ export const remoteApiProviders: Provider[] = [
   { provide: TASK_MANAGEMENT_API_BASE_URL, useValue: 'http://localhost:5290' },
   // Osobny token od IDENTITY_API_BASE_URL (ta sama wartość) — `PermissionStore` żyje w
   // `@erp/shared/auth` (`type:auth`), które nie może zależeć od `@erp/identity/data-access`
-  // (`type:data-access`), patrz docs/backend/identity-authz.md §6 Faza 5.
+  // (`type:data-access`), patrz docs/architecture/security.md §6 Faza 5.
   { provide: IDENTITY_PERMISSIONS_API_BASE_URL, useValue: 'http://localhost:5280' },
   // Hub SignalR mieszka w Notification — domyślna ścieżka względna `/hubs/sync` zakłada
   // wspólny origin za gatewayem, którego jeszcze nie ma, więc do czasu jego powstania

@@ -9,7 +9,7 @@ import { IDENTITY_KEYS, provideIdentityTranslations } from '../translation';
  * żeby routing/menu/federacja miały się do czego podłączyć od pierwszego commita.
  *
  * Sekcja „Zarządzanie rolami" demonstruje `*erpHasPermission` dla całych sekcji (nie tylko
- * pojedynczych przycisków) — patrz docs/backend/identity-authz.md §6 Faza 5.
+ * pojedynczych przycisków) — patrz docs/architecture/security.md §6 Faza 5.
  */
 @Component({
   selector: 'erp-identity-dashboard',

@@ -58,11 +58,11 @@ import { IssueVM } from './issue.view-model';
 
 /**
  * Orkiestrator zgłoszeń (`Issue` — nigdy `Task`, patrz
- * `docs/backend/task-management.md` §2).
+ * `docs/modules/task-management/domain.md` §2).
  *
  * Projekt rozwiązuje się z sąsiedniego orkiestratora przez leniwe wstrzyknięcie `Injector`em —
  * ten sam wzorzec co `Product` → `Category` w Catalogu
- * (`docs/frontend/orchestrators.md` §2).
+ * (`docs/guides/frontend/orchestrators.md` §2).
  */
 @Injectable({ providedIn: 'root' })
 export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
@@ -175,7 +175,7 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
    * przyszło z formularza — tryb `Commands[]` wymaga identyfikatora w payloadzie.
    *
    * **Klucza czytelnego tu nie ma i być nie może**: nadaje go serwer z licznika projektu,
-   * w tej samej transakcji co zapis (`docs/backend/task-management.md` §4).
+   * w tej samej transakcji co zapis (`docs/modules/task-management/domain.md` §4).
    */
   public async createIssueAsync(command: IssueCreateCommand, queueId?: string): Promise<string> {
     const uuid = crypto.randomUUID();
@@ -236,11 +236,11 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   /**
    * Nadpisuje <b>całą</b> mapę wartości pól niestandardowych. Pole pominięte w mapie zostaje
    * wyczyszczone — komenda ma człon w liczbie mnogiej, więc to, co przyszło, jest tym, co
-   * zostaje (`docs/backend/endpoint-naming.md` §2).
+   * zostaje (`docs/guides/backend/endpoint-naming.md` §2).
    *
    * <p>Wartości jadą jako tekst w postaci kanonicznej (liczba z kropką, data ISO-8601 UTC,
    * użytkownik jako uuid), bo kontrakt NSwag musi mieć jeden typ na pole, a nie union zależny
-   * od danych z bazy (`docs/backend/task-management.md` §6).</p>
+   * od danych z bazy (`docs/modules/task-management/domain.md` §6).</p>
    */
   public setCustomFieldsAsync(command: IssueSetCustomFieldsCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueSetCustomFieldsMultipleCommand(p), command, {
@@ -253,7 +253,7 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   //
   // Komendy nazywają się `IssueSetParent…`/`IssueAddLink…`, bo agregatem jest ZGŁOSZENIE —
   // krawędź powiązania ma własny korzeń w bazie, ale operacja wychodzi zawsze z karty
-  // zgłoszenia (`docs/backend/task-management.md` §8.1).
+  // zgłoszenia (`docs/modules/task-management/domain.md` §8.1).
 
   /**
    * Ustawia albo zdejmuje rodzica. Pusty `parentUuid` wypina zgłoszenie z hierarchii — to
@@ -297,7 +297,7 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   /**
    * Zmiana stanu z natychmiastowym, optymistycznym skutkiem — karta zgłoszenia przerysowuje
    * się od razu, zamiast czekać na `BulkCommandRunner`. Patrz `runOptimisticCommandAsync` na
-   * bazie i `docs/frontend/optimistic-updates.md`. Bramki (`WF-004`, ostrzeżenia grafu) leżą
+   * bazie i `docs/guides/frontend/optimistic-updates.md`. Bramki (`WF-004`, ostrzeżenia grafu) leżą
    * PRZED wywołaniem tej metody, w komponencie — tak samo jak dziś.
    */
   public setStateOptimisticAsync(
@@ -382,7 +382,7 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   // ── Komendy wsadowe na zaznaczeniu z listy ──
   //
   // Cele buduje wywołujący przez `erpBuildBatchTargets(store.scope())`
-  // (`docs/frontend/selection-scope.md` §3) — nigdy ręcznym składaniem `targetUuids`.
+  // (`docs/guides/frontend/selection-scope.md` §3) — nigdy ręcznym składaniem `targetUuids`.
 
   public setStateMultipleAsync(
     payload: BatchCommandOfIssueSetStateCommandAndSearchIssueRequest,
@@ -504,7 +504,7 @@ export class TaskManagementIssueOrchestrator extends BaseOrchestrator<
   }
 
   /** Usuwa pojedynczy załącznik (ATT-002) — kasowanie pliku w magazynie idzie przez outbox,
-   * nie przez ten wywołanie (`docs/backend/media-storage.md` §4b). */
+   * nie przez ten wywołanie (`docs/guides/backend/media-storage.md` §4b). */
   public removeAttachmentAsync(command: IssueRemoveAttachmentCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.issueRemoveAttachmentMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.removeIssueAttachment,

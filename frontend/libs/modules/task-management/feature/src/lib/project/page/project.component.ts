@@ -12,7 +12,7 @@ import { provideProjectTranslations } from '../translation';
  * <p><b>Osobna strona, mimo że projekt jest przede wszystkim kontekstem listy zgłoszeń.</b>
  * Konfiguracja (pola, schemat stanów, członkowie) nie mieści się w przełączniku nad tabelą,
  * a wejście na kartę projektu musi mieć skąd nastąpić
- * (`docs/frontend/task-management-pages.md` §4.1).</p>
+ * (`docs/modules/task-management/screens.md` §4.1).</p>
  */
 @Component({
   selector: 'erp-task-management-project',

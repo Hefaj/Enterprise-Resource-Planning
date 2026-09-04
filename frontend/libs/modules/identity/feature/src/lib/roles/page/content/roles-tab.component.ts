@@ -20,7 +20,7 @@ import { ROLES_KEYS } from '../../translation';
 
 /** Nagłówek + pasek akcji + tabela ról. „Nowa rola" jest akcją sekcyjną (zawsze dostępna);
  * „Dodaj uprawnienie"/„Dodaj rolę składową" są akcjami zaznaczenia — działają na zasięgu
- * zaznaczonych ról (patrz `docs/frontend/selection-scope.md`), tak samo jak analogiczne akcje
+ * zaznaczonych ról (patrz `docs/guides/frontend/selection-scope.md`), tak samo jak analogiczne akcje
  * na stronie użytkowników. */
 @Component({
   selector: 'erp-identity-roles-tab',

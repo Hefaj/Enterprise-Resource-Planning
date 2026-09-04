@@ -41,4 +41,11 @@ export const remoteMenu: ErpNavigationItem[] = [
     iconId: 'network',
     route: 'brank-kind',
   },
+  {
+    label: 'shared.documentation.navigationLabel',
+    labelKey: 'shared.documentation.navigationLabel',
+    iconId: 'book-open',
+    route: 'documentation',
+    requiredPermission: ERP_PERMISSIONS.Catalog.ProductRead,
+  },
 ];

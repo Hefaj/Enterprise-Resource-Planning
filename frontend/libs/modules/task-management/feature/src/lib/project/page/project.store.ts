@@ -7,7 +7,7 @@ import { ProjectVM, SearchProjectRequest, TaskManagementProjectOrchestrator } fr
  *
  * <p>Świadomie <b>bez `ErpSelectionScope`</b>: projektów są dziesiątki, a operacji masowych na
  * nich nie ma i nie będzie — konfiguracja projektu to praca po jednym, na jego karcie
- * (`docs/frontend/task-management-pages.md` §4.1). Dokładanie zaznaczenia „na wszelki wypadek"
+ * (`docs/modules/task-management/screens.md` §4.1). Dokładanie zaznaczenia „na wszelki wypadek"
  * dawałoby toolbar bez akcji.</p>
  */
 @Injectable()

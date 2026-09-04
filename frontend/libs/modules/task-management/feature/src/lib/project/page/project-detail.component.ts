@@ -18,6 +18,7 @@ import { PROJECT_KIND } from '@erp/task-management/util';
 
 import { ProjectAutomationsComponent } from './content/project-automations.component';
 import { ProjectFieldsComponent } from './content/project-fields.component';
+import { ProjectNotificationsComponent } from './content/project-notifications.component';
 import { ProjectSlaComponent } from './content/project-sla.component';
 import { ProjectTagsComponent } from './content/project-tags.component';
 import { ProjectTypesComponent } from './content/project-types.component';
@@ -29,7 +30,7 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
  * Karta projektu — `/task-management/project/:uuid`.
  *
  * <p>Docelowo master-detail z zakładkami: pola, typy, SLA, stany, tablice, członkowie
- * (`docs/frontend/task-management-pages.md` §4.2). Zakładka SLA dochodzi w fazie 5
+ * (`docs/modules/task-management/screens.md` §4.2). Zakładka SLA dochodzi w fazie 5
  * (`SLA-001`); stany, tablice i członkowie zostają zaślepką, dopóki nie wejdzie faza, która je
  * wypełnia.</p>
  */
@@ -125,7 +126,7 @@ export class ProjectDetailComponent {
   );
 
   /**
-   * Master-detail z zakładkami (`docs/frontend/task-management-pages.md` §4.2) — dziś „pola"
+   * Master-detail z zakładkami (`docs/modules/task-management/screens.md` §4.2) — dziś „pola"
    * i „typy" (`TYP-001`); pozostałe (stany, tablice, członkowie, SLA) wchodzą razem z fazami,
    * które je wypełniają.
    */
@@ -175,6 +176,12 @@ export class ProjectDetailComponent {
               id: 'webhooks',
               label: PROJECT_KEYS.detail.webhooks.title,
               component: ProjectWebhooksComponent,
+              inputs: { project },
+            },
+            {
+              id: 'notifications',
+              label: PROJECT_KEYS.detail.notifications.title,
+              component: ProjectNotificationsComponent,
               inputs: { project },
             },
           ]

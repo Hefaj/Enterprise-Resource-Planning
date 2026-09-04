@@ -249,6 +249,7 @@
       "taskmgmtIssueAddWatcher": "Dodanie obserwującego",
       "taskmgmtIssueRemoveWatcher": "Usunięcie obserwującego",
       "taskmgmtProjectSetSla": "Zmiana SLA projektu",
+      "taskmgmtProjectSetNotificationMuted": "Zmiana wyciszenia powiadomień projektu",
       "taskmgmtBoardSetCardSprint": "Przeniesienie karty między backlogiem a sprintem",
       "taskmgmtSprintCreate": "Utworzenie sprintu",
       "taskmgmtSprintSetDates": "Zmiana planu sprintu",
@@ -431,5 +432,25 @@
       "taskmgmt_issue_overdue": "Minął termin zgłoszenia {{issueKey}} — {{issueTitle}}",
       "taskmgmt_request_delivered": "Zlecenie {{issueKey}} — {{issueTitle}} zostało zrealizowane"
     }
+  },
+  "documentation": {
+    "navigationLabel": "Dokumentacja",
+    "searchLabel": "Szukaj w dokumentacji",
+    "searchPlaceholder": "Wpisz co najmniej 2 znaki",
+    "noResults": "Nie znaleziono pasującego artykułu.",
+    "loading": "Ładowanie dokumentacji…",
+    "loadError": "Nie udało się załadować dokumentacji.",
+    "empty": "Artykuł nie jest dostępny.",
+    "skipToContent": "Przejdź do treści artykułu",
+    "topics": "Tematy",
+    "onThisPage": "Na tej stronie",
+    "mobileNavigation": "Pokaż tematy",
+    "closeMobileNavigation": "Zamknij tematy",
+    "previous": "Poprzedni temat",
+    "next": "Następny temat",
+    "help": "Pomoc",
+    "centerTitle": "Centrum pomocy",
+    "availableModules": "Dostępne moduły",
+    "partialError": "Część dokumentacji jest chwilowo niedostępna. Pozostałe moduły nadal działają."
   }
 }

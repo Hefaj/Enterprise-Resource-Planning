@@ -20,7 +20,7 @@ import { SprintExecCloseMetadata } from '../modal/sprint-exec-close/sprint-exec-
  * Stan podstrony backlogu — `/task-management/board/:uuid/backlog` (SPR-002).
  *
  * <p><b>Backlog i sprint dzielą ten sam mechanizm ranku, co kolumny tablicy kanbanowej</b>
- * (`docs/backend/task-management.md` §7.2, SPR-002 AC1): to wciąż jeden `board_card.rank`,
+ * (`docs/modules/task-management/domain.md` §7.2, SPR-002 AC1): to wciąż jeden `board_card.rank`,
  * a "kolumna" to tutaj przynależność do sprintu (`BoardCardVM.sprintUuid`), nie stan zgłoszenia.
  * Stąd `BoardSetCardSprintCommand` zamiast `BoardSetCardPositionCommand` — ta sama logika
  * sąsiadów, inne pole, które się zmienia.</p>
@@ -28,7 +28,7 @@ import { SprintExecCloseMetadata } from '../modal/sprint-exec-close/sprint-exec-
  * <p>Przesunięcie NIE idzie przez `ErpOptimisticStore` (jak na tablicy kanbanowej) — backlog
  * nie ma osobnych kolumn wygaszanych w locie ani modala pól wymaganych do obsłużenia w trakcie
  * przeciągania, więc prosty cykl „wyślij komendę → poczekaj na zadanie → odśwież" jest
- * wystarczający i nie dubluje maszynerii cofania (`docs/frontend/optimistic-updates.md`
+ * wystarczający i nie dubluje maszynerii cofania (`docs/guides/frontend/optimistic-updates.md`
  * — kiedy NIE stosować nakładki).</p>
  */
 @Injectable()

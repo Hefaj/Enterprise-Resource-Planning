@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.IssueTypes;
 /// Schemat systemowy typów zgłoszeń — <b>stałe identyfikatory</b>, tak samo jak
 /// <see cref="Workflow.WorkflowSchemeDefaults"/>: seed musi być powtarzalny między resetami
 /// bazy, a projekt zakładany bez wskazania schematu musi mieć na co wskazać
-/// (<c>docs/backend/task-management-requirements.md</c> TYP-002).
+/// (<c>docs/modules/task-management/requirements.md</c> TYP-002).
 ///
 /// <para>Pięć typów: <c>Epik</c> (Epic), <c>Funkcjonalność</c>/<c>Zadanie</c>/<c>Błąd</c>
 /// (Standard), <c>Podzadanie</c> (Subtask) — dokładnie tyle, ile trzeba, żeby zademonstrować

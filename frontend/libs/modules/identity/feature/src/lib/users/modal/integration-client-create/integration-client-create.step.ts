@@ -9,7 +9,7 @@ const GUID_PATTERN = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{
 
 /** `uuid` musi być dokładnie `sub` service-accounta klienta Keycloaka — admin go wkleja, front
  * tylko pilnuje kształtu GUID-a (backend i tak odrzuci kolizję/nieistniejący token przy
- * pierwszym użyciu, patrz `docs/backend/identity-authz.md` §2). */
+ * pierwszym użyciu, patrz `docs/architecture/security.md` §2). */
 function guidValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
   if (!value) return null;

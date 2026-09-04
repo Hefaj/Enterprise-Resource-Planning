@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Workflow;
 
 /// <summary>Jeden stan schematu. <see cref="NameKey"/> to <b>klucz tłumaczenia</b>, nie tekst —
 /// nazwy stanów są danymi wskazującymi na registry Transloco (patrz
-/// <c>docs/frontend/task-management-pages.md</c> §8).</summary>
+/// <c>docs/modules/task-management/screens.md</c> §8).</summary>
 public sealed class WorkflowState : Entity
 {
     /// <summary>Konstruktor dla EF Core.</summary>

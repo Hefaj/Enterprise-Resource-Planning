@@ -15,7 +15,7 @@ namespace Catalog.Application.Multimedia;
 /// wiersz wskazujący na nieistniejący plik, a przy padnięciu magazynu — plik, o którym nikt już
 /// nie wie. Koperta wypuszczona przez outbox zapisuje się w <b>tej samej transakcji</b>, co
 /// usunięcie wiersza, i doczeka się ponowienia po restarcie
-/// (<c>docs/backend/media-storage.md</c> §4b).</para>
+/// (<c>docs/guides/backend/media-storage.md</c> §4b).</para>
 ///
 /// <para><b>Liczbę referencji podaje handler, a decyzję podejmuje agregat.</b> Agregat nie
 /// sięga do bazy — tak samo jak przy wykrywaniu cykli w rolach Identity. Handler wykonuje

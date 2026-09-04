@@ -33,8 +33,8 @@ public sealed class UserNotificationConfiguration : IEntityTypeConfiguration<Use
         // `read_at is null` jest wybierane z każdego wiersza feedu przy każdym starcie aplikacji.
         builder.HasIndex(n => n.UserId).HasFilter("read_at IS NULL");
 
-        // Deduplikacja po grupie — tylko wśród jeszcze nieprzeczytanych (patrz docs/backend/
-        // user-notifications.md §4.2): odbiorca, który już przeczytał poprzednie wystąpienie,
+        // Deduplikacja po grupie — tylko wśród jeszcze nieprzeczytanych (patrz
+        // docs/modules/notification/user-notifications.md): odbiorca, który już przeczytał poprzednie wystąpienie,
         // ma dostać nowy wpis, nie cichą inkrementację czegoś, czego już nie zobaczy.
         builder.HasIndex(n => new { n.UserId, n.GroupKey })
             .IsUnique()

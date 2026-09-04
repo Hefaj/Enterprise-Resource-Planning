@@ -12,7 +12,7 @@ namespace TaskManagement.Reports.Command;
 ///
 /// <para><b>Dlaczego to NIE jest endpoint wsadowy</b>, mimo że każda inna komenda zapisu nim jest.
 /// Raport już jest operacją zbiorczą — zbiorczą po rekordach, nie po przebiegach. Zlecenie pięciu
-/// raportów naraz nie jest przypadkiem użycia (patrz <c>docs/backend/reporting.md</c> §5.4).</para>
+/// raportów naraz nie jest przypadkiem użycia (patrz <c>docs/architecture/reporting.md</c> §5.4).</para>
 ///
 /// <para>Endpoint zwraca <see cref="BatchResult"/> mimo braku wsadu — kształt odpowiedzi zostaje
 /// ten sam, co przy operacjach masowych, bo frontend rejestruje zadanie w <c>JobService</c>
@@ -52,7 +52,7 @@ public sealed class ReportRunCreateCommandEndpoint : Endpoint<ReportRunCreateCom
         ArgumentNullException.ThrowIfNull(req);
 
         // Granicę transakcji wyznacza pipeline komend — handler świadomie nie woła IUnitOfWork
-        // (patrz docs/backend/cqrs.md §3). Powtórzone żądanie z tym samym `X-Request-Id` nie
+        // (patrz docs/guides/backend/cqrs.md §3). Powtórzone żądanie z tym samym `X-Request-Id` nie
         // zleci drugiego raportu, tylko odda identyfikator pierwszego przebiegu.
         var runUuid = await _dispatcher.SendAsync<ReportRunCreateCommand, Guid>(req, ct);
 

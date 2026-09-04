@@ -15,7 +15,7 @@ import { JOB_KEYS } from '@erp/notification/ui';
  *
  * <p>Klucz tytułu (`titleKey`) i parametry (`params`) przychodzą gotowe z backendu
  * (`IssueNotificationPublisher`), więc wiersz tylko je tłumaczy — front nie zna treści zdania,
- * tylko konwencję `shared.notifications.kinds.*` (`docs/backend/user-notifications.md` §3).</p>
+ * tylko konwencję `shared.notifications.kinds.*` (`docs/modules/notification/user-notifications.md` §3).</p>
  */
 @Component({
   selector: 'erp-user-notification-list',

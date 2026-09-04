@@ -22,7 +22,7 @@ namespace Catalog.Application.Multimedia;
 /// <para><b>Zadanie kończy się sukcesem, gdy zlecenie zostało przyjęte</b>, a nie gdy
 /// miniaturka jest gotowa. To jest ta sama granica, co przy wgrywaniu, i trzeba ją znać
 /// czytając raport zadania: plik, którego Skia nie zdekoduje, zostawia tu <c>succeeded</c>
-/// i ląduje wyłącznie w logu konsumenta (<c>docs/backend/endpoint-naming.md</c> §5 —
+/// i ląduje wyłącznie w logu konsumenta (<c>docs/guides/backend/endpoint-naming.md</c> §5 —
 /// <c>Exec</c> bez zmiany encji nie wygeneruje nawet <c>AggregateChanged</c>; to zdarzenie
 /// przyjdzie dopiero z konsumenta, gdy warianty faktycznie powstaną).</para>
 ///

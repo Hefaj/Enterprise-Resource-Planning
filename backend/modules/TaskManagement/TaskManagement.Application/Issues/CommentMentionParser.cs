@@ -8,7 +8,7 @@ namespace TaskManagement.Application.Issues;
 /// <para>Format jest kontraktem z edytorem: wzmianka renderuje się jako
 /// <c>&lt;span data-mention-user-uuid="…"&gt;@Imię&lt;/span&gt;</c> — atrybut, nie tekst, żeby
 /// zmiana wyświetlanego imienia (front rozwiązuje uuid na nazwisko przez
-/// <c>ERP_USER_DIRECTORY</c>, <c>docs/frontend/user-directory.md</c>) nie gubiła wzmianki.
+/// <c>ERP_USER_DIRECTORY</c>, <c>docs/guides/frontend/user-directory.md</c>) nie gubiła wzmianki.
 /// Parsowanie idzie PO sanityzacji: <c>data-*</c> jest na białej liście sanitizera tak samo,
 /// jak atrybuty obrazka wklejanego ze schowka (faza 4).</para>
 /// </summary>

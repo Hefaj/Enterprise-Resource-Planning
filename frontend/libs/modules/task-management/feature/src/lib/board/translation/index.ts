@@ -9,7 +9,7 @@ export { BOARD_KEYS } from './keys';
  *
  * Dokłada scope modułowy (`taskManagement`), bo nazwy kolumn i priorytetów na kartach
  * przychodzą z bazy jako klucze, a nie z tego pliku
- * (`docs/frontend/task-management-pages.md` §8). `provideTaskManagementTranslations`
+ * (`docs/modules/task-management/screens.md` §8). `provideTaskManagementTranslations`
  * wciąga już `provideSharedTranslations`, więc nie powtarzamy go tutaj.
  */
 export function provideBoardTranslations(): Provider[] {

@@ -10,12 +10,12 @@ import { USER_ACCOUNT_KIND } from '@erp/identity/util';
 import { USERS_KEYS } from '../../../translation';
 
 /** Tabela listy użytkowników — `selectionMode` input (domyślnie `'multi'`, checkboxy), bo strona
- * ma zarówno akcje masowe toolbara (patrz `docs/frontend/selection-scope.md`), jak i panel
+ * ma zarówno akcje masowe toolbara (patrz `docs/guides/frontend/selection-scope.md`), jak i panel
  * szczegółów zależny od zaznaczenia dokładnie jednego wiersza (`UsersStore.selectedUuid`).
  * Konsument dostaje pełny `ErpSelectionState<UserVM>` przez `selectionChange` — to on, przez
  * `erpResolveSelectionScope`, rozstrzyga „lista czy filtr", nie ta tabela. `selectionMode` jest
- * inputem, nie wartością zaszytą na sztywno w builderze — patrz `docs/frontend/smart-tables.md`
- * §2 (anatomia smart tabeli) i `docs/frontend/pages.md` §10 (częste błędy). */
+ * inputem, nie wartością zaszytą na sztywno w builderze — patrz `docs/guides/frontend/smart-tables.md`
+ * §2 (anatomia smart tabeli) i `docs/guides/frontend/pages.md` §10 (częste błędy). */
 @Component({
   selector: 'erp-identity-users-table',
   standalone: true,
@@ -86,7 +86,7 @@ export class IdentityUsersTableComponent {
       // `UserAccountQueries.SearchAsync` (backend) ignoruje `request.Sorts` — zawsze zwraca
       // `OrderBy(Email)`, bez whitelisty `ApplySorting`. Sortowanie wyłączone na każdej kolumnie,
       // żeby klik w nagłówek nie obiecywał zmiany kolejności, której backend i tak nie wykona
-      // (patrz docs/frontend/smart-tables.md §6).
+      // (patrz docs/guides/frontend/smart-tables.md §6).
       .addColumn((c) => c.setId('email').setAccessorKey('email').setHeader(USERS_KEYS.table.columns.email).setEnableSorting(false).setSize(280))
       .addColumn((c) =>
         c.setId('displayName').setAccessorKey('displayName').setHeader(USERS_KEYS.table.columns.displayName).setEnableSorting(false).setSize(220),

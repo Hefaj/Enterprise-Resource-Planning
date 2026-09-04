@@ -388,7 +388,7 @@ export class MultimediaTabComponent {
    * więc listy plików pozostałych celów po prostu nie zna; zebranie jej wymagałoby pobrania
    * galerii wszystkich pasujących produktów tylko po to, żeby odesłać ją z powrotem. Komenda
    * `SetMultimedia` z pustą listą adresuje stan docelowy, jest idempotentna i nie zależy od tego,
-   * co front zdążył wczytać (`docs/backend/endpoint-naming.md` §2).
+   * co front zdążył wczytać (`docs/guides/backend/endpoint-naming.md` §2).
    */
   protected onDeleteMass(): void {
     const targets = this.tabStore.batchTargets();

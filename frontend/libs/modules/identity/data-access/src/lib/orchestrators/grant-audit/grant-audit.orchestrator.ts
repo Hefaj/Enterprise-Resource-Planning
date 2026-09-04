@@ -7,7 +7,7 @@ import { GrantAuditVM } from './grant-audit.view-model';
 
 /**
  * Orkiestrator dziennika audytu nadań (`grant_audit`) — append-only log kto/komu/co/kiedy
- * nadał lub odebrał (rola, uprawnienie), patrz `docs/backend/events-outbox.md`. Wyłącznie
+ * nadał lub odebrał (rola, uprawnienie), patrz `docs/architecture/integration-events.md`. Wyłącznie
  * do odczytu: brak komend, brak mutacji.
  *
  * `signalrSignature` nie odpowiada żadnej realnej sygnaturze `AggregateSignatures` na

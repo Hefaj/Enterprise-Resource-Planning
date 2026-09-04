@@ -24,10 +24,10 @@ interface EffectivePermissionRow {
 /**
  * Zakładka „Efektywne uprawnienia" — płaski, tylko-do-odczytu zbiór (bezpośrednie + przez
  * wszystkie role w łańcuchu dziedziczenia) WSZYSTKICH zaznaczonych użytkowników w jednej
- * tabeli, pogrupowany po użytkowniku (patrz `docs/frontend/pages.md` §6).
+ * tabeli, pogrupowany po użytkowniku (patrz `docs/guides/frontend/pages.md` §6).
  *
  * BEZ rozwinięcia „skąd" — backend eksponuje ścieżkę dziedziczenia (`GetMyPermissionSources`)
- * tylko dla `/me` (patrz `docs/backend/identity-authz.md` §9), rozszerzenie na dowolnego
+ * tylko dla `/me` (patrz `docs/architecture/security.md` §9), rozszerzenie na dowolnego
  * użytkownika to osobny przyrost backendowy.
  */
 @Component({

@@ -62,7 +62,7 @@ public interface IIssueCommentRepository
 /// projekcją przez <see cref="IIssueActivityQueries"/>, jak każdy inny odczyt w tym module.</para>
 ///
 /// <para>Wpis powstaje w tej samej jednostce pracy, co zmiana, którą opisuje — nie ma ścieżki,
-/// w której zmiana się zapisze, a historia nie (<c>docs/backend/task-management.md</c> §11).</para>
+/// w której zmiana się zapisze, a historia nie (<c>docs/modules/task-management/domain.md</c> §11).</para>
 /// </summary>
 public interface IIssueActivityWriter
 {
@@ -98,7 +98,7 @@ public interface IBoardRepository
 /// przestawia się <b>zawsze w kontekście całej tablicy</b>, bo rank wylicza się z sąsiadów.
 /// Metoda „znajdź jedną kartę” zachęcałaby do policzenia ranku bez wiedzy o sąsiadach, czyli
 /// do jedynego błędu, przed którym cały ten schemat ma chronić
-/// (<c>docs/backend/task-management.md</c> §7.2).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §7.2).</para>
 /// </summary>
 public interface IBoardCardRepository
 {
@@ -272,7 +272,7 @@ public interface IFieldSchemeRepository
 /// a nie dostęp do zgłoszeń po stronie zapisu. Reguła, której broni („mapowanie pole↔slot jest
 /// niezmienne po pierwszym użyciu"), mieszka poza <see cref="FieldScheme"/>, bo dane, o które
 /// pyta, leżą na zgłoszeniach — a agregat nie widzi poza swoją granicę
-/// (<c>docs/backend/task-management.md</c> §6).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §6).</para>
 /// </summary>
 public interface IFieldUsageProbe
 {
@@ -299,7 +299,7 @@ public interface IProjectKeyCounterWriter
 /// <para>Abstrakcja istnieje, bo implementacja jest <b>zapytaniem SQL</b>
 /// (<c>UPDATE … RETURNING</c>), a nie operacją na agregacie — a warstwa aplikacji nie zna
 /// SQL-a. Wywołanie musi trafić w tę samą transakcję, co zapis zgłoszenia
-/// (<c>docs/backend/task-management.md</c> §4).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §4).</para>
 /// </summary>
 public interface IIssueKeyAllocator
 {

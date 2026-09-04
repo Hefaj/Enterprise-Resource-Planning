@@ -1,7 +1,7 @@
 import { MaybeSignal } from '@erp/shared/ui';
 
 /**
- * Karta na tablicy (`docs/frontend/task-management-pages.md` §9.3) — niesie klucz, tytuł,
+ * Karta na tablicy (`docs/modules/task-management/screens.md` §9.3) — niesie klucz, tytuł,
  * znacznik typu, awatar przypisanego, priorytet; tagi i estymatę dokłada faza 6.
  */
 export interface ErpIssueCardConfig {

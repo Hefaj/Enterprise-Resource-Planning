@@ -55,7 +55,7 @@ interface IssueAttachmentRow {
  *
  * <p><b>Usunięcie pojedynczego załącznika (ATT-002)</b> kasuje wiersz od razu, a bajty w magazynie
  * sprząta konsument zdarzenia <c>ArtifactDeletionRequested</c> po zatwierdzeniu transakcji —
- * nigdy gołe wywołanie <c>DeleteAsync</c> z tego miejsca (`docs/backend/media-storage.md` §4b).</p>
+ * nigdy gołe wywołanie <c>DeleteAsync</c> z tego miejsca (`docs/guides/backend/media-storage.md` §4b).</p>
  */
 @Component({
   selector: 'erp-task-management-issue-attachments',

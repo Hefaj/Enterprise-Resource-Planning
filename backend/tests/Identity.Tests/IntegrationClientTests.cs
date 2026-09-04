@@ -6,7 +6,7 @@ namespace Identity.Tests;
 
 /// <summary>
 /// API-003 — klucz integracyjny jako klient Keycloaka z własnym zestawem uprawnień. Patrz
-/// <c>docs/backend/identity-authz.md</c> §2.
+/// <c>docs/architecture/security.md</c> §2.
 ///
 /// <para><c>IntegrationClientCreateCommandHandler</c> (który zawija <c>UserAccount.CreateServiceAccount</c>
 /// w <c>CommandHandler&lt;,&gt;</c>) nie da się skonstruować w izolowanym unit teście — bazowa

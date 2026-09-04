@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Projects;
 
 /// <summary>
 /// Projekt — właściciel konfiguracji, <b>granica widoczności i granica numeracji</b>
-/// (<c>docs/backend/task-management.md</c> §3).
+/// (<c>docs/modules/task-management/domain.md</c> §3).
 ///
 /// <para>Faza 0 niesie kod, nazwę, rodzaj, schemat stanów i członków. Schemat pól
 /// (<c>FieldScheme</c>, sloty) dochodzi w fazie 3, SLA w fazie 5 — nie zakładamy kolumn
@@ -13,6 +13,7 @@ namespace TaskManagement.Domain.Projects;
 public sealed class Project : AggregateRoot
 {
     private readonly List<ProjectMember> _members = [];
+    private readonly List<Guid> _mutedNotificationUserUuids = [];
 
     /// <summary>Konstruktor dla EF Core.</summary>
     private Project()
@@ -67,6 +68,17 @@ public sealed class Project : AggregateRoot
     public bool IsPublic { get; private set; }
 
     public IReadOnlyList<ProjectMember> Members => _members.AsReadOnly();
+
+    /// <summary>Użytkownicy, którzy wyciszyli powiadomienia z tego projektu (NTF-003) —
+    /// ustawienie <b>osobiste</b>: każdy wycisza dla siebie, admin nie zarządza cudzym.
+    /// Prosta tablica na agregacie, nie osobna tabela — ten sam poziom prostoty co pola SLA
+    /// niżej (pięć płaskich kolumn zamiast dziecięcej encji).
+    ///
+    /// <para><b>Wzmianki (<c>taskmgmt.issue.mentioned</c>) omijają to wyciszenie</b> — filtr
+    /// stosuje <c>IssueNotificationPublisher</c>, nie ten agregat: wzmianka jest jawnym
+    /// wywołaniem konkretnej osoby, więc globalne wyciszenie projektu jej nie połyka, tak jak
+    /// wyciszenie kanału w typowych komunikatorach nadal przepuszcza `@wzmianki`.</para></summary>
+    public IReadOnlyList<Guid> MutedNotificationUserUuids => _mutedNotificationUserUuids.AsReadOnly();
 
     /// <summary>Widok domyślny projektu (VIEW-002) — automatycznie stosowany na liście zgłoszeń
     /// przy wejściu w kontekst tego projektu, dopóki użytkownik nie wybierze innego widoku w
@@ -263,6 +275,28 @@ public sealed class Project : AggregateRoot
                 $"Użytkownik {userUuid} nie jest członkiem projektu.");
 
         _members.Remove(existing);
+    }
+
+    /// <summary>Wycisza albo odcisza powiadomienia z tego projektu dla jednego użytkownika
+    /// (NTF-003) — idempotentnie: powtórne wyciszenie już wyciszonego (albo odciszenie już
+    /// odciszonego) nic nie zmienia. <paramref name="now"/> jest przyjmowany dla spójności z
+    /// resztą mutatorów agregatu (por. <c>SetSla</c>), choć ta operacja dziś nie niesie
+    /// znacznika czasu na samym agregacie.</summary>
+    public void SetNotificationMuted(Guid userUuid, bool muted, DateTimeOffset now)
+    {
+        _ = now;
+
+        if (muted)
+        {
+            if (!_mutedNotificationUserUuids.Contains(userUuid))
+            {
+                _mutedNotificationUserUuids.Add(userUuid);
+            }
+        }
+        else
+        {
+            _mutedNotificationUserUuids.Remove(userUuid);
+        }
     }
 
     private static string ValidateCode(string code)

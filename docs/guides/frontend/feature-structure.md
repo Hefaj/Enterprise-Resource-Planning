@@ -1,8 +1,23 @@
+---
+id: frontend.feature-structure
+title: Struktura katalogów agregatu w warstwie `feature`
+summary: Rozmieszczenie stron, modali, komponentów i tłumaczeń agregatu w warstwie feature.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - struktura katalogów feature
+  - gdzie umieścić page modal lub komponent
+related: []
+---
+
 # Struktura katalogów agregatu w warstwie `feature`
 
-Ten dokument opisuje **gdzie kłaść pliki** wewnątrz `libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/`. Nie opisuje, jak te pliki mają wyglądać w środku — od tego są [pages.md](./pages.md), [smart-tables.md](./smart-tables.md), [modals.md](./modals.md), [selection-scope.md](./selection-scope.md).
+Ten dokument opisuje **gdzie kłaść pliki** wewnątrz `libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/`. Nie opisuje, jak te pliki mają wyglądać w środku — od tego są [pages.md](pages.md), [smart-tables.md](smart-tables.md), [modals.md](modals.md), [selection-scope.md](selection-scope.md).
 
-Implementacja referencyjna: [`catalog/feature/src/lib/product/`](../../frontend/libs/modules/catalog/feature/src/lib/product/) — każdy kolejny agregat ma wyglądać tak samo, żeby ścieżka do pliku była do przewidzenia bez przeszukiwania drzewa.
+Implementacja referencyjna: [`catalog/feature/src/lib/product/`](../../../frontend/libs/modules/catalog/feature/src/lib/product) — każdy kolejny agregat ma wyglądać tak samo, żeby ścieżka do pliku była do przewidzenia bez przeszukiwania drzewa.
 
 ---
 
@@ -40,7 +55,7 @@ libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/
 
 **W `lib/` nie leżą żadne pliki luzem — wyłącznie katalogi jednostek.** Jednostką jest agregat (`product/`, `users/`), ale też strona modułu, która agregatu nie ma: dashboard startowy modułu to `lib/dashboard/` z `page/dashboard.component.ts` i własnym `translation/` (scope `identity`/`catalog`/… to po prostu scope tej strony — pozostałe strony mają swoje). Dashboard bywa placeholderem bez filtra, listy i store'a; brakujące części po prostu nie istnieją, ale te, które są, leżą tam gdzie zawsze. Nie ma „modułowego" poziomu obok jednostek — jeśli coś naprawdę jest wspólne dla całego modułu, jego miejsce to `util`/`ui`/`data-access` modułu, nie luźny plik w `feature/src/lib/`.
 
-Cztery katalogi najwyższego poziomu (`components`, `modal`, `page`, `translation`) są **stałe** — agregat może nie mieć któregoś (np. brak modali), ale nigdy nie dokłada piątego. Wszystko, co nie pasuje do żadnego z nich, prawdopodobnie nie należy do warstwy `feature` — patrz [architektura](./architecture.md) (`ui` dla komponentów prezentacyjnych, `util` dla helperów/modeli, `data-access` dla orkiestratorów).
+Cztery katalogi najwyższego poziomu (`components`, `modal`, `page`, `translation`) są **stałe** — agregat może nie mieć któregoś (np. brak modali), ale nigdy nie dokłada piątego. Wszystko, co nie pasuje do żadnego z nich, prawdopodobnie nie należy do warstwy `feature` — patrz [architektura](../../architecture/frontend.md) (`ui` dla komponentów prezentacyjnych, `util` dla helperów/modeli, `data-access` dla orkiestratorów).
 
 ---
 
@@ -60,7 +75,7 @@ Nazwa pliku i selektor niosą prefiks modułu, bo te komponenty wychodzą poza m
 
 ## 3. `modal/` — modale edycyjne agregatu
 
-Jeden podkatalog na modal, nazwany jak komenda, którą modal wysyła — typ z klienta NSwag bez sufiksu `Command`, w kebab-case (`ProductSetNameCommand` → `product-set-name/`, patrz [modals.md](./modals.md#konwencja-nazewnicza-modal-nazywa-się-jak-komenda)). W środku `*.definition.ts` + `*.step.ts` + `index.ts`, a na wierzchu `modal/index.ts` re-eksportujący wszystkie modale agregatu — to on jest re-eksportowany z barrela biblioteki i to jego widzi `entry.modals.ts` kontraktu. Szczegóły zawartości: [modals.md](./modals.md).
+Jeden podkatalog na modal, nazwany jak komenda, którą modal wysyła — typ z klienta NSwag bez sufiksu `Command`, w kebab-case (`ProductSetNameCommand` → `product-set-name/`, patrz [modals.md](modals.md#konwencja-nazewnicza-modal-nazywa-się-jak-komenda)). W środku `*.definition.ts` + `*.step.ts` + `index.ts`, a na wierzchu `modal/index.ts` re-eksportujący wszystkie modale agregatu — to on jest re-eksportowany z barrela biblioteki i to jego widzi `entry.modals.ts` kontraktu. Szczegóły zawartości: [modals.md](modals.md).
 
 Modale są tu, a nie w `page/`, celowo: otwiera je toolbar strony, ale ładowane są leniwie przez `ErpModalService` i mogą być otwarte z dowolnego miejsca aplikacji — nie są częścią drzewa komponentów strony.
 
@@ -76,9 +91,9 @@ Każda strona, niezależnie od agregatu, ma dokładnie te elementy, zawsze pod t
 
 | Plik | Rola |
 |---|---|
-| `AGGREGATE.component.ts` | szkielet `erp-grid-layout` — deklaracja obszarów siatki, nic więcej ([pages.md §1](./pages.md#1-szkielet-erp-grid-layout)) |
-| `AGGREGATE.store.ts` | store strony — filtry, sortowanie, zaznaczenie, zasięg ([pages.md §4](./pages.md#4-store-strony--jedno-źródło-prawdy-o-filtrach-i-zaznaczeniu)) |
-| `filters/AGGREGATE-filter.component.ts` | obszar `filter` — `ErpFilterBuilder`, woła store ([pages.md §2](./pages.md#2-filtry-filter)) |
+| `AGGREGATE.component.ts` | szkielet `erp-grid-layout` — deklaracja obszarów siatki, nic więcej ([pages.md §1](pages.md#1-szkielet-erp-grid-layout)) |
+| `AGGREGATE.store.ts` | store strony — filtry, sortowanie, zaznaczenie, zasięg ([pages.md §4](pages.md#4-store-strony--jedno-źródło-prawdy-o-filtrach-i-zaznaczeniu)) |
+| `filters/AGGREGATE-filter.component.ts` | obszar `filter` — `ErpFilterBuilder`, woła store ([pages.md §2](pages.md#2-filtry-filter)) |
 
 `filters/` jest osobnym katalogiem, mimo że zwykle trzyma jeden plik — filtr rozrasta się o pola niestandardowe (`addCustomFormField`), które mają wtedy gdzie zamieszkać obok niego.
 
@@ -93,7 +108,7 @@ Podział wewnątrz `content/` jest **po miejscu renderowania**, nie po domenie:
   - `AGGREGATE-list.component.ts` albo inna nazwa opisowa — gdy zakładek nie ma i nic tu nie jest zakładką (`grant-audit-list`, `permissions-catalog-list`).
 
   Nie nazywaj go `AGGREGATE-content.component.ts` — słowo „content" niesie już katalog, w którym plik leży.
-- **`content/side-panel/`** — zakładki obszaru `rightPanel`, czyli panele zależne od zaznaczenia ([pages.md §6](./pages.md#6-panel-boczny-zależny-od-zaznaczenia-kolejne-zakładki-rightpanel)). Wspólna baza ich store'ów (`AGGREGATE-scope-tab.store.ts` — cienka klasa nad `ErpScopeTabStore` z `libs/shared/ui`, patrz [pages.md §6.1](./pages.md#61-store-zakładki-dziedziczy-po-wspólnej-bazie-zasięgu-strony)) leży płasko w `side-panel/`, bo jest dzielona przez wszystkie panele; każdy panel dostaje własny podkatalog ze swoim komponentem, store'em, modelem wiersza i komórkami.
+- **`content/side-panel/`** — zakładki obszaru `rightPanel`, czyli panele zależne od zaznaczenia ([pages.md §6](pages.md#6-panel-boczny-zależny-od-zaznaczenia-kolejne-zakładki-rightpanel)). Wspólna baza ich store'ów (`AGGREGATE-scope-tab.store.ts` — cienka klasa nad `ErpScopeTabStore` z `libs/shared/ui`, patrz [pages.md §6.1](pages.md#61-store-zakładki-dziedziczy-po-wspólnej-bazie-zasięgu-strony)) leży płasko w `side-panel/`, bo jest dzielona przez wszystkie panele; każdy panel dostaje własny podkatalog ze swoim komponentem, store'em, modelem wiersza i komórkami.
 
 Zakładki zagnieżdżone (`children: [...]` w `addTab`) dostają jeden wspólny podkatalog rodzica — np. `side-panel/sales-offer/` z `exclusion-tab.component.ts` i `delivery-tab.component.ts` — bez powielania słowa `tabs` w nazwie katalogu (sufiks `-tab` w nazwie pliku już to mówi).
 
@@ -103,7 +118,7 @@ Strona bez zakładek ma samo `content/AGGREGATE-tab.component.ts`, bez `side-pan
 
 ## 5. `translation/`
 
-`pl-PL.json`, `en-US.json`, `index.ts` (provider scope'u) i **autogenerowany** `keys.ts`. Scope tłumaczeń jest per agregat, nie per moduł — dlatego katalog jest tutaj, a nie w `lib/`. Nigdy nie edytuj `keys.ts` ręcznie; po dodaniu kluczy do JSON-ów uruchom `pnpm translate:keys`. Szczegóły: [translations.md](./translations.md).
+`pl-PL.json`, `en-US.json`, `index.ts` (provider scope'u) i **autogenerowany** `keys.ts`. Scope tłumaczeń jest per agregat, nie per moduł — dlatego katalog jest tutaj, a nie w `lib/`. Nigdy nie edytuj `keys.ts` ręcznie; po dodaniu kluczy do JSON-ów uruchom `pnpm translate:keys`. Szczegóły: [translations.md](translations.md).
 
 ---
 
@@ -116,7 +131,7 @@ Nowy plik, nie wiadomo gdzie:
 3. Czy to szkielet, store strony albo filtr? → płasko w `page/` (`filters/` dla filtra)
 4. Czy renderuje się w prawym panelu? → `page/content/side-panel/CHILD_NAME/`
 5. Reszta treści strony → `page/content/`
-6. Nic z powyższych → to nie jest plik warstwy `feature`; szukaj miejsca w `ui`, `util` albo `data-access` ([architektura](./architecture.md))
+6. Nic z powyższych → to nie jest plik warstwy `feature`; szukaj miejsca w `ui`, `util` albo `data-access` ([architektura](../../architecture/frontend.md))
 
 ---
 
@@ -137,21 +152,21 @@ Zgodne z tym dokumentem: cały `catalog/feature` (`product`, `category`) i cały
 
 Do przemigrowania przy najbliższej większej zmianie w tych plikach (nie ruszaj ich „przy okazji" innego zadania):
 
-- `notification/feature/src/lib/job/` — ma poprawne `page/`, ale z katalogiem `tabs/` zamiast `content/` i `components/notification-job-table/` bez poziomu rodzaju (`tables/`). Panel `erp-job-list` (dawniej luzem w `job-list/` poza `page/`) jest już przeniesiony do `components/lists/erp-job-list/` — patrz [notifications.md §10.1](./notifications.md#10-skrzynka-powiadomień--osobny-widżet-w-nagłówku).
-- `inventory/feature/src/lib/inventory.component.ts` i `sales/feature/src/lib/sales.component.ts` — placeholdery leżące luzem w `lib/`, wygenerowane starą wersją przepisu z [new-module.md](./new-module.md); ich miejsce to `lib/dashboard/page/dashboard.component.ts`.
+- `notification/feature/src/lib/job/` — ma poprawne `page/`, ale z katalogiem `tabs/` zamiast `content/` i `components/notification-job-table/` bez poziomu rodzaju (`tables/`). Panel `erp-job-list` (dawniej luzem w `job-list/` poza `page/`) jest już przeniesiony do `components/lists/erp-job-list/` — patrz [notifications.md §10.1](notifications.md#10-skrzynka-powiadomień--osobny-widżet-w-nagłówku).
+- `inventory/feature/src/lib/inventory.component.ts` i `sales/feature/src/lib/sales.component.ts` — placeholdery leżące luzem w `lib/`, wygenerowane starą wersją przepisu z [new-module.md](new-module.md); ich miejsce to `lib/dashboard/page/dashboard.component.ts`.
 
 Odstępstwa, które **nie** są kwestią struktury katalogów i nie naprawia ich przeniesienie plików:
 
-- `identity/roles` nie ma filtra — jego siatka to `['tabs tabs', 'content rightPanel']`, więc `page/filters/` u niego nie istnieje. Filtr jest częścią stałą page'a wg [pages.md §2](./pages.md#2-filtry-filter); brak filtra to dług tej strony, nie osobna konwencja do naśladowania.
+- `identity/roles` nie ma filtra — jego siatka to `['tabs tabs', 'content rightPanel']`, więc `page/filters/` u niego nie istnieje. Filtr jest częścią stałą page'a wg [pages.md §2](pages.md#2-filtry-filter); brak filtra to dług tej strony, nie osobna konwencja do naśladowania.
 - `identity/permissions` nie ma `components/` — żaden z jego komponentów nie wychodzi poza stronę, więc wszystkie leżą w `page/content/`. To poprawny wynik reguły z §2, nie brak.
 
 ---
 
 ## Zobacz też
 
-- [Architektura frontendu](./architecture.md) — podział na 5 warstw modułu i granice między nimi (co w ogóle wolno importować z `feature`)
-- [Page dla agregatu](./pages.md) — zawartość plików z `page/`
-- [Smart tabele](./smart-tables.md) — zawartość `components/tables/`
-- [Modale](./modals.md) — zawartość `modal/`
-- [Tłumaczenia](./translations.md) — zawartość `translation/`
-- [Nowy moduł](./new-module.md) — jak powstaje biblioteka `feature`, w której to drzewo mieszka
+- [Architektura frontendu](../../architecture/frontend.md) — podział na 5 warstw modułu i granice między nimi (co w ogóle wolno importować z `feature`)
+- [Page dla agregatu](pages.md) — zawartość plików z `page/`
+- [Smart tabele](smart-tables.md) — zawartość `components/tables/`
+- [Modale](modals.md) — zawartość `modal/`
+- [Tłumaczenia](translations.md) — zawartość `translation/`
+- [Nowy moduł](new-module.md) — jak powstaje biblioteka `feature`, w której to drzewo mieszka

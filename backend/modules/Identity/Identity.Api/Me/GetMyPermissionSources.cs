@@ -5,7 +5,7 @@ using Identity.Application.Users;
 namespace Identity.Me;
 
 /// <summary>Efektywne uprawnienia zalogowanego użytkownika Z ROZWINIĘCIEM ŹRÓDŁA — zasila
-/// ekran "skąd to uprawnienie" (Faza 4, patrz <c>docs/backend/identity-authz.md</c> §6).
+/// ekran "skąd to uprawnienie" (Faza 4, patrz <c>docs/architecture/security.md</c> §6).
 /// Osobny endpoint od <see cref="GetMyPermissionsEndpoint"/>: ten zwraca więcej danych niż
 /// front potrzebuje na starcie (<c>PermissionStore</c> chce tylko płaskiej listy kodów).</summary>
 public sealed class GetMyPermissionSourcesEndpoint : EndpointWithoutRequest<List<EffectivePermissionSourceDto>>

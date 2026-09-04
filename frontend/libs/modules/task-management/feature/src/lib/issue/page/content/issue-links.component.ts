@@ -19,7 +19,7 @@ import { ISSUE_KEYS } from '../../translation';
  *
  * <p>Cała prezentacja (rodzic, podzadania, krawędzie grafu, formularz dodania) mieszka teraz
  * w `@erp/task-management/ui`; ten komponent trzyma wyłącznie to, co zna orkiestrator: graf,
- * rozwiązanie klucza→uuid i komendy (`docs/frontend/task-management-pages.md` §2.3).</p>
+ * rozwiązanie klucza→uuid i komendy (`docs/modules/task-management/screens.md` §2.3).</p>
  */
 @Component({
   selector: 'erp-task-management-issue-links',
@@ -142,7 +142,7 @@ export class IssueLinksComponent {
    * Ustawia albo zdejmuje rodzica po kluczu czytelnym.
    *
    * <p>Pętli front nie sprawdza: robi to reguła wsadowa rekurencyjnym CTE, a handler powtarza
-   * sprawdzenie jako drugą linię obrony (`docs/backend/task-management.md` §8.2).</p>
+   * sprawdzenie jako drugą linię obrony (`docs/modules/task-management/domain.md` §8.2).</p>
    */
   protected async setParentAsync(key: string | undefined): Promise<void> {
     this._saving.set(true);

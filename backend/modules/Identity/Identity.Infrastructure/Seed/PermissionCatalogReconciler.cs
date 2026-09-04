@@ -12,7 +12,7 @@ namespace Identity.Infrastructure.Seed;
 /// <summary>
 /// Uzgadnia <c>permission_catalog</c> z <see cref="Permissions.All"/> przy KAŻDYM starcie —
 /// nie tylko przy pustej bazie, inaczej niż zwykły seed. Katalog jest kodem (patrz
-/// <c>docs/backend/identity-authz.md</c> §3), więc musi się synchronizować z bazą za każdym
+/// <c>docs/architecture/security.md</c> §3), więc musi się synchronizować z bazą za każdym
 /// razem, gdy kod się zmienia: nowy kod → wstawiany; kod, którego już nie ma w
 /// <see cref="Permissions.All"/> → oznaczany <c>is_obsolete = true</c>, NIGDY kasowany
 /// (istniejące nadania mogą wciąż na niego wskazywać).

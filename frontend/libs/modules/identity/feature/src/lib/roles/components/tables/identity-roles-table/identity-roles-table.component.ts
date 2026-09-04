@@ -9,10 +9,10 @@ import { ROLES_KEYS } from '../../../translation';
 /** Tabela ról w trybie 'client' — CAŁY zbiór ról jest już w cache orkiestratora (strona ładuje
  * go raz na starcie, patrz `RolesStore`), więc nie ma tu żadnego serwerowego wyszukiwania.
  * `selectionMode` input (domyślnie `'multi'`, checkboxy) — strona ma akcje masowe toolbara
- * (patrz `docs/frontend/selection-scope.md`) i panel szczegółów zależny od zaznaczenia dokładnie
+ * (patrz `docs/guides/frontend/selection-scope.md`) i panel szczegółów zależny od zaznaczenia dokładnie
  * jednego wiersza (`RolesStore.selectedUuid`). Konsument dostaje pełny `ErpSelectionState<RoleVM>`
  * — `selectionMode` jest inputem, nie wartością zaszytą na sztywno w builderze, patrz
- * `docs/frontend/smart-tables.md` §2 i `docs/frontend/pages.md` §10 (częste błędy). */
+ * `docs/guides/frontend/smart-tables.md` §2 i `docs/guides/frontend/pages.md` §10 (częste błędy). */
 @Component({
   selector: 'erp-identity-roles-table',
   standalone: true,

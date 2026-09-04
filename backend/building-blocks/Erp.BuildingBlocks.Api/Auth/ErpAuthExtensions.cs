@@ -12,7 +12,7 @@ namespace Erp.BuildingBlocks.Api.Auth;
 /// Adres i identyfikator klienta Keycloaka — jedynego IdP w systemie. Autoryzacja (role,
 /// uprawnienia) żyje w osobnym mikroserwisie Identity i NIE jest tu walidowana — ten plik
 /// odpowiada wyłącznie za pytanie „kim jesteś", nie „co możesz" (patrz
-/// <c>docs/backend/identity-authz.md</c> §1).
+/// <c>docs/architecture/security.md</c> §1).
 /// </summary>
 public sealed class KeycloakOptions
 {

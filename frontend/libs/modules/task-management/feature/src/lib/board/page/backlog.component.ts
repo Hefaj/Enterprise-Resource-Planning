@@ -17,7 +17,7 @@ const BACKLOG_LIST_ID = 'backlog';
 
 /**
  * Strona `/task-management/board/:uuid/backlog` — podstrona tablicy scrumowej, nie osobna
- * pozycja w menu (`docs/frontend/task-management-pages.md` §2.4).
+ * pozycja w menu (`docs/modules/task-management/screens.md` §2.4).
  *
  * <p>Dwie listy obok siebie: backlog i sprint pokazywany obok niego (aktywny, a w jego braku
  * pierwszy planowany). Przeciąganie między nimi zmienia przynależność karty do sprintu

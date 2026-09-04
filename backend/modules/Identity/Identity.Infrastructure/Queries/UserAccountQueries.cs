@@ -9,7 +9,7 @@ namespace Identity.Infrastructure.Queries;
 
 /// <summary>Odczyty użytkowników. Efektywne uprawnienia idą surowym rekursywnym CTE —
 /// patrz uzasadnienie w <c>RoleQueries.IsDescendantAsync</c> i zapytanie referencyjne
-/// w <c>docs/backend/identity-authz.md</c> §2.</summary>
+/// w <c>docs/architecture/security.md</c> §2.</summary>
 public sealed class UserAccountQueries : IUserAccountQueries
 {
     private readonly IdentityDbContext _dbContext;

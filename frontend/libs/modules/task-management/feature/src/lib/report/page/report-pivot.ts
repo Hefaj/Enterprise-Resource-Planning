@@ -1,6 +1,6 @@
 /**
  * Parsowanie CSV raportu `taskmgmt.hours-by-department` (RPT-002) na tabelę przestawną,
- * renderowaną wprost na stronie — patrz `docs/frontend/task-management-pages.md` §9.4.
+ * renderowaną wprost na stronie — patrz `docs/modules/task-management/screens.md` §9.4.
  *
  * <p>Kolumny CSV (stałe, ustalone przez definicję raportu backendu):
  * <c>department_code, department_name, zagadnienie_key, period, hours</c>.</p>

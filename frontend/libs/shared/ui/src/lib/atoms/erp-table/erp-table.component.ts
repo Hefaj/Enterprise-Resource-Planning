@@ -993,7 +993,7 @@ export class ErpTableComponent<T> implements AfterViewInit {
         // włączeniu zaznaczania). Pominięcie tego merge'a dla zapisanego stanu zostawiało takie
         // kolumny całkiem poza `columnOrder` — TanStack dokleja je wtedy na sam koniec listy
         // widocznych kolumn, więc np. kolumna zaznaczania renderowała się jako ostatnia zamiast
-        // pierwsza, mimo poprawnego pinningu (patrz identity-users-table, docs/frontend/pages.md §10).
+        // pierwsza, mimo poprawnego pinningu (patrz identity-users-table, docs/guides/frontend/pages.md §10).
         this._columnOrder.set(finalOrder);
         this._columnPinning.set(newPinning);
         

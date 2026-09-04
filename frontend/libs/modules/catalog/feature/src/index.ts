@@ -18,3 +18,4 @@ export * from './lib/category/translation';
 
 export * from './lib/warranty/components/pickers/catalog-warranty-picker/catalog-warranty-picker.component';
 export * from './lib/warranty/translation';
+export * from './lib/documentation';

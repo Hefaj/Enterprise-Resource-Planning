@@ -44,7 +44,7 @@ export const appConfig: ApplicationConfig = {
         erpPermissionErrorInterceptor,
       ]),
     ),
-    // Authorization Code + PKCE przeciw Keycloakowi — patrz docs/backend/identity-authz.md §5-6.
+    // Authorization Code + PKCE przeciw Keycloakowi — patrz docs/architecture/security.md §5-6.
     provideAuth({
       config: {
         authority: 'http://localhost:8080/realms/erp',

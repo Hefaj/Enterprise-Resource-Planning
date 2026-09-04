@@ -11,7 +11,7 @@ import { provideIssueTranslations } from '../translation';
  *
  * <p><b>Bez zakładek i bez prawego panelu</b>, bo faza 0 nie ma jeszcze żadnej treści zależnej
  * od zaznaczenia: komentarze i historia wiszą przy zgłoszeniu i mieszkają na jego karcie, a nie
- * w panelu obok listy. Zgodnie z `docs/frontend/pages.md` §3 nie dokładamy `ErpTabsBuilder`
+ * w panelu obok listy. Zgodnie z `docs/guides/frontend/pages.md` §3 nie dokładamy `ErpTabsBuilder`
  * ani obszarów `tabs`/`rightPanel`, dopóki nie ma czego w nich pokazać.</p>
  */
 @Component({

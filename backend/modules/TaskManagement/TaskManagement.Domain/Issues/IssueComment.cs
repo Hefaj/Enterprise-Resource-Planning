@@ -5,7 +5,7 @@ namespace TaskManagement.Domain.Issues;
 /// <summary>
 /// Komentarz pod zgłoszeniem.
 ///
-/// <para><b>Wątkowanie jest jednopoziomowe</b> (<c>docs/backend/task-management.md</c> §11):
+/// <para><b>Wątkowanie jest jednopoziomowe</b> (<c>docs/modules/task-management/domain.md</c> §11):
 /// odpowiedź wskazuje komentarz główny i nic głębiej. Drzewo bez ograniczenia głębokości
 /// wymaga w UI wcięć, zwijania i decyzji „co pokazać przy dwudziestym poziomie”, a dyskusja
 /// przy zgłoszeniu i tak toczy się w jednym wątku — to nie jest forum.</para>

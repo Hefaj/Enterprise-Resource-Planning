@@ -42,7 +42,7 @@ import { ISSUE_KEYS } from '../../translation';
  *
  * <p>Zaznaczenie z tabeli trafia do store'a, nie zostaje lokalne — to jedyna droga, którą zasięg
  * (`ErpSelectionScope`) dociera do akcji masowych. Cele buduje `erpBuildBatchTargets(scope)`,
- * nigdy ręczne składanie `targetUuids` (`docs/frontend/selection-scope.md` §3).</p>
+ * nigdy ręczne składanie `targetUuids` (`docs/guides/frontend/selection-scope.md` §3).</p>
  *
  * <p><b>Przypisanie ma trzy drogi, bo to trzy różne czynności.</b> „Przypisz do mnie" i „zdejmij
  * przypisanie" idą wprost komendą — osoby nie trzeba wybierać, więc modal byłby tylko klikiem
@@ -196,7 +196,7 @@ export class IssueTabComponent {
   );
 
   /** Dwuklik w wiersz otwiera kartę — po KLUCZU czytelnym, nie po uuid, bo ta sama trasa krąży
-   * w mailach i commitach (`docs/frontend/task-management-pages.md` §2.3). */
+   * w mailach i commitach (`docs/modules/task-management/screens.md` §2.3). */
   protected openIssue(issue: IssueVM): void {
     void this._router.navigate(['/task-management/issue', issue.key]);
   }

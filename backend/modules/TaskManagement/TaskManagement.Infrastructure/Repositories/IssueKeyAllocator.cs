@@ -7,7 +7,7 @@ namespace TaskManagement.Infrastructure.Repositories;
 
 /// <summary>
 /// Nadaje klucze czytelne (<c>DEV-123</c>) jednym <c>UPDATE … RETURNING</c> na wierszu licznika
-/// projektu (<c>docs/backend/task-management.md</c> §4).
+/// projektu (<c>docs/modules/task-management/domain.md</c> §4).
 ///
 /// <para><b>Dlaczego surowy SQL, a nie wczytanie licznika przez EF.</b> Odczyt-modyfikacja-zapis
 /// przez śledzenie zmian to klasyczny wyścig: dwie instancje odczytają ten sam <c>next_number</c>,

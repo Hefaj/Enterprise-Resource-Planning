@@ -43,7 +43,7 @@ export interface MultimediaDownloadResult {
  * jedno archiwum — przy pierwszym takim komplecie przeglądarka pyta użytkownika o zgodę na
  * „pobieranie wielu plików". Dla dziesiątek zdjęć to działa; dla setek właściwą drogą jest
  * archiwum składane po stronie serwera i wydawane jako artefakt zadania
- * (`docs/backend/exports-artifacts.md`) — tego endpointu jeszcze nie ma.
+ * (`docs/guides/backend/exports-artifacts.md`) — tego endpointu jeszcze nie ma.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogMultimediaDownloadService {

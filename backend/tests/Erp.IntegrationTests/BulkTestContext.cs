@@ -12,7 +12,7 @@ namespace Erp.IntegrationTests;
 /// Agregat testowy z <b>licznikiem wykonań</b>.
 ///
 /// <para>Licznik, a nie flaga „zrobione": kryterium akceptacji z
-/// <c>docs/backend/multi-instance.md</c> §10 wymaga wykazania, że żaden element nie został
+/// <c>docs/architecture/multi-instance.md</c> §10 wymaga wykazania, że żaden element nie został
 /// wykonany <b>dwukrotnie</b>. Flaga idempotentna nie odróżniłaby jednego wykonania od dwóch,
 /// a <c>job_item.attempts</c> liczy próby runnera, nie faktyczne skutki uboczne w danych —
 /// czyli mierzyłby to, co sam runner o sobie sądzi.</para>

@@ -6,7 +6,7 @@ namespace Erp.BuildingBlocks.Application.Commands;
 /// Zatwierdza jednostkę pracy po komendzie, która jest właścicielem transakcji.
 ///
 /// <para><b>Co to zmienia w handlerach.</b> Nic — i o to chodzi. Handler nadal nie woła
-/// <c>SaveChanges</c> (patrz <c>docs/backend/cqrs.md</c> §3), zmienia się tylko to, że granicę
+/// <c>SaveChanges</c> (patrz <c>docs/guides/backend/cqrs.md</c> §3), zmienia się tylko to, że granicę
 /// wyznacza teraz pipeline, a nie każdy wywołujący z osobna. Endpoint pojedynczej komendy nie
 /// musi już pamiętać o zapisie — a to jest błąd, którego kompilator nie łapie i który kończy
 /// się odpowiedzią „200 OK" bez żadnej zmiany w bazie.</para>

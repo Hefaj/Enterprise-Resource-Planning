@@ -16,7 +16,7 @@ import { USERS_KEYS } from '../translation';
  * (`frontend/libs/modules/catalog/feature/src/lib/product/page/product.component.ts`).
  *
  * Panel boczny otwiera i zamyka WYŁĄCZNIE wybór zakładki, nigdy zaznaczenie w tabeli
- * (patrz `docs/frontend/pages.md` §3): zakładka `'list'` (bez `component`) to stan
+ * (patrz `docs/guides/frontend/pages.md` §3): zakładka `'list'` (bez `component`) to stan
  * "panel schowany", każda kolejna to alternatywny widok otwierany na żądanie —
  * niezależnie od tego, czy i co jest zaznaczone. Za komunikat "nic nie wybrano"
  * odpowiada sama zakładka, nie warunek `collapsed`.

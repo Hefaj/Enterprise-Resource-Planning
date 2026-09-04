@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Issues;
 
 /// <summary>
 /// Wpis historii zgłoszenia — <b>tylko do dopisywania</b>, nigdy do zmiany ani usunięcia
-/// (<c>docs/backend/task-management.md</c> §11).
+/// (<c>docs/modules/task-management/domain.md</c> §11).
 ///
 /// <para><b>To nie jest to samo, co <c>AggregateChanged</c> ze skanu ChangeTrackera.</b> Tamto
 /// mówi „coś się zmieniło” na potrzeby cache’u i powstaje automatycznie; to jest <b>treść

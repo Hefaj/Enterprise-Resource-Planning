@@ -10,7 +10,7 @@ const AUTH_KEYS = SHARED_KEYS.auth;
 
 /**
  * Strona pokazywana, gdy `erpPermissionGuard` odrzuci nawigację (brak wymaganego
- * uprawnienia) — patrz docs/backend/identity-authz.md §6 Faza 5. Zostaje w chromie appki
+ * uprawnienia) — patrz docs/architecture/security.md §6 Faza 5. Zostaje w chromie appki
  * (trasa-dziecko `ShellLayoutComponent`), nie wylogowuje — to tylko komunikat, prawdziwe
  * egzekwowanie i tak jest po stronie backendu.
  */

@@ -4,14 +4,14 @@
  * Każdy ID to hash MD5 gwarantujący unikalność i niezależność od konwencji nazewnictwa.
  * Definiowane w warstwie `util` (lekka, zero zależności od komponentów), żeby mogły być
  * importowane zarówno przez `feature` (definicje modali), jak i `contract` (lekki
- * `remoteModalIds` ładowany przy STARTUP) — patrz `docs/frontend/modals.md`.
+ * `remoteModalIds` ładowany przy STARTUP) — patrz `docs/guides/frontend/modals.md`.
  *
  * ─── Generowanie nowego ID ───
  *   node -e "console.log(require('crypto').createHash('md5').update('scope.entity.action').digest('hex'))"
  */
 
 /** Modal: utworzenie zgłoszenia. Klucza czytelnego (`DEV-123`) nie ma w formularzu —
- * nadaje go serwer z licznika projektu (`docs/backend/task-management.md` §4). */
+ * nadaje go serwer z licznika projektu (`docs/modules/task-management/domain.md` §4). */
 export const ISSUE_CREATE_MODAL_ID = 'a2a75be5cf5dfedd42585637cb253b65';
 
 /** Modal: seryjna zmiana stanu zgłoszeń. */
@@ -24,7 +24,7 @@ export const ISSUE_SET_ASSIGNEE_MODAL_ID = '45ee67c3d582d94b6502ffe26f49a1a8';
 /** Modal: uzupełnienie pól wymaganych przez przejście (`WorkflowTransitionDto.requiredFields`,
  * WF-004) — otwiera się PRZED wysłaniem `IssueSetStateCommand`, gdy zgłoszeniu brakuje choć
  * jednej wartości. Anulowanie nie zmienia niczego: karta na tablicy nie rusza się z miejsca
- * (`docs/backend/task-management.md` §5.2, AC1). */
+ * (`docs/modules/task-management/domain.md` §5.2, AC1). */
 export const WORKFLOW_REQUIRED_FIELDS_MODAL_ID = '7009eb9ed7477ebaee96320cabb2bd1b';
 
 /** Modal: utworzenie sprintu (nazwa, cel, zakres dat) — SPR-001. Uuid generuje klient, tak samo

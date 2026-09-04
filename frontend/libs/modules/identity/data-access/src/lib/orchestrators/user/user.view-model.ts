@@ -4,7 +4,7 @@ import { RoleVM } from '../role/role.view-model';
 /**
  * Przypisanie roli wzbogacone o rozwiązaną rolę — `UserAccountDto.roleGrants` to lista OBIEKTÓW
  * przypisania (nie samych UUID-ów), więc wzbogacona wersja nadpisuje pole pod tą samą nazwą wg
- * wzorca z `docs/frontend/orchestrators.md` §4 (rozszerzenie elementu, nie zduplikowane pole).
+ * wzorca z `docs/guides/frontend/orchestrators.md` §4 (rozszerzenie elementu, nie zduplikowane pole).
  */
 export interface UserRoleGrantVM extends UserRoleGrantDto {
   readonly role: RoleVM | null;

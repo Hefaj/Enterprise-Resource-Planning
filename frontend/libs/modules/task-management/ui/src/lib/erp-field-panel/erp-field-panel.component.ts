@@ -17,7 +17,7 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
 /**
  * Prawy panel pól karty zgłoszenia — stan i przejścia na górze, potem typ i metadane
- * (`docs/frontend/task-management-pages.md` §9.1, decyzja 1: „panel pól jest po prawej
+ * (`docs/modules/task-management/screens.md` §9.1, decyzja 1: „panel pól jest po prawej
  * i to on trzyma stan").
  */
 @Component({

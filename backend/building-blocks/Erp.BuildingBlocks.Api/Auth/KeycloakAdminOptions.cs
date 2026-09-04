@@ -3,7 +3,7 @@ namespace Erp.BuildingBlocks.Api.Auth;
 /// <summary>
 /// Poświadczenia service-account klienta <c>erp-identity-service</c>, używane wyłącznie przez
 /// <see cref="IKeycloakAdminClient"/> do wymuszonego wylogowania (patrz
-/// <c>docs/backend/identity-authz.md</c> Faza 6). Dziś rejestrowane tylko w
+/// <c>docs/architecture/security.md</c> Faza 6). Dziś rejestrowane tylko w
 /// <c>Identity.Api</c> — inne mikroserwisy nie potrzebują Admin API Keycloaka.
 /// </summary>
 public sealed class KeycloakAdminOptions

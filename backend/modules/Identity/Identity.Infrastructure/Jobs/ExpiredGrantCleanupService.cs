@@ -13,7 +13,7 @@ namespace Identity.Infrastructure.Jobs;
 /// <summary>
 /// Sprząta nadania ról, którym minął termin ważności (<c>user_role.expires_at</c>) — bez tego
 /// wygasłe nadanie zostaje w bazie i nadal trafia do efektywnych uprawnień, dopóki ktoś ręcznie
-/// go nie odbierze (patrz <c>docs/backend/identity-authz.md</c> Faza 6).
+/// go nie odbierze (patrz <c>docs/architecture/security.md</c> Faza 6).
 ///
 /// <para><b>Wiele instancji.</b> Przebieg bierze dzierżawę <c>identity:expired-grant-cleanup</c>;
 /// instancja bez niej pomija tykniecie i wraca za pięć minut. Samo odbieranie ról zniosłoby

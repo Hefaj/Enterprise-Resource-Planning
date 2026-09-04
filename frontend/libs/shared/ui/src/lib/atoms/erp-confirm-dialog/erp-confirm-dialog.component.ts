@@ -20,7 +20,7 @@ import { ErpConfirmAppearance, ErpConfirmDialogConfig } from './erp-confirm-dial
  * to, czego `TUI_CONFIRM` nie ma: wydźwięk destrukcyjny, lista skutków i spinner na przycisku.
  *
  * Komponent **nie deklaruje** providerów Transloco — to by przesłoniło scope modułu, z którego
- * dialog został otwarty (patrz docs/frontend/translations.md §2). Klucze modułowe są pełne
+ * dialog został otwarty (patrz docs/guides/frontend/translations.md §2). Klucze modułowe są pełne
  * (`product.base....`), więc rozwiązują się przez globalny serwis.
  */
 @Component({

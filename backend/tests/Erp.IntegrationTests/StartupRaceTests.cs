@@ -13,7 +13,7 @@ using Xunit;
 namespace Erp.IntegrationTests;
 
 /// <summary>
-/// Kryterium akceptacji fazy 2 (<c>docs/backend/multi-instance.md</c> §10): <b>równoległy start
+/// Kryterium akceptacji fazy 2 (<c>docs/architecture/multi-instance.md</c> §10): <b>równoległy start
 /// trzech instancji na pustej bazie</b>.
 ///
 /// <para>To jest najostrzejsze ryzyko z całej listy wieloinstancyjnej — nie nieaktualny UI, tylko

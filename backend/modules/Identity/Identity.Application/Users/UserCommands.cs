@@ -13,8 +13,8 @@ namespace Identity.Application.Users;
 /// podszyć pod innego admina przez sam payload.
 ///
 /// <para><c>Uuid</c> (nie <c>UserUuid</c>) — nazwa wymagana przez <see cref="IAggregateCommand"/>:
-/// <c>BulkCommandRunner</c> podstawia tu identyfikator elementu zadania. Patrz Faza 1
-/// w <c>docs/backend/identity-bulk-migration.md</c>.</para></summary>
+/// <c>BulkCommandRunner</c> podstawia tu identyfikator elementu zadania. Patrz
+/// <c>docs/guides/backend/bulk-commands.md</c>.</para></summary>
 public sealed class UserAddRoleCommand : ICommand<Guid>, IAggregateCommand
 {
     public Guid Uuid { get; set; }

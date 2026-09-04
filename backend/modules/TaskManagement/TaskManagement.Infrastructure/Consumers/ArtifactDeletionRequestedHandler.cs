@@ -7,7 +7,7 @@ namespace TaskManagement.Infrastructure.Consumers;
 /// <summary>
 /// Kasuje w magazynie plik, którego rekord właśnie zniknął z bazy (ATT-002) — wzorem
 /// <c>Catalog.Infrastructure.Consumers.ArtifactDeletionRequestedHandler</c>
-/// (<c>docs/backend/media-storage.md</c> §4b).
+/// (<c>docs/guides/backend/media-storage.md</c> §4b).
 /// </summary>
 public static class ArtifactDeletionRequestedHandler
 {

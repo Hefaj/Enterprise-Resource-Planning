@@ -1,6 +1,21 @@
+---
+id: backend.bulk-commands
+title: Operacje masowe
+summary: Trwałe operacje masowe oparte na job, job_item i BulkCommandRunner.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - operacja masowa bulk
+  - BatchEndpointBase lub BulkCommandRunner
+related: []
+---
+
 # Operacje masowe
 
-**Stan: ✅ działa.** Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
+Dokument opisuje obowiązujący kontrakt operacji masowych.
 
 Zadanie masowe jest **wierszem w bazie** razem ze swoimi elementami — przeżywa restart procesu
 i wznawia się od pierwszego nieprzetworzonego elementu. Kolejka w pamięci procesu byłaby tu
@@ -36,14 +51,14 @@ wyliczenia `JobStatus`, żeby nie ruszyć liczb, którymi zapisane są pozostał
 
 `job_item.command_json` bywa `null` — patrz tryby w sekcji 2.
 
-Definicje: [`Job.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/Job.cs),
-[`JobItem.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/JobItem.cs).
+Definicje: [`Job.cs`](../../../backend/building-blocks/Erp.BuildingBlocks.Jobs/Job.cs),
+[`JobItem.cs`](../../../backend/building-blocks/Erp.BuildingBlocks.Jobs/JobItem.cs).
 
 ---
 
 ## 2. Endpoint — trzy tryby jednego kontraktu
 
-[`BatchEndpointBase<TCommand, TFilter>`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/BatchEndpointBase.cs)
+[`BatchEndpointBase<TCommand, TFilter>`](../../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/BatchEndpointBase.cs)
 przyjmuje `BatchCommand<TCommand, TFilter>` i sprowadza go do listy `JobTarget`:
 
 | Tryb | Pole żądania | `JobItem.CommandJson` |
@@ -82,7 +97,7 @@ Zamiast poświęcać atomowość, zakładanie zostało rozbite:
 1. **Nagłówek** `job` w stanie `Draft` — zwykły `SaveChanges`, bez koperty i bez zdarzeń.
    (`Entry(job).State = Added`, nie `Jobs.Add(job)` — to drugie przeszłoby po grafie i wciągnęło
    do ChangeTrackera wszystkie elementy, czyli dokładnie te wiersze, które zaraz wstawi `COPY`.)
-2. **Elementy** przez [`IJobItemBulkWriter`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/IJobItemBulkWriter.cs)
+2. **Elementy** przez [`IJobItemBulkWriter`](../../../backend/building-blocks/Erp.BuildingBlocks.Jobs/IJobItemBulkWriter.cs)
    — binarne `COPY` po tym samym połączeniu.
 3. **Przyjęcie**: `job.MarkAccepted()` (`Draft` → `Pending`) razem z publikacją `JobAccepted`,
    w **jednej transakcji**, przez `IIntegrationEventPublisher`.
@@ -109,20 +124,20 @@ wstawienia niekompletnego wiersza.
 > (`Job.Create`), a `GetMatchingUuidsAsync` całą listę uuidów — przy 50 tys. celów to ~33 MB
 > sterty na żądanie. Strumieniowanie `SELECT uuid` → `COPY` bez pośredniej listy jest możliwe,
 > ale wymagałoby oderwania pre-checku wsadowego od pełnego zbioru celów (reguły z
-> [`batch-validation.md`](./batch-validation.md) z definicji widzą cały wsad naraz).
+> [`batch-validation.md`](batch-validation.md) z definicji widzą cały wsad naraz).
 > Przy setkach tysięcy celów warte rewizji; przy dzisiejszej skali nieistotne.
 
 ---
 
 ## 3. Wykonanie — `BulkCommandRunner`
 
-[`BulkCommandRunner<TContext>`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/BulkCommandRunner.cs)
+[`BulkCommandRunner<TContext>`](../../../backend/building-blocks/Erp.BuildingBlocks.Jobs/BulkCommandRunner.cs)
 to `BackgroundService` **czytający z bazy**, nie z kolejki w pamięci — restart w połowie zadania
 wznawia pracę od pierwszego nieprzetworzonego `job_item`, zamiast gubić całość.
 
 Pętla: znajdź najstarsze `Pending`/`Running` zadanie → weź do `ChunkSize` (domyślnie 500,
 `BulkJobs:ChunkSize`) jego elementów ze statusem `Pending` → przetwórz w jednej transakcji.
-Brak pracy → czekaj na [`IJobQueueSignal`](../../backend/building-blocks/Erp.BuildingBlocks.Jobs/IJobQueueSignal.cs)
+Brak pracy → czekaj na [`IJobQueueSignal`](../../../backend/building-blocks/Erp.BuildingBlocks.Jobs/IJobQueueSignal.cs)
 z sufitem `IdlePollingInterval` (domyślnie 2 s) i pętla od nowa.
 
 > **`IJobQueueSignal` — budzik, nie kolejka.** `JobStore.CreateAsync` woła `_signal.Signal()`
@@ -135,7 +150,7 @@ z sufitem `IdlePollingInterval` (domyślnie 2 s) i pętla od nowa.
 > w jedno. **Wewnątrzprocesowy, celowo**: budzi WYŁĄCZNIE runner w tym samym procesie; jeśli
 > zadanie podejmie inna instancja, znajdzie je na swoim zwykłym pollu — dokładnie jak dziś. To
 > jest podpowiedź, nie stan współdzielony, więc nie wymaga niczego dodatkowego w wieloinstancyjności
-> ([`multi-instance.md`](./multi-instance.md)).
+> ([`multi-instance.md`](../../architecture/multi-instance.md)).
 >
 > **Wybór zadania jest wyłączny.** Zadanie blokuje się przez `FOR UPDATE SKIP LOCKED` na wierszu
 > `job`, w **tej samej transakcji** co wykonanie chunka — jeden runner na zadanie, N runnerów nad
@@ -143,7 +158,7 @@ z sufitem `IdlePollingInterval` (domyślnie 2 s) i pętla od nowa.
 > w kolejce do najstarszego zadania i flota zdegenerowałaby się do jednego pracującego procesu.
 > Blokada puszcza commit, a przy awarii procesu — zerwana sesja Postgresa, więc nie ma
 > osieroconych dzierżaw. Współbieżność *wewnątrz* jednego zadania jest świadomie odpuszczona;
-> uzasadnienie i alternatywa: [`multi-instance.md` §4.1](./multi-instance.md).
+> uzasadnienie i alternatywa: [`multi-instance.md` §4.1](../../architecture/multi-instance.md).
 
 **Jeden chunk = jedna transakcja + jeden scope DI.** Każdy element wewnątrz chunka idzie przez
 normalną szynę komend — ten sam `IBulkCommandExecutor`, który resolwuje handler zarejestrowany
@@ -179,7 +194,7 @@ z kolekcjami jeszcze **po jednym zapytaniu na kolekcję**, bo globalne `SplitQue
 `Include` na osobny SELECT. Dla produktu to sześć zapytań na element.
 
 Ile agregatu wczytać, deklaruje **handler**, implementując
-[`IBulkPreloadingHandler`](../../backend/building-blocks/Erp.BuildingBlocks.Application/Abstractions/IBulkPreloadingHandler.cs)
+[`IBulkPreloadingHandler`](../../../backend/building-blocks/Erp.BuildingBlocks.Application/Abstractions/IBulkPreloadingHandler.cs)
 — bo to on wie, czego potrzebuje jego metoda domenowa. Handler bez tego interfejsu działa jak
 dotąd (`PreloadAsync` jest wtedy no-opem), więc moduł, który wczytywania wsadowego nie chce,
 nie zmienia niczego.
@@ -227,7 +242,7 @@ dodatkowymi commitami. `ProgressUpdateTarget ≤ 1` wyłącza mechanizm i przywr
 ### Częściowe niepowodzenie
 
 `DomainException` jednego elementu **nie przerywa chunka** — element dostaje `Failed` + kod błędu,
-pozostałe idą dalej. Opiera się to na regule z [`cqrs.md`](./cqrs.md#3-komendy): *metoda agregatu
+pozostałe idą dalej. Opiera się to na regule z [`cqrs.md`](cqrs.md#3-komendy): *metoda agregatu
 waliduje przed zmianą stanu*, więc wyjątek domenowy oznacza, że nic się nie zmieniło i transakcja
 zostaje czysta.
 
@@ -244,7 +259,7 @@ całe zadanie w nieskończonej pętli ponowień.
 
 Reguły oparte na unikalności (SKU, sygnatura duplikatu produktu) **muszą** być wymuszone
 unikalnym indeksem, bo dwie równoległe komendy przeszłyby walidację aplikacyjną obie — patrz
-[`batch-validation.md`](./batch-validation.md#11-czym-to-nie-jest-pre-check--gwarancja). Ich
+[`batch-validation.md`](batch-validation.md#11-czym-to-nie-jest-pre-check--gwarancja). Ich
 naruszenie przychodzi jednak jako `DbUpdateException`, czyli tą samą ścieżką co awaria zapisu.
 
 Bez tłumaczenia dawałoby to dwa problemy naraz: raport pokazywałby `1200 × persistence_error`
@@ -277,8 +292,8 @@ przed każdym chunkiem — inaczej zdarzenia i powiadomienia SignalR nie miałyb
 
 ## 4. Anulowanie i retry
 
-[`JobControlEndpoints`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/JobControlEndpoints.cs)
-(dodane w fazie 5 — **zmiana kontraktu**, odłożona świadomie z faz 1–4):
+[`JobControlEndpoints`](../../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/JobControlEndpoints.cs)
+udostępnia dwie operacje sterujące:
 
 - **`POST job/cancel`** — ustawia `job.Status = Cancelled`. Nie cofa tego, co już się zapisało:
   `BulkCommandRunner` sprawdza status przed **każdym** chunkiem, więc elementy w trakcie
@@ -289,8 +304,8 @@ przed każdym chunkiem — inaczej zdarzenia i powiadomienia SignalR nie miałyb
   oryginału — ponowienie odtwarza dokładnie to, co się nie udało, nie jego przybliżenie.
 
 Oba są zaimplementowane w Catalogu
-([`Catalog.Api/Jobs/JobControlEndpoints.cs`](../../backend/modules/Catalog/Catalog.Api/Jobs/JobControlEndpoints.cs))
-i w Identity ([`Identity.Api/Jobs/JobControlEndpoints.cs`](../../backend/modules/Identity/Identity.Api/Jobs/JobControlEndpoints.cs));
+([`Catalog.Api/Jobs/JobControlEndpoints.cs`](../../../backend/modules/Catalog/Catalog.Api/Jobs/JobControlEndpoints.cs))
+i w Identity ([`Identity.Api/Jobs/JobControlEndpoints.cs`](../../../backend/modules/Identity/Identity.Api/Jobs/JobControlEndpoints.cs));
 Sales ma infrastrukturę zadań gotową (`IJobStore`, `BulkCommandRunner<SalesDbContext>` zarejestrowane),
 ale nie wystawia jeszcze tych dwóch endpointów.
 
@@ -301,12 +316,12 @@ ale nie wystawia jeszcze tych dwóch endpointów.
 Job **wykonuje i jest jego właścicielem** serwis wykonujący — Catalog ma własne `catalog.job`/
 `catalog.job_item`, potrzebne mu i tak do wznawiania i retry. Notification utrzymuje wyłącznie
 **read-model replikę** w `notification.job`, karmioną zdarzeniami `JobAccepted`/`JobProgressed`/
-`JobCompleted` (patrz [`JobReplicationHandlers.cs`](../../backend/modules/Notification/Notification.Infrastructure/Consumers/JobReplicationHandlers.cs)).
+`JobCompleted` (patrz [`JobReplicationHandlers.cs`](../../../backend/modules/Notification/Notification.Infrastructure/Consumers/JobReplicationHandlers.cs)).
 Dzięki temu `searchJob`/`getJob` na froncie zawsze odpytują Notification, a granica modułów nie
 jest łamana joinem cross-schema.
 
 `JobCompletedHandler` po zapisaniu repliki publikuje własny `AggregateChanged` na kanale `jobs`
-(patrz [`realtime-signalr.md`](./realtime-signalr.md#4-kanał-jobs-a-notificationjob)) —
+(patrz [`realtime-signalr.md`](../../architecture/realtime.md#4-kanał-jobs-a-notificationjob)) —
 to jest osobny sygnał od automatycznego `AggregateChanged` na `notification.job`, który leci
 z tego samego zapisu przez `AggregateChangeScanner`.
 
@@ -314,11 +329,11 @@ z tego samego zapisu przez `AggregateChangeScanner`.
 
 ## 6. Zobacz też
 
-- [Walidacja wsadowa](./batch-validation.md) — pre-check PRZED utworzeniem zadania, dla reguł
+- [Walidacja wsadowa](batch-validation.md) — pre-check PRZED utworzeniem zadania, dla reguł
   zbiorczych (istnienie, duplikat), które kosztowałyby N zapytań przy walidacji per element
 - [Zasięg zaznaczenia (frontend)](../frontend/selection-scope.md) — druga strona tego kontraktu:
   skąd UI bierze `targetUuids`/`targetFilter` i jak zachowuje się przy „Zaznacz wszystko"
-- [CQRS — komendy i zapytania](./cqrs.md)
-- [Zdarzenia domenowe i outbox](./events-outbox.md)
-- [Synchronizacja w czasie rzeczywistym](./realtime-signalr.md)
-- [Architektura backendu](./architecture.md)
+- [CQRS — komendy i zapytania](cqrs.md)
+- [Zdarzenia domenowe i outbox](../../architecture/integration-events.md)
+- [Synchronizacja w czasie rzeczywistym](../../architecture/realtime.md)
+- [Architektura backendu](../../architecture/backend.md)

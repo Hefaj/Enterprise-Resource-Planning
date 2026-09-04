@@ -355,14 +355,14 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       gap: 0.25rem;
     }
 
-    /* Pole pokazuje zaznaczenie, ale nie przyjmuje tekstu (patrz \`onFieldKeydown\`) — kursor
+    /* Pole pokazuje zaznaczenie, ale nie przyjmuje tekstu (patrz onFieldKeydown) — kursor
        tekstowy sugerowałby edycję, której nie ma. */
     :host tui-textfield input {
       caret-color: transparent;
     }
 
     /* Wyszukiwarka mieszka w środku tui-data-list (a nie w opakowującym divie), bo
-       \`tuiMultiSelectGroup\` wiąże się z listą tylko wtedy, gdy jest ona korzeniem treści
+       tuiMultiSelectGroup wiąże się z listą tylko wtedy, gdy jest ona korzeniem treści
        dropdownu. Dlatego przykleja się do góry — inaczej odjeżdżałaby razem z opcjami. */
     .erp-picker-search {
       position: sticky;
@@ -396,11 +396,11 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
       right: 1rem;
     }
 
-    /* Panel dropdownu: nigdy węższy niż input (wymusza to \`erpDropdownMinWidth\` na
-       tui-textfield), a \`min-width\` niżej to wygodny domyślny rozmiar dla wąskich inputów
+    /* Panel dropdownu: nigdy węższy niż input (wymusza to erpDropdownMinWidth na
+       tui-textfield), a min-width niżej to wygodny domyślny rozmiar dla wąskich inputów
        (np. w panelu filtrów) — bez tego długie etykiety pozycji ucinały się bardziej niż
-       trzeba. Górny limit pilnuje sama Taiga (\`maxWidth\` liczone z viewportu przy
-       \`limitWidth: 'min'\`); powyżej dostępnej szerokości etykiety tnie \`.erp-input-picker-item\`. */
+       trzeba. Górny limit pilnuje sama Taiga (maxWidth liczone z viewportu przy
+       limitWidth: 'min'); powyżej dostępnej szerokości etykiety tnie .erp-input-picker-item. */
     .erp-input-picker-list {
       min-width: 32rem;
     }

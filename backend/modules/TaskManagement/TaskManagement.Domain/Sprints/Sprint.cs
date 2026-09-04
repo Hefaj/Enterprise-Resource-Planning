@@ -12,7 +12,7 @@ public enum SprintStatus
 }
 
 /// <summary>
-/// Sprint — iteracja jednej tablicy scrumowej (SPR-001, <c>docs/backend/task-management.md</c> §3).
+/// Sprint — iteracja jednej tablicy scrumowej (SPR-001, <c>docs/modules/task-management/domain.md</c> §3).
 ///
 /// <para><b>Aktywny sprint na tablicy jest najwyżej jeden.</b> Niezmiennik egzekwuje indeks
 /// częściowy bazy (<c>unique(board_uuid) where status = 'Active'</c>), nie ta klasa — dwie

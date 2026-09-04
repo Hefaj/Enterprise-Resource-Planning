@@ -39,10 +39,10 @@ export interface ErpScopeTabSource<TParent, TFilter> {
  * Wspólna podstawa **każdej** zakładki panelu bocznego zależnej od zaznaczenia — niezależnie od
  * modułu i agregatu. Panel pokazuje JEDNĄ tabelę zbierającą wiersze podrzędne WSZYSTKICH
  * zaznaczonych rodziców (multimedia wszystkich zaznaczonych produktów, role wszystkich
- * zaznaczonych użytkowników…), pogrupowaną po rodzicu — patrz `docs/frontend/pages.md` §6.
+ * zaznaczonych użytkowników…), pogrupowaną po rodzicu — patrz `docs/guides/frontend/pages.md` §6.
  *
  * Zbiera w jednym miejscu obsługę „Zaznacz wszystko" opisaną w
- * `docs/frontend/selection-scope.md`, żeby żadna zakładka nie odtwarzała jej po swojemu
+ * `docs/guides/frontend/selection-scope.md`, żeby żadna zakładka nie odtwarzała jej po swojemu
  * (a najczęściej — nie pomijała, czytając `selection().selectedItems` wprost i pokazując pusty
  * ekran przy tysiącach zaznaczonych pozycji):
  *

@@ -1,18 +1,33 @@
+---
+id: frontend.smart-tables
+title: Smart tabele — lista serwerowa dla agregatu
+summary: Smart tabela z listą serwerową, orkiestratorem, paginacją i sortowaniem.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - smart tabela dla agregatu
+  - paginowana lista serwerowa
+related: []
+---
+
 # Smart tabele — lista serwerowa dla agregatu
 
 Prawie każdy agregat dostaje własny komponent tabeli: cienki Smart Component w warstwie `feature`, który spina orkiestrator (dane) z atomem `erp-table` (prezentacja, `libs/shared/ui`). Ten dokument opisuje anatomię takiego komponentu i przepis na dodanie kolejnego.
 
-Implementacja referencyjna: [`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/tables/catalog-product-table/catalog-product-table.component.ts). Inne przykłady tego samego wzorca: [`notification-job-table.component.ts`](../../frontend/libs/modules/notification/feature/src/lib/job/components/notification-job-table/notification-job-table.component.ts) (własne komponenty komórek + odświeżanie po SignalR), [`identity-users-table.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/components/tables/identity-users-table/identity-users-table.component.ts) (`selectionMode: 'single'`).
+Implementacja referencyjna: [`catalog-product-table.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/components/tables/catalog-product-table/catalog-product-table.component.ts). Inne przykłady tego samego wzorca: [`notification-job-table.component.ts`](../../../frontend/libs/modules/notification/feature/src/lib/job/components/notification-job-table/notification-job-table.component.ts) (własne komponenty komórek + odświeżanie po SignalR), [`identity-users-table.component.ts`](../../../frontend/libs/modules/identity/feature/src/lib/users/components/tables/identity-users-table/identity-users-table.component.ts) (`selectionMode: 'single'`).
 
-Atom, który te komponenty opakowują: [`erp-table.component.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.component.ts) + [`erp-table.builder.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.builder.ts) (wzorzec "Single Config Builder", patrz [atomy UI](./atoms.md)).
+Atom, który te komponenty opakowują: [`erp-table.component.ts`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.component.ts) + [`erp-table.builder.ts`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.builder.ts) (wzorzec "Single Config Builder", patrz [atomy UI](atoms.md)).
 
 ---
 
 ## 1. Gdzie to żyje i dlaczego to nie jest kolejny atom
 
-Smart tabela mieszka w `libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/components/tables/MODULE-AGGREGATE-table/` — to warstwa `feature`, nie `ui`. Zna konkretny orkiestrator, konkretny `SearchXRequest` i konkretny `XVM` — właśnie dlatego nie może być atomem współdzielonym (atomy nie znają `data-access`, patrz granice warstw w [architekturze](./architecture.md)).
+Smart tabela mieszka w `libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/components/tables/MODULE-AGGREGATE-table/` — to warstwa `feature`, nie `ui`. Zna konkretny orkiestrator, konkretny `SearchXRequest` i konkretny `XVM` — właśnie dlatego nie może być atomem współdzielonym (atomy nie znają `data-access`, patrz granice warstw w [architekturze](../../architecture/frontend.md)).
 
-Sam komponent **nie** dostaje własnego buildera w stylu [atomów UI](./atoms.md) — ma kilka prostych `input()`/`output()` (`filters`, `stateKey`, `selectionMode`, `selectionChange`...), a całą złożoność chowa w jednym `computed<ErpTableConfig<TVm>>` budowanym przez `ErpTableBuilder` z `erp-table`. To ten sam config trafia do jedynego `[config]` inputa `<erp-table>` w szablonie.
+Sam komponent **nie** dostaje własnego buildera w stylu [atomów UI](atoms.md) — ma kilka prostych `input()`/`output()` (`filters`, `stateKey`, `selectionMode`, `selectionChange`...), a całą złożoność chowa w jednym `computed<ErpTableConfig<TVm>>` budowanym przez `ErpTableBuilder` z `erp-table`. To ten sam config trafia do jedynego `[config]` inputa `<erp-table>` w szablonie.
 
 ---
 
@@ -147,15 +162,15 @@ Osiem elementów, zawsze w tym układzie:
 
 ## 3. Przepis: nowa smart tabela dla agregatu
 
-1. **Sprawdź, czy orkiestrator agregatu już istnieje** i ma `searchAsync`/`getViewModel()` — jeśli nie, najpierw [orkiestrator](./orchestrators.md).
+1. **Sprawdź, czy orkiestrator agregatu już istnieje** i ma `searchAsync`/`getViewModel()` — jeśli nie, najpierw [orkiestrator](orchestrators.md).
 2. Skopiuj strukturę z §2 (najbliższy istniejący przykład w tym samym module, jeśli jest — inaczej `catalog-product-table.component.ts`).
 3. `ErpTableBuilder<TVm>` — zawsze `.setMode('server')` (tryb `'client'` jest dla list w pamięci, nie dla agregatów z paginacją API) i `.setRowIdAccessor(x => x.uuid)` — musi zwracać to samo, czego backend i SignalR używają jako identyfikatora, bo na nim opiera się zaznaczenie, cache orkiestratora i mapowanie `AggregateChanged`.
 4. Kolumny: `.addColumn()` dla pojedynczej, `.addColumnGroup()` dla nagłówka nadrzędnego nad kilkoma. Prosta wartość pola → `.setAccessorKey()`; wyliczenie z wielu pól → `.setAccessorFn()`; wielolinijkowa treść z badge'ami → `.setCellRichContent()`; własny komponent Angulara (np. status z ikoną) → `.setCell(Component)`. Wyłącz sortowanie (`.setEnableSorting(false)`) na każdej kolumnie, której backend nie umie posortować (whitelist w `XQueries.ApplySorting`, patrz [CQRS](../backend/cqrs.md)) — inaczej użytkownik dostaje klik, który nic nie robi.
-5. `.setEmptyMessage()` — klucz Transloco, nigdy string na sztywno (patrz [tłumaczenia](./translations.md)).
+5. `.setEmptyMessage()` — klucz Transloco, nigdy string na sztywno (patrz [tłumaczenia](translations.md)).
 6. Zdecyduj o `selectionMode` (patrz §5) i podłącz `.setOnSelectionChange()` tylko, jeśli strona faktycznie konsumuje zaznaczenie.
 7. `.setOnStateChange()` — zawsze wg wzorca z §2 (`sortingChanged`/`dataStateChanged` przez porównanie z `lastTableState`), nigdy gołe „fetchuj przy każdym stanie" — to podwaja zapytania przy zdarzeniach, które nie zmieniają zbioru danych (np. resize kolumny).
 8. `fetchData` — `page = pageIndex + 1` (patrz §4), `loadOptions` dobierz do tego, co faktycznie renderują kolumny (nie dociągaj czegoś, czego żadna kolumna nie pokazuje).
-9. Jeśli strona potrzebuje zasięgu zaznaczenia („Zaznacz wszystko" + panele boczne) — dopisz `.setFilters(this.filters)` i `sortsChange`, patrz [zasięg zaznaczenia](./selection-scope.md). Jeśli nie — pomiń oba, jak robi to `notification-job-table`.
+9. Jeśli strona potrzebuje zasięgu zaznaczenia („Zaznacz wszystko" + panele boczne) — dopisz `.setFilters(this.filters)` i `sortsChange`, patrz [zasięg zaznaczenia](selection-scope.md). Jeśli nie — pomiń oba, jak robi to `notification-job-table`.
 10. Zarejestruj komponent w `index.ts` modułu (`feature`), jeśli ma być używany poza własnym plikiem strony.
 
 ---
@@ -166,7 +181,7 @@ Osiem elementów, zawsze w tym układzie:
 
 **`if (this.lastTableState !== null)` w efekcie od `filters()`.** Pierwsze pobranie danych po wejściu na widok odpala `builder.setOnStateChange` (tabela zawsze emituje swój początkowy stan raz, przy starcie). Efekt od `filters()` ma obsłużyć wyłącznie *kolejne* zmiany filtrów — bez tego strażnika pierwsze wejście strzela dwa zapytania (jedno z efektu, jedno ze stanu początkowego tabeli).
 
-**Nie czyść zaznaczenia ręcznie przy zmianie filtrów.** `erp-table` ma własny wewnętrzny efekt na `config().filters`, który robi to sam (`_resetSelectionOnDataShapeChange`, patrz [`erp-table.component.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.component.ts)) — identycznie przy zmianie sortowania. Warunkiem jest podanie `.setFilters(this.filters)` w builderze; **bez tego wywołania efekt tabeli nie ma czego porównywać i zaznaczenie po zmianie filtrów zostaje** (nieaktualne, celujące w poprzedni zbiór). Duplikowanie tego wywołaniem `tableComponent()?.clearSelection()` z zewnątrz jest zbędne i było błędem w tej właśnie implementacji — patrz §6.
+**Nie czyść zaznaczenia ręcznie przy zmianie filtrów.** `erp-table` ma własny wewnętrzny efekt na `config().filters`, który robi to sam (`_resetSelectionOnDataShapeChange`, patrz [`erp-table.component.ts`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-table.component.ts)) — identycznie przy zmianie sortowania. Warunkiem jest podanie `.setFilters(this.filters)` w builderze; **bez tego wywołania efekt tabeli nie ma czego porównywać i zaznaczenie po zmianie filtrów zostaje** (nieaktualne, celujące w poprzedni zbiór). Duplikowanie tego wywołaniem `tableComponent()?.clearSelection()` z zewnątrz jest zbędne i było błędem w tej właśnie implementacji — patrz §6.
 
 **`.setFilters(this.filters)` przekazuje sygnał, nie jego wartość.** `this.filters` (referencja, bez `()`) trafia do configu jako `MaybeSignal`, więc `erp-table` sam go odpakowuje w swoim reaktywnym kontekście. Gdyby `tableConfig` computed czytał `this.filters()` bezpośrednio, cały config (wszystkie kolumny, callbacki) przeliczałby się przy każdej zmianie filtra — tak przelicza się tylko to, co faktycznie musi.
 
@@ -176,7 +191,7 @@ Osiem elementów, zawsze w tym układzie:
 
 ## 5. Szerokości kolumn
 
-`.setSize(...)` **nie jest twardą szerokością — jest wagą.** Gdy suma szerokości widocznych kolumn nie wypełnia tabeli, nadmiar rozdzielany jest między kolumny proporcjonalnie do ich `size`, więc kolumna opisu (`setSize(320)`) dostaje z luki ~3.5x więcej niż kolumna identyfikatora (`setSize(90)`). Gdy kolumny się nie mieszczą — nic się nie dzieje i zostaje poziomy scroll. Niezmiennik: **nigdy nie ma pustej przestrzeni po prawej, a scroll pojawia się wyłącznie przy realnym braku miejsca.** Algorytm: [`erp-column-sizing.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-column-sizing.ts).
+`.setSize(...)` **nie jest twardą szerokością — jest wagą.** Gdy suma szerokości widocznych kolumn nie wypełnia tabeli, nadmiar rozdzielany jest między kolumny proporcjonalnie do ich `size`, więc kolumna opisu (`setSize(320)`) dostaje z luki ~3.5x więcej niż kolumna identyfikatora (`setSize(90)`). Gdy kolumny się nie mieszczą — nic się nie dzieje i zostaje poziomy scroll. Niezmiennik: **nigdy nie ma pustej przestrzeni po prawej, a scroll pojawia się wyłącznie przy realnym braku miejsca.** Algorytm: [`erp-column-sizing.ts`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-column-sizing.ts).
 
 Praktyczne konsekwencje przy pisaniu kolumn:
 
@@ -202,7 +217,7 @@ selectionChange = output<string | null>();
 
 **Bez zaznaczania** (`notification-job-table.component.ts`) — `.setSelectionMode('none')`, brak `selectionChange`/`setOnSelectionChange` w ogóle. Domyślny stan buildera to zresztą `'none'` (patrz `ErpTableBuilder` konstruktor) — trzeba go świadomie podnieść do `'single'`/`'multi'`.
 
-**Własne komponenty komórek zamiast `cellRichContent`/`cellFormatter`** — gdy komórka potrzebuje własnej logiki/stylu (np. pasek postępu, badge statusu z kolorem zależnym od wartości), `.setCell(Component, inputs?)` zamiast funkcji. Patrz `JobStatusCellComponent`/`JobCommandCellComponent` w `notification-job-table`. **Tylko do wyświetlania** — komórka z przyciskiem wołającym mutację (usuń/odbierz/dezaktywuj wiersz) to inny przypadek: taka akcja idzie przez `selectionMode` + `addSelectionGroup` w `erp-action-toolbar` strony/zakładki, nie przez własny komponent komórki — patrz [pages.md §5](./pages.md#5-główna-lista-content) i [częste błędy](./pages.md#10-częste-błędy) (`IdentityRowRemoveCellComponent` w module identity to przykład tego, czego nie robić).
+**Własne komponenty komórek zamiast `cellRichContent`/`cellFormatter`** — gdy komórka potrzebuje własnej logiki/stylu (np. pasek postępu, badge statusu z kolorem zależnym od wartości), `.setCell(Component, inputs?)` zamiast funkcji. Patrz `JobStatusCellComponent`/`JobCommandCellComponent` w `notification-job-table`. **Tylko do wyświetlania** — komórka z przyciskiem wołającym mutację (usuń/odbierz/dezaktywuj wiersz) to inny przypadek: taka akcja idzie przez `selectionMode` + `addSelectionGroup` w `erp-action-toolbar` strony/zakładki, nie przez własny komponent komórki — patrz [pages.md §5](pages.md#5-główna-lista-content) i [częste błędy](pages.md#10-częste-błędy) (`IdentityRowRemoveCellComponent` w module identity to przykład tego, czego nie robić).
 
 **Odświeżanie po zdarzeniu z SignalR, poza cyklem paginacji/filtrów** (`notification-job-table.component.ts`) — gdy nowe wiersze mogą pojawić się z zewnątrz (zlecone zadanie), a nie tylko przez zmianę filtra/strony przez użytkownika, dopnij subskrypcję do `SignalrSyncService.onUpdate(SIGNATURE)` w konstruktorze, z `debounceTime` (zbija serię szybkich zdarzeń do jednego zapytania) i publiczną metodą `reload()` do wywołania z toolbara:
 ```typescript
@@ -212,7 +227,7 @@ this._signalrSync.onUpdate(NOTIFICATION_JOB_SIGNATURE)
 ```
 Zwykłe aktualizacje istniejących wierszy (nie nowe) obsługuje sam `items` computed przez `orchestrator.getViewModel()()` — subskrypcja jest potrzebna tylko dla wierszy, których jeszcze nie ma w `currentUuids`.
 
-**Sortowanie na wyjściu (`sortsChange`)** dodawaj tylko wtedy, gdy strona rozwiązuje UUID-y niezależnie od tabeli (materializacja „Zaznacz wszystko", podgląd w panelu bocznym — patrz [zasięg zaznaczenia §4](./selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query)) i potrzebuje tej samej kolejności. Bez takiego konsumenta to martwy output.
+**Sortowanie na wyjściu (`sortsChange`)** dodawaj tylko wtedy, gdy strona rozwiązuje UUID-y niezależnie od tabeli (materializacja „Zaznacz wszystko", podgląd w panelu bocznym — patrz [zasięg zaznaczenia §4](selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query)) i potrzebuje tej samej kolejności. Bez takiego konsumenta to martwy output.
 
 ---
 
@@ -232,9 +247,9 @@ Zwykłe aktualizacje istniejących wierszy (nie nowe) obsługuje sam `items` com
 
 ## 8. Zobacz też
 
-- [Page dla agregatu](./pages.md) — gdzie smart tabela mieszkuje w szkielecie całej strony (filtr, action toolbar, zakładki, panel boczny)
-- [Struktura katalogów agregatu](./feature-structure.md) — dlaczego smart tabela leży w `components/tables/`, a nie w `page/`
-- [Orkiestratory](./orchestrators.md) — `searchAsync`, `getViewModel()`, mapowanie DTO→VM, którym karmi się `items`
-- [Zasięg zaznaczenia i akcje masowe](./selection-scope.md) — co robić z `selectionChange`/`sortsChange` na poziomie strony, „Zaznacz wszystko", panele boczne
-- [Atomy UI — Single Config Builder](./atoms.md) — wzorzec, którym zbudowany jest sam `erp-table`
-- [Tłumaczenia](./translations.md) — klucze dla nagłówków kolumn i `emptyMessage`
+- [Page dla agregatu](pages.md) — gdzie smart tabela mieszkuje w szkielecie całej strony (filtr, action toolbar, zakładki, panel boczny)
+- [Struktura katalogów agregatu](feature-structure.md) — dlaczego smart tabela leży w `components/tables/`, a nie w `page/`
+- [Orkiestratory](orchestrators.md) — `searchAsync`, `getViewModel()`, mapowanie DTO→VM, którym karmi się `items`
+- [Zasięg zaznaczenia i akcje masowe](selection-scope.md) — co robić z `selectionChange`/`sortsChange` na poziomie strony, „Zaznacz wszystko", panele boczne
+- [Atomy UI — Single Config Builder](atoms.md) — wzorzec, którym zbudowany jest sam `erp-table`
+- [Tłumaczenia](translations.md) — klucze dla nagłówków kolumn i `emptyMessage`

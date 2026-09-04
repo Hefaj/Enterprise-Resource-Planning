@@ -6,7 +6,7 @@ namespace TaskManagement.FieldSchemes.Query;
 
 /// <summary>
 /// Profil pól projektu — kolumny tabeli, filtry i whitelist sortowania budują się z tej jednej
-/// odpowiedzi (<c>docs/backend/task-management.md</c> §6).
+/// odpowiedzi (<c>docs/modules/task-management/domain.md</c> §6).
 ///
 /// <para>Uprawnieniem jest <c>issue.read</c>, nie <c>scheme.manage</c>: profil jest potrzebny
 /// każdemu, kto ogląda listę zgłoszeń projektu, a nie tylko temu, kto go konfiguruje.</para>

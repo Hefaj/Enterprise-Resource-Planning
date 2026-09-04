@@ -58,7 +58,7 @@ public sealed class ReportJobFactory<TContext> : IReportJobFactory
         var retentionDays = _artifactOptions.RequireStore(ArtifactStoreKeys.Transient).RetentionDays
             ?? throw new InvalidOperationException(
                 "Magazyn `transient` nie ma ustawionego `RetentionDays`, a `job.expire_on` musi się "
-                + "zgadzać z regułą wygasania kubełka (docs/backend/reporting.md §3).");
+                + "zgadzać z regułą wygasania kubełka (docs/architecture/reporting.md §3).");
 
         var expireOn = now.AddDays(retentionDays);
 

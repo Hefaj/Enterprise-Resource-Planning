@@ -9,7 +9,7 @@ using Identity.Domain.Roles;
 namespace Identity.Application.Roles;
 
 /// <summary>
-/// Od Fazy 3 przejścia na operacje masowe (patrz <c>docs/backend/identity-bulk-migration.md</c>)
+/// Komendy Identity obsługujące operacje masowe (patrz <c>docs/guides/backend/bulk-commands.md</c>)
 /// komendy modułu Identity idą tą samą drogą co Catalog/Sales: przez
 /// <c>BatchEndpointBase</c>/<c>BulkCommandRunner</c>. Handlery NIE wołają
 /// <c>IUnitOfWork.SaveChangesAsync</c> — granicę transakcji wyznacza runner (jeden zapis na
@@ -156,7 +156,7 @@ public sealed class RoleAddMemberCommand : ICommand<Guid>, IAggregateCommand
 /// walidacja cyklu. Od Fazy 3 to DRUGA linia obrony: pierwsza (i jedyna skuteczna WEWNĄTRZ
 /// jednego wsadu) jest <c>RoleGraphCycleRule</c> w pre-checku, bo <c>IsDescendantAsync</c>
 /// czyta stan zacommitowany i nie widzi krawędzi z wcześniejszych elementów tego samego chunka
-/// (patrz <c>docs/backend/identity-bulk-migration.md</c> §1.3).</summary>
+/// (patrz <c>docs/guides/backend/batch-validation.md</c>).</summary>
 public sealed class RoleAddMemberCommandHandler : CommandHandler<RoleAddMemberCommand, Guid>
 {
     private readonly IRoleRepository _repository;

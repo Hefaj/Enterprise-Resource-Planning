@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Issues;
 
 /// <summary>
 /// Powiązanie między dwoma zgłoszeniami — krawędź grafu
-/// (<c>docs/backend/task-management.md</c> §8.1).
+/// (<c>docs/modules/task-management/domain.md</c> §8.1).
 ///
 /// <para><b>Osobny korzeń agregatu, nie kolekcja na zgłoszeniu.</b> Krawędź należy do dwóch
 /// zgłoszeń naraz, więc nie ma jednego właściciela, który mógłby ją trzymać: umieszczenie jej

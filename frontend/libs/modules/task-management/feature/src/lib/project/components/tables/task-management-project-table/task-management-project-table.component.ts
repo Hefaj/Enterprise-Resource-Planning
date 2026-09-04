@@ -13,7 +13,7 @@ import { PROJECT_KIND } from '@erp/task-management/util';
 import { PROJECT_KEYS } from '../../../translation';
 
 /**
- * Smart tabela projektów — lista serwerowa wg [`smart-tables.md`](../../../../../../../../../docs/frontend/smart-tables.md).
+ * Smart tabela projektów — lista serwerowa wg [`smart-tables.md`](../../../../../../../../../docs/guides/frontend/smart-tables.md).
  *
  * <p>Kolumna „schemat pól" pokazuje <b>nazwę schematu</b>, nie jego uuid, i jest tu celowo:
  * to jedyne miejsce, w którym widać na raz, które projekty mają własne pola, a które nie —

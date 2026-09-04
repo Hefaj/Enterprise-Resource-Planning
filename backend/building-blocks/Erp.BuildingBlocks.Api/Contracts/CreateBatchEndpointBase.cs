@@ -4,7 +4,7 @@ namespace Erp.BuildingBlocks.Api.Contracts;
 
 /// <summary>
 /// Baza endpointów wsadowych dla czasownika <c>Create</c> — patrz
-/// <c>docs/backend/endpoint-naming.md</c> §4.
+/// <c>docs/guides/backend/endpoint-naming.md</c> §4.
 ///
 /// <para><b>Dlaczego osobna baza.</b> Tworzenie jest jedyną operacją, dla której dwa z trzech
 /// trybów wskazywania celów nie mają sensu: agregat jeszcze nie istnieje, więc nie ma czego

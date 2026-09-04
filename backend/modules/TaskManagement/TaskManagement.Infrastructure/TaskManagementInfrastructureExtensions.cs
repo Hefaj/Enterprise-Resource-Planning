@@ -55,7 +55,7 @@ public static class TaskManagementInfrastructureExtensions
             typeof(TaskManagementDbContext).Assembly.GetName().Name));
 
         // Dzierżawa wyłączności idzie razem z kontekstem — korzysta z niej seed, a od fazy 2
-        // także rebalans rangi kart na tablicy (docs/backend/multi-instance.md §3.1).
+        // także rebalans rangi kart na tablicy (docs/architecture/multi-instance.md §3.1).
         services.AddErpExclusiveLease<TaskManagementDbContext>();
 
         services.Configure<IssueAttachmentOptions>(configuration.GetSection(IssueAttachmentOptions.SectionName));
@@ -112,7 +112,7 @@ public static class TaskManagementInfrastructureExtensions
         services.AddHostedService<WebhookDeliveryDispatcher>();
 
         // Sygnatury SignalR — kontrakt z frontendem. Muszą zgadzać się co do znaku
-        // z `signalrSignature` orkiestratorów (docs/backend/realtime-signalr.md).
+        // z `signalrSignature` orkiestratorów (docs/architecture/realtime.md).
         services.AddSingleton<IAggregateSignatureMap>(new AggregateSignatureMap()
             .Register<Issue>(AggregateSignatures.TaskManagementIssue)
             .Register<Project>(AggregateSignatures.TaskManagementProject)

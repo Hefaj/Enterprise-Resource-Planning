@@ -35,7 +35,7 @@ interface FilterOption {
 /**
  * Filtry listy zgłoszeń.
  *
- * <p><b>Dwa przełączniki nad tabelą</b> (`docs/frontend/task-management-pages.md` §2.1) są tutaj,
+ * <p><b>Dwa przełączniki nad tabelą</b> (`docs/modules/task-management/screens.md` §2.1) są tutaj,
  * a nie w toolbarze: zakres i projekt to filtry, a nie akcje — trafiają do `SearchIssueRequest`
  * dokładnie tak samo jak tekst czy priorytet.</p>
  *
@@ -112,7 +112,7 @@ export class IssueFilterComponent implements OnInit {
 
   /** Stany aktywnego projektu. `nameKey` ze schematu jest kluczem tłumaczenia; stan zdefiniowany
    * przez użytkownika bez klucza wyświetla własny kod — jedyne dopuszczone wyjście poza registry
-   * (`docs/frontend/task-management-pages.md` §8). */
+   * (`docs/modules/task-management/screens.md` §8). */
   private readonly _stateOptions = computed<FilterOption[]>(() => {
     this._translationsReady();
     return this._store.states().map((state) => ({
@@ -127,7 +127,7 @@ export class IssueFilterComponent implements OnInit {
    * Konfiguracja filtra jest <b>przeliczana</b>, bo pola projekto-specyficzne dochodzą i znikają
    * razem z kontekstem projektu. Przebudowa tworzy nową grupę formularza — i tak jest to
    * pożądane, bo zmiana projektu i tak czyści filtry po polach z poprzedniego schematu
-   * (`docs/frontend/task-management-pages.md` §2.1).
+   * (`docs/modules/task-management/screens.md` §2.1).
    */
   public readonly filterConfig = computed<ErpFilterConfig>(() => {
     const fields = this._store.filterableFields();

@@ -70,6 +70,17 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Navigation(p => p.Members).UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        // NTF-003 — wyciszenie powiadomień per (użytkownik, projekt), ustawienie osobiste.
+        // Prosta tablica `uuid[]`, mapowana wprost przez natywne wsparcie Npgsql dla kolekcji
+        // prymitywnych — bez `HasConversion`, bez osobnej tabeli. Właściwość publiczna jest
+        // tylko do odczytu (owija pole `_mutedNotificationUserUuids`), więc mapujemy backing
+        // field jako property po nazwie, tak samo jak `Issue._customFields`.
+        builder.Property<List<Guid>>("_mutedNotificationUserUuids")
+            .HasColumnName("muted_notification_user_uuids")
+            .IsRequired();
+
+        builder.Ignore(p => p.MutedNotificationUserUuids);
     }
 }
 

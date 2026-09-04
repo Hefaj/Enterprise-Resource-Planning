@@ -61,7 +61,7 @@ export type SavedViewModeValue = (typeof SAVED_VIEW_MODE)[keyof typeof SAVED_VIE
  *
  * <p>Zbiór jest zamknięty i mały, bo każdy typ ma po stronie bazy własną pulę slotów
  * sortowalnych: dołożenie typu to migracja tabeli `issue`, a nie wpis w słowniku
- * (`docs/backend/task-management.md` §6).</p>
+ * (`docs/modules/task-management/domain.md` §6).</p>
  */
 export const CUSTOM_FIELD_DATA_TYPE = {
   Text: 0,
@@ -79,7 +79,7 @@ export type CustomFieldDataTypeValue =
  *
  * <p>`Blocks` to jedyny typ, który musi być acykliczny; `Delivers` jest zarezerwowany dla
  * zleceń międzydziałowych (faza 5) i nie wolno go używać jako zwykłego powiązania
- * (`docs/backend/task-management.md` §8.1).</p>
+ * (`docs/modules/task-management/domain.md` §8.1).</p>
  */
 export const ISSUE_LINK_TYPE = {
   Blocks: 0,
@@ -94,7 +94,7 @@ export type IssueLinkTypeValue = (typeof ISSUE_LINK_TYPE)[keyof typeof ISSUE_LIN
  * `TaskManagement.Domain.FieldSchemes.FieldSlot` — slot sortowalny na `issue`.
  *
  * <p>`None` jest wartością pełnoprawną, nie brakiem decyzji: pole, po którym nikt nie sortuje
- * ani nie filtruje, nie zajmuje zasobu rzadkiego (`docs/backend/task-management.md` §6).</p>
+ * ani nie filtruje, nie zajmuje zasobu rzadkiego (`docs/modules/task-management/domain.md` §6).</p>
  */
 export const FIELD_SLOT = {
   None: 0,
@@ -137,7 +137,7 @@ export const PROJECT_MEMBER_ROLE = {
  * <p>Po niej, nie po nazwie typu, liczy się reguła hierarchii z `LNK-001` AC2: rodzic o kategorii
  * `Subtask` jest odrzucony, dziecko o kategorii `Epic` jest odrzucone. Front nie duplikuje tej
  * reguły — sprawdza ją tylko po to, żeby pokazać komunikat PRZED wysłaniem komendy, którą backend
- * i tak odrzuci (`docs/backend/task-management.md`).</p>
+ * i tak odrzuci (`docs/modules/task-management/domain.md`).</p>
  */
 export const ISSUE_TYPE_CATEGORY = {
   Epic: 0,
@@ -149,7 +149,7 @@ export type IssueTypeCategoryValue = (typeof ISSUE_TYPE_CATEGORY)[keyof typeof I
 
 /**
  * `TaskManagement.Application.Issues.IssueScope` — zakres listy zgłoszeń.
- * <b>Parametr, nie osobna strona</b> (patrz `docs/frontend/task-management-pages.md` §2.1).
+ * <b>Parametr, nie osobna strona</b> (patrz `docs/modules/task-management/screens.md` §2.1).
  */
 export const ISSUE_SCOPE = {
   Available: 0,

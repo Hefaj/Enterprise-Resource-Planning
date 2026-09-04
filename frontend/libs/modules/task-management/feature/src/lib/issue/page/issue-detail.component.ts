@@ -53,7 +53,7 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
 /**
  * Karta zgłoszenia — `/task-management/issue/:key`.
  *
- * <p><b>Układ dwukolumnowy wg `docs/frontend/task-management-pages.md` §9.1</b>: główna
+ * <p><b>Układ dwukolumnowy wg `docs/modules/task-management/screens.md` §9.1</b>: główna
  * kolumna niesie nagłówek, opis, załączniki, powiązania i strumień aktywności z zakotwiczonym
  * kompozytorem; `erp-field-panel` po prawej trzyma stan i przejścia na samej górze, potem typ,
  * metadane i pola niestandardowe projektu (`IssueCustomFieldsComponent` — projekcja przez
@@ -461,7 +461,7 @@ export class IssueDetailComponent {
   }
 
   /**
-   * Nakładka optymistyczna (`docs/frontend/optimistic-updates.md`) zastępuje dawne
+   * Nakładka optymistyczna (`docs/guides/frontend/optimistic-updates.md`) zastępuje dawne
    * `erpAwaitJobAsync` + wymuszony refetch: podgląd renderuje się od razu z lokalnie
    * napisanego opisu, zamiast na chwilę pokazać stan sprzed zapisu. Cofnięcie przywraca
    * treść do edytora i wraca do trybu edycji — toast leci przez `ErpOptimisticRollbackBridge`.
@@ -496,7 +496,7 @@ export class IssueDetailComponent {
    * (`taskmgmt.required_fields_missing`), na wypadek klienta API pomijającego UI.</p>
    *
    * <p><b>Komenda ma natychmiastowy, optymistyczny skutek</b> (`setStateOptimisticAsync`,
-   * `docs/frontend/optimistic-updates.md`) — karta przełącza stan od razu, zamiast czekać na
+   * `docs/guides/frontend/optimistic-updates.md`) — karta przełącza stan od razu, zamiast czekać na
    * `BulkCommandRunner`; przy porażce (np. `409` na wersji zgłoszenia) wraca do poprzedniego
    * stanu i pokazuje toast przez `ErpOptimisticRollbackBridge`.</p>
    *
@@ -645,7 +645,7 @@ function priorityTone(priority: number): string {
   }
 }
 
-/** Kolor kropki stanu — po kategorii (`docs/backend/task-management.md`), nie po nazwie:
+/** Kolor kropki stanu — po kategorii (`docs/modules/task-management/domain.md`), nie po nazwie:
  * stan zdefiniowany przez użytkownika i tak wpada w jedną z trzech kategorii. */
 function stateCategoryTone(category: number): string {
   switch (category) {

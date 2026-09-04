@@ -1,10 +1,25 @@
+---
+id: architecture.integration-events
+title: Zdarzenia domenowe, outbox i integracja
+summary: Zdarzenia domenowe i integracyjne, transactional outbox oraz konsumenci RabbitMQ.
+kind: architecture
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - zdarzenie domenowe lub integracyjne
+  - outbox i konsument RabbitMQ
+related: []
+---
+
 # Zdarzenia domenowe, outbox i integracja
 
 **Stan: ✅ działa.** `AddErpMessaging<TContext>()` jest wołane w `Program.cs` Catalogu, Sales
 i Notification. Notification dodatkowo **konsumuje** — `AggregateChangedRelayHandler` przekazuje
-`AggregateChanged` do `RealtimeBroadcaster` ([`realtime-signalr.md`](./realtime-signalr.md)),
+`AggregateChanged` do `RealtimeBroadcaster` ([`realtime-signalr.md`](realtime.md)),
 a `JobAcceptedHandler`/`JobProgressedHandler`/`JobCompletedHandler` utrzymują replikę
-`notification.job` — patrz [`bulk-commands.md`](./bulk-commands.md#5-replika-w-notification).
+`notification.job` — patrz [`bulk-commands.md`](../guides/backend/bulk-commands.md#5-replika-w-notification).
 
 ---
 
@@ -209,6 +224,6 @@ złamana — sygnał, że ktoś ominął `IUnitOfWork` i woła `DbContext.SaveCh
 
 ## 8. Zobacz też
 
-- [Operacje masowe](./bulk-commands.md)
-- [Synchronizacja w czasie rzeczywistym](./realtime-signalr.md) — konsument `AggregateChanged`
-- [CQRS](./cqrs.md)
+- [Operacje masowe](../guides/backend/bulk-commands.md)
+- [Synchronizacja w czasie rzeczywistym](realtime.md) — konsument `AggregateChanged`
+- [CQRS](../guides/backend/cqrs.md)

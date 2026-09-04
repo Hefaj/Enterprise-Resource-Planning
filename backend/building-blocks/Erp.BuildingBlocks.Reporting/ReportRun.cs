@@ -5,13 +5,13 @@ namespace Erp.BuildingBlocks.Reporting;
 
 /// <summary>
 /// Przebieg raportu — jedna operacja „zrób plik z tego, co pasuje do definicji". Uogólnienie
-/// dawnego <c>Catalog.Domain.ExportRuns.ExportRun</c> (patrz <c>docs/backend/reporting.md</c> §3):
+/// dawnego <c>Catalog.Domain.ExportRuns.ExportRun</c> (patrz <c>docs/architecture/reporting.md</c> §3):
 /// eksport katalogu jest dziś jedną z definicji (<c>catalog.product-export</c>), nie osobnym
 /// agregatem obok.
 ///
 /// <para><b>Dlaczego ta klasa mieszka w building blocku, a nie w <c>{Modul}.Domain</c>.</b>
 /// Dokładnie z tego samego powodu co <see cref="Jobs.Job"/>: generalizacja z
-/// <c>docs/backend/reporting.md</c> §2 dotyczy KODU, nie DANYCH. Każdy moduł mapuje tę SAMĄ
+/// <c>docs/architecture/reporting.md</c> §2 dotyczy KODU, nie DANYCH. Każdy moduł mapuje tę SAMĄ
 /// klasę do WŁASNEJ tabeli we własnym schemacie (<c>catalog.report_run</c>,
 /// <c>taskmgmt.report_run</c>) przez własny <c>DbContext</c> —
 /// <see cref="ReportRunConfiguration"/> aplikuje się tam przez
@@ -87,7 +87,7 @@ public class ReportRun : AggregateRoot
     /// <summary>Kiedy artefakt przestaje być dostępny — spójne z <c>job.expire_on</c>.</summary>
     public DateTimeOffset? ExpireOn { get; private set; }
 
-    /// <summary>Zlecenie raportu. Uuid generuje klient (patrz <c>docs/backend/endpoint-naming.md</c> §4).</summary>
+    /// <summary>Zlecenie raportu. Uuid generuje klient (patrz <c>docs/guides/backend/endpoint-naming.md</c> §4).</summary>
     /// <exception cref="DomainException">Gdy klucz definicji albo format jest pusty.</exception>
     public static ReportRun Create(
         Guid uuid, string reportKey, string format, string? parametersJson, DateTimeOffset createdAt)

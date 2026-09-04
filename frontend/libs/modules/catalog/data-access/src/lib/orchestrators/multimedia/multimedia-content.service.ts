@@ -28,7 +28,7 @@ export type MultimediaVariant = 'thumb' | 'preview';
  *
  * Alternatywą byłby podpisany adres prosto do magazynu, ale ten żyje minuty i jest bearer-owy —
  * w galerii przewijanej w tę i z powrotem wygasa w trakcie oglądania (patrz
- * `docs/backend/exports-artifacts.md` §9).
+ * `docs/guides/backend/exports-artifacts.md` §9).
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogMultimediaContentService {

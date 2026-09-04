@@ -15,7 +15,8 @@
     "../../../libs/shared/ui/src/index.ts",
     "../../../libs/shared/ui/src/lib/atoms/erp-button/index.ts",
     "../../../libs/shared/ui/src/lib/form/erp-input/index.ts",
-    "../../../libs/shared/util/src/index.ts"
+    "../../../libs/shared/util/src/index.ts",
+    "../../../libs/shared/ui/src/lib/atoms/erp-drawer/index.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts",

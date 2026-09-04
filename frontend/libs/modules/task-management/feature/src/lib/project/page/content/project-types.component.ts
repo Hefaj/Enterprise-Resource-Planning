@@ -28,7 +28,7 @@ import { PROJECT_KEYS } from '../../translation';
 
 /**
  * Zakładka typów na karcie projektu (`TYP-001`) — wybór schematu i lista typów, analogicznie
- * do zakładki pól (`docs/frontend/task-management-pages.md` §4.2).
+ * do zakładki pól (`docs/modules/task-management/screens.md` §4.2).
  *
  * <p>Picker startuje zaznaczony na `project().issueTypeSchemeUuid` — to schemat aktualnie
  * podpięty do projektu (`ProjectDto.issueTypeSchemeUuid`, kontrakt fazy 4). Zmiana zaznaczenia

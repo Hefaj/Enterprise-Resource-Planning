@@ -1,3 +1,18 @@
+---
+id: frontend.modals
+title: Modale (lazy-loaded, przez `ErpModalService`)
+summary: Tworzenie i leniwe ładowanie modali przez ErpModalService.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - nowy modal lazy loaded
+  - ErpModalService
+related: []
+---
+
 # Modale (lazy-loaded, przez `ErpModalService`)
 
 Modal nie jest zwykłym komponentem otwieranym bezpośrednio przez inny komponent — jest **zarejestrowany globalnie** i ładowany leniwie na żądanie, z dowolnego miejsca w aplikacji, niezależnie od tego, w którym module fizycznie mieszka jego kod.
@@ -39,7 +54,7 @@ Selektor kroku dokłada z przodu prefiks modułu: `erp-catalog-product-set-price
 
 ## 1. Dlaczego modal jest rejestrowany, a nie importowany bezpośrednio
 
-Moduł `sales` może potrzebować otworzyć modal zdefiniowany w module `catalog` (np. "dodaj produkt do zamówienia") — ale `sales` **nie może** zaimportować kodu `catalog` bezpośrednio, bo to złamałoby granice `scope:X` wymuszone przez ESLint (patrz [architektura frontendu](./architecture.md#tagi-nx)) i, w trybie MFE, oznaczałoby statyczną zależność między dwoma osobno budowanymi aplikacjami.
+Moduł `sales` może potrzebować otworzyć modal zdefiniowany w module `catalog` (np. "dodaj produkt do zamówienia") — ale `sales` **nie może** zaimportować kodu `catalog` bezpośrednio, bo to złamałoby granice `scope:X` wymuszone przez ESLint (patrz [architektura frontendu](../../architecture/frontend.md#tagi-nx)) i, w trybie MFE, oznaczałoby statyczną zależność między dwoma osobno budowanymi aplikacjami.
 
 Rozwiązanie: każdy moduł rejestruje swoje modale pod globalnie unikalnym `MODAL_ID` w warstwie `contract` (jedyna warstwa eksponowana przez Native Federation). Wywołujący zna tylko `MODAL_ID` i typ komendy:
 
@@ -63,16 +78,16 @@ node -e "console.log(require('crypto').createHash('md5').update('MODULE_NAME.ent
 
 ## 3. Krok 1.5 — Orkiestrator gotowy do zapisu (`data-access`)
 
-Przed utworzeniem definicji modalu upewnij się, że orkiestrator (np. `CatalogProductOrchestrator`) ma metodę do wykonania komendy (np. `setPriceMultipleAsync`). Jeśli nie — zaimplementuj ją najpierw, wg wzorca komend w [orkiestratorach, sekcja 6](./orchestrators.md#6-komendy-mutacje), i zaimportuj typ komendy z wygenerowanego klienta API.
+Przed utworzeniem definicji modalu upewnij się, że orkiestrator (np. `CatalogProductOrchestrator`) ma metodę do wykonania komendy (np. `setPriceMultipleAsync`). Jeśli nie — zaimplementuj ją najpierw, wg wzorca komend w [orkiestratorach, sekcja 6](orchestrators.md#6-komendy-mutacje), i zaimportuj typ komendy z wygenerowanego klienta API.
 
 ---
 
 ## 4. Krok 1.7 — Teksty (Tłumaczenia)
 
-Wszystkie stałe teksty widoczne dla użytkownika w modalu (tytuł, etykiety kroków, przycisk zapisu, placeholder, komunikaty błędów) idą przez klucze Transloco — zero hardcodowania. Procedura dodawania kluczy + `pnpm translate:keys`: [Tłumaczenia, sekcja 5](./translations.md#5-dodawanie-nowych-kluczy-do-istniejącego-scopeu). Zaimportuj wygenerowany obiekt kluczy (np. `PRODUCT_KEYS`) i używaj go bezpośrednio w definicji modalu i jego komponentach.
+Wszystkie stałe teksty widoczne dla użytkownika w modalu (tytuł, etykiety kroków, przycisk zapisu, placeholder, komunikaty błędów) idą przez klucze Transloco — zero hardcodowania. Procedura dodawania kluczy + `pnpm translate:keys`: [Tłumaczenia, sekcja 5](translations.md#5-dodawanie-nowych-kluczy-do-istniejącego-scopeu). Zaimportuj wygenerowany obiekt kluczy (np. `PRODUCT_KEYS`) i używaj go bezpośrednio w definicji modalu i jego komponentach.
 
 > [!IMPORTANT]
-> Modal ma dostęp do swoich tłumaczeń niezależnie od tego, gdzie w aplikacji został otwarty, dzięki `getModalProviders()` — patrz [Tłumaczenia, sekcja 3](./translations.md#3-automatyczne-wstrzykiwanie-providerów-w-modalach). Definicja modalu **nigdy** nie woła `.setProviders(...)` w builderze.
+> Modal ma dostęp do swoich tłumaczeń niezależnie od tego, gdzie w aplikacji został otwarty, dzięki `getModalProviders()` — patrz [Tłumaczenia, sekcja 3](translations.md#3-automatyczne-wstrzykiwanie-providerów-w-modalach). Definicja modalu **nigdy** nie woła `.setProviders(...)` w builderze.
 
 ---
 
@@ -130,15 +145,15 @@ export class PascalCaseModalNameModalDefinition implements ErpModalDefinition<CO
 Komponent kroku reprezentuje zawartość formularza. **Nie pisz ręcznego HTML/CSS w szablonie** —
 cała treść (podsumowanie celów, pola formularza, layout) jest deklaratywnie złożona przez
 `ErpStepContentBuilder` i wyrenderowana przez jeden `<erp-step-content [contentConfig]="formContent" />`.
-To pokrywa ~90% przypadków; patrz [Atomy UI](./atoms.md) po ogólny wzorzec buildera i
+To pokrywa ~90% przypadków; patrz [Atomy UI](atoms.md) po ogólny wzorzec buildera i
 `ErpStepContentBuilder` (`libs/shared/ui/src/lib/atoms/erp-step-content/`) po pełne API
 (`addFormField`, `addComponent`, `addSection`, `addBatchTargetsSummary`...).
 
-Dla modalu **operacji masowej** (`BatchCommand<TCommand, TFilter>`, patrz [Zasięg zaznaczenia](./selection-scope.md))
+Dla modalu **operacji masowej** (`BatchCommand<TCommand, TFilter>`, patrz [Zasięg zaznaczenia](selection-scope.md))
 krok rozszerza `ErpBatchStepBase<COMMAND_TYPE, METADATA_TYPE>` — baza dostarcza `targetUuids`,
 `isFilterMode`, `targetCount` i blokadę zapisu bez celów. Podsumowanie zaznaczonych pozycji
 ("Edytujesz N produktów" + lista nazw / hint trybu filtra), wyświetlane jako baner w tym samym
-stylu co `erp-selection-scope-banner` (patrz [Zasięg zaznaczenia](./selection-scope.md)), idzie
+stylu co `erp-selection-scope-banner` (patrz [Zasięg zaznaczenia](selection-scope.md)), idzie
 przez `.addBatchTargetsSummary(...)` zamiast ręcznego `@if (isFilterMode()) {...} @else if (...) {...}`:
 
 ```typescript
@@ -292,8 +307,8 @@ export { registerModals, remoteModalIds } from './lib/entry.modals';
 
 ## Zobacz też
 
-- [Tłumaczenia](./translations.md) — `getModalProviders()`, zasada zero-hardcoded-stringów
-- [Struktura katalogów agregatu](./feature-structure.md) — gdzie w drzewie `feature` leży katalog `modal/`
-- [Orkiestratory](./orchestrators.md) — skąd modal bierze metodę do wywołania w `setOnSave`
-- [Nowy moduł](./new-module.md) — jeśli `entry.modals.ts` jeszcze nie istnieje w module
-- [Zasięg zaznaczenia](./selection-scope.md) — skąd modal wsadowy bierze cele (`erpBuildBatchTargets`) i `targetCount`
+- [Tłumaczenia](translations.md) — `getModalProviders()`, zasada zero-hardcoded-stringów
+- [Struktura katalogów agregatu](feature-structure.md) — gdzie w drzewie `feature` leży katalog `modal/`
+- [Orkiestratory](orchestrators.md) — skąd modal bierze metodę do wywołania w `setOnSave`
+- [Nowy moduł](new-module.md) — jeśli `entry.modals.ts` jeszcze nie istnieje w module
+- [Zasięg zaznaczenia](selection-scope.md) — skąd modal wsadowy bierze cele (`erpBuildBatchTargets`) i `targetCount`

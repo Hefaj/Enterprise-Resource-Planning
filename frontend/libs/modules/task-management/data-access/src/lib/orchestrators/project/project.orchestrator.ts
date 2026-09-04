@@ -12,6 +12,7 @@ import {
   ProjectSetDefaultSavedViewCommand,
   ProjectSetFieldSchemeCommand,
   ProjectSetIssueTypeSchemeCommand,
+  ProjectSetNotificationMutedCommand,
   ProjectSetSlaCommand,
   SearchProjectRequest,
   SearchResponse,
@@ -21,12 +22,12 @@ import { ProjectVM } from './project.view-model';
 
 /**
  * Orkiestrator projektów. Projekt jest **kontekstem listy zgłoszeń**, nie osobną stroną
- * (`docs/frontend/task-management-pages.md` §1), więc jego głównym konsumentem jest przełącznik
+ * (`docs/modules/task-management/screens.md` §1), więc jego głównym konsumentem jest przełącznik
  * kontekstu nad tabelą, a nie własny ekran.
  *
  * Cache jest mały i celowo bez paginacji po stronie konsumenta: projektów są dziesiątki,
  * nie dziesiątki tysięcy — to ta sama różnica skali, która w
- * [`task-management.md` §10.1](../../../../../../../docs/backend/task-management.md) pozwoliła
+ * [`task-management.md` §10.1](../../../../../../../docs/modules/task-management/domain.md) pozwoliła
  * liczyć widoczność joinem zamiast materializowanym ACL.
  */
 @Injectable({ providedIn: 'root' })
@@ -63,7 +64,7 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
    * <p>Pusty <c>fieldSchemeUuid</c> odpina schemat i <b>nie kasuje</b> wartości zapisanych
    * na zgłoszeniach — wracają, gdy schemat wróci. Kasowanie danych przy zmianie konfiguracji
    * jest nieodwracalne, a ta operacja nie wygląda na nieodwracalną
-   * (`docs/backend/task-management.md` §6).</p>
+   * (`docs/modules/task-management/domain.md` §6).</p>
    */
   public setFieldSchemeAsync(command: ProjectSetFieldSchemeCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetFieldSchemeMultipleCommand(p), command, {
@@ -86,6 +87,15 @@ export class TaskManagementProjectOrchestrator extends BaseOrchestrator<
   public setSlaAsync(command: ProjectSetSlaCommand, queueId?: string): Promise<string> {
     return this.runSingleCommandAsync((p) => this._api.projectSetSlaMultipleCommand(p), command, {
       commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectSla,
+      queueId,
+    });
+  }
+
+  /** Wycisza/odcisza powiadomienia z projektu dla WOŁAJĄCEGO (NTF-003) — ustawienie osobiste,
+   * nigdy w cudzym imieniu; backend bierze użytkownika z kontekstu wykonania, nie z payloadu. */
+  public setNotificationMutedAsync(command: ProjectSetNotificationMutedCommand, queueId?: string): Promise<string> {
+    return this.runSingleCommandAsync((p) => this._api.projectSetNotificationMutedMultipleCommand(p), command, {
+      commandName: TASK_MANAGEMENT_JOB_COMMAND_KEYS.setProjectNotificationMuted,
       queueId,
     });
   }

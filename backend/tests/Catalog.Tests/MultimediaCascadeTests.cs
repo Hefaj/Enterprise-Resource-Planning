@@ -9,7 +9,7 @@ using Xunit;
 namespace Catalog.Tests;
 
 /// <summary>
-/// Kaskada po odpięciu multimediów od produktu (<c>docs/backend/media-storage.md</c> §4c).
+/// Kaskada po odpięciu multimediów od produktu (<c>docs/guides/backend/media-storage.md</c> §4c).
 ///
 /// <para>To jedyne miejsce w systemie, w którym plik użytkownika znika bez jawnej komendy
 /// „usuń zasób", więc granica między „znika kaskadą" a „zostaje w bibliotece" musi być

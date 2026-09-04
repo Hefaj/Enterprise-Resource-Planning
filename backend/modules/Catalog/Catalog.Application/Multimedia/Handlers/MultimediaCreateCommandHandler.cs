@@ -28,7 +28,7 @@ namespace Catalog.Application.Multimedia;
 /// wiersz wskazujący na poczekalnię, którą reguła lifecycle sprząta po dobie — czyli zepsutą
 /// miniaturkę u użytkownika. Ta kolejność zostawia w najgorszym razie obiekt bez wiersza:
 /// niewidoczny dla nikogo i wyłapywany przez audytora rozjazdu
-/// (<c>docs/backend/media-storage.md</c> §4d).</para>
+/// (<c>docs/guides/backend/media-storage.md</c> §4d).</para>
 /// </summary>
 public sealed class MultimediaCreateCommandHandler : CommandHandler<MultimediaCreateCommand, Guid>
 {

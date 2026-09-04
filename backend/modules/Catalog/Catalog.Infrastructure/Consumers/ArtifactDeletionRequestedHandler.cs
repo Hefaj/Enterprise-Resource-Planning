@@ -11,7 +11,7 @@ namespace Catalog.Infrastructure.Consumers;
 /// nie są w jednej transakcji. Koperta zapisuje się razem z usunięciem wiersza, więc rollback
 /// zabiera ją ze sobą, a padnięcie magazynu odkłada tylko dostarczenie — nie gubi go. Ponowienie
 /// jest bezpieczne: <c>DeleteAsync</c> traktuje brak obiektu jako sukces, bo o to wołającemu
-/// chodziło (<c>docs/backend/media-storage.md</c> §4b).</para>
+/// chodziło (<c>docs/guides/backend/media-storage.md</c> §4b).</para>
 ///
 /// <para><b>Filtr po module jest obowiązkowy, nie ostrożnościowy.</b> Wymiana <c>erp.events</c>
 /// jest fanoutowa — tę kopertę dostają wszystkie mikroserwisy, a każdy ma własne kubełki.

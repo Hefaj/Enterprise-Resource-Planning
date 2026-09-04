@@ -98,7 +98,8 @@ public sealed class ProjectQueries : IProjectQueries
                         p.SlaWorkStartTime!.Value,
                         p.SlaWorkEndTime!.Value),
                 p.IsArchived,
-                p.DefaultSavedViewUuid))
+                p.DefaultSavedViewUuid,
+                EF.Property<List<Guid>>(p, "_mutedNotificationUserUuids").Contains(me)))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }

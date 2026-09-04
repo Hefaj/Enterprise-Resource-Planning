@@ -1,9 +1,11 @@
 # Plan realizacji — nazewnictwo endpointów, eksporty, powiadomienia
 
-> **Plik tymczasowy — usuń po wdrożeniu.**
-> Dokumentacja docelowa (zostaje): [`docs/backend/endpoint-naming.md`](docs/backend/endpoint-naming.md),
-> [`docs/backend/exports-artifacts.md`](docs/backend/exports-artifacts.md),
-> [`docs/frontend/notifications.md`](docs/frontend/notifications.md).
+> **Status:** completed (25.08.2026)
+>
+> **Zarchiwizowany plan historyczny — nie jest źródłem aktualnych reguł technicznych.**
+> Dokumentacja docelowa (zostaje): [`docs/guides/backend/endpoint-naming.md`](../../docs/guides/backend/endpoint-naming.md),
+> [`docs/guides/backend/exports-artifacts.md`](../../docs/guides/backend/exports-artifacts.md),
+> [`docs/guides/frontend/notifications.md`](../../docs/guides/frontend/notifications.md).
 
 ---
 
@@ -27,8 +29,8 @@ Etap 5.1 wyszedł **szerszy**, niż zakładał plan — patrz opis w sekcji 5.1.
 > szczegóły w sekcji „Weryfikacja".
 >
 > **Ten plik nie ma już nic otwartego — można go usunąć.** Wiedza, która ma zostać, mieszka
-> w `docs/backend/endpoint-naming.md`, `docs/backend/exports-artifacts.md`
-> i `docs/frontend/notifications.md`.
+> w `docs/guides/backend/endpoint-naming.md`, `docs/guides/backend/exports-artifacts.md`
+> i `docs/guides/frontend/notifications.md`.
 
 ---
 
@@ -127,7 +129,7 @@ w przeglądarce.
 ### 2.2 `IArtifactStore`
 
 - [x] Interfejs w `Erp.BuildingBlocks.Application/Abstractions/` — sygnatura w
-      [`exports-artifacts.md` §5](docs/backend/exports-artifacts.md#5-magazyn-artefaktów--minio)
+      [`exports-artifacts.md` §5](../../docs/guides/backend/exports-artifacts.md#5-magazyn-artefaktów--minio)
 - [x] Implementacja w **nowym projekcie `Erp.BuildingBlocks.Artifacts`** — projektu
       `Erp.BuildingBlocks.Infrastructure` nie ma, a wciskanie klienta S3 do `.Persistence`
       (EF) byłoby nadużyciem. Rejestracja jawna przez `AddErpArtifacts`, nie przez konwencję:
@@ -150,7 +152,7 @@ w przeglądarce.
 - [x] `BulkCommandRunner.ProcessNextChunkAsync` filtruje `kind = Map` (bez tego podjąłby przebieg
       eksportu i uznał go za puste zadanie)
 - [x] Dopisz `ExportRunner` do listy założeń jednoinstancyjnych w
-      [`docs/backend/architecture.md` §7](docs/backend/architecture.md#7-założenia-jednoinstancyjne)
+      [`docs/architecture/backend.md` §7](../../docs/architecture/backend.md#7-założenia-jednoinstancyjne)
 
 ### 2.4 `ExportRun` + `ExportRunner`
 
@@ -209,7 +211,7 @@ nie payload.
 ## Etap 4 — `ErpToastService`
 
 Docelowy kształt i uzasadnienie rozmieszczenia:
-[`docs/frontend/notifications.md` §4-6](docs/frontend/notifications.md).
+[`docs/guides/frontend/notifications.md` §4-6](../../docs/guides/frontend/notifications.md).
 
 - [x] Atom w `libs/shared/ui/src/lib/erp-toast/` wzorcem Single Config Builder
       (`.types.ts` / `.builder.ts` / `.component.ts` / `index.ts`)
@@ -265,7 +267,7 @@ Zawężenie poszło więc **na serwer**, gdzie tożsamość i tak już jest:
 
 ### 5.2 Nieaktualna sekcja w dokumentacji realtime
 
-`docs/backend/realtime-signalr.md` §2 wciąż niesie ostrzeżenie „Znany dług — brak autoryzacji",
+`docs/architecture/realtime.md` §2 wciąż niesie ostrzeżenie „Znany dług — brak autoryzacji",
 podczas gdy `SyncHub` ma `[Authorize]`, a `userId` pochodzi z claimu `sub` przez
 `SubjectUserIdProvider`. Dokumentacja opisuje stan bieżący, więc to jest usterka.
 

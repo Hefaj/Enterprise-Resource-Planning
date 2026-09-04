@@ -65,7 +65,7 @@ export class IssueCommentService extends IssueChildCache<IssueCommentDto> {
  * <p><b>Słucha dwóch kanałów</b>, bo dopisuje ją i zmiana pola zgłoszenia, i komentarz —
  * a własnego kanału świadomie nie ma: osobna sygnatura oznaczałaby dwa zdarzenia realtime
  * na jedną zmianę i drugie odświeżenie karty bez nowej treści
- * (`docs/backend/task-management.md` §11).</p>
+ * (`docs/modules/task-management/domain.md` §11).</p>
  */
 @Injectable({ providedIn: 'root' })
 export class IssueActivityService extends IssueChildCache<IssueActivityDto> {

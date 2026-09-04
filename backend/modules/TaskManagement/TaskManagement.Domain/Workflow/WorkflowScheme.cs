@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Workflow;
 
 /// <summary>
 /// Automat stanów jako <b>dana, nie klasa</b> — nowy projekt z własnym zestawem stanów nie
-/// wymaga wdrożenia kodu (patrz <c>docs/backend/task-management.md</c> §5).
+/// wymaga wdrożenia kodu (patrz <c>docs/modules/task-management/domain.md</c> §5).
 ///
 /// <para>Świadoma różnica wobec DMS: zgłoszenia czytają <b>bieżący</b> schemat, nie snapshot.
 /// Tablica pokazuje kilkaset zgłoszeń w kolumnach wyprowadzonych ze stanów — gdyby połowa kart
@@ -185,7 +185,7 @@ public sealed class WorkflowScheme : AggregateRoot
             result.Add((removedStateUuid, targetStateUuid));
         }
 
-        // Walidacja PRZED mutacją (`docs/backend/cqrs.md` §3): sprawdzamy skutek usunięcia na
+        // Walidacja PRZED mutacją (`docs/guides/backend/cqrs.md` §3): sprawdzamy skutek usunięcia na
         // policzonym zbiorze, zanim cokolwiek zniknie z `_states`/`_transitions`.
         if (!_states.Exists(s => s.Category == WorkflowStateCategory.Todo && !removeSet.Contains(s.Uuid)))
         {

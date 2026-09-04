@@ -1,3 +1,18 @@
+---
+id: backend.new-microservice
+title: Nowy mikroserwis — przepis
+summary: Procedura utworzenia mikroserwisu .NET w czterech projektach Clean Architecture.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - nowy mikroserwis backendowy
+  - nowy DbContext lub moduł backendowy
+related: []
+---
+
 # Nowy mikroserwis — przepis
 
 Dodanie kolejnego mikroserwisu (obok Catalog, Identity, Notification, Sales) wymaga czterech projektów
@@ -39,7 +54,7 @@ bo kolejność i zakres referencji tu egzekwuje `Erp.ArchitectureTests`:
 
 `.Api` referencuje `.Infrastructure` **wyłącznie po to, żeby złożyć kontener DI w `Program.cs`**
 — kod endpointów sięga do abstrakcji z `.Application`, nigdy do EF bezpośrednio (patrz
-[`cqrs.md`](./cqrs.md), [`architecture.md`](./architecture.md#3-cztery-warstwy-modułu)).
+[`cqrs.md`](cqrs.md), [`architecture.md`](../../architecture/backend.md#3-cztery-warstwy-modułu)).
 
 Dodaj do solucji:
 
@@ -88,7 +103,7 @@ IJobDbContext`, więc bez tego interfejsu moduł nie może w ogóle użyć silni
 migracji dodającej te dwie tabele osobno.
 
 Fabryka do migracji offline (bez uruchamiania całego hosta — patrz
-[`persistence-ef.md`](./persistence-ef.md#7-migracje)):
+[`persistence-ef.md`](persistence-ef.md#7-migracje)):
 
 ```csharp
 public sealed class SalesDbContextFactory : IDesignTimeDbContextFactory<SalesDbContext>
@@ -155,10 +170,10 @@ public static class SalesInfrastructureExtensions
 ```
 
 Dodaj sygnaturę do **jedynego miejsca prawdy**:
-[`AggregateSignatures.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/AggregateSignatures.cs)
+[`AggregateSignatures.cs`](../../../backend/building-blocks/Erp.BuildingBlocks.Contracts/AggregateSignatures.cs)
 — stała `SalesCustomer = "sales.customer"` i wpis w `AggregateSignatures.All`. Literówka tutaj nie
 wywali buildu po żadnej stronie — zdarzenia po prostu przestaną cicho docierać do klientów
-(patrz [`realtime-signalr.md`](./realtime-signalr.md#2-grupy)).
+(patrz [`realtime-signalr.md`](../../architecture/realtime.md#2-grupy)).
 
 ---
 
@@ -247,8 +262,8 @@ inferowane i używają domyślnych `bin`/`obj` — slot dotyczy wyłącznie watc
 ## Krok 5: Pierwszy agregat, komenda, endpointy
 
 Nic tu nie jest specyficzne dla nowego mikroserwisu — to zwykły przepis z
-[`cqrs.md`](./cqrs.md) (agregat w `.Domain`, komenda + handler w `.Application`, endpoint
-w `.Api`) i opcjonalnie [`bulk-commands.md`](./bulk-commands.md), jeśli moduł ma mieć operację
+[`cqrs.md`](cqrs.md) (agregat w `.Domain`, komenda + handler w `.Application`, endpoint
+w `.Api`) i opcjonalnie [`bulk-commands.md`](bulk-commands.md), jeśli moduł ma mieć operację
 masową od startu. Sales dostał dokładnie jeden agregat (`Customer`), jedną komendę
 (`SetCustomerNameCommand`) i jej wariant masowy (`customer/batch-set-name`) — to był cały
 sprawdzian, czy szablon się powtarza bez kopiowania kodu do BuildingBlocks.
@@ -258,7 +273,7 @@ sprawdzian, czy szablon się powtarza bez kopiowania kodu do BuildingBlocks.
 ## Krok 6: Rejestracja we frontendzie
 
 Poza zakresem tego dokumentu — mikroserwis bez klienta NSwag i orkiestratora jest bezużyteczny
-z frontu, ale to osobny przepis: [`docs/frontend/new-module.md`](../frontend/new-module.md)
+z frontu, ale to osobny przepis: [`docs/guides/frontend/new-module.md`](../frontend/new-module.md)
 (generacja bibliotek NX) i konfiguracja `remote-api.providers.ts` dla `API_BASE_URL` nowego
 modułu. Sales ma dziś backend gotowy, ale **bez** odpowiadającego klienta frontendowego —
 `frontend/libs/modules/sales/` ma tylko `contract`/`feature` sprzed tego planu, żadnego
@@ -273,14 +288,14 @@ modułu. Sales ma dziś backend gotowy, ale **bez** odpowiadającego klienta fro
 - [ ] Migracja się wygenerowała i stosuje przy starcie (`Database:MigrateOnStartup`)
 - [ ] Nowa sygnatura jest w `AggregateSignatures.All`
 - [ ] `dotnet run --project backend/modules/MODULE_NAME/MODULE_NAME.Api` startuje, `/openapi/v1.json` pokazuje nowe endpointy
-- [ ] Zapis agregatu generuje wiersz w outboksie (schemat `wolverine`) — atomowość jak w [`events-outbox.md`](./events-outbox.md#7-jak-zweryfikować-atomowość-ręcznie)
+- [ ] Zapis agregatu generuje wiersz w outboksie (schemat `wolverine`) — atomowość jak w [`events-outbox.md`](../../architecture/integration-events.md#7-jak-zweryfikować-atomowość-ręcznie)
 
 ---
 
 ## Zobacz też
 
-- [Architektura backendu](./architecture.md)
-- [CQRS — komendy i zapytania](./cqrs.md)
-- [Operacje masowe](./bulk-commands.md)
-- [Persystencja](./persistence-ef.md)
+- [Architektura backendu](../../architecture/backend.md)
+- [CQRS — komendy i zapytania](cqrs.md)
+- [Operacje masowe](bulk-commands.md)
+- [Persystencja](persistence-ef.md)
 - Frontend: [nowy moduł](../frontend/new-module.md)

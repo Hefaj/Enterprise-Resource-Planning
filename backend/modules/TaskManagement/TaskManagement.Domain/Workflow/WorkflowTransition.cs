@@ -12,7 +12,7 @@ namespace TaskManagement.Domain.Workflow;
 /// (modal zbierający brakujące pola), a agregat sprawdza to samo jako backstop — patrz
 /// <see cref="Issues.Issue.SetState"/>. <c>guard</c> (warunek w tym samym wąskim języku,
 /// co krawędzie gateway w DMS) zostaje poza zakresem WF-004 — patrz
-/// <c>docs/backend/task-management.md</c> §5.2.</para>
+/// <c>docs/modules/task-management/domain.md</c> §5.2.</para>
 /// </summary>
 public sealed class WorkflowTransition : Entity
 {

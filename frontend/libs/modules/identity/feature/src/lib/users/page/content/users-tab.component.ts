@@ -21,7 +21,7 @@ import { USERS_KEYS } from '../../translation';
 
 /** Nagłówek + pasek akcji + tabela listy użytkowników. Zaznaczenie wielokrotne (checkboxy)
  * napędza akcje masowe toolbara (nadaj rolę/uprawnienie/wymuś wylogowanie na całym zasięgu —
- * patrz `docs/frontend/selection-scope.md`); zaznaczenie DOKŁADNIE jednego wiersza pokazuje
+ * patrz `docs/guides/frontend/selection-scope.md`); zaznaczenie DOKŁADNIE jednego wiersza pokazuje
  * dodatkowo panel zakładek w sąsiednim obszarze (`rightPanel`, `UsersStore.selectedUuid`). */
 @Component({
   selector: 'erp-identity-users-tab',

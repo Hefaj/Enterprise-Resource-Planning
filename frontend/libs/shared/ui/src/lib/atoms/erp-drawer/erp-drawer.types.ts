@@ -5,6 +5,7 @@ import { ErpComponentSignalInputs } from '../../base/erp-component-signal-inputs
 export interface ErpDrawerConfig<TComponent = any> {
   open: MaybeSignal<boolean>;
   title?: MaybeSignal<Translatable>;
+  closeLabel?: MaybeSignal<Translatable>;
   overlay?: MaybeSignal<boolean>;
   direction?: MaybeSignal<'start' | 'end'>;
   component?: Type<TComponent>;

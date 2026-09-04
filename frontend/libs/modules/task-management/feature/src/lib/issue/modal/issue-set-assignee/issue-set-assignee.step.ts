@@ -25,7 +25,7 @@ import { ISSUE_KEYS } from '../../translation';
  *
  * <p>Lista osób pochodzi z <c>ERP_USER_DIRECTORY</c>, nie z backendu Task Management: ten sam
  * katalog obsługuje DMS i każdy kolejny moduł, który wskazuje ludzi
- * (<c>docs/frontend/user-directory.md</c>).</p>
+ * (<c>docs/guides/frontend/user-directory.md</c>).</p>
  */
 @Component({
   selector: 'erp-task-management-issue-set-assignee-step',

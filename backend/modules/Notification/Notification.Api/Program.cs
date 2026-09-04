@@ -22,7 +22,7 @@ builder.Services.AddNotificationInfrastructure(builder.Configuration);
 // Jedno ustawienie steruje wszystkim, co z niej wynika. Gdyby operator musiał zgrać `Realtime:Role`
 // z `Messaging:ListenQueueName` ręcznie, prędzej czy później postawiłby dwa przekaźniki naraz —
 // a wtedy bufor koalescencji i próg „all" liczyłyby się dwukrotnie i nikt by tego nie zauważył
-// poza podwojonym ruchem u klienta. Patrz RealtimeRole i docs/backend/multi-instance.md §7.1.
+// poza podwojonym ruchem u klienta. Patrz RealtimeRole i docs/architecture/multi-instance.md §7.1.
 var realtimeRole = builder.Configuration.GetValue("Realtime:Role", RealtimeRole.Both);
 
 if (realtimeRole == RealtimeRole.Hub)

@@ -1,10 +1,25 @@
+---
+id: frontend.selection-scope
+title: Zasięg zaznaczenia (selection scope) i akcje masowe
+summary: Zasięg zaznaczenia, wybór wszystkich wyników i bezpieczne cele operacji masowych.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - zaznacz wszystko lub akcja masowa
+  - ErpSelectionScope
+related: []
+---
+
 # Zasięg zaznaczenia (selection scope) i akcje masowe
 
 Ten dokument opisuje, jak strona z listą + panelami bocznymi ma się zachować, gdy użytkownik kliknie **„Zaznacz wszystko"**, a filtry pasują do tysięcy pozycji: co jest celem akcji masowej, co wolno pokazać w panelu i które akcje muszą wtedy zniknąć z zasięgu ręki.
 
-Implementacja referencyjna: strona produktów katalogu — [`product.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (właściciel zasięgu), [`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) (wspólna podstawa zakładek zależnych od zaznaczenia), [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/multimedia/multimedia-tab.component.ts) i [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/warranty/warranty-tab.component.ts) (panele zależne od zaznaczenia), [`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/product-tab.component.ts) (toolbar + modale wsadowe).
+Implementacja referencyjna: strona produktów katalogu — [`product.store.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (właściciel zasięgu), [`product-scope-tab.store.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) (wspólna podstawa zakładek zależnych od zaznaczenia), [`multimedia-tab.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/multimedia/multimedia-tab.component.ts) i [`warranty-tab.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/warranty/warranty-tab.component.ts) (panele zależne od zaznaczenia), [`product-tab.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/product-tab.component.ts) (toolbar + modale wsadowe).
 
-Warstwa współdzielona: [`erp-selection.utils.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.ts) (+ testy [`erp-selection.utils.spec.ts`](../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.spec.ts)) oraz atom [`erp-selection-scope-banner`](../../frontend/libs/shared/ui/src/lib/atoms/erp-selection-scope-banner) — zdanie o zasięgu nad panelem.
+Warstwa współdzielona: [`erp-selection.utils.ts`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.ts) (+ testy [`erp-selection.utils.spec.ts`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-table/erp-selection.utils.spec.ts)) oraz atom [`erp-selection-scope-banner`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-selection-scope-banner) — zdanie o zasięgu nad panelem.
 
 ---
 
@@ -87,7 +102,7 @@ Liczność zasięgu czytaj przez `erpSelectionScopeCount(scope)` (a nie `erpSele
 
 ## 4. Panel zależny od zaznaczenia w trybie `query`
 
-Trzy reguły, wszystkie zaszyte w [`ErpScopeTabStore`](../../frontend/libs/shared/ui/src/lib/base/erp-scope-tab.store.ts) — wspólnej bazie zakładek panelu dla wszystkich stron aplikacji, po której dziedziczą cienkie klasy per page ([`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts), `user-scope-tab.store.ts`, `role-scope-tab.store.ts`) — store'y poszczególnych zakładek (multimedia, gwarancje, role…) dziedziczą je zamiast odtwarzać po swojemu:
+Trzy reguły, wszystkie zaszyte w [`ErpScopeTabStore`](../../../frontend/libs/shared/ui/src/lib/base/erp-scope-tab.store.ts) — wspólnej bazie zakładek panelu dla wszystkich stron aplikacji, po której dziedziczą cienkie klasy per page ([`product-scope-tab.store.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts), `user-scope-tab.store.ts`, `role-scope-tab.store.ts`) — store'y poszczególnych zakładek (multimedia, gwarancje, role…) dziedziczą je zamiast odtwarzać po swojemu:
 
 **1. Próbka zamiast listy.** Panel ładuje kilka pierwszych rodziców (`PRODUCT_SCOPE_PREVIEW_LIMIT = 10`), rozwiązanych tym samym mechanizmem co materializacja (`ProductStore.resolveUuids(filters, limit)` — z cache per (filtry, limit)). Scroll nie doładowuje kolejnych: to próbka i ma taką się czuć.
 
@@ -189,7 +204,7 @@ Z bazy zakładka dostaje gotowe: `scope`/`scopeKind`/`scopeCount`, `products` (m
 4. **Tryb `explicit` z `loading: true`** (materializacja w toku) → stan „rozwiązywanie zaznaczenia", nie pusty ekran i nie baner trybu filtra.
 5. **Toolbar** dostaje `.setSelectionScope(...)`, a akcje wymagające wskazanych pozycji — `.setScopes(['explicit'])` + `.setUnavailableHint(...)`.
 6. **Akcje masowe** budują cele przez `erpBuildBatchTargets(scope)` i przekazują `targetCount` metadanymi.
-7. **Teksty** — wyłącznie klucze Transloco (patrz [tłumaczenia](./translations.md)). Wspólne dla całej strony produktów: `PRODUCT_KEYS.base.selectionScope.{resolving,allTitle,previewTitle,previewDescription}`; per zakładka zostaje tylko podpowiedź o zablokowanej akcji (`…multimedia.panel.scopeFileSelectionUnavailable`, `…warranty.panel.scopeWarrantySelectionUnavailable`). Domyślne, ogólne teksty banera: `SHARED_KEYS.selectionScope.*`.
+7. **Teksty** — wyłącznie klucze Transloco (patrz [tłumaczenia](translations.md)). Wspólne dla całej strony produktów: `PRODUCT_KEYS.base.selectionScope.{resolving,allTitle,previewTitle,previewDescription}`; per zakładka zostaje tylko podpowiedź o zablokowanej akcji (`…multimedia.panel.scopeFileSelectionUnavailable`, `…warranty.panel.scopeWarrantySelectionUnavailable`). Domyślne, ogólne teksty banera: `SHARED_KEYS.selectionScope.*`.
 
 ---
 
@@ -217,9 +232,9 @@ Z bazy zakładka dostaje gotowe: `scope`/`scopeKind`/`scopeCount`, `products` (m
 
 ## 9. Zobacz też
 
-- [Page dla agregatu](./pages.md) — gdzie zasięg zaznaczenia mieszka w szkielecie całej strony (store, zakładki, panel boczny)
+- [Page dla agregatu](pages.md) — gdzie zasięg zaznaczenia mieszka w szkielecie całej strony (store, zakładki, panel boczny)
 - [Operacje masowe (backend)](../backend/bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, częściowy sukces, cancel/retry
 - [Walidacja wsadowa](../backend/batch-validation.md) — pre-check przed utworzeniem zadania, górne ograniczenia wsadu
-- [Modale](./modals.md) — modale wsadowe, `ErpBatchMetadata`
-- [Orkiestratory](./orchestrators.md) — `searchAsync`, rozwiązywanie UUID → ViewModel, komendy masowe
-- [Atomy UI](./atoms.md) — wzorzec buildera, którym rozszerzano toolbar i tabelę
+- [Modale](modals.md) — modale wsadowe, `ErpBatchMetadata`
+- [Orkiestratory](orchestrators.md) — `searchAsync`, rozwiązywanie UUID → ViewModel, komendy masowe
+- [Atomy UI](atoms.md) — wzorzec buildera, którym rozszerzano toolbar i tabelę

@@ -46,7 +46,7 @@ export class SignalrSyncService {
    * Dla konsumenta (`BaseOrchestrator`) skutek jest identyczny, więc jeden strumień. */
   private readonly _fullRefresh$: Subject<string> = new Subject<string>();
   /** `ReceiveNotification(notificationUuid, unreadCount)` — kanał powiadomień osobistych
-   * (`docs/backend/user-notifications.md` §7), auto-dołączony do grupy `user:{userId}` przy
+   * (`docs/modules/notification/user-notifications.md` §7), auto-dołączony do grupy `user:{userId}` przy
    * połączeniu; w odróżnieniu od `agg:{signature}` nie wymaga jawnego `subscribe(...)`. */
   private readonly _notification$: Subject<{ notificationUuid: string; unreadCount: number }> = new Subject();
   private _connection: signalR.HubConnection | null = null;

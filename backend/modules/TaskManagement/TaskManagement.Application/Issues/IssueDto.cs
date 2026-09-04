@@ -59,7 +59,7 @@ public sealed record IssueExternalLinkDto(Guid Uuid, string Url, string Label);
 /// <summary>
 /// Zakres listy zgłoszeń — <b>parametr, nie osobna strona</b>. „Moje zgłoszenia” jako oddzielny
 /// ekran zmusza użytkownika do zgadywania, gdzie patrzeć
-/// (<c>docs/frontend/task-management-pages.md</c> §2.1).
+/// (<c>docs/modules/task-management/screens.md</c> §2.1).
 /// </summary>
 public enum IssueScope
 {
@@ -79,7 +79,7 @@ public enum IssueScope
 /// <para>Działa <b>wyłącznie na polach ze slotem</b> i wyłącznie w kontekście jednego projektu:
 /// bez projektu nie da się przetłumaczyć kodu pola na slot, bo dwa schematy mogą mapować ten
 /// sam kod na różne kolumny. Pole spoza profilu jest <b>ignorowane</b>, nie odrzucane —
-/// tak samo jak nieznane pole sortowania (<c>docs/backend/cqrs.md</c>).</para>
+/// tak samo jak nieznane pole sortowania (<c>docs/guides/backend/cqrs.md</c>).</para>
 /// </summary>
 public sealed class IssueCustomFieldFilter
 {
@@ -183,7 +183,7 @@ public interface IIssueQueries
 /// <summary>
 /// Rozwiązuje DSL wyszukiwania (SRCH-005) na <see cref="SearchIssueRequest"/> — implementacja
 /// żyje w Infrastructure, bo wymaga bazy (kod projektu → uuid, nazwa tagu → uuid), czego
-/// Application świadomie nie zna (<c>docs/backend/task-management.md</c> §6).
+/// Application świadomie nie zna (<c>docs/modules/task-management/domain.md</c> §6).
 /// </summary>
 public interface IIssueSearchDslResolver
 {

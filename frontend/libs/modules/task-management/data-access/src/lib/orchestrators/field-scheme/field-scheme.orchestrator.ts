@@ -79,7 +79,7 @@ export class TaskManagementFieldSchemeOrchestrator extends BaseOrchestrator<
    *
    * <p><b>Slotu nie da się później zmienić</b> — nie ma takiej komendy i to jest cała egzekucja
    * reguły „mapowanie pole↔slot jest niezmienne po pierwszym użyciu"
-   * (`docs/backend/task-management.md` §6). UI musi to powiedzieć użytkownikowi PRZED zapisem,
+   * (`docs/modules/task-management/domain.md` §6). UI musi to powiedzieć użytkownikowi PRZED zapisem,
    * bo po nim jedyną drogą jest usunięcie pola, a to blokuje pierwsza zapisana wartość.</p>
    */
   public addFieldAsync(command: FieldSchemeAddFieldCommand, queueId?: string): Promise<string> {

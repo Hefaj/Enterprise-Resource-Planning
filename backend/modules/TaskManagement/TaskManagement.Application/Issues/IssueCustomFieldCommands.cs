@@ -11,7 +11,7 @@ namespace TaskManagement.Application.Issues;
 /// <summary>
 /// Nadpisuje <b>całą</b> kolekcję wartości pól niestandardowych zgłoszenia — człon w liczbie
 /// mnogiej, więc to, co przyszło, jest tym, co zostaje, a pusta mapa czyści wszystkie pola
-/// (<c>docs/backend/endpoint-naming.md</c> §2).
+/// (<c>docs/guides/backend/endpoint-naming.md</c> §2).
 ///
 /// <para>Wartości jadą jako <c>Dictionary&lt;string, string&gt;</c> w postaci kanonicznej,
 /// a nie jako polimorficzny JSON: kontrakt NSwag musi mieć jeden typ na pole, a nie union

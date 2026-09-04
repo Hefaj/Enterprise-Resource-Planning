@@ -55,7 +55,7 @@ export interface BoardColumnVM {
 
 /** Optymistyczne przesunięcie: karta narysowana tam, gdzie ją upuszczono, zanim serwer
  * potwierdzi. Trzymamy pozycję (kolumna + indeks), a NIE wyliczony rank — rank liczy serwer
- * (`docs/backend/task-management.md` §7.2), więc front nie ma go po co udawać. */
+ * (`docs/modules/task-management/domain.md` §7.2), więc front nie ma go po co udawać. */
 interface PendingMove {
   readonly cardUuid: string;
   readonly swimlaneKey: string;
@@ -72,11 +72,11 @@ const BOARD_POSITION_SCOPE = 'taskmgmt.board.position';
  * Stan strony tablicy.
  *
  * <p>Trzy rzeczy, których nie robi dziś żaden inny ekran w systemie
- * (`docs/frontend/task-management-pages.md` §2.2): optymistyczne przestawienie z cofnięciem,
+ * (`docs/modules/task-management/screens.md` §2.2): optymistyczne przestawienie z cofnięciem,
  * pomijanie własnego, jeszcze niepotwierdzonego ruchu i wygaszanie kolumn niedostępnych
  * <b>w chwili chwycenia karty</b> — a nie dopiero po upuszczeniu.</p>
  *
- * <p><b>Przesunięcie idzie przez `ErpOptimisticStore`</b> (`docs/frontend/optimistic-updates.md`),
+ * <p><b>Przesunięcie idzie przez `ErpOptimisticStore`</b> (`docs/guides/frontend/optimistic-updates.md`),
  * nie przez lokalny sygnał — daje to darmowy, spójny z resztą systemu cykl życia (cofnięcie,
  * toast, bezpiecznik czasowy), zamiast własnej kopii tej logiki tylko dla tablicy.</p>
  */
@@ -104,7 +104,7 @@ export class BoardStore {
   /**
    * Kolumny z kartami. Kolumna karty <b>wynika ze stanu zgłoszenia</b>, nie jest przechowywana
    * przy karcie — zduplikowanie jej dałoby dwa źródła prawdy, rozjeżdżające się przy każdej
-   * zmianie stanu spoza tablicy (`docs/backend/task-management.md` §7.1).
+   * zmianie stanu spoza tablicy (`docs/modules/task-management/domain.md` §7.1).
    *
    * <p>Zgłoszenie w stanie nieprzypisanym do żadnej kolumny <b>znika z tablicy</b> i to jest
    * poprawne: tak działa kolumna „gotowe" schowana za filtrem.</p>
@@ -274,7 +274,7 @@ export class BoardStore {
    *
    * <p>Liczone <b>w chwili chwycenia</b>, ze schematu przejść projektu. Poznanie tego dopiero
    * z błędu po upuszczeniu jest wrogie użytkownikowi
-   * (`docs/frontend/task-management-pages.md` §2.2). To wygoda, nie kontrola — regułę
+   * (`docs/modules/task-management/screens.md` §2.2). To wygoda, nie kontrola — regułę
    * i tak egzekwuje backend (`taskmgmt.transition_not_allowed`).</p>
    */
   public readonly allowedColumnUuids = computed<ReadonlySet<string>>(() => {
@@ -313,7 +313,7 @@ export class BoardStore {
    *
    * <p>Istnieje, bo pozycja w menu nie ma skąd wziąć uuid-a tablicy, a osobna strona „lista
    * tablic” dla jednej tablicy na projekt byłaby klikiem donikąd
-   * (`docs/frontend/task-management-pages.md` §5). Zwraca uuid, żeby wywołujący mógł podmienić
+   * (`docs/modules/task-management/screens.md` §5). Zwraca uuid, żeby wywołujący mógł podmienić
    * adres na konkretną tablicę — link do „jakiejś domyślnej” nie da się wysłać koledze.</p>
    */
   public async resolveDefaultBoardUuidAsync(): Promise<string | null> {
@@ -395,7 +395,7 @@ export class BoardStore {
     const { afterIssueUuid, beforeIssueUuid } = this._neighbours(swimlaneKey, columnUuid, cardUuid, index);
     const boardUuid = board.uuid;
 
-    // Optymistyczna nakładka pozycji (`docs/frontend/optimistic-updates.md`) — karta ląduje
+    // Optymistyczna nakładka pozycji (`docs/guides/frontend/optimistic-updates.md`) — karta ląduje
     // w nowym miejscu natychmiast (patrz `columns` wyżej, projektujące ją z `ErpOptimisticStore`)
     // i schodzi dopiero, gdy `settleAsync` przeładuje tablicę z serwera: świeże dane są
     // jednocześnie potwierdzeniem i cofnięciem, zależnie od tego, czym skończyło się zadanie.
@@ -446,7 +446,7 @@ export class BoardStore {
   /**
    * Sąsiedzi karty po upuszczeniu — liczeni z widoku kolumny, po zdjęciu z niej przestawianej
    * karty. Do serwera idą <b>identyfikatory sąsiadów, nigdy wyliczony rank</b>: rank liczy
-   * serwer z ich bieżących wartości, w transakcji (`docs/backend/task-management.md` §7.2).
+   * serwer z ich bieżących wartości, w transakcji (`docs/modules/task-management/domain.md` §7.2).
    */
   private _neighbours(
     swimlaneKey: string,

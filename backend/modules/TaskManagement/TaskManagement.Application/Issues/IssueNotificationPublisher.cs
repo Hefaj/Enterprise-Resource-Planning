@@ -1,5 +1,6 @@
 using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Contracts;
+using TaskManagement.Application.Projects;
 using TaskManagement.Domain.Issues;
 
 namespace TaskManagement.Application.Issues;
@@ -7,8 +8,8 @@ namespace TaskManagement.Application.Issues;
 /// <summary>
 /// Buduje i publikuje <c>UserNotificationRequested</c> dla zdarzeń zgłoszenia (NTF-002) —
 /// jedno miejsce, żeby konwencja <c>Link</c>/<c>TitleKey</c>/<c>GroupKey</c> nie rozjechała się
-/// między siedmioma miejscami wywołania (<c>docs/backend/user-notifications.md</c>,
-/// <c>docs/backend/task-management-requirements.md</c> REQ-005).
+/// między siedmioma miejscami wywołania (<c>docs/modules/notification/user-notifications.md</c>,
+/// <c>docs/modules/task-management/requirements.md</c> REQ-005).
 ///
 /// <para><b>Odbiorcy zawsze z pominięciem sprawcy</b> — Notification i tak wyklucza <c>ActorId</c>
 /// z fan-outu, ale odfiltrowanie tutaj oszczędza puste zdarzenia, gdy sprawca był jedynym
@@ -17,10 +18,12 @@ namespace TaskManagement.Application.Issues;
 public sealed class IssueNotificationPublisher
 {
     private readonly IIntegrationEventPublisher _publisher;
+    private readonly IProjectNotificationMuteQueries _muteQueries;
 
-    public IssueNotificationPublisher(IIntegrationEventPublisher publisher)
+    public IssueNotificationPublisher(IIntegrationEventPublisher publisher, IProjectNotificationMuteQueries muteQueries)
     {
         _publisher = publisher;
+        _muteQueries = muteQueries;
     }
 
     /// <summary>Nowy przypisany dostaje powiadomienie — nie dostaje go sam siebie przypisujący.</summary>
@@ -138,7 +141,7 @@ public sealed class IssueNotificationPublisher
             severity, extraParams);
     }
 
-    private Task PublishAsync(
+    private async Task PublishAsync(
         IReadOnlyList<string> recipients,
         Guid? actorUuid,
         string kind,
@@ -150,8 +153,29 @@ public sealed class IssueNotificationPublisher
         NotificationSeverity severity = NotificationSeverity.Info,
         IReadOnlyDictionary<string, string>? extraParams = null)
     {
-        // Klucz tytułu wg konwencji `shared.notifications.kinds.*` (docs/backend/
-        // user-notifications.md §3) — jedna przestrzeń nazw tłumaczeń dla wszystkich modułów,
+        // NTF-003 — wyciszenie projektu tłumi wszystko OPRÓCZ bezpośrednich wzmianek: `@wzmianka`
+        // jest jawnym, celowym wywołaniem konkretnej osoby, więc globalne wyciszenie projektu jej
+        // nie połyka (ten sam wzorzec co wyciszenie kanału w typowych komunikatorach).
+        var effectiveRecipients = recipients;
+
+        if (kind != "taskmgmt.issue.mentioned")
+        {
+            var muted = await _muteQueries.GetMutedUserUuidsAsync(issue.ProjectUuid, ct).ConfigureAwait(false);
+            if (muted.Count > 0)
+            {
+                effectiveRecipients = recipients
+                    .Where(r => !(Guid.TryParse(r, out var recipientUuid) && muted.Contains(recipientUuid)))
+                    .ToList();
+            }
+
+            if (effectiveRecipients.Count == 0)
+            {
+                return;
+            }
+        }
+
+        // Klucz tytułu wg konwencji `shared.notifications.kinds.*`
+        // (docs/modules/notification/user-notifications.md) — jedna przestrzeń nazw tłumaczeń dla wszystkich modułów,
         // bo Notification (i inne moduły) nie ładują scope'u `taskmgmt`.
         var titleKey = "shared.notifications.kinds." + kind.Replace('.', '_');
 
@@ -166,7 +190,7 @@ public sealed class IssueNotificationPublisher
         }
 
         var integrationEvent = new UserNotificationRequested(
-            recipients,
+            effectiveRecipients,
             actorUuid is { } actor && actor != Guid.Empty ? actor.ToString() : null,
             kind,
             AggregateSignatures.TaskManagementIssue,
@@ -180,6 +204,6 @@ public sealed class IssueNotificationPublisher
             correlationId,
             now);
 
-        return _publisher.PublishAsync(integrationEvent, ct);
+        await _publisher.PublishAsync(integrationEvent, ct).ConfigureAwait(false);
     }
 }

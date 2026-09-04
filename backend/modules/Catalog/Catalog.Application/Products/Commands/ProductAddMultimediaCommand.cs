@@ -14,7 +14,7 @@ namespace Catalog.Application.Products;
 ///
 /// <para>To <c>Add</c>, a nie <c>Set</c>: <c>ProductSetMultimediaCommand</c> podmieniałby CAŁĄ
 /// galerię, czyli dodanie szóstego zdjęcia kasowałoby pięć poprzednich
-/// (<c>docs/backend/endpoint-naming.md</c> §3).</para>
+/// (<c>docs/guides/backend/endpoint-naming.md</c> §3).</para>
 /// </summary>
 public sealed class ProductAddMultimediaCommand : ICommand<Guid>, IAggregateCommand
 {

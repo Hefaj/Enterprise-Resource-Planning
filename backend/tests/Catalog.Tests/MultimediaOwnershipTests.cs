@@ -8,7 +8,7 @@ namespace Catalog.Tests;
 /// <summary>
 /// Reguła usuwania zasobu multimedialnego. Testowana, bo jest to jedyne miejsce, w którym
 /// system mógłby cicho skasować dane użytkownika — a projekt świadomie odrzucił wariant
-/// „brak referencji = śmieć do zamiecenia" (<c>docs/backend/media-storage.md</c> §4c).
+/// „brak referencji = śmieć do zamiecenia" (<c>docs/guides/backend/media-storage.md</c> §4c).
 /// </summary>
 public class MultimediaOwnershipTests
 {

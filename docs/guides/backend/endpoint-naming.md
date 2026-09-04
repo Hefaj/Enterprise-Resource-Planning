@@ -1,7 +1,21 @@
+---
+id: backend.endpoint-naming
+title: Nazewnictwo komend i endpointów
+summary: Konwencja nazw komend i endpointów oparta na pięciu czasownikach.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - nazwanie komendy lub endpointu
+  - zmiana kontraktu NSwag
+related: []
+---
+
 # Nazewnictwo komend i endpointów
 
-**Stan: ✅ obowiązuje i jest wymuszone testem.** Legenda znaczników —
-[`architecture.md`](./architecture.md#1-stan-wdrożenia).
+Konwencja obowiązuje i jest wymuszana testem architektonicznym.
 
 Wszystkie komendy w systemie spełniają tę konwencję, a `CommandNamingTests`
 w `Erp.ArchitectureTests` nie pozwala jej złamać (sekcja 9). Wcześniej czasowników było osiem
@@ -72,7 +86,7 @@ wystarczający sam z siebie:
    nie dostaje błędu, tylko kasuje kolumnę.
 
 2. **Szablon zwielokrotnia tę pomyłkę przez cały filtr.** W trybie `TemplateCommand` + `TargetFilter`
-   ([`bulk-commands.md`](./bulk-commands.md#2-endpoint--trzy-tryby-jednego-kontraktu)) jeden payload
+   ([`bulk-commands.md`](bulk-commands.md#2-endpoint--trzy-tryby-jednego-kontraktu)) jeden payload
    idzie na wszystkie cele. Wąskie `SetPrice` powielone na 50 tys. produktów robi dokładnie to,
    czego użytkownik chciał. Szerokie `Set` powielone na 50 tys. produktów nadaje wszystkim te same
    nazwy, opisy i klasyfikacje.
@@ -83,7 +97,7 @@ wystarczający sam z siebie:
    `BulkCommandRunner`.
 
 Odróżnienie „null" od „nie przysłano" wymagałoby `Optional<T>` albo JSON Patch. Zamrożony kontrakt
-NSwag ([`architecture.md` §6](./architecture.md#6-kontrakt-z-frontendem)) tego praktycznie nie
+NSwag ([`architecture.md` §6](../../architecture/backend.md#6-kontrakt-z-frontendem)) tego praktycznie nie
 udźwignie, a wąskie komendy rozwiązują ten sam problem bez żadnej maszynerii.
 
 **`Set` wymaga istniejącego agregatu.** Nie jest upsertem — brak agregatu to
@@ -100,10 +114,10 @@ wyłącznie tryb `Commands[]`.
 `IAggregateCommand.Uuid` wypełnia **klient**, przed wysłaniem. To nie jest szczegół implementacyjny,
 tylko decyzja: ten uuid jest jednocześnie kluczem idempotencji, więc ponowienie tego samego żądania
 po zerwaniu połączenia nie tworzy duplikatu — o ile agregat ma unikalny indeks na kluczu naturalnym
-(patrz [`batch-validation.md`](./batch-validation.md)).
+(patrz [`batch-validation.md`](batch-validation.md)).
 
 Endpointy `Create` dziedziczą po
-[`CreateBatchEndpointBase<TCommand, TFilter>`](../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/CreateBatchEndpointBase.cs),
+[`CreateBatchEndpointBase<TCommand, TFilter>`](../../../backend/building-blocks/Erp.BuildingBlocks.Api/Contracts/CreateBatchEndpointBase.cs),
 który **odrzuca** żądanie z `TargetFilter`, `TargetUuids` albo `TemplateCommand` błędem 400.
 Wcześniejszy wariant — każdy endpoint zwracający `Enumerable.Empty` z `GetUuidsFromFilterAsync` —
 po cichu zakładał zadanie z zerem celów i wyglądał z zewnątrz jak sukces.
@@ -118,7 +132,7 @@ wszystkie trzy daje `Exec`:
 | Pytanie | Jeśli TAK |
 |---|---|
 | Czy operacja tylko czyta stan i nic nie zmienia? | To jest **zapytanie** (`getX`/`searchX`), nie komenda. |
-| Czy operacja produkuje artefakt (plik, dokument, eksport)? | To jest **`Create` na osobnym agregacie przebiegu** — patrz [`exports-artifacts.md`](./exports-artifacts.md). |
+| Czy operacja produkuje artefakt (plik, dokument, eksport)? | To jest **`Create` na osobnym agregacie przebiegu** — patrz [`exports-artifacts.md`](exports-artifacts.md). |
 | Czy da się to opisać jako `Create`/`Set`/`Add`/`Remove` na stanie agregatu? | Użyj tamtego czasownika. |
 
 Zostaje dokładnie to, czym `Exec` ma być: operacja procesowa, po jednym agregacie, bez artefaktu.
@@ -128,14 +142,14 @@ Zostaje dokładnie to, czym `Exec` ma być: operacja procesowa, po jednym agrega
 `job/retry-failed` ponawia nieudane elementy bez pytania. Ponowienie `SetPrice` jest nieszkodliwe;
 ponowienie „wyślij powiadomienie" albo „zarezerwuj numer" już nie. Komenda `Exec`, która nie jest
 bezpieczna do ponowienia, **musi** to zaznaczyć: idempotencja z pipeline'u komend
-([`cqrs.md` §6](./cqrs.md#6-pipeline-komend)) tutaj nie pomaga — chroni przed ponowieniem
+([`cqrs.md` §6](cqrs.md#6-pipeline-komend)) tutaj nie pomaga — chroni przed ponowieniem
 ŻĄDANIA HTTP przez klienta, a `retry-failed` ponawia element zadania po stronie serwera,
 gdzie żadnego `X-Request-Id` nie ma. Jedynym mechanizmem zostaje świadome wyłączenie takiego
 zadania z `retry-failed`.
 
 Druga rzecz, o której łatwo zapomnieć: `Exec`, który nie zmienia żadnej encji, **nie wygeneruje
 `AggregateChanged`**, bo to zdarzenie powstaje ze skanu ChangeTrackera
-([`events-outbox.md`](./events-outbox.md)). Frontend nie zobaczy nic poza statusem zadania. To
+([`events-outbox.md`](../../architecture/integration-events.md)). Frontend nie zobaczy nic poza statusem zadania. To
 poprawne, ale trzeba to wiedzieć, projektując informację zwrotną.
 
 ---
@@ -149,7 +163,7 @@ ProductRemoveMultimediaCommand → product.RemoveMultimedia(...)
 ```
 
 Handler zostaje cienki, a czytający kod nie musi tłumaczyć jednego słownika na drugi. Reguła
-„metoda agregatu waliduje przed zmianą stanu" ([`cqrs.md` §3](./cqrs.md#3-komendy)) obowiązuje
+„metoda agregatu waliduje przed zmianą stanu" ([`cqrs.md` §3](cqrs.md#3-komendy)) obowiązuje
 bez zmian — na niej opiera się sukces częściowy operacji masowych.
 
 ---
@@ -179,7 +193,7 @@ public override void Configure()
 ## 8. Co dokładnie łamie przemianowanie
 
 Obie nazwy są częścią zamrożonego kontraktu
-([`architecture.md` §6](./architecture.md#6-kontrakt-z-frontendem)):
+([`architecture.md` §6](../../architecture/backend.md#6-kontrakt-z-frontendem)):
 
 | Zmiana w C# | Skutek na froncie |
 |---|---|
@@ -197,7 +211,7 @@ backendu i wywala dopiero w przeglądarce.
 
 Konwencja nazewnicza bez testu zgnije przy pierwszej komendzie pisanej pod presją czasu — to ten
 sam argument, dla którego granic warstw pilnuje `Erp.ArchitectureTests`, a nie code review.
-[`CommandNamingTests`](../../backend/tests/Erp.ArchitectureTests/CommandNamingTests.cs) sprawdza
+[`CommandNamingTests`](../../../backend/tests/Erp.ArchitectureTests/CommandNamingTests.cs) sprawdza
 cztery rzeczy:
 
 | Test | Co pilnuje |
@@ -219,7 +233,7 @@ która akurat przechodzi.
 
 ## 10. Zobacz też
 
-- [CQRS](./cqrs.md) — struktura komendy, handlera i zapytania
-- [Operacje masowe](./bulk-commands.md) — trzy tryby wskazywania celów, `job`/`job_item`
-- [Eksporty i artefakty](./exports-artifacts.md) — dlaczego artefakt to `Create` na agregacie przebiegu
-- [Walidacja wsadowa](./batch-validation.md) — pre-check przed założeniem zadania
+- [CQRS](cqrs.md) — struktura komendy, handlera i zapytania
+- [Operacje masowe](bulk-commands.md) — trzy tryby wskazywania celów, `job`/`job_item`
+- [Eksporty i artefakty](exports-artifacts.md) — dlaczego artefakt to `Create` na agregacie przebiegu
+- [Walidacja wsadowa](batch-validation.md) — pre-check przed założeniem zadania

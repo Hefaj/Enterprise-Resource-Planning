@@ -25,6 +25,8 @@
         (updateClick)="updateApp()"
       />
 
+      <erp-button [config]="helpButtonConfig" />
+
       <!-- Notifications -->
       <erp-notifications
         [count]="unreadNotificationsCount()"
@@ -65,9 +67,9 @@
   </header>
 
   <!-- Shell Main Content -->
-  <main style="flex: 1; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;">
+  <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;">
     <router-outlet></router-outlet>
-  </main>
+  </div>
 </div>
 
 <!-- Navigation Drawer Menu -->

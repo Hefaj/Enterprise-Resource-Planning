@@ -4,7 +4,7 @@ import { PermissionCatalogVM } from '@erp/identity/data-access';
 
 /**
  * Komórka opisu uprawnienia. `descriptionKey` to KLUCZ tłumaczenia (katalog jest definiowany
- * w kodzie backendu, patrz `docs/backend/identity-authz.md` §3), więc musi przejść przez
+ * w kodzie backendu, patrz `docs/architecture/security.md` §3), więc musi przejść przez
  * `erpTranslate` — zwykła kolumna z akcesorem pokazałaby surowy klucz.
  */
 @Component({

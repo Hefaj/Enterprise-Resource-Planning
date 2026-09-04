@@ -275,6 +275,12 @@
       "save": "Save SLA",
       "saveFailed": "Failed to save the project SLA."
     },
+    "notifications": {
+      "title": "Notifications",
+      "muteLabel": "Mute notifications from this project",
+      "muteHint": "Muting does not apply to direct @mentions — those will always reach you.",
+      "saveFailed": "Failed to save the notification setting."
+    },
     "workflow": {
       "title": "Workflow scheme",
       "noScheme": "This project has no workflow scheme attached yet.",

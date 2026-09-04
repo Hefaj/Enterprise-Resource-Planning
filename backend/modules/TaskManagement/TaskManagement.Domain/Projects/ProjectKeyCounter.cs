@@ -2,7 +2,7 @@ namespace TaskManagement.Domain.Projects;
 
 /// <summary>
 /// Licznik numeracji zgłoszeń projektu — jedyne miejsce w tej architekturze, gdzie potrzebna
-/// jest monotoniczna sekwencja per encja (<c>docs/backend/task-management.md</c> §4).
+/// jest monotoniczna sekwencja per encja (<c>docs/modules/task-management/domain.md</c> §4).
 ///
 /// <para><b>Celowo nie jest agregatem.</b> Nie ma reguł biznesowych i nie wolno go czytać
 /// przez śledzenie zmian EF: numer nadaje się jednym <c>UPDATE … RETURNING</c> w tej samej

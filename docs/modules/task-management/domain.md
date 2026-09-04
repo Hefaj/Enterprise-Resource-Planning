@@ -1,11 +1,26 @@
+---
+id: module.task-management.domain
+title: Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
+summary: Model domenowy zgłoszeń, projektów, workflow, tablic i automatyzacji.
+kind: module-specification
+scope: task-management
+audience:
+  - frontend
+  - backend
+  - agent
+triggers:
+  - domena Task Management
+  - Issue workflow board lub automation
+related: []
+---
+
 # Task Management — zgłoszenia, tablice, zlecenia międzydziałowe
 
-**Stan: ✅ fazy 0–3 wdrożone i zweryfikowane end-to-end; fazy 4–7 📐 projekt.**
-Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
+Dokument opisuje obowiązujące reguły domenowe oraz jawnie wskazane kontrakty docelowe.
 Mikroserwis `TaskManagement` działa (schemat `taskmgmt`, port 5290, migracja
 `InitialTaskManagementSchema`) i obejmuje `Project`, `Issue`, licznik klucza czytelnego,
 schemat stanów w seedzie oraz endpointy listy, karty po kluczu i zmiany stanu.
-Faza 1 jest wdrożona po stronie backendu: **komentarze** (`issue_comment`, wątek
+Backend obsługuje **komentarze** (`issue_comment`, wątek
 jednopoziomowy, edycja zachowująca oryginał, usunięcie miękkie) i **historia zmian**
 (`issue_activity`, dopisywana jawnie w komendach, w tej samej transakcji co zmiana).
 Doszły do tego **załączniki zgłoszenia** (`IssueAttachment`, migracja `IssueAttachments`, kubełek
@@ -14,7 +29,7 @@ czyszczony przy zapisie (`IRichTextSanitizer`).
 Front: strona `/task-management/issue` (lista serwerowa z filtrem i akcją masową) oraz karta
 `/task-management/issue/:key` (opis w edytorze, przejścia stanów, załączniki, wątek komentarzy
 z odpowiedziami i historia zmian); zaślepka „Dashboard Analityczny Zadań" usunięta z menu.
-Faza 2 jest wdrożona po obu stronach: `Board` z kolumnami mapowanymi na stany
+Backend i frontend obsługują `Board` z kolumnami mapowanymi na stany
 (`board`, `board_column` ze stanami jako `uuid[]`), kolejność kart w `board_card` z rankiem jako
 łańcuchem porządkowanym leksykograficznie (`BoardRank`, zestawienie `C` na kolumnie),
 komenda `BoardSetCardPosition` licząca rank **z sąsiadów, w transakcji**, oraz rebalans
@@ -23,7 +38,7 @@ komenda `BoardSetCardPosition` licząca rank **z sąsiadów, w transakcji**, ora
 przestawieniem, wygaszaniem kolumn niedostępnych w chwili chwycenia karty i odświeżaniem
 kanałem `taskmgmt.board`.
 
-Faza 3 jest wdrożona po stronie backendu i na liście zgłoszeń: `FieldScheme` z definicjami pól,
+Backend i lista zgłoszeń obsługują `FieldScheme` z definicjami pól,
 sloty na `issue` (`num_1..4`, `text_1..4`, `date_1..4`, `user_1..2`), wartości w `custom_fields`
 (jsonb, źródło prawdy), `getProjectFieldProfile` jako jedno źródło kolumn, filtrów i whitelisty
 sortowania, komenda `IssueSetCustomFields` oraz `ProjectSetFieldScheme`. Front: kolumny i filtry
@@ -32,9 +47,10 @@ Doszła lista projektów (`/task-management/project`) i karta projektu z **zakł
 wybór schematu, definicje z widocznym mapowaniem na sloty, dodawanie pola z ostrzeżeniem
 o niezmienności slotu i usuwanie — odmawiane, gdy pole ma wartości na zgłoszeniach.
 
-Nie ma jeszcze hierarchii, sprintów ani zleceń — to fazy 4–7.
+Hierarchia, sprinty i zlecenia należą do specyfikacji docelowej; ich dostępność należy potwierdzać
+w kodzie i testach przed publikacją instrukcji użytkownika.
 Obrazków osadzonych w treści opisu też jeszcze nie ma: backend je unosi, front wymaga podmiany
-`src` na `blob:` w obie strony ([`task-management-pages.md` §2.3](../frontend/task-management-pages.md#23-karta-zgłoszenia--task-managementissuekey)).
+`src` na `blob:` w obie strony ([`task-management-pages.md` §2.3](screens.md#23-karta-zgłoszenia--task-managementissuekey)).
 
 Ten dokument opisuje **docelowy model** modułu zarządzania pracą wzorowanego na YouTracku:
 projekty z własnym zestawem pól i własnym automatem stanów, tablice z ręczną kolejnością kart,
@@ -42,18 +58,16 @@ powiązania i hierarchia zgłoszeń oraz zlecenia składane działom przez bizne
 Decyzje są rozstrzygnięte — nie jest to zestaw wariantów do wyboru.
 
 **Podział na strony, nawigacja i menu frontu →
-[`docs/frontend/task-management-pages.md`](../frontend/task-management-pages.md).**
+[`docs/modules/task-management/screens.md`](screens.md).**
 **Wymagania funkcjonalne z kryteriami akceptacji, zakres MVP i decyzje odrzucone →
-[`task-management-requirements.md`](./task-management-requirements.md).**
-**Kolejność prac i checklisty faz 4–8 → [`PLAN-task-management.md`](../../PLAN-task-management.md).**
-
+[`task-management-requirements.md`](requirements.md).**
 ---
 
 ## 1. Po co ten moduł w tej architekturze
 
 Catalog przetestował CRUD, operacje masowe, artefakty, realtime i uprawnienia globalne.
 DMS bierze na siebie długożyjący proces, autoryzację per instancja zasobu i ingest z zewnątrz
-([`dms-workflow.md`](./dms-workflow.md)). Task Management celowo **nie powtarza** tamtych
+([`dms-workflow.md`](../dms/domain-workflow.md)). Task Management celowo **nie powtarza** tamtych
 wyzwań — bierze cztery, których nie ma dziś nigdzie:
 
 | Wyzwanie | Stan | Gdzie w tym dokumencie |
@@ -111,7 +125,7 @@ czytaniu logów nie dałoby się ich rozróżnić.
 ## 3. Agregaty
 
 Schemat `taskmgmt`, jeden mikroserwis `TaskManagement` (4 projekty Clean Architecture,
-[`new-microservice.md`](./new-microservice.md)).
+[`new-microservice.md`](../../guides/backend/new-microservice.md)).
 
 ### `Project`
 Właściciel konfiguracji: kod (`DEV`, `MKT`), nazwa, zespół, **schemat pól**, **schemat stanów**,
@@ -176,7 +190,7 @@ Dlaczego akurat tak, przy dwóch instancjach:
 |---|---|
 | `MAX(number) + 1` przy wstawianiu | Klasyczny wyścig — dwie instancje wyliczą ten sam numer, druga dostanie błąd unikalności |
 | Sekwencja Postgresa per projekt (`CREATE SEQUENCE`) | Nowy projekt = DDL w runtime; poza tym sekwencja nie cofa się przy rollbacku, więc numeracja dziurawi się przy każdej odrzuconej walidacji |
-| Licznik w pamięci procesu | Wywraca się przy drugiej instancji — dokładnie ten zakaz, co w [`multi-instance.md`](./multi-instance.md) |
+| Licznik w pamięci procesu | Wywraca się przy drugiej instancji — dokładnie ten zakaz, co w [`multi-instance.md`](../../architecture/multi-instance.md) |
 
 `UPDATE … RETURNING` blokuje wiersz licznika na czas transakcji, więc przy dużym natężeniu
 tworzenia zgłoszeń w jednym projekcie **serializuje** je. To akceptowalne: tworzenie zgłoszenia
@@ -217,7 +231,7 @@ Na przejściu wiszą trzy rzeczy i wszystkie są danymi:
 - `required_fields` — czego nie wolno zostawić pustego (przejście do `Done` bez `resolution` jest
   najczęstszym źródłem śmieci w raportach),
 - `guard` — warunek na polach zgłoszenia, w **tym samym wąskim języku warunków**, co krawędzie
-  gateway w DMS ([`dms-workflow.md` §4.4](./dms-workflow.md#44-warunki-na-krawędziach)):
+  gateway w DMS ([`dms-workflow.md` §4.4](../dms/domain-workflow.md#44-warunki-na-krawędziach)):
   porównania, `and`/`or`, ścieżka do pola, literały. Wyrażeń ogólnego przeznaczenia
   wykonywanych z bazy nie ma i nie będzie.
 
@@ -234,7 +248,7 @@ w konfiguracji już nie ma — a użytkownik widzi jeden ekran, nie jeden proces
 
 Ceną jest **migracja stanów przy publikacji schematu**: usunięcie stanu wymaga wskazania stanu
 docelowego dla zgłoszeń, które w nim siedzą. Wykonuje ją istniejący mechanizm `job`/`job_item`
-z sukcesem częściowym ([`bulk-commands.md`](./bulk-commands.md)) — bez nowego kodu, z widocznym
+z sukcesem częściowym ([`bulk-commands.md`](../../guides/backend/bulk-commands.md)) — bez nowego kodu, z widocznym
 postępem. Publikacja bez pełnego mapowania jest odrzucana walidacją, nie kończy się cichym
 osieroceniem zgłoszeń.
 
@@ -246,7 +260,7 @@ w tył (`Done → In Progress`) rutynowo, a nie jako sterowana wyjątkiem operac
 
 Gdy trzeci moduł faktycznie zażąda grafu z rozgałęzieniami, powstaje
 `Erp.BuildingBlocks.Workflow` jako **biblioteka** — tak jak zapowiada
-[`dms-workflow.md` §12.5](./dms-workflow.md#125-silnik-obiegu-zostaje-w-dms). Dwa różne mechanizmy
+[`dms-workflow.md` §11.5](../dms/domain-workflow.md#115-silnik-obiegu-zostaje-w-dms). Dwa różne mechanizmy
 w dwóch modułach są tu tańsze niż przedwczesna abstrakcja nad jednym.
 
 ---
@@ -265,7 +279,7 @@ i `Budżet`). Model jest **ten sam, co dla typu dokumentu w DMS** i celowo się 
 > **Dwa odstępstwa wdrożenia od powyższego, oba świadome.** Po pierwsze, indeksy są **złożone
 > `(project_uuid, slot)`, nie częściowe per projekt**: indeks częściowy wymaga uuid projektu
 > w treści DDL, czyli tworzenia indeksu komendą aplikacyjną — wbrew regule „migracja jest krokiem
-> wdrożenia" ([`production.md`](./production.md)). Selektywność zostaje ta sama, bo projekt jest
+> wdrożenia" ([`production.md`](../../operations/production.md)). Selektywność zostaje ta sama, bo projekt jest
 > pierwszą kolumną indeksu. Po drugie, indeksowane są **dwa pierwsze sloty każdego typu, nie
 > wszystkie czternaście**: czternaście indeksów na najgorętszej tabeli modułu kosztuje przy każdym
 > zapisie zgłoszenia, a doindeksowanie kolejnego slotu to jedna migracja podjęta na danych,
@@ -273,7 +287,7 @@ i `Budżet`). Model jest **ten sam, co dla typu dokumentu w DMS** i celowo się 
 
 Uzasadnienie wyboru slotów (i odrzucenia indeksów wyrażeniowych, tabel projekcji per typ oraz
 EAV) jest wspólne i nie powtarzamy go —
-[`dms-workflow.md` §3.2](./dms-workflow.md#32-sortowalne-atrybuty--sloty-typowane).
+[`dms-workflow.md` §3.2](../dms/domain-workflow.md#32-sortowalne-atrybuty--sloty-typowane).
 
 `user_1..user_2` to jedyne rozszerzenie względem DMS: „Reviewer", „Product Owner" i „QA" to
 w praktyce najczęstsze pola niestandardowe w narzędziu tego typu, a filtrowanie po nich
@@ -282,7 +296,7 @@ w praktyce najczęstsze pola niestandardowe w narzędziu tego typu, a filtrowani
 **Profil pól jedzie do frontu endpointem `getProjectFieldProfile`** — klucz, klucz tłumaczenia,
 typ danych, sortowalność, filtrowalność, słownik wartości. Whitelist sortowania po stronie
 backendu to kolumny wspólne `issue` + sloty aktywnego projektu; oba końce czytają z tego samego
-profilu, więc nie da się ich rozjechać ([`cqrs.md`](./cqrs.md)).
+profilu, więc nie da się ich rozjechać ([`cqrs.md`](../../guides/backend/cqrs.md)).
 
 > **Kiedy wydzielić wzorzec do building-blocks.** Sloty + profil pól to teraz **drugie**
 > zastosowanie. Wydzielamy `Erp.BuildingBlocks.CustomFields` przy **trzecim**, nie wcześniej —
@@ -331,7 +345,7 @@ przestawienie na nieaktualnym widoku wstawiałoby kartę w miejsce, którego uż
 **Rebalans**: łańcuchy rosną przy wielokrotnym wstawianiu w to samo miejsce. Usługa tła
 przenumerowuje tablicę, gdy najdłuższy rank przekroczy próg — oznaczona `[ClusterSafe]`
 z dzierżawą na advisory locku, jak każda usługa cykliczna
-([`multi-instance.md` §4.3](./multi-instance.md#43-usługi-cykliczne--dzierżawa-z-fazy-0)).
+([`multi-instance.md` — praca startowa i cykliczna](../../architecture/multi-instance.md#praca-startowa-i-cykliczna)).
 Bez `[ClusterSafe]` nie przejdzie `BackgroundServiceTests`.
 
 ### 7.3 Współbieżność i echo własnej zmiany
@@ -344,14 +358,14 @@ sensownego.
 Kolizja realna to co innego: **ktoś przeciągnął kartę, którą ktoś inny właśnie usunął z tablicy
 albo przeniósł do innego projektu**. Tu obowiązuje optymistyczna kontrola po wersji zgłoszenia —
 komenda odpada z `409`, front cofa optymistyczny ruch i pokazuje toast — **BRD-003 ✅**, patrz
-[`optimistic-updates.md`](../frontend/optimistic-updates.md) (`docs/backend/task-management-requirements.md` §BRD-003).
+[`optimistic-updates.md`](../../guides/frontend/optimistic-updates.md) (`docs/modules/task-management/requirements.md` §BRD-003).
 
 **Echo własnej zmiany nie wymaga już osobnego mechanizmu.** Pierwotny projekt zakładał pomijanie
 zdarzenia SignalR o korelacji odpowiadającej własnej komendzie
 (`TaskManagementBoardOrchestrator._pendingCardUuids` + `isPending()`) — ale to rusztowanie nigdy
 nie miało wywołujących i zostało usunięte razem z wpięciem nakładki optymistycznej. Nakładka
 pozycji karty (`BoardStore`, scope `taskmgmt.board.position`, patrz
-[`optimistic-updates.md` §9](../frontend/optimistic-updates.md)) żyje POZA cache'm kart
+[`optimistic-updates.md` §9](../../guides/frontend/optimistic-updates.md)) żyje POZA cache'm kart
 (`taskmgmt.board`) i wygrywa z każdymi danymi z serwera aż do własnego zdjęcia — echo, które w
 międzyczasie odświeży cache karty, nie ma wpływu na to, GDZIE karta jest narysowana, więc problem
 „karta pod kursorem przeskakuje" znika bez rozpoznawania echa po stronie odbioru. Kontrakt realtime
@@ -361,7 +375,7 @@ rozszerzenie go o korelację nie jest już potrzebne dla tego przypadku.
 ### 7.4 Realtime
 Sygnatury: `taskmgmt.issue`, `taskmgmt.board`, `taskmgmt.sprint`, `taskmgmt.project`.
 Rejestracja w `AggregateSignatures` musi zgadzać się co do znaku z `signalrSignature`
-orkiestratorów ([`realtime-signalr.md`](./realtime-signalr.md)).
+orkiestratorów ([`realtime-signalr.md`](../../architecture/realtime.md)).
 
 Zmiana kolejności rozgłasza się na `taskmgmt.board` z uuid **karty przestawionej i jej sąsiadów** —
 nie całej tablicy. Porządkowanie po stronie klienta jest lokalne, więc trzy uuid-y wystarczą.
@@ -384,7 +398,7 @@ niż link: wpływa na agregację postępu, na widok drzewa i na zamykanie. Jedna
 ### 8.2 Cykle
 Zarówno drzewo, jak i `blokuje` muszą być acykliczne. Sprawdzenie to **reguła wsadowa**
 `IssueLinkCycleRule : IBatchRule<T>` — bezpośredni odpowiednik `RoleGraphCycleRule` z Identity
-([`batch-validation.md`](./batch-validation.md)), rejestrowana skanem zestawów, bez `AddScoped`
+([`batch-validation.md`](../../guides/backend/batch-validation.md)), rejestrowana skanem zestawów, bez `AddScoped`
 w `Program.cs`. Sprawdzenie idzie **rekurencyjnym CTE w bazie**, nie wczytaniem grafu do pamięci:
 graf zależności w dużym projekcie potrafi mieć tysiące krawędzi, a reguła musi działać także
 w pre-checku operacji masowej.
@@ -443,7 +457,7 @@ wprowadzanie drugiej instancji tamtego mechanizmu bez potrzeby byłoby kosztem b
 
 Samo powiadomienie: moduł **publikuje `UserNotificationRequested`** i sam wylicza odbiorców
 (tylko on zna obserwujących), a doręczenie, grupowanie i preferencje należą do Notification —
-[`user-notifications.md`](./user-notifications.md). Wysyłka nie rozłazi się po modułach.
+[`user-notifications.md`](../notification/user-notifications.md). Wysyłka nie rozłazi się po modułach.
 
 ---
 
@@ -472,7 +486,7 @@ Gdyby wyjątków przybyło ponad te dwa, właściwą odpowiedzią jest przejści
 wzorem DMS — nie dokładanie kolejnych warunków do predykatu.
 
 ### 10.2 Uprawnienia funkcyjne
-Kody w `Permissions.cs` wg konwencji z [`identity-authz.md`](./identity-authz.md):
+Kody w `Permissions.cs` wg konwencji z [`identity-authz.md`](../../architecture/security.md):
 `taskmgmt.issue.read`, `taskmgmt.issue.create`, `taskmgmt.issue.update`, `taskmgmt.issue.bulk`,
 `taskmgmt.board.manage`, `taskmgmt.project.manage`, `taskmgmt.scheme.manage`.
 Kopia katalogu po stronie frontu w `permission-codes.ts` — dopisanie kodu w jednym miejscu
@@ -480,7 +494,7 @@ wymaga dopisania w drugim.
 
 **Rola w projekcie ≠ uprawnienie w Identity.** Identity odpowiada „czy w ogóle wolno ci ruszać
 zgłoszenia", `project_member.role` — „w których projektach". To dokładnie ten podział, który
-[`identity-authz.md` §9](./identity-authz.md) opisuje jako **atrybut nadania, nigdy osobny kod
+[`identity-authz.md` §9](../../architecture/security.md) opisuje jako **atrybut nadania, nigdy osobny kod
 uprawnienia** — inaczej katalog uprawnień rośnie z liczbą projektów.
 
 ### 10.3 Struktura organizacyjna — czego tu nie ma
@@ -508,8 +522,8 @@ Komentarze to osobna tabela z wątkowaniem jednopoziomowym i wzmiankami (`@user`
 generują zdarzenie → Notification. Edycja komentarza zachowuje poprzednią treść (przy sporze
 „ale on to napisał" liczy się oryginał).
 
-Praca zalogowana (`work_log`) — jedna tabela, agregowana do rodzica. Wchodzi w późnej fazie
-i **nie jest** systemem czasu pracy; granica z kadrami jest tu tak samo twarda, jak granica
+Praca zalogowana (`work_log`) — jedna tabela, agregowana do rodzica. Jest elementem kontraktu
+docelowego i **nie jest** systemem czasu pracy; granica z kadrami jest tu tak samo twarda, jak granica
 DMS-u z księgowością.
 
 ---
@@ -517,7 +531,7 @@ DMS-u z księgowością.
 ## 12. Operacje masowe
 
 Wpadają w istniejący kontrakt bez nowego mechanizmu — `BatchCommand<T,TFilter>` → `BatchResult`
-→ `job`/`job_item` z sukcesem częściowym ([`bulk-commands.md`](./bulk-commands.md)):
+→ `job`/`job_item` z sukcesem częściowym ([`bulk-commands.md`](../../guides/backend/bulk-commands.md)):
 
 | Operacja | Reguły wstępne (`IBatchRule<T>`) |
 |---|---|
@@ -531,27 +545,7 @@ częściowy sukces.
 
 ---
 
-## 13. Kolejność wdrożenia
-
-| Faza | Zakres | Co weryfikuje |
-|---|---|---|
-| 0 ✅ | Mikroserwis `TaskManagement`, schemat `taskmgmt`, `Project` + `Issue`, licznik klucza, lista serwerowa, karta zgłoszenia, przepisanie szkieletu frontu | Szablon modułu na nowej domenie + **sekwencja per encja przy dwóch instancjach** |
-| 1 ✅ | `WorkflowScheme` w seedzie, przejścia z regułami, komentarze, `issue_activity` | Automat stanów jako dana |
-| 2 ✅ | `Board` + `board_card` + `rank`, drag&drop, realtime kolejności, rebalans `[ClusterSafe]` | **Uporządkowana kolekcja i współbieżna edycja — główne pytanie modułu** |
-| 3 ✅ | `FieldScheme`, sloty, `getProjectFieldProfile`, kolumny i filtry z profilu | Konfiguracja per projekt |
-| 4 | Hierarchia, `issue_link`, `IssueLinkCycleRule`, widok drzewa | Graf w obrębie agregatu |
-| 5 | Projekty `Intake`, link `realizuje`, `derived_delivery_state`, odbiór, SLA i eskalacje | Zlecenia przez granicę działu |
-| 6 | Sprinty, backlog, zamknięcie iteracji, operacje masowe na zgłoszeniach | Dojrzałość narzędzia |
-| 7 | Edytor schematu stanów, migracja stanów przy publikacji, zapisane widoki, `work_log` | Konfiguracja z UI, nie z seeda |
-
-Faza 2 sama odpowiada na główne pytanie architektoniczne. Fazy 0–1 to fundament, reszta jest
-rozbudową.
-Które strony frontu wchodzą w której fazie →
-[`task-management-pages.md` §9](../frontend/task-management-pages.md#9-kolejność-względem-faz-wdrożenia).
-
----
-
-## 14. Granice modułu — czego tu nie ma
+## 13. Granice modułu — czego tu nie ma
 
 | Kuszące | Właściciel / dlaczego nie |
 |---|---|
@@ -560,20 +554,20 @@ Które strony frontu wchodzą w której fazie →
 | System czasu pracy, urlopy, grafiki | Kadry. `work_log` służy szacowaniu pracy w projekcie, nie rozliczaniu pracownika |
 | Wiki / baza wiedzy | Osobna domena. Opis zgłoszenia to nie dokumentacja |
 | Silnik obiegu ogólnego przeznaczenia | [§5.4](#54-dlaczego-nie-silnik-z-dms-u) — biblioteka `Erp.BuildingBlocks.Workflow` przy trzecim odbiorcy, nie mikroserwis |
-| Powiadomienia e-mail / push, skrzynka użytkownika | Notification ([`user-notifications.md`](./user-notifications.md)). Ten moduł publikuje `UserNotificationRequested` z listą odbiorców i nic poza tym |
+| Powiadomienia e-mail / push, skrzynka użytkownika | Notification ([`user-notifications.md`](../notification/user-notifications.md)). Ten moduł publikuje `UserNotificationRequested` z listą odbiorców i nic poza tym |
 | Uprawnienia i role | Identity. Tu zostaje wyłącznie `project_member` jako atrybut nadania ([§10.2](#102-uprawnienia-funkcyjne)) |
-| Dashboard analityczny / raporty burndown | Po fazie 6, gdy są dane. Zrobiony pierwszy, przez pół roku świeci pustkami — i to jest dokładnie treść dzisiejszej zaślepki w menu |
+| Dashboard analityczny / raporty burndown | Dopiero po zebraniu wiarygodnych danych czasu i iteracji; nie publikujemy pustej zaślepki |
 
 ---
 
-## 15. Zobacz też
+## 14. Zobacz też
 
-- [`architecture.md`](./architecture.md) — stan wdrożenia, granice warstw, reguły DI
-- [`new-microservice.md`](./new-microservice.md) — jak założyć mikroserwis `TaskManagement`
-- [`dms-workflow.md`](./dms-workflow.md) — sloty sortowalne, język warunków, silnik obiegu
-- [`bulk-commands.md`](./bulk-commands.md), [`batch-validation.md`](./batch-validation.md)
-- [`multi-instance.md`](./multi-instance.md) — `[ClusterSafe]`, dzierżawy, backplane
-- [`realtime-signalr.md`](./realtime-signalr.md) — sygnatury, koalescencja, resync
-- [`identity-authz.md`](./identity-authz.md) — kody uprawnień, atrybut nadania
-- [`user-notifications.md`](./user-notifications.md) — dokąd trafia „nowy komentarz" i „zlecenie zrealizowane"
-- [`task-management-pages.md`](../frontend/task-management-pages.md) — strony i menu
+- [`architecture.md`](../../architecture/backend.md) — granice warstw i reguły DI
+- [`new-microservice.md`](../../guides/backend/new-microservice.md) — jak założyć mikroserwis `TaskManagement`
+- [`dms-workflow.md`](../dms/domain-workflow.md) — sloty sortowalne, język warunków, silnik obiegu
+- [`bulk-commands.md`](../../guides/backend/bulk-commands.md), [`batch-validation.md`](../../guides/backend/batch-validation.md)
+- [`multi-instance.md`](../../architecture/multi-instance.md) — `[ClusterSafe]`, dzierżawy, backplane
+- [`realtime-signalr.md`](../../architecture/realtime.md) — sygnatury, koalescencja, resync
+- [`identity-authz.md`](../../architecture/security.md) — kody uprawnień, atrybut nadania
+- [`user-notifications.md`](../notification/user-notifications.md) — dokąd trafia „nowy komentarz" i „zlecenie zrealizowane"
+- [`task-management-pages.md`](screens.md) — strony i menu

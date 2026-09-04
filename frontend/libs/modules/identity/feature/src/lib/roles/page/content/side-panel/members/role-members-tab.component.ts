@@ -23,7 +23,7 @@ import { RoleMemberRow, RoleMembersTabStore } from './role-members-tab.store';
 
 /**
  * Zakładka „Role składowe" — składowe WSZYSTKICH zaznaczonych ról w JEDNEJ tabeli, pogrupowane
- * po roli-kontenerze (patrz `docs/frontend/pages.md` §6).
+ * po roli-kontenerze (patrz `docs/guides/frontend/pages.md` §6).
  */
 @Component({
   selector: 'erp-identity-role-members-tab',

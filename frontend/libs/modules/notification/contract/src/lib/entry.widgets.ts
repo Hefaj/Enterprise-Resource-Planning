@@ -24,7 +24,7 @@ export async function loadJobListComponent(): Promise<{
 
   // Providery wracają razem z komponentem, bo host nie ma jak ich znać: scope Transloco
   // `job` żyje w tym module. Host wstawia je do injectora widżetu — nie do własnego,
-  // globalnego (patrz ostrzeżenie o DI shadowing w docs/frontend/translations.md).
+  // globalnego (patrz ostrzeżenie o DI shadowing w docs/guides/frontend/translations.md).
   return { component: JobListComponent, providers: provideJobTranslations() };
 }
 

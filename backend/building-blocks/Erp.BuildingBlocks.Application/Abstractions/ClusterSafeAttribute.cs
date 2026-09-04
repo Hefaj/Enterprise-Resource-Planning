@@ -13,7 +13,7 @@ namespace Erp.BuildingBlocks.Application.Abstractions;
 /// <para>Atrybut niczego nie wymusza w czasie działania. Jest deklaracją przeczytaną przez test
 /// i przez następną osobę, która otworzy ten plik.</para>
 /// </summary>
-/// <remarks>Patrz <c>docs/backend/multi-instance.md</c> §3.2.</remarks>
+/// <remarks>Patrz <c>docs/architecture/multi-instance.md</c> §3.2.</remarks>
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class ClusterSafeAttribute : Attribute
 {

@@ -10,11 +10,12 @@ import { Router } from '@angular/router';
 import { TuiIcon, TuiExpand } from '@taiga-ui/core';
 import { ErpNavigationMenuConfig, ErpNavigationItem } from './erp-navigation-menu.types';
 import { unwrapSignal } from '@erp/shared/ui';
+import { ErpTranslatePipe } from '@erp/shared/ui';
 
 @Component({
   selector: 'erp-navigation-menu',
   standalone: true,
-  imports: [CommonModule, TuiIcon, TuiExpand],
+  imports: [CommonModule, TuiIcon, TuiExpand, ErpTranslatePipe],
   styles: [`
     :host {
       display: block;
@@ -145,7 +146,7 @@ import { unwrapSignal } from '@erp/shared/ui';
         }
 
         <span class="nav-label">
-          {{ node.label }}
+          {{ ((node.labelKey || node.label) | erpTranslate) || node.label }}
         </span>
 
         @if (hasChildren) {
@@ -183,7 +184,7 @@ export class ErpNavigationMenuComponent {
   public internalLoading = signal(false);
   public expandedNodes = signal<Set<ErpNavigationItem>>(new Set());
 
-  private router = inject(Router);
+  private readonly _router = inject(Router);
 
   public isExpanded(node: ErpNavigationItem): boolean {
     return this.expandedNodes().has(node);
@@ -197,7 +198,7 @@ export class ErpNavigationMenuComponent {
         this.internalLoading.set(true);
         const routeArray = Array.isArray(node.route) ? node.route : [node.route];
         
-        this.router.navigate(routeArray).finally(() => {
+        this._router.navigate(routeArray).finally(() => {
           this.internalLoading.set(false);
         });
       }
@@ -211,13 +212,13 @@ export class ErpNavigationMenuComponent {
       if (this.showSingle() && !isCurrentlyExpanded) {
         siblings.forEach(sibling => {
           if (sibling !== node) {
-            this.deepRemove(newSet, sibling);
+            this._deepRemove(newSet, sibling);
           }
         });
       }
 
       if (isCurrentlyExpanded) {
-        this.deepRemove(newSet, node);
+        this._deepRemove(newSet, node);
       } else {
         newSet.add(node);
       }
@@ -237,10 +238,10 @@ export class ErpNavigationMenuComponent {
     return palette[level % palette.length] || 'var(--tui-text-tertiary)';
   }
 
-  private deepRemove(set: Set<ErpNavigationItem>, node: ErpNavigationItem): void {
+  private _deepRemove(set: Set<ErpNavigationItem>, node: ErpNavigationItem): void {
     set.delete(node);
     if (node.children) {
-      node.children.forEach(child => this.deepRemove(set, child));
+      node.children.forEach(child => this._deepRemove(set, child));
     }
   }
 }

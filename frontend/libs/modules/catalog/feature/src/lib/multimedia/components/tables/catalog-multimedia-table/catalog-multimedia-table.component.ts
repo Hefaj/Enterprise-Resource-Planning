@@ -35,7 +35,7 @@ import { MultimediaLibraryThumbnailCellComponent } from './multimedia-library-th
  * Różnica wobec tabeli w panelu produktu: tam wiersz jest parą (produkt, plik) i pochodzi
  * z galerii konkretnych produktów, tu wierszem jest **sam zasób**. Dlatego to jedyne miejsce,
  * w którym widać pliki nieużywane przez żaden produkt — czyli te, które w ogóle da się usunąć
- * (`docs/backend/media-storage.md` §4c).
+ * (`docs/guides/backend/media-storage.md` §4c).
  */
 @Component({
   selector: 'erp-catalog-multimedia-table',

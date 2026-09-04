@@ -2,7 +2,7 @@ import { TemplateRef } from '@angular/core';
 
 import { MaybeSignal } from '@erp/shared/ui';
 
-/** Kategoria wpisu do zaznaczenia w filtrze — wielokrotny wybór (`docs/frontend/task-management-pages.md`
+/** Kategoria wpisu do zaznaczenia w filtrze — wielokrotny wybór (`docs/modules/task-management/screens.md`
  * §9.1), bez osobnej opcji „Wszystko": brak zaznaczenia znaczy „bez filtra", czyli to samo, co
  * zaznaczenie wszystkich kategorii naraz. `Czas` istnieje już teraz (kolumna filtra), mimo że
  * rejestracja czasu wchodzi dopiero w fazie 6; filtr po prostu nie pokazuje w tej kategorii nic,
@@ -37,7 +37,7 @@ export interface ErpActivityHistoryEntry extends ErpActivityStreamEntryBase {
   kind: 'history';
   /** Klucz zdania — `params.field` (jeśli jest) MUSI już być przetłumaczony przez wywołującego
    * PRZED przekazaniem tutaj: Transloco nie rozwiązuje kluczy zagnieżdżonych w parametrach
-   * (`docs/frontend/task-management-pages.md` §2.3). */
+   * (`docs/modules/task-management/screens.md` §2.3). */
   sentenceKey: string;
   params?: Record<string, string>;
 }
@@ -52,7 +52,7 @@ export type ErpActivityStreamEntry = ErpActivityCommentEntry | ErpActivityHistor
 
 /**
  * Strumień aktywności karty zgłoszenia — komentarze, historia i (od fazy 6) czas w jednej,
- * chronologicznej liście z filtrem (`docs/frontend/task-management-pages.md` §9.1, decyzja 2).
+ * chronologicznej liście z filtrem (`docs/modules/task-management/screens.md` §9.1, decyzja 2).
  *
  * <p><b>Prezentacyjny z hakami na własny UI wywołującego</b>: edytor odpowiedzi/edycji komentarza
  * zna `erp-rich-text` i orkiestrator, których ten atom nie ma prawa znać, więc oba miejsca
@@ -67,7 +67,7 @@ export interface ErpActivityStreamConfig {
 
   canWrite?: MaybeSignal<boolean>;
 
-  /** Zakotwiczony na dole strumienia (`docs/frontend/task-management-pages.md` §9.1,
+  /** Zakotwiczony na dole strumienia (`docs/modules/task-management/screens.md` §9.1,
    * decyzja 3) — pole nowego komentarza + przycisk zapisu, własność `feature`. */
   composerTemplate?: TemplateRef<void>;
 

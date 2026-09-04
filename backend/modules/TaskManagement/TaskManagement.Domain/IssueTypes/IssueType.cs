@@ -6,7 +6,7 @@ namespace TaskManagement.Domain.IssueTypes;
 /// Jeden typ zgłoszenia w obrębie schematu (<see cref="IssueTypeScheme"/>) — <c>Epik</c>,
 /// <c>Zadanie</c>, <c>Błąd</c>... Typ steruje hierarchią przez <see cref="Category"/>,
 /// a opcjonalnie zawęża konfigurację zgłoszenia: inny automat stanów albo inny zestaw pól
-/// niż domyślny na projekcie (<c>docs/backend/task-management-requirements.md</c> TYP-001/003).
+/// niż domyślny na projekcie (<c>docs/modules/task-management/requirements.md</c> TYP-001/003).
 /// </summary>
 public sealed class IssueType : Entity
 {

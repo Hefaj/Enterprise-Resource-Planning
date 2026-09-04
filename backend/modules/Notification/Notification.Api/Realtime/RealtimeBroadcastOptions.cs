@@ -56,7 +56,7 @@ public sealed class RealtimeBroadcastOptions
     /// backplane'u na Postgresie, a wysyłka do grupy musi dosięgnąć połączeń wiszących na innych
     /// hubach. Wszystko inne — dzierżawy, licznik sekwencji, koordynacja startu — idzie przez
     /// Postgresa, który już jest transakcyjnym źródłem prawdy (patrz
-    /// <c>docs/backend/multi-instance.md</c> §1). Nie dokładaj tu cache'a uprawnień ani kolejek:
+    /// <c>docs/architecture/multi-instance.md</c> §1). Nie dokładaj tu cache'a uprawnień ani kolejek:
     /// awaria Redisa ma degradować realtime, a nie kłaść autoryzację całego ERP.</para>
     ///
     /// <para>Puste przy <see cref="RealtimeRole.Both"/> jest poprawne i normalne — jedna instancja

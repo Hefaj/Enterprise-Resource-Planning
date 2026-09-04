@@ -1,16 +1,33 @@
+---
+id: module.task-management.requirements
+title: Task Management — wymagania produktowe i funkcjonalne
+summary: Wymagania i kryteria akceptacji funkcji Task Management.
+kind: module-specification
+scope: task-management
+audience:
+  - frontend
+  - backend
+  - agent
+triggers:
+  - wymagania Task Management
+  - kryteria akceptacji Issue
+related: []
+---
+
 # Task Management — wymagania produktowe i funkcjonalne
+
+> **Status:** archived baseline. Trwały kontrakt bez harmonogramu znajduje się w
+> `docs/modules/task-management/requirements.md`; kolejność prac pozostaje w aktywnym planie modułu.
 
 **Stan dokumentu: 📐 specyfikacja docelowa.** Znaczniki przy wymaganiach mówią o stanie kodu:
 ✅ wdrożone, 🟡 częściowo, 📐 projekt. Legenda —
-[`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
+[`architecture.md` §1](../../architecture/backend.md#1-stan-wdrożenia).
 
 Ten dokument jest **źródłem prawdy dla realizacji modułu**: co system ma robić, w jakiej
 kolejności i po czym poznamy, że działa. Mechanika (jak liczy się `rank`, dlaczego sloty zamiast
-EAV, jak wygląda predykat widoczności) mieszka w [`task-management.md`](./task-management.md)
+EAV, jak wygląda predykat widoczności) mieszka w [`task-management.md`](domain.md)
 i nie jest tu powtarzana — wymagania odsyłają do paragrafów tamtego dokumentu. Podział na strony
-frontu → [`task-management-pages.md`](../frontend/task-management-pages.md).
-Kolejność prac, checklisty i zmiany łamiące → [`PLAN-task-management.md`](../../PLAN-task-management.md).
-
+frontu → [`task-management-pages.md`](screens.md).
 ---
 
 ## 0. Jak czytać ten dokument
@@ -42,7 +59,7 @@ Prefiksy ID odpowiadają obszarom: `PRJ` projekt, `MEM` członkostwo, `ISS` zgł
    *znaczenie* dla raportów — kategoria stanu, typ danych pola — i te są zamkniętą listą.
 2. **Zgłoszenie jest w dokładnie jednym stanie.** Na tym stoi tablica (karta leży w jednej
    kolumnie) i to jest powód, dla którego nie ma tu silnika obiegu z DMS-u
-   ([`task-management.md` §5.4](./task-management.md#54-dlaczego-nie-silnik-z-dms-u)).
+   ([`task-management.md` §5.4](domain.md#54-dlaczego-nie-silnik-z-dms-u)).
 3. **Projekt jest granicą** widoczności, numeracji i konfiguracji. Nie ma bytu „organizacja"
    ani „workspace" ([§24.1](#241-organizacja--workspace)), nie ma bytu „dział"
    ([§24.2](#242-dział-jako-byt)).
@@ -66,7 +83,7 @@ Prefiksy ID odpowiadają obszarom: `PRJ` projekt, `MEM` członkostwo, `ISS` zgł
 
 **Zakaz nazw `Task`, `Job`, `WorkItem`** w `TaskManagement.Domain` — każde z tych słów jest już
 zajęte gdzie indziej w systemie
-([`task-management.md` §2](./task-management.md#2-nazewnictwo--issue-nigdy-task)).
+([`task-management.md` §2](domain.md#2-nazewnictwo--issue-nigdy-task)).
 
 ---
 
@@ -122,7 +139,7 @@ na pytanie kierownictwa.
 ## 2. Aktorzy i role (`PERM`, `MEM`)
 
 Dwie **niezależne** osie, których nie wolno zlepić w jedną
-([`identity-authz.md`](./identity-authz.md)):
+([`identity-authz.md`](../../architecture/security.md)):
 
 - **uprawnienie funkcyjne w Identity** (`taskmgmt.issue.update`) — „czy w ogóle wolno ci robić
   tę rzecz w systemie";
@@ -171,7 +188,7 @@ AC1: dyrektor IT widzi „dział WMS: 142 h na zagadnieniu X" nie będąc człon
 AC2: kliknięcie w liczbę **nie otwiera** listy zgłoszeń, do których nie ma dostępu — rozwinięcie
 kończy się na poziomie, na którym agregat przestaje być anonimowy.
 AC3: to uprawnienie **nie jest trzecim wyjątkiem w predykacie widoczności zgłoszeń**
-([`task-management.md` §10.1](./task-management.md#101-widoczność-liczona-po-projekcie)) —
+([`task-management.md` §10.1](domain.md#101-widoczność-liczona-po-projekcie)) —
 działa wyłącznie w zapytaniach raportowych, które nigdy nie zwracają tytułu ani opisu.
 Uzasadnienie AC3: dopisanie `OR ma_uprawnienie_raportowe` do predykatu listy jest jednolinijkową
 zmianą, która po cichu otwiera cudze zgłoszenia prywatne. Rozdział idzie po **zapytaniu**,
@@ -241,7 +258,7 @@ w stanie początkowym schematu projektu.
 AC2: Given pusty tytuł, When zatwierdzam, Then walidacja odrzuca żądanie z `ProblemDetails`
 i zgłoszenie nie powstaje.
 AC3: zgłoszenie dostaje klucz `KOD-NNN` unikalny globalnie, nadany w **tej samej transakcji**
-([`task-management.md` §4](./task-management.md#4-klucz-czytelny-dev-123)).
+([`task-management.md` §4](domain.md#4-klucz-czytelny-dev-123)).
 AC4: zgłaszającym jest wywołujący; nie da się go podać w komendzie.
 
 **ISS-002 — Klucz czytelny · Must · faza 0 · ✅**
@@ -252,7 +269,7 @@ AC3: operacja masowa bierze pulę numerów jednym `UPDATE`, jeden chunk = jeden 
 
 **ISS-003 — Edycja pól zgłoszenia · Must · fazy 0–3 · ✅**
 Opis: tytuł, opis, priorytet, przypisany, termin, typ, tagi i pola niestandardowe zmieniają się
-**osobnymi komendami** wg konwencji `IssueSet…` ([`endpoint-naming.md`](./endpoint-naming.md)),
+**osobnymi komendami** wg konwencji `IssueSet…` ([`endpoint-naming.md`](../../guides/backend/endpoint-naming.md)),
 nie jednym `PATCH` ([§24.4](#244-crud-owe-api-put--patch)).
 AC1: każda zmiana dopisuje wpis do historii w tej samej transakcji.
 AC2: `updated_at` zmienia się wyłącznie przy zmianie treści zgłoszenia, nie przy zmianie
@@ -278,7 +295,7 @@ referencję do załącznika.
 AC4: podgląd i edytor rozwiązują referencję identycznie; po odświeżeniu strony obraz nadal jest.
 AC5: usunięcie zgłoszenia usuwa osadzone obrazy razem z nim.
 AC6: obraz wklejony i **usunięty z treści przed zapisem** nie zostawia osieroconego pliku —
-sprząta go lifecycle prefiksu postojowego ([`media-storage.md`](./media-storage.md)), nie worker
+sprząta go lifecycle prefiksu postojowego ([`media-storage.md`](../../guides/backend/media-storage.md)), nie worker
 liczący referencje.
 
 > **To zmiana w `@erp/shared/ui`, nie w module.** `erp-rich-text` ma dziś w builderze jawną
@@ -361,7 +378,7 @@ i link do ich listy.
 ## 6. Pola niestandardowe (`FLD`)
 
 Mechanika (jsonb jako źródło prawdy + sloty typowane dla SQL) →
-[`task-management.md` §6](./task-management.md#6-pola-niestandardowe). Odrzucenie EAV →
+[`task-management.md` §6](domain.md#6-pola-niestandardowe). Odrzucenie EAV →
 [§24.3](#243-eav-issuefielddefinition--issuefieldvalue).
 
 **FLD-001 — Definicja pola w schemacie · Must · faza 3 · ✅**
@@ -376,7 +393,7 @@ drugi tylko dla pól systemowych z seeda.
 AC1: pole założone bez klucza wyświetla swoją nazwę, nigdy surowy klucz.
 Uzasadnienie: dzisiejszy stan (tylko `nameKey`) pokazuje użytkownikowi nierozwiązany klucz —
 znany chropowaty brzeg z
-[`task-management-pages.md` §4.2](../frontend/task-management-pages.md#42-karta-projektu--task-managementprojectuuid).
+[`task-management-pages.md` §4.2](screens.md#42-karta-projektu--task-managementprojectuuid).
 
 **FLD-003 — Profil pól jako jedno źródło prawdy · Must · faza 3 · ✅**
 Opis: `getProjectFieldProfile` zwraca kolumny, filtry, słowniki i whitelistę sortowania; front
@@ -491,7 +508,7 @@ AC1: usunięty komentarz zostawia ślad („komentarz usunięty"), nie znika z w
 **CMT-004 — Wzmianki `@` · Must · faza 5 · 📐**
 AC1: wzmianka dopisuje osobę do obserwujących i wywołuje powiadomienie.
 AC2: podpowiadanie osób idzie przez port `ERP_USER_DIRECTORY`
-([`user-directory.md`](../frontend/user-directory.md)), nie przez lokalny endpoint modułu.
+([`user-directory.md`](../../guides/frontend/user-directory.md)), nie przez lokalny endpoint modułu.
 
 **CMT-005 — Reakcje · Could · później · 📐**
 
@@ -523,7 +540,7 @@ AC1: plik wgrywa się od razu po wybraniu; bajty idą prosto do magazynu, nie pr
 (bilet → `PUT` → rejestracja jedną komendą).
 AC2: podgląd przez `blob:`, nigdy adres endpointu w `src`.
 AC3: usunięcie zgłoszenia usuwa pliki w tej samej transakcji
-([`media-storage.md`](./media-storage.md)).
+([`media-storage.md`](../../guides/backend/media-storage.md)).
 
 **ATT-002 — Usunięcie pojedynczego załącznika · Should · faza 6 · 📐**
 Uzasadnienie zmiany wobec dzisiejszego stanu: przy zgłoszeniach żyjących miesiącami omyłkowo
@@ -604,10 +621,10 @@ AC3: rozgłoszenie realtime niesie uuid przestawionej karty i sąsiadów, nie ca
 
 **BRD-003 — Optymistyczne przestawienie z cofnięciem · Must · faza 2 · ✅**
 AC1: karta ląduje w nowym miejscu natychmiast; `409` cofa ruch i pokazuje toast — przez
-`ErpOptimisticStore` (`docs/frontend/optimistic-updates.md`), nie ręczny lokalny sygnał.
+`ErpOptimisticStore` (`docs/guides/frontend/optimistic-updates.md`), nie ręczny lokalny sygnał.
 AC2: karta nie przeskakuje pod kursorem, gdy w międzyczasie dojdzie echo własnej zmiany —
 nakładka pozycji żyje poza cache'm kart i wygrywa z danymi z serwera aż do własnego zdjęcia, więc
-rozpoznawanie echa po stronie odbioru nie jest potrzebne (`docs/frontend/optimistic-updates.md` §9).
+rozpoznawanie echa po stronie odbioru nie jest potrzebne (`docs/guides/frontend/optimistic-updates.md` §9).
 
 **BRD-004 — Wygaszanie niedozwolonych kolumn · Must · faza 2 · ✅**
 AC1: kolumny, do których przejście jest niedozwolone, są wygaszane **w chwili chwycenia karty**,
@@ -734,7 +751,7 @@ AC1: osobna strona, bo wchodzi na nią inna rola; karta zlecenia to karta zgłos
 **NTF-001 — Moduł wylicza odbiorców, Notification doręcza · Must · faza 5 · 📐**
 AC1: `TaskManagement` publikuje `UserNotificationRequested` z listą odbiorców i nic poza tym.
 AC2: grupowanie, preferencje, kanały i skrzynka należą do Notification
-([`user-notifications.md`](./user-notifications.md)).
+([`user-notifications.md`](../notification/user-notifications.md)).
 
 **NTF-002 — Zdarzenia powiadamiające · Must · faza 5 · 📐**
 Lista zamknięta w fazie 5: przypisano mi zgłoszenie, wzmianka, nowy komentarz na obserwowanym,
@@ -761,11 +778,11 @@ niespełnialny dla wszystkich celów.
 **BULK-002 — Zestaw operacji · Must · faza 6 · 📐**
 Zmiana stanu, przypisanie, priorytet, dodanie/usunięcie tagu, dodanie do sprintu, przeniesienie
 do projektu, migracja stanów po publikacji schematu.
-AC1: każda ma własny zestaw reguł wstępnych ([`batch-validation.md`](./batch-validation.md)).
+AC1: każda ma własny zestaw reguł wstępnych ([`batch-validation.md`](../../guides/backend/batch-validation.md)).
 
 **BULK-003 — Zaznaczenie jako zakres · Must · faza 6 · 📐**
 AC1: „Zaznacz wszystko" jest filtrem, nie listą uuid-ów, i przechodzi progiem materializacji
-([`selection-scope.md`](../frontend/selection-scope.md)).
+([`selection-scope.md`](../../guides/frontend/selection-scope.md)).
 
 ---
 
@@ -790,7 +807,7 @@ AC1: reguła ma licznik wykonań i log ostatnich uruchomień; da się ją wyłą
 ## 19. Raporty i dashboardy (`RPT`)
 
 **RPT-001 — Raporty przez wspólny mechanizm · Must · faza 7 · 📐**
-Opis: `ReportRun` + `IReportDefinition` ([`reporting.md`](./reporting.md)) — nie własny silnik
+Opis: `ReportRun` + `IReportDefinition` ([`reporting.md`](../../architecture/reporting.md)) — nie własny silnik
 i nie osobny mikroserwis.
 AC1: ciężki przebieg idzie na slot `Map`/`Reduce` z izolacją zasobów, nie na wątku HTTP.
 AC2: raport zwracający więcej niż ekran danych kończy się artefaktem do pobrania istniejącym
@@ -826,7 +843,7 @@ w fazie 7. Odwrotna kolejność daje ekran świecący pustkami przez kwartał.
 
 **API-001 — Kontrakt komendowy, nie CRUD-owy · Must · zawsze · ✅**
 Opis: endpointy nazywane pięcioma czasownikami (`create`/`set`/`add`/`remove`/`exec`);
-nazwa klasy endpointu → nazwa metody klienta NSwag ([`endpoint-naming.md`](./endpoint-naming.md)).
+nazwa klasy endpointu → nazwa metody klienta NSwag ([`endpoint-naming.md`](../../guides/backend/endpoint-naming.md)).
 AC1: nie ma `PATCH /issues/{id}` przyjmującego dowolny zestaw pól
 ([§24.4](#244-crud-owe-api-put--patch)).
 AC2: przemianowanie klasy endpointu jest zmianą łamiącą i wymaga regeneracji klienta.
@@ -889,19 +906,19 @@ AC1: archiwizacja projektu nie łamie linków; klucz zgłoszenia jest wieczysty.
 Opis: ekrany składa się z komponentów, nie z HTML-a. Kolejność sięgania jest sztywna:
 `@erp/shared/ui` → komponent w `@erp/task-management/ui` → dopiero wtedy własny szablon.
 AC1: komponent prezentacyjny **nie mieszka w `feature`** — `feature` trzyma smart components
-(logika, store, orkiestrator), `ui` trzyma dumb components ([`feature-structure.md`](../frontend/feature-structure.md)).
+(logika, store, orkiestrator), `ui` trzyma dumb components ([`feature-structure.md`](../../guides/frontend/feature-structure.md)).
 AC2: zdolność brakująca w komponencie współdzielonym (np. wklejanie obrazów w `erp-rich-text`)
 dokładana jest **do niego**, nie obchodzona lokalnie — inaczej powstaje trzecia kopia tego samego
 kodu w trzecim module.
 AC3: nowy atom w `libs/modules/task-management/ui` powstaje wg wzorca „Single Config Builder"
-([`atoms.md`](../frontend/atoms.md)), z `erp-` w selektorze.
+([`atoms.md`](../../guides/frontend/atoms.md)), z `erp-` w selektorze.
 Stan dzisiaj: `libs/modules/task-management/ui` zawiera **wyłącznie tłumaczenia** — karta tablicy,
 kolumna, wątek komentarzy i historia leżą w `feature`. To dług do spłacenia w fazie 4.
 
 **NFR-010 — Rozmieszczenie elementów wzorowane na YouTracku · Must · faza 4 · 📐**
 Opis: użytkownicy przychodzą z YouTracka i mają odnaleźć elementy tam, gdzie ich szukają.
 Wiążące rozmieszczenie per ekran →
-[`task-management-pages.md` §9](../frontend/task-management-pages.md#9-układ-ekranów--wzorzec-youtracka).
+[`task-management-pages.md` §9](screens.md#9-układ-ekranów--wzorzec-youtracka).
 AC1: karta zgłoszenia to dwie kolumny — treść po lewej, **panel pól po prawej**; stan i przejścia
 na górze panelu.
 AC2: komentarze i historia to **jeden strumień aktywności z filtrem**, nie dwie osobne sekcje
@@ -913,7 +930,7 @@ AC3: pole komentarza jest zakotwiczone na dole strumienia i widoczne bez przewij
 ## 22. Zakres MVP i fazy
 
 Fazy 0–3 są **wdrożone**; numeracja jest ciągła z
-[`task-management.md` §13](./task-management.md#13-kolejność-wdrożenia), żeby nie unieważniać
+[`task-management.md` §13](domain.md#13-kolejność-wdrożenia), żeby nie unieważniać
 istniejących odwołań.
 
 | Faza | Nazwa | Zakres wymagań | Stan |
@@ -938,7 +955,7 @@ pracuje: **rejestracja czasu przesunięta z 7 do 6** (raport nie zadziała wstec
 przesunięte z 8 do 7** (kierownictwo jest aktorem, nie odbiorcą rozszerzeń).
 
 Podział na strony frontu per faza →
-[`task-management-pages.md` §9](../frontend/task-management-pages.md#9-kolejność-względem-faz-wdrożenia).
+[`task-management-pages.md` §11](screens.md#11-kolejność-względem-faz-wdrożenia).
 
 ---
 
@@ -979,7 +996,7 @@ serwerowo po polu własnym** — wtedy każde pole to osobny `LEFT JOIN`, a filt
 to trzy joiny na najgorętszej tabeli modułu. Wybór: jsonb jako źródło prawdy (dowolna liczba pól)
 + stała pula slotów typowanych dla pól sortowalnych i filtrowalnych. To **ten sam wzorzec,
 co typ dokumentu w DMS** — drugie zastosowanie, świadomie nieuogólniane
-([`dms-workflow.md` §3.2](./dms-workflow.md#32-sortowalne-atrybuty--sloty-typowane)).
+([`dms-workflow.md` §3.2](../dms/domain-workflow.md#32-sortowalne-atrybuty--sloty-typowane)).
 
 ### 24.4 CRUD-owe API (`PUT` / `PATCH`)
 **Odrzucone.** `PATCH /issues/{id}` z dowolnym zestawem pól nie daje się zwalidować regułą
@@ -1016,10 +1033,9 @@ w macierzy, nie da się też zdebugować rok później.
 
 ## 25. Zobacz też
 
-- [`task-management.md`](./task-management.md) — model domenowy i mechanika (rank, sloty, widoczność)
-- [`PLAN-task-management.md`](../../PLAN-task-management.md) — kolejność prac i checklisty
-- [`task-management-pages.md`](../frontend/task-management-pages.md) — podział na strony
-- [`cqrs.md`](./cqrs.md), [`endpoint-naming.md`](./endpoint-naming.md) — kontrakt komend
-- [`bulk-commands.md`](./bulk-commands.md), [`batch-validation.md`](./batch-validation.md)
-- [`identity-authz.md`](./identity-authz.md), [`user-notifications.md`](./user-notifications.md)
-- [`multi-instance.md`](./multi-instance.md), [`reporting.md`](./reporting.md)
+- [`task-management.md`](domain.md) — model domenowy i mechanika (rank, sloty, widoczność)
+- [`task-management-pages.md`](screens.md) — podział na strony
+- [`cqrs.md`](../../guides/backend/cqrs.md), [`endpoint-naming.md`](../../guides/backend/endpoint-naming.md) — kontrakt komend
+- [`bulk-commands.md`](../../guides/backend/bulk-commands.md), [`batch-validation.md`](../../guides/backend/batch-validation.md)
+- [`identity-authz.md`](../../architecture/security.md), [`user-notifications.md`](../notification/user-notifications.md)
+- [`multi-instance.md`](../../architecture/multi-instance.md), [`reporting.md`](../../architecture/reporting.md)

@@ -21,7 +21,7 @@ import { PRODUCT_KEYS } from '../../translation';
  *
  * Cena tej decyzji: pliki wgrane do modalu zamkniętego bez zapisu zostają w katalogu jako
  * zasoby nieprzypisane do żadnego produktu. Sprzątanie takich sierot nie jest jeszcze
- * zaimplementowane (patrz `docs/backend/exports-artifacts.md` §9).
+ * zaimplementowane (patrz `docs/guides/backend/exports-artifacts.md` §9).
  */
 @Component({
   selector: 'erp-catalog-product-add-multimedia-step',

@@ -4,7 +4,7 @@ namespace Identity.Domain.Roles;
 
 /// <summary>
 /// Rola — "grupa uprawnień" z pytania, które zapoczątkowało ten moduł (patrz
-/// <c>docs/backend/identity-authz.md</c> §1-2). Niesie zbiór uprawnień bezpośrednich
+/// <c>docs/architecture/security.md</c> §1-2). Niesie zbiór uprawnień bezpośrednich
 /// (<see cref="Permissions"/>) i zbiór ról składowych (<see cref="MemberRoleUuids"/>), których
 /// uprawnienia dziedziczy — hierarchiczne RBAC (NIST RBAC1).
 ///
@@ -18,7 +18,7 @@ namespace Identity.Domain.Roles;
 /// (<c>IRoleQueries.IsAncestorAsync</c>), a agregat dostaje już zweryfikowany fakt.</para>
 ///
 /// <para><b>Tylko allow.</b> Brak jakiejkolwiek formy <c>deny</c> — uzasadnienie w
-/// <c>docs/backend/identity-authz.md</c> §2.</para>
+/// <c>docs/architecture/security.md</c> §2.</para>
 /// </summary>
 public class Role : AggregateRoot
 {

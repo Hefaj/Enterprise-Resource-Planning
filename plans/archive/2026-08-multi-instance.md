@@ -1,12 +1,30 @@
+---
+id: architecture.multi-instance
+title: Wieloinstancyjność — plan wdrożenia
+summary: Reguły bezpiecznej pracy wielu instancji, dzierżawy, role Hub/Relay i Redis backplane.
+kind: architecture
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - skalowanie poziome lub druga instancja
+  - cluster safe background service
+related: []
+---
+
 # Wieloinstancyjność — plan wdrożenia
+
+> **Status:** completed. Aktualny kontrakt architektoniczny opisuje
+> `docs/architecture/multi-instance.md`.
 
 Backend **nie zakłada już jednej instancji serwisu**. Ten dokument jest planem, według którego
 założenie zostało zdjęte: co zmienić, w jakiej kolejności i **jak udowodnić**, że zadziałało.
-Stan po zmianie opisuje [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
+Stan po zmianie opisuje [`architecture.md` §7](backend.md#7-wieloinstancyjność--założenia-zdjęte).
 
 Stan: ✅ wdrożone, z dowodami. Rozjazdy między planem a kodem — świadome, z uzasadnieniem —
 zebrane w [§11](#11-odstępstwa-od-planu); dwa z nich to usterki wykryte dopiero przez testy. Legenda znaczników jak w
-[`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
+[`architecture.md` §1](backend.md#1-stan-wdrożenia).
 
 ---
 
@@ -33,7 +51,7 @@ zdolnym się z nim rozjechać.
 
 ## 2. Kolejność i dlaczego właśnie taka
 
-Kluczowa obserwacja, której [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nie mówi wprost:
+Kluczowa obserwacja, której [§7](backend.md#7-wieloinstancyjność--założenia-zdjęte) nie mówi wprost:
 **„razem" dotyczy wnętrza realtime, nie całego backendu.** Cztery punkty SignalR (rozgłaszanie,
 licznik, koalescencja, próg) trzeba wdrożyć jednym ruchem, bo częściowe wdrożenie wygląda jak
 gotowość, a nią nie jest. Ale runnery, start procesu i cache uprawnień są od nich niezależne.
@@ -148,7 +166,7 @@ Cztery konsekwencje, każda warta odnotowania:
    blokując elementy (`FOR UPDATE SKIP LOCKED` na `job_item`) zamiast zadania — ale wtedy dwa
    runnery aktualizują liczniki tego samego wiersza `job`, `xmin` wyłapuje konflikt na
    `SaveChanges`, chunk wpada w ścieżkę izolacji „element po elemencie" i przepustowość leci
-   na łeb. To dokładnie ta patologia, którą [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte)
+   na łeb. To dokładnie ta patologia, którą [§7](backend.md#7-wieloinstancyjność--założenia-zdjęte)
    opisuje jako „wygląda jak awaria bazy". Alternatywa — liczniki przez `UPDATE … SET
    succeeded_count = succeeded_count + @n`, poza `xmin` i poza metodą agregatu — jest możliwa,
    ale to ustępstwo w modelu domenowym i wchodzi dopiero wtedy, gdy pojedyncze wielkie zadanie
@@ -177,7 +195,7 @@ tego, co się wydaje. Zapytanie musi wyjść z bazy gotowe.
 ### 4.2 `ExportRunner` — krótkie przejęcie i heartbeat
 
 Tu ten sam wzorzec **nie zadziała**, i to jest różnica, której
-[§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nie rozdziela: przebieg eksportu strumieniuje
+[§7](backend.md#7-wieloinstancyjność--założenia-zdjęte) nie rozdziela: przebieg eksportu strumieniuje
 50 tys. rekordów do MinIO. Trzymanie transakcji Postgresa przez cały ten czas oznacza
 długowieczny snapshot blokujący `VACUUM` — lekarstwo gorsze od choroby.
 
@@ -209,7 +227,7 @@ który by o nim wiedział, więc i bez szans na posprzątanie inaczej niż regu�
 
 ## 5. Faza 2 — start procesu
 
-**Ta kategoria nie figuruje dziś w [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) w ogóle**,
+**Ta kategoria nie figuruje dziś w [§7](backend.md#7-wieloinstancyjność--założenia-zdjęte) w ogóle**,
 a niesie najostrzejsze ryzyko z całej listy — nie nieaktualny UI, tylko potencjalnie uszkodzony
 schemat bazy.
 
@@ -283,7 +301,7 @@ stronie IdP niezależnie od fleety.
 ## 7. Faza 4 — realtime (jedna niepodzielna zmiana)
 
 Cztery punkty naraz. Wdrożenie częściowe wygląda jak gotowość i nią nie jest — to jest ostrzeżenie
-z [§7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) i tutaj obowiązuje dosłownie.
+z [§7](backend.md#7-wieloinstancyjność--założenia-zdjęte) i tutaj obowiązuje dosłownie.
 
 ### 7.1 Rozdzielenie ról: Hub i Relay
 
@@ -322,7 +340,7 @@ wariantem podstawowym.
 
 ### 7.2 Licznik sekwencji → Postgres (rewizja wcześniejszej decyzji)
 
-[`architecture.md` §7 „Kierunki naprawy"](./architecture.md#7-wieloinstancyjność--założenia-zdjęte)
+[`architecture.md` §7 „Kierunki naprawy"](backend.md#7-wieloinstancyjność--założenia-zdjęte)
 wskazuje na `INCR` w Redisie. **Ten plan tę decyzję zmienia** i powód jest konkretny.
 
 Dzisiejsze uzasadnienie, dlaczego licznik może być ulotny
@@ -467,7 +485,7 @@ dotarła do **obu** klientów, razem z kanałem `jobs`. Cała droga: Catalog →
 
 ### 8.4 Domknięcie dokumentacji
 
-[`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nie opisuje już
+[`architecture.md` §7](backend.md#7-wieloinstancyjność--założenia-zdjęte) nie opisuje już
 stanu faktycznego jako jednoinstancyjnego — jest opisem **zdjętych** założeń, z odesłaniem tutaj.
 Adnotacje w kodzie mówiące „zakłada jedną instancję" zostały zdjęte razem ze zmianą, a nie
 później: komentarz kłamiący o współbieżności jest gorszy niż brak komentarza. Każda usługa tła
@@ -480,7 +498,7 @@ niesie dziś `[ClusterSafe]` z opisem mechanizmu, który ją zabezpiecza.
 Te miejsca są gotowe na wiele instancji i to nie przypadek — w każdym świadomie wybrano trwałość
 zamiast pamięci procesu. Dotykanie ich w ramach tego planu byłoby zmianą bez powodu:
 
-- **Outbox i RabbitMQ** — koperta zapisuje się w transakcji danych ([`events-outbox.md`](./events-outbox.md)).
+- **Outbox i RabbitMQ** — koperta zapisuje się w transakcji danych ([`events-outbox.md`](integration-events.md)).
 - **`job` / `job_item` w bazie** — zadanie przeżywa restart; brakowało wyłącznie wyłączności przy
   *wyborze*, nie trwałości. Faza 1 dokłada dokładnie to jedno.
 - **Klucze idempotencji** — `EfIdempotencyStore` trzyma je w tabeli schematu modułu i zatwierdza
@@ -580,9 +598,9 @@ niezależnie od tego, jak flaga jest ustawiona.
 
 ## 12. Zobacz też
 
-- [Architektura backendu §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) — lista założeń, którą ten plan zdejmuje
-- [Operacje masowe](./bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`
-- [Eksporty i artefakty](./exports-artifacts.md) — `ExportRun`, `ExportRunner`
-- [Synchronizacja w czasie rzeczywistym](./realtime-signalr.md) §5–6 — licznik sekwencji, backplane
-- [Tożsamość i uprawnienia](./identity-authz.md) §4, §9 — cache uprawnień, wymuszone wylogowanie
-- [Zdarzenia domenowe i outbox](./events-outbox.md) — dlaczego fanout ≠ broadcast
+- [Architektura backendu §7](backend.md#7-wieloinstancyjność--założenia-zdjęte) — lista założeń, którą ten plan zdejmuje
+- [Operacje masowe](../guides/backend/bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`
+- [Eksporty i artefakty](../guides/backend/exports-artifacts.md) — `ExportRun`, `ExportRunner`
+- [Synchronizacja w czasie rzeczywistym](realtime.md) §5–6 — licznik sekwencji, backplane
+- [Tożsamość i uprawnienia](security.md) §4, §9 — cache uprawnień, wymuszone wylogowanie
+- [Zdarzenia domenowe i outbox](integration-events.md) — dlaczego fanout ≠ broadcast

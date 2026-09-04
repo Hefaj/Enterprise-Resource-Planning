@@ -8,8 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Identity.Infrastructure.Persistence;
 
 /// <summary>
-/// Kontekst modułu Identity, schemat <c>identity</c>. Od Fazy 0 przejścia na operacje masowe
-/// (patrz <c>docs/backend/identity-bulk-migration.md</c>) implementuje <see cref="IJobDbContext"/>
+/// Kontekst modułu Identity, schemat <c>identity</c>. Na potrzeby operacji masowych
+/// (patrz <c>docs/guides/backend/bulk-commands.md</c>) implementuje <see cref="IJobDbContext"/>
 /// tak samo jak Catalog/Sales — tabele <c>job</c>/<c>job_item</c> żyją w tym schemacie, bo to
 /// Identity wykonuje własne zadania i musi je wznowić po restarcie.
 /// </summary>

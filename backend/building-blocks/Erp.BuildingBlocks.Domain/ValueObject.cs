@@ -9,7 +9,7 @@ namespace Erp.BuildingBlocks.Domain;
 ///
 /// Po stronie EF mapowane zwykle jako owned entity (<c>OwnsOne</c>/<c>OwnsMany</c>), więc nie mają
 /// własnej tabeli ani własnego klucza — to jest właśnie ten przypadek, o którym mówi sekcja 9
-/// `docs/frontend/orchestrators.md`: własne ID w bazie nie czyni z czegoś agregatu.
+/// `docs/guides/frontend/orchestrators.md`: własne ID w bazie nie czyni z czegoś agregatu.
 /// </summary>
 public abstract class ValueObject : IEquatable<ValueObject>
 {

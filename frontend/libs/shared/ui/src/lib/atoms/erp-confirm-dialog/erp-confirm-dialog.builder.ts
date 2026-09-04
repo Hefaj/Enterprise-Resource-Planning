@@ -9,7 +9,7 @@ import {
 } from './erp-confirm-dialog.types';
 
 /**
- * Fluent API do złożenia konfiguracji potwierdzenia — patrz docs/frontend/atoms.md.
+ * Fluent API do złożenia konfiguracji potwierdzenia — patrz docs/guides/frontend/atoms.md.
  */
 export class ErpConfirmDialogBuilder extends ErpBaseBuilder<ErpConfirmDialogConfig> {
   /** Klucz tłumaczenia nagłówka (ewentualnie z parametrami), nigdy gotowy tekst. */

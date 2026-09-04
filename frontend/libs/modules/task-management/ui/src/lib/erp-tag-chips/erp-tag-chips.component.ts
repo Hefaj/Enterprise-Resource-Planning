@@ -8,7 +8,7 @@ import { ErpTagChipItem, ErpTagChipsConfig } from './erp-tag-chips.types';
 
 /**
  * Chipsy — dziś typ i priorytet, przygotowane pod tagi z fazy 6
- * (`docs/frontend/task-management-pages.md` §10). Prezentacyjny: lista przychodzi gotowa,
+ * (`docs/modules/task-management/screens.md` §10). Prezentacyjny: lista przychodzi gotowa,
  * usuwanie tylko emituje `remove`, nie woła żadnej komendy samo.
  */
 @Component({

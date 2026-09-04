@@ -8,7 +8,7 @@ using Xunit;
 namespace Erp.IntegrationTests;
 
 /// <summary>
-/// Kryterium akceptacji fazy 4 (<c>docs/backend/multi-instance.md</c> §10): po restarcie
+/// Kryterium akceptacji fazy 4 (<c>docs/architecture/multi-instance.md</c> §10): po restarcie
 /// przekaźnika <c>lastSeenSequence</c> <b>nie cofa się</b>, a wykrywanie luki działa dalej.
 ///
 /// <para>Dopóki licznik i połączenia ginęły razem, licznik w pamięci był poprawny. Po rozdzieleniu

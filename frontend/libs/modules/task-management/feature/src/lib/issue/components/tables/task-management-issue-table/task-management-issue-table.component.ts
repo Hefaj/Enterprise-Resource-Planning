@@ -39,11 +39,11 @@ import { ISSUE_KEYS } from '../../../translation';
 import { IssueKeyCellComponent } from './issue-key-cell.component';
 
 /**
- * Smart tabela zgłoszeń — lista serwerowa wg [`smart-tables.md`](../../../../../../../../../docs/frontend/smart-tables.md).
+ * Smart tabela zgłoszeń — lista serwerowa wg [`smart-tables.md`](../../../../../../../../../docs/guides/frontend/smart-tables.md).
  *
  * <p>Wiersz to zawsze `Issue`, w każdym zakresie — w odróżnieniu od listy dokumentów DMS, gdzie
  * klucz wiersza zmienia się z zakresem. Tutaj nie ma czynności, więc dedup nie ma czego zgubić
- * (`docs/frontend/task-management-pages.md` §2.1).</p>
+ * (`docs/modules/task-management/screens.md` §2.1).</p>
  *
  * <p>Sortowanie jest włączone <b>wyłącznie</b> na kolumnach z whitelisty
  * `IssueQueries.ApplySorting`: klucz, tytuł, priorytet, termin, data modyfikacji. Kolumna stanu
@@ -97,7 +97,7 @@ export class TaskManagementIssueTableComponent {
   /**
    * Kolumny projekto-specyficzne — <b>wyłącznie przy zawężeniu do jednego projektu</b>.
    * Bez projektu kod pola nie znaczy nic, bo dwa schematy mogą mapować ten sam kod na różne
-   * kolumny (`docs/frontend/task-management-pages.md` §2.1).
+   * kolumny (`docs/modules/task-management/screens.md` §2.1).
    */
   protected readonly customFields = computed<ProjectFieldDto[]>(() =>
     this._fields.fieldsOf(this.filters().projectUuid)(),
@@ -157,7 +157,7 @@ export class TaskManagementIssueTableComponent {
         c
           .setId('key')
           .setAccessorKey('key')
-          // Ikona typu + klucz (`erp-issue-key`, `docs/frontend/task-management-pages.md` §10).
+          // Ikona typu + klucz (`erp-issue-key`, `docs/modules/task-management/screens.md` §10).
           // W trybie drzewa dostaje wcięcie wg poziomu zagnieżdżenia — to klucz jest tym, po
           // czym użytkownik wodzi wzrokiem, szukając struktury (`LNK-006`).
           .setCell(IssueKeyCellComponent, {
@@ -264,7 +264,7 @@ export class TaskManagementIssueTableComponent {
    *
    * <p>Po drucie wszystko jest tekstem w postaci kanonicznej (liczba z kropką, data ISO-8601
    * UTC, użytkownik jako uuid) — formatowanie jest wyłącznie sprawą widoku. Użytkownik pokazuje
-   * się nazwiskiem ze wspólnego katalogu, nigdy uuidem (`docs/frontend/user-directory.md`);
+   * się nazwiskiem ze wspólnego katalogu, nigdy uuidem (`docs/guides/frontend/user-directory.md`);
    * dopóki nazwisko nie dojedzie, zostaje uuid, a nie pustka.</p>
    */
   private _customFieldLabel(row: IssueVM, field: ProjectFieldDto): string {

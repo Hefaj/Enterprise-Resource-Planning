@@ -1,8 +1,8 @@
 import { MaybeSignal } from '@erp/shared/ui';
 
 /**
- * Klucz zgłoszenia + ikona typu — atom najczęściej powtarzany w module (`docs/frontend/
- * task-management-pages.md` §10): tabela, karta, powiązania i tablica pokazują to samo,
+ * Klucz zgłoszenia + ikona typu — atom najczęściej powtarzany w module
+ * (`docs/modules/task-management/screens.md`): tabela, karta, powiązania i tablica pokazują to samo,
  * więc różnice w formacie klucza kończyłyby się jako cztery osobne poprawki.
  */
 export interface ErpIssueKeyConfig {

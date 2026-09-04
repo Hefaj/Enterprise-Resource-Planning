@@ -1,18 +1,33 @@
+---
+id: frontend.pages
+title: Page dla agregatu — szkielet, zakładki, panel zależny od zaznaczenia
+summary: Szkielet strony agregatu z filtrem, treścią i panelem zależnym od zaznaczenia.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - nowy page dla agregatu
+  - panel zależny od zaznaczenia
+related: []
+---
+
 # Page dla agregatu — szkielet, zakładki, panel zależny od zaznaczenia
 
 Ten dokument opisuje anatomię typowego **page** modułu: widoku listującego agregat (np. produkty, użytkownicy), z filtrami, tabelą serwerową, akcjami masowymi i (opcjonalnie) zakładkami. Cel: każdy kolejny page ma wyglądać i działać tak samo, żeby użytkownik uczący się jednego ekranu rozumiał od razu wszystkie pozostałe.
 
 Implementacja referencyjna: strona produktów katalogu —
-[`product.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.component.ts) (szkielet siatki),
-[`product.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (store strony — filtry, sortowanie, zaznaczenie, zasięg),
-[`product-filter.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/filters/product-filter.component.ts) (filtry),
-[`product-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/product-tab.component.ts) (pierwsza zakładka — lista),
-[`catalog-product-table.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/components/tables/catalog-product-table/catalog-product-table.component.ts) (smart tabela),
-[`product-scope-tab.store.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) + [`multimedia-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/multimedia/multimedia-tab.component.ts) / [`warranty-tab.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/warranty/warranty-tab.component.ts) (panele boczne zależne od zaznaczenia).
+[`product.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.component.ts) (szkielet siatki),
+[`product.store.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/product.store.ts) (store strony — filtry, sortowanie, zaznaczenie, zasięg),
+[`product-filter.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/filters/product-filter.component.ts) (filtry),
+[`product-tab.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/product-tab.component.ts) (pierwsza zakładka — lista),
+[`catalog-product-table.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/components/tables/catalog-product-table/catalog-product-table.component.ts) (smart tabela),
+[`product-scope-tab.store.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/product-scope-tab.store.ts) + [`multimedia-tab.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/multimedia/multimedia-tab.component.ts) / [`warranty-tab.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/product/page/content/side-panel/warranty/warranty-tab.component.ts) (panele boczne zależne od zaznaczenia).
 
-Ten sam kształt na innym module: [`users.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/users.component.ts) + [`user-scope-tab.store.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/content/side-panel/user-scope-tab.store.ts) + [`user-roles-tab.component.ts`](../../frontend/libs/modules/identity/feature/src/lib/users/page/content/side-panel/roles/user-roles-tab.component.ts) — role wszystkich zaznaczonych użytkowników w jednej tabeli.
+Ten sam kształt na innym module: [`users.component.ts`](../../../frontend/libs/modules/identity/feature/src/lib/users/page/users.component.ts) + [`user-scope-tab.store.ts`](../../../frontend/libs/modules/identity/feature/src/lib/users/page/content/side-panel/user-scope-tab.store.ts) + [`user-roles-tab.component.ts`](../../../frontend/libs/modules/identity/feature/src/lib/users/page/content/side-panel/roles/user-roles-tab.component.ts) — role wszystkich zaznaczonych użytkowników w jednej tabeli.
 
-Dokumenty, na których ten się opiera i których nie powiela: [smart tabele](./smart-tables.md) (anatomia `erp-catalog-product-table`), [zasięg zaznaczenia](./selection-scope.md) (`ErpSelectionScope`, materializacja, bramkowanie toolbara), [atomy UI](./atoms.md) (wzorzec Single Config Builder, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-action-toolbar`).
+Dokumenty, na których ten się opiera i których nie powiela: [smart tabele](smart-tables.md) (anatomia `erp-catalog-product-table`), [zasięg zaznaczenia](selection-scope.md) (`ErpSelectionScope`, materializacja, bramkowanie toolbara), [atomy UI](atoms.md) (wzorzec Single Config Builder, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-action-toolbar`).
 
 ---
 
@@ -149,7 +164,7 @@ Store strony (`page/AGGREGATE.store.ts`, `@Injectable()` rejestrowany w `provide
 
 1. **Filtry** (`signal<Partial<SearchXRequest>>`) — z `setFilters`/`updateFilters`.
 2. **Sortowanie** (`signal<SortOption[] | undefined>`) — osobno od filtrów, bo żyje w stanie tabeli, ale store go potrzebuje do zapytań o same UUID-y (patrz punkt 3).
-3. **Zaznaczenie** (`signal<ErpSelectionState<XVM> | null>`) i **zasięg** (`computed<ErpSelectionScope<XVM, SearchXRequest>>` przez `erpResolveSelectionScope`, z progiem materializacji i cache'em uuidów) — cała mechanika opisana w [zasięgu zaznaczenia §2](./selection-scope.md#2-trzy-zasięgi-i-próg-materializacji). **Nie odtwarzaj tego ręcznie** — skopiuj `product.store.ts` i zmień typy (`XVM`, `SearchXRequest`, próg materializacji dobrany dla agregatu).
+3. **Zaznaczenie** (`signal<ErpSelectionState<XVM> | null>`) i **zasięg** (`computed<ErpSelectionScope<XVM, SearchXRequest>>` przez `erpResolveSelectionScope`, z progiem materializacji i cache'em uuidów) — cała mechanika opisana w [zasięgu zaznaczenia §2](selection-scope.md#2-trzy-zasięgi-i-próg-materializacji). **Nie odtwarzaj tego ręcznie** — skopiuj `product.store.ts` i zmień typy (`XVM`, `SearchXRequest`, próg materializacji dobrany dla agregatu).
 4. **Stan ładowania** (`signal<boolean>`) — dla `erp-filter` (spinner przycisku szukania).
 
 Store strony jest jedynym miejscem, które zna regułę „lista czy filtr" (`scope`). Ani filtr, ani smart tabela, ani panele boczne nie podejmują tej decyzji same — czytają gotowy `scope`/`scopeKind` ze store'a.
@@ -182,9 +197,9 @@ template: `
 `
 ```
 
-- **Bez własnego nagłówka strony (`<h1>`/tytuł+podtytuł) w `content`.** Referencyjny `product-tab.component.ts` (i cały przykład w §1) nie ma takiego nagłówka — nazwa strony żyje w routingu/menu (patrz [nowy moduł](./new-module.md)), nie jest powtarzana wewnątrz `content`. Dodanie `<h1>{{ X_KEYS.title | erpTranslate }}</h1>` + `<p>{{ X_KEYS.subtitle | erpTranslate }}</p>` na górze `content` zabiera miejsce filtrowi/tabeli i dubluje informację, którą użytkownik już widzi w tytule zakładki przeglądarki/breadcrumbie. Znalezione i usunięte w `users-tab.component.ts`, `roles-tab.component.ts`, `grant-audit-list.component.ts`, `permissions-catalog-list.component.ts` — wszystkie cztery dodały taki nagłówek niezależnie od siebie, mimo że żaden przykład referencyjny go nie ma.
-- **Smart tabela** (`erp-catalog-product-table` w przykładzie) — komponent osobny, zbudowany wg [smart-tables.md](./smart-tables.md); page go tylko konsumuje, nie zna jego wewnętrznej logiki paginacji/fetchowania.
-- **`selectionMode` smart tabeli jest jej własnym inputem** (`selectionMode = input<ErpSelectionMode>('multi')`, patrz [smart-tables.md §2](./smart-tables.md#2-anatomia)), **nigdy** wartością zaszytą na sztywno w `.setSelectionMode(...)` wewnątrz buildera tabeli — nawet gdy dany page używa jej dziś tylko z jednym trybem. Zaszycie na sztywno nie boli, dopóki tabela ma jednego konsumenta, ale blokuje ponowne użycie tego samego komponentu w innym page z innym trybem zaznaczenia — a to jest właśnie cel wydzielenia jej jako osobnego Smart Component.
+- **Bez własnego nagłówka strony (`<h1>`/tytuł+podtytuł) w `content`.** Referencyjny `product-tab.component.ts` (i cały przykład w §1) nie ma takiego nagłówka — nazwa strony żyje w routingu/menu (patrz [nowy moduł](new-module.md)), nie jest powtarzana wewnątrz `content`. Dodanie `<h1>{{ X_KEYS.title | erpTranslate }}</h1>` + `<p>{{ X_KEYS.subtitle | erpTranslate }}</p>` na górze `content` zabiera miejsce filtrowi/tabeli i dubluje informację, którą użytkownik już widzi w tytule zakładki przeglądarki/breadcrumbie. Znalezione i usunięte w `users-tab.component.ts`, `roles-tab.component.ts`, `grant-audit-list.component.ts`, `permissions-catalog-list.component.ts` — wszystkie cztery dodały taki nagłówek niezależnie od siebie, mimo że żaden przykład referencyjny go nie ma.
+- **Smart tabela** (`erp-catalog-product-table` w przykładzie) — komponent osobny, zbudowany wg [smart-tables.md](smart-tables.md); page go tylko konsumuje, nie zna jego wewnętrznej logiki paginacji/fetchowania.
+- **`selectionMode` smart tabeli jest jej własnym inputem** (`selectionMode = input<ErpSelectionMode>('multi')`, patrz [smart-tables.md §2](smart-tables.md#2-anatomia)), **nigdy** wartością zaszytą na sztywno w `.setSelectionMode(...)` wewnątrz buildera tabeli — nawet gdy dany page używa jej dziś tylko z jednym trybem. Zaszycie na sztywno nie boli, dopóki tabela ma jednego konsumenta, ale blokuje ponowne użycie tego samego komponentu w innym page z innym trybem zaznaczenia — a to jest właśnie cel wydzielenia jej jako osobnego Smart Component.
 - **`erp-action-toolbar`** zawsze **nad** tabelą, wewnątrz `div` z `erpActionToolbarZone` + `[erpActionToolbarContext]="actionToolbar"` (włącza skróty klawiszowe i Mega Menu zakresu tej strefy) — nigdy pod tabelą, nigdy jako osobny obszar siatki.
 - `actionToolbar` (`ErpActionToolbarBuilder`) rozdziela akcje na `addDefaultGroup` (zawsze dostępne — dodaj, eksport, odśwież) i `addSelectionGroup` (wymagają zaznaczenia — edycja masowa, zmiana statusu). Podłącz zawsze:
   ```typescript
@@ -193,8 +208,8 @@ template: `
   .setOnClearSelection(() => { this.store.clearSelection(); this.productTable()?.clearSelection(); })
   ```
 - **Zaznaczenie z tabeli trafia do store'a, nie zostaje lokalne**: `onSelectionChange(state) { this.store.setSelection(state); }` — to jedyna droga, którą zasięg dociera do zakładek w `rightPanel`.
-- Modale akcji masowych otwierają się z `erpBuildBatchTargets(this.store.scope())` jako cel + `{ targetCount: this.selectionCount() }` jako metadane — nigdy ręcznym składaniem `targetUuids`/`targetFilter` (patrz [zasięg zaznaczenia §3](./selection-scope.md#3-cele-operacji-masowych--jeden-helper-zero-ręcznego-składania)).
-- **Akcja dotycząca JEDNEGO konkretnego wiersza (odbierz rolę, usuń wpis, dezaktywuj...) jest akcją zaznaczenia w `erp-action-toolbar`, nie przyciskiem w komórce tabeli.** Ustaw `selectionMode: 'single'` (albo `'multi'`, jeśli akcja ma sens nad wieloma naraz), zbierz wybrany wiersz przez `.setOnSelectionChange(...)`, i dodaj akcję przez `addSelectionGroup(...)` — dokładnie ten sam wzorzec co przy zaznaczeniu wielokrotnym w tym paragrafie, tylko z `selectionMode: 'single'`. Dotyczy to również małych, lokalnych tabel `mode: 'client'` w zakładkach szczegółu (§7), nie tylko głównej listy. Komórka z własnym komponentem (`.setCell(Component)`) jest wyłącznie dla **wyświetlania** (badge, pasek postępu, format) — patrz [smart-tables.md §6](./smart-tables.md#6-warianty) — nigdy dla przycisku wywołującego mutację. Powód: przycisk w komórce nie korzysta z żadnej maszynerii toolbara (bramkowanie po uprawnieniach przez `.setHidden(...)`, przypięte akcje, skróty klawiszowe, Mega Menu) i psuje spójność z resztą aplikacji, gdzie każda mutacja idzie przez toolbar. Znalezione i poprawione w `user-roles-tab.component.ts` (był osobny `IdentityRowRemoveCellComponent` w kolumnie zamiast `addSelectionGroup`) — ten sam błąd powtarza się jeszcze w `user-permissions-tab.component.ts` i `roles/tabs/role-members-tab.component.ts`.
+- Modale akcji masowych otwierają się z `erpBuildBatchTargets(this.store.scope())` jako cel + `{ targetCount: this.selectionCount() }` jako metadane — nigdy ręcznym składaniem `targetUuids`/`targetFilter` (patrz [zasięg zaznaczenia §3](selection-scope.md#3-cele-operacji-masowych--jeden-helper-zero-ręcznego-składania)).
+- **Akcja dotycząca JEDNEGO konkretnego wiersza (odbierz rolę, usuń wpis, dezaktywuj...) jest akcją zaznaczenia w `erp-action-toolbar`, nie przyciskiem w komórce tabeli.** Ustaw `selectionMode: 'single'` (albo `'multi'`, jeśli akcja ma sens nad wieloma naraz), zbierz wybrany wiersz przez `.setOnSelectionChange(...)`, i dodaj akcję przez `addSelectionGroup(...)` — dokładnie ten sam wzorzec co przy zaznaczeniu wielokrotnym w tym paragrafie, tylko z `selectionMode: 'single'`. Dotyczy to również małych, lokalnych tabel `mode: 'client'` w zakładkach szczegółu (§7), nie tylko głównej listy. Komórka z własnym komponentem (`.setCell(Component)`) jest wyłącznie dla **wyświetlania** (badge, pasek postępu, format) — patrz [smart-tables.md §6](smart-tables.md#6-warianty) — nigdy dla przycisku wywołującego mutację. Powód: przycisk w komórce nie korzysta z żadnej maszynerii toolbara (bramkowanie po uprawnieniach przez `.setHidden(...)`, przypięte akcje, skróty klawiszowe, Mega Menu) i psuje spójność z resztą aplikacji, gdzie każda mutacja idzie przez toolbar. Znalezione i poprawione w `user-roles-tab.component.ts` (był osobny `IdentityRowRemoveCellComponent` w kolumnie zamiast `addSelectionGroup`) — ten sam błąd powtarza się jeszcze w `user-permissions-tab.component.ts` i `roles/tabs/role-members-tab.component.ts`.
 - **Dane w zakładce/panelu — nawet proste, tylko-do-odczytu — renderuje `erp-table` (`mode: 'client'` dla danych już w pamięci), nie ręcznie pisany `@for` z divami/chipami.** Pokusa napisania własnego layoutu pojawia się przy prostych listach (np. płaski zbiór kodów pogrupowany po module), ale `erp-table` daje za darmo sortowanie, resize kolumn, `stateKey`, wirtualizację i spójny `emptyMessage` — własny `@for` tego nie ma i za każdym razem trzeba to pisać ręcznie od nowa. Znalezione i poprawione w `user-effective-permissions-tab.component.ts` (lista `<div>`/`<span class="chip">` zamiast `erp-table` z kolumnami Moduł/Uprawnienie).
 
 ---
@@ -246,7 +261,7 @@ Trzy elementy zakładki-panelu, zawsze razem:
 
 ### 6.1 Store zakładki dziedziczy po wspólnej bazie zasięgu strony
 
-Mechanika jest jedna dla całej aplikacji i mieszka w `ErpScopeTabStore` (`libs/shared/ui`, [erp-scope-tab.store.ts](../../frontend/libs/shared/ui/src/lib/base/erp-scope-tab.store.ts)). Każdy page dokłada nad nią **cienką** klasę (`page/content/side-panel/AGGREGATE-scope-tab.store.ts`, wzór: `product-scope-tab.store.ts`, `user-scope-tab.store.ts`, `role-scope-tab.store.ts`), która podłącza swój zasięg i orkiestrator oraz nadaje dziedzinowe nazwy (`products`/`users`/`roles` zamiast ogólnego `parents`):
+Mechanika jest jedna dla całej aplikacji i mieszka w `ErpScopeTabStore` (`libs/shared/ui`, [erp-scope-tab.store.ts](../../../frontend/libs/shared/ui/src/lib/base/erp-scope-tab.store.ts)). Każdy page dokłada nad nią **cienką** klasę (`page/content/side-panel/AGGREGATE-scope-tab.store.ts`, wzór: `product-scope-tab.store.ts`, `user-scope-tab.store.ts`, `role-scope-tab.store.ts`), która podłącza swój zasięg i orkiestrator oraz nadaje dziedzinowe nazwy (`products`/`users`/`roles` zamiast ogólnego `parents`):
 
 ```typescript
 export abstract class UserScopeTabStore<TChild = unknown> extends ErpScopeTabStore<UserVM, SearchUserAccountRequest, TChild> {
@@ -266,7 +281,7 @@ export abstract class UserScopeTabStore<TChild = unknown> extends ErpScopeTabSto
 }
 ```
 
-Store konkretnej zakładki dziedziczy po TEJ klasie. Baza implementuje raz całą mechanikę „Zaznacz wszystko" opisaną w [zasięgu zaznaczenia §4](./selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query): próbkę N pierwszych pozycji w trybie `query`, blokadę granularnego wyboru, modele widoku po UUID z orkiestratora (aktualizacje SignalR za darmo), czyszczenie podzaznaczenia przy zmianie zbioru. Store konkretnej zakładki tylko dziedziczy i dokłada to, co specyficzne dla jej wierszy podrzędnych:
+Store konkretnej zakładki dziedziczy po TEJ klasie. Baza implementuje raz całą mechanikę „Zaznacz wszystko" opisaną w [zasięgu zaznaczenia §4](selection-scope.md#4-panel-zależny-od-zaznaczenia-w-trybie-query): próbkę N pierwszych pozycji w trybie `query`, blokadę granularnego wyboru, modele widoku po UUID z orkiestratora (aktualizacje SignalR za darmo), czyszczenie podzaznaczenia przy zmianie zbioru. Store konkretnej zakładki tylko dziedziczy i dokłada to, co specyficzne dla jej wierszy podrzędnych:
 
 ```typescript
 @Injectable() // rejestrowany na poziomie komponentu zakładki, nie page
@@ -276,7 +291,7 @@ export class MultimediaTabStore extends ProductScopeTabStore<MultimediaRow> {
 }
 ```
 
-**Nie odtwarzaj tej mechaniki w nowej zakładce** — kopiowanie progów/próbek/momentów czyszczenia rozjeżdża się przy pierwszej zmianie (patrz [częste błędy](./selection-scope.md#7-częste-błędy)).
+**Nie odtwarzaj tej mechaniki w nowej zakładce** — kopiowanie progów/próbek/momentów czyszczenia rozjeżdża się przy pierwszej zmianie (patrz [częste błędy](selection-scope.md#7-częste-błędy)).
 
 ### 6.2 Komponent zakładki: stany zasięgu + `erp-table`, nie smart tabela
 
@@ -338,7 +353,7 @@ ErpActionToolbarBuilder.create(b => b
 );
 ```
 
-Akcje wyrażalne nad całym zbiorem (dodaj, usuń wszystkie, ustaw wartość) zostają dostępne w każdym zasięgu; akcje wymagające tożsamości konkretnych pozycji (usuń zaznaczone pliki, pobierz wskazane) dostają `.setScopes(['explicit'])` + `.setUnavailableHint(...)` — blokada z podpowiedzią, nigdy ukrywanie przycisku (patrz [zasięg zaznaczenia §5](./selection-scope.md#5-bramkowanie-akcji-toolbara)).
+Akcje wyrażalne nad całym zbiorem (dodaj, usuń wszystkie, ustaw wartość) zostają dostępne w każdym zasięgu; akcje wymagające tożsamości konkretnych pozycji (usuń zaznaczone pliki, pobierz wskazane) dostają `.setScopes(['explicit'])` + `.setUnavailableHint(...)` — blokada z podpowiedzią, nigdy ukrywanie przycisku (patrz [zasięg zaznaczenia §5](selection-scope.md#5-bramkowanie-akcji-toolbara)).
 
 ---
 
@@ -368,7 +383,7 @@ private _onRevokeSelected(): void {
 
 Trzy reguły dla takich akcji:
 
-1. **`.setScopes(['explicit'])` + `.setUnavailableHint(...)`** — akcja na wskazanych wierszach wymaga zaznaczenia rozwiązanego do listy identyfikatorów; przy zaznaczeniu opisanym filtrem panel pokazuje tylko próbkę i wybór pojedynczych wierszy jest zablokowany (§6.3, [zasięg zaznaczenia](./selection-scope.md)).
+1. **`.setScopes(['explicit'])` + `.setUnavailableHint(...)`** — akcja na wskazanych wierszach wymaga zaznaczenia rozwiązanego do listy identyfikatorów; przy zaznaczeniu opisanym filtrem panel pokazuje tylko próbkę i wybór pojedynczych wierszy jest zablokowany (§6.3, [zasięg zaznaczenia](selection-scope.md)).
 2. **Akcja „dodaj" adresuje CAŁY zasięg, nie próbkę** — modal dostaje `batchTargets()` ze store'a zakładki (`targetUuids`/`targetFilter` + `targetCount`), więc „nadaj rolę" z panelu obejmie wszystkich zaznaczonych użytkowników, także tych spoza widocznej próbki.
 3. **Toolbar dostaje dwie różne rodziny akcji, nie jedną.** Akcje nad zbiorem rodziców („nadaj rolę wszystkim zaznaczonym") współistnieją z akcjami nad zaznaczonymi wierszami panelu („odbierz te konkretne przypisania") — to dwie osobne ścieżki UI, każda do innego kontraktu backendu (wsad na zasięgu vs. `Commands: [command]` na znanych celach — patrz [operacje masowe (backend)](../backend/bulk-commands.md#2-endpoint--trzy-tryby-jednego-kontraktu)).
 
@@ -376,7 +391,7 @@ Trzy reguły dla takich akcji:
 
 ## 8. Struktura katalogów
 
-Pełna konwencja rozmieszczenia plików agregatu w warstwie `feature` (`components/`, `modal/`, `page/`, `translation/`) — [struktura katalogów agregatu](./feature-structure.md). Część dotycząca page'a:
+Pełna konwencja rozmieszczenia plików agregatu w warstwie `feature` (`components/`, `modal/`, `page/`, `translation/`) — [struktura katalogów agregatu](feature-structure.md). Część dotycząca page'a:
 
 ```
 libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/page/
@@ -395,22 +410,22 @@ libs/modules/MODULE_NAME/feature/src/lib/AGGREGATE/page/
             └── CHILD_NAME-*-cell.component.ts  # komórki tylko tego panelu
 ```
 
-Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGREGATE/components/tables/` (§5, [smart-tables.md](./smart-tables.md)), bo używa jej też inny kod niż ta strona. Wszystko pozostałe w `page/` jest prywatne: z całego drzewa tylko `AGGREGATE.component.ts` trafia do barrela biblioteki.
+Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGREGATE/components/tables/` (§5, [smart-tables.md](smart-tables.md)), bo używa jej też inny kod niż ta strona. Wszystko pozostałe w `page/` jest prywatne: z całego drzewa tylko `AGGREGATE.component.ts` trafia do barrela biblioteki.
 
 ---
 
 ## 9. Przepis: nowy page dla agregatu
 
-1. **Sprawdź, czy orkiestrator agregatu istnieje** (`searchAsync`, `getViewModel()`/`getSignalViewModel()`) — jeśli nie, najpierw [orkiestrator](./orchestrators.md).
-2. **Zbuduj smart tabelę** dla agregatu wg [smart-tables.md](./smart-tables.md), z `sortsChange`/`.setFilters(...)`, jeśli page będzie miał zasięg zaznaczenia (§9.9 tamtego dokumentu).
+1. **Sprawdź, czy orkiestrator agregatu istnieje** (`searchAsync`, `getViewModel()`/`getSignalViewModel()`) — jeśli nie, najpierw [orkiestrator](orchestrators.md).
+2. **Zbuduj smart tabelę** dla agregatu wg [smart-tables.md](smart-tables.md), z `sortsChange`/`.setFilters(...)`, jeśli page będzie miał zasięg zaznaczenia (§9.9 tamtego dokumentu).
 3. **Store strony** — skopiuj `product.store.ts` (tabela serwerowa: pełny zasięg z materializacją i `resolveUuids`, §4) albo `roles.store.ts` (tabela kliencka: zasięg zawsze `explicit`/`none`, bez materializacji). Nie dodawaj `selectedUuid` — panel nigdy nie pokazuje jednego wiersza (§6).
 4. **Filtr** — `ErpFilterBuilder` w `page/filters/`, `setOnSearch` woła store (§2).
 5. **Zdecyduj o zakładkach** (§3). Brak akcji specyficznych dla podzbiorów danych → bez zakładek, `content` renderuje wrapper toolbar+tabela wprost. W przeciwnym razie: `ErpTabsBuilder` w komponencie page, pierwszy `addTab` bez `component`, kolejne z `component` wskazującym panel boczny.
 6. **Pierwsza zakładka / `content`** — wrapper z `erp-action-toolbar` nad smart tabelą, `onSelectionChange` woła `store.setSelection(...)` (§5).
 7. **Każdy panel boczny**: store dziedziczący po `AGGREGATE-scope-tab.store.ts` (który dziedziczy po `ErpScopeTabStore`, §6.1) + komponent z trzema stanami zasięgu, `erp-table` w trybie `client` z `setGroupedRows` po rodzicu (§6), `erp-selection-scope-banner`, toolbar bramkowany `.setScopes(['explicit'])` tam, gdzie akcja wymaga wskazanych pozycji (§6.2–6.3).
 8. **Szkielet siatki** w `AGGREGATE.component.ts` — `ErpGridLayoutBuilder`, `setLayoutId` unikalny w aplikacji, `ErpTabsComponent` renderowany dwa razy (`renderMode: 'tabs'` / `'content'`), `collapsed` na `rightPanel` warunkiem po aktywnej pierwszej zakładce / braku zaznaczenia (§1, §3).
-9. **Tłumaczenia** — wyłącznie klucze z registry modułu (`AGGREGATE_KEYS...`), zero stringów na sztywno w szablonach i etykietach toolbara/zakładek — patrz [tłumaczenia](./translations.md).
-10. **Rejestracja w routingu** modułu (`contract`) i w menu — patrz [nowy moduł §…](./new-module.md), jeśli to pierwszy page modułu.
+9. **Tłumaczenia** — wyłącznie klucze z registry modułu (`AGGREGATE_KEYS...`), zero stringów na sztywno w szablonach i etykietach toolbara/zakładek — patrz [tłumaczenia](translations.md).
+10. **Rejestracja w routingu** modułu (`contract`) i w menu — patrz [nowy moduł §…](new-module.md), jeśli to pierwszy page modułu.
 
 ---
 
@@ -418,7 +433,7 @@ Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGR
 
 - **Zakładki dla page, który ma tylko tabelę i akcje** — niepotrzebny `rightPanel`, `ErpTabsBuilder` i pusty narzut. Bez zakładek, jeśli nie trzeba dzielić widoku.
 - **Pierwsza zakładka z `component` ustawionym w `addTab`** — wtedy `rightPanel` próbuje wyrenderować listę drugi raz obok tej w `content`. Pierwsza zakładka nie ma `component`; jej treścią jest obszar `content`.
-- **Panel boczny czytający `store.selection().selectedItems` wprost** zamiast `store.scope()` — przy „Zaznacz wszystko" to pole jest puste; panel pokaże pusty ekran mimo tysięcy zaznaczonych pozycji (patrz [zasięg zaznaczenia §7](./selection-scope.md#7-częste-błędy)).
+- **Panel boczny czytający `store.selection().selectedItems` wprost** zamiast `store.scope()` — przy „Zaznacz wszystko" to pole jest puste; panel pokaże pusty ekran mimo tysięcy zaznaczonych pozycji (patrz [zasięg zaznaczenia §7](selection-scope.md#7-częste-błędy)).
 - **Panel boczny jako smart tabela z własnym `searchAsync`** zamiast `erp-table` w trybie `client` karmionego z `tabStore.products`/orkiestratora — panel pokazuje dowód zasięgu, nie prowadzi własnej paginacji API.
 - **Nowa zakładka odtwarzająca mechanikę zasięgu** zamiast dziedziczenia po `AGGREGATE-scope-tab.store.ts` — progi/próbki/czyszczenie podzaznaczenia rozjadą się przy pierwszej zmianie.
 - **`erp-action-toolbar` poza `erpActionToolbarZone`** albo bez `[erpActionToolbarContext]` — skróty klawiszowe i Mega Menu tej strefy nie działają.
@@ -426,7 +441,7 @@ Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGR
 - **Wiersz panelu bez identyfikatora rodzica** (`setRowIdAccessor(x => x.roleUuid)`) — w tabeli zbierającej wielu rodziców identyfikatory dzieci się powtarzają, więc zaznaczenie i śledzenie wierszy się rozjeżdżają. Klucz to zawsze para, np. `${r.userUuid}:${r.grant.roleUuid}`.
 - **Akcja „dodaj" z panelu adresująca tylko widoczną próbkę** zamiast `batchTargets()` (§7 pkt 2) — przy „Zaznacz wszystko" modal dostanie 10 UUID-ów zamiast filtra obejmującego tysiące.
 - **Różne `setLayoutId` między środowiskami/kopiami tego samego page** albo kolizja z istniejącym — psuje zapisane preferencje szerokości paneli innego page.
-- **`selectionMode` zaszyty na sztywno w `.setSelectionMode(...)` smart tabeli** zamiast wystawiony jako `input()` (patrz §5, [smart-tables.md §2](./smart-tables.md#2-anatomia)) — działa dopóki tabela ma jednego konsumenta, ale blokuje jej ponowne użycie w innym page z innym trybem zaznaczenia.
+- **`selectionMode` zaszyty na sztywno w `.setSelectionMode(...)` smart tabeli** zamiast wystawiony jako `input()` (patrz §5, [smart-tables.md §2](smart-tables.md#2-anatomia)) — działa dopóki tabela ma jednego konsumenta, ale blokuje jej ponowne użycie w innym page z innym trybem zaznaczenia.
 - **`selectionMode: 'single'` (radio) na głównej liście** — panel agreguje zaznaczenie (§6), a akcje masowe toolbara działają na zbiorze; radio odbiera obu rację bytu. Tabela główna zawsze `'multi'`.
 - **Brak `.withSharedState(this.activeTabId)` w `tabsConfig`, gdy `ErpTabsComponent` renderuje się dwa razy** (`renderMode: 'tabs'` + `renderMode: 'content'`) — bez współdzielonego stanu obie instancje trzymają osobny, niezależny stan aktywnej zakładki; kliknięcie nagłówka w obszarze `tabs` nie zmienia niczego w `rightPanel`. Dotyczy **każdego** wariantu z zakładkami, nie tylko §3. Znaleziony w `users.component.ts` i `roles.component.ts`.
 - **Pominięcie pierwszej zakładki-listy (bez `component`)** — bez niej użytkownik nie ma jak schować `rightPanel` i zobaczyć pełnej listy, mając nadal zaznaczone wiersze.
@@ -443,10 +458,10 @@ Smart tabela głównej listy **nie** jest częścią `page/` — mieszka w `AGGR
 
 ## 11. Zobacz też
 
-- [Smart tabele](./smart-tables.md) — anatomia komponentu tabeli głównej listy
-- [Zasięg zaznaczenia i akcje masowe](./selection-scope.md) — `ErpSelectionScope`, materializacja, cele operacji masowych, bramkowanie toolbara
-- [Orkiestratory](./orchestrators.md) — `searchAsync`, `getViewModel()`/`getSignalViewModel()`, którymi karmią się tabela główna i panele
-- [Atomy UI — Single Config Builder](./atoms.md) — wzorzec, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-filter`, `erp-action-toolbar`
-- [Struktura katalogów agregatu](./feature-structure.md) — gdzie w drzewie `feature` leżą pliki page'a, tabeli, modali i tłumaczeń
-- [Modale](./modals.md) — modale akcji masowych otwierane z toolbara
-- [Tłumaczenia](./translations.md) — klucze dla etykiet filtrów, kolumn, zakładek, akcji toolbara
+- [Smart tabele](smart-tables.md) — anatomia komponentu tabeli głównej listy
+- [Zasięg zaznaczenia i akcje masowe](selection-scope.md) — `ErpSelectionScope`, materializacja, cele operacji masowych, bramkowanie toolbara
+- [Orkiestratory](orchestrators.md) — `searchAsync`, `getViewModel()`/`getSignalViewModel()`, którymi karmią się tabela główna i panele
+- [Atomy UI — Single Config Builder](atoms.md) — wzorzec, którym zbudowane są `erp-grid-layout`, `erp-tabs`, `erp-table`, `erp-filter`, `erp-action-toolbar`
+- [Struktura katalogów agregatu](feature-structure.md) — gdzie w drzewie `feature` leżą pliki page'a, tabeli, modali i tłumaczeń
+- [Modale](modals.md) — modale akcji masowych otwierane z toolbara
+- [Tłumaczenia](translations.md) — klucze dla etykiet filtrów, kolumn, zakładek, akcji toolbara

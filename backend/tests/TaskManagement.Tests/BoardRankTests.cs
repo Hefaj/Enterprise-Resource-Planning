@@ -6,7 +6,7 @@ using Xunit;
 namespace TaskManagement.Tests;
 
 /// <summary>
-/// Indeksowanie ułamkowe kolejności kart (<c>docs/backend/task-management.md</c> §7.2).
+/// Indeksowanie ułamkowe kolejności kart (<c>docs/modules/task-management/domain.md</c> §7.2).
 ///
 /// <para>To jest ta część fazy 2, w której pomyłka nie objawia się wyjątkiem, tylko kartą
 /// wracającą po odświeżeniu na inne miejsce niż ta, w które ją upuszczono. Stąd testy na

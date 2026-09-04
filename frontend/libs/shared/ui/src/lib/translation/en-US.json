@@ -249,6 +249,7 @@
       "taskmgmtIssueAddWatcher": "Add watcher",
       "taskmgmtIssueRemoveWatcher": "Remove watcher",
       "taskmgmtProjectSetSla": "Project SLA change",
+      "taskmgmtProjectSetNotificationMuted": "Project notification mute changed",
       "taskmgmtBoardSetCardSprint": "Move card between backlog and sprint",
       "taskmgmtSprintCreate": "Sprint created",
       "taskmgmtSprintSetDates": "Sprint plan changed",
@@ -431,5 +432,25 @@
       "taskmgmt_issue_overdue": "Issue {{issueKey}} — {{issueTitle}} is overdue",
       "taskmgmt_request_delivered": "Request {{issueKey}} — {{issueTitle}} has been delivered"
     }
+  },
+  "documentation": {
+    "navigationLabel": "Documentation",
+    "searchLabel": "Search documentation",
+    "searchPlaceholder": "Enter at least 2 characters",
+    "noResults": "No matching article was found.",
+    "loading": "Loading documentation…",
+    "loadError": "Documentation could not be loaded.",
+    "empty": "The article is not available.",
+    "skipToContent": "Skip to article content",
+    "topics": "Topics",
+    "onThisPage": "On this page",
+    "mobileNavigation": "Show topics",
+    "closeMobileNavigation": "Close topics",
+    "previous": "Previous topic",
+    "next": "Next topic",
+    "help": "Help",
+    "centerTitle": "Help center",
+    "availableModules": "Available modules",
+    "partialError": "Some documentation is temporarily unavailable. Other modules remain available."
   }
 }

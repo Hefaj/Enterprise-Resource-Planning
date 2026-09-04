@@ -149,17 +149,17 @@ import { ErpTreePickerConfig } from './erp-tree-picker.types';
       gap: 0.25rem;
     }
 
-    /* Panel dropdownu: nigdy węższy niż input (wymusza to \`erpDropdownMinWidth\`
-       na tui-textfield, patrz dyrektywa w komponencie) — \`width: 100%\` wypełnia realną
+    /* Panel dropdownu: nigdy węższy niż input (wymusza to erpDropdownMinWidth
+       na tui-textfield, patrz dyrektywa w komponencie) — width: 100% wypełnia realną
        szerokość dropdownu, którą Taiga już wylicza jako max(min-width inputu, szerokość
-       potrzebna na treść). \`min-width\` niżej to tylko wygodny domyślny rozmiar dla wąskich
-       inputów — drzewo jest zwirtualizowane (wiersze \`position: absolute\`), więc CSS i tak
+       potrzebna na treść). min-width niżej to tylko wygodny domyślny rozmiar dla wąskich
+       inputów — drzewo jest zwirtualizowane (wiersze position: absolute), więc CSS i tak
        nie "widzi" długości etykiet, żeby realnie dopasować szerokość do treści. Górny limit
        (żeby panel nie rozciągał się do granic viewportu przy bardzo szerokim inpucie) pilnuje
-       już sama Taiga (\`maxWidth\` liczone z viewportu przy \`limitWidth: 'min'\`) — dodatkowy,
+       już sama Taiga (maxWidth liczone z viewportu przy limitWidth: 'min') — dodatkowy,
        węższy max-width tutaj tworzyłby pustą przestrzeń z prawej strony przy inputach
        szerszych niż ten limit, więc go nie ustawiamy. Powyżej dostępnej szerokości etykiety
-       są ucinane z (...) przez \`.erp-tree-label\`. */
+       są ucinane z (...) przez .erp-tree-label. */
     .erp-tree-picker-panel {
       display: flex;
       width: 100%;

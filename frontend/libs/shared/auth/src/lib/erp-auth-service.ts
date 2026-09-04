@@ -13,7 +13,7 @@ export interface ErpUserProfile {
 
 /**
  * Cienka fasada nad `OidcSecurityService` (Authorization Code + PKCE, Keycloak jako IdP —
- * patrz `docs/backend/identity-authz.md` §5-6). Backend NIE zna ról ani uprawnień na tym
+ * patrz `docs/architecture/security.md` §5-6). Backend NIE zna ról ani uprawnień na tym
  * etapie (Faza 1 — samo uwierzytelnianie); `ErpUserProfile` niesie wyłącznie tożsamość.
  * Role/uprawnienia dojdą w Fazie 3-5 jako osobny `PermissionStore` zasilany przez mikroserwis
  * Identity, nie przez claimy tokenu Keycloaka.
@@ -49,7 +49,7 @@ export class ErpAuthService {
   });
 
   /** Przekierowuje do hostowanej strony logowania Keycloaka (Authorization Code + PKCE) —
-   * hasło NIGDY nie dotyka kodu SPA, patrz uzasadnienie w `docs/backend/identity-authz.md` §1. */
+   * hasło NIGDY nie dotyka kodu SPA, patrz uzasadnienie w `docs/architecture/security.md` §1. */
   public login(): void {
     this._oidcSecurityService.authorize();
   }

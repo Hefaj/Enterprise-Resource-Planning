@@ -15,7 +15,7 @@ namespace TaskManagement.Application.Abstractions;
 /// <para><b>Dlaczego w module, a nie w building-blocks.</b> To pierwsze użycie. Wydzielenie do
 /// fundamentu przy drugim (DMS) albo trzecim odbiorcy, gdy będzie wiadomo, co w tym jest wspólne,
 /// a co domenowe — ta sama zasada, co przy slotach pól niestandardowych
-/// (<c>docs/backend/task-management.md</c> §6).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §6).</para>
 /// </summary>
 public interface IRichTextSanitizer
 {

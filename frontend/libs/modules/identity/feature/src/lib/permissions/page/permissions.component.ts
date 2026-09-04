@@ -16,10 +16,10 @@ import { providePermissionsTranslations, PERMISSIONS_KEYS } from '../translation
 /** Strona `/identity/permissions` — read-only przeglądarka katalogu uprawnień (grupowanie po
  * module, filtr po lewej) + panel "kto ma to uprawnienie" dla wybranego kodu. Zero mutacji —
  * katalog jest definiowany w kodzie, nie CRUD-owany w UI (patrz
- * `docs/backend/identity-authz.md` §3).
+ * `docs/architecture/security.md` §3).
  *
  * Panel boczny otwiera i zamyka WYŁĄCZNIE wybór zakładki, nigdy zaznaczenie w liście
- * (patrz `docs/frontend/pages.md` §3): zakładka `'list'` (bez `component`) to stan
+ * (patrz `docs/guides/frontend/pages.md` §3): zakładka `'list'` (bez `component`) to stan
  * "panel schowany", zakładka "Kto ma uprawnienie" to alternatywny widok otwierany na żądanie —
  * niezależnie od tego, czy jakiś kod jest wybrany. Komunikat "nic nie wybrano" pokazuje sam
  * panel, nie warunek `collapsed`. */

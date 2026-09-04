@@ -8,7 +8,7 @@ using Xunit;
 namespace Erp.ArchitectureTests;
 
 /// <summary>
-/// Egzekwuje konwencję nazewniczą z <c>docs/backend/endpoint-naming.md</c>.
+/// Egzekwuje konwencję nazewniczą z <c>docs/guides/backend/endpoint-naming.md</c>.
 ///
 /// <para>Konwencja zapisana wyłącznie w dokumencie przestaje obowiązywać przy pierwszej komendzie
 /// pisanej pod presją czasu — to ten sam argument, dla którego granic warstw pilnuje
@@ -90,7 +90,7 @@ public class CommandNamingTests
 
         offenders.ShouldBeEmpty(
             "Nazwa komendy musi mieć postać {Agregat}{Create|Set|Add|Remove|Exec}{Cel}Command "
-            + $"— patrz docs/backend/endpoint-naming.md. Niezgodne: {string.Join(", ", offenders)}");
+            + $"— patrz docs/guides/backend/endpoint-naming.md. Niezgodne: {string.Join(", ", offenders)}");
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ public class CommandNamingTests
         }
 
         offenders.ShouldBeEmpty(
-            "Trasa nie może powtarzać prefiksu swojej grupy — patrz docs/backend/endpoint-naming.md §7. "
+            "Trasa nie może powtarzać prefiksu swojej grupy — patrz docs/guides/backend/endpoint-naming.md §7. "
             + $"Niezgodne: {string.Join("; ", offenders)}");
     }
 

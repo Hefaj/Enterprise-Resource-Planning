@@ -1,3 +1,18 @@
+---
+id: frontend.atoms
+title: Atomy UI — wzorzec "Single Config Builder"
+summary: Wzorzec Single Config Builder dla współdzielonych atomów UI.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - nowy atom UI
+  - Single Config Builder
+related: []
+---
+
 # Atomy UI — wzorzec "Single Config Builder"
 
 Atomy i molekuły UI współdzielone (`libs/shared/ui/**`, np. `erp-button`, `erp-input-text`) nie przyjmują dziesiątek osobnych `@Input()` — przyjmują **jeden obiekt konfiguracji**, złożony fluent-API builderem.
@@ -57,7 +72,7 @@ Dla atomów/molekuł w `libs/shared/ui/**`, które będą używane w wielu modu�
 
 ## 4. Backend (jeśli komponent wymaga nowego endpointu)
 
-Backend to .NET 10 — Minimal APIs, silne typowanie DTO. DTO ma odpowiadać configowi frontendu; moduł woła bezpośrednio API swojego mikroserwisu (brak warstwy BFF/agregacji, patrz [CLAUDE.md](../../CLAUDE.md)).
+Backend to .NET 10 — Minimal APIs, silne typowanie DTO. DTO ma odpowiadać configowi frontendu; moduł woła bezpośrednio API swojego mikroserwisu (brak warstwy BFF/agregacji, patrz [CLAUDE.md](../../../CLAUDE.md)).
 
 ---
 
@@ -102,10 +117,10 @@ ma jednej akcji do wykonania (rozgałęzienie, zmiana stanu lokalnego, kilka nie
   niż wywołujesz dialog.
 - **Potwierdzenie zawsze zostaje w `feature`/`ui` — nigdy nie wędruje do orkiestratora.**
   Uzasadnienie (granice warstw, kontekst treści, „anulowano" ≠ błąd) →
-  [`orchestrators.md` §6](./orchestrators.md#6-komendy-mutacje).
+  [`orchestrators.md` §6](orchestrators.md#6-komendy-mutacje).
 
 ---
 
 ## Zobacz też
 
-- [Architektura frontendu](./architecture.md) — gdzie w drzewie zależności żyje `ui` względem `feature`/`data-access`
+- [Architektura frontendu](../../architecture/frontend.md) — gdzie w drzewie zależności żyje `ui` względem `feature`/`data-access`

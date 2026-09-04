@@ -24,7 +24,7 @@ interface PermissionHolderRow {
 
 /**
  * Prawy panel strony `/identity/permissions` — „kto ma uprawnienie" dla WSZYSTKICH zaznaczonych
- * kodów w JEDNEJ tabeli, pogrupowanej po uprawnieniu (patrz `docs/frontend/pages.md` §6).
+ * kodów w JEDNEJ tabeli, pogrupowanej po uprawnieniu (patrz `docs/guides/frontend/pages.md` §6).
  *
  * Filtr `SearchUserAccountRequest.PermissionCode` jest EFEKTYWNY (przez całą hierarchię ról) —
  * w odróżnieniu od filtra `roleUuid` na stronie Ról tu chodzi o pełny obraz „kto realnie może",

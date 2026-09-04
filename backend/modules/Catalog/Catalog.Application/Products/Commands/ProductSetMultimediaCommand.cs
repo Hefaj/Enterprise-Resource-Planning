@@ -5,7 +5,7 @@ namespace Catalog.Application.Products;
 
 /// <summary>
 /// Podmiana CAŁEJ galerii produktu; pusta lista czyści ją do zera
-/// (<c>docs/backend/endpoint-naming.md</c> §2 — <c>Set</c> z pustą kolekcją zastępuje
+/// (<c>docs/guides/backend/endpoint-naming.md</c> §2 — <c>Set</c> z pustą kolekcją zastępuje
 /// nieistniejące <c>Clear</c>).
 ///
 /// <para><b>Po co, skoro jest <see cref="ProductRemoveMultimediaCommand"/>.</b> „Zdejmij

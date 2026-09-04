@@ -19,7 +19,7 @@ interface RoleContainerRow {
 
 /**
  * Zakładka „Zawarta w" — role-kontenery WSZYSTKICH zaznaczonych ról w JEDNEJ tabeli,
- * pogrupowane po zaznaczonej roli (patrz `docs/frontend/pages.md` §6). Odwrotny kierunek DAG,
+ * pogrupowane po zaznaczonej roli (patrz `docs/guides/frontend/pages.md` §6). Odwrotny kierunek DAG,
  * tylko do odczytu: dodawanie/usuwanie idzie z poziomu roli-kontenera (zakładka „Role składowe"),
  * nie stąd — patrz `RoleOrchestrator.getContainerRoles()`.
  */

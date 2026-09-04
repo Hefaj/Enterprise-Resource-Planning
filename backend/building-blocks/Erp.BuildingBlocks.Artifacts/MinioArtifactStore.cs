@@ -20,7 +20,7 @@ namespace Erp.BuildingBlocks.Artifacts;
 /// presigned <c>PUT</c>-em, <see cref="AssetPrefix"/> — miejsce dla zawartości potwierdzonej
 /// komendą. Reguła lifecycle założona wyłącznie na poczekalni sprząta obiekty, których nikt
 /// nigdy nie zarejestrował, i robi to bez ani jednej linijki kodu sprzątającego
-/// (<c>docs/backend/media-storage.md</c> §4a).</para>
+/// (<c>docs/guides/backend/media-storage.md</c> §4a).</para>
 /// </summary>
 public sealed class MinioArtifactStore : IArtifactStore
 {

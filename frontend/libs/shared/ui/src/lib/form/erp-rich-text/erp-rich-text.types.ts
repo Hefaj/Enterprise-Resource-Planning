@@ -9,7 +9,7 @@ import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
  * wie nic o biletach, magazynie plików ani module wywołującym — dostaje plik i oddaje adres,
  * pod którym obrazek ma się wyświetlić. Moduł odpowiada też za późniejszą podmianę adresu
  * tymczasowego (np. `blob:`) na docelowy po zakończeniu wgrywania — komponent tego nie robi
- * (`docs/backend/task-management-requirements.md` ISS-005, CMT-006).
+ * (`docs/modules/task-management/requirements.md` ISS-005, CMT-006).
  */
 export type ErpRichTextImageUploadPort = (file: File | Blob) => Observable<string>;
 

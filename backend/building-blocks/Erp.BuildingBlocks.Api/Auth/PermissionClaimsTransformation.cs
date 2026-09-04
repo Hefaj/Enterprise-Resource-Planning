@@ -11,7 +11,7 @@ namespace Erp.BuildingBlocks.Api.Auth;
 /// <c>c.Security.PermissionsClaimType</c>, tu zostawiona domyślna).
 ///
 /// Token Keycloaka NIE niesie uprawnień — to świadomie odseparowane od AuthN (patrz
-/// <c>docs/backend/identity-authz.md</c> §1): ten transformator dociąga je z
+/// <c>docs/architecture/security.md</c> §1): ten transformator dociąga je z
 /// <see cref="IPermissionProvider"/> (Identity + cache TTL) przy każdym żądaniu.
 ///
 /// <para><b>Wołane wielokrotnie na żądanie.</b> ASP.NET Core może wywołać

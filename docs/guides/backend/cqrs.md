@@ -1,3 +1,18 @@
+---
+id: backend.cqrs
+title: CQRS — komendy i zapytania
+summary: Komendy, handlery, zapytania, transakcje i idempotencja w pipeline CQRS.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - komenda lub zapytanie CQRS
+  - pipeline komend i X-Request-Id
+related: []
+---
+
 # CQRS — komendy i zapytania
 
 **Stan: ✅ obie strony działają**, razem z pipeline'em komend (logowanie, walidacja wejścia,
@@ -117,7 +132,7 @@ Dwie rzeczy, które łatwo przeoczyć w tym przykładzie:
   więc pełny produkt z pięcioma kolekcjami byłby pięcioma zbędnymi zapytaniami. Handler
   deklaruje ten sam zakres w `PreloadAsync` (z `IBulkPreloadingHandler`), dzięki czemu cały
   chunk wczytuje się jednym zapytaniem — patrz
-  [`bulk-commands.md`](./bulk-commands.md#jeden-chunk--jedno-wczytanie).
+  [`bulk-commands.md`](bulk-commands.md#jeden-chunk--jedno-wczytanie).
 
 **Handler nigdy nie ustawia właściwości agregatu z zewnątrz.** Gdyby walidacja ceny żyła w handlerze,
 istniałaby w dwóch miejscach (handler pojedynczy + ścieżka masowa) i rozeszłaby się przy pierwszej zmianie.
@@ -340,7 +355,7 @@ w systemie.
 `IValidator<TCommand>` sprawdza **kształt komendy** (wymagalność, zakresy, długości) — to, co da
 się rozstrzygnąć bez sięgania do bazy. Reguła zależna od stanu modelu zostaje w agregacie, bo
 tylko tam da się ją wymusić bez wyścigu; reguła zbiorcza zostaje w pre-checku wsadowym
-([`batch-validation.md`](./batch-validation.md)). Komenda bez walidatora przechodzi bez kosztu —
+([`batch-validation.md`](batch-validation.md)). Komenda bez walidatora przechodzi bez kosztu —
 walidator jest dokładany tam, gdzie ma sens, a nie obowiązkiem przy każdej komendzie.
 
 Kod błędu podany przez `WithErrorCode("amount_negative")` jest kontraktem z frontendem; domyślne
@@ -356,9 +371,9 @@ transakcję całego chunka z powodu jednego źle wypełnionego pola.
 
 ## 7. Zobacz też
 
-- [Operacje masowe](./bulk-commands.md) — jak ta sama komenda jest wykonywana zbiorczo
-- [Walidacja wsadowa](./batch-validation.md) — reguły zbiorcze uruchamiane PRZED utworzeniem
+- [Operacje masowe](bulk-commands.md) — jak ta sama komenda jest wykonywana zbiorczo
+- [Walidacja wsadowa](batch-validation.md) — reguły zbiorcze uruchamiane PRZED utworzeniem
   zadania, dopełnienie walidacji w agregacie dla przypadków, których nie da się sprawdzić
   per pojedynczy element bez N zapytań
-- [Zdarzenia domenowe i outbox](./events-outbox.md) — co się dzieje przy `SaveChangesAsync`
-- [Persystencja](./persistence-ef.md)
+- [Zdarzenia domenowe i outbox](../../architecture/integration-events.md) — co się dzieje przy `SaveChangesAsync`
+- [Persystencja](persistence-ef.md)

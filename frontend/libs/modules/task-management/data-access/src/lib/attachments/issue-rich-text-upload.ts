@@ -136,7 +136,7 @@ const CONTENT_URL_PATTERN = /\/issue\/attachment\/content\/([0-9a-fA-F-]{36})/g;
  *
  * <p>Bez tego `<img src="…/issue/attachment/content/…">` w zapisanym HTML-u dałby 401: ani
  * `<img>`, ani `tui-editor-socket` nie dokładają nagłówka `Authorization`
- * (`docs/frontend/multimedia.md` §3, ten sam powód co przy miniaturkach Catalogu). Adresy
+ * (`docs/guides/frontend/multimedia.md` §3, ten sam powód co przy miniaturkach Catalogu). Adresy
  * pochodzą z tego samego cache’u co kafelki załączników, więc obrazek w treści i w liście
  * załączników dzielą jeden `blob:` i jedno zwolnienie pamięci.</p>
  */

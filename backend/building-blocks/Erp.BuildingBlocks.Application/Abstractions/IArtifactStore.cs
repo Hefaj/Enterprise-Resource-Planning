@@ -29,7 +29,7 @@ public sealed record ArtifactMetadata(
 /// <summary>
 /// Pozycja z listowania magazynu — na tyle uboga, na ile pozwala S3 bez odpytywania o każdy
 /// obiekt z osobna. Używa tego wyłącznie audytor rozjazdu
-/// (<c>docs/backend/media-storage.md</c> §4d), któremu do decyzji wystarczy tożsamość i wiek.
+/// (<c>docs/guides/backend/media-storage.md</c> §4d), któremu do decyzji wystarczy tożsamość i wiek.
 /// </summary>
 /// <param name="Uuid">Identyfikator artefaktu wyprowadzony z klucza obiektu.</param>
 /// <param name="LastModified">Znacznik czasu z magazynu; <c>null</c>, gdy magazyn go nie podał.</param>
@@ -67,7 +67,7 @@ public static class ArtifactStoreKeys
 public sealed record ArtifactUploadTicket(Guid Uuid, Uri Url, DateTimeOffset ExpiresOn);
 
 /// <summary>
-/// Magazyn plików jednego modułu — patrz <c>docs/backend/media-storage.md</c>.
+/// Magazyn plików jednego modułu — patrz <c>docs/guides/backend/media-storage.md</c>.
 ///
 /// <para><b>Każdy moduł rozmawia z magazynem sam.</b> Nie ma i nie będzie centralnego
 /// mikroserwisu plików: żeby bezpiecznie usunąć plik, trzeba wiedzieć, czy ktoś go jeszcze

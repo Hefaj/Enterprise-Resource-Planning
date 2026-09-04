@@ -1,7 +1,9 @@
 using Erp.BuildingBlocks.Api.Contracts;
+using Erp.BuildingBlocks.Application.Abstractions;
 using Erp.BuildingBlocks.Domain;
 using FastEndpoints;
 using TaskManagement.Application.Abstractions;
+using TaskManagement.Application.Issues;
 using TaskManagement.Domain.IssueTypes;
 using TaskManagement.Domain.Projects;
 using TaskManagement.Domain.Workflow;
@@ -11,7 +13,7 @@ namespace TaskManagement.Application.Projects;
 /// <summary>
 /// Założenie projektu. Razem z projektem powstaje jego licznik numeracji — jedno bez drugiego
 /// nie ma sensu, a rozdzielenie na dwie komendy dawałoby okno, w którym projekt istnieje,
-/// ale nie da się w nim utworzyć zgłoszenia (<c>docs/backend/task-management.md</c> §4).
+/// ale nie da się w nim utworzyć zgłoszenia (<c>docs/modules/task-management/domain.md</c> §4).
 /// </summary>
 public sealed class ProjectCreateCommand : ICommand<Guid>, IAggregateCommand
 {
@@ -357,6 +359,49 @@ public sealed class ProjectSetSlaCommandHandler : CommandHandler<ProjectSetSlaCo
             command.WorkingDays,
             command.WorkStartTime,
             command.WorkEndTime);
+
+        return project.Uuid;
+    }
+}
+
+/// <summary>Wycisza/odcisza powiadomienia z projektu dla WOŁAJĄCEGO (NTF-003) — ustawienie
+/// osobiste, nie administracyjne: <see cref="Muted"/> jedyny parametr wejściowy, użytkownika
+/// bierzemy zawsze z <see cref="IExecutionContext"/>, nigdy z payloadu, bo inaczej dałoby się
+/// wyciszyć powiadomienia komuś innemu.</summary>
+public sealed class ProjectSetNotificationMutedCommand : ICommand<Guid>, IAggregateCommand
+{
+    public Guid Uuid { get; set; }
+
+    public bool Muted { get; set; }
+}
+
+public sealed class ProjectSetNotificationMutedCommandHandler : CommandHandler<ProjectSetNotificationMutedCommand, Guid>
+{
+    private readonly IProjectRepository _repository;
+    private readonly IExecutionContext _executionContext;
+    private readonly IClock _clock;
+
+    public ProjectSetNotificationMutedCommandHandler(
+        IProjectRepository repository,
+        IExecutionContext executionContext,
+        IClock clock)
+    {
+        _repository = repository;
+        _executionContext = executionContext;
+        _clock = clock;
+    }
+
+    public override async Task<Guid> ExecuteAsync(ProjectSetNotificationMutedCommand command, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var project = await _repository.FindAsync(command.Uuid, ct).ConfigureAwait(false)
+            ?? throw new AggregateNotFoundException(nameof(Project), command.Uuid);
+
+        project.SetNotificationMuted(
+            IssueCreateCommandHandler.ActorUuid(_executionContext),
+            command.Muted,
+            _clock.UtcNow);
 
         return project.Uuid;
     }

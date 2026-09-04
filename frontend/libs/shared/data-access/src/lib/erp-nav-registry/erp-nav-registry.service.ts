@@ -3,12 +3,14 @@ import { Injectable, signal } from '@angular/core';
 export interface ErpNavigationItem {
   id?: string;
   label: string;
+  /** Klucz Transloco; `label` pozostaje fallbackiem dla starszych modułów. */
+  labelKey?: string;
   route?: string | string[]; // Twoja domena nazywa to "route", a nie "routerLink"
   iconId?: string; // Zamiast "pi pi-box", np. po prostu "box"
   disabled?: boolean;
   children?: ErpNavigationItem[];
   /** Kod uprawnienia (patrz `ERP_PERMISSIONS`) wymagany, żeby pozycja była widoczna —
-   * shell filtruje menu w `STARTUP.ts` przed rejestracją, patrz docs/backend/identity-authz.md §6. */
+   * shell filtruje menu w `STARTUP.ts` przed rejestracją, patrz docs/architecture/security.md §6. */
   requiredPermission?: string;
 }
 

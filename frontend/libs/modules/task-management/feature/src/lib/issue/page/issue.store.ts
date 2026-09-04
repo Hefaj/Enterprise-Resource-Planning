@@ -16,7 +16,7 @@ import {
 
 /**
  * Do ilu zgłoszeń „Zaznacz wszystko" jest jeszcze rozwiązywane do listy identyfikatorów —
- * ten sam próg co w Catalogu i Identity, patrz `docs/frontend/selection-scope.md` §2.
+ * ten sam próg co w Catalogu i Identity, patrz `docs/guides/frontend/selection-scope.md` §2.
  */
 export const ISSUE_SELECTION_MATERIALIZE_LIMIT = 100;
 
@@ -27,7 +27,7 @@ export const ISSUE_SELECTION_MATERIALIZE_LIMIT = 100;
  * i filtry projekto-specyficzne</b>: whitelist sortowania po stronie backendu to kolumny wspólne
  * `issue` plus sloty aktywnego projektu, więc pole z poprzedniego kontekstu zostałoby po cichu
  * zignorowane, a użytkownik widziałby kolejność, o którą nie prosił
- * (`docs/frontend/task-management-pages.md` §2.1). Sloty wchodzą w fazie 3 — reset jest już
+ * (`docs/modules/task-management/screens.md` §2.1). Sloty wchodzą w fazie 3 — reset jest już
  * teraz, bo dopisanie go później oznacza znalezienie tego błędu w produkcji.</p>
  */
 @Injectable()
@@ -51,7 +51,7 @@ export class IssueStore {
   /**
    * Pola projekto-specyficzne, po których wolno filtrować — czyli te ze slotem. Pole bez slotu
    * jest w profilu i widać je w tabeli, ale filtr po nim wymagałby skanu jsonb
-   * (`docs/backend/task-management.md` §6).
+   * (`docs/modules/task-management/domain.md` §6).
    */
   public readonly filterableFields = computed<ProjectFieldDto[]>(() =>
     this._fields.sortableFieldsOf(this.projectUuid())(),
@@ -140,7 +140,7 @@ export class IssueStore {
     });
   }
 
-  // ── Zaznaczenie i zasięg — patrz docs/frontend/selection-scope.md §2 ──
+  // ── Zaznaczenie i zasięg — patrz docs/guides/frontend/selection-scope.md §2 ──
 
   public readonly selection = signal<ErpSelectionState<IssueVM> | null>(null);
 

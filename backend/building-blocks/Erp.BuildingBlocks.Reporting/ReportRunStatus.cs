@@ -1,11 +1,11 @@
 namespace Erp.BuildingBlocks.Reporting;
 
 /// <summary>
-/// Stan przebiegu raportu — kopia <c>ExportRunStatus</c> (patrz <c>docs/backend/reporting.md</c> §3).
+/// Stan przebiegu raportu — kopia <c>ExportRunStatus</c> (patrz <c>docs/architecture/reporting.md</c> §3).
 ///
 /// <para>Celowo bez stanu pośredniego między <see cref="Running"/> a końcowymi: raport zsumowany
 /// w 96% jest raportem błędnym, nie częściowym — dokładnie to samo uzasadnienie, co przy
-/// eksportach (<c>docs/backend/exports-artifacts.md</c> §3).</para>
+/// eksportach (<c>docs/guides/backend/exports-artifacts.md</c> §3).</para>
 /// </summary>
 public enum ReportRunStatus
 {

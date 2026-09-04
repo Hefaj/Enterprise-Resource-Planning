@@ -16,7 +16,7 @@ public enum UserNotificationSeverity
 /// Jeden wiersz w osobistym feedzie powiadomień jednego odbiorcy — fan-out zapisany przy
 /// wstawianiu, nie event+join. Feed (<c>where user_uuid=@me order by created_at desc</c>) i
 /// licznik nieprzeczytanych muszą trafiać w indeks bez joinu, więc każdy odbiorca dostaje
-/// własny wiersz zamiast wspólnego wiersza zdarzenia (patrz <c>docs/backend/user-notifications.md</c> §4).
+/// własny wiersz zamiast wspólnego wiersza zdarzenia (patrz <c>docs/modules/notification/user-notifications.md</c> §4).
 ///
 /// Zasilana wyłącznie <see cref="UserNotificationRequested"/> (patrz
 /// <c>Notification.Api/UserNotifications/Consumers</c>) — tak jak <c>NotificationJob</c>, nie ma
@@ -104,7 +104,7 @@ public class UserNotification : AggregateRoot
     public DateTimeOffset CreatedAt { get; private set; }
 
     /// <summary>Moment otwarcia popovera dzwonka — odrębny od <see cref="ReadAt"/> (patrz
-    /// <c>docs/frontend/notifications.md</c> §10.2): zobaczenie na liście nie jest tym samym
+    /// <c>docs/guides/frontend/notifications.md</c> §10.2): zobaczenie na liście nie jest tym samym
     /// co jawne oznaczenie „przeczytane".</summary>
     public DateTimeOffset? SeenAt { get; private set; }
 

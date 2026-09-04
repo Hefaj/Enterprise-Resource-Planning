@@ -56,7 +56,7 @@ public sealed record IssueGraphDto(
 ///
 /// <para>Pytania o osiągalność idą <b>rekurencyjnym CTE w bazie</b>, nie wczytaniem grafu do
 /// pamięci: graf zależności w dużym projekcie potrafi mieć tysiące krawędzi, a reguła musi
-/// działać także w pre-checku operacji masowej (<c>docs/backend/task-management.md</c> §8.2).
+/// działać także w pre-checku operacji masowej (<c>docs/modules/task-management/domain.md</c> §8.2).
 /// To jest ta jedna rzecz, którą robimy inaczej niż <c>RoleGraphCycleRule</c> w Identity, gdzie
 /// graf ról jest o rzędy wielkości mniejszy.</para>
 /// </summary>

@@ -35,7 +35,7 @@ public enum JobStatus
     /// zadanie w tym stanie jest dla niego niewidzialne; klient nie dostaje <c>jobUuid</c>, dopóki
     /// przełączenie się nie powiedzie. Awaria w trakcie zakładania zostawia więc osierocony wiersz
     /// — nikt go nie zobaczy i nikt go nie wykona, ale nikt go też dziś nie sprząta
-    /// (patrz <c>docs/backend/bulk-commands.md</c> §3).</para>
+    /// (patrz <c>docs/guides/backend/bulk-commands.md</c> §3).</para>
     ///
     /// <para>Wartość dopisana na KOŃCU wyliczenia — kolejność pozostałych jest częścią kontraktu
     /// zapisanego w <c>job.status</c> jako liczba.</para>
@@ -44,7 +44,7 @@ public enum JobStatus
 }
 
 /// <summary>
-/// Kształt wykonania zadania — patrz <c>docs/backend/exports-artifacts.md</c> §3.
+/// Kształt wykonania zadania — patrz <c>docs/guides/backend/exports-artifacts.md</c> §3.
 ///
 /// <para>Obie wartości dzielą tabelę <c>job</c>, bo dzielą wszystko, co czyni długą operację
 /// widoczną dla użytkownika: właściciela, status, liczniki postępu, wygasanie, replikę

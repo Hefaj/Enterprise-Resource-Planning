@@ -1,3 +1,19 @@
+---
+id: module.task-management.screens
+title: Task Management — podział na strony
+summary: Podział stron, nawigacja i układy ekranów Task Management.
+kind: module-specification
+scope: task-management
+audience:
+  - frontend
+  - backend
+  - agent
+triggers:
+  - strony Task Management
+  - układ listy zgłoszeń tablicy lub projektu
+related: []
+---
+
 # Task Management — podział na strony
 
 **Stan: ✅ fazy 0–1 wdrożone; pozostałe strony 📐 projekt.** Istnieją dwie trasy — lista
@@ -5,15 +21,15 @@
 (opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki, wątek komentarzy
 i historia zmian). Zaślepka **„Dashboard Analityczny Zadań"** zniknęła z `entry.menu.ts` razem
 z fazą 0 (dashboard robiony pierwszy przez pół roku świeci pustkami). Tablicy, zleceń i grupy „Konfiguracja" w menu nie ma —
-pozycja bez działającej strony to ten sam błąd, który usunęła faza 0.
+pozycja bez działającej strony jest błędem nawigacji i nie może zostać opublikowana.
 
 Model domenowy, automat stanów, sloty pól i mechanika kolejności na tablicy →
-[`docs/backend/task-management.md`](../backend/task-management.md).
+[`docs/modules/task-management/domain.md`](domain.md).
 Ten dokument opisuje **wyłącznie podział na strony i nawigację**.
 
-Wzorce, na których stoją te strony: [`pages.md`](./pages.md), [`smart-tables.md`](./smart-tables.md),
-[`feature-structure.md`](./feature-structure.md), [`modals.md`](./modals.md),
-[`orchestrators.md`](./orchestrators.md).
+Wzorce, na których stoją te strony: [`pages.md`](../../guides/frontend/pages.md), [`smart-tables.md`](../../guides/frontend/smart-tables.md),
+[`feature-structure.md`](../../guides/frontend/feature-structure.md), [`modals.md`](../../guides/frontend/modals.md),
+[`orchestrators.md`](../../guides/frontend/orchestrators.md).
 
 ---
 
@@ -24,7 +40,7 @@ menu — pierwsze dwie są przeniesieniem rozstrzygnięć z DMS-u, trzecia jest 
 
 - **Projekt to kontekst, nie strona.** Wszystkie projekty mieszkają na tej samej liście zgłoszeń,
   przełączane kontekstem projektu, bo to projekt decyduje o zestawie kolumn
-  ([`task-management.md` §6](../backend/task-management.md#6-pola-niestandardowe)). Osobna strona
+  ([`task-management.md` §6](domain.md#6-pola-niestandardowe)). Osobna strona
   per projekt oznacza menu rosnące z każdym nowym działem.
 - **„Moje zgłoszenia" to zakres, nie strona.** Ten sam `searchIssue` z parametrem `scope`.
 - **Tablica to osobna strona, nie widok listy.** Tu odchodzimy od schematu „jedna encja, jedna
@@ -37,7 +53,7 @@ menu — pierwsze dwie są przeniesieniem rozstrzygnięć z DMS-u, trzecia jest 
 ## 2. Grupa A — praca codzienna
 
 ### 2.1 Zgłoszenia — `/task-management/issue`
-Lista serwerowa: `erp-grid-layout` + filtr + smart tabela + action toolbar ([`pages.md`](./pages.md)).
+Lista serwerowa: `erp-grid-layout` + filtr + smart tabela + action toolbar ([`pages.md`](../../guides/frontend/pages.md)).
 Dwa przełączniki nad tabelą:
 
 - **zakres**: `Moje` / `Zgłoszone przeze mnie` / `Obserwowane` / `Mojego zespołu` / `Wszystkie dostępne`,
@@ -47,12 +63,12 @@ Dwa przełączniki nad tabelą:
 
 Kolumny projekto-specyficzne są dostępne **wyłącznie** przy zawężeniu do jednego projektu.
 Ich definicja pochodzi z `getProjectFieldProfile`, nie ze stałej w komponencie — `ErpTableBuilder`
-buduje `computed<ErpTableConfig>` z profilu ([`smart-tables.md`](./smart-tables.md)).
+buduje `computed<ErpTableConfig>` z profilu ([`smart-tables.md`](../../guides/frontend/smart-tables.md)).
 
 Wiersz to zawsze `Issue` (w każdym zakresie) — w odróżnieniu od listy dokumentów DMS, gdzie klucz
 wiersza zmienia się z zakresem. Tutaj nie ma czynności, więc dedup nie ma czego zgubić.
 
-Zaznaczenie i akcje masowe idą przez pełny [`ErpSelectionScope`](./selection-scope.md) — zmiana
+Zaznaczenie i akcje masowe idą przez pełny [`ErpSelectionScope`](../../guides/frontend/selection-scope.md) — zmiana
 stanu, przypisanie i dodanie do sprintu na kilkuset zgłoszeniach to zwykłe zadanie masowe.
 
 ### 2.2 Tablica — `/task-management/board/:uuid` ✅
@@ -67,9 +83,9 @@ Trzy rzeczy, których nie robi dziś żaden inny ekran w systemie:
 
 1. **Optymistyczne przestawienie z cofnięciem.** Karta ląduje w nowym miejscu natychmiast, komenda
    `setBoardCardPosition` leci z `beforeUuid`/`afterUuid` (nie z wyliczonym rankiem — liczy go
-   serwer, [`task-management.md` §7.2](../backend/task-management.md#72-rank-jest-łańcuchem-nie-liczbą-całkowitą)).
+   serwer, [`task-management.md` §7.2](domain.md#72-rank-jest-łańcuchem-nie-liczbą-całkowitą)).
    Odpowiedź `409` cofa ruch i pokazuje toast. Idzie przez `ErpOptimisticStore`
-   (`BoardStore.dropAsync`, [`optimistic-updates.md`](./optimistic-updates.md#9-dwie-komendy-pod-jedną-nakładką--boardstoredropasync)) —
+   (`BoardStore.dropAsync`, [`optimistic-updates.md`](../../guides/frontend/optimistic-updates.md#9-dwie-komendy-pod-jedną-nakładką--boardstoredropasync)) —
    nie przez lokalny sygnał, jak we wcześniejszej wersji tego ekranu.
 2. **Echo własnej zmiany nie przeskakuje kartą pod kursorem — bez rozpoznawania echa.** Nakładka
    pozycji żyje POZA cache'm kart orkiestratora (własny scope `taskmgmt.board.position`) i wygrywa
@@ -79,7 +95,7 @@ Trzy rzeczy, których nie robi dziś żaden inny ekran w systemie:
    lokalny zbiór „karty z własną, niepotwierdzoną komendą"
    (`TaskManagementBoardOrchestrator._pendingCardUuids`, dziś usunięty jako martwe rusztowanie bez
    wywołujących) — nakładka optymistyczna rozwiązuje ten sam problem bez żadnego z tych dwóch
-   mechanizmów ([`task-management.md` §7.3](../backend/task-management.md#73-współbieżność-i-echo-własnej-zmiany)).
+   mechanizmów ([`task-management.md` §7.3](domain.md#73-współbieżność-i-echo-własnej-zmiany)).
 3. **Przeciąganie w kolumnę, do której przejście jest niedozwolone.** Kolumna niedostępna dla
    danej karty jest wygaszana **w chwili chwycenia karty**, na podstawie przejść ze schematu.
    Poznanie tego dopiero z błędu po upuszczeniu jest wrogie użytkownikowi.
@@ -87,9 +103,8 @@ Trzy rzeczy, których nie robi dziś żaden inny ekran w systemie:
 Przejście wymagające pól (`required_fields`) otwiera modal przed potwierdzeniem ruchu — karta
 wisi w stanie „w toku" do zamknięcia modala.
 
-**Czego faza 2 świadomie nie dowozi**: swimlane'ów (drugi wymiar grupowania nad tym samym
-mechanizmem kolejności — nie on jest pytaniem tej fazy) i modala pól wymaganych przy przejściu
-(`required_fields` to pola niestandardowe, czyli faza 3). Strona rysuje dziś kolumny wprost
+**Bieżące ograniczenia:** brak swimlane'ów (drugiego wymiaru grupowania nad tym samym
+mechanizmem kolejności) i modala pól wymaganych przy przejściu. Strona rysuje dziś kolumny wprost
 ze stanów schematu projektu.
 
 ### 2.3 Karta zgłoszenia — `/task-management/issue/:key`
@@ -98,7 +113,7 @@ muszą dominować ekran, a link do zgłoszenia (`/issue/DEV-412`) krąży w mail
 pełny widok.
 
 Trasa idzie po **kluczu czytelnym**, nie po UUID. Stare klucze przekierowują na bieżący
-(`issue.previous_keys`, [`task-management.md` §4](../backend/task-management.md#4-klucz-czytelny-dev-123)) —
+(`issue.previous_keys`, [`task-management.md` §4](domain.md#4-klucz-czytelny-dev-123)) —
 inaczej każdy link sprzed przeniesienia projektu jest martwy.
 
 Layout: kolumna główna (tytuł, opis, załączniki, komentarze, historia), panel boczny (stan
@@ -114,22 +129,22 @@ przeniesione z multimediów Catalogu i jedną własną:
 - **bajty nie idą przez mikroserwis** — bilet (`getIssueAttachmentUploadTickets`) → `PUT` prosto
   do magazynu → rejestracja paczki jedną komendą w jednej transakcji, pod jednym `X-Request-Id`;
 - **podgląd przez `blob:`**, nie przez adres endpointu w `src` — zawartość jest za uprawnieniem,
-  a `<img>` nie dokłada nagłówka `Authorization` ([`multimedia.md` §3](./multimedia.md#3-miniaturki-blob-nie-adres-endpointu));
+  a `<img>` nie dokłada nagłówka `Authorization` ([`multimedia.md` §3](../../guides/frontend/multimedia.md#3-miniaturki-blob-nie-adres-endpointu));
   miniatur pochodnych tu nie ma, więc adres zamawia dopiero kafelek obrazu, nie każdy wiersz;
 - **usuwania nie ma i nie jest to przeoczenie** — plik należy do zgłoszenia i znika razem z nim
-  w tej samej transakcji ([`media-storage.md` §4c](../backend/media-storage.md)), więc backend
+  w tej samej transakcji ([`media-storage.md` §4c](../../guides/backend/media-storage.md)), więc backend
   nie wystawia komendy kasującej pojedynczy załącznik.
 
 **Komentarze** (`erp-task-management-issue-comments`) i **historia** (`…-issue-history`) to dziś
-dwie osobne sekcje pod załącznikami. **Faza 4 łączy je w jeden strumień aktywności z filtrem**
+dwie osobne sekcje pod załącznikami. Docelowy układ łączy je w jeden strumień aktywności z filtrem
 (`Wszystko / Komentarze / Historia / Czas`) — powód i docelowy układ w [§9.1](#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień).
 Trzy rzeczy warte zapamiętania niezależnie od układu:
 
 - **wątek jest jednopoziomowy**, bo taka jest reguła domeny, a nie uproszczenie widoku
-  ([`task-management.md` §11](../backend/task-management.md#11-historia-zmian-i-komentarze));
+  ([`task-management.md` §11](domain.md#11-historia-zmian-i-komentarze));
   odpowiedź składa się w jednym przebiegu po płaskiej liście, bez rekurencji;
 - **komentarz pojawia się natychmiast, przez nakładkę optymistyczną** (`ErpOptimisticStore`,
-  [`optimistic-updates.md` §5](./optimistic-updates.md#5-wpięcie-b--kolekcje-dziecięce-issuechildcache)),
+  [`optimistic-updates.md` §5](../../guides/frontend/optimistic-updates.md#5-wpięcie-b--kolekcje-dziecięce-issuechildcache)),
   a nie dopiero po dojechaniu zdarzenia z kanału `taskmgmt.issue_comment`. **To zmiana wobec
   wcześniejszej wersji tego dokumentu**, która optymistyczne wstawianie komentarzy zabraniała —
   argument („dałoby przez chwilę dwa komentarze") przestał obowiązywać, odkąd `addCommentAsync`
@@ -141,7 +156,7 @@ Trzy rzeczy warte zapamiętania niezależnie od układu:
   w parametrach — złożenie tego w TS wypisałoby użytkownikowi surowy klucz).
 
 > **Uuid zamiast nazwiska.** Autor komentarza, aktor zmiany i przypisany pokazują się dziś jako
-> uuid — front nie ma katalogu użytkowników w żadnym module. To jedna pozycja do zrobienia,
+> uuid — front nie ma katalogu użytkowników w żadnym module. To jeden wspólny problem,
 > nie trzy: rozwiązuje ją wspólny słownik z Identity, nie lokalne obejście na karcie.
 
 > **Obrazki osadzone w treści opisu to osobna pozycja, jeszcze niezrobiona.** Backend jest na nie
@@ -155,7 +170,8 @@ Trzy rzeczy warte zapamiętania niezależnie od układu:
 Podstrona tablicy scrumowej, nie osobna pozycja w menu: dwie listy obok siebie (backlog ↔ sprint),
 przeciąganie między nimi, suma estymat w nagłówku sprintu.
 
-Wchodzi dopiero z fazą 6 — tablica kanban jest użyteczna bez backlogu, odwrotnie nie.
+Backlog publikujemy dopiero razem z działającą obsługą sprintów — tablica kanban jest użyteczna bez
+backlogu, odwrotnie nie.
 
 ---
 
@@ -175,7 +191,7 @@ Akcje: złóż zlecenie, odbierz realizację (przejście z uprawnieniem), zgło�
 ### 3.2 Karta zlecenia
 Nie ma osobnej trasy — to karta zgłoszenia (§2.3), na której pasek powiązań pokazuje zgłoszenia
 realizujące z ich stanami. Zamawiający widzi **nagłówki**, nie treść cudzych zgłoszeń
-([`task-management.md` §10.1](../backend/task-management.md#101-widoczność-liczona-po-projekcie)).
+([`task-management.md` §10.1](domain.md#101-widoczność-liczona-po-projekcie)).
 
 ---
 
@@ -185,12 +201,12 @@ realizujące z ich stanami. Zamawiający widzi **nagłówki**, nie treść cudzy
 Lista projektów: kod, typ (`Delivery`/`Intake`), lead, liczba otwartych zgłoszeń, schemat pól,
 schemat stanów.
 
-### 4.2 Karta projektu — `/task-management/project/:uuid` 🟡 (faza 3 dowozi zakładkę pól)
+### 4.2 Karta projektu — `/task-management/project/:uuid`
 Master-detail z zakładkami: **pola** (definicje + **mapowanie na sloty**), **stany** (wybór
 schematu), **tablice**, **członkowie** (`project_member` z rolą), **SLA**.
 
-Zakładki poza polami wchodzą razem z fazami, które je wypełniają — pusta zakładka to ta sama
-zaślepka, którą usunęliśmy z menu w fazie 0.
+Zakładka pojawia się dopiero razem z działającym przebiegiem, który ją wypełnia — pustych
+zaślepek nie publikujemy.
 
 **Znany chropowaty brzeg**: pole zakładane z UI podaje `nameKey`, czyli klucz tłumaczenia.
 Klucz, którego nikt nie dopisał do `translation/*.json`, wyświetla się użytkownikowi dosłownie.
@@ -198,18 +214,18 @@ Dla schematów systemowych (seed) jest to poprawne, dla pól zakładanych ręczn
 odpowiedzią jest nazwa jako zwykły tekst obok opcjonalnego klucza, a nie zamiast niego.
 
 Tu żyje ostrzeżenie „slot już użyty, mapowania nie zmienisz"
-([`task-management.md` §6](../backend/task-management.md#6-pola-niestandardowe)) — identyczne co do
+([`task-management.md` §6](domain.md#6-pola-niestandardowe)) — identyczne co do
 treści z ostrzeżeniem przy typach dokumentów w DMS.
 
 ### 4.3 Schematy stanów — `/task-management/workflow-scheme/:uuid`
 Edytor stanów i przejść. **Nie canvas grafu** — automat jest sekwencyjny, więc dwie listy
 (stany, przejścia) plus macierz „z → do" są czytelniejsze i tańsze niż rysowanie
-([`task-management.md` §5.4](../backend/task-management.md#54-dlaczego-nie-silnik-z-dms-u)).
+([`task-management.md` §5.4](domain.md#54-dlaczego-nie-silnik-z-dms-u)).
 To świadoma różnica względem edytora obiegu w DMS, nie niedoróbka.
 
 Publikacja zmiany otwiera **modal mapowania stanów** dla zgłoszeń siedzących w usuwanych stanach;
 zatwierdzenie uruchamia zadanie masowe z postępem
-([`task-management.md` §5.3](../backend/task-management.md#53-zmiana-schematu-a-istniejące-zgłoszenia)).
+([`task-management.md` §5.3](domain.md#53-zmiana-schematu-a-istniejące-zgłoszenia)).
 
 ---
 
@@ -220,8 +236,8 @@ zatwierdzenie uruchamia zadanie masowe z postępem
 | „Moje zgłoszenia" | Zakres na liście. Osobna strona zmusza użytkownika do zgadywania, gdzie patrzeć |
 | Strona per projekt / per dział w menu | Kontekst projektu na jednej liście — inaczej N kopii tego samego ekranu |
 | Osobna lista podzadań | Hierarchia to tryb drzewa na liście zgłoszeń i pasek powiązań na karcie |
-| „Uprawnienia i role" | Identity ([`identity-authz.md`](../backend/identity-authz.md)). Tu zostaje wyłącznie zakładka członków na karcie projektu |
-| Dashboard / burndown / raporty | Po fazie 6, gdy są dane. Dzisiejsza zaślepka w menu jest dokładnie tym błędem |
+| „Uprawnienia i role" | Identity ([`identity-authz.md`](../../architecture/security.md)). Tu zostaje wyłącznie zakładka członków na karcie projektu |
+| Dashboard / burndown / raporty | Dopiero gdy istnieją dane czasu i iteracji oraz działający raport; bez zaślepki w menu |
 | Osobna strona sprintów | Sprint to podstrona tablicy — poza tablicą nie ma sensu |
 
 ---
@@ -229,13 +245,13 @@ zatwierdzenie uruchamia zadanie masowe z postępem
 ## 6. Struktura katalogów i modale
 
 Agregaty w `libs/modules/task-management/feature/src/lib/`, każdy wg
-[`feature-structure.md`](./feature-structure.md) (`components`/`modal`/`page`/`translation`):
+[`feature-structure.md`](../../guides/frontend/feature-structure.md) (`components`/`modal`/`page`/`translation`):
 
 ```
 issue/   board/   project/   workflow-scheme/   request/
 ```
 
-Modale ([`modals.md`](./modals.md)): nowe zgłoszenie, przejście stanu z wymaganymi polami,
+Modale ([`modals.md`](../../guides/frontend/modals.md)): nowe zgłoszenie, przejście stanu z wymaganymi polami,
 przypisanie, dodanie powiązania (wyszukiwarka po kluczu), przeniesienie do projektu (**ostrzeżenie
 o zmianie klucza**), złożenie zlecenia, odbiór zlecenia, mapowanie stanów przy publikacji schematu,
 podsumowanie operacji masowej.
@@ -244,7 +260,7 @@ Definicje modali **nie wywołują** `.setProviders(...)` — providery wstrzykuj
 z `getModalProviders()` kontraktu remota.
 
 Sygnatury SignalR do orkiestratorów: `taskmgmt.issue`, `taskmgmt.board`, `taskmgmt.sprint`,
-`taskmgmt.project` ([`orchestrators.md`](./orchestrators.md)).
+`taskmgmt.project` ([`orchestrators.md`](../../guides/frontend/orchestrators.md)).
 
 **Osobny orkiestrator kolejności.** `BoardOrchestrator` trzyma karty po UUID i utrzymuje porządek
 po `(rank, issueUuid)`; `IssueOrchestrator` trzyma treść zgłoszeń. Jeden orkiestrator na oba
@@ -276,7 +292,7 @@ przy jednej tablicy przekierowuje wprost na nią.
 ## 8. Tłumaczenia
 
 Zero hardcoded stringów, klucze z registry (`TASK_MANAGEMENT_KEYS.…`), `keys.ts` autogenerowany
-przez `pnpm translate:keys` — nigdy ręcznie ([`translations.md`](./translations.md)).
+przez `pnpm translate:keys` — nigdy ręcznie ([`translations.md`](../../guides/frontend/translations.md)).
 
 Trzy zbiory kluczy, których nie ma w innych modułach i o które łatwo się potknąć:
 
@@ -285,14 +301,14 @@ Trzy zbiory kluczy, których nie ma w innych modułach i o które łatwo się po
   wyświetla nazwę własną — to jedyne dopuszczone wyjście poza registry;
 - **nazwy pól niestandardowych** — analogicznie, z profilu projektu;
 - **kody błędów przejść** (`taskmgmt.transition_not_allowed`) idą do `shared.errors.codes`
-  ([`notifications.md`](./notifications.md)).
+  ([`notifications.md`](../../guides/frontend/notifications.md)).
 
 ---
 
 ## 9. Układ ekranów — wzorzec YouTracka
 
 Użytkownicy przychodzą z YouTracka i mają odnaleźć elementy tam, gdzie ich szukają
-([`task-management-requirements.md` NFR-010](../backend/task-management-requirements.md#21-audyt-i-wymagania-niefunkcjonalne-nfr)).
+([kontrakt niefunkcjonalny](requirements.md#kryteria-niefunkcjonalne)).
 Ta sekcja jest **wiążąca co do rozmieszczenia**, nie co do wyglądu — kolory, odstępy i typografia
 idą z TaigaUI i Tailwinda, nie z YouTracka.
 
@@ -333,7 +349,7 @@ Cztery decyzje, które wynikają z tego układu:
 3. **Pole komentarza jest zakotwiczone na dole strumienia**, widoczne bez przewijania do końca —
    inaczej przy długim wątku odpowiedź wymaga podróży.
 4. **Tytuł i opis edytuje się w miejscu**, bez trybu „edytuj całość". Karta nie ma przycisku
-   „zapisz zgłoszenie" — każda zmiana to osobna komenda ([`task-management.md` §11](../backend/task-management.md#11-historia-zmian-i-komentarze)).
+   „zapisz zgłoszenie" — każda zmiana to osobna komenda ([`task-management.md` §11](domain.md#11-historia-zmian-i-komentarze)).
 
 ### 9.2 Lista zgłoszeń — gdzie odchodzimy od YouTracka
 
@@ -342,8 +358,8 @@ z kolumnami. My zostajemy przy `erp-table`:
 
 | YouTrack | U nas | Powód |
 |---|---|---|
-| lista wierszy z metadanymi pod tytułem | tabela z kolumnami | kolumny pochodzą z profilu pól projektu i mają być sortowalne serwerowo ([`smart-tables.md`](./smart-tables.md)); lista wierszy to własny szablon i utrata sortowania |
-| pole zapytania DSL na całą szerokość | `erp-filter` + przełączniki zakresu i projektu | DSL wchodzi dopiero w fazie 8 ([wymagania SRCH-005](../backend/task-management-requirements.md#11-wyszukiwanie-i-filtrowanie-srch-view)) |
+| lista wierszy z metadanymi pod tytułem | tabela z kolumnami | kolumny pochodzą z profilu pól projektu i mają być sortowalne serwerowo ([`smart-tables.md`](../../guides/frontend/smart-tables.md)); lista wierszy to własny szablon i utrata sortowania |
+| pole zapytania DSL na całą szerokość | `erp-filter` + przełączniki zakresu i projektu | DSL nie należy do bieżącego kontraktu listy |
 | zapisane widoki w lewym panelu | zapisane widoki jako lista nad filtrem | lewy panel kolidowałby z menu modułu |
 
 Zachowujemy z YouTracka: **klucz i typ jako pierwsza kolumna**, priorytet jako kolorowy znacznik
@@ -365,12 +381,12 @@ przy wierszu (nie tekst), tagi jako chipsy, zaznaczenie z paskiem akcji masowych
 Karta niesie: klucz, tytuł, znacznik typu, awatar przypisanego, tagi jako chipsy, estymatę.
 Nagłówek kolumny: nazwa + licznik kart + limit WIP, gdy ustawiony. Swimlane'y są zwijane.
 
-### 9.4 Raport godzin (faza 7)
+### 9.4 Raport godzin
 
 Układ tabeli przestawnej: wiersze = dział (projekt wykonawczy), kolumny = okres, rozwinięcie
 wiersza = zagadnienia. **Rozwinięcie kończy się na poziomie zagadnienia** — niżej byłyby tytuły
 zgłoszeń, do których kierownictwo nie ma dostępu
-([wymagania PERM-005](../backend/task-management-requirements.md#2-aktorzy-i-role-perm-mem)).
+([widoczność i prywatność](requirements.md#widoczność-i-prywatność)).
 
 ---
 
@@ -390,14 +406,14 @@ Dostępne w `@erp/shared/ui` i wprost przydatne tutaj: `erp-table`, `erp-tabs`, 
 `erp-input-picker`, `erp-toggle-group`, `erp-confirm-dialog`.
 
 **Brakująca zdolność komponentu współdzielonego jest dokładana do niego, nie obchodzona lokalnie.**
-Przykład wiążący dla fazy 4: wklejanie obrazów ze schowka wchodzi do `erp-rich-text`
+Przykład wiążący: wklejanie obrazów ze schowka wchodzi do `erp-rich-text`
 w `@erp/shared/ui` (z portem na wgrywanie, który moduł wypełnia własnym biletem), a nie jako
 lokalny handler `paste` na karcie zgłoszenia — inaczej DMS i Catalog dostaną drugą i trzecią
 kopię tego samego kodu.
 
 **Stan dzisiaj to dług:** `libs/modules/task-management/ui` zawiera wyłącznie tłumaczenia, a karta
 tablicy, kolumna tablicy, wątek komentarzy i historia leżą w `feature`. Kandydaci do przeniesienia
-i do powstania w fazie 4:
+i do utworzenia wraz z realnym użyciem:
 
 | Komponent w `ui` | Zastępuje / obsługuje |
 |---|---|
@@ -409,21 +425,3 @@ i do powstania w fazie 4:
 | `erp-tag-chips` | tagi na liście, karcie i kafelku |
 
 ---
-
-## 11. Kolejność względem faz wdrożenia
-
-Fazy → [`task-management.md` §13](../backend/task-management.md#13-kolejność-wdrożenia).
-
-| Faza | Strony |
-|---|---|
-| 0 ✅ | Zgłoszenia (bez pól niestandardowych), Karta zgłoszenia; **usunięcie zaślepki „Dashboard Analityczny Zadań"** |
-| 1 ✅ | Karta zgłoszenia — przejścia stanów, komentarze, historia |
-| 2 ✅ | **Tablica** (kanban, drag&drop, realtime) |
-| 3 ✅ | Kontekst projektu na liście, kolumny i filtry z profilu; Projekty i Karta projektu — zakładka pól |
-| 4 | **Przebudowa układu karty wg [§9.1](#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień)** (dwie kolumny, strumień aktywności), obrazy ze schowka w opisie i komentarzu, tryb drzewa na liście, pasek powiązań, zakładka typów na karcie projektu, **wyprowadzenie komponentów do `ui` ([§10](#10-skąd-biorą-się-komponenty))** |
-| 5 | Zlecenia, odbiór; Karta projektu — SLA; obserwujący i wzmianki na karcie |
-| 6 | Backlog i planowanie sprintu, akcje masowe, tagi, **rejestracja czasu na karcie** |
-| 7 | Schematy stanów (edytor + mapowanie przy publikacji), zapisane widoki, **raport rozliczenia godzin ([§9.4](#94-raport-godzin-faza-7))** |
-
-Fazy 0–2 to **trzy strony, nie dziesięć** — i to faza 2 odpowiada na pytanie, po co ten moduł
-w ogóle powstał.

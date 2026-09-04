@@ -13,7 +13,7 @@ namespace Erp.BuildingBlocks.Application.Commands;
 /// odpowiedź. Bez klucza idempotencji jedyne, co może zrobić, to zgadywać — a przy operacjach
 /// nieidempotentnych z natury (<c>exec</c>, <c>create</c> bez uuid od klienta) zgadywanie kończy
 /// się drugim skutkiem, którego nikt nie zamawiał (patrz
-/// <c>docs/backend/endpoint-naming.md</c> §4).</para>
+/// <c>docs/guides/backend/endpoint-naming.md</c> §4).</para>
 ///
 /// <para><b>Bez nagłówka middleware nie robi nic.</b> Klucz podaje klient, bo tylko on wie,
 /// które dwa żądania są tą samą operacją — dwa identyczne co do bajtu żądania mogą być

@@ -17,15 +17,14 @@ public sealed record PermissionDefinition(
 /// <see cref="AggregateSignatures"/>: jedno źródło prawdy, wersjonowane razem z kodem,
 /// które je sprawdza. Strona "Uprawnienia" w module Identity jest read-only przeglądarką
 /// tego katalogu — formularz "dodaj uprawnienie" produkowałby wiersze, których żaden
-/// <c>if</c> w kodzie nie sprawdza (patrz <c>docs/backend/identity-authz.md</c> §3).
+/// <c>if</c> w kodzie nie sprawdza (patrz <c>docs/architecture/security.md</c> §3).
 ///
 /// <para>Przy starcie <c>Identity</c> uzgadnia ten katalog z tabelą <c>permission_catalog</c>:
 /// dopisuje nowe kody, znikające oznacza <c>is_obsolete = true</c> — nigdy nie kasuje, bo
 /// istniejące nadania mogą na nie wskazywać (patrz <c>PermissionCatalogReconciler</c>).</para>
 ///
-/// <para><b>Faza 2 wprowadza katalog i mechanizm uzgadniania; faza 3 dopina do niego
-/// rzeczywiste sprawdzanie na endpointach Catalog/Sales/Notification</b> — kody poniżej
-/// są już stabilnym kontraktem, ale jeszcze nieegzekwowanym poza Identity.</para>
+/// <para>Katalog jest uzgadniany przez Identity, a endpointy modułów korzystają z poniższych
+/// stabilnych kodów jako wspólnego kontraktu autoryzacji.</para>
 /// </summary>
 public static class Permissions
 {
@@ -54,7 +53,7 @@ public static class Permissions
         public const string JobControl = "catalog.job.control";
 
         /// <summary>Zlecenie raportu/eksportu katalogu i pobranie gotowego artefaktu —
-        /// patrz <c>docs/backend/reporting.md</c>.</summary>
+        /// patrz <c>docs/architecture/reporting.md</c>.</summary>
         public const string ReportRunCreate = "catalog.report_run.create";
     }
 
@@ -80,20 +79,20 @@ public static class Permissions
         public const string PermissionRead = "identity.permission.read";
 
         /// <summary>Sterowanie zadaniami masowymi Identity (`job/cancel`, `job/retry-failed`) —
-        /// patrz Faza 0 w <c>docs/backend/identity-bulk-migration.md</c>.</summary>
+        /// patrz <c>docs/guides/backend/bulk-commands.md</c>.</summary>
         public const string JobControl = "identity.job.control";
 
         /// <summary>Zakładanie kont serwisowych (kluczy integracyjnych, API-003) — gate'uje
         /// WYŁĄCZNIE tworzenie: przeglądanie listy idzie po <see cref="UserRead"/> (to ta sama
         /// strona Użytkownicy), a nadawanie ról/uprawnień kontu serwisowemu po
         /// <see cref="UserManage"/> (istniejące endpointy `UserAddRole`/`UserAddPermission`
-        /// nie znają rodzaju konta). Patrz <c>docs/backend/identity-authz.md</c> §2.</summary>
+        /// nie znają rodzaju konta). Patrz <c>docs/architecture/security.md</c> §2.</summary>
         public const string IntegrationClientManage = "identity.integration_client.manage";
     }
 
     /// <summary>
     /// Task Management. Prefiks kodów to <c>taskmgmt</c>, spójnie ze schematem bazy
-    /// i sygnaturami SignalR (<c>docs/backend/task-management.md</c> §2, §10.2).
+    /// i sygnaturami SignalR (<c>docs/modules/task-management/domain.md</c> §2, §10.2).
     ///
     /// <para><b>Rola w projekcie nie jest uprawnieniem.</b> Te kody odpowiadają na pytanie
     /// „czy w ogóle wolno ci ruszać zgłoszenia”; „w których projektach” rozstrzyga
@@ -121,11 +120,11 @@ public static class Permissions
 
         /// <summary>Uruchamianie i odczyt raportów Task Management (PERM-005). Bramkuje wyłącznie
         /// endpointy raportów — świadomie NIE wchodzi w predykat widoczności zgłoszeń
-        /// (patrz <c>docs/backend/task-management-requirements.md</c> PERM-005 AC3).</summary>
+        /// (patrz <c>docs/modules/task-management/requirements.md</c> PERM-005 AC3).</summary>
         public const string ReportReadAll = "taskmgmt.report.read.all";
 
-        /// <summary>Zarządzanie regułami automatyzacji (faza 8, AUT-001) — nowa funkcja, nie
-        /// rozszerzenie istniejącego kodu (zasada z `PLAN-task-management.md` §9). Gates
+        /// <summary>Zarządzanie regułami automatyzacji (AUT-001, patrz
+        /// <c>docs/modules/task-management/requirements.md</c>). Gates
         /// tworzenie/edycję/włączanie/wyłączanie/usuwanie i odczyt — kto nie zarządza
         /// automatyzacją, nie widzi logiki jej reguł.</summary>
         public const string AutomationManage = "taskmgmt.automation.manage";

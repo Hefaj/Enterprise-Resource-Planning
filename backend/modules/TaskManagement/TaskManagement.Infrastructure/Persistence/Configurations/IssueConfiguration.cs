@@ -104,7 +104,7 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         // ZŁOŻONE z `project_uuid`, a nie częściowe per projekt jak w DMS: indeks częściowy
         // wymaga uuid projektu w treści DDL, czyli tworzenia indeksu przy zakładaniu projektu.
         // To byłby DDL wykonywany komendą aplikacyjną, wbrew regule „migracja jest krokiem
-        // wdrożenia" (docs/backend/production.md). Selektywność jest ta sama — pierwszą kolumną
+        // wdrożenia" (docs/operations/production.md). Selektywność jest ta sama — pierwszą kolumną
         // indeksu jest projekt — a koszt to jeden indeks więcej na slot, nie jeden na projekt.
         builder.Property(i => i.Num1).HasColumnName("num_1");
         builder.Property(i => i.Num2).HasColumnName("num_2");
@@ -136,7 +136,7 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
 
         // Niezmiennik „klucz zgłoszenia jest unikalny globalnie” egzekwuje INDEKS BAZY,
         // nie kod aplikacji — dokładnie jak „dokument w jednym obiegu” w DMS
-        // (docs/backend/task-management.md §3).
+        // (docs/modules/task-management/domain.md §3).
         builder.HasIndex(i => i.Key).IsUnique();
 
         builder.HasIndex(i => new { i.ProjectUuid, i.StateUuid });
@@ -147,7 +147,7 @@ public sealed class IssueConfiguration : IEntityTypeConfiguration<Issue>
         // `IssueQueries.ApplySorting`). Bez wspierającego indeksu Postgres robi Seq Scan +
         // Sort całej tabeli przed odcięciem strony — przy 200 tys. zgłoszeń to Seq Scan
         // podnosi koszt na tyle, że JIT się włącza i sam narzuca ~190ms kosztu kompilacji,
-        // zamiast pomóc (zmierzone przy weryfikacji fazy 6, zob. PLAN-task-management.md §4.6).
+        // zamiast pomóc (pomiar dla NFR-003 opisuje docs/modules/task-management/requirements.md).
         // Z tym indeksem odczyt pierwszej strony jest odczytem wstecznym po indeksie, nie
         // skanem tabeli — koszt przestaje zależeć od liczby zgłoszeń.
         builder.HasIndex(i => new { i.CreatedAt, i.Uuid })

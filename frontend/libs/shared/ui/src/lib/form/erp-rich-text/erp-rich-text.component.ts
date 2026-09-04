@@ -28,7 +28,7 @@ import { erpRichTextToolset } from './erp-rich-text.builder';
 
 /**
  * Pole tekstu formatowanego — opakowanie `tui-editor` (TaigaUI, tiptap pod spodem) w konwencję
- * Single Config Builder (`docs/frontend/atoms.md`).
+ * Single Config Builder (`docs/guides/frontend/atoms.md`).
  *
  * <p><b>Wartość to HTML.</b> Edytor jest `ControlValueAccessor` nad `string`, więc wpina się
  * w formularz jak `erp-input`. Treść pochodzi od użytkownika, więc <b>backend musi ją oczyścić

@@ -9,7 +9,7 @@ namespace TaskManagement.Issues.Query;
 /// idzie po kluczu, nie po UUID — link krąży w mailach i commitach, a UUID nikt nie przepisze.
 ///
 /// <para>Klucze historyczne są obsługiwane w zapytaniu, więc link sprzed przeniesienia projektu
-/// nadal otwiera właściwe zgłoszenie (<c>docs/backend/task-management.md</c> §4).</para>
+/// nadal otwiera właściwe zgłoszenie (<c>docs/modules/task-management/domain.md</c> §4).</para>
 /// </summary>
 public sealed class GetIssueByKeyEndpoint : Endpoint<GetIssueByKeyRequest, IssueDto>
 {

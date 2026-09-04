@@ -2,7 +2,7 @@ namespace Identity.Domain.Users;
 
 /// <summary>
 /// Uprawnienie nadane bezpośrednio użytkownikowi, z pominięciem ról — wyjątek z powodem,
-/// nie równoprawna ścieżka (patrz <c>docs/backend/identity-authz.md</c> §1, punkt 4).
+/// nie równoprawna ścieżka (patrz <c>docs/architecture/security.md</c> §1, punkt 4).
 /// <see cref="Reason"/> jest wymagany: bezpośrednie nadanie bez ról jest niestandardowe
 /// z założenia, więc musi zostawić ślad "dlaczego", żeby ktoś za pół roku nie musiał zgadywać.
 /// </summary>

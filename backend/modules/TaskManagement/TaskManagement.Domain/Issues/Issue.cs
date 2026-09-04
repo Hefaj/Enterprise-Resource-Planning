@@ -10,7 +10,7 @@ namespace TaskManagement.Domain.Issues;
 /// Zgłoszenie — jednostka pracy tego modułu. <b>Nigdy „Task”</b>: słowo „zadanie” jest w tym
 /// systemie zajęte trzykrotnie (<c>job</c>/<c>job_item</c> operacji masowych, historia zadań
 /// z Notification, <c>WorkItem</c> obiegu w DMS) — patrz
-/// <c>docs/backend/task-management.md</c> §2.
+/// <c>docs/modules/task-management/domain.md</c> §2.
 ///
 /// <para>Wyniki pracy (komentarze, historia zmian, praca zalogowana) wiszą przy zgłoszeniu,
 /// nie przy tablicy — zgłoszenie może wejść na drugą tablicę albo z niej wypaść i niczego
@@ -143,7 +143,7 @@ public sealed class Issue : AggregateRoot
     // To nie jest drugie źródło prawdy, tylko projekcja `custom_fields` utrzymywana w tej samej
     // metodzie, co one — rozjazd wymagałby zapisu z pominięciem `SetCustomFields`, a takiej
     // ścieżki nie ma. Dlaczego sloty, a nie indeksy wyrażeniowe na jsonb, tabele projekcji
-    // per typ czy EAV: docs/backend/dms-workflow.md §3.2.
+    // per typ czy EAV: docs/modules/dms/domain-workflow.md §3.2.
 
     public decimal? Num1 { get; private set; }
 
@@ -378,7 +378,7 @@ public sealed class Issue : AggregateRoot
     /// Zmiana stanu wg schematu projektu. Schemat wchodzi parametrem, bo jest <b>osobnym
     /// agregatem</b> — a reguła i tak musi być tutaj: „metoda agregatu waliduje PRZED zmianą
     /// stanu” jest tym, na czym stoi częściowy sukces operacji masowej
-    /// (<c>docs/backend/bulk-commands.md</c>).
+    /// (<c>docs/guides/backend/bulk-commands.md</c>).
     /// </summary>
     public void SetState(WorkflowScheme scheme, Guid toStateUuid, DateTimeOffset now)
     {
@@ -522,7 +522,7 @@ public sealed class Issue : AggregateRoot
     /// <summary>
     /// Nadpisuje <b>całą</b> kolekcję wartości pól niestandardowych — to, co przyszło, jest tym,
     /// co zostaje; pole pominięte w żądaniu zostaje wyczyszczone razem ze swoim slotem
-    /// (<c>docs/backend/endpoint-naming.md</c> §2).
+    /// (<c>docs/guides/backend/endpoint-naming.md</c> §2).
     ///
     /// <para>Schemat wchodzi parametrem, bo jest <b>osobnym agregatem</b> — tak samo jak schemat
     /// stanów przy <see cref="SetState"/>. Cała walidacja dzieje się PRZED pierwszą zmianą

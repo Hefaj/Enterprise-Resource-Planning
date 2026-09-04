@@ -5,7 +5,7 @@ import { ErpSelectionScope, ErpSelectionState } from '@erp/shared/ui';
 /**
  * Współdzielony stan strony `/identity/permissions`: wyszukiwana fraza (filtr po lewej) i
  * zaznaczenie uprawnień dla panelu „kto ma uprawnienie". Strona jest w 100% read-only (patrz
- * `docs/backend/identity-authz.md` §3) — ten store istnieje głównie po to, żeby niezależne
+ * `docs/architecture/security.md` §3) — ten store istnieje głównie po to, żeby niezależne
  * obszary siatki (`filter`/`content`/`rightPanel`, wypełniane przez `ErpGridLayoutBuilder.fill()`)
  * mogły się komunikować przez wspólny injector strony.
  *

@@ -13,7 +13,7 @@ export { JOB_KEYS } from './keys';
  *
  * Rejestrować wyłącznie w providerach agregujących modułu (trasa, loader komponentu z kontraktu),
  * NIGDY w dekoratorze `@Component` komponentu współdzielonego — to tworzy child injector
- * przesłaniający scope nadrzędny (patrz `docs/frontend/translations.md`).
+ * przesłaniający scope nadrzędny (patrz `docs/guides/frontend/translations.md`).
  */
 export function provideJobTranslations(): Provider[] {
   return [

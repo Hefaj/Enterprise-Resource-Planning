@@ -9,7 +9,7 @@ namespace Catalog.Infrastructure.ReportDefinitions;
 /// Eksport katalogu produktów do pliku — pierwsza (i dziś jedyna) definicja raportu Catalog.
 ///
 /// <para>Uogólnienie dawnego <c>ExportRunner.WriteProductsXmlAsync</c> (patrz
-/// <c>docs/backend/reporting.md</c> §3): eksport nie jest już osobnym runnerem, tylko definicją
+/// <c>docs/architecture/reporting.md</c> §3): eksport nie jest już osobnym runnerem, tylko definicją
 /// zarejestrowaną pod <see cref="IReportDefinition"/> — samą serializację XML/CSV robi wspólny
 /// <see cref="ReportFormatWriter"/>.</para>
 ///

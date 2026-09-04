@@ -35,7 +35,7 @@ interface MatrixCell {
 
 /**
  * Zakładka schematu stanów na karcie projektu (`WF-006`/`WF-007`,
- * `docs/frontend/task-management-pages.md` §4.3).
+ * `docs/modules/task-management/screens.md` §4.3).
  *
  * <p><b>Nie canvas grafu</b> — automat jest sekwencyjny, więc dwie listy (stany, przejścia) plus
  * macierz „z→do" są tańsze i czytelniejsze niż rysowanie (decyzja architektoniczna, nie

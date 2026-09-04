@@ -7,7 +7,7 @@ z [`../../docker-compose.yml`](../../docker-compose.yml) przy każdym starcie �
 ## Po co, skoro uprawnienia i tak sprawdza endpoint
 
 To są **dwie różne osie separacji** i robią co innego
-([`docs/backend/media-storage.md` §2](../../../docs/backend/media-storage.md#2-trzy-osie-separacji)):
+([`docs/guides/backend/media-storage.md` §2](../../../docs/guides/backend/media-storage.md#2-trzy-osie-separacji)):
 
 | | Odpowiada na pytanie | Trzyma, gdy |
 |---|---|---|

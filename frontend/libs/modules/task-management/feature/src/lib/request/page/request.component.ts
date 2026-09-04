@@ -18,7 +18,7 @@ import { provideRequestTranslations } from '../translation';
  *
  * <p><b>„Odbierz realizację" i „zgłoś zastrzeżenia" celowo nie mają własnych modali</b> — to
  * przejścia stanu na karcie zlecenia (`Do odbioru → Odebrane`, `Do odbioru → Zastrzeżenia`),
- * a automat stanów jest DANĄ (`docs/backend/task-management.md` §2), nie logiką zaszytą we
+ * a automat stanów jest DANĄ (`docs/modules/task-management/domain.md` §2), nie logiką zaszytą we
  * froncie. Osobny modal na każde przejście dublowałby to, co panel pól karty już robi ogólnie
  * dla każdego zgłoszenia.</p>
  */

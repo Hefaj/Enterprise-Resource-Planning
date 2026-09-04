@@ -20,7 +20,7 @@ import { RoleOrchestrator } from '../role/role.orchestrator';
 import { UserVM } from './user.view-model';
 
 /**
- * Orkiestrator kont użytkowników (`UserAccount`, patrz `docs/backend/identity-authz.md` §2).
+ * Orkiestrator kont użytkowników (`UserAccount`, patrz `docs/architecture/security.md` §2).
  * `roleGrants[].role` rozwiązywany leniwie z `RoleOrchestrator` (wzorzec §2 orchestrators.md —
  * cykliczna zależność między orkiestratorami rozwiązana przez `Injector`, nie konstruktor).
  */
@@ -40,7 +40,7 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
   protected override readonly signature = 'identity.user';
 
   protected override readonly orchestratorConfig: Partial<OrchestratorConfig> & { signalrSignature: string } = {
-    // Ta sama sygnatura co `PermissionStore` (Faza 5/6) — cache konta i tak odświeży się na
+    // Ta sama sygnatura co `PermissionStore` — cache konta i tak odświeży się na
     // żywo przy zmianie własnych uprawnień; dla kont innych userów to głównie no-op, bez szkody.
     signalrSignature: 'identity.user',
     maxCacheSize: 1000,
@@ -88,10 +88,10 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
     }
   }
 
-  // ── Komendy — cele wsadu (§3 docs/frontend/selection-scope.md) ──
+  // ── Komendy — cele wsadu (§3 docs/guides/frontend/selection-scope.md) ──
   //
-  // Wszystkie idą przez odpowiednik `BatchEndpointBase` (patrz Faza 1+2 w
-  // docs/backend/identity-bulk-migration.md). `addRoleMultipleAsync`/`addPermissionMultipleAsync`/
+  // Wszystkie idą przez odpowiednik `BatchEndpointBase` (patrz
+  // docs/guides/backend/bulk-commands.md). `addRoleMultipleAsync`/`addPermissionMultipleAsync`/
   // `execForceLogoutMultipleAsync` obsługują OBA przypadki wywołania — panel szczegółów podaje
   // `targetUuids: [uuid]` (jeden, konkretny użytkownik), lista `erpBuildBatchTargets(scope)`
   // (zaznaczenie wielokrotne albo filtr „Zaznacz wszystko"); backend nie rozróżnia tych dwóch
@@ -141,7 +141,7 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
    * przez admina — `sub` service-accounta klienta Keycloaka — NIE generowany po stronie
    * klienta (inaczej niż `RoleOrchestrator.createRoleAsync`), bo backend musi zapisać wiersz
    * z DOKŁADNIE tym identyfikatorem, żeby token `client_credentials` tego klienta trafił na
-   * istniejące uprawnienia (patrz `docs/backend/identity-authz.md` §2). */
+   * istniejące uprawnienia (patrz `docs/architecture/security.md` §2). */
   public async createIntegrationClientAsync(command: IntegrationClientCreateCommand, queueId?: string): Promise<string> {
     const jobUuid = await this.runSingleCommandAsync(
       p => this._api.integrationClientCreateMultipleCommand(p),
@@ -178,7 +178,7 @@ export class UserOrchestrator extends BaseOrchestrator<UserAccountDto, UserVM, S
   }
 
   /** Płaski, tylko-do-odczytu zbiór efektywnych kodów uprawnień. Bez rozwinięcia „skąd” —
-   * backend eksponuje to tylko dla `/me` (patrz `docs/backend/identity-authz.md` §9). */
+   * backend eksponuje to tylko dla `/me` (patrz `docs/architecture/security.md` §9). */
   public getEffectivePermissions(uuid: string): Signal<string[]> {
     return this._effectiveSignalFor(uuid).asReadonly();
   }

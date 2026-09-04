@@ -6,7 +6,7 @@ namespace Identity.Me;
 
 /// <summary>
 /// Efektywny zbiór uprawnień zalogowanego użytkownika — front ładuje to raz w <c>STARTUP.ts</c>
-/// (patrz <c>docs/backend/identity-authz.md</c> §6, <c>PermissionStore</c>). Tożsamość
+/// (patrz <c>docs/architecture/security.md</c> §6, <c>PermissionStore</c>). Tożsamość
 /// wyłącznie z <c>context.User</c> (przez <see cref="IExecutionContext"/>) — nie z parametru
 /// URL, żeby nie dało się odpytać o cudze uprawnienia przez samą zmianę id w żądaniu.
 /// </summary>

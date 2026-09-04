@@ -74,7 +74,7 @@ public sealed class TagSetNameCommandHandler : CommandHandler<TagSetNameCommand,
 /// (TAG-003, `Could`), bo operacja usuwa jeden agregat i przepina kolekcję należącą do
 /// nieograniczonej liczby innych agregatów (<c>Issue</c>), więc nie da się jej opisać jako
 /// <c>Create</c>/<c>Set</c>/<c>Add</c>/<c>Remove</c> na jednym z nich —
-/// <c>docs/backend/endpoint-naming.md</c> §5.
+/// <c>docs/guides/backend/endpoint-naming.md</c> §5.
 ///
 /// <para><b>Bez `AggregateChanged` dla zgłoszeń dotkniętych scaleniem</b> — przepięcie
 /// <c>issue_tag</c> idzie raw SQL-em (<see cref="IIssueTagWriter"/>), z pominięciem

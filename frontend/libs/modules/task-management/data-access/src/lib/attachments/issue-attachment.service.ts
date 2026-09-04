@@ -29,7 +29,7 @@ const SIGNATURE = 'taskmgmt.issue_attachment';
  * <p>Cache i realtime dziedziczy po {@link IssueChildCache} (tam też uzasadnienie, dlaczego
  * to nie jest orkiestrator). Własne jest tu jedno: <b>wgrywanie idzie z pominięciem tego
  * serwisu jako pośrednika bajtów</b> — przeglądarka wysyła plik prosto do magazynu adresem
- * z biletu, a tutaj wraca dopiero rejestracja (`docs/backend/media-storage.md`,
+ * z biletu, a tutaj wraca dopiero rejestracja (`docs/guides/backend/media-storage.md`,
  * `GetIssueAttachmentUploadTicketsEndpoint`).</p>
  */
 @Injectable({ providedIn: 'root' })

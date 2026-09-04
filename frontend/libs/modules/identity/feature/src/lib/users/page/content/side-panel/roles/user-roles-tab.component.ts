@@ -26,7 +26,7 @@ import { UserRoleGrantRow, UserRolesTabStore } from './user-roles-tab.store';
 
 /**
  * Zakładka „Role" — role WSZYSTKICH zaznaczonych użytkowników w JEDNEJ tabeli, pogrupowane po
- * użytkowniku (patrz `docs/frontend/pages.md` §6). Panel otwiera wybór zakładki, nie zaznaczenie,
+ * użytkowniku (patrz `docs/guides/frontend/pages.md` §6). Panel otwiera wybór zakładki, nie zaznaczenie,
  * więc obsługuje też stan „nic nie zaznaczono" oraz próbkę w trybie `query`.
  *
  * Odbieranie roli jest akcją zaznaczenia w `erp-action-toolbar` (zaznacz wiersze, potem

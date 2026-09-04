@@ -10,7 +10,7 @@ import { MultimediaLibraryTabComponent } from './content/multimedia-library-tab.
  * Biblioteka mediów — lista wszystkich zasobów katalogu, niezależna od produktów.
  *
  * <b>Bez zakładek i bez prawego panelu</b>, bo strona ma tylko listę i akcje nad nią
- * (`docs/frontend/pages.md` §3: zakładki dokłada się dopiero wtedy, gdy jest alternatywny
+ * (`docs/guides/frontend/pages.md` §3: zakładki dokłada się dopiero wtedy, gdy jest alternatywny
  * widok zależny od zaznaczenia). Siatka ma więc dwa obszary zamiast czterech.
  */
 @Component({

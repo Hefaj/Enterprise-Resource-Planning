@@ -1,3 +1,18 @@
+---
+id: frontend.translations
+title: Tłumaczenia (Transloco)
+summary: Transloco, typowane klucze, scope tłumaczeń i ochrona przed DI shadowing.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - tłumaczenia Transloco
+  - brak tłumaczenia lub DI shadowing
+related: []
+---
+
 # Tłumaczenia (Transloco)
 
 Lokalizacja i18n oparta o **Transloco**, z generatorem typowanych kluczy. Zasada nadrzędna: **zero hardcoded stringów** widocznych dla użytkownika w TS/HTML — wszystko idzie przez klucze z wygenerowanego rejestru.
@@ -44,7 +59,7 @@ Transloco rozwiązuje tłumaczenia przez wstrzykiwacz (DI) — komponent pyta o 
 
 ## 3. Automatyczne wstrzykiwanie providerów w modalach
 
-Definicje modali (np. `ProductSetPriceModalDefinition`, patrz [dokumentacja modali](./modals.md)) **nie wołają** `.setProviders(...)` w builderze — to by wymagało, żeby każdy modal ręcznie pamiętał o doładowaniu tłumaczeń, i łatwo by się to rozjechało między modułami.
+Definicje modali (np. `ProductSetPriceModalDefinition`, patrz [dokumentacja modali](modals.md)) **nie wołają** `.setProviders(...)` w builderze — to by wymagało, żeby każdy modal ręcznie pamiętał o doładowaniu tłumaczeń, i łatwo by się to rozjechało między modułami.
 
 Zamiast tego `ErpModalService` sam pobiera i wstrzykuje odpowiednie providery przy leniwym ładowaniu modalu z remota — pod warunkiem, że kontrakt remota (`entry.modals.ts`) eksponuje funkcję `getModalProviders()`:
 
@@ -90,7 +105,7 @@ export function provideMODULE_NAMETranslations() {
 }
 ```
 
-To jest jednorazowa czynność przy tworzeniu modułu/funkcjonalności — patrz [nowy moduł, krok 4.4](./new-module.md#krok-4-uzupełnij-biblioteki).
+To jest jednorazowa czynność przy tworzeniu modułu/funkcjonalności — patrz [nowy moduł, krok 4.4](new-module.md#krok-4-uzupełnij-biblioteki).
 
 ---
 
@@ -113,7 +128,7 @@ Kody `snake_case` (`multimedia_still_referenced`) nie są tekstem dla użytkowni
 jego języka. Tłumaczenia trzymamy w gałęzi `shared.errors.codes` scope'u `shared`, pod nazwą
 w `camelCase`, a zamianę robi `resolveErrorCodeKey` z `@erp/shared/ui`. Scope MUSI być `shared`:
 błąd zgłoszony przez Catalog wyświetla moduł `notification`, który nie ma scope'u Catalogu.
-Szczegóły → [Powiadomienia §9](./notifications.md#9-kody-błędów-zadań--z-multimedia_still_referenced-na-zdanie).
+Szczegóły → [Powiadomienia §9](notifications.md#9-kody-błędów-zadań--z-multimedia_still_referenced-na-zdanie).
 
 **Nigdy nie edytuj `keys.ts` ręcznie** — kolejne uruchomienie generatora nadpisze ręczne zmiany bez ostrzeżenia, a rozjazd między `keys.ts` a `pl-PL.json`/`en-US.json` prowadzi do kluczy, które istnieją w typach, ale nie mają tłumaczenia w runtime (albo odwrotnie).
 
@@ -121,6 +136,6 @@ Szczegóły → [Powiadomienia §9](./notifications.md#9-kody-błędów-zadań--
 
 ## Zobacz też
 
-- [Modale](./modals.md) — `getModalProviders()` w praktyce
-- [Struktura katalogów agregatu](./feature-structure.md) — gdzie leży katalog `translation/` agregatu
-- [Nowy moduł](./new-module.md) — bootstrapping scope'u przy tworzeniu modułu
+- [Modale](modals.md) — `getModalProviders()` w praktyce
+- [Struktura katalogów agregatu](feature-structure.md) — gdzie leży katalog `translation/` agregatu
+- [Nowy moduł](new-module.md) — bootstrapping scope'u przy tworzeniu modułu

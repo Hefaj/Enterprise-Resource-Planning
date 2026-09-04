@@ -6,8 +6,8 @@ namespace TaskManagement.Application.Automation;
 /// Parser postaci tekstowej wąskiego warunku — <c>priority = "High" and state.category = "Done"
 /// or tag = "…"</c>. Produkuje ten sam AST (<see cref="AutomationCondition"/>), co budowniczy
 /// formularza w UI (patrz test równoważności w <c>AutomationConditionParserTests</c>). Grunt pod
-/// przyszłe `guard` (WF-003) i SRCH-005 — <b>nie jest głównym interfejsem</b> edycji reguły w tej
-/// sesji (UI buduje warunek strukturalnie, patrz `PLAN-task-management.md`).
+/// przyszłe `guard` (WF-003) i SRCH-005 — <b>nie jest głównym interfejsem</b> edycji reguły;
+/// UI buduje warunek strukturalnie zgodnie z <c>docs/modules/task-management/requirements.md</c>.
 ///
 /// <para>Nie generuje SQL-a i nie wykonuje kodu — wyłącznie tokenizuje i składa AST, tak samo
 /// jak wymaga tego SRCH-005 AC1 dla języka wyszukiwania.</para>

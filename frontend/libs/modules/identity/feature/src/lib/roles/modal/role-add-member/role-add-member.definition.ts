@@ -8,7 +8,7 @@ import { ROLE_ADD_MEMBER_MODAL_ID } from '@erp/identity/util';
 /** `excludeUuids` — rola-kontener sama (nie może być swoją własną składową) i role już będące
  * składowymi; wywołujący podaje je tylko w trybie jednego celu. Cykle DALEJ nie są wykrywane
  * klientem — backend waliduje i zwraca `role_cycle_detected`, patrz
- * `docs/backend/identity-authz.md` §2. */
+ * `docs/architecture/security.md` §2. */
 export interface RoleAddMemberMetadata extends ErpBatchMetadata {
   readonly excludeUuids: string[];
 }

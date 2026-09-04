@@ -1,3 +1,18 @@
+---
+id: frontend.user-directory
+title: Użytkownicy w module, który nie jest Identity
+summary: Port katalogu użytkowników dla modułów, picker osoby i prezentacja nazwiska zamiast UUID.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - użytkownik w module innym niż Identity
+  - picker osoby lub ERP_USER_DIRECTORY
+related: []
+---
+
 # Użytkownicy w module, który nie jest Identity
 
 **Stan: ✅ wdrożone.** Katalog działa, korzysta z niego Task Management (przypisany na liście
@@ -7,7 +22,7 @@ w to samo bez własnego kodu.
 Ten dokument odpowiada na jedno pytanie: **skąd moduł bierze nazwisko, skoro backend oddaje mu
 sam `uuid`, a użytkownicy należą do Identity.**
 
-Model tożsamości, role i uprawnienia → [`identity-authz.md`](../backend/identity-authz.md).
+Model tożsamości, role i uprawnienia → [`identity-authz.md`](../../architecture/security.md).
 
 ---
 
@@ -48,7 +63,7 @@ z implementacją.
 
 > **Dlaczego nie po prostu serwis wstrzykiwany wprost w komponencie.** Bo komponent siedzi
 > w `type:ui`. Ta sama droga, którą wcześniej poszedł `IDENTITY_PERMISSIONS_API_BASE_URL`
-> w `@erp/shared/auth` ([`identity-authz.md` §6](../backend/identity-authz.md)).
+> w `@erp/shared/auth` ([`identity-authz.md` §6](../../architecture/security.md)).
 
 ---
 
@@ -109,7 +124,7 @@ Kolumna sortowana i filtrowana po stronie serwera nie może brać nazwiska z kom
 `TaskManagementIssueOrchestrator` rozwiązuje więc `assignee`/`reporter` w `resolveEagerDependencies`
 (jedna paczka uuidów na całą stronę listy) i `_resolveCurrentDeps` (odczyt sygnału, więc wiersz
 przerysowuje się sam, gdy nazwisko dojedzie) — dokładnie tak samo, jak rozwiązuje projekt
-([`orchestrators.md`](./orchestrators.md) §2).
+([`orchestrators.md`](orchestrators.md) §2).
 
 ---
 
@@ -133,14 +148,14 @@ przerysowuje się sam, gdy nazwisko dojedzie) — dokładnie tak samo, jak rozwi
 |---|---|
 | **Replikacja użytkowników do schematu każdego modułu** | Wymaga zdarzenia `UserAccountChanged`, konsumenta i backfillu w każdym module. Kupuje jedną rzecz: sortowanie, filtrowanie i eksport **po nazwisku** po stronie serwera. Do czasu, aż ktoś tego naprawdę zażąda, front sklejający nazwiska wystarcza — a decyzja jest odwracalna, bo kontrakt HTTP się nie zmieni |
 | **Awatary** | Keycloak ich nie trzyma; wejdą razem z magazynem plików dla profilu, nie wcześniej |
-| **Grupy i jednostki organizacyjne** | Identity, pozycja odłożona ([`identity-authz.md` §9](../backend/identity-authz.md)). Do tego czasu „dział” to projekt i jego zespół |
-| **Podpowiadanie @wzmianek w komentarzach** | Ten sam katalog, ale wymaga integracji z edytorem tiptap — osobna pozycja przy powiadomieniach dla ludzi ([`user-notifications.md`](../backend/user-notifications.md)) |
+| **Grupy i jednostki organizacyjne** | Identity, pozycja odłożona ([`identity-authz.md` §9](../../architecture/security.md)). Do tego czasu „dział” to projekt i jego zespół |
+| **Podpowiadanie @wzmianek w komentarzach** | Ten sam katalog, ale wymaga integracji z edytorem tiptap — osobna pozycja przy powiadomieniach dla ludzi ([`user-notifications.md`](../../modules/notification/user-notifications.md)) |
 
 ---
 
 ## 7. Zobacz też
 
-- [`identity-authz.md`](../backend/identity-authz.md) — skąd bierze się `user_account` i dlaczego Keycloak jest czystym IdP
-- [`architecture.md`](./architecture.md) — scope’y i warstwy, których ten port nie łamie
-- [`orchestrators.md`](./orchestrators.md) — rozwiązywanie zależności wiersza
-- [`atoms.md`](./atoms.md) — wzorzec Single Config Builder, na którym stoi picker
+- [`identity-authz.md`](../../architecture/security.md) — skąd bierze się `user_account` i dlaczego Keycloak jest czystym IdP
+- [`architecture.md`](../../architecture/frontend.md) — scope’y i warstwy, których ten port nie łamie
+- [`orchestrators.md`](orchestrators.md) — rozwiązywanie zależności wiersza
+- [`atoms.md`](atoms.md) — wzorzec Single Config Builder, na którym stoi picker

@@ -11,7 +11,7 @@ namespace TaskManagement.Infrastructure.Queries;
 /// <para><b>Profil jest jednym źródłem prawdy dla obu końców</b>: front buduje z niego kolumny
 /// tabeli i filtry, a <see cref="IssueQueries"/> czyta z niego mapę „kod pola → slot" przy
 /// tłumaczeniu sortowania na <c>ORDER BY</c>. Dwa niezależne katalogi pól rozjechałyby się
-/// pierwszego dnia po dodaniu pola (<c>docs/backend/task-management.md</c> §6).</para>
+/// pierwszego dnia po dodaniu pola (<c>docs/modules/task-management/domain.md</c> §6).</para>
 /// </summary>
 public sealed class FieldSchemeQueries : IFieldSchemeQueries
 {

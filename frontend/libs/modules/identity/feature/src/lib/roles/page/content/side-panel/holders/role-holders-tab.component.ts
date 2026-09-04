@@ -22,8 +22,8 @@ interface RoleHolderRow {
 
 /**
  * Zakładka „Kto ma tę rolę" — posiadacze WSZYSTKICH zaznaczonych ról w JEDNEJ tabeli,
- * pogrupowani po roli (patrz `docs/frontend/pages.md` §6). Filtr `roleUuid` jest BEZPOŚREDNI
- * (nie przez hierarchię) — patrz `docs/backend/identity-authz.md`.
+ * pogrupowani po roli (patrz `docs/guides/frontend/pages.md` §6). Filtr `roleUuid` jest BEZPOŚREDNI
+ * (nie przez hierarchię) — patrz `docs/architecture/security.md`.
  */
 @Component({
   selector: 'erp-identity-role-holders-tab',

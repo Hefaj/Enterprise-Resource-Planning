@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Route } from '@angular/router';
 import { erpAuthGuard, erpGuestGuard } from '@erp/shared/auth';
 import { loadModuleRoutes } from './module-loaders';
@@ -27,6 +26,11 @@ export const appRoutes: Route[] = [
       {
         path: 'dashboard',
         loadComponent: () => import('@erp/client/feature').then((m) => m.DashboardComponent),
+      },
+      {
+        path: 'help',
+        data: { breadcrumb: 'shared.documentation.help' },
+        loadComponent: () => import('@erp/client/feature').then((module) => module.HelpComponent),
       },
       {
         path: 'forbidden',

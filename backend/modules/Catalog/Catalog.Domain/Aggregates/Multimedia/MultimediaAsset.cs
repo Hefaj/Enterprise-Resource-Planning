@@ -9,7 +9,7 @@ namespace Catalog.Domain.Multimedia;
 /// „Nikt tego teraz nie używa" nie znaczy „to śmieć": użytkownik, który odpina zdjęcie od
 /// produktu, żeby przepiąć je do innego, nie prosi o skasowanie pliku. Kasowanie po zerowej
 /// referencji usuwałoby jego dane w oknie między dwoma kliknięciami — nieodwracalnie
-/// i niewidocznie (<c>docs/backend/media-storage.md</c> §4c).</para>
+/// i niewidocznie (<c>docs/guides/backend/media-storage.md</c> §4c).</para>
 /// </summary>
 public enum MultimediaOwnership
 {
@@ -32,7 +32,7 @@ public enum MultimediaOwnership
 /// <summary>
 /// Zasób multimedialny (zdjęcie, wideo) — osobny agregat, nie pole produktu.
 ///
-/// Uzasadnienie granicy, wg kryteriów z sekcji 9 <c>docs/frontend/orchestrators.md</c>:
+/// Uzasadnienie granicy, wg kryteriów z sekcji 9 <c>docs/guides/frontend/orchestrators.md</c>:
 /// ma własny endpoint, bywa ładowany niezależnie od produktu (flaga <c>includeMultimedia</c>),
 /// jest współdzielony między agregatami i ma własny cykl życia (upload, usunięcie).
 /// Frontend potwierdza tę granicę osobnym orkiestratorem o sygnaturze <c>catalog.multimedia</c>.
@@ -92,7 +92,7 @@ public class MultimediaAsset : AggregateRoot
     /// <para>Świadomie identyfikator, a nie gotowy adres: adres do magazynu jest podpisany
     /// i krótko ważny, więc zapisany w bazie zestarzałby się w kilka minut. Zawartość wydaje
     /// endpoint modułu, który ten identyfikator wymienia na strumień — patrz
-    /// <c>docs/backend/exports-artifacts.md</c> §6.</para>
+    /// <c>docs/guides/backend/exports-artifacts.md</c> §6.</para>
     /// </summary>
     public Guid? ArtifactUuid { get; private set; }
 
@@ -126,7 +126,7 @@ public class MultimediaAsset : AggregateRoot
     /// <summary>
     /// Czy dla tego zasobu w ogóle warto generować warianty. Adres zewnętrzny odpada, bo bajty
     /// nie są nasze; nie-obrazy odpadają, bo miniaturka wideo czy PDF-u wymaga innych narzędzi
-    /// niż skalowanie bitmapy (patrz <c>docs/backend/media-storage.md</c> §9).
+    /// niż skalowanie bitmapy (patrz <c>docs/guides/backend/media-storage.md</c> §9).
     /// </summary>
     public bool SupportsDerivatives => ArtifactUuid is not null && MediaType == ImageMediaType;
 

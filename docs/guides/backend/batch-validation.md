@@ -1,9 +1,24 @@
+---
+id: backend.batch-validation
+title: Walidacja wsadowa (batch validation)
+summary: Walidacja wsadowa przez IBatchRule i ValidationChain przed utworzeniem zadania.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - walidacja wsadowa
+  - IBatchRule lub ValidationChain
+related: []
+---
+
 # Walidacja wsadowa (batch validation)
 
 **Stan: ✅ działa.** Mechanizm wspólny (`Erp.BuildingBlocks.Validation`). Podpięty w Catalog
 (`ProductMustExistRule` dla `product/batch-set-price`/`batch-set-name`, `ProductDuplicateRule`
 dla `product/batch-set-classification`) i w Identity (`RoleGraphCycleRule`, `RoleCodeUniqueRule`,
-reguły istnienia — patrz [`identity-authz.md` §7](./identity-authz.md#7-mapa-wdrożenia--gdzie-co-leży)).
+reguły istnienia — patrz [`identity-authz.md` §7](../../architecture/security.md#7-mapa-wdrożenia--gdzie-co-leży)).
 Cel odrzucony przez pre-check dostaje `job_item.status = Failed` i `error_code` **przy tworzeniu
 zadania**, zanim `BulkCommandRunner` w ogóle je zobaczy.
 
@@ -11,7 +26,7 @@ zadania**, zanim `BulkCommandRunner` w ogóle je zobaczy.
 
 ## 1. Po co to istnieje
 
-[`cqrs.md`](./cqrs.md#3-komendy) i [`bulk-commands.md`](./bulk-commands.md) opisują już jedną
+[`cqrs.md`](cqrs.md#3-komendy) i [`bulk-commands.md`](bulk-commands.md) opisują już jedną
 warstwę walidacji: **metoda agregatu waliduje przed zmianą stanu**, a `DomainException` jednego
 elementu nie przerywa chunka operacji masowej. To działa dobrze dla reguł, które dotyczą
 WYŁĄCZNIE jednego agregatu naraz (cena nieujemna, nazwa niepusta).
@@ -47,7 +62,7 @@ Dlatego każda reguła oparta na **unikalności** musi mieć dwie warstwy:
 
 Bez trzeciego elementu duplikat, który prześlizgnął się przez pre-check, trafiłby do raportu jako
 `persistence_error` i był ponawiany aż do wyczerpania `MaxAttempts` — mimo że jest trwały.
-Patrz [`bulk-commands.md`](./bulk-commands.md).
+Patrz [`bulk-commands.md`](bulk-commands.md).
 
 ---
 
@@ -97,7 +112,7 @@ niezależnie od tego, jaki dokładnie kształt ma `T`.
 Implementacja żyje w `Application` modułu i dostaje dane przez **dedykowany interfejs
 odczytowy** (np. `IProductQueries.GetExistingUuidsAsync`), nie przez surowy `DbContext` —
 `Application` nie zna EF Core, tę granicę pilnuje `Erp.ArchitectureTests`, tak samo jak dla
-reszty strony odczytu CQRS (patrz [`cqrs.md`](./cqrs.md#4-zapytania)).
+reszty strony odczytu CQRS (patrz [`cqrs.md`](cqrs.md#4-zapytania)).
 
 ```csharp
 public sealed class ProductMustExistRule : IBatchRule<Guid>
@@ -250,7 +265,7 @@ nigdy nie wygeneruje.
   reguł (`CategoryMustExistRule` → `CategoryMustBeActiveRule`). `ProductBatchValidator` (tak samo
   `RoleBatchValidator`/`UserBatchValidator` w Identity) woła swoje reguły płasko, bo są niezależne i chcemy zebrać wszystkie naruszenia elementu naraz.
   Klasa `ValidationChain<T>` jest gotowa, ale bez konsumenta poza building blockiem.
-- **Walidacja wejścia z pipeline'u komend** (`IValidator<TCommand>`, [`cqrs.md` §6](./cqrs.md#6-pipeline-komend))
+- **Walidacja wejścia z pipeline'u komend** (`IValidator<TCommand>`, [`cqrs.md` §6](cqrs.md#6-pipeline-komend))
   to osobna warstwa: sprawdza kształt POJEDYNCZEJ komendy bez sięgania do bazy i biegnie przy
   każdym jej wykonaniu — również dla elementu zadania masowego. Pre-check wsadowy odpowiada na
   pytania, których nie da się rozstrzygnąć bez zbiorczego zapytania, i biegnie RAZ, przed
@@ -263,6 +278,6 @@ nigdy nie wygeneruje.
 
 ## 5. Zobacz też
 
-- [Operacje masowe](./bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, częściowe niepowodzenie
-- [CQRS — komendy i zapytania](./cqrs.md) — `DomainException`, walidacja w agregacie
-- [Architektura backendu](./architecture.md)
+- [Operacje masowe](bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, częściowe niepowodzenie
+- [CQRS — komendy i zapytania](cqrs.md) — `DomainException`, walidacja w agregacie
+- [Architektura backendu](../../architecture/backend.md)

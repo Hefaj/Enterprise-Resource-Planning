@@ -1,19 +1,29 @@
+---
+id: backend.media-storage
+title: Magazyn plików — gdzie żyją, kto ma do nich dostęp, kto po nich sprząta
+summary: Własność plików przez moduł, separacja dostępu i sprzątanie osieroconych obiektów.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - pliki w module biznesowym
+  - usuwanie lub sprzątanie multimediów
+related: []
+---
+
 # Magazyn plików — gdzie żyją, kto ma do nich dostęp, kto po nich sprząta
 
-**Stan: 🟡 wgrywanie i miniaturki potwierdzone na żywym MinIO, reszta nie.** Legenda znaczników —
-[`architecture.md`](./architecture.md#1-stan-wdrożenia). Wdrożone są wszystkie pozycje
-z [§6](#6-stan-wdrożenia) plus miniaturki z [§8](#8-warianty-pochodne--miniaturki); testy
-jednostkowe i architektoniczne przechodzą. Przebieg end-to-end na MinIO **odbył się dla ścieżki
-wgrywania i wariantów pochodnych** (i wywrócił dwa nieme braki w podpięciu — patrz
-[§6](#6-stan-wdrożenia)); co nadal czeka na pierwsze uruchomienie, wylicza
-[§7](#7-co-zostało-do-weryfikacji).
-Ten dokument **zastępuje** rozstrzygnięcia z [`exports-artifacts.md`](./exports-artifacts.md)
+Catalog jest implementacją referencyjną wgrywania, promocji, usuwania i generowania wariantów na
+MinIO. Wymagania sprawdzenia każdego środowiska opisuje [§7](#7-weryfikacja-środowiskowa).
+Ten dokument **zastępuje** rozstrzygnięcia z [`exports-artifacts.md`](exports-artifacts.md)
 §5 i §9 w tych punktach, w których się z nimi rozjeżdża (układ kubełków, poświadczenia,
 sprzątanie, rola DMS).
 
 Podział zakresów między tymi dwoma dokumentami:
 
-| | [`exports-artifacts.md`](./exports-artifacts.md) | ten dokument |
+| | [`exports-artifacts.md`](exports-artifacts.md) | ten dokument |
 |---|---|---|
 | Odpowiada na | jak powstaje plik produkowany przez system i jak użytkownik się o nim dowiaduje | gdzie pliki leżą, kto je widzi, kiedy znikają |
 | Zakres | jeden producent (`ExportRun`, `job.kind = Reduce`) | wszystkie pliki wszystkich modułów |
@@ -64,7 +74,7 @@ backend.
 ### Współdzielenie plików między modułami
 
 Marketing chce użyć zdjęcia produktu. To się robi **w przeglądarce, nie na backendzie**: front
-i tak woła każdy mikroserwis bezpośrednio (brak BFF — [`architecture.md`](./architecture.md)),
+i tak woła każdy mikroserwis bezpośrednio (brak BFF — [`architecture.md`](../../architecture/backend.md)),
 więc Marketing trzyma u siebie `uuid` zasobu z Catalogu, a `<img>` bierze zawartość z
 `GET catalog/multimedia/content/{uuid}`, za uprawnieniem Catalogu. Zero sprzężenia backendów,
 zero kopii bajtów, uprawnienie sprawdzane tam, gdzie mieszka model.
@@ -101,7 +111,7 @@ GET catalog/multimedia/content/{uuid}  → catalog.dictionary.read
 GET dms/invoice/content/{uuid}         → dms.invoice.read   + wpis audytowy pobrania
 ```
 
-Inny serwis, inny kod w [`Permissions`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/Permissions.cs),
+Inny serwis, inny kod w [`Permissions`](../../../backend/building-blocks/Erp.BuildingBlocks.Contracts/Permissions.cs),
 inna trasa. Faktury dostają dodatkowo audyt każdego pobrania — i **to** jest realna różnica między
 fakturą a zdjęciem produktu. Z magazynem nie ma ona nic wspólnego.
 
@@ -123,7 +133,7 @@ erp-marketing-media       …
 
 Nazwa: `erp-{moduł}-{klasa}`, klasa ∈ `artifacts` (wygasające, produkowane przez system) |
 `media` (trwałe, wgrywane przez użytkownika). Podział na te dwie klasy zostaje bez zmian — jest
-dobry i uzasadniony w [`exports-artifacts.md` §9](./exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
+dobry i uzasadniony w [`exports-artifacts.md` §9](exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
 Zmienia się to, że **kubełek jest per moduł, a nie wspólny**.
 
 Cztery powody, każdy wystarczający sam z siebie:
@@ -149,7 +159,7 @@ Cztery powody, każdy wystarczający sam z siebie:
 ### 2.3 Oś C — klucz MinIO per serwis
 
 **Tego nie ma dziś wcale.** Wszystkie serwisy chodzą na koncie root (`erp`/`erp12345`),
-a katalog [`backend/minio/policies/`](../../backend/minio/policies/) istnieje i jest pusty —
+a katalog [`backend/minio/policies/`](../../../backend/minio/policies) istnieje i jest pusty —
 kierunek był w planie, tylko nie został wykonany.
 
 Każdy serwis dostaje własnego użytkownika MinIO z polityką zawężoną do swoich kubełków:
@@ -169,7 +179,7 @@ Każdy serwis dostaje własnego użytkownika MinIO z polityką zawężoną do sw
 ```
 
 Zakładane jednorazowym kontenerem `minio-init` w
-[`docker-compose.yml`](../../backend/docker-compose.yml) (`mc admin user add` + `mc admin policy
+[`docker-compose.yml`](../../../backend/docker-compose.yml) (`mc admin user add` + `mc admin policy
 attach`), obok samego MinIO — tak samo jak kubełek zakłada się kodem, a nie instrukcją dla
 developera.
 
@@ -257,7 +267,7 @@ heurystyce. Rozbite na przypadki, trzy z czterech nie potrzebują workera w ogó
 Bilet wydany, przeglądarka zrobiła `PUT`, użytkownik zamknął modal przed krokiem 3. Obiekt jest
 w kubełku, w bazie nie ma o nim ani jednego wiersza — więc **nic w systemie nie wie, że istnieje**.
 Dziś to jedyny wyciek jawnie przyznany jako nieobsłużony (patrz też
-[`docs/frontend/multimedia.md` §2](../frontend/multimedia.md)).
+[`docs/guides/frontend/multimedia.md` §2](../frontend/multimedia.md)).
 
 **Rozwiązanie: prefiks postojowy z §3, czyli zero kodu sprzątającego.** Osierocony obiekt nigdy
 nie opuszcza `staging/` i umiera z reguły kubełka. Mechanizm, który nie ma jak mieć buga i nie ma
@@ -274,7 +284,7 @@ Baza i MinIO nie są w jednej transakcji, więc zawsze istnieje moment, w który
 a `DeleteObject` padł albo się nie wykonał.
 
 **Rozwiązanie: transactional outbox, nie worker** — machineria już jest
-([`events-outbox.md`](./events-outbox.md)). Ta sama transakcja, która usuwa `MultimediaAsset`,
+([`events-outbox.md`](../../architecture/integration-events.md)). Ta sama transakcja, która usuwa `MultimediaAsset`,
 zapisuje kopertę `MultimediaAssetDeleted { ArtifactUuid }`; konsument woła `DeleteAsync`
 z ponowieniami. Semantyka at-least-once jest tu dokładnie właściwa, bo usunięcie jest idempotentne:
 `MinioArtifactStore.DeleteAsync` świadomie łyka `ObjectNotFoundException`.
@@ -329,7 +339,7 @@ Zasady, wszystkie konieczne:
   z trwającym uploadem ani z niezatwierdzoną jeszcze transakcją;
 - **kierunek: od magazynu do bazy** — listuje `assets/`, sprawdza każdy klucz po indeksie
   `multimedia.artifact_uuid`, który **jest już założony** dokładnie pod to
-  ([`MultimediaAssetConfiguration`](../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/Configurations/Multimedia/MultimediaAssetConfiguration.cs));
+  ([`MultimediaAssetConfiguration`](../../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/Configurations/Multimedia/MultimediaAssetConfiguration.cs));
 - **domyślnie dry-run** — raportuje do logu i metryki; kasowanie włącza się jawnie i dopiero po
   tym, jak przez kilka przebiegów raport jest pusty albo w całości zrozumiały;
 - **w serwisie-właścicielu** — tylko Catalog wie, co jest referencją w Catalogu. To ta sama
@@ -337,7 +347,7 @@ Zasady, wszystkie konieczne:
 - **pod dzierżawą `catalog:media-reconciliation`** (advisory lock Postgresa) — instancja, która
   jej nie dostanie, pomija przebieg i czeka na następny cykl. Pominięcie nic tu nie kosztuje, bo
   cykl liczy się w godzinach; bez dzierżawy dwie instancje listowałyby ten sam kubełek i kasowały
-  te same obiekty. Patrz [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
+  te same obiekty. Patrz [`architecture.md` §7](../../architecture/backend.md#7-wieloinstancyjność--założenia-zdjęte).
 
 > **Jak czytać jego wynik.** Jeżeli 4a–4c działają, audytor przez większość życia systemu nie
 > znajduje niczego — i o to chodzi. Worker, który regularnie coś kasuje, jest **objawem**, że
@@ -366,47 +376,35 @@ Trzy pozycje niezależne od powyższych rozstrzygnięć, warte zapisania, żeby 
 
 ---
 
-## 6. Stan wdrożenia
+## 6. Implementacja referencyjna Catalogu
 
-| # | Zmiana | Stan | Gdzie |
-|---|---|---|---|
-| 1 | Kubełki per moduł; `Stores` jako słownik (§2.2, §2.4) | ✅ | [`ErpArtifactOptions`](../../backend/building-blocks/Erp.BuildingBlocks.Artifacts/ErpArtifactOptions.cs), [`ErpArtifactExtensions`](../../backend/building-blocks/Erp.BuildingBlocks.Artifacts/ErpArtifactExtensions.cs) |
-| 2 | Klucz MinIO per serwis, polityki, `minio-init` (§2.3) | ✅ | [`minio/policies/`](../../backend/minio/policies/), [`docker-compose.yml`](../../backend/docker-compose.yml) |
-| 3 | Prefiksy `staging/`/`assets/`, `PromoteAsync`, lifecycle (§3, §4a) | ✅ | [`MinioArtifactStore`](../../backend/building-blocks/Erp.BuildingBlocks.Artifacts/MinioArtifactStore.cs) |
-| 4 | Komenda usuwająca + outbox `ArtifactDeletionRequested` (§4b) | ✅ | `MultimediaRemoveCommand*`, [`ArtifactDeletionRequestedHandler`](../../backend/modules/Catalog/Catalog.Infrastructure/Consumers/ArtifactDeletionRequestedHandler.cs) |
-| 5 | `Ownership` + licznik referencji w `MultimediaDto` + kaskada dla `Owned` (§4c) | ✅ | [`MultimediaAsset`](../../backend/modules/Catalog/Catalog.Domain/Aggregates/Multimedia/MultimediaAsset.cs), `MultimediaCascade`, `ProductRemoveMultimediaCommand*`, `ProductSetMultimediaCommand*` |
-| 6 | Audytor rozjazdu, dry-run (§4d) | ✅ | [`MediaReconciliationService`](../../backend/modules/Catalog/Catalog.Infrastructure/Jobs/MediaReconciliationService.cs) |
-| 7 | Limit rozmiaru, `ReadToAsync` (§5) | ✅ | `MultimediaOptions`, `GetMultimediaContent` |
-| 8 | Skan antywirusowy (§5) | 📐 | decyzja nie zapadła |
-| 9 | Miniaturki i podglądy (SkiaSharp, outbox, endpoint wariantu) — §8 | ✅ | `ImageDerivativeGenerator`, `ArtifactDerivativesRequestedHandler`, `GetMultimediaVariantEndpoint`; przebieg end-to-end na żywym MinIO potwierdzony — patrz niżej |
-| 10 | Ponowne zlecenie wariantów (`multimedia/batch-exec-generate-derivatives`) — §8 | ✅ | `MultimediaExecGenerateDerivativesCommand*`, akcja „Generuj miniatury" w panelu multimediów |
+Catalog pokazuje komplet wzorca, który następny moduł ma powtórzyć bez kopiowania szczegółów
+domenowych:
 
-### Dwie rzeczy, które trzymały pozycję 9 martwą
+- kubełki i klucze dostępu per moduł konfiguruje `ErpArtifactOptions` oraz polityki w
+  [`backend/minio/policies`](../../../backend/minio/policies);
+- `MinioArtifactStore` rozdziela `staging/` i `assets/`, promuje obiekt po rejestracji i wspiera
+  lifecycle dla zawartości tymczasowej;
+- usunięcie domenowe publikuje `ArtifactDeletionRequested` przez outbox;
+- `MultimediaCascade` usuwa osierocony zasób `Owned`, ale zachowuje zasób `Library`;
+- `MediaReconciliationService` audytuje rozjazd w trybie dry-run;
+- endpoint zawartości używa `ReadToAsync`, a limity po rejestracji sprawdzają faktyczny rozmiar;
+- pochodne obrazu produkuje konsument outboxu, a komenda masowa może ponowić generowanie.
 
-Generator był poprawny od początku (testy przechodziły), ale **kod nigdy się nie wykonywał**.
-Blokowały go dwa niezależne braki w podpięciu — oba nieme, żaden nie dawał błędu:
+Skanowanie antywirusowe pozostaje decyzją dla modułów przyjmujących dokumenty od zewnętrznych
+nadawców. Nie wolno uznać samego rozszerzenia ani MIME z żądania za dowód bezpieczeństwa pliku.
 
-1. **Catalog nie miał `Messaging:ListenQueueName`**, więc nie był związany z wymianą `erp.events`.
-   Fanout kopiuje kopertę wyłącznie do związanych kolejek — moduł nie dostawał nawet tego, co sam
-   opublikował. Publikacja się udawała, outbox pustoszał, dead letters były puste.
-2. **Konsumenci przyjmowali `IServiceProvider`** w sygnaturze, żeby sięgnąć po kluczowany
-   `IArtifactStore`. Wolverine 6 odrzuca takie sygnatury (`ServiceLocationPolicy.NotAllowed`) —
-   handler nie powstawał, a koperta lądowała jako „No known handler". Dotyczyło to tak samo
-   `ArtifactDerivativesRequestedHandler`, jak i `ArtifactDeletionRequestedHandler`, czyli
-   **pozycja 4 tej tabeli też nigdy nie zadziałała**. Rozwiązanie: `IArtifactStoreResolver`.
+### Wymagania podpięcia konsumenta
 
-To zostawiło osobny dług, który zamyka dopiero pozycja 10: zlecenie generowania wychodzi
-**raz**, przy rejestracji pliku, więc zasoby wgrane w czasie, gdy konsument był martwy, nie
-miały jak wariantów dostać. Stąd komenda `Exec` ponawiająca zlecenie dla wskazanych zasobów —
-bez niej jedynym sposobem nadrobienia byłoby wgranie plików od nowa.
+Moduł przetwarzający własne zdarzenia musi mieć `Messaging:ListenQueueName` i związanie z wymianą
+`erp.events`; sam poprawnie opróżniający się outbox nie dowodzi, że konsument dostał wiadomość.
+Konsumenci Wolverine nie pobierają kluczowanego magazynu przez surowy `IServiceProvider`, lecz przez
+`IArtifactStoreResolver`, aby sygnatura handlera była wspierana i możliwa do zweryfikowania.
 
-Pomiary z przebiegu potwierdzającego: wariant gotowy **0,25 s** po rejestracji dla zdjęcia
-12 Mpx i **1,6 s** dla 90 Mpx. To szybciej, niż użytkownik zdąży zatwierdzić modal — kafelek
-pojawia się od razu z miniaturką, a zaślepka typu pliku jest w praktyce ścieżką awaryjną,
-nie normalnym etapem. Podmiana przez `AggregateChanged` → SignalR działa i została sprawdzona
-na biernej karcie przeglądarki: jedno odpytanie po pchnięciu, bez pętli odpytującej.
+Zlecenie pochodnych wychodzi raz przy rejestracji, dlatego moduł musi udostępnić idempotentną komendę
+ponowienia dla zasobów, które nie mają oczekiwanych wariantów.
 
-### Jak domknięta jest kaskada z pozycji 5
+### Kaskada zasobu należącego do agregatu
 
 Wyzwalaczem jest odpięcie referencji, którego wcześniej w module nie było: komendy
 `ProductRemoveMultimediaCommand` (zdejmuje wskazane pliki) i `ProductSetMultimediaCommand`
@@ -433,15 +431,11 @@ to jedyne miejsce, w którym plik użytkownika znika bez jawnej komendy „usuń
 
 ---
 
-## 7. Co zostało do weryfikacji
+## 7. Weryfikacja środowiskowa
 
-Ścieżka wgrywania i miniaturek przeszła już na żywym MinIO (konto `catalog`, nie root):
-bilet → `PUT` do magazynu → rejestracja → promocja do `assets/` → warianty pod
-`derivatives/{uuid:N}/{thumb|preview}` → endpoint wariantu → miniaturka w tabeli. Zamknięte tym
-samym przebiegiem: **`minio-init` zakłada konto i politykę**, **`CopyObject` przy promocji** oraz
-**Skia na maszynie deweloperskiej**.
-
-Nadal do sprawdzenia:
+Każde środowisko musi przejść pełny przebieg na koncie modułu, nie na koncie root:
+bilet → `PUT` → rejestracja → promocja do `assets/` → pochodne → endpoint wariantu → odczyt w UI.
+Oprócz testu aplikacyjnego trzeba sprawdzić:
 
 - **Reguła lifecycle z dwoma wpisami naraz** (`erp-staging-cleanup` + `erp-artifact-retention`
   na kubełku `transient`) — kubełek `media` nie ma retencji, więc przebieg z multimediami tego
@@ -450,16 +444,10 @@ Nadal do sprawdzenia:
   `SkiaSharp.NativeAssets.Linux.NoDependencies` musi jeszcze trafić do obrazu wdrożeniowego.
   Brak `libSkiaSharp.so` nie objawia się przy starcie — dopiero przy pierwszym wgranym zdjęciu,
   w konsumencie działającym w tle.
-- ~~**Kasowanie plików**~~ — **zweryfikowane end-to-end** (25.08.2026): „Usuń z biblioteki"
-  na stronie `/catalog/multimedia` → `multimedia/batch-remove` → zadanie `Completed` 1/1 →
-  wiersz zniknął z `catalog.multimedia`, a konsument `ArtifactDeletionRequested` usunął
-  z kubełka obiekt `assets/{uuid:N}` (18 MB). Sprawdzona jest też odmowa: ten sam zasób,
-  póki wskazywał na niego produkt, odpadł jako `job_item` z `multimedia_still_referenced`,
-  nie wywracając zadania.
-- ~~**Nadrabianie wariantów dla starych zasobów**~~ — **zweryfikowane end-to-end**: „Generuj
-  miniatury" → `multimedia/batch-exec-generate-derivatives` → `derivatives/{uuid:N}/{thumb,preview}`
-  w kubełku, `derivatives_generated_at` ustawione, a miniaturka pojawiła się w otwartej tabeli
-  sama, przez `AggregateChanged` — bez odświeżania strony.
+- **Kasowanie i odmowę kasowania** — zasób bez referencji znika przez outbox, a zasób nadal
+  używany kończy element zadania kodem `multimedia_still_referenced` bez wywrócenia paczki.
+- **Nadrabianie wariantów** — komenda ponowienia tworzy `thumb` i `preview`, ustawia znacznik czasu,
+  a otwarta tabela odświeża się przez `AggregateChanged`, bez pętli odpytującej.
 - **Migracja danych deweloperskich**: obiekty sprzed zmiany kluczy leżą pod płaskim `{uuid:N}`,
   a kod adresuje `assets/{uuid:N}`. Kubełki zmieniły też nazwy (`erp-catalog-media` zamiast
   `erp-media`), więc najprościej jest wyczyścić wolumen MinIO i wgrać multimedia od nowa —
@@ -487,7 +475,7 @@ mc admin policy attach  local erp-catalog --user catalog
 Obiekty sprzed zmiany leżą wtedy pod płaskim `{uuid:N}` w starym kubełku i trzeba je przenieść
 pod `assets/{uuid:N}` w nowym (albo wyczyścić wolumen — to dane deweloperskie).
 
-### Frontend: kontrakt NSwag jest zregenerowany
+### Frontend: wymagany kontrakt NSwag
 
 Klient w `frontend/libs/modules/catalog/data-access/src/lib/api-client.ts` został wygenerowany
 z żywego Catalogu i ma komplet: pola `referenceCount`/`hasDerivatives` w `MultimediaDto`,
@@ -498,10 +486,8 @@ i `product/batch-set-multimedia`. `SearchMultimediaRequest` ma też filtry bibli
 filtrem CELU operacji masowej, „usuń wszystkie nieużywane" jest jednym żądaniem, a nie listą
 uuidów wyklikaną ręcznie.
 
-**Ręczne dopiski z okresu przejściowego okazały się co do znaku poprawne** — generator zastąpił
-je bez różnicy w treści, a cały diff poza dwoma nowymi operacjami to przesortowanie metod.
-Obejście po stronie orkiestratora (czytanie nowych pól przez sygnaturę indeksową DTO) zostało
-usunięte: `catalog-multimedia.orchestrator.ts` czyta je wprost.
+Orkiestrator czyta typowane pola klienta wprost. Ręczne rozszerzanie wygenerowanego DTO lub dostęp
+przez sygnaturę indeksową są niedozwolone; po zmianie kontraktu trzeba ponownie uruchomić NSwag.
 
 ---
 
@@ -545,7 +531,7 @@ ponawia zlecenie.
 
 **Czasownik to `Exec`, nie `Set`** — komenda nie zmienia żadnego plastra stanu agregatu; sam
 zasób po jej wykonaniu wygląda tak samo, a różnica pojawia się dopiero w magazynie i dopiero
-po zatwierdzeniu transakcji ([`endpoint-naming.md` §5](./endpoint-naming.md#5-exec-i-jego-granica)).
+po zatwierdzeniu transakcji ([`endpoint-naming.md` §5](endpoint-naming.md#5-exec-i-jego-granica)).
 Ma to widoczną konsekwencję w raporcie zadania: **sukces oznacza przyjęcie zlecenia, nie gotową
 miniaturkę**. Plik, którego Skia nie zdekoduje, zostawia `succeeded` i ląduje wyłącznie w logu
 konsumenta. Gotowe warianty zgłaszają się osobno, przez `AggregateChanged`.
@@ -579,7 +565,7 @@ robić dokładnie to, czemu warianty zapobiegają.
 
 | Co | Dlaczego tak |
 |---|---|
-| **SkiaSharp**, nie ImageSharp | ImageSharp od v3 ma Six Labors Split License z progiem przychodowym — ta sama klasa zależności, którą projekt odrzucił przy MassTransit v9 i MediatR v13 ([`architecture.md` §4](./architecture.md#4-decyzje-technologiczne-i-ich-powody)). SkiaSharp to MIT nad Skia na BSD-3. |
+| **SkiaSharp**, nie ImageSharp | ImageSharp od v3 ma Six Labors Split License z progiem przychodowym — ta sama klasa zależności, którą projekt odrzucił przy MassTransit v9 i MediatR v13 ([`architecture.md` §4](../../architecture/backend.md#4-decyzje-technologiczne-i-ich-powody)). SkiaSharp to MIT nad Skia na BSD-3. |
 | **WebP** | ~30% mniejszy plik przy tej samej jakości; wariantu nie pobiera nikt poza naszym UI, więc zgodność ze starymi przeglądarkami nie jest argumentem. |
 | Wariant w **ścieżce**, nie w query | Odpowiedź niesie `immutable`, więc każdy wariant musi mieć własny trwały adres. Query string zachęcałby do dowolnych rozmiarów, a zestaw jest zamknięty — pliki powstają z góry. |
 | **404 zamiast oryginału**, gdy wariantu brak | Podstawienie oryginału „żeby coś było" byłoby cichym powrotem do problemu. Klient wie z `hasDerivatives`, kiedy pytać. |
@@ -600,10 +586,10 @@ Samego backfillu nie ma.
 
 ## 9. Zobacz też
 
-- [Eksporty i artefakty](./exports-artifacts.md) — jak powstaje plik produkowany przez system,
+- [Eksporty i artefakty](exports-artifacts.md) — jak powstaje plik produkowany przez system,
   `job.kind`, agregat przebiegu, wygasanie razem z wierszem `job`
-- [Zdarzenia domenowe i outbox](./events-outbox.md) — mechanizm z §4b
-- [Tożsamość i uprawnienia](./identity-authz.md) — katalog uprawnień z §2.1
-- [Architektura backendu §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) — gdzie trafia
+- [Zdarzenia domenowe i outbox](../../architecture/integration-events.md) — mechanizm z §4b
+- [Tożsamość i uprawnienia](../../architecture/security.md) — katalog uprawnień z §2.1
+- [Architektura backendu §7](../../architecture/backend.md#7-wieloinstancyjność--założenia-zdjęte) — gdzie trafia
   audytor z §4d
 - [Multimedia na froncie](../frontend/multimedia.md) — bilety, `blob:`-URL-e, galeria, miniaturki

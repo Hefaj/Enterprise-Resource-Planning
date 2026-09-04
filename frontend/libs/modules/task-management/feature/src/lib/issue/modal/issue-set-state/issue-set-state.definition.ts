@@ -24,7 +24,7 @@ export interface IssueSetStateMetadata extends ErpBatchMetadata {
  * Modal: seryjna zmiana stanu zgłoszeń.
  *
  * <p><b>Wymaga jednego projektu.</b> Kolumny i stany są konfiguracją projektu
- * (`docs/backend/task-management.md` §5), więc lista wyboru istnieje tylko wtedy, gdy wszystkie
+ * (`docs/modules/task-management/domain.md` §5), więc lista wyboru istnieje tylko wtedy, gdy wszystkie
  * cele należą do jednego projektu albo gdy lista jest zawężona kontekstem projektu. Przy
  * zaznaczeniu z kilku projektów krok pokazuje komunikat zamiast pustego pickera — inaczej
  * użytkownik wybierałby stan, który dla części celów nie istnieje, i połowa elementów zadania

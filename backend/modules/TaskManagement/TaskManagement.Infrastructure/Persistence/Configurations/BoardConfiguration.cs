@@ -86,7 +86,7 @@ public sealed class BoardColumnConfiguration : IEntityTypeConfiguration<BoardCol
 ///
 /// <para>Dwa indeksy i oba niosą regułę. Unikalny <c>(board_uuid, issue_uuid)</c> to
 /// niezmiennik „jedno zgłoszenie ma najwyżej jedną kartę na danej tablicy”, egzekwowany
-/// <b>bazą, nie kodem aplikacji</b> (<c>docs/backend/task-management.md</c> §3). Zwykły
+/// <b>bazą, nie kodem aplikacji</b> (<c>docs/modules/task-management/domain.md</c> §3). Zwykły
 /// <c>(board_uuid, rank)</c> obsługuje jedyne zapytanie, jakie tablica zadaje: „daj karty
 /// w kolejności”.</para>
 /// </summary>

@@ -1,7 +1,7 @@
 namespace TaskManagement.Domain.Issues;
 
 /// <summary>
-/// Rodzaj powiązania między zgłoszeniami (<c>docs/backend/task-management.md</c> §8.1).
+/// Rodzaj powiązania między zgłoszeniami (<c>docs/modules/task-management/domain.md</c> §8.1).
 ///
 /// <para>Powiązanie to <b>graf</b> i coś zupełnie innego niż hierarchia
 /// (<c>issue.parent_uuid</c>, drzewo z jednym rodzicem). Trzymanie obu w jednej tabeli

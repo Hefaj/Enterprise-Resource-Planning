@@ -10,7 +10,9 @@ import {
   JOB_LIST_WIDGET_ID,
   USER_NOTIFICATION_WIDGET_ID,
   SignalrSyncService,
+  ErpDocumentationRegistryService,
 } from '@erp/shared/data-access';
+import { ErpRemoteDocumentationDescriptor } from '@erp/shared/util';
 import { ErpModalService } from '@erp/shared/ui';
 import { AppSettingsService } from '@erp/client/util';
 import { ErpJobToastBridge } from './erp-job-toast.bridge';
@@ -18,7 +20,7 @@ import { ErpOptimisticRollbackBridge } from './erp-optimistic-rollback.bridge';
 import { ErpAuthService, PermissionStore } from '@erp/shared/auth';
 
 /** Sygnatura SignalR dla zmian uprawnień/ról użytkownika — `AggregateSignatures.IdentityUser`
- * po stronie backendu (patrz docs/backend/identity-authz.md §4/§6). */
+ * po stronie backendu (patrz docs/architecture/security.md §4/§6). */
 const IDENTITY_USER_SIGNATURE = 'identity.user';
 
 export async function STARTUP(): Promise<void> {
@@ -26,6 +28,7 @@ export async function STARTUP(): Promise<void> {
   const modalService = inject(ErpModalService);
   const widgetRegistry = inject(ErpWidgetRegistryService);
   const jobResultRegistry = inject(ErpJobResultRegistry);
+  const documentationRegistry = inject(ErpDocumentationRegistryService);
 
   // Samo wstrzyknięcie uruchamia most: jego konstruktor zakłada `effect` nad feedem zadań.
   // Bez tej linijki serwis nigdy by nie powstał — nikt inny go nie wstrzykuje.
@@ -165,6 +168,7 @@ export async function STARTUP(): Promise<void> {
       permissionStore,
       unfilteredMenus,
       jobResultRegistry,
+      documentationRegistry,
     ),
   );
   const remoteMenus = await Promise.all(loadPromises);
@@ -224,6 +228,7 @@ interface EntryContractModule {
 
   /** Leniwy loader resolwera — patrz `ErpJobResultRegistry`. */
   loadJobResultResolver?: (injector: Injector) => Promise<ErpJobResultResolver>;
+  remoteDocumentation?: ErpRemoteDocumentationDescriptor;
 }
 
 async function loadContractDirect(
@@ -233,6 +238,7 @@ async function loadContractDirect(
   permissionStore: PermissionStore,
   unfilteredMenus: Map<string, ErpNavigationItem[]>,
   jobResultRegistry: ErpJobResultRegistry,
+  documentationRegistry: ErpDocumentationRegistryService,
 ): Promise<ErpNavigationItem | null> {
   try {
     const module = (await loadModuleContract(modulePrefix)) as EntryContractModule;
@@ -255,6 +261,12 @@ async function loadContractDirect(
       for (const commandType of module.remoteJobResultCommandTypes) {
         jobResultRegistry.register(commandType, resolverLoader);
       }
+    }
+
+    if (module.remoteDocumentation
+      && (!module.remoteDocumentation.requiredPermission
+        || permissionStore.has(module.remoteDocumentation.requiredPermission))) {
+      documentationRegistry.register(module.remoteDocumentation);
     }
 
     if (module?.remoteMenu) {
@@ -289,7 +301,7 @@ async function loadContractDirect(
 
 /**
  * Usuwa z drzewa menu pozycje, których `requiredPermission` nie jest w bieżącym zbiorze
- * uprawnień — patrz docs/backend/identity-authz.md §6 Faza 5 („shell filtruje menu, nie
+ * uprawnień — patrz docs/architecture/security.md §6 Faza 5 („shell filtruje menu, nie
  * każdy moduł osobno"). Brak `requiredPermission` = pozycja zawsze widoczna (domyślne
  * zachowanie sprzed Fazy 5). Węzeł-grupa, który po przefiltrowaniu dzieci zostaje pusty,
  * a oryginalnie miał dzieci, też znika — nie pokazujemy pustych podmenu.

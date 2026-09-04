@@ -25,7 +25,7 @@ const ERROR_CODE_KEYS = SHARED_KEYS.errors.codes as Record<string, string>;
  * `taskmgmt.transition_not_allowed` → `taskmgmtTransitionNotAllowed`.
  *
  * Kropka jest traktowana jak podkreślnik, bo Task Management prefiksuje swoje kody nazwą modułu
- * (`docs/backend/task-management.md` §2). Rejestr kluczy zostaje płaski — zagnieżdżanie go per
+ * (`docs/modules/task-management/domain.md` §2). Rejestr kluczy zostaje płaski — zagnieżdżanie go per
  * moduł rozbiłoby jedyną zaletę tego scope'u, czyli to, że `notification` widzi wszystkie kody
  * naraz bez ładowania scope'ów cudzych modułów.
  */

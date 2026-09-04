@@ -51,7 +51,7 @@ public interface IMultimediaQueries
     /// chwilą wiersze <c>product_multimedia</c> jeszcze w bazie są. Zwykły licznik pokazałby
     /// stan sprzed odpięcia i kaskada nigdy by nie zadziałała. Wykluczenie produktu daje
     /// dokładnie stan po zapisie — bez zaglądania w ChangeTracker z warstwy, która o EF nie wie
-    /// (<c>docs/backend/media-storage.md</c> §4c).</para>
+    /// (<c>docs/guides/backend/media-storage.md</c> §4c).</para>
     /// </summary>
     Task<Dictionary<Guid, int>> CountReferencesExceptAsync(
         IReadOnlyCollection<Guid> uuids,
@@ -64,7 +64,7 @@ public interface IMultimediaQueries
     /// <para>Pyta audytor rozjazdu, idąc od magazynu do bazy — dlatego adresuje po
     /// <c>artifact_uuid</c>, a nie po uuid zasobu, i dlatego pod tę kolumnę jest indeks.
     /// Artefakt, którego tu nie ma, jest kandydatem na sierotę
-    /// (<c>docs/backend/media-storage.md</c> §4d).</para>
+    /// (<c>docs/guides/backend/media-storage.md</c> §4d).</para>
     /// </summary>
     Task<HashSet<Guid>> GetKnownArtifactUuidsAsync(
         IReadOnlyCollection<Guid> artifactUuids,

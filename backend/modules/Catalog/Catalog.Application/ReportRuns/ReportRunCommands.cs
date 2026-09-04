@@ -11,8 +11,8 @@ namespace Catalog.Application.ReportRuns;
 ///
 /// <para><b>To jest <c>Create</c>, a nie <c>Exec</c> na produkcie</b> — operacja produkuje
 /// artefakt z wielu rekordów, więc jej naturalnym kształtem jest nowy agregat przebiegu,
-/// nie czasownik na agregacie źródłowym (patrz <c>docs/backend/endpoint-naming.md</c> §5
-/// i <c>docs/backend/reporting.md</c> §3).</para>
+/// nie czasownik na agregacie źródłowym (patrz <c>docs/guides/backend/endpoint-naming.md</c> §5
+/// i <c>docs/architecture/reporting.md</c> §3).</para>
 ///
 /// <para><c>Uuid</c> generuje klient — jest jednocześnie kluczem idempotencji.</para>
 /// </summary>

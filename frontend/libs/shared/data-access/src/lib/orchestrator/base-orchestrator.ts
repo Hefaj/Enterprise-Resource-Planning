@@ -511,7 +511,7 @@ export abstract class BaseOrchestrator<
   }
 
   // ────────────────────────────────────────────────────────────────
-  // Nakładki optymistyczne — patrz `docs/frontend/optimistic-updates.md`
+  // Nakładki optymistyczne — patrz `docs/guides/frontend/optimistic-updates.md`
   // ────────────────────────────────────────────────────────────────
 
   /**

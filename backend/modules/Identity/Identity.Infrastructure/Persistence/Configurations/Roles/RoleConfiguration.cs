@@ -9,7 +9,7 @@ namespace Identity.Infrastructure.Persistence.Configurations.Roles;
 /// <see cref="Role.MemberRoleUuids"/> są na publicznym API płaskimi listami, ale w bazie żyją
 /// jako kolekcje własne encji-opakowań (<see cref="RolePermissionEntry"/>,
 /// <see cref="RoleMemberEntry"/>) w osobnych tabelach — <c>role_permission</c>/<c>role_member</c>,
-/// zgodnie z modelem w <c>docs/backend/identity-authz.md</c> §2. Konfiguracja celuje w prywatne
+/// zgodnie z modelem w <c>docs/architecture/security.md</c> §2. Konfiguracja celuje w prywatne
 /// pola (<c>OwnsMany("_permissions", ...)</c>), bo te encje-opakowania nie mają żadnej publicznej
 /// nawigacji — cały sens opakowania jest czysto techniczny (EF nie potrafi mapować
 /// <c>List&lt;string&gt;</c>/<c>List&lt;Guid&gt;</c> jako encji własnej wprost).

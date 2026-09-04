@@ -15,8 +15,8 @@ using Xunit;
 namespace Erp.IntegrationTests;
 
 /// <summary>
-/// PERM-005 — jedyny automatyczny test regresyjny granicy `taskmgmt.report.read.all`
-/// (dotąd weryfikowanej wyłącznie ręcznie na żywej bazie, patrz `PLAN-task-management.md` §10).
+/// PERM-005 — automatyczny test regresyjny granicy `taskmgmt.report.read.all`
+/// opisanej w <c>docs/modules/task-management/requirements.md</c>.
 ///
 /// <para><b>AC3</b> — <c>taskmgmt.report.read.all</c> nigdy nie wchodzi do predykatu widoczności
 /// zgłoszeń (<see cref="IssueVisibility.VisibleTo"/>). Metoda strukturalnie nie ma jak to zrobić:

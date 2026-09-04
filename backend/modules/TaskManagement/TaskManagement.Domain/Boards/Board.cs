@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Boards;
 
 /// <summary>
 /// Tablica: kolumny mapowane na stany schematu i kolejność kart w tabeli podrzędnej
-/// (<c>docs/backend/task-management.md</c> §3, §7).
+/// (<c>docs/modules/task-management/domain.md</c> §3, §7).
 ///
 /// <para><b>Kolumna, w której leży karta, nie jest przechowywana</b> — wynika ze stanu
 /// zgłoszenia i z mapowania kolumn. Zduplikowanie jej na karcie dałoby dwa źródła prawdy,

@@ -6,7 +6,7 @@ import { IdentityClient, PermissionCatalogEntryDto } from '../../api-client';
 import { PermissionCatalogItemDto, PermissionCatalogVM } from './permission-catalog.view-model';
 
 /**
- * Katalog uprawnień — read-only przeglądarka (`docs/backend/identity-authz.md` §3). Backend
+ * Katalog uprawnień — read-only przeglądarka (`docs/architecture/security.md` §3). Backend
  * celowo nie paginuje `searchPermissionCatalog()` (dziesiątki, nie tysiące wpisów), więc
  * `fetchByUuids`/`searchByFilters` obie po prostu wołają ten sam endpoint i filtrują/mapują
  * lokalnie — nie ma osobnego "get po id" ani realnych filtrów wyszukiwania po stronie API.

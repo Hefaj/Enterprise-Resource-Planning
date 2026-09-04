@@ -23,7 +23,7 @@ namespace Erp.BuildingBlocks.Jobs;
 /// samego wiersza <c>job</c> — <c>xmin</c> wyłapywałby konflikt na <c>SaveChanges</c>, chunk
 /// wpadałby w ścieżkę izolacji „element po elemencie", a przepustowość leciałaby na łeb. Ta
 /// współbieżność jest świadomie odpuszczona; wraca do rozważenia dopiero, gdy pojedyncze wielkie
-/// zadanie okaże się wąskim gardłem (patrz <c>docs/backend/multi-instance.md</c> §4.1).</para>
+/// zadanie okaże się wąskim gardłem (patrz <c>docs/architecture/multi-instance.md</c> §4.1).</para>
 ///
 /// <para><b>Dlaczego lock zwraca sam <c>uuid</c>, a nie encję</b> — patrz
 /// <see cref="PostgresRowLock"/>, gdzie mieszka wspólna mechanika i jej uzasadnienie.</para>

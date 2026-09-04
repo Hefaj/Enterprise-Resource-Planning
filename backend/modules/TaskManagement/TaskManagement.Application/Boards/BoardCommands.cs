@@ -106,7 +106,7 @@ public sealed class BoardColumnInput
 
 /// <summary>
 /// Nadpisuje <b>całą</b> kolekcję kolumn — człon w liczbie mnogiej, więc to, co przyszło, jest
-/// tym, co zostaje (<c>docs/backend/endpoint-naming.md</c> §2).
+/// tym, co zostaje (<c>docs/guides/backend/endpoint-naming.md</c> §2).
 ///
 /// <para>Kolumny są nadpisywane w całości, a nie po jednej, bo przeniesienie stanu z kolumny
 /// do kolumny to dwie operacje na dwóch kolumnach, a między nimi tablica byłaby w stanie
@@ -207,7 +207,7 @@ public sealed class BoardSetSwimlaneCommandHandler : CommandHandler<BoardSetSwim
 ///
 /// <para><b>Celem komendy jest tablica</b> (<see cref="Uuid"/>), a nie karta: kolejność należy
 /// do tablicy, a karty dla danego zgłoszenia może jeszcze nie być
-/// (<c>docs/backend/task-management.md</c> §7.1).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §7.1).</para>
 ///
 /// <para><b>Komenda nie przyjmuje wyliczonego ranku, tylko sąsiadów</b> — rank liczy serwer,
 /// w transakcji, z bieżących wartości. Gdyby liczył go klient, przestawienie na nieaktualnym
@@ -307,7 +307,7 @@ public sealed class BoardSetCardPositionCommandHandler : CommandHandler<BoardSet
 /// ją w docelowej liście, w jednym ruchu (SPR-002).
 ///
 /// <para>Backlog i sprint dzielą <b>ten sam mechanizm ranku</b>, co kolumny tablicy
-/// (<c>docs/backend/task-management.md</c> §7.2, SPR-002 AC1): to wciąż jeden <c>board_card.rank</c>
+/// (<c>docs/modules/task-management/domain.md</c> §7.2, SPR-002 AC1): to wciąż jeden <c>board_card.rank</c>
 /// na kartę, a front filtruje widok po przynależności do sprintu. Sąsiedzi w komendzie są więc
 /// zawsze z listy, do której karta właśnie trafia — tak samo jak przy przeciąganiu na tablicy
 /// kanbanowej.</para>

@@ -1,0 +1,15 @@
+{
+  "moduleId": "catalog",
+  "routePrefix": "catalog",
+  "overviewArticleId": "catalog.overview",
+  "requiredPermission": "catalog.product.read",
+  "articles": [
+    { "id": "catalog.overview", "slug": "overview", "content": "overview.md", "order": 0, "icon": "@tui.book-open", "contextRoutes": ["/catalog"] },
+    { "id": "catalog.products.list-and-filters", "slug": "products-list-and-filters", "content": "products/list-and-filters.md", "order": 10, "icon": "@tui.list-filter", "contextRoutes": ["/catalog/products"], "capabilityIds": ["catalog.products.search"] },
+    { "id": "catalog.products.bulk-edit", "slug": "products-bulk-edit", "content": "products/bulk-edit.md", "order": 20, "icon": "@tui.list-checks", "relatedArticleIds": ["catalog.products.list-and-filters", "catalog.background-jobs"], "capabilityIds": ["catalog.products.set-name", "catalog.products.set-price"] },
+    { "id": "catalog.multimedia.library", "slug": "multimedia-library", "content": "multimedia/library.md", "order": 30, "icon": "@tui.images", "contextRoutes": ["/catalog/multimedia"], "capabilityIds": ["catalog.multimedia.search", "catalog.multimedia.download", "catalog.multimedia.derivatives", "catalog.multimedia.remove-unused"], "requiredPermission": "catalog.dictionary.read" },
+    { "id": "catalog.background-jobs", "slug": "background-jobs", "content": "background-jobs.md", "order": 40, "icon": "@tui.clock", "relatedArticleIds": ["catalog.products.bulk-edit", "catalog.multimedia.library"], "capabilityIds": ["catalog.jobs.track"] },
+    { "id": "catalog.permissions", "slug": "permissions", "content": "permissions.md", "order": 50, "icon": "@tui.shield-check" },
+    { "id": "catalog.troubleshooting", "slug": "troubleshooting", "content": "troubleshooting.md", "order": 60, "icon": "@tui.circle-question-mark" }
+  ]
+}

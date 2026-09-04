@@ -26,6 +26,7 @@ import { ErpButtonConfig } from './erp-button.types';
         [size]="_size()"
         [disabled]="_disabled() || _loadingCombined()"
         [loading]="_loadingCombined()"
+        [attr.aria-label]="(_ariaLabel() | erpTranslate) || null"
         (click)="handleClick($event)"
       >
         @if (_iconStart()) {
@@ -42,6 +43,7 @@ import { ErpButtonConfig } from './erp-button.types';
         [size]="_size()"
         [disabled]="_disabled() || _loadingCombined()"
         [loading]="_loadingCombined()"
+        [attr.aria-label]="(_ariaLabel() | erpTranslate) || null"
         [iconStart]="_iconStart() ?? ''"
         [iconEnd]="_iconEnd() ?? ''"
         (click)="handleClick($event)"
@@ -66,6 +68,7 @@ export class ErpButtonComponent {
   protected readonly internalLoading = signal(false);
 
   protected readonly _label = computed(() => unwrapSignal(this.config().label));
+  protected readonly _ariaLabel = computed(() => unwrapSignal(this.config().ariaLabel));
   protected readonly _size = computed(() => unwrapSignal(this.config().size) ?? 'm');
   protected readonly _appearance = computed(() => unwrapSignal(this.config().appearance) ?? 'primary');
   protected readonly _disabled = computed(() => unwrapSignal(this.config().disabled) ?? false);

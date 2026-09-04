@@ -16,7 +16,7 @@ namespace Notification.Api.UserNotifications;
 /// Fan-out + zapis feedu + push realtime dla <see cref="UserNotificationRequested"/> — w jednym
 /// handlerze, nie w dwóch (jeden w Infrastructure na DB, drugi w Api na SignalR), bo push kanałem
 /// <c>notifications</c> niesie AKTUALNY licznik nieprzeczytanych obok uuid (patrz
-/// <c>docs/backend/user-notifications.md</c> §7 — <c>ReceiveNotification(uuid, unreadCount)</c>),
+/// <c>docs/modules/notification/user-notifications.md</c> §7 — <c>ReceiveNotification(uuid, unreadCount)</c>),
 /// a policzenie go bez wcześniejszego zapisu dałoby wyścig z drugim zdarzeniem, które nadejdzie
 /// tuż po. Handler żyje w <c>Api</c>, bo potrzebuje <see cref="IHubContext{SyncHub}"/>, którego
 /// <c>Infrastructure</c> nie może referencować (odwrotny kierunek zależności) — referencja

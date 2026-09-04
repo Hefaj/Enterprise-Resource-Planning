@@ -13,7 +13,7 @@ public enum NotificationSeverity
 /// Jedno zdarzenie „powiadom tych ludzi o tym fakcie" dla wszystkich modułów — <c>Kind</c> jest
 /// daną, nie typem. Publikowane przez moduł-producenta (np. Task Management) w tej samej
 /// transakcji co zmiana, która je wywołała; Notification jest jedynym konsumentem
-/// (patrz <c>docs/backend/user-notifications.md</c> §3, Faza 1).
+/// (patrz <c>docs/modules/notification/user-notifications.md</c> §3, Faza 1).
 ///
 /// <para><b>Sprawca a odbiorcy.</b> Producent wylicza <see cref="Recipients"/> i sam decyduje,
 /// czy <see cref="ActorId"/> ma się w nich znaleźć — Notification i tak wyklucza sprawcę z

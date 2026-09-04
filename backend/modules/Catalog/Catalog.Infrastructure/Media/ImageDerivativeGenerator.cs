@@ -9,7 +9,7 @@ namespace Catalog.Infrastructure.Media;
 /// <para><b>Dlaczego SkiaSharp, a nie ImageSharp.</b> ImageSharp od v3 chodzi na Six Labors
 /// Split License z progiem przychodowym — czyli tej samej klasie zależności, którą ten projekt
 /// odrzucił już dwa razy (MassTransit v9, MediatR v13; patrz
-/// <c>docs/backend/architecture.md</c> §4). SkiaSharp to MIT nad Skia na BSD-3, utrzymywane
+/// <c>docs/architecture/backend.md</c> §4). SkiaSharp to MIT nad Skia na BSD-3, utrzymywane
 /// przez Microsoft.</para>
 ///
 /// <para><b>WebP, nie JPEG.</b> Przy tej samej postrzeganej jakości daje ok. 30% mniejszy plik,

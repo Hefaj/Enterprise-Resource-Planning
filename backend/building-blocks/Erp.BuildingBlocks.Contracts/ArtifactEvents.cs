@@ -17,7 +17,7 @@ namespace Erp.BuildingBlocks.Contracts;
 /// obowiązek odrzucić kopertę spoza swojego modułu.</para>
 ///
 /// <para>Kontrakt publiczny, wersjonowany — wolno wyłącznie dodawać pola
-/// (<c>docs/backend/events-outbox.md</c>).</para>
+/// (<c>docs/architecture/integration-events.md</c>).</para>
 /// </summary>
 /// <param name="Module">Moduł-właściciel magazynu, np. <c>Catalog</c>. Zgodny z
 /// <c>Messaging:ServiceName</c>.</param>

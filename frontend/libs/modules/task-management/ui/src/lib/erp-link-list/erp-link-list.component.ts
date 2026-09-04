@@ -20,7 +20,7 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
 /**
  * Pasek powiązań — rodzic, podzadania, blokady, miejsce na przyszłe „zlecenie" z fazy 5
- * (`docs/frontend/task-management-pages.md` §10). Prezentacyjny — dodawanie/usuwanie tylko
+ * (`docs/modules/task-management/screens.md` §10). Prezentacyjny — dodawanie/usuwanie tylko
  * emitują zdarzenia, komenda i rozwiązanie klucza→uuid zostają w `feature`
  * (`erp-task-management-issue-links`).
  */

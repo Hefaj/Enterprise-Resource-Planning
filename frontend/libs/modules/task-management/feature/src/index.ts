@@ -16,3 +16,4 @@ export * from './lib/request/page/request.component';
 export * from './lib/request/translation';
 export * from './lib/report/page/report.component';
 export * from './lib/report/translation';
+export * from './lib/documentation';

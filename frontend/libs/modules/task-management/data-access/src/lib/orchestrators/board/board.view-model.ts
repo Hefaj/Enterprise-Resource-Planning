@@ -11,7 +11,7 @@ import { BoardCardDto } from '../../api-client';
  *
  * <p><b>`rank` bywa pusty</b> i to nie jest błąd: zgłoszenie, którego nikt jeszcze nie
  * przestawiał, nie ma wiersza w `board_card` i ląduje na końcu swojej kolumny. Wiersz powstaje
- * przy pierwszym przeciągnięciu (`docs/backend/task-management.md` §7.1).</p>
+ * przy pierwszym przeciągnięciu (`docs/modules/task-management/domain.md` §7.1).</p>
  */
 export interface BoardCardVM extends BoardCardDto {
   readonly assignee: ErpUserRef | undefined;

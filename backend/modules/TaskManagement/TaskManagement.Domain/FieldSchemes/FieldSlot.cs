@@ -4,11 +4,11 @@ namespace TaskManagement.Domain.FieldSchemes;
 
 /// <summary>
 /// Slot sortowalny na <c>issue</c> — stała pula kolumn, w której dublują się pola
-/// <b>sortowalne i filtrowalne</b> (<c>docs/backend/task-management.md</c> §6).
+/// <b>sortowalne i filtrowalne</b> (<c>docs/modules/task-management/domain.md</c> §6).
 ///
 /// <para>Uzasadnienie wyboru slotów — i odrzucenia indeksów wyrażeniowych na jsonb, tabel
 /// projekcji per typ oraz EAV — jest wspólne z DMS i nie powtarzamy go tutaj:
-/// <c>docs/backend/dms-workflow.md</c> §3.2.</para>
+/// <c>docs/modules/dms/domain-workflow.md</c> §3.2.</para>
 ///
 /// <para><see cref="None"/> jest wartością pełnoprawną, nie brakiem decyzji: pole, po którym
 /// nikt nie sortuje ani nie filtruje, <b>nie zajmuje slotu</b> i żyje wyłącznie w

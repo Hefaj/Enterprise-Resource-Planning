@@ -8,7 +8,7 @@ import { ErpIssueKeyConfig } from './erp-issue-key.types';
 import { TASKMANAGEMENT_KEYS } from '../translation';
 
 /**
- * Klucz zgłoszenia + ikona typu (`docs/frontend/task-management-pages.md` §10).
+ * Klucz zgłoszenia + ikona typu (`docs/modules/task-management/screens.md` §10).
  *
  * Czysto prezentacyjny — nie zna orkiestratora ani zgłoszenia jako całości, wyłącznie to,
  * co ma pokazać. Klikalny link (`routerLink`) dostaje z zewnątrz, żeby to samo miejsce dało się
@@ -95,7 +95,7 @@ export class ErpIssueKeyComponent {
   /**
    * Kopiuje link do karty zgłoszenia wzorem YouTrack: `DEV-1 Tytuł`, gdzie klucz jest
    * hiperłączem, a reszta zwykłym tekstem — po stałej trasie po kluczu czytelnym
-   * (`docs/frontend/task-management-pages.md` §9.1), nie po `link()`: ten bywa `undefined`
+   * (`docs/modules/task-management/screens.md` §9.1), nie po `link()`: ten bywa `undefined`
    * właśnie tam, gdzie kopiowanie ma największy sens (nagłówek karty — już tu jesteśmy, więc
    * nikt by tego linku nie potrzebował do nawigacji).
    *

@@ -6,7 +6,7 @@ namespace TaskManagement.Domain.Boards;
 
 /// <summary>
 /// Indeksowanie ułamkowe kolejności kart — <b>łańcuch porządkowany leksykograficznie</b>,
-/// nie liczba całkowita (<c>docs/backend/task-management.md</c> §7.2).
+/// nie liczba całkowita (<c>docs/modules/task-management/domain.md</c> §7.2).
 ///
 /// <para>Pozycja jako <c>int</c> z przenumerowaniem wymaga przy każdym przeciągnięciu karty
 /// <c>UPDATE</c> na kilkudziesięciu wierszach — długa transakcja, kolizja z drugą osobą

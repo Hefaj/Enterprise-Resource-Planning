@@ -19,7 +19,7 @@ public enum CustomFieldDataType
     /// <summary>Użytkownik. Slot <c>user_1..user_2</c> — jedyne rozszerzenie względem DMS,
     /// bo „Recenzent" i „Product Owner" to najczęstsze pola tego narzędzia, a filtr
     /// „wszystko, gdzie jestem recenzentem" musi być joinem w SQL
-    /// (<c>docs/backend/task-management.md</c> §6).</summary>
+    /// (<c>docs/modules/task-management/domain.md</c> §6).</summary>
     User = 3,
 
     /// <summary>Wybór z listy wartości. Trzyma się w slocie tekstowym — z punktu widzenia

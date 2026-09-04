@@ -24,7 +24,7 @@ interface ModuleGroup {
  * (patrz `PermissionCatalogOrchestrator`).
  *
  * Zaznaczenie karmi panel „kto ma uprawnienie" przez `PermissionsStore.scope` — panel pokazuje
- * posiadaczy WSZYSTKICH zaznaczonych uprawnień naraz (patrz `docs/frontend/pages.md` §6).
+ * posiadaczy WSZYSTKICH zaznaczonych uprawnień naraz (patrz `docs/guides/frontend/pages.md` §6).
  */
 @Component({
   selector: 'erp-identity-permissions-catalog-list',

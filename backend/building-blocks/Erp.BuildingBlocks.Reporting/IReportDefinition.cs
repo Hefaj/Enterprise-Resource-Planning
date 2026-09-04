@@ -10,7 +10,7 @@ namespace Erp.BuildingBlocks.Reporting;
 public sealed record ReportParameters(string? ParametersJson, string Format);
 
 /// <summary>
-/// Wynik pre-checku kosztu — patrz <c>docs/backend/reporting.md</c> §5.4. Odmowa PRZED
+/// Wynik pre-checku kosztu — patrz <c>docs/architecture/reporting.md</c> §5.4. Odmowa PRZED
 /// założeniem przebiegu jest tańsza dla użytkownika niż czterdzieści minut mielenia zakończone
 /// timeoutem.
 /// </summary>
@@ -52,7 +52,7 @@ public sealed class ReportRow
 }
 
 /// <summary>
-/// Jedyne, co pisze autor raportu — patrz <c>docs/backend/reporting.md</c> §4.
+/// Jedyne, co pisze autor raportu — patrz <c>docs/architecture/reporting.md</c> §4.
 ///
 /// <para>Implementacje wyłapuje skan zestawów w <c>AddErpModule</c> (rejestracja pod
 /// <see cref="IReportDefinition"/>, wieloznaczna — jeden moduł może mieć kilka definicji).

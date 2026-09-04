@@ -209,7 +209,7 @@ public static class ErpModuleRegistrationExtensions
 
     /// <summary>
     /// Definicje raportów pod <c>IReportDefinition</c> — <c>TryAddEnumerable</c>, bo moduł
-    /// zwykle ma kilka definicji naraz (patrz <c>docs/backend/reporting.md</c> §4).
+    /// zwykle ma kilka definicji naraz (patrz <c>docs/architecture/reporting.md</c> §4).
     /// <see cref="ReportRunner{TContext}"/> odnajduje właściwą po
     /// <c>IReportDefinition.Key</c> przy każdym przejęciu przebiegu — nowa definicja więc
     /// nie dopisuje żadnej rejestracji ręcznie, wystarczy, że implementuje interfejs

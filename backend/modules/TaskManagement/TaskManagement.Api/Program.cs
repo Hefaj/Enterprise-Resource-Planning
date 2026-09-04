@@ -33,16 +33,16 @@ builder.Services.AddErpCommands<TaskManagementDbContext>(builder.Configuration);
 
 // Silnik zadań masowych — trwałe `job`/`job_item` w schemacie `taskmgmt`. Każda mutacja w tym
 // module idzie przez runner, a to on otwiera transakcję chunka, w której licznik klucza
-// zgłoszenia i samo zgłoszenie zapisują się razem (docs/backend/task-management.md §4).
+// zgłoszenia i samo zgłoszenie zapisują się razem (docs/modules/task-management/domain.md §4).
 builder.Services.AddErpBulkJobs<TaskManagementDbContext>(builder.Configuration);
 
 // Magazyn plików modułu — dwa kubełki (`erp-taskmgmt-artifacts` / `erp-taskmgmt-media`) i konto
 // MinIO tego serwisu. Nie ma centralnego mikroserwisu do multimediów: moduł jest właścicielem
 // swoich plików, bo referencja i rekord muszą leżeć w jednej transakcji
-// (docs/backend/media-storage.md).
+// (docs/guides/backend/media-storage.md).
 builder.Services.AddErpArtifacts(builder.Configuration);
 
-// Runner przebiegów raportu — patrz docs/backend/reporting.md. Rejestracja jawna, bo niesie
+// Runner przebiegów raportu — patrz docs/architecture/reporting.md. Rejestracja jawna, bo niesie
 // decyzję o cyklu życia usługi hostowanej (mirror AddErpBulkJobs powyżej).
 builder.Services.AddErpReporting<TaskManagementDbContext>();
 

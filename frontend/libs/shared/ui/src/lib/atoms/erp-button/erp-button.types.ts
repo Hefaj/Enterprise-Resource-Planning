@@ -15,6 +15,7 @@ export type ErpButtonSize = 'xs' | 's' | 'm' | 'l';
 
 export interface ErpButtonConfig {
   label?: MaybeSignal<Translatable>;
+  ariaLabel?: MaybeSignal<Translatable>;
   size?: MaybeSignal<ErpButtonSize>;
   appearance?: MaybeSignal<ErpButtonAppearance>;
   loading?: MaybeSignal<boolean>;

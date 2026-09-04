@@ -1,14 +1,27 @@
+---
+id: backend.exports-artifacts
+title: Eksporty i artefakty
+summary: Operacje produkujące pliki, ReportRun, IArtifactStore i retencja artefaktów.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - eksport raport lub plik do pobrania
+  - IArtifactStore i MinIO
+related: []
+---
+
 # Eksporty i artefakty
 
-**Stan: ✅ działa w Catalogu.** Legenda znaczników —
-[`architecture.md`](./architecture.md#1-stan-wdrożenia). Magazyn artefaktów (MinIO), kolumna
-`job.kind`, agregat `ExportRun` i `ExportRunner` są w kodzie i zweryfikowane end-to-end na żywej
-infrastrukturze. Frontendowa strona (akcja „Pobierz" w feedzie zadań) jeszcze nie istnieje —
-patrz [`docs/frontend/notifications.md`](../frontend/notifications.md).
+Catalog jest implementacją referencyjną magazynu artefaktów (MinIO), `job.kind`, agregatu przebiegu
+i runnera. Odbiór gotowego pliku odbywa się przez feed zadań opisany w
+[`docs/guides/frontend/notifications.md`](../frontend/notifications.md).
 
 > **Zakres tego dokumentu to jeden producent plików: eksport.** Rozstrzygnięcia obejmujące
 > **wszystkie** pliki wszystkich modułów — układ kubełków, poświadczenia do magazynu, prefiksy
-> obiektów i sprzątanie — mieszkają w [`media-storage.md`](./media-storage.md) i mają
+> obiektów i sprzątanie — mieszkają w [`media-storage.md`](media-storage.md) i mają
 > pierwszeństwo tam, gdzie §5, §7 i §9 poniżej opisują dzisiejszy, węższy stan.
 
 ---
@@ -25,14 +38,14 @@ agregatów":
 | Granica transakcji | chunk | cały przebieg |
 | Przykład | `ProductSetPriceCommand` | eksport katalogu do XML |
 
-`job`/`job_item` + `BulkCommandRunner` ([`bulk-commands.md`](./bulk-commands.md)) to silnik
+`job`/`job_item` + `BulkCommandRunner` ([`bulk-commands.md`](bulk-commands.md)) to silnik
 **wyłącznie map-owy**: `job_item` per agregat, status per element, `retry-failed` per element,
 chunk jako transakcja. Wpychanie do niego eksportu rozjeżdża się w każdym z tych punktów naraz —
 status per produkt nic nie znaczy, plik trzeba zapisać strumieniowo w ustalonej kolejności ponad
 chunkami, a ponowienie 1200 elementów nie regeneruje pliku.
 
 Dlatego eksport **nie jest komendą `Exec` na agregacie źródłowym**
-([`endpoint-naming.md` §5](./endpoint-naming.md#5-exec-i-jego-granica)). Jest `Create` na
+([`endpoint-naming.md` §5](endpoint-naming.md#5-exec-i-jego-granica)). Jest `Create` na
 osobnym agregacie przebiegu.
 
 ---
@@ -63,11 +76,11 @@ Komenda: `ExportRunCreateCommand` — zwykły `Create`, uuid od klienta.
 To, co się przez to samo załatwia:
 
 - `AggregateChanged` leci **automatycznie** ze skanu ChangeTrackera przy każdej zmianie statusu —
-  nie trzeba niczego publikować ręcznie ([`events-outbox.md`](./events-outbox.md))
+  nie trzeba niczego publikować ręcznie ([`events-outbox.md`](../../architecture/integration-events.md))
 - nowa sygnatura `catalog.export_run` w `AggregateSignatures` daje frontendowi normalny
-  orkiestrator, cache i realtime ([`realtime-signalr.md`](./realtime-signalr.md))
+  orkiestrator, cache i realtime ([`realtime-signalr.md`](../../architecture/realtime.md))
 - uprawnienie wpada w istniejącą konwencję `{moduł}.{zasób}.{akcja}` → `catalog.export_run.create`
-  ([`identity-authz.md`](./identity-authz.md))
+  ([`identity-authz.md`](../../architecture/security.md))
 - historia eksportów jest zwykłą listą agregatów, z `searchExportRun`/`getExportRun`
 
 ---
@@ -115,7 +128,7 @@ Trzy rzeczy, które odróżniają go od runnera map-owego:
 1. **Strumieniuje, nie materializuje.** Źródłem jest `IAsyncEnumerable<T>` z zapytania
    `AsNoTracking`, wyjściem strumień do magazynu artefaktów. Wciągnięcie 50 tys. rekordów do
    pamięci, żeby je zaraz zserializować, jest dokładnie tym błędem, który
-   [`bulk-commands.md`](./bulk-commands.md) opisuje przy `COPY`.
+   [`bulk-commands.md`](bulk-commands.md) opisuje przy `COPY`.
 2. **Aktualizuje postęp co N rekordów, nie co rekord.** Zapis licznika po każdym wierszu to
    50 tys. `UPDATE`-ów; co 500 wystarczy, żeby pasek postępu wyglądał na żywy.
 3. **Artefakt zapisuje przed zmianą statusu.** Kolejność `zapisz plik → ustaw ArtifactUuid
@@ -137,7 +150,7 @@ Trzy rzeczy, które odróżniają go od runnera map-owego:
 
 ## 5. Magazyn artefaktów — MinIO
 
-MinIO (API zgodne z S3) jako usługa w [`backend/docker-compose.yml`](../../backend/docker-compose.yml),
+MinIO (API zgodne z S3) jako usługa w [`backend/docker-compose.yml`](../../../backend/docker-compose.yml),
 obok Postgresa i RabbitMQ — porty **9100** (API) i **9101** (konsola), przesunięte względem
 domyślnych 9000/9001, bo 9000 jest na maszynach deweloperskich gęsto zajęty, a kolizja objawia się
 wyłącznie tym, że kontener nie wstaje.
@@ -195,7 +208,7 @@ interfejs ma unikać.
 > centralny serwis plików nie umiałby odpowiedzieć na pytanie „czy ten plik jest jeszcze czyjś",
 > bo referencje żyją w schematach modułów biznesowych. `IArtifactStore` zostaje biblioteką,
 > a każdy moduł rozmawia z magazynem sam — pełne uzasadnienie w
-> [`media-storage.md` §1](./media-storage.md#1-biblioteka-nie-mikroserwis).
+> [`media-storage.md` §1](media-storage.md#1-biblioteka-nie-mikroserwis).
 >
 > DMS powstaje jako **moduł biznesowy** (faktury, umowy, obieg dokumentu) i trzyma swoje pliki
 > we własnych kubełkach, dokładnie tak jak Catalog trzyma swoje.
@@ -235,7 +248,7 @@ starcie modułu). Rozdzielenie ich na dwie niezależne konfiguracje było najpro
 rozjazdu, więc go nie ma.
 
 > **Gdzie ta opcja mieszka.** Po przejściu na słownik magazynów jest to
-> `Artifacts:Stores:transient:RetentionDays` ([`media-storage.md` §2.4](./media-storage.md#24-kształt-konfiguracji)).
+> `Artifacts:Stores:transient:RetentionDays` ([`media-storage.md` §2.4](media-storage.md#24-kształt-konfiguracji)).
 > Zasada „jedna liczba na retencję" została — zmieniło się tylko to, że jest jedna **na kubełek**,
 > a nie jedna na moduł. Reguła obejmująca cały kubełek zakłada się wyłącznie tam, gdzie
 > `RetentionDays` jest ustawione; kubełek `media` nie ma jej wcale, a próba jej tam ustawienia
@@ -251,7 +264,7 @@ błąd wyglądający na awarię.
 ## 8. Jak użytkownik dowiaduje się, że jest gotowe
 
 Tu jest pułapka, o którą łatwo się rozbić. Są **dwa kanały o zupełnie różnym adresowaniu**
-([`realtime-signalr.md` §2](./realtime-signalr.md#2-grupy)):
+([`realtime-signalr.md` §2](../../architecture/realtime.md#2-grupy)):
 
 | Kanał | Grupa | Kto dostaje |
 |---|---|---|
@@ -265,7 +278,7 @@ musi mieć wiersz w `job` (pierwszy: sekcja 3).
 
 Efekt: eksport pojawia się w dzwonku, w historii zadań i przeżywa zamknięcie przeglądarki, bez
 pisania jednej linijki kodu powiadomień. Strona frontendowa —
-[`docs/frontend/notifications.md`](../frontend/notifications.md).
+[`docs/guides/frontend/notifications.md`](../frontend/notifications.md).
 
 ---
 
@@ -292,7 +305,7 @@ w katalogu. Dlatego kubełki są dwa:
 > **Nazwy w nagłówku tabeli są nieaktualne — podział klas nie.** Kubełki są dziś per moduł
 > (`erp-catalog-artifacts`, `erp-catalog-media`), konfigurowane słownikiem `Artifacts:Stores`,
 > a każdy serwis chodzi na własnym koncie MinIO zamiast na roocie —
-> [`media-storage.md` §2](./media-storage.md#2-trzy-osie-separacji). Reszta tabeli, łącznie
+> [`media-storage.md` §2](media-storage.md#2-trzy-osie-separacji). Reszta tabeli, łącznie
 > z ostatnim wierszem (bezkluczowy = wygasający, trwały jawnie przez klucz), obowiązuje.
 
 Domyślna (bezkluczowa) rejestracja to magazyn **wygasający**, bo taki jest każdy plik
@@ -335,7 +348,7 @@ się odrzuceniem podpisu przez magazyn.
 > celuje w `staging/{uuid}`, komenda promuje obiekt do `assets/{uuid}` (`CopyObject` po stronie
 > magazynu), a reguła lifecycle założona na samym `staging/` kasuje to, co nigdy nie zostało
 > potwierdzone. Osierocony obiekt umiera więc z konfiguracji magazynu, a nie z kodu, który mógłby
-> się pomylić — [`media-storage.md` §3 i §4a](./media-storage.md#3-cykl-życia-obiektu-w-kubełku--staging-i-assets).
+> się pomylić — [`media-storage.md` §3 i §4a](media-storage.md#3-cykl-życia-obiektu-w-kubełku--staging-i-assets).
 
 ### Odczyt: proxy przez moduł, nie presigned
 
@@ -353,15 +366,15 @@ zmienia — podmiana pliku jest nowym zasobem, nie edycją istniejącego.
 
 Konsekwencja dla frontendu: `<img src>` nie dołącza tokenu, więc obrazek pobiera się przez
 `HttpClient` i ląduje w `blob:`-URL-u — patrz
-[`docs/frontend/multimedia.md`](../frontend/multimedia.md).
+[`docs/guides/frontend/multimedia.md`](../frontend/multimedia.md).
 
 ---
 
 ## 10. Zobacz też
 
-- [Magazyn plików](./media-storage.md) — kubełki per moduł, poświadczenia, prefiksy, sprzątanie;
+- [Magazyn plików](media-storage.md) — kubełki per moduł, poświadczenia, prefiksy, sprzątanie;
   rozstrzygnięcia obejmujące wszystkie pliki, nie tylko eksporty
-- [Nazewnictwo komend i endpointów](./endpoint-naming.md) — dlaczego to `Create`, a nie `Exec`
-- [Operacje masowe](./bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, `retry-failed`
-- [Realtime SignalR](./realtime-signalr.md) — kanały `jobs` i `agg:`, grupy
+- [Nazewnictwo komend i endpointów](endpoint-naming.md) — dlaczego to `Create`, a nie `Exec`
+- [Operacje masowe](bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, `retry-failed`
+- [Realtime SignalR](../../architecture/realtime.md) — kanały `jobs` i `agg:`, grupy
 - [Powiadomienia na froncie](../frontend/notifications.md) — toast, dzwonek, ponowne pobranie

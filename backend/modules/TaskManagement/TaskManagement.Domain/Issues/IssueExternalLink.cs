@@ -9,7 +9,7 @@ namespace TaskManagement.Domain.Issues;
 /// kolekcja, eagerowo doczytywana przy <c>IIssueRepository.FindAsync</c>. Świadomie
 /// <b>nie</b> integracja w domenie — moduł nie wie nic o repozytoriach kodu, PR-ach ani CI,
 /// niesie wyłącznie adres URL z etykietą nadaną przez człowieka
-/// (<c>docs/backend/task-management.md</c> tabela „Co jest poza zakresem").</para>
+/// (<c>docs/modules/task-management/domain.md</c> tabela „Co jest poza zakresem").</para>
 /// </summary>
 public sealed class IssueExternalLink : Entity
 {

@@ -39,7 +39,7 @@ public static class NotificationInfrastructureExtensions
 
         // Dzierżawa wyłączności idzie razem z kontekstem, bo z niego bierze łańcuch
         // połączenia. Korzystają z niej usługi tła i praca startowa modułu —
-        // patrz docs/backend/multi-instance.md §3.1.
+        // patrz docs/architecture/multi-instance.md §3.1.
         services.AddErpExclusiveLease<NotificationDbContext>();
 
         services.AddScoped<IJobQueries, JobQueries>();
@@ -61,7 +61,7 @@ public static class NotificationInfrastructureExtensions
         // `UserNotification` NIE dostaje sygnatury — rozgłoszenie idzie kanałem `notifications`
         // (uuid + licznik nieprzeczytanych, patrz UserNotificationRequestedConsumer), celowo poza
         // konwencją `agg:{signature}` i bez koalescencji RealtimeBroadcastera
-        // (docs/backend/user-notifications.md §7).
+        // (docs/modules/notification/user-notifications.md §7).
 
         return services;
     }

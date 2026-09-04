@@ -7,7 +7,7 @@ namespace TaskManagement.Infrastructure.Queries;
 
 /// <summary>
 /// Predykat widoczności zgłoszeń — <b>liczony po projekcie, joinem w SQL</b>, nie po
-/// materializowanym ACL per zgłoszenie (<c>docs/backend/task-management.md</c> §10.1).
+/// materializowanym ACL per zgłoszenie (<c>docs/modules/task-management/domain.md</c> §10.1).
 ///
 /// <para>Materializowany ACL wymusiła w DMS liczba dokumentów i to, że dostęp zmienia się tam
 /// przy każdym kroku procesu. Tutaj liczba projektów jest o rzędy wielkości mniejsza, a dostęp

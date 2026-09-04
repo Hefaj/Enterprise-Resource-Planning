@@ -9,7 +9,7 @@ namespace TaskManagement.Boards.Query;
 ///
 /// <para>Puste <c>Uuids</c> zwraca całą tablicę; wypełnione — wyłącznie wskazane karty, i tą
 /// ścieżką idzie odświeżenie po zdarzeniu <c>taskmgmt.board</c>
-/// (<c>docs/backend/task-management.md</c> §7.4).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §7.4).</para>
 /// </summary>
 public sealed class GetBoardCardsEndpoint : Endpoint<GetBoardCardsRequest, List<BoardCardDto>>
 {

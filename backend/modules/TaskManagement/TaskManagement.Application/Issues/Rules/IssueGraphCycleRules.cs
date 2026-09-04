@@ -13,7 +13,7 @@ public sealed record IssueLinkTarget(Guid SourceUuid, Guid TargetUuid, IssueLink
 
 /// <summary>
 /// Reguła wsadowa: ustawienie rodzica nie może zamknąć pętli w drzewie
-/// (<c>docs/backend/task-management.md</c> §8.2).
+/// (<c>docs/modules/task-management/domain.md</c> §8.2).
 ///
 /// <para><b>Dlaczego to nie wystarcza samo sprawdzenie w handlerze.</b> Handler pyta bazę
 /// o stan ZACOMMITOWANY — nie widzi krawędzi z wcześniejszych elementów TEGO SAMEGO wsadu,
@@ -122,7 +122,7 @@ public sealed class IssueParentCycleRule : IBatchRule<IssueParentTarget>
 
 /// <summary>
 /// Reguła wsadowa: kategoria typu ogranicza hierarchię — Epik nigdy nie ma rodzica, Podzadanie
-/// nigdy nie jest rodzicem (<see cref="Issue.SetParent"/>, `docs/backend/task-management.md` §8.2).
+/// nigdy nie jest rodzicem (<see cref="Issue.SetParent"/>, `docs/modules/task-management/domain.md` §8.2).
 ///
 /// <para><b>Dlaczego pre-check, a nie tylko agregat.</b> <c>Issue.SetParent</c> sprawdza dokładnie
 /// tę samą regułę, ale robi to dopiero w <c>BulkCommandRunner</c>, chunkami, nawet minuty po

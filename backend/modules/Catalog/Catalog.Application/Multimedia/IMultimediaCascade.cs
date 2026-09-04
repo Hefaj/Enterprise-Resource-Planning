@@ -2,7 +2,7 @@ namespace Catalog.Application.Multimedia;
 
 /// <summary>
 /// Kaskada dla zasobów <c>Owned</c>: usuwa plik razem z ostatnią referencją do niego, w tej samej
-/// transakcji, w której ta referencja znika (<c>docs/backend/media-storage.md</c> §4c).
+/// transakcji, w której ta referencja znika (<c>docs/guides/backend/media-storage.md</c> §4c).
 ///
 /// <para><b>Dlaczego to nie jest worker kasujący po zerowym liczniku.</b> Zamiatanie w tle usuwa
 /// dane użytkownika na podstawie heurystyki, w oknie między dwoma jego kliknięciami — odpięcie

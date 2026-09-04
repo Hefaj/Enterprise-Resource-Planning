@@ -1,10 +1,25 @@
+---
+id: frontend.notifications
+title: Powiadomienia — toast, dzwonek, historia zadań, skrzynka
+summary: Toasty, dzwonek, historia zadań i tłumaczenie błędów backendu.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - powiadomienie lub toast na froncie
+  - historia zadań i pobieranie artefaktu
+related: []
+---
+
 # Powiadomienia — toast, dzwonek, historia zadań, skrzynka
 
 Cztery powierzchnie, jedna zasada. Sekcje 1–9 opisują to, co **jest w kodzie**: dzwonek, feed
 zadań, strona historii, akcja pobrania artefaktu i `ErpToastService` ze stosem toastów.
-[Sekcja 10](#10-skrzynka-powiadomień--druga-zakładka-dzwonka) to **📐 projekt** — skrzynka
+[Sekcja 10](#10-skrzynka-powiadomień--osobny-widżet-w-nagłówku) opisuje skrzynkę
 powiadomień międzymodułowych, której dziś nie ma; strona backendowa w
-[`user-notifications.md`](../backend/user-notifications.md).
+[`user-notifications.md`](../../modules/notification/user-notifications.md).
 
 ---
 
@@ -27,18 +42,18 @@ powiadomień międzymodułowych, której dziś nie ma; strona backendowa w
 
 | Element | Plik |
 |---|---|
-| Kanał `jobs` → grupa `user:{userId}` | backend, [`realtime-signalr.md`](../backend/realtime-signalr.md) |
-| Store feedu (root singleton) | [`job.service.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/job.service.ts) |
-| Zasilanie z repliki serwera | [`job-feed.service.ts`](../../frontend/libs/modules/notification/data-access/src/lib/orchestrators/job/job-feed.service.ts) |
-| Dzwonek w nagłówku (dumb) | [`erp-notifications.component.ts`](../../frontend/libs/client/ui/src/lib/erp-notifications/erp-notifications.component.ts) |
-| Lista pod dzwonkiem (lazy z remota) | [`job-list.component.ts`](../../frontend/libs/modules/notification/feature/src/lib/job/job-list/job-list.component.ts) |
-| Wiersz zadania (dumb) | [`erp-job-item.component.ts`](../../frontend/libs/modules/notification/ui/src/lib/erp-job-item/erp-job-item.component.ts) |
-| Strona „Historia zadań" | [`job.component.ts`](../../frontend/libs/modules/notification/feature/src/lib/job/page/job.component.ts) |
-| Toast — atom, builder, serwis | [`erp-toast/`](../../frontend/libs/shared/ui/src/lib/atoms/erp-toast) |
-| Stos toastów (host) | [`erp-toast-host.component.ts`](../../frontend/apps/client/src/app/erp-toast-host.component.ts) |
-| Automatyczny toast po zadaniu | [`erp-job-toast.bridge.ts`](../../frontend/apps/client/src/app/erp-job-toast.bridge.ts) |
-| Pobranie artefaktu z feedu | [`job-download.service.ts`](../../frontend/libs/modules/notification/feature/src/lib/job/job-download.service.ts) |
-| Rejestr wyników zadań | [`erp-job-result-registry.service.ts`](../../frontend/libs/shared/data-access/src/lib/jobs/erp-job-result-registry.service.ts) |
+| Kanał `jobs` → grupa `user:{userId}` | backend, [`realtime-signalr.md`](../../architecture/realtime.md) |
+| Store feedu (root singleton) | [`job.service.ts`](../../../frontend/libs/shared/data-access/src/lib/orchestrator/job.service.ts) |
+| Zasilanie z repliki serwera | [`job-feed.service.ts`](../../../frontend/libs/modules/notification/data-access/src/lib/orchestrators/job/job-feed.service.ts) |
+| Dzwonek w nagłówku (dumb) | [`erp-notifications.component.ts`](../../../frontend/libs/client/ui/src/lib/erp-notifications/erp-notifications.component.ts) |
+| Lista pod dzwonkiem (lazy z remota) | [`job-list.component.ts`](../../../frontend/libs/modules/notification/feature/src/lib/job/components/lists/erp-job-list/job-list.component.ts) |
+| Wiersz zadania (dumb) | [`erp-job-item.component.ts`](../../../frontend/libs/modules/notification/ui/src/lib/erp-job-item/erp-job-item.component.ts) |
+| Strona „Historia zadań" | [`job.component.ts`](../../../frontend/libs/modules/notification/feature/src/lib/job/page/job.component.ts) |
+| Toast — atom, builder, serwis | [`erp-toast/`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-toast) |
+| Stos toastów (host) | [`erp-toast-host.component.ts`](../../../frontend/apps/client/src/app/erp-toast-host.component.ts) |
+| Automatyczny toast po zadaniu | [`erp-job-toast.bridge.ts`](../../../frontend/apps/client/src/app/erp-job-toast.bridge.ts) |
+| Pobranie artefaktu z feedu | [`job-download.service.ts`](../../../frontend/libs/modules/notification/feature/src/lib/job/job-download.service.ts) |
+| Rejestr wyników zadań | [`erp-job-result-registry.service.ts`](../../../frontend/libs/shared/data-access/src/lib/jobs/erp-job-result-registry.service.ts) |
 
 `JobService` mieszka w `shared/data-access`, a nie w module notification, celowo: licznik przy
 dzwonku musi być znany hostowi, zanim ktokolwiek kliknie i pociągnie remota. Store jest zasilany
@@ -120,7 +135,7 @@ Konsekwencja jest jedna i do zaakceptowania: **kod z `data-access` nie wystrzeli
 bezpośrednio.** Robi to za niego host — jedyna warstwa widząca obie strony. Ten sam układ
 co przy dzwonku powiadomień i rejestrze wyników zadań.
 
-Atom idzie wzorcem z [`atoms.md`](./atoms.md) — jeden `input.required<ErpToastConfig>()`, reszta
+Atom idzie wzorcem z [`atoms.md`](atoms.md) — jeden `input.required<ErpToastConfig>()`, reszta
 przez `computed()`.
 
 ---
@@ -266,7 +281,7 @@ robi się ją świadomie, a nie rozbudowuje parser.
 
 **Stan: ✅ wdrożone** (widżety w nagłówku i licznik z §10.2). Skrzynka pełnoekranowa
 (`/notification/inbox`, §10.5) zostaje **📐 projekt**. Model, kontrakt zdarzenia i kanały →
-[`user-notifications.md`](../backend/user-notifications.md).
+[`user-notifications.md`](../../modules/notification/user-notifications.md).
 
 ### 10.1 Dwa widżety w nagłówku, nie jedna lista
 
@@ -299,7 +314,7 @@ widżety w nagłówku**, każdy z własnym licznikiem i własnym panelem:
 
 Oba widżety mają identyczny szkielet komponentu prezentacyjnego (`count`/`hasActivity`/
 `panelComponent`/`panelInjector`/`open` model) — celowo bez wspólnej bazy/atomu, bo dwóch
-konsumentów nie uzasadnia jeszcze abstrakcji (patrz [atoms.md](./atoms.md)).
+konsumentów nie uzasadnia jeszcze abstrakcji (patrz [atoms.md](atoms.md)).
 
 ### 10.2 `NotificationStore` idzie do `shared/data-access`
 
@@ -337,7 +352,7 @@ API. Trzy rzeczy, o których trzeba pamiętać:
 
 1. **`403` jest poprawnym zachowaniem.** Uprawnienie mogło zniknąć po wysyłce — obsługuje to
    istniejący `erp-permission-error.interceptor` i strona `/forbidden`
-   ([`identity-authz.md` §6](../backend/identity-authz.md)). Nie chowamy pozycji ze skrzynki
+   ([`identity-authz.md` §6](../../architecture/security.md)). Nie chowamy pozycji ze skrzynki
    „na wszelki wypadek": użytkownik ma widzieć, że coś było, i dowiedzieć się, że stracił dostęp.
 2. **Trasa może prowadzić do modułu, którego remote nie jest jeszcze załadowany** — to działa bez
    zmian, bo kontrakty wszystkich remotów ładują się przy STARTUP (§3), a `feature` dociąga się
@@ -371,9 +386,9 @@ Most spinający store z `ErpToastService` mieszka **w hoście**, jak `ErpJobToas
 
 ## 11. Zobacz też
 
-- [Atomy UI](./atoms.md) — wzorzec Single Config Builder
-- [Orkiestratory](./orchestrators.md) — skąd biorą się wpisy optymistyczne w feedzie
-- [Tłumaczenia](./translations.md) — dlaczego klucz, a nie tekst; DI shadowing
+- [Atomy UI](atoms.md) — wzorzec Single Config Builder
+- [Orkiestratory](orchestrators.md) — skąd biorą się wpisy optymistyczne w feedzie
+- [Tłumaczenia](translations.md) — dlaczego klucz, a nie tekst; DI shadowing
 - [Eksporty i artefakty](../backend/exports-artifacts.md) — strona backendowa
-- [Realtime SignalR](../backend/realtime-signalr.md) — kanały `jobs`, `agg:` i `notifications`
-- [Powiadomienia użytkownika](../backend/user-notifications.md) — strona backendowa skrzynki
+- [Realtime SignalR](../../architecture/realtime.md) — kanały `jobs`, `agg:` i `notifications`
+- [Powiadomienia użytkownika](../../modules/notification/user-notifications.md) — strona backendowa skrzynki

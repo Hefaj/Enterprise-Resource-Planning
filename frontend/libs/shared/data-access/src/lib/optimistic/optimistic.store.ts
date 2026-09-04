@@ -19,7 +19,7 @@ const RESOLVED_STATUSES: ReadonlySet<JobStatus> = new Set<JobStatus>([
 ]);
 
 /**
- * Rejestr globalnych nakładek optymistycznych — patrz `docs/frontend/optimistic-updates.md`.
+ * Rejestr globalnych nakładek optymistycznych — patrz `docs/guides/frontend/optimistic-updates.md`.
  *
  * <p><b>Dlaczego to nie jest część `IdentityMapStore`.</b> `_handleFullResync()` robi
  * `identityMap.clear()` na resync po rozłączeniu huba — nakładka MUSI przeżyć to czyszczenie,

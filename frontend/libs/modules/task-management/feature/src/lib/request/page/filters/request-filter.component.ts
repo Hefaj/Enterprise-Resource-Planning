@@ -19,7 +19,7 @@ interface FilterOption {
  * nie ma dziś ani jednego, ani drugiego, a strona nie ma po co proponować pustych opcji.
  *
  * <p>Pierwszy dostępny rejestr wybiera się automatycznie — w typowym wdrożeniu jest dokładnie
- * jeden (`docs/backend/task-management-requirements.md` REQ-002), więc użytkownik nie powinien
+ * jeden (`docs/modules/task-management/requirements.md` REQ-002), więc użytkownik nie powinien
  * musieć klikać pickera, żeby zobaczyć swoje zlecenia.</p>
  */
 @Component({

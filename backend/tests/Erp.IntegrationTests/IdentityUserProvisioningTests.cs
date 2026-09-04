@@ -14,7 +14,7 @@ namespace Erp.IntegrationTests;
 
 /// <summary>
 /// API-003 — klucz integracyjny jako klient Keycloaka z własnym zestawem uprawnień. Patrz
-/// <c>docs/backend/identity-authz.md</c> §2 i plan w <c>docs/backend/task-management-requirements.md</c>.
+/// <c>docs/architecture/security.md</c> §2 i plan w <c>docs/modules/task-management/requirements.md</c>.
 ///
 /// Testuje dwie rzeczy z prawdziwym Postgresem (migracje uwzględniające `AddUserAccountKind`):
 /// <list type="number">

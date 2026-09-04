@@ -13,7 +13,7 @@ namespace TaskManagement.Infrastructure.Queries;
 
 /// <summary>
 /// Odczyty zgłoszeń — <c>AsNoTracking</c> i projekcja wprost do DTO, z pominięciem repozytoriów
-/// (<c>docs/backend/cqrs.md</c>). Każde zapytanie startuje od predykatu widoczności; nie ma tu
+/// (<c>docs/guides/backend/cqrs.md</c>). Każde zapytanie startuje od predykatu widoczności; nie ma tu
 /// ścieżki, która by go omijała.
 /// </summary>
 public sealed class IssueQueries : IIssueQueries
@@ -291,7 +291,7 @@ public sealed class IssueQueries : IIssueQueries
     /// <summary>
     /// Mapa „kod pola → slot" dla kontekstu żądania. Pusta bez wybranego projektu: dwa schematy
     /// mogą mapować ten sam kod pola na różne kolumny, więc poza kontekstem projektu nazwa pola
-    /// nie znaczy nic (<c>docs/backend/task-management.md</c> §6).
+    /// nie znaczy nic (<c>docs/modules/task-management/domain.md</c> §6).
     /// </summary>
     private async Task<IReadOnlyDictionary<string, FieldSlot>> SlotMapAsync(
         SearchIssueRequest request,
@@ -434,7 +434,7 @@ public sealed class IssueQueries : IIssueQueries
     /// Whitelist sortowania. Pole spoza listy jest <b>ignorowane</b>, nie przekładane na SQL —
     /// front i backend czytają ten sam zestaw kolumn, a przełącznik projektu na liście resetuje
     /// sortowanie właśnie po to, żeby nie przyszło tu pole z poprzedniego kontekstu
-    /// (<c>docs/frontend/task-management-pages.md</c> §2.1).
+    /// (<c>docs/modules/task-management/screens.md</c> §2.1).
     /// </summary>
     private static IQueryable<Issue> ApplySorting(
         IQueryable<Issue> query,
@@ -467,7 +467,7 @@ public sealed class IssueQueries : IIssueQueries
                 // ZOSTAJE ZIGNOROWANE, nie odrzucone: przełącznik projektu na liście resetuje
                 // sortowanie właśnie po to, żeby nie przyszło tu pole z poprzedniego kontekstu,
                 // a wyścig między resetem a żądaniem nie ma prawa kończyć się błędem 400
-                // (docs/frontend/task-management-pages.md §2.1).
+                // (docs/modules/task-management/screens.md §2.1).
                 _ => SortBySlot(ordered, query, sort.Field, slots, descending),
             };
         }

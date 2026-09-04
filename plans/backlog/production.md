@@ -1,4 +1,22 @@
+---
+id: operations.production
+title: Wyjście na produkcję — plan wdrożenia
+summary: Runbook wdrożenia produkcyjnego, konfiguracji, migracji, backupu i CI/CD.
+kind: operations
+scope: operations
+audience:
+  - operations
+  - backend
+  - agent
+triggers:
+  - wdrożenie produkcyjne
+  - gateway TLS backup lub migracje wdrożeniowe
+related: []
+---
+
 # Wyjście na produkcję — plan wdrożenia
+
+> **Status:** backlog. Powtarzalny kontrakt wydania opisuje `docs/operations/production.md`.
 
 Wszystko, co powstało do tej pory, chodzi wyłącznie na maszynie deweloperskiej: `dotnet run`
 z bind-mountem repozytorium, `nx serve`, `docker compose up` z hasłami `erp/erp` w pliku
@@ -6,7 +24,7 @@ wersjonowanym w gicie. Ten dokument jest planem zdjęcia tego założenia — cz
 kolejności to dokładać i po czym poznać, że dana faza jest skończona.
 
 Stan: 📐 **cały dokument jest projektem — nie ma pod nim kodu.** Legenda znaczników jak
-w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
+w [`architecture.md` §1](../architecture/backend.md#1-stan-wdrożenia).
 
 > **Czym ten dokument nie jest.** Nie jest instrukcją wyboru dostawcy hostingu ani opisem
 > konkretnego środowiska. Opisuje, co musi być prawdą o *repozytorium i artefaktach*, żeby
@@ -20,13 +38,13 @@ w [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
 
 Rzecz, którą trzeba powiedzieć wprost, bo zmienia priorytety: **backend jest architektonicznie
 gotowy na produkcję i to nie jest przypadek.** Wieloinstancyjność została wdrożona w całości
-([`multi-instance.md`](./multi-instance.md)), zadania masowe i eksporty przeżywają restart
+([`multi-instance.md`](../architecture/multi-instance.md)), zadania masowe i eksporty przeżywają restart
 procesu, outbox commituje się w transakcji danych, klucze idempotencji leżą w bazie. Nie brakuje
 architektury — brakuje **opakowania i eksploatacji**.
 
 | Obszar | Stan | Uwagi |
 |---|---|---|
-| Skalowanie poziome serwisów | ✅ | Dzierżawy, `SKIP LOCKED`, rozdział Hub/Relay, backplane — [`multi-instance.md`](./multi-instance.md) |
+| Skalowanie poziome serwisów | ✅ | Dzierżawy, `SKIP LOCKED`, rozdział Hub/Relay, backplane — [`multi-instance.md`](../architecture/multi-instance.md) |
 | Trwałość zadań i eksportów przy restarcie | ✅ | `job`/`job_item` w bazie, `heartbeat_at`, wznawianie |
 | Migracje jako osobny krok wdrożenia | ✅ | `Database:MigrateOnStartup` domyślnie `false` (`ErpDatabaseMigrator`); `true` ustawia wyłącznie `appsettings.Development.json` |
 | **Obrazy kontenerów** | 📐 | **Nie ma ani jednego `Dockerfile`** w repozytorium — [§4](#4-faza-a--pakowanie) |
@@ -35,8 +53,8 @@ architektury — brakuje **opakowania i eksploatacji**.
 | **Konfiguracja frontu poza buildem** | 📐 | Adresy API i manifest federacji zaszyte na `localhost` w czasie kompilacji — [§5.2](#52-frontend--konfiguracja-w-runtime-nie-w-buildzie) |
 | **Wspólny origin / gateway** | 📐 | Stąd CORS z `AllowCredentials` i bezwzględny `SIGNALR_HUB_URL`; komentarz w `remote-api.providers.ts` wprost pisze „gatewaya jeszcze nie ma" — [§6](#6-faza-c--jeden-origin-i-tls) |
 | **TLS** | 📐 | Wszystko chodzi po `http://`, Keycloak w trybie `start-dev` |
-| **Health checks** | 📐 | Nigdzie `AddHealthChecks` — load balancer nie ma po czym poznać, którą instancję wyciąć z rotacji; [`observability.md` §4](./observability.md#4-health-checks) |
-| **Telemetria** | 📐 | Ani jednego pakietu OpenTelemetry w repozytorium — wybór biblioteki jest wciąż decyzją do podjęcia; [`observability.md`](./observability.md) |
+| **Health checks** | 📐 | Nigdzie `AddHealthChecks` — load balancer nie ma po czym poznać, którą instancję wyciąć z rotacji; [`observability.md` §4](observability.md#4-health-checks) |
+| **Telemetria** | 📐 | Ani jednego pakietu OpenTelemetry w repozytorium — wybór biblioteki jest wciąż decyzją do podjęcia; [`observability.md`](observability.md) |
 | **Backup i odtwarzanie** | 📐 | Ani Postgresa (dane + schemat `keycloak`), ani MinIO (multimediów **nie ma w bazie**) — [§8.2](#82-backup-i-odtwarzanie) |
 
 ### Dlaczego `docker-compose.multi.yml` nie jest odpowiedzią
@@ -122,7 +140,7 @@ Wybór między buildem monolitycznym a mikrofrontendowym jest decyzją otwartą 
 
 **Skończone, gdy:** `docker build` dla każdego serwisu i frontu przechodzi, a
 `docker-compose.multi.yml` używa `image:` zamiast bind-mountu i `dotnet run` — i nadal spełnia
-kryteria akceptacji z [`multi-instance.md` §10](./multi-instance.md#10-kryteria-akceptacji).
+kryteria akceptacji z [`multi-instance.md` §10](../architecture/multi-instance.md#10-kryteria-akceptacji).
 
 ---
 
@@ -243,7 +261,7 @@ deweloperskie.
 
 ### 8.1 Topologia i health checks
 
-Kształt wynika wprost z [`multi-instance.md`](./multi-instance.md) i nie ma tu swobody:
+Kształt wynika wprost z [`multi-instance.md`](../architecture/multi-instance.md) i nie ma tu swobody:
 
 - Catalog, Identity, Sales — dowolna liczba replik;
 - Notification — **huby ×N i dokładnie jeden Relay**; tylko Relay konsumuje `notification.events`
@@ -252,7 +270,7 @@ Kształt wynika wprost z [`multi-instance.md`](./multi-instance.md) i nie ma tu 
 - Redis — wyłącznie backplane SignalR. Nie dokładać do niego cache'u uprawnień ani kolejek:
   awaria Redisa ma degradować realtime, a nie kłaść autoryzację całego ERP;
 - `Messaging:PrecompiledHandlers=true` + krok `dotnet run -- codegen write` w pipelinie —
-  [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) nazywa
+  [`architecture.md` §7](../architecture/backend.md#7-wieloinstancyjność--założenia-zdjęte) nazywa
   włączenie tej flagi „decyzją wdrożenia"; przy równoległym starcie kilku instancji znika przy
   okazji wyścig na generowanym kodzie.
 
@@ -276,12 +294,12 @@ Dwa niezależne przedmioty backupu, bo dane leżą w dwóch miejscach:
 Kluczowa rzecz, którą trzeba przećwiczyć, a nie zapisać: **próbne odtworzenie**. Backup
 niesprawdzony odtworzeniem jest założeniem, nie zabezpieczeniem — i rozjazd baza↔magazyn
 (referencja bez pliku) jest tu realnym scenariuszem, o którym mówi
-[`media-storage.md` §4d](./media-storage.md).
+[`media-storage.md` §4d](../guides/backend/media-storage.md).
 
 ### 8.3 Telemetria
 
 Pełny rozpis — stos narzędzi, sygnały, progi i kolejność wdrażania — jest w osobnym dokumencie:
-[`observability.md`](./observability.md). Tutaj tylko zakres minimalny, bez którego nie ma sensu
+[`observability.md`](observability.md). Tutaj tylko zakres minimalny, bez którego nie ma sensu
 wychodzić na produkcję.
 
 W repozytorium **nie ma dziś żadnego pakietu OpenTelemetry** — decyzja co do biblioteki nie została
@@ -299,7 +317,7 @@ tego systemu:
 
 **Uwaga do §8.1:** `/health/ready` nie może sprawdzać RabbitMQ ani MinIO. Bogaty `ready` przy
 padzie brokera wyrzuca z rotacji wszystkie instancje naraz i kładzie API, choć outbox jest właśnie
-po to, żeby ten pad przetrwać — [`observability.md` §4](./observability.md#4-health-checks).
+po to, żeby ten pad przetrwać — [`observability.md` §4](observability.md#4-health-checks).
 
 
 ---
@@ -308,7 +326,7 @@ po to, żeby ten pad przetrwać — [`observability.md` §4](./observability.md#
 
 1. Build + testy: `Erp.ArchitectureTests` oraz `Erp.IntegrationTests` — te ostatnie chodzą na
    Testcontainers, więc CI nie potrzebuje infrastruktury poza Dockerem
-   ([`multi-instance.md` §10](./multi-instance.md#10-kryteria-akceptacji)).
+   ([`multi-instance.md` §10](../architecture/multi-instance.md#10-kryteria-akceptacji)).
 2. Build frontu (`nx affected` wystarcza — monorepo już to umie) plus lint granic modułów.
 3. Obrazy tagowane SHA commita. **Nigdy `latest`** na produkcji: bez wersji w tagu nie da się
    odpowiedzieć na pytanie, co właściwie jest wdrożone, ani wrócić do poprzedniego stanu.
@@ -361,7 +379,7 @@ które `project.json` już definiuje.
 - [ ] Notification: huby ×N + **dokładnie jeden** Relay; Redis podłączony
 - [ ] `/health/ready` odpowiada i proxy z niego korzysta
 - [ ] Backup Postgresa i MinIO działa, **odtworzenie przećwiczone**
-- [ ] Alerty: outbox, `job` failed, brak Relaya, dysk — [`observability.md` §9](./observability.md#9-checklist)
+- [ ] Alerty: outbox, `job` failed, brak Relaya, dysk — [`observability.md` §9](observability.md#9-checklist)
 - [ ] Czujka uptime **poza tym serwerem**, z powiadomieniem na telefon
 - [ ] Wdrożenie wykonane dwa razy z rzędu z pipeline'u, bez kroków ręcznych
 
@@ -369,9 +387,9 @@ które `project.json` już definiuje.
 
 ## 12. Zobacz też
 
-- [Architektura backendu](./architecture.md) — [§1 stan wdrożenia](./architecture.md#1-stan-wdrożenia), [§7 wieloinstancyjność](./architecture.md#7-wieloinstancyjność--założenia-zdjęte)
-- [Wieloinstancyjność — plan wdrożenia](./multi-instance.md) — topologia, role, dowody
-- [Tożsamość i uprawnienia](./identity-authz.md) — Keycloak i moduł Identity
-- [Magazyn plików](./media-storage.md) — kubełki, retencja, rozjazd baza↔magazyn
-- [Obserwowalność i niezawodność](./observability.md) — health checks, alerty, zapobieganie awariom
-- [Persystencja — EF Core i Postgres](./persistence-ef.md) — migracje i seed
+- [Architektura backendu](../architecture/backend.md) — [§1 stan wdrożenia](../architecture/backend.md#1-stan-wdrożenia), [§7 wieloinstancyjność](../architecture/backend.md#7-wieloinstancyjność--założenia-zdjęte)
+- [Wieloinstancyjność — plan wdrożenia](../architecture/multi-instance.md) — topologia, role, dowody
+- [Tożsamość i uprawnienia](../architecture/security.md) — Keycloak i moduł Identity
+- [Magazyn plików](../guides/backend/media-storage.md) — kubełki, retencja, rozjazd baza↔magazyn
+- [Obserwowalność i niezawodność](observability.md) — health checks, alerty, zapobieganie awariom
+- [Persystencja — EF Core i Postgres](../guides/backend/persistence-ef.md) — migracje i seed

@@ -144,7 +144,7 @@ public sealed class IssueTypeSchemeSetTypeCommandHandler : CommandHandler<IssueT
 /// <para>Odmawia, gdy <b>którekolwiek zgłoszenie ma ten typ</b> — sprawdzane przez
 /// <see cref="IssueTypeInUseRule"/> w pre-checku operacji masowej (TYP-004 AC1). Handler
 /// powtarza tę samą regułę jako drugą linię obrony, bo między pre-checkiem a wykonaniem
-/// chunka mogło powstać nowe zgłoszenie tego typu (patrz <c>docs/backend/batch-validation.md</c>
+/// chunka mogło powstać nowe zgłoszenie tego typu (patrz <c>docs/guides/backend/batch-validation.md</c>
 /// §1.1 — pre-check to zapowiedź, nie gwarancja).</para>
 /// </summary>
 public sealed class IssueTypeSchemeRemoveTypeCommand : ICommand<Guid>, IAggregateCommand

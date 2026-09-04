@@ -10,7 +10,7 @@ namespace Identity.Tests;
 /// wsadu — <c>IRoleQueries.IsDescendantAsync</c> (druga linia, w handlerze) czyta stan
 /// zacommitowany i nie widzi krawędzi z wcześniejszych elementów TEGO SAMEGO chunka. Para
 /// <c>A→B</c> + <c>B→A</c> w jednym zadaniu jest dokładnie tym przypadkiem, dla którego ta
-/// reguła powstała — patrz <c>docs/backend/identity-bulk-migration.md</c> §1.3.
+/// reguła powstała — patrz <c>docs/guides/backend/batch-validation.md</c>.
 /// </summary>
 public class RoleGraphCycleRuleTests
 {

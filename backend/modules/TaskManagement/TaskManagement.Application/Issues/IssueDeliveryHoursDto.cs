@@ -29,7 +29,7 @@ public sealed record IssueDeliveryHoursSummaryDto(
 ///
 /// <para>Pisane w fazie 6, nie 7 (razem z pierwszym wpisem czasu) — kształt tego zapytania
 /// decyduje, jakich indeksów potrzebuje <c>issue_link</c>/<c>issue_work_log</c>, a raport
-/// (faza 7) tylko go woła (<c>docs/backend/task-management-requirements.md</c> §14).</para>
+/// (faza 7) tylko go woła (<c>docs/modules/task-management/requirements.md</c> §14).</para>
 /// </summary>
 public interface IIssueDeliveryHoursQueries
 {

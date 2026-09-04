@@ -11,7 +11,7 @@ namespace Catalog.Multimedia.Command;
 /// <para>Zlecenie generowania wychodzi normalnie raz — przy rejestracji pliku. Zasoby wgrane,
 /// zanim generator zaczął działać, nie mają jak go dostać, więc bez tego endpointu jedynym
 /// sposobem nadrobienia byłoby wgranie wszystkiego od nowa
-/// (<c>docs/backend/media-storage.md</c> §7).</para>
+/// (<c>docs/guides/backend/media-storage.md</c> §7).</para>
 ///
 /// <para><b>Zadanie kończy się na przyjęciu zleceń, nie na gotowych plikach.</b> Warianty
 /// powstają w konsumencie, po zatwierdzeniu transakcji — patrz

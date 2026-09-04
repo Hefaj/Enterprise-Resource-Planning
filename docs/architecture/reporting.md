@@ -1,15 +1,27 @@
+---
+id: architecture.reporting
+title: Raporty — gdzie żyją, jak nie zjadają serwera
+summary: Architektura raportów, przebiegów ReportRun i izolacji zasobów Map/Reduce.
+kind: architecture
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - raport zestawienie lub agregacja
+  - ciężki przebieg Map Reduce
+related: []
+---
+
 # Raporty — gdzie żyją, jak nie zjadają serwera
 
-**Stan: 📐 projekt, brak kodu.** Legenda znaczników —
-[`architecture.md` §1](./architecture.md#1-stan-wdrożenia). Nie istnieje ani jeden raport, ani
-`ReportRun`, ani `ReportRunner`. Istnieje natomiast **cały podsystem, na którym raport ma stanąć**:
-`job.kind = Reduce`, agregat przebiegu, `ExportRunner`, `IArtifactStore`, kanał `jobs`, retencja.
-Ten dokument rozstrzyga, że raport **nie dostaje własnego podsystemu ani własnego mikroserwisu** —
-i mówi, co konkretnie zrobić, gdy pojawi się pierwszy raport.
+Raporty korzystają z `ReportRun`, `ReportRunner`, `job.kind = Reduce`, `IArtifactStore`, kanału
+`jobs` i retencji artefaktów. Dokument rozstrzyga, że raport **nie dostaje własnego podsystemu ani
+własnego mikroserwisu**; kolejne definicje rozszerzają wspólny mechanizm.
 
 Relacja do sąsiednich dokumentów:
 
-| | [`exports-artifacts.md`](./exports-artifacts.md) | ten dokument |
+| | [`exports-artifacts.md`](../guides/backend/exports-artifacts.md) | ten dokument |
 |---|---|---|
 | Odpowiada na | jak powstaje plik i jak użytkownik się o nim dowiaduje | gdzie należy raport i jak go odizolować od reszty systemu |
 | Zakres | jeden producent (`ExportRun`) | wszystkie przebiegi typu *reduce*, w tym eksport po uogólnieniu |
@@ -32,7 +44,7 @@ odzysk po awarii runnera — jest identyczna. Dlatego raport nie dostaje własne
 
 Granica po drugiej stronie jest równie ważna: jeżeli coś zwraca stronę wyników i mieści się
 w budżecie żądania HTTP, **to nie jest raport, tylko zapytanie** — i należy do
-[`cqrs.md`](./cqrs.md), nie tutaj. Zestawienie widoczne na ekranie w tabeli nie potrzebuje ani
+[`cqrs.md`](../guides/backend/cqrs.md), nie tutaj. Zestawienie widoczne na ekranie w tabeli nie potrzebuje ani
 przebiegu, ani pliku.
 
 ---
@@ -43,7 +55,7 @@ przebiegu, ani pliku.
 dane, przez wspólną bibliotekę `Erp.BuildingBlocks.Reporting`.**
 
 Argument rozstrzygający jest ten sam, który
-[`media-storage.md` §1](./media-storage.md#1-biblioteka-nie-mikroserwis) postawił przy plikach:
+[`media-storage.md` §1](../guides/backend/media-storage.md#1-biblioteka-nie-mikroserwis) postawił przy plikach:
 **centralny serwis nie ma skąd wziąć danych.** Są dokładnie trzy drogi i każda przegrywa:
 
 | Droga | Dlaczego odpada |
@@ -95,7 +107,7 @@ wszystko po to, żeby odróżnić `GROUP BY` od jego braku.
 Co się przez to samo załatwia, bo już działa dla `ExportRun`:
 
 - `job.kind = Reduce` — status `Completed` albo `Failed`, **nic pośredniego**. Uzasadnienie
-  z [`exports-artifacts.md` §3](./exports-artifacts.md#3-jobkind--map-i-reduce-dzielą-tabelę)
+  z [`exports-artifacts.md` §3](../guides/backend/exports-artifacts.md#3-jobkind--map-i-reduce-dzielą-tabelę)
   obowiązuje tym mocniej: raport zsumowany w 96% jest raportem błędnym, nie częściowym.
 - `AggregateChanged` ze skanu ChangeTrackera → realtime bez linijki kodu w runnerze.
 - Kanał `jobs` adresowany `user:{userId}` → dzwonek i „Pobierz" u zleceniodawcy.
@@ -105,7 +117,7 @@ Co się przez to samo załatwia, bo już działa dla `ExportRun`:
 **Migracja `ExportRun` → `ReportRun` łamie kontrakt NSwag** (`searchExportRun` → `searchReportRun`,
 `ExportRunCreateCommand` → `ReportRunCreateCommand`) i wymaga świadomej regeneracji klienta oraz
 zmiany sygnatury `catalog.export_run` w `AggregateSignatures` — patrz
-[`endpoint-naming.md`](./endpoint-naming.md). Zrobić to **przed** pierwszym raportem; po jest
+[`endpoint-naming.md`](../guides/backend/endpoint-naming.md). Zrobić to **przed** pierwszym raportem; po jest
 dwukrotnie drożej.
 
 ---
@@ -128,7 +140,7 @@ public interface IReportDefinition
 
 Implementacje wyłapuje skan zestawów w `AddErpModule` — nowa definicja **nie dopisuje `AddScoped`**
 nigdzie, ma tylko leżeć w `{Modul}.Application` i implementować interfejs. Konwencja rejestracji
-z [`architecture.md`](./architecture.md) obowiązuje bez wyjątku.
+z [`architecture.md`](backend.md) obowiązuje bez wyjątku.
 
 `ReportRunner` jest jeden dla wszystkich definicji i robi dokładnie to, co dziś `ExportRunner`:
 krótka transakcja przejęcia pod `SKIP LOCKED`, bicie serca w `heartbeat_at`, postęp co 500
@@ -165,7 +177,7 @@ godziny. Odmowa z `errorCode` jest tu właściwą odpowiedzią, nie cichym ustaw
 
 Odpowiedź na „a może osobny serwer" brzmi: **osobna instancja tego samego serwisu**, nie osobny
 serwis. Wzorzec już istnieje — `Realtime:Role` (`Hub`/`Relay`) z
-[`multi-instance.md` §4](./multi-instance.md). To samo dla obciążenia:
+[`multi-instance.md` §4](multi-instance.md). To samo dla obciążenia:
 
 ```
 Workload:Roles = Api          # nie rejestruje żadnego BackgroundService
@@ -174,7 +186,7 @@ Workload:Roles = Both         # domyślne — dev zachowuje się jak dziś
 ```
 
 Domyślne `Both` jest warunkiem, żeby `dotnet run --project Catalog.Api` dalej robiło wszystko —
-zasada przewodnia z [`multi-instance.md` §1](./multi-instance.md#1-zasada-przewodnia).
+zasada trwałego właściciela z [`multi-instance.md`](multi-instance.md#granice-odpowiedzialności).
 
 Dopiero to daje twardą izolację: kontener z rolą `Runner` dostaje limity `cpus` i `memory`
 w compose/k8s i **fizycznie nie jest w stanie** zagłodzić instancji API. Ten sam obraz, inna
@@ -208,7 +220,7 @@ bicie serca zamiast trzymanego locka.
 - **Nigdy synchronicznie w HTTP.** Endpoint zakłada przebieg i zwraca `BatchResult{JobUuid}`, tak
   jak eksport. Endpoint raportu, jak endpoint eksportu, **nie jest wsadowy** — zlecanie pięciu
   raportów naraz nie jest przypadkiem użycia, a `BatchEndpointBase` wyprodukowałby dwa zadania na
-  jeden raport ([`exports-artifacts.md` §2](./exports-artifacts.md#2-agregat-przebiegu)).
+  jeden raport ([`exports-artifacts.md` §2](../guides/backend/exports-artifacts.md#2-agregat-przebiegu)).
 - **Streaming, nigdy materializacja.** `IAsyncEnumerable` → formatter → `IArtifactStore.WriteAsync`.
   `.ToList()` na wyniku raportu to ten sam błąd, przed którym ostrzega `bulk-commands.md` przy
   `COPY`, tylko z większym zbiorem.
@@ -247,33 +259,18 @@ Punkt 3 jest odległy i może nie nadejść nigdy. Nie budować go zawczasu.
 
 Katalog raportów **nie** jest centralnym endpointem. Każdy kontrakt remota eksponuje swoje
 definicje, a host składa listę tak samo, jak składa menu — mechanizm już istnieje
-([`frontend/architecture.md`](../frontend/architecture.md)). Zlecenie raportu woła API modułu,
+([`frontend/architecture.md`](frontend.md)). Zlecenie raportu woła API modułu,
 który go definiuje, przez `API_BASE_URL` tego modułu; nie ma warstwy agregującej, tak jak nigdzie
 indziej w tym systemie.
 
 Przebieg raportu jest zwykłym agregatem z orkiestratorem, cache i realtime, a odbiór gotowego pliku
 idzie istniejącą ścieżką „Pobierz" w feedzie zadań —
-[`frontend/notifications.md`](../frontend/notifications.md). Bramkowanie akcji uprawnieniem
+[`frontend/notifications.md`](../guides/frontend/notifications.md). Bramkowanie akcji uprawnieniem
 `{moduł}.report.{klucz}.run` przez `*erpHasPermission`.
 
 ---
 
-## 8. Kolejność wdrożenia
-
-| Faza | Zakres | Kiedy | Koszt |
-|---|---|---|---|
-| 0 | `ExportRun` → `ReportRun`, `IReportDefinition`, `ExportRunner` → `ReportRunner`; eksport zostaje definicją | **przed pierwszym raportem** | mały — podsystem już stoi; regeneracja NSwag |
-| 1 | Rozdzielone pule slotów `Map`/`Reduce`, limit przebiegów per użytkownik, `EstimateAsync` | przy pierwszym ciężkim raporcie | mały |
-| 2 | `Workload:Roles`, worker jako osobny kontener z limitami `cpus`/`memory` | pierwsze wdrożenie produkcyjne pod obciążeniem | średni — dotyka [`production.md`](./production.md) |
-| 3 | Osobna pula połączeń + `statement_timeout`, potem read replica | gdy raporty widać w opóźnieniach API | średni / duży |
-| 4 | Schemat `analytics` z read modelem | gdy denormalizacja z [§6](#6-raporty-cross-module) zaczyna się powtarzać | duży |
-
-Każda faza zostawia działającą jedną instancję i domyślną konfigurację odtwarzającą dzisiejsze
-zachowanie — ta sama zasada, co w [`multi-instance.md` §1](./multi-instance.md#1-zasada-przewodnia).
-
----
-
-## 9. Czego nie robić
+## 8. Czego nie robić
 
 - **Mikroserwisu raportowego czytającego cudze schematy** — [§2](#2-biblioteka-nie-mikroserwis).
 - **Raportu synchronicznego w HTTP.** Timeout gatewaya to najgorszy możliwy komunikat o tym, że

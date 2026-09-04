@@ -19,7 +19,7 @@ namespace Notification.Infrastructure.Realtime;
 ///
 /// <para>Wniosek: licznik musi przeżyć proces, który go zwiększa. Tabela w schemacie modułu daje
 /// to bez nowej infrastruktury i bez pytania o konfigurację trwałości Redisa — który zostaje
-/// wyłącznie backplanem SignalR (patrz <c>docs/backend/multi-instance.md</c> §1).</para>
+/// wyłącznie backplanem SignalR (patrz <c>docs/architecture/multi-instance.md</c> §1).</para>
 ///
 /// <para><b>Zwykła klasa, nie encja domenowa.</b> To licznik infrastruktury realtime, a nie byt
 /// biznesowy — nie ma niezmiennika do pilnowania, nie ma zdarzeń, nie ma tożsamości innej niż

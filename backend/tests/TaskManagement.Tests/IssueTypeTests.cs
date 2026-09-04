@@ -10,12 +10,12 @@ using Xunit;
 namespace TaskManagement.Tests;
 
 /// <summary>
-/// Typy zgłoszeń (<c>docs/backend/task-management-requirements.md</c> TYP-001..004).
+/// Typy zgłoszeń (<c>docs/modules/task-management/requirements.md</c> TYP-001..004).
 /// </summary>
 public class IssueTypeTests
 {
     /// <summary>Zgłoszenie bez typu odpada w pipeline'u walidacji WEJŚCIA, przed dotknięciem
-    /// bazy — 400, nie 422 (<c>docs/backend/cqrs.md</c> §6).</summary>
+    /// bazy — 400, nie 422 (<c>docs/guides/backend/cqrs.md</c> §6).</summary>
     [Fact]
     public void Utworzenie_zgloszenia_bez_typu_jest_odrzucane_przez_walidacje()
     {

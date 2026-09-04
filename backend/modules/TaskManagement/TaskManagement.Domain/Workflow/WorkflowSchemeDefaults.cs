@@ -20,7 +20,7 @@ public static class WorkflowSchemeDefaults
 
     /// <summary>Buduje schemat systemowy: trzy stany i przejścia w obie strony.
     /// Powrót <c>Done → In Progress</c> jest tu rutyną, nie sterowanym wyjątkiem —
-    /// to jedna z różnic wobec obiegu w DMS (<c>docs/backend/task-management.md</c> §5.4).</summary>
+    /// to jedna z różnic wobec obiegu w DMS (<c>docs/modules/task-management/domain.md</c> §5.4).</summary>
     public static WorkflowScheme Build()
     {
         var scheme = WorkflowScheme.CreateWithUuid(SystemSchemeUuid, "Domyślny", isSystem: true);
@@ -37,7 +37,7 @@ public static class WorkflowSchemeDefaults
         AddPair(scheme, TodoStateUuid, InProgressStateUuid, "start", "return");
 
         // WF-004 — przykład wymogu przejścia: „przejście do Done bez resolution”
-        // (docs/backend/task-management.md §5.2) nie wykonuje się do końca, front otwiera modal
+        // (docs/modules/task-management/domain.md §5.2) nie wykonuje się do końca, front otwiera modal
         // PRZED wysłaniem komendy, a agregat (`Issue.SetState`) go egzekwuje jako backstop.
         // Kod pola musi istnieć w schemacie pól projektu, żeby przejście dało się w ogóle
         // ukończyć — patrz `TaskManagementSeeder.CreateDeliveryFieldScheme`.

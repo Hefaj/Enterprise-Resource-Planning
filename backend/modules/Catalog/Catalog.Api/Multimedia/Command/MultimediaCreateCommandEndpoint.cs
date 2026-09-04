@@ -72,7 +72,7 @@ public sealed class MultimediaCreateCommandEndpoint
         var uuids = new List<Guid>(req.Commands.Count);
 
         // Jedna transakcja na całą paczkę: granicę przejmuje endpoint, więc pipeline komend
-        // nie zatwierdza po każdym pliku (patrz docs/backend/cqrs.md §3). Katalog, w którym
+        // nie zatwierdza po każdym pliku (patrz docs/guides/backend/cqrs.md §3). Katalog, w którym
         // wylądowała połowa wgranej galerii, byłby gorszy niż odrzucenie całości.
         using (_dispatcher.OwnTransaction())
         {

@@ -24,7 +24,7 @@ namespace Catalog.Application.Multimedia;
 /// Ile produktów używa tego zasobu. Niezerowa wartość <b>blokuje</b> usunięcie — UI ma to
 /// pokazać przed kliknięciem, a nie dowiadywać się o tym z odrzuconej komendy. To nie jest
 /// licznik do automatycznego kasowania: zerowa wartość znaczy „nikt tego teraz nie używa",
-/// a nie „to śmieć" (<c>docs/backend/media-storage.md</c> §4c).
+/// a nie „to śmieć" (<c>docs/guides/backend/media-storage.md</c> §4c).
 /// </param>
 public sealed record MultimediaDto(
     Guid Uuid,

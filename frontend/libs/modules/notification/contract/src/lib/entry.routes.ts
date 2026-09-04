@@ -22,7 +22,7 @@ export const remoteRoutes: Route[] = [
         // przy STARTUP — tego chcemy uniknąć.
         //
         // Scope rejestrowany na trasie, nie w dekoratorze komponentu (child injector
-        // przesłoniłby scope nadrzędny — patrz docs/frontend/translations.md).
+        // przesłoniłby scope nadrzędny — patrz docs/guides/frontend/translations.md).
         loadChildren: async (): Promise<Route[]> => {
           const [{ JobComponent }, { provideJobTranslations }] = await Promise.all([
             import('@erp/notification/feature'),

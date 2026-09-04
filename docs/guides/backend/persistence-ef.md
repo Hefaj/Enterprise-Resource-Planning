@@ -1,6 +1,21 @@
+---
+id: backend.persistence-ef
+title: Persystencja — EF Core i PostgreSQL
+summary: Mapowanie EF Core, migracje, seed oraz drzewa oparte na closure table.
+kind: guide
+scope: backend
+audience:
+  - backend
+  - agent
+triggers:
+  - migracja EF lub mapowanie agregatu
+  - seed lub closure table
+related: []
+---
+
 # Persystencja — EF Core i PostgreSQL
 
-**Stan: ✅ działa** (Catalog). Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
+Catalog jest implementacją referencyjną tego kontraktu.
 
 ---
 
@@ -22,7 +37,7 @@ optionsBuilder.UseErpPostgres(
 ```
 
 **Joiny między schematami są zakazane.** Dane obce sprowadza się wyłącznie zdarzeniami
-(read-model replica) — patrz [`events-outbox.md`](./events-outbox.md). Technicznie nic nie broni
+(read-model replica) — patrz [`events-outbox.md`](../../architecture/integration-events.md). Technicznie nic nie broni
 napisać takiego joina, dlatego granicy pilnuje osobny `DbContext` per moduł: kontekst Catalogu
 po prostu nie zna encji Notification.
 
@@ -30,7 +45,7 @@ po prostu nie zna encji Notification.
 
 ## 2. Co `ErpDbContext` ustala za wszystkich
 
-[`ErpDbContext`](../../backend/building-blocks/Erp.BuildingBlocks.Persistence/ErpDbContext.cs)
+[`ErpDbContext`](../../../backend/building-blocks/Erp.BuildingBlocks.Persistence/ErpDbContext.cs)
 narzuca trzy rzeczy konwencją, żeby nie dało się ich pominąć w pojedynczej konfiguracji encji:
 
 | Cecha | Realizacja | Dlaczego konwencją, a nie per encja |
@@ -110,7 +125,7 @@ Trzy pułapki, na które trzeba uważać:
    ```
 
 3. **Zagnieżdżone typy owned (owned w owned) nie są obsługiwane** przez
-   `AggregateChangeScanner` — patrz [`events-outbox.md`](./events-outbox.md#3-skaner-changetrackera).
+   `AggregateChangeScanner` — patrz [`events-outbox.md`](../../architecture/integration-events.md#3-skaner-changetrackera).
 
 ### Klucz dziecka agregatu nadaje BAZA, nie konstruktor
 
@@ -205,7 +220,7 @@ informacja do rozstrzygnięcia biznesowego, a nie powód, by serwis się nie pod
 
 Naruszenie takiego indeksu w czasie działania trzeba przetłumaczyć na kod domenowy, inaczej
 raport z operacji masowej pokaże `persistence_error` — patrz
-[`bulk-commands.md`](./bulk-commands.md#naruszenie-unikalności-to-reguła-biznesowa-nie-awaria).
+[`bulk-commands.md`](bulk-commands.md#naruszenie-unikalności-to-reguła-biznesowa-nie-awaria).
 
 ---
 
@@ -228,7 +243,7 @@ Do czego służy:
 | Rozwinięcie zaznaczenia `TreeSelectionRequest` | patrz niżej |
 | Wykrycie cyklu przy przenoszeniu węzła | `WouldCreateCycleAsync` — jedno zapytanie po indeksie |
 
-Utrzymuje ją [`CategoryClosureMaintainer`](../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/CategoryClosureMaintainer.cs)
+Utrzymuje ją [`CategoryClosureMaintainer`](../../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/CategoryClosureMaintainer.cs)
 surowym SQL-em (rekurencyjne CTE dla pełnej przebudowy, `INSERT … SELECT` dla nowego liścia).
 Surowy SQL jest tu celowy: przebudowa domknięcia dla drzewa o setkach tysięcy węzłów przez
 ChangeTracker oznaczałaby materializację milionów wierszy w pamięci procesu.
@@ -262,7 +277,7 @@ Implementacja porównuje odległości do najbliższego korzenia i najbliższego 
 
 ## 6. Dane startowe
 
-[`CatalogSeeder`](../../backend/modules/Catalog/Catalog.Infrastructure/Seed/CatalogSeeder.cs)
+[`CatalogSeeder`](../../../backend/modules/Catalog/Catalog.Infrastructure/Seed/CatalogSeeder.cs)
 zastąpił `CatalogMockData`. Zachowuje te same wolumeny i nazwy, więc frontend widzi dane, do których
 był przyzwyczajony.
 
@@ -316,7 +331,7 @@ dotnet ef database update --project backend/modules/Catalog/Catalog.Infrastructu
 ```
 
 `--startup-project` wskazuje na `Infrastructure`, a nie na `Api`, dzięki
-[`CatalogDbContextFactory`](../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/CatalogDbContextFactory.cs)
+[`CatalogDbContextFactory`](../../../backend/modules/Catalog/Catalog.Infrastructure/Persistence/CatalogDbContextFactory.cs)
 (`IDesignTimeDbContextFactory`). Bez niej `dotnet ef` musiałby wystartować cały host — a ten wymaga
 działającego RabbitMQ. Fabryka pozwala generować migracje offline. Łańcuch połączenia bierze ze
 zmiennej `CATALOG_CONNECTION_STRING`, w jej braku z domyślnych ustawień `docker-compose.yml`.
@@ -334,6 +349,6 @@ zamiast zatrzymać wdrożenie.
 
 ## 8. Zobacz też
 
-- [Architektura backendu](./architecture.md)
-- [CQRS — komendy i zapytania](./cqrs.md)
-- [Zdarzenia domenowe i outbox](./events-outbox.md)
+- [Architektura backendu](../../architecture/backend.md)
+- [CQRS — komendy i zapytania](cqrs.md)
+- [Zdarzenia domenowe i outbox](../../architecture/integration-events.md)

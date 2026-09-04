@@ -1438,6 +1438,11 @@ namespace TaskManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("workflow_scheme_uuid");
 
+                    b.PrimitiveCollection<List<Guid>>("_mutedNotificationUserUuids")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("muted_notification_user_uuids");
+
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()

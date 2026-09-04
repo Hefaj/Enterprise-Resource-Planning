@@ -11,7 +11,7 @@ namespace Erp.IntegrationTests;
 
 /// <summary>
 /// Dwa węzły Wolverine'a nad jednym Postgresem i jednym RabbitMQ — kryteria akceptacji faz 3 i 5
-/// (<c>docs/backend/multi-instance.md</c> §10).
+/// (<c>docs/architecture/multi-instance.md</c> §10).
 ///
 /// <para>Te dwa testy razem opisują <b>całą</b> politykę routingu tego systemu, w jej dwóch
 /// przeciwstawnych trybach: zdarzenie integracyjne to <i>praca do wykonania</i> i ma trafić do

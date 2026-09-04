@@ -10,7 +10,7 @@ namespace TaskManagement.Infrastructure.Queries;
 
 /// <summary>
 /// Odczyty tablic — <c>AsNoTracking</c> i projekcja wprost do DTO, z pominięciem repozytoriów
-/// (<c>docs/backend/cqrs.md</c>).
+/// (<c>docs/guides/backend/cqrs.md</c>).
 ///
 /// <para>Widoczność tablicy dziedziczy po projekcie, a widoczność karty po zgłoszeniu: ten sam
 /// predykat, co na liście zgłoszeń, więc zgłoszenie prywatne nie wypływa bocznymi drzwiami

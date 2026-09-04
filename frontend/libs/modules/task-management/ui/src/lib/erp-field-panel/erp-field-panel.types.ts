@@ -4,7 +4,7 @@ export interface ErpFieldPanelTransition {
   id: string;
 
   /** Klucz tłumaczenia nazwy przejścia (`WorkflowTransitionDto.nameKey`) — dana schematu,
-   * nie stała registry, tak samo jak nazwy stanów (`docs/frontend/task-management-pages.md` §8). */
+   * nie stała registry, tak samo jak nazwy stanów (`docs/modules/task-management/screens.md` §8). */
   labelKey: string;
 }
 
@@ -29,7 +29,7 @@ export interface ErpFieldPanelRow {
 }
 
 /**
- * Prawy panel pól karty zgłoszenia (`docs/frontend/task-management-pages.md` §9.1) — **stan
+ * Prawy panel pól karty zgłoszenia (`docs/modules/task-management/screens.md` §9.1) — **stan
  * i dostępne przejścia na samej górze**, bo to najczęstsza akcja na karcie.
  *
  * <p>Pola niestandardowe budowane z profilu projektu (`IssueCustomFieldsComponent`) i tagi

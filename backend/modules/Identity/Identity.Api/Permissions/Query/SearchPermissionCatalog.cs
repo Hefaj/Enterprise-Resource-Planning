@@ -4,7 +4,7 @@ using Identity.Application.Permissions;
 namespace Identity.Permissions.Query;
 
 /// <summary>Read-only przeglądarka katalogu uprawnień — patrz
-/// <c>docs/backend/identity-authz.md</c> §3. Brak paginacji celowo: katalog ma dziesiątki,
+/// <c>docs/architecture/security.md</c> §3. Brak paginacji celowo: katalog ma dziesiątki,
 /// nie tysiące wpisów, więc UI (grupowanie po module) woli mieć wszystko naraz.</summary>
 public sealed class SearchPermissionCatalogEndpoint : EndpointWithoutRequest<List<PermissionCatalogEntryDto>>
 {

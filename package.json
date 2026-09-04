@@ -5,7 +5,15 @@
   "main": "index.js",
   "scripts": {
     "prepare": "nx g @nx-dotnet/core:restore",
-    "translate:keys": "node tools/scripts/generate-translation-keys.js"
+    "translate:keys": "node tools/scripts/generate-translation-keys.js",
+    "docs:generate:technical": "node tools/scripts/documentation/generate-technical-index.mjs",
+    "docs:generate:user": "node tools/scripts/documentation/generate-user-documentation.mjs",
+    "docs:generate": "pnpm docs:generate:technical && pnpm docs:generate:user",
+    "docs:test": "node --test tools/scripts/documentation/*.test.mjs",
+    "docs:check:technical": "node tools/scripts/documentation/validate-technical-docs.mjs",
+    "docs:check:user": "node tools/scripts/documentation/validate-user-documentation.mjs",
+    "docs:check": "pnpm docs:test && pnpm docs:check:technical && pnpm docs:check:user",
+    "docs:scaffold": "node tools/scripts/documentation/scaffold-user-article.mjs"
   },
   "keywords": [],
   "author": "",
@@ -71,7 +79,8 @@
     "typescript": "^6.0.0",
     "typescript-eslint": "^8.40.0",
     "vite": "^7.0.0",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "yaml": "2.9.0"
   },
   "nx": {
     "tags": [

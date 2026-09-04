@@ -17,7 +17,7 @@ namespace Erp.BuildingBlocks.Persistence.Concurrency;
 ///
 /// <para><b>Dlaczego Postgres, a nie Redis.</b> Zewnętrzny lock obok <c>job.status</c> byłby drugim
 /// źródłem prawdy, zdolnym rozjechać się z pierwszym. Postgres i tak jest transakcyjnym źródłem
-/// prawdy tego systemu — patrz <c>docs/backend/multi-instance.md</c> §1.</para>
+/// prawdy tego systemu — patrz <c>docs/architecture/multi-instance.md</c> §1.</para>
 /// </summary>
 public interface IExclusiveLease
 {

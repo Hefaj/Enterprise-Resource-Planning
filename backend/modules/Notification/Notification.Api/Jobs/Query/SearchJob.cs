@@ -10,7 +10,7 @@ namespace Notification.Jobs.Query;
 /// z tym samym wzorcem „szukaj → pobierz”, co pozostałe moduły.
 ///
 /// <para><b>Celowo bez <c>Permissions(...)</c>.</b> W przeciwieństwie do reszty Fazy 3
-/// (patrz <c>docs/backend/identity-authz.md</c> §7 Faza 3), ten endpoint karmi dzwonek
+/// (patrz <c>docs/architecture/security.md</c> §7 Faza 3), ten endpoint karmi dzwonek
 /// powiadomień w nagłówku — własny feed użytkownika o JEGO WŁASNYCH zadaniach masowych, nie
 /// uprzywilejowany zasób. Bramkowanie go przez <c>notification.job.read</c> odcięłoby każdego
 /// nowego użytkownika bez wyraźnie nadanego uprawnienia od widoku własnych powiadomień —

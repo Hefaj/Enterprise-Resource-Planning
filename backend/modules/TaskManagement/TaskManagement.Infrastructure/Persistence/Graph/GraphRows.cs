@@ -7,7 +7,7 @@ namespace TaskManagement.Infrastructure.Persistence.Graph;
 /// wyłącznie po to, żeby EF miał w co zmaterializować wynik zapytania, którego nie da się
 /// wyrazić w LINQ. Nie pojawiają się w migracjach i nie mają odpowiednika w bazie.</para>
 ///
-/// <para>Dlaczego CTE, a nie graf w pamięci — <c>docs/backend/task-management.md</c> §8.2:
+/// <para>Dlaczego CTE, a nie graf w pamięci — <c>docs/modules/task-management/domain.md</c> §8.2:
 /// drzewo i graf blokad w dużym projekcie mają tysiące krawędzi, a reguła wsadowa musi
 /// działać także w pre-checku operacji masowej.</para>
 /// </summary>

@@ -19,7 +19,7 @@ export type IssueCreateMetadata = Record<string, never>;
  * <p>Komenda idzie w trybie <c>Commands[]</c>, więc uuid generuje klient — robi to
  * <c>createIssueAsync</c>, nie ten formularz. <b>Klucza czytelnego nie ma w polach i być nie
  * może</b>: nadaje go serwer z licznika projektu, w tej samej transakcji co zapis
- * (`docs/backend/task-management.md` §4).</p>
+ * (`docs/modules/task-management/domain.md` §4).</p>
  *
  * <p>Stanu początkowego też nie wybiera użytkownik — bierze go schemat projektu
  * (`WorkflowScheme.InitialState`), bo „w jakim stanie powstaje zgłoszenie" jest konfiguracją

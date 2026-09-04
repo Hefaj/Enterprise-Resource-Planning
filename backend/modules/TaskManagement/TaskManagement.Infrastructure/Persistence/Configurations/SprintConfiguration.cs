@@ -11,7 +11,7 @@ namespace TaskManagement.Infrastructure.Persistence.Configurations;
 /// <para>Indeks <c>ix_sprint_board_active</c> niesie regułę: aktywny sprint na tablicy jest
 /// najwyżej jeden. Egzekwuje ją baza, nie <see cref="Sprint"/> — dwie równoległe komendy
 /// aktywacji na różnych sprintach tej samej tablicy przeszłyby walidację aplikacyjną obie
-/// (<c>docs/backend/task-management.md</c> §3).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §3).</para>
 /// </summary>
 public sealed class SprintConfiguration : IEntityTypeConfiguration<Sprint>
 {

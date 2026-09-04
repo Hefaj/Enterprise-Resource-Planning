@@ -27,7 +27,7 @@ public sealed class GetRoleRequest
 /// <summary>Krawędź grafu ról: <see cref="ContainerUuid"/> zawiera <see cref="MemberUuid"/> jako
 /// składową — jeden wiersz tabeli <c>role_member</c>. Zasila <c>RoleGraphCycleRule</c>, która
 /// buduje z całego zbioru krawędzi graf w pamięci, żeby wykryć cykl WEWNĄTRZ wsadu (patrz
-/// uzasadnienie w <c>docs/backend/identity-bulk-migration.md</c> §1.3).</summary>
+/// uzasadnienie w <c>docs/guides/backend/batch-validation.md</c>).</summary>
 public sealed record RoleMembershipEdge(Guid ContainerUuid, Guid MemberUuid);
 
 /// <summary>Odczyty ról. Implementacja w <c>Identity.Infrastructure</c>.</summary>
@@ -62,7 +62,7 @@ public interface IRoleQueries
     /// <summary>
     /// Wszystkie krawędzie <c>role_member</c> w systemie — jedno zapytanie, z którego
     /// <c>RoleGraphCycleRule</c> buduje graf w pamięci. Tabela ról liczy dziesiątki, nie
-    /// tysiące wierszy (patrz <c>docs/backend/identity-authz.md</c> §2 „bez tabeli domknięcia
+    /// tysiące wierszy (patrz <c>docs/architecture/security.md</c> §2 „bez tabeli domknięcia
     /// w v1"), więc materializacja całego grafu jest tania.
     /// </summary>
     Task<List<RoleMembershipEdge>> GetAllMembershipEdgesAsync(CancellationToken cancellationToken);
@@ -73,7 +73,7 @@ public interface IRoleQueries
     ///
     /// Wołane PRZED <c>Role.AddMember</c> — jeśli wynik jest prawdziwy, dodanie
     /// <paramref name="ancestorRoleUuid"/> jako składowej kontenera <paramref name="roleUuid"/>
-    /// zamknęłoby cykl (patrz <c>docs/backend/identity-authz.md</c> §2). Agregat sam nie ma
+    /// zamknęłoby cykl (patrz <c>docs/architecture/security.md</c> §2). Agregat sam nie ma
     /// jak tego sprawdzić — nie ma dostępu do bazy.
     /// </summary>
     Task<bool> IsDescendantAsync(Guid ancestorRoleUuid, Guid roleUuid, CancellationToken cancellationToken);

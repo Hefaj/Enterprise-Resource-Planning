@@ -52,7 +52,7 @@ public static class ErpApiExtensions
     /// co odpytuje ten sam endpoint, co uruchamia transformację klaimów NOWEGO żądania...) —
     /// nieskończona rekurencja sieciowa wyczerpująca pulę połączeń Kestrela aż do zawieszenia.
     /// Identity i tak nie ma dziś (Faza 3) własnych endpointów bramkowanych przez
-    /// <c>Permissions(...)</c> (patrz <c>docs/backend/identity-authz.md</c> §7 Faza 3), więc
+    /// <c>Permissions(...)</c> (patrz <c>docs/architecture/security.md</c> §7 Faza 3), więc
     /// nie traci niczego, wyłączając to u siebie.</param>
     public static IServiceCollection AddErpApi(
         this IServiceCollection services,

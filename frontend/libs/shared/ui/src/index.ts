@@ -47,15 +47,17 @@ export * from './lib/atoms/erp-media-preview';
 // // Molecules
 export * from './lib/molecules/erp-filter';
 export * from './lib/molecules/erp-action-toolbar';
+export * from './lib/molecules/erp-documentation-article';
+export * from './lib/molecules/erp-documentation-search';
 
 // // Organisms
 export * from './lib/atoms/erp-modal';
 export * from './lib/atoms/erp-step-content';
 export * from './lib/organisms/erp-group-panel';
+export * from './lib/organisms/erp-documentation-layout';
 
 // Użytkownicy — katalog wspólny dla wszystkich modułów (port `ERP_USER_DIRECTORY`)
 export * from './lib/user';
 
 // Translations
 export * from './lib/translation';
-

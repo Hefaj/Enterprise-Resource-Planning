@@ -1,9 +1,9 @@
 # Plan realizacji — Task Management (fazy 4–8)
 
 > **Plik roboczy — usuń po domknięciu fazy 8.**
-> Dokumentacja docelowa (zostaje): [`docs/backend/task-management-requirements.md`](docs/backend/task-management-requirements.md)
-> (co budujemy i po czym poznamy, że działa), [`docs/backend/task-management.md`](docs/backend/task-management.md)
-> (model i mechanika), [`docs/frontend/task-management-pages.md`](docs/frontend/task-management-pages.md)
+> Dokumentacja docelowa (zostaje): [`docs/modules/task-management/requirements.md`](../../docs/modules/task-management/requirements.md)
+> (co budujemy i po czym poznamy, że działa), [`docs/modules/task-management/domain.md`](../../docs/modules/task-management/domain.md)
+> (model i mechanika), [`docs/modules/task-management/screens.md`](../../docs/modules/task-management/screens.md)
 > (strony i menu). Ten plik jest **wyłącznie o kolejności prac i checklistach**.
 
 ---
@@ -36,7 +36,7 @@ Zawsze w tej kolejności — odwrotna kolejność kończy się frontem pisanym p
 1. **Domena** (`TaskManagement.Domain`) — agregat, niezmienniki, metody walidujące **przed** zmianą stanu.
 2. **Persystencja** (`Infrastructure/Persistence`) — konfiguracja EF, migracja, seed.
 3. **Aplikacja** (`Application`) — komendy, handlery, DTO, reguły `IBatchRule`, zapytania `IXxxQueries`.
-4. **API** (`Api`) — endpointy FastEndpoints wg [`endpoint-naming.md`](docs/backend/endpoint-naming.md),
+4. **API** (`Api`) — endpointy FastEndpoints wg [`endpoint-naming.md`](../../docs/guides/backend/endpoint-naming.md),
    uprawnienia, grupy tras.
 5. **Testy backendu** — `TaskManagement.Tests` + `Erp.ArchitectureTests` + `BackgroundServiceTests`.
 6. **Regeneracja klienta NSwag** — `frontend/libs/modules/task-management/data-access/nswag.json`.
@@ -192,7 +192,7 @@ celowo nie ma w żadnym zestawie" i zero obsługi wklejania.
 
 Warstwa `ui` modułu zawiera **wyłącznie tłumaczenia**; karta tablicy, kolumna, wątek komentarzy
 i historia leżą w `feature`. Faza 4 to prostuje — komponent prezentacyjny nie mieszka w `feature`
-([`feature-structure.md`](docs/frontend/feature-structure.md), [`atoms.md`](docs/frontend/atoms.md)).
+([`feature-structure.md`](../../docs/guides/frontend/feature-structure.md), [`atoms.md`](../../docs/guides/frontend/atoms.md)).
 
 - [x] `erp-issue-key` — klucz + ikona typu; używany w tabeli, na karcie, w powiązaniach i na tablicy.
 - [x] `erp-issue-card` — przeniesienie z `feature/board/components/board-card`.
@@ -215,7 +215,7 @@ selektor `erp-*`, translation-aware przez `erpTranslate` — smart component pod
       `PUT` do magazynu → rejestracja, plus podmiana referencja ↔ `blob:` w obie strony
       (podgląd **i** edytor).
 - [x] **Przebudowa układu karty zgłoszenia** wg
-      [`task-management-pages.md` §9.1](docs/frontend/task-management-pages.md#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień):
+      [`task-management-pages.md` §9.1](../../docs/modules/task-management/screens.md#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień):
       dwie kolumny, panel pól po prawej ze stanem na górze, strumień aktywności z filtrem,
       zakotwiczone pole komentarza, edycja tytułu i opisu w miejscu.
 - [x] `feature/issue`: kolumna typu z ikoną na liście, wybór typu w modalu tworzenia,
@@ -243,7 +243,7 @@ selektor `erp-*`, translation-aware przez `erpTranslate` — smart component pod
 - [x] **Zrzut ekranu wklejony `Ctrl+V` w opisie** wgrywa się bez okna wyboru pliku, wyświetla się
       po odświeżeniu strony i po ponownym wejściu w edytor.
 - [x] **To samo w polu komentarza**; plik pojawia się na liście załączników zgłoszenia.
-- [x] Karta zgłoszenia ma układ z [§9.1 dokumentu stron](docs/frontend/task-management-pages.md#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień):
+- [x] Karta zgłoszenia ma układ z [§9.1 dokumentu stron](../../docs/modules/task-management/screens.md#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień):
       panel pól po prawej, jeden strumień aktywności z filtrem, pole komentarza zakotwiczone.
 - [x] **`grep` po `feature` nie znajduje komponentu prezentacyjnego bez logiki** — karta tablicy,
       strumień, panel pól i pasek powiązań są w `task-management/ui`.
@@ -253,7 +253,7 @@ selektor `erp-*`, translation-aware przez `erpTranslate` — smart component pod
 
 ## 3. Faza 5 — zlecenia międzydziałowe, obserwujący, powiadomienia
 
-**Cel fazy:** drugi scenariusz z [§1 wymagań](docs/backend/task-management-requirements.md#1-cel-systemu) —
+**Cel fazy:** drugi scenariusz z [§1 wymagań](../../docs/modules/task-management/requirements.md#1-cel-systemu) —
 biznes zleca, dział wykonuje, zamawiający odbiera. To jest faza, która uzasadnia istnienie modułu.
 
 **Wymagania:** REQ-001..006, NTF-001/002, ISS-009, CMT-004, PERM-003/004, PRJ-006.
@@ -288,7 +288,7 @@ biznes zleca, dział wykonuje, zamawiający odbiera. To jest faza, która uzasad
 - [x] `data-access`: rozszerzenie `issue.orchestrator` o obserwujących i `derivedDeliveryState`.
 - [x] `feature/issue`: sekcja obserwujących na karcie (dodaj/usuń, „obserwuję" jako przełącznik).
 - [x] `feature/issue`: wzmianki `@` w edytorze komentarza — podpowiadanie przez
-      `ERP_USER_DIRECTORY` ([`user-directory.md`](docs/frontend/user-directory.md)), nie lokalnym endpointem.
+      `ERP_USER_DIRECTORY` ([`user-directory.md`](../../docs/guides/frontend/user-directory.md)), nie lokalnym endpointem.
 - [x] **Nowy agregat `request`** w `feature`: strona `/task-management/request`
       (`REQ-006`) + modale „złóż zlecenie", „odbierz realizację", „zgłoś zastrzeżenia".
 - [x] `feature/issue`: pasek powiązań pokazuje nagłówki zgłoszeń realizujących (`REQ-002`).
@@ -359,7 +359,7 @@ TIME-001/002/004, BRD-006/007/009, PRJ-003/004, ATT-002, API-005, NFR-008.
 - [x] Egzekutory dla siedmiu operacji z `BULK-002` — sześć (zmiana stanu, przypisanie,
       priorytet, dodanie/usunięcie tagu, dodanie do sprintu) już istniało jako zwykłe komendy
       pojedynczego zgłoszenia przechodzące przez generyczny `BatchEndpointBase` bez zmian (kontrakt
-      wsadowy nie odróżnia jednego celu od tysiąca — `docs/backend/bulk-commands.md`); siódma
+      wsadowy nie odróżnia jednego celu od tysiąca — `docs/guides/backend/bulk-commands.md`); siódma
       (przeniesienie do projektu) jest nowa. `IssueBatchValidator` rozszerzony o pre-check
       istnienia projektu docelowego (`IssueTargetProjectMustExistRule`).
 - [x] Przeniesienie do projektu (`ISS-010`) — `IssueSetProjectCommand` (nazwa wg pięciu
@@ -473,7 +473,7 @@ Ta podsekcja jest **warunkiem koniecznym fazy 7**: raport godzin nie policzy nic
       i publikuje `ArtifactDeletionRequested` przez outbox (`IIntegrationEventPublisher`), **nigdy
       gołe `DeleteAsync` z handlera** — bajty w magazynie sprząta nowy `ArtifactDeletionRequestedHandler`
       (`TaskManagement.Infrastructure/Consumers`, kopia mechanizmu z Catalogu,
-      `docs/backend/media-storage.md` §4b) po zatwierdzeniu transakcji, tolerując brak obiektu.
+      `docs/guides/backend/media-storage.md` §4b) po zatwierdzeniu transakcji, tolerując brak obiektu.
       Nowy `TaskManagementModule.Name` jako dyskryminator modułu (wymiana `erp.events` jest fanoutowa).
 - [x] Linki zewnętrzne na zgłoszeniu (`API-005`) — `IssueExternalLink`, encja podrzędna `Issue` wzorem
       `IssueTag` (mała, ograniczona kolekcja, eagerowo doczytywana), NIE integracja w domenie: niesie
@@ -557,7 +557,7 @@ Zweryfikowano na żywo 2026-09-02 (środowisko dev, `client-monolith` + `TaskMan
       część dropdownów pokazywała surowe klucze (`taskManagement.priority.critical` itd.) mimo
       poprawnych tłumaczeń w JSON-ie. Przy okazji przeniesiono `provideTaskManagementTranslations()`
       z `providers` pojedynczego komponentu (`issue-detail.component.ts`) na trasę agregującą
-      moduł (`entry.routes.ts`) — to samo w sobie poprawne per `docs/frontend/translations.md`,
+      moduł (`entry.routes.ts`) — to samo w sobie poprawne per `docs/guides/frontend/translations.md`,
       ale nie usuwa błędu reaktywności; właściwa naprawa (9 plików) zgłoszona jako osobne zadanie.
 - [x] Wyszukiwanie frazy w komentarzach nie pokazuje zgłoszeń spoza uprawnień.
       Dodano komentarz z unikalną frazą do DEV-1 (widoczny), wyszukanie frazy zwróciło DEV-1.
@@ -641,7 +641,7 @@ Zweryfikowano na żywo 2026-09-02 (środowisko dev, `client-monolith` + `TaskMan
       `Tag.SetName` (domena) + `TagSetNameCommand`. Scalenie: `TagExecMergeCommand` (czasownik
       `Exec` — usuwa jeden agregat i przepina kolekcję należącą do nieograniczonej liczby innych
       agregatów, nie da się opisać jako `Create`/`Set`/`Add`/`Remove` na jednym z nich,
-      `docs/backend/endpoint-naming.md` §5) + `IIssueTagWriter.RepointAsync` (raw SQL z dedupem
+      `docs/guides/backend/endpoint-naming.md` §5) + `IIssueTagWriter.RepointAsync` (raw SQL z dedupem
       przez `NOT EXISTS`, poza granicą agregatu `Tag` — ten sam wzorzec co
       `IProjectKeyCounterWriter.SetPrefixAsync`). **Bez `AggregateChanged` dla zgłoszeń
       dotkniętych scaleniem** (raw SQL omija ChangeTracker) — świadomie zaakceptowane, front
@@ -663,7 +663,7 @@ Zweryfikowano na żywo 2026-09-02 (środowisko dev, `client-monolith` + `TaskMan
 Wchodzi tu, a nie w fazie 8, bo dyrektor IT jest **aktorem systemu**, nie odbiorcą rozszerzeń.
 Dane zbierają się od fazy 6 (`TIME-001`), więc raport ma z czego liczyć od pierwszego dnia.
 
-Zrealizowane jako generalizacja `ExportRun`→`ReportRun` (`docs/backend/reporting.md` §3-4,
+Zrealizowane jako generalizacja `ExportRun`→`ReportRun` (`docs/architecture/reporting.md` §3-4,
 **faza 0 tamtego dokumentu**, zrobiona teraz, przed pierwszym raportem, zgodnie z zaleceniem):
 nowy building block `Erp.BuildingBlocks.Reporting` (`ReportRun` — konkretna klasa mirror `Job`,
 NIE generyk/interfejs per moduł; `IReportRunDbContext`; `ReportRunner<TContext>`;
@@ -710,7 +710,7 @@ zaktualizowane w obu modułach.
 - [x] Front: strona raportu przebudowana z jednego bespoke pivotu na **selektor raportu +
       generyczny renderer** (`ReportStore.REPORT_DEFINITIONS`, `report.component.ts`) — pivot
       dział×zagadnienie×okres zostaje wyłącznie dla `hours-by-department`
-      ([§9.4 dokumentu stron](docs/frontend/task-management-pages.md#94-raport-godzin-faza-7)),
+      ([§9.4 dokumentu stron](../../docs/modules/task-management/screens.md#94-raport-godzin-faza-7)),
       pozostałe cztery renderują się generyczną tabelą nagłówek+wiersze
       (`parseReportCsvToRows`) z tłumaczeniem nazw kolumn i rozwiązaniem `assignee_uuid` przez
       `ERP_USER_DIRECTORY`; kolumny-duplikaty uuid obok nazwy (`type_uuid`, `sprint_uuid`) są
@@ -833,7 +833,7 @@ zaktualizowane w obu modułach.
       zamiast rzucić błąd — dotyczyło **wszystkich siedmiu rodzajów akcji**, nie tylko
       priorytetu, bo wszystkie korzystają z tej samej metody. Naprawione tym samym wzorcem,
       co już użyty w `ReportDefinitions` (`JsonSerializerOptions { PropertyNameCaseInsensitive
-      = true }`) — [`AutomationActionExecutor.cs`](backend/modules/TaskManagement/TaskManagement.Application/Automation/AutomationActionExecutor.cs).
+      = true }`) — [`AutomationActionExecutor.cs`](../../backend/modules/TaskManagement/TaskManagement.Application/Automation/AutomationActionExecutor.cs).
       Żaden z 189 testów jednostkowych tego nie złapał, bo konstruują `ConfigJson` przez
       `JsonSerializer.Serialize` z domyślnym PascalCase — dokładnie ten sam kształt, którego
       front nigdy nie wysyła. Po poprawce: nowe zgłoszenie `DEV-12` dostało `Krytyczny`
@@ -847,7 +847,7 @@ zaktualizowane w obu modułach.
       i wzorzec `this._transloco.translate(...)` w `computed` ze strażnikiem
       `injectTranslationsReadySignal()` (ten sam co w `issue-filter.component.ts`) już
       istniały gdzie indziej w module — po prostu nie zostały tu użyte. Naprawione w
-      [`project-automations.component.ts`](frontend/libs/modules/task-management/feature/src/lib/project/page/content/project-automations.component.ts).
+      [`project-automations.component.ts`](../../frontend/libs/modules/task-management/feature/src/lib/project/page/content/project-automations.component.ts).
       **AC3 (twardy limit głębokości = 5) zweryfikowany na żywo end-to-end**: reguła
       „przy dodaniu komentarza dodaj komentarz" (samo-wyzwalająca się) uruchomiona ręcznym
       komentarzem na `DEV-12` wygenerowała dokładnie **5** automatycznych odpowiedzi
@@ -1031,7 +1031,7 @@ po stronie backendu.
 | 8 | `Webhooks` | `webhook`, `webhook_delivery` |
 
 Migracja jest **krokiem wdrożenia**, nie komendą aplikacyjną
-([`production.md`](docs/backend/production.md)) — dotyczy to również indeksów pod pola własne.
+([`production.md`](../../docs/operations/production.md)) — dotyczy to również indeksów pod pola własne.
 
 ---
 
@@ -1060,7 +1060,7 @@ Sekcja uzupełniana w trakcie — po każdej fazie wpis: co uruchomiono, na czym
 
 | Faza | Data | Co zweryfikowano | Wynik |
 |---|---|---|---|
-| 0–3 | 27.08.2026 | end-to-end wg opisu w `docs/backend/task-management.md` | ✅ |
+| 0–3 | 27.08.2026 | end-to-end wg opisu w `docs/modules/task-management/domain.md` | ✅ |
 | 4 | 01.09.2026 | `dotnet test backend/tests/TaskManagement.Tests` (78/78), `Erp.ArchitectureTests` (26/26), `tsc --noEmit` obu bibliotek frontu, pełny build `client:serve`, przeklikanie na żywo w przeglądarce (typ zgłoszenia, hierarchia, tablica z modalem WF-004, tryb drzewa, wklejanie obrazka `Ctrl+V` w opisie i komentarzu z przeżyciem odświeżenia strony) | ✅ |
 | 5 | 01.09.2026 | Backend: `dotnet test backend/tests/TaskManagement.Tests` (97/97), `Erp.ArchitectureTests` (27/27, po Etapie A i po Etapie E), migracje `AddUserNotification`/`WatchersAndIntake` uruchomione na żywej bazie deweloperskiej, endpointy `user-notification/*` i pola `IssueDto.derivedDeliveryState`/`isWatchedByMe`/`watcherCount` zweryfikowane przez `curl` na uruchomionych `TaskManagement.Api`/`Notification.Api`. Front: regeneracja NSwag dla obu modułów, `pnpm nx run {task-management,notification,client}:build` (produkcyjny build federacji) zielony, `lint` na wszystkich dotkniętych bibliotekach bez nowych błędów. Nie wykonano pełnego scenariusza end-to-end w przeglądarce (zamawiający→dev→auto-przeliczenie stanu realizacji→powiadomienie w dzwonku) — działający w tle serwer deweloperski innej sesji serwował wciąż stary bundle remotów `notification`/`task-management`, więc wizualna weryfikacja UI (drugi tab dzwonka, przycisk „obserwuję”, strona „Zlecenia”) pozostaje do zrobienia w kolejnej sesji ze świeżo odpalonym `client-monolith`. Przegląd kodu `IssueOverdueScanService` pod kątem dzierżawy (`taskmgmt:issue-overdue-scan`) potwierdza brak duplikacji przypomnień między instancjami. | ⚠️ częściowo (backend ✅, front bez żywej weryfikacji UI) |
 | 5 (dokończenie) | 01.09.2026 | Front dokończony na żywo po restarcie `client-monolith` ze świeżym bundlem: zakładki popovera dzwonka, strona `/task-management/request` (rejestr `MKT`, lista `MKT-1/2/3`), zapis i przeżycie odświeżenia zakładki SLA na karcie projektu. Podczas testu przycisku obserwowania na karcie zgłoszenia (`MKT-1`) wykryto realny błąd: `DbUpdateConcurrencyException` w `BulkCommandRunner`, bo `IssueWatcherConfiguration`/`ProjectMemberConfiguration` nie miały `ValueGeneratedNever()` na kluczu UUIDv7 generowanym po stronie klienta — EF traktował nowy insert jako update na nieistniejącym wierszu; dodatkowo błąd ujawnił samo-zakleszczenie w ścieżce izolacji błędów `BulkCommandRunner`. Naprawiono oba (`IssueConfiguration.cs`, `ProjectConfiguration.cs`, `BulkCommandRunner.cs`), dodano regresję w `Erp.IntegrationTests`, `dotnet test` zielony (`Erp.IntegrationTests` 23/23, `TaskManagement.Tests` 97/97, `Erp.ArchitectureTests` 27/27). Re-weryfikacja end-to-end po przebudowie i restarcie `TaskManagement.Api`: kliknięcie „Obserwuj” na `MKT-1` → `POST issue/batch-add-watcher` 200 OK → UI „Przestań obserwować”/„Obserwujący: 2” → w bazie `taskmgmt.job` wiersz `IssueAddWatcherCommand` ze `status=2` (Completed), `succeeded_count=1`, oraz nowy wiersz w `taskmgmt.issue_watcher` z `opted_out_at IS NULL`; kliknięcie „Przestań obserwować” → `POST issue/batch-remove-watcher` 200 OK → UI wraca do „Obserwuj”/„Obserwujący: 1” → job `IssueRemoveWatcherCommand` `status=2`/`succeeded_count=1`, a wiersz w `issue_watcher` **pozostaje** z ustawionym `opted_out_at` (zgodnie z projektem „opt-out nigdy nie kasuje wiersza” z `IssueWatcher.cs`), nie jest usuwany. | ✅ |

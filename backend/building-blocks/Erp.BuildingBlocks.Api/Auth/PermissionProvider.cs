@@ -11,7 +11,7 @@ namespace Erp.BuildingBlocks.Api.Auth;
 /// <summary>
 /// Adres mikroserwisu Identity, z którego pozostałe serwisy pobierają efektywne uprawnienia
 /// użytkownika — patrz <see cref="IPermissionProvider"/> i
-/// <c>docs/backend/identity-authz.md</c> §4.
+/// <c>docs/architecture/security.md</c> §4.
 /// </summary>
 public sealed class IdentityServiceOptions
 {
@@ -29,7 +29,7 @@ public interface IPermissionProvider
     /// <param name="userId">Claim <c>sub</c> użytkownika, o którego uprawnienia pytamy.</param>
     /// <param name="bearerToken">Token JWT PRZEKAZUJĄCEGO żądania (nie <paramref name="userId"/>!)
     /// — Identity dziś wymaga wyłącznie ważnego tokenu na <c>/internal/users/{id}/permissions</c>
-    /// (świadomie odłożona luka, patrz <c>docs/backend/identity-authz.md</c> §7 Faza 2), więc
+    /// (świadomie odłożona luka, patrz <c>docs/architecture/security.md</c> §7 Faza 2), więc
     /// przekazujemy dalej token WŁASNEGO żądania serwisu, nie token użytkownika docelowego —
     /// te dwa są tym samym w typowym przypadku (użytkownik pyta o swoje uprawnienia), ale nie
     /// muszą być, gdy dojdzie właściwa autoryzacja service-to-service.</param>
@@ -70,7 +70,7 @@ public interface IPermissionProvider
 /// w pamięci procesu przez <see cref="CacheTtl"/> (domyślnie 60 s).
 ///
 /// <para><b>Dlaczego TTL, a nie <c>perm_ver</c> w tokenie JWT.</b> Docelowy projekt w
-/// <c>docs/backend/identity-authz.md</c> §4 zakładał licznik wersji niesiony w tokenie —
+/// <c>docs/architecture/security.md</c> §4 zakładał licznik wersji niesiony w tokenie —
 /// wymagałoby to jednak niestandardowego mappera Keycloaka odpytującego Identity przy KAŻDYM
 /// wystawieniu tokenu (SPI po stronie Keycloaka, osobny projekt). Sam TTL=60s spełnia
 /// udokumentowane SLA odwołania uprawnień (§4: „≤30-60 s") bez tej zależności — jeśli

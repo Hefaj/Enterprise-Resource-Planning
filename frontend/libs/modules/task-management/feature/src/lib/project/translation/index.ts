@@ -8,7 +8,7 @@ export { PROJECT_KEYS } from './keys';
  * Scope tłumaczeń agregatu `Project` — lista projektów i karta projektu.
  *
  * Dokłada scope modułowy (`taskManagement`), bo nazwy pól niestandardowych przychodzą z bazy
- * jako klucze tłumaczeń, a nie z tego pliku (`docs/frontend/task-management-pages.md` §8).
+ * jako klucze tłumaczeń, a nie z tego pliku (`docs/modules/task-management/screens.md` §8).
  */
 export function provideProjectTranslations(): Provider[] {
   return [

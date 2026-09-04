@@ -13,7 +13,7 @@ using Xunit;
 namespace Erp.IntegrationTests;
 
 /// <summary>
-/// Kryteria akceptacji fazy 1 z <c>docs/backend/multi-instance.md</c> §10 — <b>dwa</b> runnery
+/// Kryteria akceptacji fazy 1 z <c>docs/architecture/multi-instance.md</c> §10 — <b>dwa</b> runnery
 /// nad jednym Postgresem.
 ///
 /// <para>Test mierzy to, co faktycznie boli przy dwóch instancjach, a nie samą „obecność locka":

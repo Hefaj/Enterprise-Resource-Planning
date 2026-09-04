@@ -10,7 +10,7 @@ using Xunit;
 namespace TaskManagement.Tests;
 
 /// <summary>
-/// Hierarchia i powiązania (<c>docs/backend/task-management.md</c> §8).
+/// Hierarchia i powiązania (<c>docs/modules/task-management/domain.md</c> §8).
 ///
 /// <para>Reguły cyklu testujemy na <b>atrapie zapytań grafu</b>, nie na bazie: sprawdzamy
 /// symulację krawędzi z tego samego wsadu, czyli dokładnie tę część, której nie widzi ani
@@ -70,7 +70,7 @@ public class IssueGraphTests
 
     /// <summary>LNK-001 AC2: epik nie może mieć rodzica. Sprawdzamy też, że odrzucenie nie
     /// zmienia stanu agregatu — reguła „metoda agregatu waliduje PRZED zmianą stanu”, na której
-    /// stoi częściowy sukces operacji masowych (<c>docs/backend/cqrs.md</c> §3).</summary>
+    /// stoi częściowy sukces operacji masowych (<c>docs/guides/backend/cqrs.md</c> §3).</summary>
     [Fact]
     public void Epik_nie_moze_miec_rodzica()
     {
@@ -184,7 +184,7 @@ public class IssueGraphTests
     /// <summary>
     /// Sedno pre-checku kategorii: element odrzucony na tej regule dostaje status <c>Failed</c>
     /// razem z kodem błędu <b>przy tworzeniu zadania</b> — bez sięgania po <c>BulkCommandRunner</c>
-    /// (`docs/backend/batch-validation.md` §1). Testujemy samą regułę na atrapie zapytania grafu,
+    /// (`docs/guides/backend/batch-validation.md` §1). Testujemy samą regułę na atrapie zapytania grafu,
     /// dokładnie tak jak <see cref="IssueParentCycleRule"/> obok.
     /// </summary>
     [Fact]

@@ -33,7 +33,7 @@ public sealed class IssueBatchValidator : IBatchValidator
     /// z pozostałymi w tym samym wsadzie — nie może zamknąć pętli w drzewie, a kategoria typu
     /// (Epik/Podzadanie) musi dopuszczać taką hierarchię. Reguły są niezależne od siebie —
     /// płasko, nie łańcuchem — więc element może dostać oba naruszenia naraz
-    /// (`docs/backend/batch-validation.md` §2 „Tryb niezależnych reguł").</summary>
+    /// (`docs/guides/backend/batch-validation.md` §2 „Tryb niezależnych reguł").</summary>
     public async Task<ValidationTracker> ValidateSetParentAsync(
         IReadOnlyList<BatchTarget<IssueSetParentCommand>> targets,
         CancellationToken cancellationToken)
@@ -58,7 +58,7 @@ public sealed class IssueBatchValidator : IBatchValidator
     }
 
     /// <summary>Pre-check masowego dopinania powiązań — sprawdzane są wyłącznie blokady,
-    /// bo tylko one muszą być acykliczne (<c>docs/backend/task-management.md</c> §8.2).</summary>
+    /// bo tylko one muszą być acykliczne (<c>docs/modules/task-management/domain.md</c> §8.2).</summary>
     public async Task<ValidationTracker> ValidateAddLinkAsync(
         IReadOnlyList<BatchTarget<IssueAddLinkCommand>> targets,
         CancellationToken cancellationToken)
@@ -81,7 +81,7 @@ public sealed class IssueBatchValidator : IBatchValidator
     /// <summary>Pre-check masowego przeniesienia projektu — jedna reguła: projekt docelowy musi
     /// istnieć. Reszta (typ zgłoszenia w schemacie docelowym, schemat pól) wymaga wczytania
     /// poszczególnych zgłoszeń i zostaje w handlerze jako druga linia obrony
-    /// (`docs/backend/batch-validation.md`).</summary>
+    /// (`docs/guides/backend/batch-validation.md`).</summary>
     public async Task<ValidationTracker> ValidateMoveToProjectAsync(
         IReadOnlyList<BatchTarget<IssueSetProjectCommand>> targets,
         CancellationToken cancellationToken)

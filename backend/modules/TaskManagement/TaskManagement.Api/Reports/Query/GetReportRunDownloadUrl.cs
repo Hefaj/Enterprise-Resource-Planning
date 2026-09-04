@@ -14,7 +14,7 @@ namespace TaskManagement.Reports.Query;
 /// <b>bearer-owy</b>: kto go ma, ten pobiera, niezależnie od uprawnień. Gdyby jechał w każdym
 /// <c>getReportRun</c>, leżałby w cache przeglądarki i w historii długo po tym, jak przestał
 /// być komukolwiek potrzebny. Tutaj powstaje dopiero na kliknięcie, za sprawdzeniem uprawnienia,
-/// i żyje minuty — patrz <c>docs/backend/exports-artifacts.md</c> §6.</para>
+/// i żyje minuty — patrz <c>docs/guides/backend/exports-artifacts.md</c> §6.</para>
 /// </summary>
 public sealed class GetReportRunDownloadUrlEndpoint
     : Endpoint<GetReportRunDownloadUrlRequest, ReportRunDownloadUrlResponse>

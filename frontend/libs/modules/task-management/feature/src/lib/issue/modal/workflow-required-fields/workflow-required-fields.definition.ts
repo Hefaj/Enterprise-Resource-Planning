@@ -18,7 +18,7 @@ import { ISSUE_KEYS } from '../../translation';
  * tylko uzupełnia pola przed komendą, którą i tak wysyła wywołujący
  * (`BoardStore.dropAsync`/`IssueDetailComponent.applyTransitionAsync`). `values` startuje
  * z PEŁNĄ bieżącą mapą pól zgłoszenia — `IssueSetCustomFieldsCommand` nadpisuje ją w CAŁOŚCI
- * (`docs/backend/endpoint-naming.md` §2), więc modal, który znałby tylko brakujące pola,
+ * (`docs/guides/backend/endpoint-naming.md` §2), więc modal, który znałby tylko brakujące pola,
  * wyzerowałby przy zapisie wszystkie pozostałe.
  */
 export interface WorkflowRequiredFieldsCommand {
@@ -42,7 +42,7 @@ export interface WorkflowRequiredFieldsMetadata {
  * Modal WF-004: uzupełnienie pól wymaganych przez przejście, PRZED wysłaniem
  * `IssueSetStateCommand`. Zapisuje WYŁĄCZNIE pola niestandardowe — zmianę stanu wykonuje
  * wywołujący, dopiero po tym, jak ten modal się zamknie z `saved: true`
- * (`docs/backend/task-management.md` §5.2, AC1: anulowanie modala nie rusza karty).
+ * (`docs/modules/task-management/domain.md` §5.2, AC1: anulowanie modala nie rusza karty).
  */
 @Injectable({ providedIn: 'root' })
 export class WorkflowRequiredFieldsModalDefinition
@@ -79,7 +79,7 @@ export class WorkflowRequiredFieldsModalDefinition
 
           // Karta wisi „w toku" na tablicy dopóki ten modal nie zamknie się — więc zanim
           // `setOnSave` się rozwiąże, pola muszą być NAPRAWDĘ zapisane, nie tylko przyjęte
-          // do kolejki (`docs/backend/task-management-requirements.md` WF-004 AC1).
+          // do kolejki (`docs/modules/task-management/requirements.md` WF-004 AC1).
           await erpAwaitJobAsync(this._jobs, jobUuid);
 
           // Rozwiązanie jedzie OSOBNĄ komendą — pole pierwszej klasy, nie wpis w `values`.

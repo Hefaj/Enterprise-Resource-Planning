@@ -1,14 +1,27 @@
+---
+id: operations.observability
+title: Obserwowalność i niezawodność produkcyjna
+summary: Health checks, metryki, alerty, korelacja i retencja telemetryczna.
+kind: operations
+scope: operations
+audience:
+  - operations
+  - backend
+  - agent
+triggers:
+  - obserwowalność produkcyjna
+  - health check alert lub korelacja X-Request-Id
+related: []
+---
+
 # Obserwowalność i niezawodność produkcyjna
 
-Jak wykrywać awarie tego systemu i jak im zapobiegać. Dokument jest rozwinięciem
-[`production.md` §8](./production.md#8-faza-e-i-f--runtime-obserwowalność-backup), który
-wymienia trzy alerty i temat zamyka — tutaj jest komplet: stos narzędzi, sygnały specyficzne dla
+Jak wykrywać awarie tego systemu i jak im zapobiegać. Dokument uzupełnia
+[runbook produkcyjny](production.md) o kompletny zestaw narzędzi i sygnałów specyficznych dla
 **tej** architektury, progi, i osobno rzeczy, które awarii **zapobiegają**, a nie tylko ją pokazują.
 
-Stan: 📐 **projekt, brak kodu.** Legenda znaczników jak w
-[`architecture.md` §1](./architecture.md#1-stan-wdrożenia). W repozytorium nie ma dziś ani jednego
-pakietu OpenTelemetry, ani jednego health checka — `AddErpApi`/`UseErpApi` rejestrują
-FastEndpoints, Swagger, CORS, uwierzytelnianie i `ErpProblemDetailsHandler`, i na tym koniec.
+Kontrakt jest docelową specyfikacją operacyjną. Konkretne kroki wprowadzenia brakujących elementów
+są śledzone w `plans/backlog/observability.md`, a ich dostępność potwierdza konfiguracja środowiska.
 
 ---
 
@@ -52,8 +65,7 @@ propagacja kontekstu przez RabbitMQ działa bez pisania czegokolwiek.
 
 ### 3.1 Backend telemetrii
 
-Przy rekomendacji z [`production.md` §10.1](./production.md#101-gdzie-to-postawić) („jeden serwer
-+ `docker-compose.prod.yml` + Traefik"):
+Dla niewielkiego wdrożenia utrzymywanego przez jedną osobę:
 
 | | **SigNoz** (rekomendacja) | Grafana + Alloy + Loki/Tempo/Prometheus | Grafana Cloud / Seq |
 |---|---|---|---|
@@ -63,13 +75,13 @@ Przy rekomendacji z [`production.md` §10.1](./production.md#101-gdzie-to-postaw
 | Kiedy wybrać | jeden serwer, jedna osoba utrzymująca — **to jest twój przypadek** | znasz już Grafanę albo planujesz klaster | nie chcesz administrować drugim systemem |
 
 Rekomendacja to SigNoz albo darmowy tier w chmurze — **nie** samodzielnie składany stos Grafany.
-Argument jest ten sam, którym [`multi-instance.md` §1](./multi-instance.md#1-zasada-przewodnia)
+Argument jest ten sam, którym [kontrakt wieloinstancyjności](../architecture/multi-instance.md#granice-odpowiedzialności)
 odrzuca zależności wymagane lokalnie: narzędzie, którego utrzymanie jest projektem samym w sobie,
 zostanie porzucone po miesiącu, a wtedy zostaje monitoring, któremu nikt nie ufa.
 
 **Czego nie robić:** nie stawiać drugiego Postgresa ani drugiego Redisa „pod metryki". Redis ma
 w tej architekturze dokładnie jedno zastosowanie (backplane SignalR) i ta granica jest
-w [`multi-instance.md` §1](./multi-instance.md#1-zasada-przewodnia) postawiona świadomie.
+w [kontrakcie wieloinstancyjności](../architecture/multi-instance.md#granice-odpowiedzialności) postawiona świadomie.
 
 ### 3.2 Czujka z zewnątrz
 
@@ -100,7 +112,7 @@ częściową awarię w całkowitą.
 Przy padzie RabbitMQ „bogaty" `ready` zwraca niezdrowy status na **wszystkich** instancjach
 naraz, proxy wyrzuca je z rotacji i API przestaje odpowiadać — mimo że odczyty i większość zapisów
 działają bez zarzutu, bo outbox jest właśnie po to, żeby pad brokera przetrwać
-([`events-outbox.md`](./events-outbox.md): koperta leży w bazie, dane są bezpieczne, stoi tylko
+([`events-outbox.md`](../architecture/integration-events.md): koperta leży w bazie, dane są bezpieczne, stoi tylko
 integracja). Sprawny mechanizm degradacji zostaje unieważniony przez health check.
 
 Reguła: **do `ready` trafia wyłącznie to, bez czego instancja nie obsłuży żadnego żądania.**
@@ -184,7 +196,7 @@ where status = 1 and (heartbeat_at is null or heartbeat_at < now() - interval '5
 #### d) Realtime zamarł po cichu — liczba Relayów
 
 Najbardziej podstępna awaria w tym systemie. Przy rozdziale ról
-([`multi-instance.md` §7.1](./multi-instance.md)) huby (`Realtime:Role=Hub`) wystawiają
+([`multi-instance.md` §7.1](../architecture/multi-instance.md)) huby (`Realtime:Role=Hub`) wystawiają
 `/hubs/sync` i **nie konsumują z brokera**; konsumuje wyłącznie jeden `Realtime:Role=Relay`.
 
 - **Zero żywych Relayów** — huby działają, klienci są połączeni, health checki zielone, a zmiany
@@ -222,13 +234,12 @@ Dwa przypadki warte osobnego zdania:
 #### f) Rozjazd baza ↔ MinIO
 
 Referencja w bazie bez pliku w magazynie to realny scenariusz opisany
-w [`media-storage.md` §4d](./media-storage.md). Okresowy audyt liczący rozjazd, z alertem na
+w [`media-storage.md` §4d](../guides/backend/media-storage.md). Okresowy audyt liczący rozjazd, z alertem na
 wartość > 0 — bo bez niego wykryje go dopiero użytkownik klikający w zdjęcie sprzed pół roku.
 
 #### g) Frontend
 
-Błędy JS i nieudane ładowania remote'ów (jeśli jednak Native Federation, a nie monolit
-z [`production.md` §10.2](./production.md#102-front-mfe-czy-monolit)) — z tego samego powodu:
+Błędy JS i nieudane ładowania remote'ów Native Federation — z tego samego powodu:
 awaria po stronie przeglądarki nie zostawia śladu w logach backendu.
 
 ---
@@ -237,7 +248,7 @@ awaria po stronie przeglądarki nie zostawia śladu w logach backendu.
 
 Materiał jest gotowy i nie wymaga wymyślania nowego identyfikatora: **`X-Request-Id` już płynie
 z frontu** (`withRequestId`) i służy idempotencji komend
-([`cqrs.md` §6](./cqrs.md#6-pipeline-komend)).
+([`cqrs.md` §6](../guides/backend/cqrs.md#6-pipeline-komend)).
 
 Trzy kroki, każdy w jednym miejscu:
 
@@ -246,7 +257,7 @@ Trzy kroki, każdy w jednym miejscu:
 2. `ErpProblemDetailsHandler` — `traceId` w odpowiedzi błędu. Jest tam już słownik kodów błędów
    wspólny z `job_item.error_code`, więc miejsce jest naturalne.
 3. Front pokazuje `traceId` w toaście błędu (`shared.errors.*`, patrz
-   [`frontend/notifications.md`](../frontend/notifications.md)).
+   [`frontend/notifications.md`](../guides/frontend/notifications.md)).
 
 Efekt: zgłoszenie brzmi „błąd o ID 4f2a…" zamiast „nie działa", a pełny ślad przez wszystkie
 serwisy znajduje się w dwie sekundy. To pojedyncza zmiana o największym stosunku wartości do
@@ -277,15 +288,14 @@ Pojedyncze żądanie nie może być w stanie położyć instancji:
 
 - rate limiting na gatewayu (per IP i per użytkownik);
 - twardy cap na liczbę celów operacji masowej — dziś ogranicza ją próg materializacji po stronie
-  frontu ([`frontend/selection-scope.md`](../frontend/selection-scope.md)), co jest zabezpieczeniem
+  frontu ([`frontend/selection-scope.md`](../guides/frontend/selection-scope.md)), co jest zabezpieczeniem
   po niewłaściwej stronie granicy zaufania;
 - cap na `pageSize` w zapytaniach listowych;
 - limit rozmiaru wgrywanego pliku wymuszany przy wystawianiu biletu, nie dopiero przy rejestracji.
 
 ### 7.3 Retencja
 
-`job`, `job_item` i `grant_audit` rosną monotonicznie — [`production.md` §10.3](./production.md#103-do-rozstrzygnięcia-przy-okazji)
-odnotowuje to jako otwarte. `IdempotencyCleanupService` jest gotowym wzorcem do skopiowania,
+`job`, `job_item` i `grant_audit` rosną monotonicznie. `IdempotencyCleanupService` jest gotowym wzorcem,
 razem z jego uzasadnieniem `[ClusterSafe]` („jedno `ExecuteDelete` po wygasłych wierszach — druga
 instancja usuwa zero wierszy"). Bez tego wykres wolnego miejsca stanie się z czasem twoim głównym
 alertem, a `job` z milionem wierszy spowolni każde odpytanie historii zadań.
@@ -307,7 +317,7 @@ planowanego restartu.
   nowej usłudze tła) i `Erp.IntegrationTests` na Testcontainers — już są, wystarczy trzymać je
   w pipelinie jako blokujące;
 - **odtworzenie backupu przećwiczone**, nie zapisane w checkliście
-  ([`production.md` §8.2](./production.md#82-backup-i-odtwarzanie));
+  ([runbook produkcyjny](production.md#backup-i-odtwarzanie));
 - staging na tym samym `docker-compose.prod.yml` — różnica względem produkcji to wyłącznie
   wartości w plikach sekretów;
 - test obciążeniowy na jednej reprezentatywnej operacji masowej przed pierwszym wyjściem: wąskie
@@ -316,24 +326,7 @@ planowanego restartu.
 
 ---
 
-## 8. Kolejność wdrażania
-
-Nie da się tego zrobić naraz, a kolejność jest tu ważniejsza niż kompletność.
-
-| # | Krok | Nakład | Co łapie |
-|---|---|---|---|
-| 1 | `/health/live`, `/health/ready` w `AddErpApi` + zewnętrzna czujka z powiadomieniem na telefon | jeden wieczór | pad maszyny, proxy, certyfikatu, dysku — **większość realnych awarii** |
-| 2 | Logi strukturalne w jednym miejscu, z korelacją po `X-Request-Id` i `traceId` w `ProblemDetails` | dzień | „nie działa" → konkretny ślad |
-| 3 | Alerty z [§5.2](#52-sygnały-specyficzne-dla-tej-architektury): outbox, `job`, Relay, dysk | dzień | awarie przebiegające przy HTTP 200 |
-| 4 | Metryki i śledzenie rozproszone (OTel + backend telemetrii) | kilka dni | „czemu to trwa 8 sekund" |
-| 5 | Retencja, wyłącznik na Identity, limity ([§7](#7-zapobieganie-awariom)) | sukcesywnie | awarie, które się nie zdarzą |
-
-Najczęstszy błąd to zacząć od punktu 4. Ładne wykresy w systemie, który nie zadzwoni, gdy serwer
-się nie podniesie, są dokładnie tak samo bezużyteczne jak backup, którego nikt nie odtworzył.
-
----
-
-## 9. Checklist
+## 8. Checklist
 
 - [ ] `/health/live` i `/health/ready` rejestrowane w `AddErpApi`/`UseErpApi`, nie w `Program.cs`
 - [ ] `/health/ready` sprawdza **tylko** Postgresa; zależności miękkie w `/health/deps`
@@ -352,12 +345,12 @@ się nie podniesie, są dokładnie tak samo bezużyteczne jak backup, którego n
 
 ---
 
-## 10. Zobacz też
+## 9. Zobacz też
 
-- [Wyjście na produkcję](./production.md) — [§8 runtime i backup](./production.md#8-faza-e-i-f--runtime-obserwowalność-backup), [§11 checklist](./production.md#11-checklist-przed-pierwszym-wyjściem)
-- [Wieloinstancyjność](./multi-instance.md) — dzierżawy, role Hub/Relay, `[ClusterSafe]`
-- [Zdarzenia i outbox](./events-outbox.md) — co dokładnie leży w schemacie `wolverine`
-- [Operacje masowe](./bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, stany
-- [Eksporty i artefakty](./exports-artifacts.md) — `ExportRun`, `heartbeat_at`, odzysk
-- [Magazyn plików](./media-storage.md) — [§4d rozjazd baza↔magazyn](./media-storage.md)
-- [Tożsamość i uprawnienia](./identity-authz.md) — `HttpPermissionProvider`, cache i unieważnianie
+- [Runbook wdrożenia produkcyjnego](production.md)
+- [Wieloinstancyjność](../architecture/multi-instance.md) — dzierżawy, role Hub/Relay, `[ClusterSafe]`
+- [Zdarzenia i outbox](../architecture/integration-events.md) — co dokładnie leży w schemacie `wolverine`
+- [Operacje masowe](../guides/backend/bulk-commands.md) — `job`/`job_item`, `BulkCommandRunner`, stany
+- [Eksporty i artefakty](../guides/backend/exports-artifacts.md) — `ExportRun`, `heartbeat_at`, odzysk
+- [Magazyn plików](../guides/backend/media-storage.md) — [§4d rozjazd baza↔magazyn](../guides/backend/media-storage.md)
+- [Tożsamość i uprawnienia](../architecture/security.md) — `HttpPermissionProvider`, cache i unieważnianie

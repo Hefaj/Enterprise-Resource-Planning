@@ -3,7 +3,7 @@ import { MaybeSignal, Translatable } from '../../base/erp-signal-utils';
 import { ErpMediaPreviewConfig, ErpMediaPreviewItem } from './erp-media-preview.types';
 
 /**
- * Fluent API do złożenia konfiguracji podglądu — patrz docs/frontend/atoms.md.
+ * Fluent API do złożenia konfiguracji podglądu — patrz docs/guides/frontend/atoms.md.
  */
 export class ErpMediaPreviewBuilder extends ErpBaseBuilder<ErpMediaPreviewConfig> {
   /** Komplet pozycji w kolejności, w jakiej mają się przewijać strzałkami. */

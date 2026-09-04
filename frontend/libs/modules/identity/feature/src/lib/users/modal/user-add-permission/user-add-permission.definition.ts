@@ -12,7 +12,7 @@ import { USER_ADD_PERMISSION_MODAL_ID } from '@erp/identity/util';
 export type UserAddPermissionMetadata = ErpBatchMetadata;
 
 /** Modal: seryjne nadanie uprawnienia bezpośrednio użytkownikom, z pominięciem ról (patrz
- * `docs/backend/identity-authz.md` §2 — uprawnienie bezpośrednie to WYJĄTEK z powodem i
+ * `docs/architecture/security.md` §2 — uprawnienie bezpośrednie to WYJĄTEK z powodem i
  * audytem, nie równoprawna ścieżka obok ról). Wywoływany z panelu szczegółów
  * (`targetUuids: [uuid]`) i z toolbara listy (zasięg zaznaczenia) — jak `UserAddRoleModalDefinition`. */
 @Injectable({ providedIn: 'root' })

@@ -13,14 +13,14 @@ import { ErpMediaPreviewConfig, ErpMediaPreviewItem } from './erp-media-preview.
  * `ErpMediaPreviewService`.
  *
  * <b>Dlaczego to nie jest modal z `ErpModalService`.</b> Tamten mechanizm opisuje modale
- * komendowe: kroki, walidacja, `setOnSave` wołające orkiestrator (patrz docs/frontend/modals.md).
+ * komendowe: kroki, walidacja, `setOnSave` wołające orkiestrator (patrz docs/guides/frontend/modals.md).
  * Podgląd nic nie zapisuje i nie ma komendy, którą miałby nieść — założenie mu jej na siłę
  * dołożyłoby pusty krok i przycisk zapisu, który nic nie robi. To jest okno przeglądarki treści
  * i dlatego idzie tą samą drogą co `ErpConfirmDialogService`: `TuiDialogService` +
  * Polymorpheus.
  *
  * <b>Nie deklaruje providerów Transloco</b> — przesłoniłyby scope modułu, z którego okno
- * otwarto (docs/frontend/translations.md §2).
+ * otwarto (docs/guides/frontend/translations.md §2).
  */
 @Component({
   selector: 'erp-media-preview',

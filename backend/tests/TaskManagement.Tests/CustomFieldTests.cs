@@ -9,7 +9,7 @@ using Xunit;
 namespace TaskManagement.Tests;
 
 /// <summary>
-/// Pola niestandardowe na slotach (<c>docs/backend/task-management.md</c> §6).
+/// Pola niestandardowe na slotach (<c>docs/modules/task-management/domain.md</c> §6).
 ///
 /// <para>Testujemy agregat, bo to on trzyma dwa niezmienniki, których pomyłka nie objawia się
 /// wyjątkiem, tylko cichym przekłamaniem danych: <b>slot pasuje typem</b> i <b>slot jest zajęty

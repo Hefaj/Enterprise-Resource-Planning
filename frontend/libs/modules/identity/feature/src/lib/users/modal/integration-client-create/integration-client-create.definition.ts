@@ -9,7 +9,7 @@ export type IntegrationClientCreateMetadata = Record<string, never>;
 
 /**
  * Modal: rejestracja konta serwisowego (klucza integracyjnego, API-003) — reużywa stronę
- * Użytkownicy zamiast osobnej strony, patrz `docs/backend/identity-authz.md` §2. Wzorowane
+ * Użytkownicy zamiast osobnej strony, patrz `docs/architecture/security.md` §2. Wzorowane
  * dosłownie na `RoleCreateModalDefinition` — inna niż tam różnica: `Uuid` NIE jest generowany
  * po stronie klienta, tylko wklejony przez admina (`sub` service-accounta z Keycloaka), więc
  * krok modalu wystawia pole `uuid` do edycji (patrz `integration-client-create.step.ts`).

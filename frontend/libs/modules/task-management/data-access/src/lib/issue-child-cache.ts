@@ -20,7 +20,7 @@ import { ErpOptimisticOp, ErpOptimisticStore, SignalrSyncService, Translatable }
  * front nie ma i nie ma po co dokładać. Odświeżamy więc listy trzymane w cache’u; w praktyce
  * jest to jedna otwarta karta zgłoszenia.</p>
  *
- * <p><b>Nakładki optymistyczne</b> (`docs/frontend/optimistic-updates.md`) — kolekcja jest
+ * <p><b>Nakładki optymistyczne</b> (`docs/guides/frontend/optimistic-updates.md`) — kolekcja jest
  * zawężona do `T extends { uuid: string }`, bo klucz elementu jest wymagany do wstawienia/
  * podmiany/usunięcia przez patch. `itemsOf` przepuszcza wynik przez `ErpOptimisticStore.project`
  * pod sygnaturą realtime tej kolekcji ({@link signature}), więc konsument (`erp-activity-stream`)

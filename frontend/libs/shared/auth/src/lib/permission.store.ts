@@ -6,7 +6,7 @@ import { IDENTITY_PERMISSIONS_API_BASE_URL } from './identity-permissions-api-ba
 /**
  * Efektywny zbiór uprawnień bieżącego użytkownika — ładowany raz przy starcie appki
  * (`STARTUP.ts`, `GET /me/permissions`) i odświeżany na sygnaturę SignalR `identity.user`
- * dla własnego `userId` (patrz docs/backend/identity-authz.md §6). Front tylko chowa UI na
+ * dla własnego `userId` (patrz docs/architecture/security.md §6). Front tylko chowa UI na
  * jej podstawie — realne źródło prawdy zostaje na backendzie (`Permissions(...)` na
  * endpointach), więc błąd ładowania jest fail-closed: pusty zbiór, nie wyjątek, żeby nie
  * wywrócić startu appki i nie pokazać przypadkiem czegoś, na co nie ma zgody.

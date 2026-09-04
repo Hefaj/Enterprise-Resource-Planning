@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Boards;
 
 /// <summary>
 /// Karta na tablicy — <b>kolejność zgłoszenia na konkretnej tablicy</b>
-/// (<c>docs/backend/task-management.md</c> §7.1).
+/// (<c>docs/modules/task-management/domain.md</c> §7.1).
 ///
 /// <para>Kolejność należy do tablicy, nie do zgłoszenia: to samo zgłoszenie może wisieć wysoko
 /// na tablicy działu dev i nisko na tablicy zarządu. Dlatego rank mieszka tutaj, a nie na

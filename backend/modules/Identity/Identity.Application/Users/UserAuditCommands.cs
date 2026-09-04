@@ -13,10 +13,9 @@ namespace Identity.Application.Users;
 /// Wymuszone wylogowanie — odrębny plik od <see cref="UserCommands"/>, bo ta komenda nie
 /// zmienia stanu agregatu <see cref="UserAccount"/> (żadna metoda domenowa), tylko woła
 /// dwa systemy zewnętrzne (Keycloak Admin API, cache uprawnień) i zostawia ślad audytowy —
-/// inny kształt niż reszta komend w tym module (patrz <c>docs/backend/identity-authz.md</c>
-/// Faza 6).
+/// inny kształt niż reszta komend w tym module (patrz <c>docs/architecture/security.md</c>).
 ///
-/// <para>Od Fazy 2 przejścia na operacje masowe (<c>docs/backend/identity-bulk-migration.md</c>)
+/// <para>W przebiegu operacji masowych (<c>docs/guides/backend/bulk-commands.md</c>)
 /// idzie przez <c>BulkCommandRunner</c> tak jak reszta komend <c>user/*</c> — skutki poza bazą
 /// (odwołanie sesji Keycloak, invalidacja cache'u) nie cofają się przy rollbacku chunka, ale są
 /// idempotentne, więc ponowienie elementu jest bezpieczne. Mitygacja kosztu N wywołań HTTP

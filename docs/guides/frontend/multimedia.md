@@ -1,7 +1,22 @@
+---
+id: frontend.multimedia
+title: Multimedia produktu — wgrywanie i wyświetlanie
+summary: Wgrywanie, prezentacja i usuwanie multimediów produktu oraz biblioteka zasobów.
+kind: guide
+scope: catalog
+audience:
+  - frontend
+  - agent
+triggers:
+  - multimedia produktu
+  - upload miniatura lub biblioteka mediów
+related: []
+---
+
 # Multimedia produktu — wgrywanie i wyświetlanie
 
 Ścieżka pliku od okna wyboru w przeglądarce do miniaturki w galerii. Strona backendowa —
-[`docs/backend/exports-artifacts.md` §9](../backend/exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
+[`docs/guides/backend/exports-artifacts.md` §9](../backend/exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga).
 
 **Stan: ✅ w kodzie** — wgrywanie, rejestracja w katalogu, dopięcie do produktów, zdejmowanie
 z produktów ([§5](#5-zdejmowanie-multimediów-z-produktów)), usuwanie z biblioteki mediów
@@ -78,7 +93,7 @@ dokłada token), a do `src` trafia dopiero `blob:`-URL.
 3. wariant `thumb` z magazynu — **tylko gdy `hasDerivatives`**.
 
 > **Punkt 3 nigdy nie spada na oryginał.** Miniaturki generuje backend asynchronicznie, po
-> zatwierdzeniu transakcji rejestrującej (`docs/backend/media-storage.md` §8); dopóki nie są
+> zatwierdzeniu transakcji rejestrującej (`docs/guides/backend/media-storage.md` §8); dopóki nie są
 > gotowe, `hasDerivatives` jest `false` i komórka pokazuje ikonę typu. W praktyce trwa to
 > ułamek sekundy — pomiary z przebiegu kontrolnego: 0,25 s dla zdjęcia 12 Mpx, 1,6 s dla 90 Mpx,
 > czyli szybciej, niż użytkownik zamknie modal. Zaślepka jest więc ścieżką dla plików wielkich
@@ -105,7 +120,7 @@ po przekroczeniu `MAX_CACHED_OBJECT_URLS` (300 zasobów).
 
 Akcja „Dodaj multimedia masowo" w toolbarze zakładki składa cele przez
 `ProductScopeTabStore.batchTargets()` — tak samo jak każda inna akcja masowa
-([`selection-scope.md`](./selection-scope.md)). Przy zaznaczeniu opisanym filtrem panel pokazuje
+([`selection-scope.md`](selection-scope.md)). Przy zaznaczeniu opisanym filtrem panel pokazuje
 próbkę kilku produktów, a operacja obejmuje **wszystkie** pasujące; komenda niesie wtedy
 `targetFilter`, a nie listę identyfikatorów.
 
@@ -146,9 +161,9 @@ Obie akcje wracają natychmiast — to zwykłe zadania masowe z paskiem postępu
 
 ## 6. Biblioteka mediów — osobna strona, nie akcja w panelu produktu
 
-`/catalog/multimedia` ([`multimedia.component.ts`](../../frontend/libs/modules/catalog/feature/src/lib/multimedia/page/multimedia.component.ts))
+`/catalog/multimedia` ([`multimedia.component.ts`](../../../frontend/libs/modules/catalog/feature/src/lib/multimedia/page/multimedia.component.ts))
 listuje **zasoby**, a nie galerie produktów. Strona bez zakładek i bez prawego panelu: filtr
-plus lista z toolbarem ([`pages.md` §3](./pages.md#3-zakładki-albo-ich-brak)).
+plus lista z toolbarem ([`pages.md` §3](pages.md#3-zakładki-albo-ich-brak)).
 
 **Dlaczego to musi być osobny ekran — i dlaczego pierwsze podejście było błędne.** Naturalny
 odruch to dołożyć „Usuń z biblioteki" do toolbara panelu multimediów przy produktach. Taki
@@ -199,8 +214,8 @@ i uznaje, że akcja nic nie zrobiła.
 
 ## 7. Zobacz też
 
-- [Modale](./modals.md) — rejestracja `PRODUCT_ADD_MULTIMEDIA_MODAL_ID` i cykl życia kroku
-- [Zasięg zaznaczenia](./selection-scope.md) — skąd biorą się cele operacji masowej
-- [Orkiestratory](./orchestrators.md) — gdzie mieszkają komendy i cache zasobów
+- [Modale](modals.md) — rejestracja `PRODUCT_ADD_MULTIMEDIA_MODAL_ID` i cykl życia kroku
+- [Zasięg zaznaczenia](selection-scope.md) — skąd biorą się cele operacji masowej
+- [Orkiestratory](orchestrators.md) — gdzie mieszkają komendy i cache zasobów
 - [Eksporty i artefakty §9](../backend/exports-artifacts.md) — bilety, endpoint zawartości
 - [Magazyn plików](../backend/media-storage.md) — kubełki, separacja dostępu, cykl życia pliku, miniaturki (§8)

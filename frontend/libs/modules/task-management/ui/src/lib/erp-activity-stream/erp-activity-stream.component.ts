@@ -18,7 +18,7 @@ import { TASKMANAGEMENT_KEYS } from '../translation';
 
 /**
  * Strumień aktywności — komentarze i historia w jednej, chronologicznej liście z filtrem
- * `Wszystko / Komentarze / Historia / Czas` (`docs/frontend/task-management-pages.md` §9.1,
+ * `Wszystko / Komentarze / Historia / Czas` (`docs/modules/task-management/screens.md` §9.1,
  * decyzja 2). Zastępuje dwie osobne sekcje (`erp-task-management-issue-comments`,
  * `…-issue-history`), które przed fazą 4 zmuszały do skakania między nimi, żeby odtworzyć
  * kolejność zdarzeń.

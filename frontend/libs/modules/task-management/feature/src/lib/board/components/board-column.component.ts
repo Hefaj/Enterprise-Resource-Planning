@@ -15,7 +15,7 @@ import { BOARD_KEYS } from '../translation';
  * <p>Kolumna <b>niedostępna dla chwyconej karty jest wygaszona i nie przyjmuje upuszczenia</b>
  * (`[cdkDropListEnterPredicate]`). Dzieje się to w chwili chwycenia karty, a nie po jej
  * upuszczeniu — poznanie zakazu dopiero z błędu jest wrogie użytkownikowi
- * (`docs/frontend/task-management-pages.md` §2.2).</p>
+ * (`docs/modules/task-management/screens.md` §2.2).</p>
  */
 @Component({
   selector: 'erp-board-column',

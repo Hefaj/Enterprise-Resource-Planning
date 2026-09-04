@@ -17,7 +17,7 @@ namespace Catalog.Infrastructure.Consumers;
 /// milisekund pracy procesora. Wykonane w komendzie rejestrującej przedłużyłoby o tyle wgranie
 /// każdej paczki zdjęć — czyli moment, w którym użytkownik patrzy na modal i czeka. Tu dzieje
 /// się to po zatwierdzeniu transakcji, a UI przez tych kilka sekund pokazuje ikonę zastępczą
-/// (<c>docs/backend/media-storage.md</c> §9).</para>
+/// (<c>docs/guides/backend/media-storage.md</c> §9).</para>
 ///
 /// <para><b>Idempotencja.</b> Dostarczenie jest <i>at-least-once</i>, więc handler musi znieść
 /// powtórzenie. Znosi: warianty zapisują się pod deterministycznym kluczem, a powtórka nadpisuje

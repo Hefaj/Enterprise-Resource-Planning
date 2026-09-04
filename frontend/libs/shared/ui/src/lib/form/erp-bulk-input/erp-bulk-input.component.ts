@@ -174,10 +174,10 @@ const SPLIT_PATTERN = /[\n\t,;]+/;
       gap: 0.25rem;
     }
 
-    /* Panel dropdownu: nigdy węższy niż input (wymusza to \`erpDropdownMinWidth\` na
-       tui-textfield), a \`min-width\` niżej to wygodny domyślny rozmiar dla wąskich inputów
+    /* Panel dropdownu: nigdy węższy niż input (wymusza to erpDropdownMinWidth na
+       tui-textfield), a min-width niżej to wygodny domyślny rozmiar dla wąskich inputów
        (np. w panelu filtrów) — bez tego textarea potrafiła być nieporęcznie wąska. Górny
-       limit pilnuje sama Taiga (\`maxWidth\` liczone z viewportu przy \`limitWidth: 'min'\`). */
+       limit pilnuje sama Taiga (maxWidth liczone z viewportu przy limitWidth: 'min'). */
     .erp-bulk-input-panel {
       display: flex;
       flex-direction: column;

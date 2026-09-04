@@ -9,7 +9,7 @@ import { provideGrantAuditTranslations } from '../translation';
 /**
  * Historia nadań (`grant_audit`) — append-only dziennik audytu: kto/komu/co/kiedy nadał lub
  * odebrał (rola, uprawnienie), skąd (UI/import wsadowy/system). Wyłącznie do odczytu, bez
- * zaznaczeń i akcji masowych — patrz `docs/backend/events-outbox.md`.
+ * zaznaczeń i akcji masowych — patrz `docs/architecture/integration-events.md`.
  *
  * Zbudowana wg tego samego schematu co pozostałe strony aplikacji (patrz
  * `catalog/feature/.../product/page/product.component.ts`): store strony w providerach,

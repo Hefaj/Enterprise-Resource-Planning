@@ -51,7 +51,7 @@ export class ProductTabComponent {
   private readonly permissionStore = inject(PermissionStore);
   protected readonly store = inject(ProductStore);
 
-  /** `catalog.product.bulk` — patrz docs/backend/identity-authz.md §6 Faza 5: front tylko
+  /** `catalog.product.bulk` — patrz docs/architecture/security.md §6 Faza 5: front tylko
    * chowa akcje, na które backend i tak odpowie 403 (już egzekwowane w Fazie 3). */
   protected readonly canBulkEdit = computed(() => this.permissionStore.has(ERP_PERMISSIONS.Catalog.ProductBulk));
 

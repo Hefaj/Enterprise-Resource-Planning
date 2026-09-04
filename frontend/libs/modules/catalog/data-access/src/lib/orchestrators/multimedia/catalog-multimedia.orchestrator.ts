@@ -133,7 +133,7 @@ export class CatalogMultimediaOrchestrator extends BaseOrchestrator<MultimediaDt
    * (`CatalogProductOrchestrator.removeMultimediaMultipleAsync`): tamta zostawia zasób w katalogu,
    * ta go z niego wymazuje. Backend odmawia usunięcia zasobu, na który wskazuje choćby jeden
    * produkt (`multimedia_still_referenced`) — element odpada pojedynczo, reszta paczki
-   * przechodzi (`docs/backend/media-storage.md` §4c).
+   * przechodzi (`docs/guides/backend/media-storage.md` §4c).
    *
    * Plik w magazynie kasuje osobny konsument, po zatwierdzeniu transakcji, więc powodzenie
    * zadania oznacza „wiersz zniknął i zlecenie skasowania pliku jest utrwalone", a nie

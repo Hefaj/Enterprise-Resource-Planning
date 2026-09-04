@@ -11,7 +11,7 @@ export type UserAddRoleMetadata = ErpBatchMetadata;
 
 /** Modal: seryjne nadanie roli użytkownikom. Wywoływany z dwóch miejsc: panelu szczegółów
  * (`targetUuids: [uuid]` — dokładnie jeden użytkownik) i toolbara listy (zasięg zaznaczenia
- * przez `erpBuildBatchTargets`, patrz `docs/frontend/selection-scope.md` §3) — modal nie musi
+ * przez `erpBuildBatchTargets`, patrz `docs/guides/frontend/selection-scope.md` §3) — modal nie musi
  * wiedzieć, które z nich. */
 @Injectable({ providedIn: 'root' })
 export class UserAddRoleModalDefinition

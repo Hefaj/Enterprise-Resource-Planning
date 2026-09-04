@@ -3,6 +3,7 @@ import { MaybeSignal } from '@erp/shared/ui';
 export interface ErpNavigationItem {
   id?: string;
   label: string;
+  labelKey?: string;
   route?: string | string[];
   iconId?: string;
   disabled?: boolean;

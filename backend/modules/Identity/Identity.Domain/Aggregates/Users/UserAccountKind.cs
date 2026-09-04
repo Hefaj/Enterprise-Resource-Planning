@@ -2,7 +2,7 @@ namespace Identity.Domain.Users;
 
 /// <summary>
 /// Rodzaj podmiotu, dla którego istnieje wiersz <see cref="UserAccount"/>. Wprowadzone przez
-/// API-003 ("klucz integracyjny") — patrz <c>docs/backend/identity-authz.md</c> §2.
+/// API-003 ("klucz integracyjny") — patrz <c>docs/architecture/security.md</c> §2.
 ///
 /// <para><b>Human</b> — projekcja człowieka zakładana JIT przy logowaniu przez Keycloak
 /// (<see cref="UserAccount.ProvisionFromToken"/>).</para>

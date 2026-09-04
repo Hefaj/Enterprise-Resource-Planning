@@ -12,7 +12,7 @@ import { ErpSelectionScopeBannerConfig } from './erp-selection-scope-banner.type
  * próbkę i mówi, że akcje obejmą cały pasujący zbiór. Po materializacji „Zaznacz wszystko"
  * do listy identyfikatorów baner tylko spokojnie potwierdza liczbę pozycji.
  *
- * Patrz `docs/frontend/selection-scope.md`.
+ * Patrz `docs/guides/frontend/selection-scope.md`.
  */
 @Component({
   selector: 'erp-selection-scope-banner',

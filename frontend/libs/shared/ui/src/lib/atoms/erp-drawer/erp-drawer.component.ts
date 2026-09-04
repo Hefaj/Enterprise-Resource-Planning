@@ -71,6 +71,9 @@ export class ErpDrawerComponent implements OnInit {
 
   protected readonly _open = computed(() => unwrapSignal(this.config().open) ?? false);
   protected readonly _title = computed(() => unwrapSignal(this.config().title));
+  protected readonly _closeLabel = computed(
+    () => unwrapSignal(this.config().closeLabel) ?? unwrapSignal(this.config().title) ?? '',
+  );
   protected readonly _overlay = computed(() => unwrapSignal(this.config().overlay) ?? true);
   protected readonly _direction = computed(() => unwrapSignal(this.config().direction) ?? 'start');
   protected readonly _component = computed(() => this.config().component);
@@ -80,10 +83,9 @@ export class ErpDrawerComponent implements OnInit {
     b
       .setAppearance('icon')
       .setIconStart('@tui.x')
+      .setAriaLabel(this._closeLabel)
       .setFn(() => this.handleClose())
   );
-
-  constructor() {}
 
   ngOnInit(): void {
     this._router?.events.pipe(

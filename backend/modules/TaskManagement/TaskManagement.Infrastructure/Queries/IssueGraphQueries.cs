@@ -15,7 +15,7 @@ namespace TaskManagement.Infrastructure.Queries;
 /// <para>Trzy zapytania idą <b>rekurencyjnym CTE</b>, bo w LINQ nie da się wyrazić przejścia
 /// grafu, a alternatywa — wczytanie wszystkich krawędzi do pamięci — rośnie z wiekiem projektu
 /// i musi działać także w pre-checku operacji masowej
-/// (<c>docs/backend/task-management.md</c> §8.2).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §8.2).</para>
 ///
 /// <para><b>Limit głębokości</b> jest w każdym z nich i nie jest ozdobnikiem: dane sprzed
 /// wprowadzenia reguł cyklu (albo wstawione ręcznie w bazie) mogą zawierać pętlę, a rekurencyjne

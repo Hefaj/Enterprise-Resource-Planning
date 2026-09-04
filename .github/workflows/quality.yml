@@ -1,0 +1,31 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: nrwl/nx-set-shas@v4
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm docs:check
+      - run: pnpm nx affected -t lint
+      - run: pnpm nx affected -t test
+      - run: pnpm nx affected -t build
+      - name: Build documentation host and documented remotes
+        run: pnpm nx run-many -t build -p client catalog task-management
+    env:
+      NX_DAEMON: false

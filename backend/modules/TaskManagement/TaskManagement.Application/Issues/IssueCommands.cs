@@ -17,7 +17,7 @@ namespace TaskManagement.Application.Issues;
 /// Komendy zgłoszenia. Handlery <b>nie wołają</b> <c>SaveChangesAsync</c> — granicę transakcji
 /// wyznacza wywołujący (<c>BulkCommandRunner</c> zapisuje raz na chunk), inaczej N elementów
 /// chunka dałoby N commitów i popsuło częściowy sukces
-/// (<c>docs/backend/cqrs.md</c> §6, <c>docs/backend/bulk-commands.md</c>).
+/// (<c>docs/guides/backend/cqrs.md</c> §6, <c>docs/guides/backend/bulk-commands.md</c>).
 /// </summary>
 public sealed class IssueCreateCommand : ICommand<Guid>, IAggregateCommand
 {
@@ -44,7 +44,7 @@ public sealed class IssueCreateCommand : ICommand<Guid>, IAggregateCommand
 
 /// <summary>Walidacja wejścia — komenda bez typu odpada w pipeline'u komend, ZANIM dotknie
 /// bazy (400, nie 422): brak typu nie jest naruszeniem reguły biznesowej, tylko niekompletnym
-/// żądaniem (<c>docs/backend/cqrs.md</c> §6).</summary>
+/// żądaniem (<c>docs/guides/backend/cqrs.md</c> §6).</summary>
 public sealed class IssueCreateCommandValidator : AbstractValidator<IssueCreateCommand>
 {
     public IssueCreateCommandValidator()
@@ -556,7 +556,7 @@ public sealed class IssueSetStateCommandHandler : CommandHandler<IssueSetStateCo
 /// <para>Zwracana przez <see cref="IssueCommandHandlerBase{TCommand}.Apply"/>, bo tylko tam
 /// widać obie wartości — przed i po. Wyliczanie „co się zmieniło” po fakcie, ze ChangeTrackera,
 /// dałoby dokładnie to, co daje już <c>AggregateChanged</c>: informację, że coś się ruszyło,
-/// bez znaczenia pola (<c>docs/backend/task-management.md</c> §11).</para>
+/// bez znaczenia pola (<c>docs/modules/task-management/domain.md</c> §11).</para>
 /// </summary>
 public readonly record struct IssueFieldChange(string? FieldCode, string? OldValue, string? NewValue, bool Changed)
 {

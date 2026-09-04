@@ -9,7 +9,7 @@ describe('resolveErrorCodeKey', () => {
   });
 
   it('traktuje prefiks modułu jak kolejny segment nazwy', () => {
-    // Task Management prefiksuje kody nazwą modułu (docs/backend/task-management.md §2),
+    // Task Management prefiksuje kody nazwą modułu (docs/modules/task-management/domain.md §2),
     // a rejestr kluczy zostaje płaski — bez tego kropka przechodziłaby przez camelCase
     // i lookup nigdy by nie trafił.
     expect(resolveErrorCodeKey('taskmgmt.transition_not_allowed')).toBe(

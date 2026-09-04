@@ -280,6 +280,12 @@ export const PROJECT_KEYS = {
         save: 'project.detail.sla.save',
         saveFailed: 'project.detail.sla.saveFailed',
       },
+      notifications: {
+        title: 'project.detail.notifications.title',
+        muteLabel: 'project.detail.notifications.muteLabel',
+        muteHint: 'project.detail.notifications.muteHint',
+        saveFailed: 'project.detail.notifications.saveFailed',
+      },
       workflow: {
         title: 'project.detail.workflow.title',
         noScheme: 'project.detail.workflow.noScheme',

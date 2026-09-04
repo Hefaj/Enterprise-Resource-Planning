@@ -5,7 +5,7 @@ namespace Identity.Domain.Audit;
 /// <summary>
 /// Wpis dziennika audytowego nadań/odebrań — kto (<see cref="ActorUserUuid"/>) zrobił co
 /// (<see cref="Action"/>) komu (<see cref="SubjectType"/>/<see cref="SubjectUuid"/>) i dlaczego
-/// (<see cref="Reason"/>), patrz <c>docs/backend/identity-authz.md</c> Faza 6.
+/// (<see cref="Reason"/>), patrz <c>docs/architecture/security.md</c> Faza 6.
 ///
 /// <para><b>Append-only, bez FK do <c>role</c>/<c>user_account</c>.</b> Wpis musi przeżyć
 /// usunięcie roli albo dezaktywację użytkownika — audyt „kto nadał uprawnienie X" jest

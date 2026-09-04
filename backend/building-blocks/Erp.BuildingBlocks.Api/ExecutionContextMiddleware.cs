@@ -13,7 +13,7 @@ namespace Erp.BuildingBlocks.Api;
 /// <c>UseAuthentication</c>/<c>UseAuthorization</c>, więc <c>context.User</c> jest tu już
 /// ustawiony i zweryfikowany. Do 2026-08 był czytany wprost z nagłówka <c>X-User-Id</c> bez
 /// żadnej weryfikacji — każdy klient mógł podać cudzy identyfikator; ten placeholder zniknął
-/// razem z wdrożeniem Keycloaka (patrz <c>docs/backend/identity-authz.md</c> §5).</para>
+/// razem z wdrożeniem Keycloaka (patrz <c>docs/architecture/security.md</c> §5).</para>
 ///
 /// <para><c>X-Client-Id</c> zostaje nagłówkiem — to nie jest tożsamość, tylko identyfikator
 /// karty przeglądarki generowany po stronie klienta raz na kartę (sessionStorage), używany

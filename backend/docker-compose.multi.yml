@@ -1,4 +1,4 @@
-# Profil weryfikacyjny wieloinstancyjności — patrz docs/backend/multi-instance.md §3.3.
+# Profil weryfikacyjny wieloinstancyjności — patrz docs/architecture/multi-instance.md.
 #
 # Uruchamianie:
 #   docker compose -f docker-compose.yml -f docker-compose.multi.yml up
@@ -76,7 +76,7 @@ services:
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
       # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
-      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      # `dotnet run -- codegen write` (patrz docs/architecture/multi-instance.md).
       Messaging__PrecompiledHandlers: "true"
       Artifacts__Endpoint: minio:9000
       # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
@@ -112,7 +112,7 @@ services:
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
       # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
-      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      # `dotnet run -- codegen write` (patrz docs/architecture/multi-instance.md).
       Messaging__PrecompiledHandlers: "true"
       Artifacts__Endpoint: minio:9000
       # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
@@ -183,7 +183,7 @@ services:
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
       # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
-      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      # `dotnet run -- codegen write` (patrz docs/architecture/multi-instance.md).
       Messaging__PrecompiledHandlers: "true"
       # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
       # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.
@@ -228,7 +228,7 @@ services:
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
       # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
-      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      # `dotnet run -- codegen write` (patrz docs/architecture/multi-instance.md).
       Messaging__PrecompiledHandlers: "true"
       # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
       # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.
@@ -265,7 +265,7 @@ services:
       Messaging__PostgresConnectionString: Host=postgres;Port=5432;Database=erp;Username=erp;Password=erp
       # Kod handlerów z zestawu, nie z Roslyna przy starcie — przy równoległym starcie kilku
       # instancji znika przy okazji wyścig na generowanym kodzie. Wymaga zatwierdzonego wyniku
-      # `dotnet run -- codegen write` (patrz docs/backend/multi-instance.md §8.2).
+      # `dotnet run -- codegen write` (patrz docs/architecture/multi-instance.md).
       Messaging__PrecompiledHandlers: "true"
       # Emitent w tokenie jest publiczny (localhost:8080 — tam loguje się przeglądarka),
       # a metadane serwis dociąga po sieci compose. Patrz KeycloakOptions.MetadataAddress.

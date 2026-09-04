@@ -37,6 +37,7 @@ export const TASK_MANAGEMENT_JOB_COMMAND_KEYS = {
   addIssueWatcher: 'shared.jobs.commands.taskmgmtIssueAddWatcher',
   removeIssueWatcher: 'shared.jobs.commands.taskmgmtIssueRemoveWatcher',
   setProjectSla: 'shared.jobs.commands.taskmgmtProjectSetSla',
+  setProjectNotificationMuted: 'shared.jobs.commands.taskmgmtProjectSetNotificationMuted',
   setBoardCardSprint: 'shared.jobs.commands.taskmgmtBoardSetCardSprint',
   createSprint: 'shared.jobs.commands.taskmgmtSprintCreate',
   setSprintDates: 'shared.jobs.commands.taskmgmtSprintSetDates',

@@ -11,7 +11,7 @@ namespace TaskManagement.Infrastructure.Jobs;
 
 /// <summary>
 /// Przenumerowuje tablicę, gdy najdłuższy rank przekroczy próg
-/// (<c>docs/backend/task-management.md</c> §7.2).
+/// (<c>docs/modules/task-management/domain.md</c> §7.2).
 ///
 /// <para>Łańcuchy rosną wyłącznie przy wielokrotnym wstawianiu <b>w to samo miejsce</b>:
 /// między <c>"n"</c> a <c>"o"</c> wchodzi <c>"nn"</c>, potem <c>"nnn"</c> i tak dalej. Sama

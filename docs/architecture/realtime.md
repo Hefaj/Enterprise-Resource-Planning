@@ -1,8 +1,22 @@
+---
+id: architecture.realtime
+title: Synchronizacja w czasie rzeczywistym (SignalR)
+summary: Centralny SignalR, sygnatury agregatów, grupy, koalescencja i resynchronizacja.
+kind: architecture
+scope: notification
+audience:
+  - backend
+  - agent
+triggers:
+  - SignalR i nowa sygnatura agregatu
+  - realtime resync lub koalescencja
+related: []
+---
+
 # Synchronizacja w czasie rzeczywistym (SignalR)
 
-**Stan: ✅ działa**, także przy wielu instancjach Notification (rozdział ról `Realtime:Role`
-+ backplane Redis — sekcja 6). Legenda znaczników —
-[`architecture.md`](./architecture.md#1-stan-wdrożenia).
+Opisany kontrakt obowiązuje także przy wielu instancjach Notification (rozdział ról
+`Realtime:Role` + backplane Redis — sekcja 6).
 
 ---
 
@@ -11,7 +25,7 @@
 Hub żyje **wyłącznie** w Notification —
 [`SyncHub`](../../backend/modules/Notification/Notification.Api/Hubs/SyncHub.cs),
 ścieżka `/hubs/sync`. Pozostałe serwisy (Catalog, Sales, Identity) nie wiedzą, że SignalR istnieje —
-publikują tylko `AggregateChanged` do RabbitMQ ([`events-outbox.md`](./events-outbox.md)).
+publikują tylko `AggregateChanged` do RabbitMQ ([`events-outbox.md`](integration-events.md)).
 Notification konsumuje i rozgłasza.
 
 ```
@@ -59,7 +73,7 @@ przeglądarki dostawałaby ruch całego ERP, niezależnie od tego, co akurat wy�
 [`RealtimeBroadcaster`](../../backend/modules/Notification/Notification.Api/Realtime/RealtimeBroadcaster.cs)
 zbiera przychodzące `AggregateChanged` w buforze per sygnatura i wysyła **jedną** wiadomość po
 oknie `RealtimeBroadcastOptions.CoalesceWindow` (domyślnie 200 ms). Bez tego bulk zatwierdzający
-chunk co kilkadziesiąt milisekund ([`bulk-commands.md`](./bulk-commands.md)) wysyłałby równie gęstą
+chunk co kilkadziesiąt milisekund ([`bulk-commands.md`](../guides/backend/bulk-commands.md)) wysyłałby równie gęstą
 serię wiadomości do każdej otwartej przeglądarki.
 
 Debounce jest „od pierwszego zdarzenia w oknie”, nie „od ostatniego” — inaczej ciągły strumień
@@ -104,7 +118,7 @@ Dwa różne sygnały, celowo rozdzielone:
 | Adresat | grupa `agg:notification.job` | grupa `user:{userId}` |
 
 Oba sygnały biorą się **z tego samego zapisu** w `JobCompletedHandler`
-([`bulk-commands.md`](./bulk-commands.md#5-replika-w-notification)), ale mają różnych odbiorców
+([`bulk-commands.md`](../guides/backend/bulk-commands.md#5-replika-w-notification)), ale mają różnych odbiorców
 i różne przeznaczenie: jeden mówi „ta encja Job się zmieniła, odśwież ją, jeśli masz w cache”,
 drugi — „Twoje zadanie X się skończyło, oznacz jako przeczytane bez pytania API”.
 
@@ -169,7 +183,7 @@ odbywa się z tą samą, monotoniczną wartością — mechanizm nie ma jak po c
 
 Wariant ulotny (licznik w pamięci procesu) był poprawny dopóty, dopóki licznik i połączenia
 **ginęły razem**; rozdział ról Hub/Relay to rozerwał. Uzasadnienie rewizji:
-[`multi-instance.md` §7.2](./multi-instance.md#72-licznik-sekwencji--postgres-rewizja-wcześniejszej-decyzji).
+[`multi-instance.md` — role Hub i Relay](multi-instance.md#realtime-role-hub-i-relay).
 
 ### Wiele instancji Notification
 
@@ -183,7 +197,7 @@ sekcja 6.
 ## 6. Skalowanie — backplane
 
 Notification jako centralny hub to pojedynczy punkt awarii realtime, ale **nie zapisów** — te idą
-przez outbox ([`events-outbox.md`](./events-outbox.md)) i doczekają brokera. Awaria hubu degraduje
+przez outbox ([`events-outbox.md`](integration-events.md)) i doczekają brokera. Awaria hubu degraduje
 UI do „odśwież ręcznie”, nie gubi danych.
 
 Skalowanie poziome Notification jest wdrożone i steruje nim **jedno** ustawienie — `Realtime:Role`:
@@ -205,12 +219,12 @@ Dwie rzeczy idą z tym w parze:
 
 - **Licznik sekwencji jest trwały** (`notification.signature_sequence`), a nie w pamięci — po
   rozdzieleniu ról restart przekaźnika **nie zrywa** połączeń, więc wyzerowany licznik zaczynałby
-  wydawać numery, które klienci już widzieli. Szerzej: [`multi-instance.md` §7.2](./multi-instance.md#72-licznik-sekwencji--postgres-rewizja-wcześniejszej-decyzji).
+  wydawać numery, które klienci już widzieli. Szerzej: [`multi-instance.md`](multi-instance.md#realtime-role-hub-i-relay).
 - **Front łączy się z `skipNegotiation: true`**, więc load balancer nie potrzebuje powinowactwa
   sesji. Cena: znika fallback na SSE i long-polling.
 
 Redis wchodzi wyłącznie jako backplane (`Realtime:Redis`) i wyłącznie tutaj — patrz
-[`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
+[`architecture.md` §7](backend.md#7-wieloinstancyjność--założenia-zdjęte).
 
 ---
 
@@ -233,6 +247,6 @@ bez niego wiadomości i tak nigdy by nie nadeszły.
 
 ## 8. Zobacz też
 
-- [Zdarzenia domenowe i outbox](./events-outbox.md) — skąd bierze się `AggregateChanged`
-- [Operacje masowe](./bulk-commands.md) — kanał `jobs`, replika `notification.job`
-- [Architektura backendu](./architecture.md)
+- [Zdarzenia domenowe i outbox](integration-events.md) — skąd bierze się `AggregateChanged`
+- [Operacje masowe](../guides/backend/bulk-commands.md) — kanał `jobs`, replika `notification.job`
+- [Architektura backendu](backend.md)

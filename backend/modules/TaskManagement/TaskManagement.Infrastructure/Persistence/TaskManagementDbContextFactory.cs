@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace TaskManagement.Infrastructure.Persistence;
 
 /// <summary>Fabryka używana wyłącznie przez narzędzia <c>dotnet ef</c> — pozwala wygenerować
-/// migrację bez podnoszenia całego hosta (patrz <c>docs/backend/persistence-ef.md</c> §7).</summary>
+/// migrację bez podnoszenia całego hosta (patrz <c>docs/guides/backend/persistence-ef.md</c> §7).</summary>
 public sealed class TaskManagementDbContextFactory : IDesignTimeDbContextFactory<TaskManagementDbContext>
 {
     private const string DefaultConnectionString =

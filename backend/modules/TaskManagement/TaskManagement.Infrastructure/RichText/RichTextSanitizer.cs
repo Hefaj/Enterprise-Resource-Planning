@@ -47,7 +47,7 @@ public sealed partial class RichTextSanitizer : IRichTextSanitizer
     /// <summary>
     /// Dozwolone schematy adresów. <c>data:</c> jest <b>celowo pominięty</b>: obrazek wklejony
     /// jako <c>data:</c> wsiąkłby w treść zgłoszenia, omijając magazyn plików, referencje
-    /// i sprzątanie — i puchłby w każdej odpowiedzi listy (<c>docs/backend/media-storage.md</c>).
+    /// i sprzątanie — i puchłby w każdej odpowiedzi listy (<c>docs/guides/backend/media-storage.md</c>).
     /// </summary>
     private static readonly string[] AllowedSchemes = ["http", "https", "mailto"];
 

@@ -1,0 +1,20 @@
+{
+  "moduleId": "task-management",
+  "routePrefix": "task-management",
+  "overviewArticleId": "task-management.overview",
+  "requiredPermission": "taskmgmt.issue.read",
+  "articles": [
+    { "id": "task-management.overview", "slug": "overview", "content": "overview.md", "order": 0, "icon": "@tui.book-open", "contextRoutes": ["/task-management"] },
+    { "id": "task-management.issues.list", "slug": "issues-list", "content": "issues/list.md", "order": 10, "icon": "@tui.list-filter", "contextRoutes": ["/task-management/issue"], "capabilityIds": ["task-management.issues.search", "task-management.issues.bulk"] },
+    { "id": "task-management.issues.detail", "slug": "issue-detail", "content": "issues/detail.md", "order": 20, "parentId": "task-management.issues.list", "icon": "@tui.file-text", "contextRoutes": ["/task-management/issue/:key"], "capabilityIds": ["task-management.issues.detail", "task-management.issues.transition"] },
+    { "id": "task-management.projects.list", "slug": "projects", "content": "projects/list.md", "order": 30, "icon": "@tui.folder-kanban", "contextRoutes": ["/task-management/project"] },
+    { "id": "task-management.projects.detail", "slug": "project-detail", "content": "projects/detail.md", "order": 40, "parentId": "task-management.projects.list", "contextRoutes": ["/task-management/project/:uuid"], "requiredPermission": "taskmgmt.project.manage" },
+    { "id": "task-management.boards.list", "slug": "boards", "content": "boards/list.md", "order": 50, "icon": "@tui.columns-3", "contextRoutes": ["/task-management/board"] },
+    { "id": "task-management.boards.board", "slug": "board", "content": "boards/board.md", "order": 60, "parentId": "task-management.boards.list", "contextRoutes": ["/task-management/board/:uuid"] },
+    { "id": "task-management.boards.backlog", "slug": "backlog-and-sprints", "content": "boards/backlog.md", "order": 70, "parentId": "task-management.boards.list", "contextRoutes": ["/task-management/board/:uuid/backlog"] },
+    { "id": "task-management.requests", "slug": "requests", "content": "requests.md", "order": 80, "icon": "@tui.send", "contextRoutes": ["/task-management/request"] },
+    { "id": "task-management.reports.hours", "slug": "hours-report", "content": "reports/hours.md", "order": 90, "icon": "@tui.chart-bar", "contextRoutes": ["/task-management/report"], "requiredPermission": "taskmgmt.report.read.all" },
+    { "id": "task-management.permissions", "slug": "permissions", "content": "permissions.md", "order": 100, "icon": "@tui.shield-check" },
+    { "id": "task-management.troubleshooting", "slug": "troubleshooting", "content": "troubleshooting.md", "order": 110, "icon": "@tui.circle-question-mark" }
+  ]
+}

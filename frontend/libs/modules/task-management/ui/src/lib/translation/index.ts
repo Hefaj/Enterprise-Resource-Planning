@@ -10,7 +10,7 @@ export { TASKMANAGEMENT_KEYS } from './keys';
  * <p><b>Dlaczego modułowy, a nie per agregat.</b> Nazwy stanów i przejść <b>nie są napisami
  * w szablonie</b>: schemat trzyma je jako <c>name_key</c> w bazie i wskazuje nimi wprost na ten
  * registry (patrz `WorkflowSchemeDefaults` w `TaskManagement.Domain` i
- * `docs/frontend/task-management-pages.md` §8). Renderuje je lista zgłoszeń, karta zgłoszenia,
+ * `docs/modules/task-management/screens.md` §8). Renderuje je lista zgłoszeń, karta zgłoszenia,
  * a od fazy 2 także tablica i konfiguracja projektu — czyli cztery różne scope'y agregatów.
  * Wciśnięcie ich w scope jednego z nich zmusiłoby pozostałe do ładowania cudzego scope'u.</p>
  *
@@ -19,7 +19,7 @@ export { TASKMANAGEMENT_KEYS } from './keys';
  *
  * <p>Rejestrować wyłącznie w providerach agregujących modułu (trasa, loader komponentu
  * z kontraktu), <b>NIGDY</b> w dekoratorze `@Component` komponentu współdzielonego — to tworzy
- * child injector przesłaniający scope nadrzędny (patrz `docs/frontend/translations.md`).</p>
+ * child injector przesłaniający scope nadrzędny (patrz `docs/guides/frontend/translations.md`).</p>
  */
 export function provideTaskManagementTranslations(): Provider[] {
   return [

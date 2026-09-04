@@ -1,13 +1,29 @@
+---
+id: module.dms.domain-workflow
+title: DMS — dokumenty i obiegi
+summary: Model dokumentów, typów, slotów, workflow, ACL i ingestu KSeF.
+kind: module-specification
+scope: dms
+audience:
+  - frontend
+  - backend
+  - agent
+triggers:
+  - domena DMS lub obieg dokumentu
+  - DocumentType workflow ACL lub KSeF
+related: []
+---
+
 # DMS — dokumenty i obiegi
 
-**Stan: 📐 projekt, brak kodu.** Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
-Front DMS to dziś atrapa (`MOCK_DOCUMENTS` w `libs/modules/dms/feature`), backendu `Dms` nie ma.
+To specyfikacja docelowa. Front DMS jest obecnie atrapą (`MOCK_DOCUMENTS` w
+`libs/modules/dms/feature`), a backendu `Dms` nie ma.
 
 Ten dokument opisuje **docelowy model** modułu obiegu dokumentów: agregaty, silnik obiegu,
 dostęp per dokument, wejście dokumentów z zewnątrz, archiwizację i kontrakt listy dla frontu.
 Decyzje są rozstrzygnięte — nie jest to zestaw wariantów do wyboru.
 
-**Podział na strony, nawigacja i menu frontu → [`docs/frontend/dms-pages.md`](../frontend/dms-pages.md).**
+**Podział na strony, nawigacja i menu frontu → [`docs/modules/dms/screens.md`](screens.md).**
 
 ---
 
@@ -24,7 +40,7 @@ DMS jest testem **siedmiu rzeczy, których architektura jeszcze nie robi**:
 | Konfiguracja jako dane — graf rysowany przez użytkownika, walidowany, wersjonowany | 📐 | [§4](#4-szablon-obiegu) |
 | Snapshot definicji — instancja niezależna od bieżącego szablonu | 📐 | [§4.2](#42-snapshot-w-instancji) |
 | Formularze definiowane danymi (każdy krok ma inne pola) | 📐 | [§9.4](#94-formularze-z-definicji) |
-| Artefakt archiwalny — niezmienny, z hashem, retencja latami | 📐 rozszerzenie [`exports-artifacts.md`](./exports-artifacts.md) | [§8](#8-audyt-i-archiwizacja) |
+| Artefakt archiwalny — niezmienny, z hashem, retencja latami | 📐 rozszerzenie [`exports-artifacts.md`](../../guides/backend/exports-artifacts.md) | [§8](#8-audyt-i-archiwizacja) |
 
 Wszystko poza tym (CQRS, outbox, `job`/`job_item`, MinIO, SignalR, `ProblemDetails`,
 idempotencja `X-Request-Id`) jest **ponownym użyciem** istniejących mechanizmów, nie nowym kodem
@@ -35,7 +51,7 @@ infrastrukturalnym.
 ## 2. Agregaty
 
 Cztery agregaty w schemacie `dms`, jeden mikroserwis `Dms` (4 projekty Clean Architecture,
-patrz [`new-microservice.md`](./new-microservice.md)).
+patrz [`new-microservice.md`](../../guides/backend/new-microservice.md)).
 
 ### `Document`
 Tożsamość dokumentu: typ, metadane, plik główny (wersjonowany), załączniki, klasa poufności,
@@ -102,7 +118,7 @@ tabelę projekcji — reszta typów zostaje na slotach.
 
 ### 3.3 Granica z księgowością
 DMS trzyma **nagłówek faktury potrzebny do obiegu i wyszukiwania**, nie księgowość.
-Pełne rozstrzygnięcie granicy i moment wydzielenia mikroserwisu → [§12](#12-granice-modułu--czego-tu-nie-ma). Pozycje,
+Pełne rozstrzygnięcie granicy i moment wydzielenia mikroserwisu → [§11](#11-granice-modułu--czego-tu-nie-ma). Pozycje,
 dekretacja i VAT należą do modułu finansowego, który dostaje zdarzenie integracyjne po
 zakończeniu obiegu. Bez tej granicy DMS spuchnie w drugi ERP.
 
@@ -116,7 +132,7 @@ Krawędź: `from`, `to`, warunek.
 
 Rodzaje bloków to **rejestr wtyczek w kodzie**: `IWorkflowNodeHandler` z kodem typu, wyłapywany
 skanem zestawów przez `AddErpModule` — dokładnie jak `IBatchRule` (patrz
-[`architecture.md`](./architecture.md), reguła „rejestracje DI nie idą do `Program.cs`”).
+[`architecture.md`](../../architecture/backend.md), reguła „rejestracje DI nie idą do `Program.cs`”).
 Każdy handler deklaruje schemat swojego `config`, walidowany **przy publikacji szablonu**,
 nie przy wykonaniu — błędna konfiguracja nie może wybuchnąć trzy tygodnie po starcie obiegu.
 
@@ -164,7 +180,7 @@ kursora to przepisanie silnika. Wchodzimy od razu z tokenami.
 Każdy postęp obiegu to **komenda na agregacie `WorkflowInstance`**, w transakcji, z optymistyczną
 kontrolą współbieżności po wersji instancji. Dwa równoległe „Akceptuj” nie mogą przesunąć tokenu
 dwa razy — łapie to wersja, nie blokada. Podwójne kliknięcie łapie idempotencja po
-`X-Request-Id` ([`cqrs.md` §6](./cqrs.md#6-pipeline-komend), front ma `withRequestId`).
+`X-Request-Id` ([`cqrs.md` §6](../../guides/backend/cqrs.md#6-pipeline-komend), front ma `withRequestId`).
 
 Efekty uboczne (mail, generowanie PDF, wołanie innego modułu) idą **wyłącznie przez outbox** —
 nigdy inline w transakcji postępu.
@@ -180,16 +196,16 @@ workflow_scheduled_work(uuid pk, instance_uuid, node_id, kind, due_at,
 pobieranej przez `FOR UPDATE SKIP LOCKED` z `heartbeat_at` — **ten sam wzorzec, co
 `BulkCommandRunner` i przebiegi eksportu**, zastosowany trzeci raz. Usługa tła deklaruje
 `[ClusterSafe(powód)]`, inaczej nie przejdzie `BackgroundServiceTests`
-([`multi-instance.md`](./multi-instance.md)).
+([`multi-instance.md`](../../architecture/multi-instance.md)).
 
 To jest pierwszy w architekturze harmonogram **per encja** („obudź instancję X o 14:00”),
 a nie cykliczny przemiał całej tabeli.
 
 ### 5.4 Operacje masowe
 „Zaakceptuj 40 faktur” wpada wprost w istniejący kontrakt `BatchCommand<T,TFilter>` →
-`job`/`job_item` z sukcesem częściowym ([`bulk-commands.md`](./bulk-commands.md)). Reguły
+`job`/`job_item` z sukcesem częściowym ([`bulk-commands.md`](../../guides/backend/bulk-commands.md)). Reguły
 wstępne (czy user jest wykonawcą, czy krok jest akceptacją) to `IBatchRule<T>`
-([`batch-validation.md`](./batch-validation.md)). Zero nowego mechanizmu.
+([`batch-validation.md`](../../guides/backend/batch-validation.md)). Zero nowego mechanizmu.
 
 ---
 
@@ -217,7 +233,7 @@ paginowana i sortowana serwerowo, więc filtr dostępu musi być joinem w SQL.**
 w aplikacji rozsypuje paginację przy pierwszej realnej objętości.
 
 Do tego **audyt nadań dostępu** analogiczny do `grant_audit` z Identity
-([`identity-authz.md` §7](./identity-authz.md)) — przy kontroli pytanie „kto miał wgląd w tę
+([`identity-authz.md` §7](../../architecture/security.md)) — przy kontroli pytanie „kto miał wgląd w tę
 fakturę i z jakiego tytułu” waży tyle samo, co „kto ją zaakceptował”.
 
 ### 6.3 Dostęp do pliku
@@ -225,7 +241,7 @@ Endpoint zawartości sprawdza **ACL dokumentu**, nie samo uprawnienie funkcyjne.
 poufnej presigned URL na 15 minut jest wyciekiem — obowiązuje strumieniowanie przez API
 z jednorazowym, krótkim biletem. Reszta (kubełek per moduł, klucz MinIO per serwis, prefiks
 postojowy, kasowanie przez outbox) bez zmian względem
-[`media-storage.md`](./media-storage.md).
+[`media-storage.md`](../../guides/backend/media-storage.md).
 
 ---
 
@@ -243,7 +259,7 @@ unique (source, external_id)
 deduplikacją** — KSeF potrafi dosłać ten sam dokument. `raw_payload` zachowany w oryginale.
 
 Ręczne wgranie używa istniejącej ścieżki: bilet → presigned PUT → rejestracja → dopięcie
-([`exports-artifacts.md` §9](./exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga)).
+([`exports-artifacts.md` §9](../../guides/backend/exports-artifacts.md#9-zawartość-wgrywana-przez-użytkownika--drugi-kubełek-druga-droga)).
 
 **Reguły routingu** (`IntakeRule`): uporządkowana lista warunków na metadanych → szablon obiegu.
 Brak dopasowania **nie może być błędem** — dokument trafia do obiegu `triage` z czynnością dla
@@ -263,7 +279,7 @@ przy kontroli — nie może wylądować w logach aplikacyjnych ani w zewnętrzny
 
 ### 8.2 Metryka dokumentu
 PDF „kto, co, kiedy” generuje istniejący mechanizm: `job.kind` + przebieg + artefakt w MinIO
-([`exports-artifacts.md`](./exports-artifacts.md)). Dwie różnice wobec eksportów z Catalogu:
+([`exports-artifacts.md`](../../guides/backend/exports-artifacts.md)). Dwie różnice wobec eksportów z Catalogu:
 
 - **klasa artefaktu `archival`** — nie wygasa; retencja liczona latami (faktury 6 lat, akta
   osobowe znacznie dłużej). To trzecia klasa obok transient i trwałej.
@@ -310,7 +326,7 @@ froncie — nie ma go w żadnym obecnym module.
 ## 10. Kontrakt listy dokumentów (front)
 
 Najczęściej używany ekran modułu. Trzy decyzje, które przesądzają o jego użyteczności.
-Pozostałe strony modułu → [`dms-pages.md`](../frontend/dms-pages.md).
+Pozostałe strony modułu → [`dms-pages.md`](screens.md).
 
 ### 10.1 Zakres jako przełącznik, nie filtr
 Jedna strona, przełącznik zakresu nad tabelą: **`Moje czynności` / `Wszystkie dostępne` /
@@ -320,7 +336,7 @@ zgadywania, gdzie patrzeć.
 
 **Klucz wiersza zależy od zakresu:** w `Moje czynności` wiersz to `WorkItem` (jeden dokument
 może mieć dwie moje czynności — dedup zgubiłby jedną), w pozostałych zakresach wiersz to
-`Document`. Orkiestrator trzyma wiersze po UUID ([`smart-tables.md`](../frontend/smart-tables.md)),
+`Document`. Orkiestrator trzyma wiersze po UUID ([`smart-tables.md`](../../guides/frontend/smart-tables.md)),
 więc musi wiedzieć, czyje to UUID-y.
 
 ### 10.2 Typ dokumentu jako kontekst tabeli
@@ -352,39 +368,21 @@ Do tego, bo księgowa i kadrowa chcą czego innego:
 ### 10.4 Realtime
 Sygnatury: `dms.document`, `dms.workflowInstance`, `dms.workItem`. Skrzynka czynności musi
 odświeżać się sama w chwili przypisania. Rejestracja sygnatur w `AggregateSignatures` musi zgadzać
-się z `signalrSignature` orkiestratorów ([`realtime-signalr.md`](./realtime-signalr.md)).
+się z `signalrSignature` orkiestratorów ([`realtime-signalr.md`](../../architecture/realtime.md)).
 
 E-mail i dzwonek: DMS **tylko publikuje `UserNotificationRequested`** z listą odbiorców, którą
 sam wylicza (i sam decyduje, ile treści ujawnić przy klasie poufnej) — resztę robi Notification,
-[`user-notifications.md`](./user-notifications.md). Wysyłka nie rozłazi się po modułach.
+[`user-notifications.md`](../notification/user-notifications.md). Wysyłka nie rozłazi się po modułach.
 
 ---
 
-## 11. Kolejność wdrożenia
-
-| Faza | Zakres | Co weryfikuje |
-|---|---|---|
-| 0 | Mikroserwis `Dms`, schemat `dms`, `Document` + `DocumentType` + sloty, upload, lista serwerowa, przepisanie atrapy frontu | Szablon modułu na nowej domenie |
-| 1 | Silnik z tokenami, snapshot, `WorkItem`, skrzynka czynności, cofanie. Szablony w seedzie | **Czy architektura udźwignie długożyjący proces** |
-| 2 | Edytor szablonów, wersjonowanie, publikacja z walidacją configu węzłów | Konfiguracja jako dane |
-| 3 | `document_acl` + audyt nadań | Autoryzacja per instancja zasobu |
-| 4 | Bloki automatyczne, `workflow_scheduled_work`, SLA/eskalacje, AND-split/join | Harmonogram per encja, równoległość |
-| 5 | Archiwizacja: klasa `archival`, metryka PDF z hashem, retencja, read-only | Artefakt trwały |
-| 6 | `document_inbox`, KSeF, reguły routingu, `triage` | Ingest zewnętrzny + deduplikacja |
-| 7 | Delegacja, przekierowanie, masowa akceptacja, podpis | Dojrzałość procesowa |
-
-Faza 1 sama odpowiada na główne pytanie architektoniczne. Reszta jest rozbudową.
-Które strony frontu wchodzą w której fazie → [`dms-pages.md` §9](../frontend/dms-pages.md#9-kolejność-względem-faz-wdrożenia).
-
----
-
-## 12. Granice modułu — czego tu nie ma
+## 11. Granice modułu — czego tu nie ma
 
 DMS mówi „faktura” w każdym zdaniu, więc kusi, żeby wydzielić z niego mikroserwis księgowości —
 albo odwrotnie, żeby dopisać do niego dekretację i rejestr VAT. Obie pokusy rozstrzygamy tutaj,
 bo odpowiedź przesądza, **co wolno wpisać do `Dms.Domain`**, a nie ile procesów uruchamiamy.
 
-### 12.1 Podział własności: DMS a księgowość
+### 11.1 Podział własności: DMS a księgowość
 
 Granica nie biegnie po typie dokumentu, tylko po tym, **czym rzecz jest**:
 
@@ -427,9 +425,9 @@ Granicę rysujemy w kodzie od razu, serwis wydziela się później i tanio:
 Front jest na to gotowy bez zmian: nie ma BFF, każdy moduł woła własne API, więc formularz
 dekretacji może być komponentem serwowanym przez remote `accounting` i osadzonym na karcie
 dokumentu DMS — Native Federation dokładnie do tego służy
-([`architecture.md`](../frontend/architecture.md)).
+([`architecture.md`](../../architecture/frontend.md)).
 
-### 12.4 Kiedy wydzielić — wyzwalacze
+### 11.4 Kiedy wydzielić — wyzwalacze
 
 Nie „gdy urośnie”, tylko którykolwiek z tych:
 
@@ -439,9 +437,9 @@ Nie „gdy urośnie”, tylko którykolwiek z tych:
 - **retencja i reżim audytu się rozjeżdżają** — księgi mają inne wymogi niż metryka obiegu,
 - księgowość dostaje **własny rytm zmian** (przepisy podatkowe), niezależny od konfiguracji procesów.
 
-Żaden z nich nie zachodzi w fazach 0–7.
+Żaden z nich nie zachodzi w opisanym zakresie DMS.
 
-### 12.5 Silnik obiegu zostaje w DMS
+### 11.5 Silnik obiegu zostaje w DMS
 
 Bardziej kusi inny podział: wyciągnąć silnik jako generyczny mikroserwis obiegów „dla urlopów,
 zamówień, wszystkiego”. Odrzucone:
@@ -449,8 +447,8 @@ zamówień, wszystkiego”. Odrzucone:
 - postęp obiegu, zmiana `document_acl` i wpis do `document_audit` **muszą być w jednej
   transakcji** — rozdzielenie zamienia każde kliknięcie „Akceptuj” w transakcję rozproszoną,
 - snapshot definicji jest per dokument, więc silnik nie miałby własnych, niezależnych danych,
-- obowiązuje precedens już zapisany w [`CLAUDE.md`](../../CLAUDE.md) i
-  [`media-storage.md` §1 „Biblioteka, nie mikroserwis”](./media-storage.md#1-biblioteka-nie-mikroserwis):
+- obowiązuje precedens już zapisany w [`CLAUDE.md`](../../../CLAUDE.md) i
+  [`media-storage.md` §1 „Biblioteka, nie mikroserwis”](../../guides/backend/media-storage.md#1-biblioteka-nie-mikroserwis):
   **„nie ma i nie będzie centralnego mikroserwisu do multimediów”**, bo referencja i rekord muszą
   leżeć w jednej transakcji. Tu rozumowanie jest identyczne.
 

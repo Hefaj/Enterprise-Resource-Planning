@@ -25,6 +25,12 @@ export class ErpDrawerBuilder extends ErpBaseBuilder<ErpDrawerConfig<any>> {
     return this;
   }
 
+  /** Ustawia dostępną nazwę ikonowego przycisku zamknięcia. */
+  public setCloseLabel(closeLabel: MaybeSignal<Translatable>): this {
+    this._data.closeLabel = closeLabel;
+    return this;
+  }
+
   /**
    * Kontroluje czy pod szufladą ma wyświetlać się półprzezroczyste tło (overlay/backdrop).
    */

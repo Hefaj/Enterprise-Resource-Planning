@@ -1,3 +1,18 @@
+---
+id: frontend.new-module
+title: Nowy moduł — architektura hybrydowa Monolit / MFE
+summary: Procedura utworzenia remota Angular, bibliotek warstwowych i rejestracji w hoście.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - nowy moduł frontendowy
+  - nowy remote Native Federation
+related: []
+---
+
 # Nowy moduł — architektura hybrydowa Monolit / MFE
 
 Dodanie nowego modułu biznesowego (kolejny remote obok `catalog`, `inventory`, `sales`...) wymaga wielu plików konfiguracyjnych, które muszą się ze sobą zgadzać. Ten dokument jest pełnym przepisem — dokładne komendy, gotowe do wklejenia szablony i uzasadnienie decyzji tam, gdzie łatwo o pomyłkę.
@@ -24,7 +39,7 @@ Dodanie nowego modułu biznesowego (kolejny remote obok `catalog`, `inventory`, 
 
 ## Krok 1: Wygeneruj biblioteki (5 warstw)
 
-Z katalogu **root workspace** (tam gdzie `nx.json`). Zależności między bibliotekami są wymuszane przez ESLint (`@nx/enforce-module-boundaries`) — patrz [architektura frontendu](./architecture.md#3-pięć-warstw-modułu).
+Z katalogu **root workspace** (tam gdzie `nx.json`). Zależności między bibliotekami są wymuszane przez ESLint (`@nx/enforce-module-boundaries`) — patrz [architektura frontendu](../../architecture/frontend.md#3-pięć-warstw-modułu).
 
 ```bash
 # 1. Contract (routing, menu, modale — eksponowane przez Native Federation)
@@ -246,7 +261,7 @@ Przełączanie dzieje się przez `fileReplacements` w konfiguracjach `production
 
 ### 3.2 `federation.config.mjs` — Native Federation z zachowaniem Vite HMR
 
-Eksponuje wyłącznie `./contract`. Generator NX i `shareAll()` domyślnie próbują współdzielić **wszystko**, łącznie z bibliotekami, których żaden inny moduł nigdy nie zaimportuje (`@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util` — używane wyłącznie przez ten jeden moduł). Efekt uboczny: Native Federation pre-bundluje je do osobnych chunków, które **nie są objęte Vite HMR** (pełny mechanizm: [architektura frontendu, sekcja 4](./architecture.md#4-native-federation--współdzielenie-zależności-i-hmr)).
+Eksponuje wyłącznie `./contract`. Generator NX i `shareAll()` domyślnie próbują współdzielić **wszystko**, łącznie z bibliotekami, których żaden inny moduł nigdy nie zaimportuje (`@erp/MODULE_NAME/feature`, `data-access`, `ui`, `util` — używane wyłącznie przez ten jeden moduł). Efekt uboczny: Native Federation pre-bundluje je do osobnych chunków, które **nie są objęte Vite HMR** (pełny mechanizm: [architektura frontendu, sekcja 4](../../architecture/frontend.md#4-native-federation--współdzielenie-zależności-i-hmr)).
 
 > [!WARNING]
 > Wewnętrzne biblioteki modułu **muszą** być w tablicy `skip`, inaczej zmiana w komponencie nie odświeży się bez restartu dev-servera. To jest krok, który najłatwiej pominąć (build i tak przejdzie bez błędu).
@@ -449,7 +464,7 @@ Po usunięciu wygenerowanych plików routingu/remote-entry wyczyść `"files"` i
 
 ### 4.1 Feature — pierwszy komponent strony
 
-Strona startowa modułu jest **jednostką jak każda inna** — leży w `lib/dashboard/`, nie luzem w `lib/` (patrz [struktura katalogów agregatu](./feature-structure.md)).
+Strona startowa modułu jest **jednostką jak każda inna** — leży w `lib/dashboard/`, nie luzem w `lib/` (patrz [struktura katalogów agregatu](feature-structure.md)).
 
 `frontend/libs/modules/MODULE_NAME/feature/src/lib/dashboard/page/dashboard.component.ts`:
 
@@ -474,7 +489,7 @@ export * from './lib/dashboard/translation';
 
 ### 4.2 Contract — Routes, Menu, Modale
 
-`contract` jest **jedyną** warstwą eksponowaną przez `federation.config.mjs` — host nigdy nie importuje `feature`/`ui`/`data-access`/`util` innego modułu bezpośrednio, ta sama granica co ESLint `scope:X`, tylko egzekwowana w runtime zamiast compile-time. Eksponuje trzy rzeczy, każda z osobnym mechanizmem leniwego ładowania: `remoteRoutes` (przez `loadRemoteModule()`, gdy użytkownik wejdzie na trasę), `remoteMenu` (zbierane przez `STARTUP.ts` na starcie hosta), `remoteModalIds`/`registerModals`/`getModalProviders` (patrz [modale](./modals.md)).
+`contract` jest **jedyną** warstwą eksponowaną przez `federation.config.mjs` — host nigdy nie importuje `feature`/`ui`/`data-access`/`util` innego modułu bezpośrednio, ta sama granica co ESLint `scope:X`, tylko egzekwowana w runtime zamiast compile-time. Eksponuje trzy rzeczy, każda z osobnym mechanizmem leniwego ładowania: `remoteRoutes` (przez `loadRemoteModule()`, gdy użytkownik wejdzie na trasę), `remoteMenu` (zbierane przez `STARTUP.ts` na starcie hosta), `remoteModalIds`/`registerModals`/`getModalProviders` (patrz [modale](modals.md)).
 
 `frontend/libs/modules/MODULE_NAME/contract/src/lib/entry.routes.ts`:
 
@@ -541,7 +556,27 @@ Upewnij się, że `src/index.ts` każdej biblioteki istnieje (może być pusty n
 
 ### 4.4 Tłumaczenia (Transloco + generator)
 
-Nowy moduł potrzebuje własnego scope'u Transloco od pierwszego commita. Utwórz `frontend/libs/modules/MODULE_NAME/feature/src/lib/dashboard/translation/{index.ts,pl-PL.json,en-US.json}` i uruchom `pnpm translate:keys`. Pełny mechanizm (DI shadowing, `getModalProviders`, bootstrapping scope'u vs. dodawanie kluczy): [Tłumaczenia](./translations.md), sekcja 4.
+Nowy moduł potrzebuje własnego scope'u Transloco od pierwszego commita. Utwórz `frontend/libs/modules/MODULE_NAME/feature/src/lib/dashboard/translation/{index.ts,pl-PL.json,en-US.json}` i uruchom `pnpm translate:keys`. Pełny mechanizm (DI shadowing, `getModalProviders`, bootstrapping scope'u vs. dodawanie kluczy): [Tłumaczenia](translations.md), sekcja 4.
+
+### 4.5 Dokumentacja użytkownika
+
+Dokumentacja jest opt-in do chwili, gdy moduł ma co najmniej jedną funkcję osiągalną z UI i
+zweryfikowany przebieg backendowy. Wtedy:
+
+1. utwórz `feature/src/lib/documentation/documentation.manifest.json` oraz odpowiadające artykuły
+   `content/pl-PL` i `content/en-US`;
+2. uruchom `pnpm docs:scaffold --module MODULE_NAME --article MODULE_NAME.overview`, a następnie
+   `pnpm docs:generate`;
+3. dodaj trasy `documentation` i `documentation/:articleSlug`, a każdą publiczną trasę ekranu
+   oznacz `documentationArticleId` albo niepustym `documentationExemptReason`;
+4. wyeksportuj lekki `remoteDocumentation` z `contract/src/lib/entry.documentation.ts`; loader ma
+   dynamicznie importować indeks z `feature`, bez statycznego eksportu komponentu lub treści;
+5. dodaj na końcu menu wpis z `labelKey: SHARED_KEYS.documentation.navigationLabel`;
+6. uruchom `pnpm docs:check` oraz test pokrycia tras w bibliotece `contract`.
+
+Chrome strony korzysta ze wspólnych tłumaczeń Transloco. Proza artykułów pozostaje w Markdown i nie
+może opisywać samego endpointu ani niedziałającej atrapy jako możliwości użytkownika. Pełna procedura
+Definition of Done i review znajduje się w [procedurze dokumentacyjnej](../../contributing/documentation.md).
 
 ---
 
@@ -681,11 +716,12 @@ Jeśli po dodaniu modułu coś "prawie działa" (widać w menu, ale routing 404,
 | dms | 4204 |
 | task-management | 4205 |
 | notification | 4206 |
-| **nowy moduł** | **następny wolny (4207+)** |
+| identity | 4207 |
+| **nowy moduł** | **następny wolny (4208+)** |
 
 ---
 
 ## Zobacz też
 
-- [Architektura frontendu](./architecture.md) — Native Federation, warstwy, HMR
-- [Modale](./modals.md), [Tłumaczenia](./translations.md)
+- [Architektura frontendu](../../architecture/frontend.md) — Native Federation, warstwy, HMR
+- [Modale](modals.md), [Tłumaczenia](translations.md)

@@ -297,11 +297,11 @@ public class Product : AggregateRoot
 
     /// <summary>
     /// Podmienia komplet powiązanych multimediów; pusta kolekcja czyści galerię
-    /// (<c>docs/backend/endpoint-naming.md</c> §2).
+    /// (<c>docs/guides/backend/endpoint-naming.md</c> §2).
     ///
     /// <para>Zwraca zasoby, które przy tej podmianie <b>straciły referencję z tego produktu</b> —
     /// woła o nie handler, żeby dopiąć kaskadę dla plików <c>Owned</c>
-    /// (<c>docs/backend/media-storage.md</c> §4c). Agregat sam nic nie kasuje: o cudzym cyklu
+    /// (<c>docs/guides/backend/media-storage.md</c> §4c). Agregat sam nic nie kasuje: o cudzym cyklu
     /// życia nie wie i wiedzieć nie ma.</para>
     ///
     /// <para>Wymaga agregatu wczytanego w zakresie <c>Full</c> — tak samo jak
@@ -365,7 +365,7 @@ public class Product : AggregateRoot
     /// wcześniej ręcznie.</para>
     ///
     /// <para>Zwraca zasoby faktycznie odpięte — to na ich podstawie handler rozstrzyga kaskadę
-    /// dla plików <c>Owned</c> (<c>docs/backend/media-storage.md</c> §4c).</para>
+    /// dla plików <c>Owned</c> (<c>docs/guides/backend/media-storage.md</c> §4c).</para>
     ///
     /// <para>Wymaga agregatu wczytanego w zakresie <c>Full</c>: na niewczytanej kolekcji nie
     /// byłoby czego odpiąć, a komenda zameldowałaby sukces.</para>

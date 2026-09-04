@@ -17,7 +17,7 @@ import { BoardStore } from './board.store';
  * <p><b>Świadomie łamie wzorzec `erp-grid-layout` + filtr + tabela</b> i jest to zapisane,
  * żeby przy review nie wyglądało na niedbalstwo: kolumny są poziomą listą przewijaną w bok,
  * a nie treścią jednego obszaru siatki. Drugi taki przypadek w systemie po edytorze szablonu
- * obiegu w DMS (`docs/frontend/task-management-pages.md` §2.2).</p>
+ * obiegu w DMS (`docs/modules/task-management/screens.md` §2.2).</p>
  *
  * <p>Swimlane'y (podział poziomy po przypisanym albo epiku) świadomie nie wchodzą w fazie 2 —
  * są drugim wymiarem grupowania nad tym samym mechanizmem kolejności, a to fazę 2 ma

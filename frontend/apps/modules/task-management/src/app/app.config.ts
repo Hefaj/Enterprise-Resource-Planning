@@ -20,4 +20,3 @@ export const appConfig: ApplicationConfig = {
     ...provideErpUserDirectory('http://localhost:5280'),
   ],
 };
-

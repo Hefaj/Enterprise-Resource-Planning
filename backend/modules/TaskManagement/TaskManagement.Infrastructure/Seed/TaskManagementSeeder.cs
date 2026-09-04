@@ -290,7 +290,7 @@ public sealed partial class TaskManagementSeeder
     /// Schemat pól przykładowego projektu wykonawczego: po jednym polu na typ danych i na slot,
     /// żeby dało się na danych z seeda sprawdzić sortowanie i filtrowanie każdego rodzaju.
     /// <c>notes</c> celowo <b>bez slotu</b> — pole, po którym nikt nie sortuje, nie zajmuje
-    /// zasobu rzadkiego (<c>docs/backend/task-management.md</c> §6).
+    /// zasobu rzadkiego (<c>docs/modules/task-management/domain.md</c> §6).
     /// </summary>
     private FieldScheme CreateDeliveryFieldScheme()
     {
@@ -334,7 +334,7 @@ public sealed partial class TaskManagementSeeder
     /// Domyślna tablica projektu — po jednej kolumnie na stan schematu.
     ///
     /// <para>Kart tu nie zakładamy. Wiersz w <c>board_card</c> powstaje przy pierwszym
-    /// przeciągnięciu (<c>docs/backend/task-management.md</c> §7.1), a seed zakładający go
+    /// przeciągnięciu (<c>docs/modules/task-management/domain.md</c> §7.1), a seed zakładający go
     /// z góry udawałby, że ktoś już ustawiał kolejność ręcznie.</para>
     /// </summary>
     private void AddDefaultBoard(Project project, WorkflowScheme scheme)

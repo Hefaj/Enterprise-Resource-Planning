@@ -11,7 +11,7 @@ namespace Catalog.Application.Products;
 /// i pozycją biblioteki mediów; użytkownik, który zdejmuje zdjęcie z produktu, nie prosi
 /// o usunięcie go z katalogu. Plik znika stąd wyłącznie wtedy, gdy jego właściciel zadeklarował
 /// go jako <c>Owned</c> — wtedy zabiera go kaskada, w tej samej transakcji
-/// (<c>docs/backend/media-storage.md</c> §4c). Jawne usunięcie zasobu z biblioteki ma własną
+/// (<c>docs/guides/backend/media-storage.md</c> §4c). Jawne usunięcie zasobu z biblioteki ma własną
 /// komendę: <c>MultimediaRemoveCommand</c>.</para>
 ///
 /// <para>Lista wewnątrz komendy z tego samego powodu, co przy dopinaniu: w trybie

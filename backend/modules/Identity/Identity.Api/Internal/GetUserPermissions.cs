@@ -7,7 +7,7 @@ namespace Identity.Internal;
 
 /// <summary>
 /// Konsumowane przez inne mikroserwisy (Catalog, Sales, Notification) do budowy cache'u
-/// uprawnień — patrz <c>docs/backend/identity-authz.md</c> §4 (<c>IPermissionProvider</c>,
+/// uprawnień — patrz <c>docs/architecture/security.md</c> §4 (<c>IPermissionProvider</c>,
 /// Faza 3). Nazwa zaczyna się od <c>/internal</c> celowo: to jest wywołanie serwis-do-serwisu,
 /// nie coś, co front miałby kiedykolwiek wołać bezpośrednio (poza jednym świadomym wyjątkiem —
 /// patrz komentarz przy <c>UserOrchestrator.getEffectivePermissions</c> we froncie).

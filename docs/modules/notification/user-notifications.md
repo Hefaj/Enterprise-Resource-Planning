@@ -1,12 +1,27 @@
+---
+id: module.notification.user-notifications
+title: Powiadomienia użytkownika — skrzynka międzymodułowa
+summary: Powiadomienia dla użytkownika, wybór odbiorców, grupowanie i preferencje kanałów.
+kind: module-specification
+scope: notification
+audience:
+  - frontend
+  - backend
+  - agent
+triggers:
+  - powiadomienie dla człowieka z modułu
+  - UserNotificationRequested
+related: []
+---
+
 # Powiadomienia użytkownika — skrzynka międzymodułowa
 
-**Stan: 📐 projekt, brak kodu.** Legenda znaczników — [`architecture.md`](./architecture.md#1-stan-wdrożenia).
-Dziś dzwonek w nagłówku karmi się **wyłącznie** zadaniami masowymi (`NotificationJob` — replika
-`job`, kanał `jobs`). Ten dokument opisuje **drugi agregat** w istniejącym mikroserwisie
-`Notification`: powiadomienie adresowane do człowieka, pochodzące z dowolnego modułu.
+Dokument opisuje drugi agregat w mikroserwisie `Notification`: powiadomienie adresowane do
+człowieka, pochodzące z dowolnego modułu. Pozostaje ono oddzielne od `NotificationJob`, repliki
+zadań masowych obsługiwanej kanałem `jobs`.
 
 Strona frontowa (druga zakładka dzwonka, skrzynka, ustawienia) →
-[`docs/frontend/notifications.md` §10](../frontend/notifications.md#10-skrzynka-powiadomień--druga-zakładka-dzwonka).
+[`docs/guides/frontend/notifications.md` §10](../../guides/frontend/notifications.md#10-skrzynka-powiadomień--osobny-widżet-w-nagłówku).
 
 ---
 
@@ -20,8 +35,8 @@ masowe.
 Wydzielenie „powiadomień o zadaniach" i „powiadomień o wszystkim innym" do dwóch procesów dałoby:
 dwa źródła licznika przy **jednym** dzwonku, dwie repliki tożsamości użytkownika, hub w jednym
 procesie i feed w drugim. Kryteria wydzielenia z
-[`media-storage.md` §1](./media-storage.md#1-biblioteka-nie-mikroserwis) i
-[`dms-workflow.md` §12.5](./dms-workflow.md#125-silnik-obiegu-zostaje-w-dms) są tu spełnione przez
+[`media-storage.md` §1](../../guides/backend/media-storage.md#1-biblioteka-nie-mikroserwis) i
+[`dms-workflow.md` §11.5](../dms/domain-workflow.md#115-silnik-obiegu-zostaje-w-dms) są tu spełnione przez
 serwis, który już stoi.
 
 **Rozstrzygnięte:** powiadomienia użytkownika to agregat `UserNotification` w `Notification`.
@@ -59,7 +74,7 @@ na pytanie „kto to obserwuje".
 ## 3. Kontrakt — jedno zdarzenie integracyjne
 
 W `Erp.BuildingBlocks.Contracts`, wersjonowane, **tylko dodawanie pól** — jak każdy kontrakt
-integracyjny ([`events-outbox.md`](./events-outbox.md)):
+integracyjny ([`events-outbox.md`](../../architecture/integration-events.md)):
 
 ```csharp
 public sealed record UserNotificationRequested(
@@ -87,7 +102,7 @@ Cztery pola, które łatwo zrobić źle:
 ### 3.1 `TitleKey` + `Params`, nigdy gotowy tekst
 Język jest **per użytkownik**, a registry Transloco stoi na froncie. Producent renderujący
 „Nowy komentarz w DEV-412" zamraża polski w bazie i psuje przełączanie języka. To ta sama zasada,
-co przy `job.errorsSummary` ([`notifications.md` §9](../frontend/notifications.md)) i przy
+co przy `job.errorsSummary` ([`notifications.md` §9](../../guides/frontend/notifications.md)) i przy
 `ErpToastConfig.message`.
 
 Klucze mieszkają w scope'ie **`shared`**, nie w scope'ie modułu-producenta: skrzynkę renderuje
@@ -149,7 +164,7 @@ w `occurrence_count = occurrence_count + 1` zamiast w duplikat. Dla powiadomień
 kluczem deduplikacji jest `(user_uuid, kind, subject_uuid, correlation_id)`.
 
 To ten sam wzorzec, co idempotencja komend po `X-Request-Id`
-([`cqrs.md` §6](./cqrs.md#6-pipeline-komend)) — z indeksu, nie z kodu.
+([`cqrs.md` §6](../../guides/backend/cqrs.md#6-pipeline-komend)) — z indeksu, nie z kodu.
 
 ---
 
@@ -162,7 +177,7 @@ notification_preference(user_uuid, kind, channel, enabled)   -- pk złożony
 ```
 
 `notification_kind_catalog` jest **świadomą kalką `permission_catalog` z Identity**
-([`identity-authz.md`](./identity-authz.md)): rodzaj powiadomienia to dana z domyślnymi kanałami,
+([`identity-authz.md`](../../architecture/security.md)): rodzaj powiadomienia to dana z domyślnymi kanałami,
 opisem i znacznikiem wycofania. Dzięki temu:
 
 - dodanie rodzaju „zgłoszenie po terminie" nie wymaga migracji ustawień żadnego użytkownika —
@@ -184,11 +199,11 @@ notification_delivery(notification_uuid, channel, status, attempts,
                       last_error, delivered_at)   -- pk (notification_uuid, channel)
 ```
 
-| Kanał | Faza | Uwagi |
-|---|---|---|
-| `InApp` | 1 | Zapis wiersza + push SignalR. „Doręczone" = zapisane, nie „zobaczone" |
-| `Email` | 3 | Przez outbox + worker z retry; szablon i język po stronie Notification |
-| `Push` | — | Nie planowane, dopóki nie ma aplikacji mobilnej |
+| Kanał | Kontrakt |
+|---|---|
+| `InApp` | Zapis wiersza + push SignalR. „Doręczone" = zapisane, nie „zobaczone" |
+| `Email` | Przez outbox + worker z retry; szablon i język po stronie Notification |
+| `Push` | Poza zakresem, dopóki nie ma aplikacji mobilnej |
 
 `InApp` nie potrzebuje retry: wiersz w bazie **jest** doręczeniem, a SignalR to tylko
 przyspieszenie. Utracony push nadrabia się przy następnym odczycie feedu — dokładnie tak, jak
@@ -201,7 +216,7 @@ jest właściwa kolejność: wysyłka po angielsku do polskiego użytkownika jes
 
 Worker wysyłkowy deklaruje `[ClusterSafe(powód)]` i pobiera zadania przez `FOR UPDATE SKIP LOCKED`
 — inaczej dwie instancje wyślą ten sam mail dwa razy
-([`multi-instance.md`](./multi-instance.md)).
+([`multi-instance.md`](../../architecture/multi-instance.md)).
 
 ---
 
@@ -209,12 +224,12 @@ Worker wysyłkowy deklaruje `[ClusterSafe(powód)]` i pobiera zadania przez `FOR
 
 Nowy kanał **`notifications`**, adresowany do grupy `user:{userId}`, celowo **poza konwencją
 `{moduł}.{agregat}`** — dokładnie jak istniejący `jobs`. Powód jest ten sam, co opisany
-w [`AggregateSignatures.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/AggregateSignatures.cs):
+w [`AggregateSignatures.cs`](../../../backend/building-blocks/Erp.BuildingBlocks.Contracts/AggregateSignatures.cs):
 na kanałach `agg:{signature}` lecą **uuid agregatów do odświeżenia cache'u**, a tu leci
 **wiadomość adresowana do konkretnego człowieka**.
 
 Nowa metoda hubu, jako **osobna metoda, nie nowy parametr istniejącej**
-([`realtime-signalr.md` §3](./realtime-signalr.md#cztery-metody-serwer--klient)):
+([`realtime-signalr.md` §3](../../architecture/realtime.md#cztery-metody-serwer--klient)):
 
 ```
 ReceiveNotification(notificationUuid, unreadCount)
@@ -250,7 +265,7 @@ Reguły:
 
 1. **`SubjectKey` i `Params` wypełnia producent, świadomie.** Tylko on zna klasę poufności
    dokumentu. Dla klasy poufnej DMS-u wysyła sam fakt („dokument czeka na akceptację") bez tytułu
-   i bez kontrahenta — [`dms-workflow.md` §6](./dms-workflow.md#6-dostęp-do-dokumentu).
+   i bez kontrahenta — [`dms-workflow.md` §6](../dms/domain-workflow.md#6-dostęp-do-dokumentu).
 2. **`Notification` niczego nie dociąga.** Nie woła API modułu źródłowego, żeby „wzbogacić"
    powiadomienie — to obeszłoby decyzję producenta i złamałoby regułę braku agregacji.
 
@@ -275,8 +290,8 @@ z dzierżawą na advisory locku, `[ClusterSafe]` — ten sam wzorzec, co `Expire
 w Identity.
 
 Powiadomienie **nie jest zapisem audytowym**. Kto co zrobił, wie `issue_activity`
-([`task-management.md` §11](./task-management.md#11-historia-zmian-i-komentarze)) i `document_audit`
-([`dms-workflow.md` §8.1](./dms-workflow.md#81-document_audit)) — u właściciela danych, bez
+([`task-management.md` §11](../task-management/domain.md#11-historia-zmian-i-komentarze)) i `document_audit`
+([`dms-workflow.md` §8.1](../dms/domain-workflow.md#81-document_audit)) — u właściciela danych, bez
 retencji liczonej w dniach. Traktowanie skrzynki jako dowodu („przecież dostał powiadomienie")
 jest błędem: to kanał, nie rejestr.
 
@@ -292,13 +307,12 @@ jest błędem: to kanał, nie rejestr.
 | `getNotificationPreference` / `setNotificationPreference` | Ustawienia per rodzaj i kanał |
 | `getNotificationKindCatalog` | Zasila stronę ustawień |
 
-**Bez bramkowania uprawnieniem**, tą samą decyzją co `searchJob`/`getJob`
-([`architecture.md` §1](./architecture.md#1-stan-wdrożenia)): to osobisty feed, nie zasób
+**Bez bramkowania uprawnieniem**, tą samą decyzją co `searchJob`/`getJob`: to osobisty feed, nie zasób
 uprzywilejowany — zagrodzenie go odcięłoby nowego użytkownika od własnych powiadomień. Zawężenie
 do `IExecutionContext.UserId` jest **jedynym** i wystarczającym zabezpieczeniem, i musi być
 w zapytaniu, nie w filtrze przyjmowanym z żądania.
 
-Nazewnictwo endpointów wg [`endpoint-naming.md`](./endpoint-naming.md); nazwa klasy endpointu jest
+Nazewnictwo endpointów wg [`endpoint-naming.md`](../../guides/backend/endpoint-naming.md); nazwa klasy endpointu jest
 kontraktem dla klienta NSwag.
 
 ---
@@ -315,7 +329,7 @@ zmiana, która je wywołała. Nigdy inline, nigdy po `SaveChanges`.
 | | `taskmgmt.issue.assigned` | Nowy przypisany |
 | | `taskmgmt.issue.due_soon` / `overdue` | Przypisany + lead projektu |
 | | `taskmgmt.request.delivered` | Zamawiający i obserwujący zlecenia |
-| DMS | `dms.document.awaiting_approval` | Wykonawca kroku ([`dms-workflow.md` §4.3](./dms-workflow.md#43-przypisanie-wykonawcy)) |
+| DMS | `dms.document.awaiting_approval` | Wykonawca kroku ([`dms-workflow.md` §4.3](../dms/domain-workflow.md#43-przypisanie-wykonawcy)) |
 | | `dms.document.returned` | Autor cofniętego kroku, z powodem cofnięcia |
 | | `dms.workitem.escalated` | Przełożony wykonawcy |
 | Identity | `identity.grant.expiring` | Właściciel wygasającego nadania + osoba nadająca |
@@ -328,22 +342,7 @@ puste.
 
 ---
 
-## 12. Kolejność wdrożenia
-
-| Faza | Zakres | Co weryfikuje |
-|---|---|---|
-| 1 | `UserNotification`, `UserNotificationRequested`, konsument z fan-outem i deduplikacją, `searchUserNotification`, kanał `notifications`, druga zakładka dzwonka | **Czy jedno zdarzenie obsłuży wszystkie moduły** |
-| 2 | `GroupKey` i koalescencja, `occurrence_count`, strona skrzynki z filtrami | Czy dzwonek jest użyteczny po tygodniu używania |
-| 3 | `notification_kind_catalog`, `notification_preference`, strona ustawień | Rodzaj jako dana |
-| 4 | Kanał `Email`: `locale` w profilu Identity, szablony, worker z retry `[ClusterSafe]` | Doręczenie poza aplikacją |
-| 5 | Retencja, sprzątanie, limity i obserwowalność (rozjazdy `kind`, przekroczenia progu odbiorców) | Higiena długoterminowa |
-
-Faza 1 jest sprawdzalna na jednym rodzaju powiadomienia z Task Management
-(`taskmgmt.issue.commented`) — i to wystarczy, żeby wiedzieć, czy kontrakt jest dobry.
-
----
-
-## 13. Czego tu nie ma
+## 12. Czego tu nie ma
 
 | Kuszące | Dlaczego nie |
 |---|---|
@@ -352,15 +351,15 @@ Faza 1 jest sprawdzalna na jednym rodzaju powiadomienia z Task Management
 | Osobny mikroserwis „inbox" | [§1](#1-dlaczego-to-nie-jest-nowy-mikroserwis) |
 | Scalenie z feedem zadań | [§11](#11-producenci--co-publikuje-który-moduł) — inny cykl życia i inna semantyka |
 | Notification wzbogaca treść, wołając API modułu | [§8.1](#81-treść-powiadomienia-wychodzi-poza-system-uprawnień) — obeszłoby decyzję o poufności; poza tym nie ma agregacji w tej architekturze |
-| Powiadomienia „systemowe" (przerwa serwisowa, komunikat admina) | Osobny rodzaj z ręcznym producentem — wchodzi banalnie po fazie 3, ale nie projektujemy pod to teraz |
+| Powiadomienia „systemowe" (przerwa serwisowa, komunikat admina) | Osobny rodzaj z ręcznym producentem; poza bieżącym zakresem |
 
 ---
 
-## 14. Zobacz też
+## 13. Zobacz też
 
-- [`realtime-signalr.md`](./realtime-signalr.md) — hub, grupy, kanały `jobs` / `agg:`
-- [`events-outbox.md`](./events-outbox.md) — zdarzenia integracyjne, wersjonowanie kontraktów
-- [`identity-authz.md`](./identity-authz.md) — `permission_catalog` jako wzorzec dla katalogu rodzajów
-- [`task-management.md`](./task-management.md), [`dms-workflow.md`](./dms-workflow.md) — producenci
-- [`notifications.md`](../frontend/notifications.md) — toast, dzwonek, skrzynka po stronie frontu
-- [`multi-instance.md`](./multi-instance.md) — `[ClusterSafe]`, dzierżawy, `SKIP LOCKED`
+- [`realtime-signalr.md`](../../architecture/realtime.md) — hub, grupy, kanały `jobs` / `agg:`
+- [`events-outbox.md`](../../architecture/integration-events.md) — zdarzenia integracyjne, wersjonowanie kontraktów
+- [`identity-authz.md`](../../architecture/security.md) — `permission_catalog` jako wzorzec dla katalogu rodzajów
+- [`task-management.md`](../task-management/domain.md), [`dms-workflow.md`](../dms/domain-workflow.md) — producenci
+- [`notifications.md`](../../guides/frontend/notifications.md) — toast, dzwonek, skrzynka po stronie frontu
+- [`multi-instance.md`](../../architecture/multi-instance.md) — `[ClusterSafe]`, dzierżawy, `SKIP LOCKED`

@@ -14,7 +14,7 @@ namespace Erp.IntegrationTests;
 
 /// <summary>
 /// SPR-004 — burndown liczony z <c>taskmgmt.issue_activity</c>, nie z tabeli migawek.
-/// Cztery scenariusze z <c>PLAN-task-management.md</c> §Faza 8: karta bez przejścia do
+/// Cztery scenariusze z <c>docs/modules/task-management/requirements.md</c>: karta bez przejścia do
 /// <c>Done</c>, karta ukończona w połowie sprintu, karta, która wróciła z <c>Done</c>
 /// (dokumentuje świadome uproszczenie „ukończone raz na zawsze"), oraz sprinty pomijane
 /// (bez dat / status <c>Planned</c>).

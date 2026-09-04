@@ -11,7 +11,7 @@ import {
 /**
  * Profil pól niestandardowych projektu — <b>jedyne źródło kolumn projekto-specyficznych,
  * filtrów po nich i whitelisty sortowania po stronie frontu</b>
- * (`docs/backend/task-management.md` §6).
+ * (`docs/modules/task-management/domain.md` §6).
  *
  * <p>Backend czyta z tego samego profilu, tłumacząc kod pola na slot w `ORDER BY`. Dlatego
  * front nie ma prawa zbudować kolumny ani filtra ze stałej w komponencie: rozjazd objawiłby

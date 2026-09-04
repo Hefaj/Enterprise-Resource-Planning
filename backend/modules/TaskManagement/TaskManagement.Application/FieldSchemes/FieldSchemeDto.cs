@@ -24,7 +24,7 @@ public sealed record FieldDefinitionDto(
 
 /// <summary>
 /// Profil pól projektu — <b>jedno źródło prawdy dla kolumn tabeli, filtrów i whitelisty
-/// sortowania</b> (<c>docs/backend/task-management.md</c> §6).
+/// sortowania</b> (<c>docs/modules/task-management/domain.md</c> §6).
 ///
 /// <para>Front buduje z tego konfigurację tabeli, a backend czyta z tego samego profilu przy
 /// tłumaczeniu nazwy pola na slot w <c>ORDER BY</c> — dzięki temu nie da się ich rozjechać.

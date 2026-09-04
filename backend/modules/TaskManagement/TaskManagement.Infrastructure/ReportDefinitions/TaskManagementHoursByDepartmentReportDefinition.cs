@@ -55,7 +55,7 @@ public sealed class TaskManagementHoursByDepartmentReportDefinition : IReportDef
 
     /// <inheritdoc />
     /// <remarks>
-    /// Odmowa PRZED założeniem przebiegu, gdy brak zakresu dat (<c>docs/backend/reporting.md</c>
+    /// Odmowa PRZED założeniem przebiegu, gdy brak zakresu dat (<c>docs/architecture/reporting.md</c>
     /// §5.4) — bez tego raport zsumowałby cały <c>work_log</c> od początku istnienia projektu za
     /// każdym razem, gdy ktoś zapomni podać filtru.
     /// </remarks>

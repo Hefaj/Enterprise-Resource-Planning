@@ -11,7 +11,7 @@ namespace Erp.ArchitectureTests;
 ///
 /// <para>To jest ta sama wymiana, którą robią <see cref="LayeringTests"/> i
 /// <see cref="CommandNamingTests"/>: reguła zapisana wyłącznie w
-/// <c>docs/backend/multi-instance.md</c> przestaje obowiązywać przy pierwszej usłudze tła pisanej
+/// <c>docs/architecture/multi-instance.md</c> przestaje obowiązywać przy pierwszej usłudze tła pisanej
 /// pod presją czasu. Tutaj przestaje przechodzić build, i to <b>w momencie dopisania klasy</b>,
 /// a nie po wdrożeniu drugiej instancji.</para>
 ///
@@ -80,7 +80,7 @@ public class BackgroundServiceTests
             + Environment.NewLine
             + "Dopisz [ClusterSafe(\"…\")] z konkretnym mechanizmem (dzierżawa, SKIP LOCKED, "
             + "naturalna idempotencja) albo — jeśli usługa NIE jest bezpieczna — zatrzymaj ją "
-            + "konfiguracją i opisz to w docs/backend/multi-instance.md.");
+            + "konfiguracją i opisz to w docs/architecture/multi-instance.md.");
     }
 
     /// <summary>

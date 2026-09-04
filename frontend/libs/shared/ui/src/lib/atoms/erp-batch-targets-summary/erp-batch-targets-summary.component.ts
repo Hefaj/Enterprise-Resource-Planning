@@ -7,7 +7,7 @@ import { ErpBatchTargetsSummaryConfig } from './erp-batch-targets-summary.types'
  * Podsumowanie celów kroku modalu operacji masowej.
  *
  * Renderuje jeden z trzech stanów, zależnie od `ErpBatchStepBase` — wszystkie w tym samym
- * stylu boksu co `erp-selection-scope-banner` (patrz `docs/frontend/selection-scope.md`),
+ * stylu boksu co `erp-selection-scope-banner` (patrz `docs/guides/frontend/selection-scope.md`),
  * żeby "zdanie o zasięgu" wyglądało identycznie niezależnie od tego, czy stoi nad panelem,
  * czy w kroku modalu:
  * - tryb filtra ("Zaznacz wszystko") — wariant ostrzegawczy: komunikat + opis (cele wyznaczy
@@ -75,7 +75,7 @@ import { ErpBatchTargetsSummaryConfig } from './erp-batch-targets-summary.types'
     }
     .erp-batch-targets-summary__empty { margin: 0; color: var(--tui-status-warning); }
 
-    /* Ten sam wygląd co \`erp-selection-scope-banner\` — "zdanie o zasięgu" ma być
+    /* Ten sam wygląd co erp-selection-scope-banner — "zdanie o zasięgu" ma być
        rozpoznawalne wizualnie niezależnie od tego, czy stoi nad panelem, czy w kroku modalu. */
     .erp-batch-targets-summary__scope-banner {
       padding: 0.5rem 0.75rem;

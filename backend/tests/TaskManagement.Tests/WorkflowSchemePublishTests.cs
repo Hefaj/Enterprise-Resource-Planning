@@ -10,7 +10,7 @@ namespace TaskManagement.Tests;
 /// <summary>
 /// WF-006 — publikacja schematu i migracja stanów. Skoncentrowane na
 /// <see cref="WorkflowScheme.Publish"/>, który jest cała walidacja PRZED wysłaniem choćby
-/// jednego <c>job_item</c> — zgodnie z <c>docs/backend/cqrs.md</c> §3, metoda agregatu waliduje
+/// jednego <c>job_item</c> — zgodnie z <c>docs/guides/backend/cqrs.md</c> §3, metoda agregatu waliduje
 /// przed zmianą stanu.
 ///
 /// <para>Sukces częściowy migracji (AC3) opiera się na tym, że każde zgłoszenie migruje osobną
@@ -150,7 +150,7 @@ public class WorkflowSchemePublishTests
     /// z mapowaniem na <c>Done</c>. Zgłoszenie A ma zapisane rozwiązanie (spełnia
     /// <c>required_fields</c> na <c>Done</c>), zgłoszenie B nie — dokładnie ten rodzaj różnicy
     /// między elementami tego samego zadania masowego, który w produkcji kończy się jednym
-    /// <c>Failed</c> i jednym <c>Succeeded</c> w tym samym chunku (<c>docs/backend/bulk-commands.md</c>
+    /// <c>Failed</c> i jednym <c>Succeeded</c> w tym samym chunku (<c>docs/guides/backend/bulk-commands.md</c>
     /// §3 „Częściowe niepowodzenie”).
     /// </summary>
     [Fact]

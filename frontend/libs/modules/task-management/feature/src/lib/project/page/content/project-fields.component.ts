@@ -33,12 +33,12 @@ import { PROJECT_KEYS } from '../../translation';
 
 /**
  * Zakładka pól na karcie projektu — definicje pól i <b>ich mapowanie na sloty</b>
- * (`docs/frontend/task-management-pages.md` §4.2).
+ * (`docs/modules/task-management/screens.md` §4.2).
  *
  * <p>Tu żyje ostrzeżenie „slot jest przypisany na stałe", identyczne co do treści z tym przy
  * typach dokumentów w DMS. Nie jest ozdobnikiem: przemapowanie slotu podmieniłoby znaczenie
  * danych historycznych, więc backend nie ma takiej komendy w ogóle
- * (`docs/backend/task-management.md` §6). Użytkownik musi to wiedzieć <b>przed</b> zapisem,
+ * (`docs/modules/task-management/domain.md` §6). Użytkownik musi to wiedzieć <b>przed</b> zapisem,
  * bo po nim jedyną drogą jest usunięcie pola — a to blokuje pierwsza zapisana wartość.</p>
  */
 @Component({

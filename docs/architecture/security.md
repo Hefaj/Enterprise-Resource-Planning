@@ -1,11 +1,26 @@
+---
+id: architecture.security
+title: Tożsamość i uprawnienia — Keycloak (AuthN) + moduł Identity (AuthZ)
+summary: Model uwierzytelnienia Keycloak i autoryzacji zarządzanej przez moduł Identity.
+kind: architecture
+scope: identity
+audience:
+  - backend
+  - agent
+triggers:
+  - autoryzacja role i uprawnienia
+  - Keycloak i Identity
+related: []
+---
+
 # Tożsamość i uprawnienia — Keycloak (AuthN) + moduł Identity (AuthZ)
 
-**Stan: ✅ całość wdrożona i działa** — logowanie przez Keycloaka, mikroserwis `Identity`
+Dokument opisuje obowiązujący kontrakt: logowanie przez Keycloaka, mikroserwis `Identity`
 z domeną ról/uprawnień (DAG z wykrywaniem cykli, efektywne uprawnienia, ścieżka dziedziczenia,
 JIT provisioning), egzekwowanie w Catalog/Sales, bramkowanie UI, audyt nadań, wygasające
 nadania, wymuszone wylogowanie, wszystkie komendy `role/*`/`user/*` jako operacje masowe.
 Dokument opisuje **stan bieżący**: §1-6 mechanizmy i decyzje, §7 mapa plików, §8 pułapki,
-§9 to, czego świadomie nie ma. Legenda znaczników — [`architecture.md` §1](./architecture.md#1-stan-wdrożenia).
+§9 to, czego świadomie nie ma.
 
 ---
 
@@ -175,7 +190,7 @@ public sealed record PermissionDefinition(
 
 ## 4. Egzekwowanie — jak uprawnienie dociera do Catalogu i Sales
 
-Ograniczenie z [`architecture.md`](./architecture.md): joiny cross-schema są zakazane, a Catalog nie może odpytywać `identity.*`. Rozwiązanie zgodne z resztą systemu:
+Ograniczenie z [`architecture.md`](backend.md): joiny cross-schema są zakazane, a Catalog nie może odpytywać `identity.*`. Rozwiązanie zgodne z resztą systemu:
 
 ```
 Keycloak ──JWT(sub)──► Catalog.Api
@@ -209,7 +224,7 @@ Keycloak ──JWT(sub)──► Catalog.Api
 > awaria Redisa kładłaby wtedy cały ERP. Propagacja idzie więc komunikatem: osobna wymiana
 > `erp.broadcast` i kolejka **per instancja**, bo `erp.events` wiąże jedną kolejkę per serwis
 > i unieważnienie dotarłoby do jednej instancji zamiast do wszystkich. Patrz
-> [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
+> [`architecture.md` §7](backend.md#7-wieloinstancyjność--założenia-zdjęte).
 
 ### Zadania masowe
 
@@ -249,7 +264,7 @@ Keycloak ──JWT(sub)──► Catalog.Api
 ### Tożsamość w backendzie idzie wyłącznie z tokenu
 
 - [`ExecutionContextMiddleware`](../../backend/building-blocks/Erp.BuildingBlocks.Api/ExecutionContextMiddleware.cs) czyta `context.User`; nagłówek `X-User-Id` **nie istnieje** — każdy mógł nim podać cudze `userId`.
-- `SyncHub` bierze tożsamość z `Context.UserIdentifier`, nie z query stringu ([`realtime-signalr.md`](./realtime-signalr.md)). Front podaje token przez `accessTokenFactory`; w query zostaje samo `clientId`.
+- `SyncHub` bierze tożsamość z `Context.UserIdentifier`, nie z query stringu ([`realtime-signalr.md`](realtime.md)). Front podaje token przez `accessTokenFactory`; w query zostaje samo `clientId`.
 - FastEndpoints jest „secure by default", więc **każde** `ep.AllowAnonymous()` w `*Group.cs` otwiera całą grupę endpointów — patrz §8.
 
 ---
@@ -276,7 +291,7 @@ i historia zostają za `identity.user.read`/`identity.user.manage` na `searchUse
 Po stronie frontu wchodzi to portem `ERP_USER_DIRECTORY` (`@erp/shared/util`) z implementacją
 w `@erp/shared/data-access` — moduły nie widzą `@erp/identity/data-access`, bo `scope:*` pozwala
 im zależeć wyłącznie od `scope:shared`. Szczegóły i wzorce użycia →
-[`docs/frontend/user-directory.md`](../frontend/user-directory.md).
+[`docs/guides/frontend/user-directory.md`](../guides/frontend/user-directory.md).
 
 **Front tylko chowa UI.** Źródłem prawdy jest sprawdzenie na endpoincie. Ukryty przycisk nie jest zabezpieczeniem — `testuser` bez uprawnień dostaje realne 403 z backendu, niezależnie od tego, co widzi.
 
@@ -292,7 +307,7 @@ im zależeć wyłącznie od `scope:shared`. Szczegóły i wzorce użycia →
 
 Ekran „skąd" nie jest ozdobą — to jedyne, co czyni zagnieżdżone role diagnozowalnymi.
 
-Mutacje na obu stronach listowych idą przez pełny [`ErpSelectionScope`](../frontend/selection-scope.md) i modale na `ErpBatchStepBase` (`assign-role`, `grant-permission`, `add-permission`, `add-member`) — każda z nich jest operacją masową, patrz §7.
+Mutacje na obu stronach listowych idą przez pełny [`ErpSelectionScope`](../guides/frontend/selection-scope.md) i modale na `ErpBatchStepBase` (`assign-role`, `grant-permission`, `add-permission`, `add-member`) — każda z nich jest operacją masową, patrz §7.
 ---
 
 ## 7. Mapa wdrożenia — gdzie co leży
@@ -311,7 +326,7 @@ Mutacje na obu stronach listowych idą przez pełny [`ErpSelectionScope`](../fro
 
 | Element | Pliki |
 |---|---|
-| Mikroserwis | `backend/modules/Identity/**` (4 projekty wg [`new-microservice.md`](./new-microservice.md)), port **5280**, schemat `identity` |
+| Mikroserwis | `backend/modules/Identity/**` (4 projekty wg [`new-microservice.md`](../guides/backend/new-microservice.md)), port **5280**, schemat `identity` |
 | Katalog uprawnień | [`Permissions.cs`](../../backend/building-blocks/Erp.BuildingBlocks.Contracts/Permissions.cs) + `PermissionDefinition`; `PermissionCatalogReconciler` uzgadnia katalog z bazą przy **każdym** starcie |
 | Agregaty | `Role` (`RolePermissionEntry`/`RoleMemberEntry` jako encje własne — EF nie mapuje `List<string>`/`List<Guid>` wprost), `UserAccount` (`UserRoleGrant`/`UserPermissionGrant`) |
 | Zapytania | `IRoleQueries`/`IUserAccountQueries`/`IPermissionCatalogQueries` — efektywne uprawnienia i ścieżka dziedziczenia surowym rekursywnym CTE przez dedykowane połączenie ADO.NET (`IdentityConnectionStringProvider`, patrz §8) |
@@ -342,13 +357,13 @@ Mutacje na obu stronach listowych idą przez pełny [`ErpSelectionScope`](../fro
 ### Operacje masowe — każda mutacja jest zadaniem
 
 Wszystkie dziesięć komend `role/*`/`user/*` idzie przez `BatchEndpointBase`/`BulkCommandRunner`
-([`bulk-commands.md`](./bulk-commands.md)); endpointy pojedyncze **nie istnieją**, akcja na jednym
+([`bulk-commands.md`](../guides/backend/bulk-commands.md)); endpointy pojedyncze **nie istnieją**, akcja na jednym
 obiekcie to zadanie z jednym elementem (~1-2 s: `EffectiveChunkSize` = 1, `IdlePollingInterval` = 2 s).
 
 Trzy konsekwencje przyjęte świadomie:
 
 - odpowiedź to `BatchResult { JobUuid }`, nie wynik operacji;
-- błąd domenowy (`role_cycle_detected`, `role_code_duplicate`) przychodzi w raporcie zadania przez dzwonek powiadomień, nie jako 4xx — mapowanie `DomainException` na 422 ([`cqrs.md` §6](./cqrs.md#6-pipeline-komend)) istnieje, ale Identity go nie używa: droga synchroniczna, na której 422 miałoby sens, przestała istnieć;
+- błąd domenowy (`role_cycle_detected`, `role_code_duplicate`) przychodzi w raporcie zadania przez dzwonek powiadomień, nie jako 4xx — mapowanie `DomainException` na 422 ([`cqrs.md` §6](../guides/backend/cqrs.md#6-pipeline-komend)) istnieje, ale Identity go nie używa: droga synchroniczna, na której 422 miałoby sens, przestała istnieć;
 - wiersz w tabeli odświeża się po `AggregateChanged` po commicie chunka, nie po odpowiedzi HTTP.
 
 **Oś „wielu" dla ról to tryb `Commands[]`.** Naturalny przypadek to „dodaj 5 uprawnień do 1 roli",
@@ -372,7 +387,7 @@ w bazie. Reguła ładuje cały graf ról jednym zapytaniem i symuluje wstawienia
 `Ordinal`; sprawdzenie w handlerze zostaje jako druga linia obrony na stanie zacommitowanym.
 Runner bierze jedno zadanie naraz i trzyma na nim `FOR UPDATE SKIP LOCKED`, więc również przy
 wielu instancjach nad jednym zadaniem pracuje dokładnie jeden proces — te dwie warstwy pokrywają
-całość. Patrz [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte).
+całość. Patrz [`architecture.md` §7](backend.md#7-wieloinstancyjność--założenia-zdjęte).
 
 > Komentarze w kodzie odsyłają miejscami do numerów faz wdrożenia. Odpowiadają obszarom wyżej:
 > **1** AuthN, **2** domena Identity, **3** egzekwowanie w Catalog/Sales, **4** moduł frontendowy,
@@ -390,7 +405,7 @@ Każda z nich jest do powtórzenia przy następnej zmianie w tym obszarze — dl
 - **Npgsql nie utrzymuje hasła w `DbConnection.ConnectionString` po otwarciu.** Odczyt connection stringa z połączenia używanego przez EF działa w testach i wywala się w runtime — stąd `IdentityConnectionStringProvider` dla surowych CTE.
 - **Dwa niezależne `provideAppInitializer`.** `STARTUP()` i `withAppInitializerAuthCheck()` startują równolegle — `PermissionStore.load()` potrafiło polecieć przed ustawieniem tokenu, dostać 401 i zostać z pustym zbiorem **na stałe** (brak retry, inaczej niż SignalR). Stąd `ErpAuthService.waitUntilAuthReady()` przed pierwszym `load()`.
 - **`TuiAlertService` nie da się wstrzyknąć poza `<tui-root>`.** Dziedziczy z `TuiPortal` → `inject(TuiPopupService)`, a ten jest dostarczany przez `<tui-popups>` wewnątrz szablonu `TuiRoot`. Zawartość projektowana do domyślnego slotu (m.in. `<router-outlet>`) dostaje injector z miejsca deklaracji, nie z pozycji w DOM — `NG0201` przy każdym żądaniu przechodzącym przez interceptor. Stąd własny `ErpToastBridgeService`/`Component`.
-- **Odczyt pola klasy przed `super()`.** Kroki modali (`.setItems(this._roles)` w argumencie `super(config)`) rzucają `ReferenceError: Must call super constructor` — TypeScript tego nie łapie, bo to błąd czasu wykonania. Zależności buduj w zmiennych lokalnych **przed** `super()`, przypisuj do `this.` po nim (patrz [`modals.md`](../frontend/modals.md)).
+- **Odczyt pola klasy przed `super()`.** Kroki modali (`.setItems(this._roles)` w argumencie `super(config)`) rzucają `ReferenceError: Must call super constructor` — TypeScript tego nie łapie, bo to błąd czasu wykonania. Zależności buduj w zmiennych lokalnych **przed** `super()`, przypisuj do `this.` po nim (patrz [`modals.md`](../guides/frontend/modals.md)).
 
 ---
 
@@ -407,5 +422,5 @@ Każda z nich jest do powtórzenia przy następnej zmianie w tym obszarze — dl
 | `UserChanged` do denormalizacji nazw użytkowników w innych modułach | Gdy jakiś moduł zacznie wyświetlać nazwiska zamiast `userId` | Kontrakt nie istnieje; dziś nikt poza Identity nie pokazuje danych użytkownika |
 | ~~Tożsamość maszynowa (dostęp M2M z własnym zestawem uprawnień)~~ | **Zrobione (API-003)** | `UserAccountKind.Service` + `IntegrationClientCreateCommand` — patrz §2. Token `client_credentials` Keycloaka niesie ten sam `sub` co logowanie człowieka, więc pipeline AuthZ działa bez zmian |
 | Właściwa autoryzacja service-to-service dla `GET /internal/users/{id}/permissions` | Gdy pojawi się drugi konsument poza `HttpPermissionProvider` | Dziś **dowolny ważny token wystarcza**, żeby odpytać o cudze uprawnienia; docelowo client credentials Keycloaka albo izolacja sieciowa. **Świadomie NIE naprawione przez API-003** — wymaga własnej tożsamości serwisowej dla KAŻDEGO mikroserwisu wołającego Identity (Catalog/Sales/Notification/TaskManagement), to osobna, szeroka zmiana |
-| ~~Backplane Redis dla cache'u uprawnień~~ | **Odrzucone świadomie** | Redis na ścieżce autoryzacji każdego żądania wymagałby zaprojektowanej degradacji; propagacja idzie broadcastem RabbitMQ. Redis zostaje wyłącznie backplanem SignalR — [`architecture.md` §7](./architecture.md#7-wieloinstancyjność--założenia-zdjęte) |
+| ~~Backplane Redis dla cache'u uprawnień~~ | **Odrzucone świadomie** | Redis na ścieżce autoryzacji każdego żądania wymagałby zaprojektowanej degradacji; propagacja idzie broadcastem RabbitMQ. Redis zostaje wyłącznie backplanem SignalR — [`architecture.md` §7](backend.md#7-wieloinstancyjność--założenia-zdjęte) |
 | Rozszerzenie `GET /me/permissions/sources` na dowolnego użytkownika | Gdy panel „skąd" ma działać dla cudzego konta | Backend eksponuje ścieżkę dziedziczenia tylko dla `/me`; UI panelu efektywnych uprawnień już ma na to miejsce |

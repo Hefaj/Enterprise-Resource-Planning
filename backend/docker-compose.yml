@@ -43,7 +43,7 @@ services:
       retries: 10
 
   # Magazyn artefaktów (API zgodne z S3) — pliki produkowane przez eksporty i raporty.
-  # Patrz docs/backend/exports-artifacts.md. Bajty NIE idą do Postgresa: `bytea` pompowałby
+  # Patrz docs/guides/backend/exports-artifacts.md. Bajty NIE idą do Postgresa: `bytea` pompowałby
   # bazę i każdy backup o wolumen plików, których nikt nie czyta po tygodniu.
   #
   # Porty 9100/9101 zamiast domyślnych 9000/9001: 9000 jest gęsto zajętym portem na maszynach
@@ -74,7 +74,7 @@ services:
   # Konta MinIO per mikroserwis — jedyna warstwa separacji plików, która trzyma przy POMYŁCE
   # W KODZIE, a nie tylko przy poprawnym kodzie. Bez niej każdy serwis chodzi na koncie root
   # i błędnie wstrzyknięty magazyn w Catalogu sięga po skany faktur z DMS-u.
-  # Patrz docs/backend/media-storage.md §2.3 oraz ./minio/policies/README.md.
+  # Patrz docs/guides/backend/media-storage.md oraz ./minio/policies/README.md.
   #
   # Kubełków ten kontener NIE zakłada — robi to moduł przy starcie (ArtifactBucketInitializer),
   # bo kubełek jest częścią jego kontraktu z magazynem. Tutaj powstaje tylko konto i polityka.
@@ -108,7 +108,7 @@ services:
     restart: "no"
 
   # Czysty IdP — uwierzytelnianie (hasła, MFA, sesje, SSO). Autoryzacja (role, uprawnienia)
-  # żyje w mikroserwisie Identity, nie tutaj — patrz docs/backend/identity-authz.md.
+  # żyje w mikroserwisie Identity, nie tutaj — patrz docs/architecture/security.md.
   keycloak:
     image: quay.io/keycloak/keycloak:26.4
     container_name: erp-keycloak

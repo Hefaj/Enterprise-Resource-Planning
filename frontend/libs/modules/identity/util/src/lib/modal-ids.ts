@@ -4,7 +4,7 @@
  * Każdy ID to hash MD5 gwarantujący unikalność i niezależność od konwencji nazewnictwa.
  * Definiowane w warstwie `util` (lekka, zero zależności od komponentów), żeby mogły być
  * importowane zarówno przez `feature` (definicje modali) jak i `contract` (lekki
- * `remoteModalIds` ładowany przy STARTUP) — patrz `docs/frontend/modals.md`.
+ * `remoteModalIds` ładowany przy STARTUP) — patrz `docs/guides/frontend/modals.md`.
  *
  * ─── Generowanie nowego ID ───
  *   node -e "console.log(require('crypto').createHash('md5').update('scope.entity.action').digest('hex'))"

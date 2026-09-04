@@ -13,7 +13,7 @@ namespace Catalog.Application.Multimedia;
 /// (patrz <c>IArtifactStore.CreateUploadTicketAsync</c>).</para>
 ///
 /// <para><c>Uuid</c> generuje klient — jest kluczem idempotencji, tak samo jak przy każdym
-/// innym <c>Create</c> (<c>docs/backend/endpoint-naming.md</c> §4). Dzięki temu ponowione
+/// innym <c>Create</c> (<c>docs/guides/backend/endpoint-naming.md</c> §4). Dzięki temu ponowione
 /// żądanie po zerwanym połączeniu nie zakłada drugiego wpisu na ten sam plik.</para>
 ///
 /// <para><b>Czego tu nie ma i dlaczego.</b> Rozmiaru ani typu MIME klient nie deklaruje: serwis

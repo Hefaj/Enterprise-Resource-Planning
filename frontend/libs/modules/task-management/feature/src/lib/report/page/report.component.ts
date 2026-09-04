@@ -252,8 +252,8 @@ export class ReportComponent {
   public constructor() {
     this.reportPickerConfig = computed(() => {
       // Strażnik reaktywności Transloco — `computed` cache'uje wynik na zawsze, jeśli odczyta
-      // `translate(...)` zanim scope się doładuje (systemowy bug znaleziony i udokumentowany
-      // w fazie 6, patrz `PLAN-task-management.md` §10 wiersz „6"); `_translationsReady()` jest
+      // `translate(...)` zanim scope się doładuje (patrz docs/guides/frontend/translations.md);
+      // `_translationsReady()` jest
       // sygnałem, więc samo jego odczytanie tutaj wymusza ponowne przeliczenie po doładowaniu.
       this._translationsReady();
 

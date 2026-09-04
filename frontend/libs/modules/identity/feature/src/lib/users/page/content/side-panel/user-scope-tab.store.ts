@@ -14,7 +14,7 @@ export const USER_SCOPE_PREVIEW_LIMIT = ERP_SCOPE_PREVIEW_LIMIT;
  * bezpośrednie, Efektywne uprawnienia).
  *
  * Mechanika jest wspólna dla całej aplikacji i mieszka w `ErpScopeTabStore` (patrz
- * `docs/frontend/pages.md` §6) — tutaj zostaje podłączenie zasięgu strony i orkiestratora
+ * `docs/guides/frontend/pages.md` §6) — tutaj zostaje podłączenie zasięgu strony i orkiestratora
  * użytkowników oraz aliasy nazw z domeny.
  */
 export abstract class UserScopeTabStore<TChild = unknown> extends ErpScopeTabStore<

@@ -32,7 +32,7 @@ import { BoardCardVM } from './board.view-model';
  *
  * <p><b>Kluczem cache’u jest uuid KARTY, nie zgłoszenia.</b> Tak samo adresuje je kanał
  * `taskmgmt.board`, więc przeciągnięcie jednej karty odświeża jeden wiersz, a nie całą
- * tablicę (`docs/backend/task-management.md` §7.4). Tym samym kanałem przychodzą uuid-y
+ * tablicę (`docs/modules/task-management/domain.md` §7.4). Tym samym kanałem przychodzą uuid-y
  * tablicy (zmiana nazwy, układ kolumn) — nie ma ich w cache kart, więc `BaseOrchestrator`
  * po prostu je pomija.</p>
  *
@@ -190,7 +190,7 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
    * Przestawia kartę pomiędzy sąsiadów.
    *
    * <p><b>Komenda niesie sąsiadów, nie wyliczony rank</b> — rank liczy serwer, w transakcji,
-   * z ich bieżących wartości (`docs/backend/task-management.md` §7.2). Front, który liczyłby
+   * z ich bieżących wartości (`docs/modules/task-management/domain.md` §7.2). Front, który liczyłby
    * go sam, wstawiałby kartę w miejsce widoczne u niego pół sekundy temu.</p>
    *
    * <p>Wywołujący odpowiada za optymistyczne przesunięcie karty i za jego cofnięcie, gdy
@@ -228,7 +228,7 @@ export class TaskManagementBoardOrchestrator extends BaseOrchestrator<
  *
  * Para `(rank, uuid)` jest rozstrzygająca celowo i po obu stronach tak samo: dwie osoby
  * wstawiające kartę w to samo miejsce wyliczą <b>identyczny</b> rank i obie muszą zobaczyć
- * tę samą kolejność (`docs/backend/task-management.md` §7.3). Porównanie musi być
+ * tę samą kolejność (`docs/modules/task-management/domain.md` §7.3). Porównanie musi być
  * leksykograficzne znak po znaku — stąd `<`/`>` na łańcuchach, nie `localeCompare`, które
  * ustawiłoby karty inaczej niż zestawienie `C` w Postgresie.
  */

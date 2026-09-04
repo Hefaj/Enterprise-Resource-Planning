@@ -42,7 +42,7 @@ public static class ErpCommandsExtensions
         services.TryAddScoped<IIdempotencyStore, EfIdempotencyStore<TContext>>();
 
         // Dzierżawa wyłączności — usługi tła i praca startowa modułu (patrz
-        // docs/backend/multi-instance.md §3.1). TryAdd, więc moduł, który zarejestrował ją już
+        // docs/architecture/multi-instance.md §3.1). TryAdd, więc moduł, który zarejestrował ją już
         // przy swoim DbContekście (a robią tak wszystkie, bo migrator startuje przed komendami),
         // nie dostaje drugiego wpisu.
         services.AddErpExclusiveLease<TContext>();

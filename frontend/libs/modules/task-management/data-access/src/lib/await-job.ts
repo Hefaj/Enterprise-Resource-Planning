@@ -15,7 +15,7 @@ const TIMEOUT_MS = 10_000;
  * natychmiast, a wykonuje się później, w `BulkCommandRunner`. Widok, który odświeża dane
  * zaraz po `await`cie komendy, pobiera stan SPRZED własnej zmiany — i wygląda to jak zmiana,
  * która nie weszła. Dotyczy każdego ekranu pokazującego skutek własnej komendy od razu:
- * tablicy i paska powiązań (`docs/frontend/orchestrators.md` §6).</p>
+ * tablicy i paska powiązań (`docs/guides/frontend/orchestrators.md` §6).</p>
  *
  * <p>Rzuca, gdy zadanie się nie powiodło — wywołujący ma wtedy cofnąć zmianę optymistyczną
  * albo pokazać komunikat. Przekroczenie czasu <b>nie</b> jest błędem: zadanie żyjące dłużej

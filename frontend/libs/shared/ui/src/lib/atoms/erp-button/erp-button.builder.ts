@@ -16,6 +16,12 @@ export class ErpButtonBuilder extends ErpBaseBuilder<ErpButtonConfig> {
     return this;
   }
 
+  /** Ustawia dostępną nazwę przycisku, gdy sama etykieta nie jest widoczna. */
+  public setAriaLabel(ariaLabel: MaybeSignal<Translatable>): this {
+    this._data.ariaLabel = ariaLabel;
+    return this;
+  }
+
   /**
    * Ustawia rozmiar przycisku ('xs' | 's' | 'm' | 'l').
    */

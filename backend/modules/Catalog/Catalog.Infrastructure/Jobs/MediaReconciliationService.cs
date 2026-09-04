@@ -55,7 +55,7 @@ public sealed class MediaReconciliationOptions
 /// żaden wiersz — <b>audytor, nie garbage collector</b>.
 ///
 /// <para><b>Czego ten serwis NIE sprząta</b>, bo sprzątają to mechanizmy, które nie mogą się
-/// pomylić (<c>docs/backend/media-storage.md</c> §4):</para>
+/// pomylić (<c>docs/guides/backend/media-storage.md</c> §4):</para>
 /// <list type="bullet">
 ///   <item>plików wgranych, po których nie przyszła komenda — te umierają z reguły lifecycle
 ///   na prefiksie <c>staging/</c> i nigdy nie trafiają do <c>assets/</c>;</item>

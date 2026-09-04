@@ -23,10 +23,10 @@ import { RolePermissionRow, RolePermissionsTabStore } from './role-permissions-t
 
 /**
  * Zakładka „Uprawnienia" — uprawnienia WSZYSTKICH zaznaczonych ról w JEDNEJ tabeli,
- * pogrupowane po roli (patrz `docs/frontend/pages.md` §6).
+ * pogrupowane po roli (patrz `docs/guides/frontend/pages.md` §6).
  *
  * Odbieranie uprawnienia jest akcją zaznaczenia w toolbarze, nie przyciskiem przy chipie —
- * dzięki temu podlega bramkowaniu po uprawnieniach (`docs/frontend/pages.md` §10).
+ * dzięki temu podlega bramkowaniu po uprawnieniach (`docs/guides/frontend/pages.md` §10).
  * Role systemowe są niemodyfikowalne, więc ich wiersze nie wchodzą do akcji.
  */
 @Component({

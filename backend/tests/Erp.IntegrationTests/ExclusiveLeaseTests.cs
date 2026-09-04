@@ -10,7 +10,7 @@ namespace Erp.IntegrationTests;
 
 /// <summary>
 /// Dowód dla <see cref="IExclusiveLease"/> — fundamentu, na którym stoją fazy 1 i 2
-/// (<c>docs/backend/multi-instance.md</c> §3.1).
+/// (<c>docs/architecture/multi-instance.md</c> §3.1).
 ///
 /// <para>Trzy własności są tu sprawdzane osobno, bo każda niesie inną obietnicę: wyłączność
 /// (nikt drugi nie wejdzie), zwolnienie (po oddaniu wchodzi następny) i — najważniejsza —

@@ -8,7 +8,7 @@ export { IDENTITY_KEYS } from './keys';
  * Scope tłumaczeń modułu Identity. Rejestrować wyłącznie w providerach agregujących modułu
  * (trasa, loader komponentu z kontraktu), NIGDY w dekoratorze `@Component` komponentu
  * współdzielonego — to tworzy child injector przesłaniający scope nadrzędny
- * (patrz `docs/frontend/translations.md`).
+ * (patrz `docs/guides/frontend/translations.md`).
  */
 export function provideIdentityTranslations(): Provider[] {
   return [

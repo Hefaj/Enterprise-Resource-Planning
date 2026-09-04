@@ -65,7 +65,7 @@ public sealed class FieldSchemeSetNameCommandHandler : CommandHandler<FieldSchem
 ///
 /// <para><c>Slot</c> jest częścią komendy i <b>nie da się go później zmienić</b> — nie ma
 /// komendy „przemapuj slot". To jest egzekucja reguły „mapowanie pole↔slot jest niezmienne
-/// po pierwszym użyciu" (<c>docs/backend/task-management.md</c> §6): przemapowanie podmieniłoby
+/// po pierwszym użyciu" (<c>docs/modules/task-management/domain.md</c> §6): przemapowanie podmieniłoby
 /// znaczenie danych historycznych, bo kolumna z budżetami zaczęłaby uchodzić za kolumnę
 /// z liczbą godzin.</para>
 /// </summary>

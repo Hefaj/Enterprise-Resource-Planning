@@ -21,7 +21,7 @@ public sealed record UserPermissionGrantDto(
 
 /// <summary>
 /// Jeden wpis efektywnego zbioru uprawnień z rozwinięciem "skąd" — bez tego zagnieżdżone role
-/// są niediagnozowalne po kilku miesiącach (patrz <c>docs/backend/identity-authz.md</c> §6).
+/// są niediagnozowalne po kilku miesiącach (patrz <c>docs/architecture/security.md</c> §6).
 /// Jedno uprawnienie może mieć kilka źródeł (dwie różne role dają to samo uprawnienie) —
 /// dlatego lista, nie pojedyncza wartość, per kod.
 /// </summary>

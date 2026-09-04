@@ -6,7 +6,7 @@ namespace Identity.Infrastructure.Persistence.Configurations.Users;
 
 /// <summary>Mapowanie agregatu <see cref="UserAccount"/> — <see cref="UserAccount.RoleGrants"/>
 /// i <see cref="UserAccount.PermissionGrants"/> jako kolekcje własne w tabelach
-/// <c>user_role</c>/<c>user_permission</c> (patrz <c>docs/backend/identity-authz.md</c> §2).</summary>
+/// <c>user_role</c>/<c>user_permission</c> (patrz <c>docs/architecture/security.md</c> §2).</summary>
 public sealed class UserAccountConfiguration : IEntityTypeConfiguration<UserAccount>
 {
     public void Configure(EntityTypeBuilder<UserAccount> builder)

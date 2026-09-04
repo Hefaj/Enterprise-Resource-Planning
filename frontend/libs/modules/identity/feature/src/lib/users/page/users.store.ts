@@ -7,16 +7,16 @@ import { USER_ACCOUNT_KIND } from '@erp/identity/util';
 /**
  * Do ilu użytkowników „Zaznacz wszystko" jest jeszcze rozwiązywane do listy identyfikatorów —
  * ten sam próg co `PRODUCT_SELECTION_MATERIALIZE_LIMIT` w Catalogu, patrz
- * `docs/frontend/selection-scope.md` §2 „Jak dobrać próg".
+ * `docs/guides/frontend/selection-scope.md` §2 „Jak dobrać próg".
  */
 export const USER_SELECTION_MATERIALIZE_LIMIT = 100;
 
 /**
  * Stan strony `/identity/users` — filtry, zaznaczenie (`ErpSelectionState`) i zasięg
- * (`ErpSelectionScope`) dla akcji masowych toolbara (patrz `docs/frontend/selection-scope.md`),
+ * (`ErpSelectionScope`) dla akcji masowych toolbara (patrz `docs/guides/frontend/selection-scope.md`),
  * wzorem `ProductStore`. Zakładki panelu bocznego czytają `scope` (przez `UserScopeTabStore`) —
  * pokazują role/uprawnienia WSZYSTKICH zaznaczonych użytkowników w jednej tabeli, patrz
- * `docs/frontend/pages.md` §6.
+ * `docs/guides/frontend/pages.md` §6.
  */
 @Injectable()
 export class UsersStore {
@@ -24,7 +24,7 @@ export class UsersStore {
 
   // Domyślnie tylko konta ludzkie — konta serwisowe (klucze integracyjne, API-003) nie mieszają
   // się z ludźmi na liście, dopóki admin świadomie nie wyczyści/zmieni filtra `kind`. Zachowuje
-  // dzisiejsze zachowanie strony sprzed API-003 (patrz `docs/backend/identity-authz.md` §2).
+  // dzisiejsze zachowanie strony sprzed API-003 (patrz `docs/architecture/security.md` §2).
   public readonly filters = signal<Partial<SearchUserAccountRequest>>({ kind: USER_ACCOUNT_KIND.Human });
   public readonly loading = signal<boolean>(false);
 
@@ -37,7 +37,7 @@ export class UsersStore {
     this.loading.set(isLoading);
   }
 
-  // ── Zaznaczenie i zasięg — patrz docs/frontend/selection-scope.md §2 ──
+  // ── Zaznaczenie i zasięg — patrz docs/guides/frontend/selection-scope.md §2 ──
 
   public readonly selection = signal<ErpSelectionState<UserVM> | null>(null);
 

@@ -5,7 +5,7 @@ namespace Identity.Domain.Users;
 /// <summary>
 /// Projekcja użytkownika Keycloaka w domenie ERP. Identity NIE trzyma hasła ani żadnego
 /// sekretu uwierzytelniającego — to zadanie Keycloaka (patrz
-/// <c>docs/backend/identity-authz.md</c> §1). Ten agregat istnieje wyłącznie po to, żeby
+/// <c>docs/architecture/security.md</c> §1). Ten agregat istnieje wyłącznie po to, żeby
 /// przypiąć role i uprawnienia bezpośrednie do <see cref="Uuid"/>, które JEST claimem
 /// <c>sub</c> tokenu JWT — nie osobnym, wewnętrznym identyfikatorem.
 ///

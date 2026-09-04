@@ -8,7 +8,7 @@ import { RolesStore } from '../../roles.store';
  * Zawarta w, Kto ma tę rolę).
  *
  * Mechanika jest wspólna dla całej aplikacji i mieszka w `ErpScopeTabStore` (patrz
- * `docs/frontend/pages.md` §6). Różnica wobec produktów i użytkowników: tabela ról działa
+ * `docs/guides/frontend/pages.md` §6). Różnica wobec produktów i użytkowników: tabela ról działa
  * w trybie `client` (cały zbiór ról jest w cache), więc zasięg nigdy nie jest `query` —
  * nie ma czego materializować ani próbkować i `resolveUuids` nie jest potrzebne.
  */

@@ -37,7 +37,7 @@ import { ProductFilterComponent } from './filters/product-filter.component';
 export class ProductComponent {
   /**
    * Panel boczny otwiera się WYŁĄCZNIE wyborem zakładki — nigdy zaznaczeniem w tabeli
-   * (patrz `docs/frontend/pages.md` §3). Zakładka `'list'` (bez `component`) to stan
+   * (patrz `docs/guides/frontend/pages.md` §3). Zakładka `'list'` (bez `component`) to stan
    * "panel schowany": jej treścią jest sąsiedni obszar `content`.
    */
   protected readonly activeTabId = signal<string | null>('list');

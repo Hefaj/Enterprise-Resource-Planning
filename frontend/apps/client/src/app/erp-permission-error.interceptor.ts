@@ -6,7 +6,7 @@ import { ErpToastService, SHARED_KEYS } from '@erp/shared/ui';
 /**
  * Pokazuje toast, gdy backend odrzuci żądanie z 403 (uprawnienie odebrane po tym, jak front
  * je już pokazał, albo bezpośrednie wywołanie API mimo schowanego przycisku) — patrz
- * docs/backend/identity-authz.md §6 Faza 5: "front tylko chowa UI", więc backend i tak
+ * docs/architecture/security.md §6 Faza 5: "front tylko chowa UI", więc backend i tak
  * egzekwuje. Celowo **nie wylogowuje** — w odróżnieniu od 401, brak uprawnienia nie znaczy,
  * że sesja jest nieważna.
  *

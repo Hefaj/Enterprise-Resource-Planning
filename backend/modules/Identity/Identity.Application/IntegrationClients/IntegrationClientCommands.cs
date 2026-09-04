@@ -8,7 +8,7 @@ namespace Identity.Application.IntegrationClients;
 
 /// <summary>
 /// Rejestruje konto serwisowe (<see cref="UserAccountKind.Service"/>) dla poufnego klienta
-/// Keycloaka z <c>client_credentials</c> — API-003, patrz <c>docs/backend/identity-authz.md</c>
+/// Keycloaka z <c>client_credentials</c> — API-003, patrz <c>docs/architecture/security.md</c>
 /// §2. ERP nie zakłada klienta w Keycloaku — admin robi to ręcznie, wkleja tu <c>sub</c>
 /// service-accounta jako <see cref="Uuid"/>. Wzorowane dosłownie na
 /// <see cref="Identity.Application.Roles.RoleCreateCommand"/>.

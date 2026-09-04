@@ -18,10 +18,10 @@ import {
 import { RoleVM } from './role.view-model';
 
 /**
- * Orkiestrator ról (`Role` — agregat DAG, patrz `docs/backend/identity-authz.md` §2).
+ * Orkiestrator ról (`Role` — agregat DAG, patrz `docs/architecture/security.md` §2).
  * `memberRoleUuids` rozwiązuje się do `members: RoleVM[]` przez SAMEGO SIEBIE (rola składa się
  * z ról) — leniwe wstrzyknięcie przez `Injector`, ten sam wzorzec co przy sąsiednich
- * orkiestratorach w `docs/frontend/orchestrators.md` §2, tylko że sąsiadem jest własna klasa.
+ * orkiestratorach w `docs/guides/frontend/orchestrators.md` §2, tylko że sąsiadem jest własna klasa.
  */
 @Injectable({ providedIn: 'root' })
 export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRoleRequest, LoadOptions> {
@@ -82,7 +82,7 @@ export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRo
   // ── Komendy — patrz uzasadnienie podziału single-target/wsadowe w `UserOrchestrator` ──
   //
   // Wszystkie idą przez odpowiednik `BatchEndpointBase` — nawet wywołanie na jednej roli jest
-  // zadaniem z jednym elementem (patrz Faza 1+3 w docs/backend/identity-bulk-migration.md);
+  // zadaniem z jednym elementem (patrz docs/guides/backend/bulk-commands.md);
   // obrys wykonania daje `runBatchCommandAsync`/`runSingleCommandAsync` z `BaseOrchestrator`.
   // Metody zwracają `jobUuid`, nie wynik operacji. `addPermissionMultipleAsync`/
   // `addMemberMultipleAsync` niżej obsługują OBA wywołania (panel szczegółów z `targetUuids:
@@ -103,7 +103,7 @@ export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRo
       { commandName: IDENTITY_JOB_COMMAND_KEYS.createRole, queueId },
     );
     // `loadAsync` (nie `dataLoader.reloadAsync`) — to nowy uuid, jeszcze nieobecny w
-    // `_loadedUuids`. Zadanie kończy się asynchronicznie (patrz Faza 1), ale UUID jest znany
+    // `_loadedUuids`. Zadanie kończy się asynchronicznie, ale UUID jest znany
     // od razu — ładujemy optymistycznie; jeśli zadanie odpadnie (np. `role_code_duplicate`),
     // wpis po prostu nie zostanie znaleziony i zniknie z cache przy kolejnym odświeżeniu.
     await this.loadAsync([uuid]);
@@ -127,7 +127,7 @@ export class RoleOrchestrator extends BaseOrchestrator<RoleDto, RoleVM, SearchRo
   // ── Komendy wsadowe na zaznaczeniu z listy ──
   //
   // Cele buduje wywołujący przez `erpBuildBatchTargets(store.scope())` (patrz
-  // `docs/frontend/selection-scope.md` §3). Tylko dodawanie — odbieranie uprawnienia/składowej
+  // `docs/guides/frontend/selection-scope.md` §3). Tylko dodawanie — odbieranie uprawnienia/składowej
   // zostaje jako akcja jednego wiersza w panelu szczegółów (usuwanie konkretnego, znanego
   // grantu nie jest naturalną operacją „to samo dla wielu zaznaczonych").
 

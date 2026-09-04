@@ -71,20 +71,20 @@
       Wolverine'a na TypeLoadMode.Static — szybszy start, brak Roslyna w obrazie i brak wyścigu
       na generowanym kodzie przy równoległym starcie instancji. Flaga jest domyślnie WYŁĄCZONA:
       zatwierdzony kod trzeba regenerować przy każdej zmianie kształtu handlera, więc włączenie
-      jej jest decyzją wdrożenia, nie stanem domyślnym. Patrz docs/backend/multi-instance.md §8.2.
+      jej jest decyzją wdrożenia, nie stanem domyślnym. Patrz docs/architecture/multi-instance.md.
     -->
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.28.0" />
   </ItemGroup>
 
   <ItemGroup Label="Artefakty">
     <!-- Klient S3 do MinIO — magazyn plików produkowanych przez eksporty i raporty.
-         Patrz docs/backend/exports-artifacts.md. -->
+         Patrz docs/guides/backend/exports-artifacts.md. -->
     <PackageVersion Include="Minio" Version="7.0.0" />
 
     <!-- Generowanie miniaturek. SkiaSharp (MIT nad Skia na BSD-3), NIE ImageSharp: ten od v3
          chodzi na Six Labors Split License z progiem przychodowym, czyli dokładnie ta klasa
          zależności, którą ten projekt już raz odrzucił przy MassTransit v9 i MediatR v13.
-         Patrz docs/backend/media-storage.md §5. -->
+         Patrz docs/guides/backend/media-storage.md. -->
     <PackageVersion Include="SkiaSharp" Version="4.151.1" />
 
     <!-- Natywne libSkiaSharp.so dla obrazów kontenerowych. Wariant `NoDependencies` świadomie:
@@ -102,7 +102,7 @@
 
   <ItemGroup Label="Realtime">
     <!-- Backplane SignalR: jedyne miejsce w systemie, gdzie potrzebny jest Redis.
-         Włączany warunkowo przez `Realtime:Redis` — patrz docs/backend/multi-instance.md §7.3. -->
+         Włączany warunkowo przez `Realtime:Redis` — patrz docs/architecture/multi-instance.md. -->
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.11" />
   </ItemGroup>
 

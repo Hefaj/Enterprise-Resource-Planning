@@ -12,7 +12,7 @@ namespace TaskManagement.Infrastructure.Seed;
 /// <para>Pod blokującą dzierżawą <c>taskmgmt:seed</c>: równoległy start dwóch instancji bez niej
 /// albo zduplikuje projekty przykładowe, albo wyłoży się na unikalności <c>project.code</c>,
 /// zależnie od tego, co akurat siadło pierwsze
-/// (<c>docs/backend/multi-instance.md</c> §3.1).</para>
+/// (<c>docs/architecture/multi-instance.md</c> §3.1).</para>
 /// </summary>
 [ClusterSafe("Blokująca dzierżawa taskmgmt:seed — bez niej równoległy start dwóch instancji "
     + "duplikuje schemat systemowy i projekty przykładowe albo łamie unikalność project.code.")]

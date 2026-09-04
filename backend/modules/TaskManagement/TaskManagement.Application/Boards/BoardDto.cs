@@ -83,7 +83,7 @@ public sealed class GetBoardRequest
 ///
 /// <para><see cref="Uuids"/> ogranicza odpowiedź do wskazanych <b>kart</b> — tą ścieżką idzie
 /// odświeżenie po zdarzeniu realtime, żeby przeciągnięcie jednej karty nie kazało klientowi
-/// pobierać całej tablicy (<c>docs/backend/task-management.md</c> §7.4). Puste = cała tablica.</para>
+/// pobierać całej tablicy (<c>docs/modules/task-management/domain.md</c> §7.4). Puste = cała tablica.</para>
 /// </summary>
 public sealed class GetBoardCardsRequest
 {

@@ -27,7 +27,7 @@ const WARRANTY_CHUNK_SIZE = 30;
 
 /**
  * Panel gwarancji zaznaczonych produktów — konsument zasięgu zaznaczenia (`ErpSelectionScope`),
- * na tych samych zasadach co panel multimediów (patrz `docs/frontend/selection-scope.md`).
+ * na tych samych zasadach co panel multimediów (patrz `docs/guides/frontend/selection-scope.md`).
  *
  * Panel jest DOWODEM (co obejmie operacja), a nie źródłem prawdy o jej celu: przy zaznaczeniu
  * opisanym filtrem pokazuje próbkę kilku pierwszych produktów i wyłącza wybór pojedynczych

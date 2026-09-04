@@ -275,7 +275,7 @@ public sealed class WorkflowSchemeRemoveTransitionCommandHandler : CommandHandle
 /// Publikuje usunięcie stanów, które mają otwarte zgłoszenia, razem z migracją tych zgłoszeń
 /// (WF-006). Czasownik <c>Exec</c>, bo operacja nie da się opisać jednym z <c>Set</c>/<c>Add</c>/
 /// <c>Remove</c> na samym agregacie schematu — dotyka też zgłoszeń spoza jego granicy
-/// (`docs/backend/endpoint-naming.md` §5).
+/// (`docs/guides/backend/endpoint-naming.md` §5).
 ///
 /// <para>Handler w dwóch krokach: (1) <see cref="WorkflowScheme.Publish"/> waliduje mapowanie
 /// i usuwa stany ze schematu — od tego momentu tablica i filtr stanu już ich nie pokazują;

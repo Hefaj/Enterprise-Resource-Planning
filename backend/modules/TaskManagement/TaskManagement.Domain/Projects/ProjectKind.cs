@@ -4,7 +4,7 @@ namespace TaskManagement.Domain.Projects;
 /// <c>Delivery</c> to projekt wykonawczy (dział ma swoją tablicę i sprinty), <c>Intake</c>
 /// to rejestr zleceń działu zamawiającego. <b>Ten sam agregat</b>, inny domyślny schemat stanów
 /// i inne domyślne uprawnienia — nie dwa typy w kodzie
-/// (<c>docs/backend/task-management.md</c> §3).
+/// (<c>docs/modules/task-management/domain.md</c> §3).
 /// </summary>
 public enum ProjectKind
 {

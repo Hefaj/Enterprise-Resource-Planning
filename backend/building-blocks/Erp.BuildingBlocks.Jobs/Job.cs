@@ -56,7 +56,7 @@ public class Job : AggregateRoot
 
     /// <summary>
     /// Kształt wykonania — decyduje, który runner podejmie zadanie i czy ma ono elementy.
-    /// Patrz <see cref="JobKind"/> i <c>docs/backend/exports-artifacts.md</c> §3.
+    /// Patrz <see cref="JobKind"/> i <c>docs/guides/backend/exports-artifacts.md</c> §3.
     /// </summary>
     public JobKind Kind { get; private set; }
 
@@ -189,7 +189,7 @@ public class Job : AggregateRoot
 
     /// <summary>
     /// Tworzy zadanie typu <see cref="JobKind.Reduce"/> — jeden artefakt z wielu rekordów
-    /// źródłowych (patrz <c>docs/backend/exports-artifacts.md</c>).
+    /// źródłowych (patrz <c>docs/guides/backend/exports-artifacts.md</c>).
     ///
     /// <para><b>Nie ma elementów i to nie jest przeoczenie.</b> <see cref="JobItem"/> istnieje po
     /// to, żeby dało się zaraportować sukces częściowy i ponowić pojedyncze niepowodzenia. Przy

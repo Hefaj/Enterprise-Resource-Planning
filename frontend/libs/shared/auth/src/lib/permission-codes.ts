@@ -2,7 +2,7 @@
  * Kopia katalogu kodów uprawnień z backendowego źródła prawdy —
  * `backend/building-blocks/Erp.BuildingBlocks.Contracts/Permissions.cs`. Front nie ma
  * dostępu do C#, więc kody trzeba zduplikować ręcznie; przy dopisywaniu nowego kodu po
- * stronie backendu dopisz go też tutaj (patrz docs/backend/identity-authz.md §3).
+ * stronie backendu dopisz go też tutaj (patrz docs/architecture/security.md §3).
  */
 export const ERP_PERMISSIONS = {
   Catalog: {

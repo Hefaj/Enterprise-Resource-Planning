@@ -1,6 +1,6 @@
 # Enterprise Resource Planning — kontekst dla Claude
 
-Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy zadaniowe leżą w `docs/frontend/*.md`, `docs/backend/*.md` i `.agents/skills/*` — poniżej jest ich skrót wciągnięty wprost, obowiązujący zawsze. Gdy zadanie pasuje do wiersza w tabeli niżej, **przeczytaj wskazany plik przed rozpoczęciem pracy** — zawiera dokładne komendy, szablony kodu i checklisty.
+Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy zadaniowe leżą w `docs/architecture/`, `docs/guides/`, `docs/modules/`, `docs/operations/` i `.agents/skills/*` — poniżej jest ich skrót wciągnięty wprost, obowiązujący zawsze. Gdy zadanie pasuje do wiersza w tabeli niżej, **przeczytaj wskazany plik przed rozpoczęciem pracy** — zawiera dokładne komendy, szablony kodu i checklisty.
 
 ## Architektura (zawsze obowiązuje)
 
@@ -12,7 +12,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 - **Selektory**: `erp-*` w bibliotekach, `app-*` w aplikacjach.
 - **Native Federation HMR**: wewnętrzne biblioteki modułu (`@erp/MODULE_NAME/{feature,data-access,ui,util}`) muszą być w tablicy `skip` w `federation.config.mjs`, inaczej `shareAll()` je pre-bundluje i tracą Vite HMR. `@erp/shared/*` i zależności zewnętrzne są `shared` (bez HMR, wymagają restartu).
 - **Package manager**: pnpm.
-- Szczegóły (module-loaders, manifest, STARTUP.ts, REMOTE_MODULES_CONFIG) → [`docs/frontend/architecture.md`](docs/frontend/architecture.md).
+- Szczegóły (module-loaders, manifest, STARTUP.ts, REMOTE_MODULES_CONFIG) → [`docs/architecture/frontend.md`](docs/architecture/frontend.md).
 
 ## Standardy Angular (zawsze obowiązuje)
 
@@ -36,52 +36,59 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 
 ## Przepisy zadaniowe (przeczytaj plik, gdy pasuje)
 
-| Zadanie | Plik |
+<!-- generated:documentation-index:start -->
+| Zadanie / sygnał | Obowiązkowy dokument |
 |---|---|
-| Nowy modal (lazy-loaded, przez `ErpModalService`) | [`docs/frontend/modals.md`](docs/frontend/modals.md) |
-| Nowy moduł — generacja NX, `project.json` hybrydowy (monolit/MFE), `federation.config.mjs`, rejestracja w Client, tłumaczenia, weryfikacja | [`docs/frontend/new-module.md`](docs/frontend/new-module.md) |
-| Orkiestrator w `data-access` (`BaseOrchestrator`, cache `IdentityMapStore`, SignalR, mapowanie DTO→ViewModel, wzorce dla drzew) | [`docs/frontend/orchestrators.md`](docs/frontend/orchestrators.md) |
-| Komenda (mutacja) na orkiestratorze — helpery `runBatchCommandAsync`/`runSingleCommandAsync`/`runDirectCommandAsync`, `X-Request-Id`, rejestracja zadania, nazewnictwo `…Async`, gdzie NIE robić potwierdzenia | [`docs/frontend/orchestrators.md` §6](docs/frontend/orchestrators.md#6-komendy-mutacje) |
-| Nakładka optymistyczna — natychmiastowy skutek mutacji z cofnięciem (`ErpOptimisticStore`, `runOptimisticCommandAsync`), kiedy stosować, a kiedy nie | [`docs/frontend/optimistic-updates.md`](docs/frontend/optimistic-updates.md) |
-| Smart tabela dla agregatu (lista serwerowa `ErpTableBuilder`, wiersze z orkiestratora po UUID, paginacja/sortowanie) | [`docs/frontend/smart-tables.md`](docs/frontend/smart-tables.md) |
-| Gdzie położyć plik w `feature` — struktura katalogów agregatu (`components`/`modal`/`page`/`translation`) | [`docs/frontend/feature-structure.md`](docs/frontend/feature-structure.md) |
-| Nowy page dla agregatu (`erp-grid-layout`, filtr, smart tabela + action toolbar, zakładki i prawy panel zależny od zaznaczenia, store strony) | [`docs/frontend/pages.md`](docs/frontend/pages.md) |
-| Nowy atom UI wg wzorca "Single Config Builder" (`*.types.ts`/`*.builder.ts`/`*.component.ts`) | [`docs/frontend/atoms.md`](docs/frontend/atoms.md) |
-| Zaznaczenie i akcje masowe w UI — „Zaznacz wszystko" jako filtr, `ErpSelectionScope`, próg materializacji, panel/zakładka zależna od zaznaczenia (`ProductScopeTabStore`, `erp-selection-scope-banner`), bramkowanie akcji toolbara | [`docs/frontend/selection-scope.md`](docs/frontend/selection-scope.md) |
-| Tłumaczenia — dodawanie kluczy, bootstrapping scope'u, DI shadowing | [`docs/frontend/translations.md`](docs/frontend/translations.md) |
-| Użytkownik w module innym niż Identity — nazwisko zamiast uuidu, picker osoby, port `ERP_USER_DIRECTORY` | [`docs/frontend/user-directory.md`](docs/frontend/user-directory.md) |
-| Multimedia produktu — wgrywanie plików (bilet → PUT do magazynu → rejestracja → dopięcie), miniaturki przez `blob:`, biblioteka mediów (`/catalog/multimedia`) i usuwanie zasobów | [`docs/frontend/multimedia.md`](docs/frontend/multimedia.md) |
-| Powiadomienia na froncie — toast (`ErpToastService`), dzwonek, historia zadań, gdzie użytkownik ponownie pobierze artefakt, tłumaczenie kodów błędów backendu (`shared.errors.codes`) | [`docs/frontend/notifications.md`](docs/frontend/notifications.md) |
-| Powiadomienie dla człowieka z dowolnego modułu (komentarz, dokument czeka na akceptację) — drugi agregat w `Notification`, kto ustala odbiorców, `UserNotificationRequested`, grupowanie, preferencje, kanał `notifications` | [`docs/backend/user-notifications.md`](docs/backend/user-notifications.md) |
-| Praca z komponentami TaigaUI (API, migracja z PrimeNG, dialogi, selecty, textfields) | `.agents/skills/taiga-ui/SKILL.md` |
-| Nowy mikroserwis backendowy — 4 projekty Clean Architecture, `.sln`, `DbContext`, `Program.cs`, sygnatura SignalR | [`docs/backend/new-microservice.md`](docs/backend/new-microservice.md) |
-| Komenda/zapytanie CQRS w module backendowym (handler, `IUnitOfWork`, projekcje, sortowanie po whiteliście) | [`docs/backend/cqrs.md`](docs/backend/cqrs.md) |
-| Pipeline komend — dyspozytor, walidacja wejścia, idempotencja (`X-Request-Id`), granica transakcji, mapowanie wyjątków na `ProblemDetails` | [`docs/backend/cqrs.md` §6](docs/backend/cqrs.md#6-pipeline-komend) |
-| Nazwanie nowej komendy/endpointu — pięć czasowników (`create`/`set`/`add`/`remove`/`exec`), człon = cel, trasy, co łamie kontrakt NSwag | [`docs/backend/endpoint-naming.md`](docs/backend/endpoint-naming.md) |
-| Operacja produkująca plik (eksport, raport, dokument) albo plik wgrywany przez użytkownika — agregat przebiegu, `job.kind`, MinIO, `IArtifactStore`, dwa kubełki, wygasanie | [`docs/backend/exports-artifacts.md`](docs/backend/exports-artifacts.md) |
-| Pliki w nowym module, separacja dostępu do multimediów (faktury vs zdjęcia), usuwanie i sprzątanie osieroconych plików | [`docs/backend/media-storage.md`](docs/backend/media-storage.md) |
-| Operacja masowa (bulk) — `BatchEndpointBase`, `job`/`job_item`, `BulkCommandRunner`, cancel/retry-failed | [`docs/backend/bulk-commands.md`](docs/backend/bulk-commands.md) |
-| Walidacja wsadowa — `IBatchRule`, `ValidationChain`, pre-check przed utworzeniem zadania masowego | [`docs/backend/batch-validation.md`](docs/backend/batch-validation.md) |
-| Zdarzenie domenowe / integracyjne, outbox, nowy konsument RabbitMQ | [`docs/backend/events-outbox.md`](docs/backend/events-outbox.md) |
-| Realtime SignalR — nowa sygnatura, grupy, koalescencja, resync | [`docs/backend/realtime-signalr.md`](docs/backend/realtime-signalr.md) |
-| Migracja EF, mapowanie agregatu, seed, drzewo/closure table | [`docs/backend/persistence-ef.md`](docs/backend/persistence-ef.md) |
-| Autoryzacja/role/uprawnienia — Keycloak (AuthN), moduł Identity (AuthZ), `grant_audit`, wygasające nadania, wymuszone wylogowanie | [`docs/backend/identity-authz.md`](docs/backend/identity-authz.md) |
-| Skalowanie poziome / druga instancja serwisu — dzierżawy `SKIP LOCKED`, rozdział ról Hub/Relay, backplane, kolejność faz | [`docs/backend/multi-instance.md`](docs/backend/multi-instance.md) |
-| Obieg dokumentu (DMS) — `Document`/`DocumentType` ze slotami sortowalnymi, szablon vs instancja ze snapshotem, silnik na tokenach, `document_acl` per dokument, ingest KSeF, metryka archiwalna, kontrakt listy zależnej od typu, granica z księgowością | [`docs/backend/dms-workflow.md`](docs/backend/dms-workflow.md) |
-| Podział na strony w DMS — które ekrany, dlaczego typ dokumentu nie jest osobną stroną, karta dokumentu vs prawy panel, edytor grafu poza `erp-grid-layout`, menu i uprawnienia | [`docs/frontend/dms-pages.md`](docs/frontend/dms-pages.md) |
-| Task Management — **co budujemy i po czym poznamy, że działa**: wymagania z kryteriami akceptacji (`ISS-001`, `BRD-002`…), zakres MVP, decyzje odrzucone (workspace, EAV, CRUD-owe API) | [`docs/backend/task-management-requirements.md`](docs/backend/task-management-requirements.md) |
-| Zarządzanie pracą (Task Management, wzorzec YouTrack) — `Issue` zamiast `Task`, klucz `DEV-123` i licznik per projekt, automat stanów jako dana, pola niestandardowe na slotach, `rank` na tablicy i współbieżny drag&drop, zlecenia międzydziałowe | [`docs/backend/task-management.md`](docs/backend/task-management.md) |
-| Podział na strony w Task Management — projekt jako kontekst listy, tablica poza `erp-grid-layout`, karta zgłoszenia po kluczu czytelnym, zlecenia jako osobna strona, menu i uprawnienia | [`docs/frontend/task-management-pages.md`](docs/frontend/task-management-pages.md) |
-| Raport (zestawienie, agregacja, plik do pobrania) — dlaczego nie osobny mikroserwis, `ReportRun`/`IReportDefinition`, izolacja zasobów (sloty `Map`/`Reduce`, rola workera, pula połączeń, replika) | [`docs/backend/reporting.md`](docs/backend/reporting.md) |
-| Wdrożenie produkcyjne — obrazy kontenerów, konfiguracja i sekrety poza repo, gateway/TLS, migracje jako krok wdrożenia, health checks, backup, CI/CD | [`docs/backend/production.md`](docs/backend/production.md) |
-| Obserwowalność produkcyjna — health checks (`live`/`ready`/`deps`), co alertować w tej architekturze (outbox, `job`, Relay), korelacja po `X-Request-Id`, retencja i limity | [`docs/backend/observability.md`](docs/backend/observability.md) |
+| aktualizacja dokumentacji po zmianie funkcji; review dokumentacji | [`docs/contributing/documentation.md`](docs/contributing/documentation.md) |
+| architektura backendu; granice mikroserwisów i danych | [`docs/architecture/backend.md`](docs/architecture/backend.md) |
+| architektura frontendu; Native Federation lub granice bibliotek Nx | [`docs/architecture/frontend.md`](docs/architecture/frontend.md) |
+| autoryzacja role i uprawnienia; Keycloak i Identity | [`docs/architecture/security.md`](docs/architecture/security.md) |
+| domena DMS lub obieg dokumentu; DocumentType workflow ACL lub KSeF | [`docs/modules/dms/domain-workflow.md`](docs/modules/dms/domain-workflow.md) |
+| domena Task Management; Issue workflow board lub automation | [`docs/modules/task-management/domain.md`](docs/modules/task-management/domain.md) |
+| eksport raport lub plik do pobrania; IArtifactStore i MinIO | [`docs/guides/backend/exports-artifacts.md`](docs/guides/backend/exports-artifacts.md) |
+| gdzie umieścić plik w repozytorium; mapa katalogów monorepo | [`docs/reference/repository-map.md`](docs/reference/repository-map.md) |
+| komenda lub zapytanie CQRS; pipeline komend i X-Request-Id | [`docs/guides/backend/cqrs.md`](docs/guides/backend/cqrs.md) |
+| migracja EF lub mapowanie agregatu; seed lub closure table | [`docs/guides/backend/persistence-ef.md`](docs/guides/backend/persistence-ef.md) |
+| multimedia produktu; upload miniatura lub biblioteka mediów | [`docs/guides/frontend/multimedia.md`](docs/guides/frontend/multimedia.md) |
+| nazwanie komendy lub endpointu; zmiana kontraktu NSwag | [`docs/guides/backend/endpoint-naming.md`](docs/guides/backend/endpoint-naming.md) |
+| nowy atom UI; Single Config Builder | [`docs/guides/frontend/atoms.md`](docs/guides/frontend/atoms.md) |
+| nowy mikroserwis backendowy; nowy DbContext lub moduł backendowy | [`docs/guides/backend/new-microservice.md`](docs/guides/backend/new-microservice.md) |
+| nowy modal lazy loaded; ErpModalService | [`docs/guides/frontend/modals.md`](docs/guides/frontend/modals.md) |
+| nowy moduł frontendowy; nowy remote Native Federation | [`docs/guides/frontend/new-module.md`](docs/guides/frontend/new-module.md) |
+| nowy page dla agregatu; panel zależny od zaznaczenia | [`docs/guides/frontend/pages.md`](docs/guides/frontend/pages.md) |
+| obserwowalność produkcyjna; health check alert lub korelacja X-Request-Id | [`docs/operations/observability.md`](docs/operations/observability.md) |
+| operacja masowa bulk; BatchEndpointBase lub BulkCommandRunner | [`docs/guides/backend/bulk-commands.md`](docs/guides/backend/bulk-commands.md) |
+| optymistyczna aktualizacja; ErpOptimisticStore | [`docs/guides/frontend/optimistic-updates.md`](docs/guides/frontend/optimistic-updates.md) |
+| orkiestrator data-access; cache IdentityMapStore lub drzewo | [`docs/guides/frontend/orchestrators.md`](docs/guides/frontend/orchestrators.md) |
+| pliki w module biznesowym; usuwanie lub sprzątanie multimediów | [`docs/guides/backend/media-storage.md`](docs/guides/backend/media-storage.md) |
+| port aplikacji lub mikroserwisu; konflikt portów w środowisku lokalnym | [`docs/reference/ports.md`](docs/reference/ports.md) |
+| powiadomienie dla człowieka z modułu; UserNotificationRequested | [`docs/modules/notification/user-notifications.md`](docs/modules/notification/user-notifications.md) |
+| powiadomienie lub toast na froncie; historia zadań i pobieranie artefaktu | [`docs/guides/frontend/notifications.md`](docs/guides/frontend/notifications.md) |
+| przegląd architektury całego systemu; ustalenie granicy między modułami | [`docs/architecture/system-overview.md`](docs/architecture/system-overview.md) |
+| raport zestawienie lub agregacja; ciężki przebieg Map Reduce | [`docs/architecture/reporting.md`](docs/architecture/reporting.md) |
+| SignalR i nowa sygnatura agregatu; realtime resync lub koalescencja | [`docs/architecture/realtime.md`](docs/architecture/realtime.md) |
+| skalowanie poziome lub druga instancja; cluster safe background service | [`docs/architecture/multi-instance.md`](docs/architecture/multi-instance.md) |
+| smart tabela dla agregatu; paginowana lista serwerowa | [`docs/guides/frontend/smart-tables.md`](docs/guides/frontend/smart-tables.md) |
+| strony DMS; karta dokumentu lub edytor obiegu | [`docs/modules/dms/screens.md`](docs/modules/dms/screens.md) |
+| strony Task Management; układ listy zgłoszeń tablicy lub projektu | [`docs/modules/task-management/screens.md`](docs/modules/task-management/screens.md) |
+| struktura katalogów feature; gdzie umieścić page modal lub komponent | [`docs/guides/frontend/feature-structure.md`](docs/guides/frontend/feature-structure.md) |
+| tłumaczenia Transloco; brak tłumaczenia lub DI shadowing | [`docs/guides/frontend/translations.md`](docs/guides/frontend/translations.md) |
+| użytkownik w module innym niż Identity; picker osoby lub ERP_USER_DIRECTORY | [`docs/guides/frontend/user-directory.md`](docs/guides/frontend/user-directory.md) |
+| walidacja wsadowa; IBatchRule lub ValidationChain | [`docs/guides/backend/batch-validation.md`](docs/guides/backend/batch-validation.md) |
+| wdrożenie produkcyjne; gateway TLS backup lub migracje wdrożeniowe | [`docs/operations/production.md`](docs/operations/production.md) |
+| wymagania Task Management; kryteria akceptacji Issue | [`docs/modules/task-management/requirements.md`](docs/modules/task-management/requirements.md) |
+| zaznacz wszystko lub akcja masowa; ErpSelectionScope | [`docs/guides/frontend/selection-scope.md`](docs/guides/frontend/selection-scope.md) |
+| zdarzenie domenowe lub integracyjne; outbox i konsument RabbitMQ | [`docs/architecture/integration-events.md`](docs/architecture/integration-events.md) |
+| zmiana w module Catalog; produkt multimedia gwarancja lub raport Catalogu | [`docs/modules/catalog/architecture.md`](docs/modules/catalog/architecture.md) |
+| znaczenie pojęcia architektonicznego | [`docs/reference/glossary.md`](docs/reference/glossary.md) |
+<!-- generated:documentation-index:end -->
 
 **Mapa portów (frontend)**: client 4200, catalog 4201, inventory 4202, sales 4203, dms 4204, task-management 4205, notification 4206, identity 4207, nowy moduł → następny wolny.
 **Mapa portów (backend, HTTP dev)**: catalog 5149, notification 5250, sales 5269, identity 5280, task-management 5290 — Inventory i Dms nie mają jeszcze backendu ani portu.
 
 ## Backend
 
-.NET 10 C# — **mikroserwisy**, każdy moduł frontendowy woła bezpośrednio API swojego mikroserwisu (`API_BASE_URL` per moduł, patrz `remote-api.providers.ts`). **Brak warstwy BFF/agregacji.** Pełny obraz i stan wdrożenia poszczególnych elementów → [`docs/backend/architecture.md`](docs/backend/architecture.md#1-stan-wdrożenia).
+.NET 10 C# — **mikroserwisy**, każdy moduł frontendowy woła bezpośrednio API swojego mikroserwisu (`API_BASE_URL` per moduł, patrz `remote-api.providers.ts`). **Brak warstwy BFF/agregacji.** Pełny obraz granic i mechanizmów → [`docs/architecture/backend.md`](docs/architecture/backend.md#1-zakres-architektury).
 
 - **Clean Architecture per moduł**: `Domain` (agregaty, reguły, zdarzenia domenowe — zero EF/ASP.NET) → `Application` (komendy/handlery/zapytania, zna tylko abstrakcje) → `Infrastructure` (`DbContext`, EF, migracje, repozytoria, konsumery) → `Api` (endpointy FastEndpoints, `Program.cs`). Granice wymuszone testem `Erp.ArchitectureTests` (NetArchTest) — odpowiednik `@nx/enforce-module-boundaries` z frontu.
 - **CQRS**: zapis przez `ICommand<T>`/`CommandHandler<,>` (FastEndpoints jako typy komendy/handlera, ale dyspozycja przez własny `ICommandDispatcher`, nie przez szynę FastEndpoints) + `IUnitOfWork`, agregat zawsze ze śledzeniem zmian. Każda komenda idzie przez pipeline: logowanie → walidacja wejścia (`IValidator<TCommand>`) → jednostka pracy → idempotencja (`X-Request-Id`). Handler **nie woła** `SaveChanges`; wywołujący, który chce jednej transakcji dla paczki komend, przejmuje granicę przez `dispatcher.OwnTransaction()`. Wyjątki mapuje na `ProblemDetails` `ErpProblemDetailsHandler`. Odczyt świadomie omija repozytoria — `AsNoTracking`, projekcja wprost do DTO przez `IXxxQueries`. Reguła: metoda agregatu waliduje **przed** zmianą stanu — na tym opiera się częściowy sukces operacji masowych.
@@ -89,7 +96,7 @@ Ten plik jest zawsze wczytywany na starcie sesji. Pełne, szczegółowe przepisy
 - **Zdarzenia**: domain event (wewnątrz modułu) ≠ integration event (`Erp.BuildingBlocks.Contracts`, wersjonowany, tylko dodawanie pól). „Coś się zmieniło” (`AggregateChanged`) generuje się **automatycznie** ze skanu ChangeTrackera EF — handler komendy nigdy o tym nie pamięta ręcznie. Transactional outbox (Wolverine + RabbitMQ): koperta zapisuje się w **tej samej transakcji** co dane.
 - **Operacje masowe**: kontrakt HTTP (`BatchCommand<T,TFilter>` → `BatchResult{JobUuid}`) jest zamrożony. Wykonanie idzie przez trwałe `job`/`job_item` w bazie i `BulkCommandRunner` (chunk = transakcja, sukces częściowy dozwolony) — nie przez kolejkę w pamięci.
 - **Rejestracje DI nie idą do `Program.cs`**: handlery komend, reguły (`IBatchRule<T>`) i walidatory wsadowe (`IBatchValidator`), egzekutory zadań masowych oraz implementacje nazwane po interfejsie (`IProductQueries` → `ProductQueries`) wyłapuje skan zestawów w `AddErpModule` (`Erp.BuildingBlocks.Api`). Nowa komenda, reguła czy repozytorium **nie dopisuje `AddScoped`** nigdzie — ma tylko implementować właściwy interfejs i leżeć w `{Modul}.Application`/`{Modul}.Infrastructure`. Jawne zostają wyłącznie rejestracje niosące decyzję (nadpisania, hosted services, seedy, cykl życia inny niż scoped) — te wygrywają z konwencją.
-- **Pliki**: **nie ma i nie będzie centralnego mikroserwisu do multimediów** — każdy moduł rozmawia z MinIO sam, przez `Erp.BuildingBlocks.Artifacts`. Moduł biznesowy jest właścicielem swoich plików, bo referencja i rekord pliku muszą leżeć w jednej transakcji (inaczej nie da się bezpiecznie sprzątać). Separacja dostępu idzie po trzech niezależnych osiach: uprawnienie na endpointcie (kto widzi plik), kubełek per moduł i klasa (jak długo żyje), klucz MinIO per serwis (co serwis w ogóle może dosięgnąć). Sprzątanie: lifecycle na prefiksie postojowym + outbox + kaskada w transakcji — **nie** worker kasujący po zerowej referencji. Szczegóły → [`docs/backend/media-storage.md`](docs/backend/media-storage.md).
+- **Pliki**: **nie ma i nie będzie centralnego mikroserwisu do multimediów** — każdy moduł rozmawia z MinIO sam, przez `Erp.BuildingBlocks.Artifacts`. Moduł biznesowy jest właścicielem swoich plików, bo referencja i rekord pliku muszą leżeć w jednej transakcji (inaczej nie da się bezpiecznie sprzątać). Separacja dostępu idzie po trzech niezależnych osiach: uprawnienie na endpointcie (kto widzi plik), kubełek per moduł i klasa (jak długo żyje), klucz MinIO per serwis (co serwis w ogóle może dosięgnąć). Sprzątanie: lifecycle na prefiksie postojowym + outbox + kaskada w transakcji — **nie** worker kasujący po zerowej referencji. Szczegóły → [`docs/guides/backend/media-storage.md`](docs/guides/backend/media-storage.md).
 - **SignalR**: jeden centralny hub, wyłącznie w Notification (`/hubs/sync`). Inne moduły publikują tylko `AggregateChanged`, nic nie wiedzą o SignalR. Sygnatury (`catalog.product`, `sales.customer`, `jobs`...) to kontrakt z frontendem — jedno źródło prawdy w `AggregateSignatures`, musi się zgadzać ze `signalrSignature` w orkiestratorach.
-- **Wiele instancji jest wspierane** — wybór zadania masowego idzie przez `FOR UPDATE SKIP LOCKED`, eksport przez krótkie przejęcie i `heartbeat_at`, usługi cykliczne i praca startowa przez dzierżawę na advisory locku Postgresa, cache uprawnień przez broadcast na `erp.broadcast`, a realtime przez rozdział ról `Realtime:Role` (`Hub`/`Relay`) i backplane Redis. Redis jest potrzebny **wyłącznie** jako backplane SignalR; wszystko inne idzie przez Postgresa. Nowa usługa tła musi zadeklarować `[ClusterSafe(powód)]` — wymusza to test `BackgroundServiceTests`. Szczegóły: [`architecture.md` §7](docs/backend/architecture.md#7-wieloinstancyjność--założenia-zdjęte) i [`multi-instance.md`](docs/backend/multi-instance.md). Nie dokładaj stanu współdzielonego w pamięci procesu bez odpowiedzi, co się z nim dzieje przy drugiej instancji.
+- **Wiele instancji jest wspierane** — wybór zadania masowego idzie przez `FOR UPDATE SKIP LOCKED`, eksport przez krótkie przejęcie i `heartbeat_at`, usługi cykliczne i praca startowa przez dzierżawę na advisory locku Postgresa, cache uprawnień przez broadcast na `erp.broadcast`, a realtime przez rozdział ról `Realtime:Role` (`Hub`/`Relay`) i backplane Redis. Redis jest potrzebny **wyłącznie** jako backplane SignalR; wszystko inne idzie przez Postgresa. Nowa usługa tła musi zadeklarować `[ClusterSafe(powód)]` — wymusza to test `BackgroundServiceTests`. Szczegóły: [`architecture.md` §7](docs/architecture/backend.md#7-wieloinstancyjność--założenia-zdjęte) i [`multi-instance.md`](docs/architecture/multi-instance.md). Nie dokładaj stanu współdzielonego w pamięci procesu bez odpowiedzi, co się z nim dzieje przy drugiej instancji.
 - **Kontrakt HTTP jest zamrożony** dla klientów NSwag: nazwa klasy endpointu → nazwa metody klienta (`SearchProductEndpoint` → `searchProduct`), nazwa klasy komendy → nazwa typu w kliencie. Zmiana wymaga świadomej regeneracji, nie przypadkowego przemianowania.

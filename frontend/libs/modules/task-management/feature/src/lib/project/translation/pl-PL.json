@@ -275,6 +275,12 @@
       "save": "Zapisz SLA",
       "saveFailed": "Nie udało się zapisać SLA projektu."
     },
+    "notifications": {
+      "title": "Powiadomienia",
+      "muteLabel": "Wycisz powiadomienia z tego projektu",
+      "muteHint": "Wyciszenie nie dotyczy bezpośrednich wzmianek @ — te zawsze do Ciebie dotrą.",
+      "saveFailed": "Nie udało się zapisać ustawienia powiadomień."
+    },
     "workflow": {
       "title": "Schemat stanów",
       "noScheme": "Ten projekt nie ma jeszcze podpiętego schematu stanów.",

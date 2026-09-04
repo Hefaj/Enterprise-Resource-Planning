@@ -2,7 +2,7 @@ namespace TaskManagement.Domain.Workflow;
 
 /// <summary>
 /// Schemat systemowy dla projektów <c>Intake</c> — zamawiający składa zlecenie, dział je
-/// przyjmuje i realizuje, zamawiający odbiera (<c>docs/backend/task-management.md</c> §9,
+/// przyjmuje i realizuje, zamawiający odbiera (<c>docs/modules/task-management/domain.md</c> §9,
 /// REQ-004 AC3).
 ///
 /// <para>Osobny schemat od <see cref="WorkflowSchemeDefaults"/>, nie parametr tego samego:

@@ -26,7 +26,7 @@ public static class AggregateSignatures
     public const string CatalogAttribute = "catalog.attribute";
 
     /// <summary>
-    /// Przebiegi raportu/eksportu (patrz <c>docs/backend/reporting.md</c>).
+    /// Przebiegi raportu/eksportu (patrz <c>docs/architecture/reporting.md</c>).
     ///
     /// <para>Ten kanał służy synchronizacji cache — leci na niego zmiana statusu przebiegu
     /// do WSZYSTKICH subskrybentów sygnatury. Powiadomieniem „twój raport jest gotowy" jest
@@ -64,7 +64,7 @@ public static class AggregateSignatures
     /// Zgłoszenie w module Task Management. Prefiks to <c>taskmgmt</c>, nie <c>task</c> —
     /// <see cref="Jobs"/> i <see cref="NotificationJob"/> zajmują już pole semantyczne
     /// „zadanie” i w logach nie dałoby się ich rozróżnić
-    /// (<c>docs/backend/task-management.md</c> §2).
+    /// (<c>docs/modules/task-management/domain.md</c> §2).
     /// </summary>
     public const string TaskManagementIssue = "taskmgmt.issue";
 
@@ -76,7 +76,7 @@ public static class AggregateSignatures
 
     /// <summary>Komentarz pod zgłoszeniem. Osobny kanał od <see cref="TaskManagementIssue"/>,
     /// bo dyskusja toczy się bez zmiany samego zgłoszenia — a karta ma dopisać cudzą wypowiedź
-    /// bez przeładowania (<c>docs/backend/task-management.md</c> §11).</summary>
+    /// bez przeładowania (<c>docs/modules/task-management/domain.md</c> §11).</summary>
     public const string TaskManagementIssueComment = "taskmgmt.issue_comment";
 
     /// <summary>Schemat stanów. Zmiana schematu przestawia kolumny tablicy i przyciski przejść
@@ -86,7 +86,7 @@ public static class AggregateSignatures
 
     /// <summary>Powiązanie między zgłoszeniami. Osobny kanał od <see cref="TaskManagementIssue"/>,
     /// bo dopięcie blokady nie zmienia żadnego z dwóch zgłoszeń, a pasek powiązań ma się
-    /// odświeżyć na OBU kartach naraz (<c>docs/backend/task-management.md</c> §8.1).</summary>
+    /// odświeżyć na OBU kartach naraz (<c>docs/modules/task-management/domain.md</c> §8.1).</summary>
     public const string TaskManagementIssueLink = "taskmgmt.issue_link";
 
     /// <summary>Schemat pól niestandardowych. Zmiana definicji pola przestawia kolumny listy
@@ -95,7 +95,7 @@ public static class AggregateSignatures
     public const string TaskManagementFieldScheme = "taskmgmt.field_scheme";
 
     /// <summary>Tablica i kolejność kart — kanał wchodzi w fazie 2
-    /// (<c>docs/backend/task-management.md</c> §7.4).</summary>
+    /// (<c>docs/modules/task-management/domain.md</c> §7.4).</summary>
     public const string TaskManagementBoard = "taskmgmt.board";
 
     /// <summary>Sprint — iteracja tablicy scrumowej (faza 6, SPR-001). Zamknięcie przenosi karty
@@ -117,7 +117,7 @@ public static class AggregateSignatures
     /// <summary>Rodzaj pracy — słownik globalny plus projektowy (faza 6, TIME-001 AC2).</summary>
     public const string TaskManagementWorkType = "taskmgmt.work_type";
 
-    /// <summary>Przebiegi raportu Task Management (patrz <c>docs/backend/reporting.md</c>) —
+    /// <summary>Przebiegi raportu Task Management (patrz <c>docs/architecture/reporting.md</c>) —
     /// mirror <see cref="CatalogReportRun"/>, jedna sygnatura per moduł wykonujący, bo
     /// <c>ReportRun</c> mieszka we własnej tabeli własnego schematu.</summary>
     public const string TaskManagementReportRun = "taskmgmt.report_run";

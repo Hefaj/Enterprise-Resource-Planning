@@ -17,7 +17,7 @@ public sealed record RoleMemberTarget(Guid ContainerUuid, Guid MemberUuid);
 /// razy (żadna krawędź jeszcze nie istnieje w bazie w chwili pre-checku) i zamknęłaby cykl.
 /// <c>RoleAddMemberCommandHandler</c> nadal woła <c>IsDescendantAsync</c> jako DRUGĄ linię
 /// obrony — łapie cykle względem wcześniej zacommitowanych zadań, nie względem tego samego
-/// wsadu (patrz <c>docs/backend/identity-bulk-migration.md</c> §1.3).</para>
+/// wsadu (patrz <c>docs/guides/backend/batch-validation.md</c>).</para>
 ///
 /// <para><b>Algorytm.</b> Jedno zapytanie ładuje CAŁY graf <c>role_member</c>
 /// (<see cref="IRoleQueries.GetAllMembershipEdgesAsync"/>) do pamięci. Elementy wsadu idą

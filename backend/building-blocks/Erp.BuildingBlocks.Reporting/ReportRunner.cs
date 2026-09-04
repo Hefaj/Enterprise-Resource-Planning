@@ -16,7 +16,7 @@ namespace Erp.BuildingBlocks.Reporting;
 /// <summary>
 /// Wykonuje przebiegi raportów — jeden silnik dla WSZYSTKICH definicji wszystkich modułów,
 /// zarejestrowany raz na moduł z jego własnym <typeparamref name="TContext"/> (patrz
-/// <c>docs/backend/reporting.md</c> §2-4). Uogólnienie dzisiejszego
+/// <c>docs/architecture/reporting.md</c> §2-4). Uogólnienie dzisiejszego
 /// <c>Catalog.Infrastructure.Jobs.ExportRunner</c> — eksport staje się jedną z definicji
 /// (<c>catalog.product-export</c>), nie osobnym runnerem.
 ///

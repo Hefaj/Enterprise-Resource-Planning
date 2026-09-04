@@ -39,12 +39,12 @@ interface CustomFieldControl {
  *
  * <p><b>Formularz buduje się z profilu projektu</b> (`getProjectFieldProfile`), nigdy ze stałej
  * w komponencie — ten sam profil, z którego backend czyta whitelistę sortowania i z którego
- * lista bierze kolumny (`docs/backend/task-management.md` §6). Projekt bez schematu pól nie
+ * lista bierze kolumny (`docs/modules/task-management/domain.md` §6). Projekt bez schematu pól nie
  * pokazuje tej sekcji w ogóle: pusty nagłówek nad niczym jest gorszy niż jego brak.</p>
  *
  * <p>Zapis idzie <b>całą mapą naraz</b>, bo komenda ma człon w liczbie mnogiej: to, co przyszło,
  * jest tym, co zostaje, a pole wyczyszczone znika razem ze swoim slotem
- * (`docs/backend/endpoint-naming.md` §2).</p>
+ * (`docs/guides/backend/endpoint-naming.md` §2).</p>
  */
 @Component({
   selector: 'erp-task-management-issue-custom-fields',

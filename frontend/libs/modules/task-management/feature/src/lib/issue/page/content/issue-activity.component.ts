@@ -46,7 +46,7 @@ import { ISSUE_KEYS } from '../../translation';
 
 /**
  * Wrapper `feature` nad `erp-activity-stream` (`ui`) — łączy komentarze i historię w jeden
- * strumień (`docs/frontend/task-management-pages.md` §9.1, decyzja 2). Cała logika komend,
+ * strumień (`docs/modules/task-management/screens.md` §9.1, decyzja 2). Cała logika komend,
  * cache’u i zdarzeń realtime zostaje tutaj; atom w `ui` tylko renderuje i filtruje.
  *
  * <p><b>Kolejność w strumieniu jest rosnąca</b> (najstarsze pierwsze), inaczej niż dawna sekcja
@@ -319,7 +319,7 @@ export class IssueActivityComponent {
   }
 
   /** Pole nazwy PRZED interpolacją — Transloco nie rozwiązuje kluczy zagnieżdżonych w
-   * parametrach (`docs/frontend/task-management-pages.md` §2.3). */
+   * parametrach (`docs/modules/task-management/screens.md` §2.3). */
   private _sentenceOf(entry: IssueActivityDto): { sentenceKey: string; params?: Record<string, string> } {
     const keys = ISSUE_KEYS.detail.history;
 
@@ -419,7 +419,7 @@ export class IssueActivityComponent {
   }
 
   /**
-   * Nakładka optymistyczna (`docs/frontend/optimistic-updates.md`) zastępuje dotychczasowe
+   * Nakładka optymistyczna (`docs/guides/frontend/optimistic-updates.md`) zastępuje dotychczasowe
    * `erpAwaitJobAsync` + wymuszony refetch: komentarz pojawia się na liście NATYCHMIAST po
    * Enter, pod tym samym uuidem, którym serwer w końcu odpowie (`addCommentAsync` respektuje
    * `command.uuid`, gdy jest podany) — dzięki temu echo `taskmgmt.issue_comment` nie dubluje

@@ -11,7 +11,7 @@ namespace TaskManagement.Infrastructure.Persistence.Configurations;
 /// zgłoszenia zabiera jego pliki w tej samej transakcji, więc nie ma stanu pośredniego,
 /// w którym wiersz już nie istnieje, a obiekt w magazynie jeszcze tak. Bajty z magazynu zdejmuje
 /// potem konsument zdarzenia — tą samą drogą co w Catalogu
-/// (<c>docs/backend/media-storage.md</c> §4c).</para>
+/// (<c>docs/guides/backend/media-storage.md</c> §4c).</para>
 /// </summary>
 public sealed class IssueAttachmentConfiguration : IEntityTypeConfiguration<IssueAttachment>
 {

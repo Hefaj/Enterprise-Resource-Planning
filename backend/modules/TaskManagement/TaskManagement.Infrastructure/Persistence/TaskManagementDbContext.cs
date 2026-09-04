@@ -24,7 +24,7 @@ namespace TaskManagement.Infrastructure.Persistence;
 ///
 /// <para>Prefiks techniczny to <b>taskmgmt</b>, nie <c>task</c>: <c>job</c>/<c>notification.job</c>
 /// zajmują już pole semantyczne „zadanie” i przy czytaniu logów nie dałoby się ich rozróżnić
-/// (<c>docs/backend/task-management.md</c> §2).</para>
+/// (<c>docs/modules/task-management/domain.md</c> §2).</para>
 ///
 /// <para><see cref="IJobDbContext"/> jest tu od fazy 0, choć operacje masowe wchodzą dopiero
 /// w fazie 6 — dołożenie go później oznaczałoby osobną migrację na dwie tabele, których kształt
@@ -55,7 +55,7 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext, IRepo
     public DbSet<BoardColumn> BoardColumns => Set<BoardColumn>();
 
     /// <summary>Kolejność kart na tablicach. Wiersz powstaje przy pierwszym przestawieniu
-    /// karty, nie przy założeniu zgłoszenia (<c>docs/backend/task-management.md</c> §7.1).</summary>
+    /// karty, nie przy założeniu zgłoszenia (<c>docs/modules/task-management/domain.md</c> §7.1).</summary>
     public DbSet<BoardCard> BoardCards => Set<BoardCard>();
 
     public DbSet<Sprint> Sprints => Set<Sprint>();
@@ -76,7 +76,7 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext, IRepo
 
     /// <summary>Krawędzie grafu powiązań. Hierarchia (<c>issue.parent_uuid</c>) mieszka OSOBNO
     /// i to jest celowe — rodzic ma inne reguły niż link
-    /// (<c>docs/backend/task-management.md</c> §8.1).</summary>
+    /// (<c>docs/modules/task-management/domain.md</c> §8.1).</summary>
     public DbSet<IssueLink> IssueLinks => Set<IssueLink>();
 
     public DbSet<IssueWatcher> IssueWatchers => Set<IssueWatcher>();
@@ -109,7 +109,7 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext, IRepo
     /// <inheritdoc />
     public DbSet<JobItem> JobItems => Set<JobItem>();
 
-    /// <summary>Przebiegi raportu — patrz docs/backend/reporting.md.</summary>
+    /// <summary>Przebiegi raportu — patrz docs/architecture/reporting.md.</summary>
     public DbSet<ReportRun> ReportRuns => Set<ReportRun>();
 
     public DbSet<AutomationRule> AutomationRules => Set<AutomationRule>();
@@ -136,7 +136,7 @@ public sealed class TaskManagementDbContext : ErpDbContext, IJobDbContext, IRepo
         modelBuilder.ApplyConfiguration(new JobConfiguration());
         modelBuilder.ApplyConfiguration(new JobItemConfiguration());
 
-        // Mapowanie ReportRun żyje w BuildingBlocks (patrz docs/backend/reporting.md §3) —
+        // Mapowanie ReportRun żyje w BuildingBlocks (patrz docs/architecture/reporting.md §3) —
         // każdy moduł je aplikuje osobno, do własnej tabeli we własnym schemacie.
         modelBuilder.ApplyConfiguration(new ReportRunConfiguration());
 

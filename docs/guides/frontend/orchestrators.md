@@ -1,3 +1,18 @@
+---
+id: frontend.orchestrators
+title: Orkiestratory (warstwa `data-access`)
+summary: Orkiestratory danych, IdentityMapStore, SignalR i mapowanie DTO do ViewModel.
+kind: guide
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - orkiestrator data-access
+  - cache IdentityMapStore lub drzewo
+related: []
+---
+
 # Orkiestratory (warstwa `data-access`)
 
 Orkiestrator to serwis Angularowy (singleton, `providedIn: 'root'`), który jest właścicielem stanu dla jednego agregatu domenowego (np. `Product`, `Category`, `Warranty`). Odpowiada za:
@@ -8,11 +23,11 @@ Orkiestrator to serwis Angularowy (singleton, `providedIn: 'root'`), który jest
 - mapowanie surowego `DTO` (to, co przyjeżdża z API) na bogaty `ViewModel` (to, czego używa UI),
 - wystawianie reaktywnego API opartego o Signals (`getViewModel()`, `getSignalViewModel()`, `getOne()`).
 
-Bazowa implementacja: [`base-orchestrator.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts). Każdy orkiestrator dziedziczy z `BaseOrchestrator<TDto, TViewModel, TFilters, TLoadOptions>`.
+Bazowa implementacja: [`base-orchestrator.ts`](../../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts). Każdy orkiestrator dziedziczy z `BaseOrchestrator<TDto, TViewModel, TFilters, TLoadOptions>`.
 
-Przykłady referencyjne w tym dokumencie: `CatalogProductOrchestrator` ([`catalog-product.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/catalog-product.orchestrator.ts)), który wzbogaca produkt o kategorie, model, multimedia i gwarancje, oraz `CatalogCategoryOrchestrator` ([`catalog-category.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/category/catalog-category.orchestrator.ts)) — sekcja 5, wzorzec dla danych hierarchicznych.
+Przykłady referencyjne w tym dokumencie: `CatalogProductOrchestrator` ([`catalog-product.orchestrator.ts`](../../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/catalog-product.orchestrator.ts)), który wzbogaca produkt o kategorie, model, multimedia i gwarancje, oraz `CatalogCategoryOrchestrator` ([`catalog-category.orchestrator.ts`](../../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/category/catalog-category.orchestrator.ts)) — sekcja 5, wzorzec dla danych hierarchicznych.
 
-Orkiestrator żyje w warstwie `data-access` — zobacz [architektura frontendu](./architecture.md) dla szerszego kontekstu (5 warstw modułu, Native Federation, granice ESLint).
+Orkiestrator żyje w warstwie `data-access` — zobacz [architektura frontendu](../../architecture/frontend.md) dla szerszego kontekstu (5 warstw modułu, Native Federation, granice ESLint).
 
 ---
 
@@ -264,7 +279,7 @@ protected readonly _rows = computed<ProductWarrantyVM[]>(() =>
 
 To **nie jest wyjątek od zasady orkiestratora** — to rozszerzenie tego samego wzorca o metody, których `TFilters`/`SharedSearchResponse` (płaski `filters → uuid[]`) nie potrafią wyrazić. Orkiestrator zostaje jedynym źródłem prawdy dla agregatu; zmienia się tylko *kształt* zapytania do API, nie właściciel danych.
 
-Referencyjna implementacja: [`catalog-category.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/category/catalog-category.orchestrator.ts), sekcja "Drzewo kategorii". Backend wystawia dla tego dwa dodatkowe endpointy obok zwykłego `search`/`get`: `GetCategoryChildren` (dzieci węzła, paginowane) i `SearchCategoryTree` (dopasowania + ich przodkowie).
+Referencyjna implementacja: [`catalog-category.orchestrator.ts`](../../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/category/catalog-category.orchestrator.ts), sekcja "Drzewo kategorii". Backend wystawia dla tego dwa dodatkowe endpointy obok zwykłego `search`/`get`: `GetCategoryChildren` (dzieci węzła, paginowane) i `SearchCategoryTree` (dopasowania + ich przodkowie).
 
 ```typescript
 // catalog-category.orchestrator.ts
@@ -383,8 +398,8 @@ Odczyt (`search`, `get`) nie potrzebuje niczego takiego — jest idempotentny z 
 
 Orkiestrator nigdy nie pyta użytkownika, czy na pewno. Dialog otwiera smart component z `feature`
 i dopiero potwierdzoną decyzję zamienia na wywołanie komendy
-([`ErpConfirmDialogService.confirmThenAsync`](../../frontend/libs/shared/ui/src/lib/atoms/erp-confirm-dialog/erp-confirm-dialog.service.ts),
-patrz [`atoms.md`](./atoms.md)):
+([`ErpConfirmDialogService.confirmThenAsync`](../../../frontend/libs/shared/ui/src/lib/atoms/erp-confirm-dialog/erp-confirm-dialog.service.ts),
+patrz [`atoms.md`](atoms.md)):
 
 ```typescript
 void this.confirmDialog
@@ -417,7 +432,7 @@ albo wymuszony refetch). W wybranych, pojedynczych miejscach UI — karta zgłos
 pokazać skutek NATYCHMIAST, z uczciwym cofnięciem, gdy zadanie odpadnie. Do tego służy
 `BaseOrchestrator.runOptimisticCommandAsync(uuid, patch, dispatchAsync, options)`, czwarty wariant
 obok tabeli wyżej — pełny opis kontraktu, cyklu życia i zasad „gdzie NIE stosować" w
-[`optimistic-updates.md`](./optimistic-updates.md).
+[`optimistic-updates.md`](optimistic-updates.md).
 
 ## 7. Checklist tworzenia nowego orkiestratora
 
@@ -477,6 +492,6 @@ Przy tworzeniu nowego orkiestratora **jawnie przejdź przez pytania testowe 1–
 
 ## Zobacz też
 
-- Implementacja bazowa: [`base-orchestrator.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts), [`orchestrator.types.ts`](../../frontend/libs/shared/data-access/src/lib/orchestrator/orchestrator.types.ts)
-- Pełny przykład wzorca z sekcji 4: [`product.view-model.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/product.view-model.ts) (definicja `ProductWarrantyVM`), [`catalog-warranty.orchestrator.ts`](../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/warranty/catalog-warranty.orchestrator.ts) (metoda rozwiązująca `resolveWarrantyVMs`)
-- [Nakładki optymistyczne](./optimistic-updates.md) — `runOptimisticCommandAsync`, kiedy pokazywać skutek mutacji natychmiast, a kiedy nie
+- Implementacja bazowa: [`base-orchestrator.ts`](../../../frontend/libs/shared/data-access/src/lib/orchestrator/base-orchestrator.ts), [`orchestrator.types.ts`](../../../frontend/libs/shared/data-access/src/lib/orchestrator/orchestrator.types.ts)
+- Pełny przykład wzorca z sekcji 4: [`product.view-model.ts`](../../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/product/product.view-model.ts) (definicja `ProductWarrantyVM`), [`catalog-warranty.orchestrator.ts`](../../../frontend/libs/modules/catalog/data-access/src/lib/orchestrators/warranty/catalog-warranty.orchestrator.ts) (metoda rozwiązująca `resolveWarrantyVMs`)
+- [Nakładki optymistyczne](optimistic-updates.md) — `runOptimisticCommandAsync`, kiedy pokazywać skutek mutacji natychmiast, a kiedy nie

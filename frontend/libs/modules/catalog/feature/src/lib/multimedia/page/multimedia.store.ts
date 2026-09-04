@@ -12,7 +12,7 @@ import {
  *
  * Wyżej niż przy produktach (100), bo zasób jest tu bytem płaskim: nie ma zależności do
  * doładowania, a orkiestrator i tak chunkuje żądania. Powyżej progu zaznaczenie zostaje
- * filtrem i akcje lecą przez `targetFilter` — patrz docs/frontend/selection-scope.md.
+ * filtrem i akcje lecą przez `targetFilter` — patrz docs/guides/frontend/selection-scope.md.
  */
 export const MULTIMEDIA_SELECTION_MATERIALIZE_LIMIT = 500;
 

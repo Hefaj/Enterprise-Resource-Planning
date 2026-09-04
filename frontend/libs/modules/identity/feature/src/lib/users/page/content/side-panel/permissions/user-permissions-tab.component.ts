@@ -26,12 +26,12 @@ import { UserPermissionGrantRow, UserPermissionsTabStore } from './user-permissi
 
 /**
  * Zakładka „Uprawnienia bezpośrednie" — nadania WSZYSTKICH zaznaczonych użytkowników w JEDNEJ
- * tabeli, pogrupowane po użytkowniku (patrz `docs/frontend/pages.md` §6). Uprawnienia
+ * tabeli, pogrupowane po użytkowniku (patrz `docs/guides/frontend/pages.md` §6). Uprawnienia
  * bezpośrednie to wyjątek z powodem, nie równoprawna ścieżka obok ról — patrz
- * `docs/backend/identity-authz.md` §2.
+ * `docs/architecture/security.md` §2.
  *
  * Odbieranie nadania jest akcją zaznaczenia w toolbarze, nie przyciskiem w komórce wiersza
- * (`docs/frontend/pages.md` §10) — dzięki temu podlega bramkowaniu po uprawnieniach i zasięgu.
+ * (`docs/guides/frontend/pages.md` §10) — dzięki temu podlega bramkowaniu po uprawnieniach i zasięgu.
  */
 @Component({
   selector: 'erp-identity-user-permissions-tab',

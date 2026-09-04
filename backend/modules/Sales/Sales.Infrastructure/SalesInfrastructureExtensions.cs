@@ -43,7 +43,7 @@ public static class SalesInfrastructureExtensions
 
         // Dzierżawa wyłączności idzie razem z kontekstem, bo z niego bierze łańcuch
         // połączenia. Korzystają z niej usługi tła i praca startowa modułu —
-        // patrz docs/backend/multi-instance.md §3.1.
+        // patrz docs/architecture/multi-instance.md §3.1.
         services.AddErpExclusiveLease<SalesDbContext>();
 
         // Repozytoria i zapytania (ICustomerQueries → CustomerQueries) rejestruje `AddErpModule`

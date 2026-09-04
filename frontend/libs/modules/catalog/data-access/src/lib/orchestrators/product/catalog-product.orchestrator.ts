@@ -354,7 +354,7 @@ export class CatalogProductOrchestrator extends BaseOrchestrator<
    *
    * <b>To nie kasuje plików.</b> Zasób jest osobnym agregatem i pozycją biblioteki mediów —
    * znika z katalogu wyłącznie jawną komendą (`multimedia/batch-remove`) albo kaskadą, gdy jego
-   * właściciel zadeklarował go jako `Owned` (`docs/backend/media-storage.md` §4c).
+   * właściciel zadeklarował go jako `Owned` (`docs/guides/backend/media-storage.md` §4c).
    */
   public removeMultimediaMultipleAsync(
     command: BatchCommandOfProductRemoveMultimediaCommandAndSearchProductRequest,

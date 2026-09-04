@@ -11,7 +11,7 @@ namespace Identity.Roles.Command;
 /// w pre-checku (<see cref="RoleBatchValidator.ValidateAddMemberAsync"/> → <c>RoleGraphCycleRule</c>)
 /// — <c>RoleAddMemberCommandHandler</c> nadal woła <c>IsDescendantAsync</c>, ale to DRUGA linia
 /// obrony na stanie zacommitowanym, nie ta, która łapie parę <c>A→B</c> + <c>B→A</c> w jednym
-/// zadaniu (patrz <c>docs/backend/identity-bulk-migration.md</c> §1.3).
+/// zadaniu (patrz <c>docs/guides/backend/batch-validation.md</c>).
 /// </summary>
 public sealed class RoleAddMemberMultipleCommandEndpoint : BatchEndpointBase<RoleAddMemberCommand, SearchRoleRequest>
 {

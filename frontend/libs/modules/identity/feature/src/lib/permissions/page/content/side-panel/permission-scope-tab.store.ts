@@ -5,7 +5,7 @@ import { PermissionsStore } from '../../permissions.store';
 
 /**
  * Wspólna podstawa zakładek panelu strony uprawnień. Mechanika mieszka w `ErpScopeTabStore`
- * (patrz `docs/frontend/pages.md` §6) — tutaj zostaje podłączenie zasięgu strony i katalogu.
+ * (patrz `docs/guides/frontend/pages.md` §6) — tutaj zostaje podłączenie zasięgu strony i katalogu.
  * Jak w rolach: zbiór jest w całości w cache, więc zasięg nigdy nie jest `query`.
  */
 export abstract class PermissionScopeTabStore<TChild = unknown> extends ErpScopeTabStore<

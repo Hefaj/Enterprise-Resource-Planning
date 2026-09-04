@@ -29,7 +29,7 @@ export interface ErpLinkListTypeOption {
 }
 
 /**
- * Pasek powiązań (`docs/frontend/task-management-pages.md` §2.3, §9.1): rodzic, podzadania,
+ * Pasek powiązań (`docs/modules/task-management/screens.md` §2.3, §9.1): rodzic, podzadania,
  * blokady i — od fazy 5 — zlecenie. Prezentacyjny: dane i opcje przychodzą gotowe, dodawanie
  * i usuwanie tylko emitują zdarzenia; komendy i rozwiązywanie klucza→uuid zostają w `feature`.
  */

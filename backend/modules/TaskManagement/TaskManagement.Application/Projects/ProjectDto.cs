@@ -33,7 +33,10 @@ public sealed record ProjectDto(
     /// <summary>Projekt archiwalny (PRJ-004) — tylko do odczytu, ukryty z domyślnych list.</summary>
     bool IsArchived,
     /// <summary>Widok domyślny (VIEW-002) — <c>null</c> znaczy brak, stan normalny.</summary>
-    Guid? DefaultSavedViewUuid);
+    Guid? DefaultSavedViewUuid,
+    /// <summary>Czy WOŁAJĄCY wyciszył powiadomienia z tego projektu (NTF-003) — ustawienie
+    /// osobiste, ten sam wzorzec co <c>IssueDto.IsWatchedByMe</c>.</summary>
+    bool IsNotificationMutedByMe);
 
 /// <summary>Filtry wyszukiwania projektów.</summary>
 public sealed class SearchProjectRequest : PagedRequest
@@ -71,4 +74,13 @@ public interface IProjectQueries
     Task<List<ProjectDto>> GetAsync(IReadOnlyCollection<Guid>? uuids, CancellationToken cancellationToken);
 
     Task<List<Guid>> GetMatchingUuidsAsync(SearchProjectRequest request, CancellationToken cancellationToken);
+}
+
+/// <summary>Wąski odczyt wyciszeń powiadomień per projekt (NTF-003) — używany wyłącznie przez
+/// <c>IssueNotificationPublisher</c> do odfiltrowania odbiorców, więc nie ma powodu przeciągać
+/// przez niego całego <see cref="IProjectQueries"/>. Implementacja w
+/// <c>TaskManagement.Infrastructure</c>.</summary>
+public interface IProjectNotificationMuteQueries
+{
+    Task<HashSet<Guid>> GetMutedUserUuidsAsync(Guid projectUuid, CancellationToken cancellationToken);
 }

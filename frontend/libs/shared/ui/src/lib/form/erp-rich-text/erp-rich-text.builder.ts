@@ -14,7 +14,7 @@ import { ErpRichTextConfig, ErpRichTextImageUploadPort, ErpRichTextToolset } fro
  *
  * <p>Żaden z nazwanych zestawów nie zawiera `TuiEditorTool.Img` na stałe: wstawienie obrazka
  * wymaga wgrania pliku do magazynu modułu i referencji, po której da się posprzątać
- * (`docs/backend/media-storage.md`). Komponent dokłada przycisk obrazka do zestawu sam,
+ * (`docs/guides/backend/media-storage.md`). Komponent dokłada przycisk obrazka do zestawu sam,
  * gdy konfiguracja dostanie {@link ErpRichTextImageUploadPort} przez `setUploadImage` — bez
  * portu wklejenie czy przeciągnięcie obrazka jest cicho ignorowane, tak jak dziś.</p>
  */
@@ -67,7 +67,7 @@ export function erpRichTextToolset(toolset: ErpRichTextToolset): readonly TuiEdi
   return TOOLSETS[toolset];
 }
 
-/** Fluent API konfiguracji `erp-rich-text` (wzorzec Single Config Builder, `docs/frontend/atoms.md`). */
+/** Fluent API konfiguracji `erp-rich-text` (wzorzec Single Config Builder, `docs/guides/frontend/atoms.md`). */
 export class ErpRichTextBuilder extends ErpInputBaseBuilder<ErpRichTextConfig> {
   public setValue(value: MaybeSignal<string | null | undefined>): this {
     this._data.value = value;

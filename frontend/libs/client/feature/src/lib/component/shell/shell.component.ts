@@ -1,5 +1,5 @@
-import { Component, signal, inject, computed, effect, untracked, Injector, Type } from '@angular/core';
-import { RouterOutlet, RouterModule } from '@angular/router';
+import { Component, signal, inject, computed, effect, Injector, Type } from '@angular/core';
+import { Router, RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
 import { ErpBreadcrumbComponent, ErpBreadcrumbBuilder } from '@erp/shared/ui/erp-breadcrumb';
@@ -14,6 +14,8 @@ import {
   ErpWidgetRegistryService,
   JobService,
   UserNotificationService,
+  ErpDocumentationRegistryService,
+  ErpLanguageService,
   JOB_LIST_WIDGET_ID,
   USER_NOTIFICATION_WIDGET_ID,
   ERP_LOGOUT_HANDLER,
@@ -81,6 +83,10 @@ export class ShellLayoutComponent {
   private readonly _userNotifications = inject(UserNotificationService);
   private readonly _logoutHandler = inject(ERP_LOGOUT_HANDLER);
   private readonly _authService = inject(ErpAuthService);
+  private readonly _router = inject(Router);
+  private readonly _documentationRegistry = inject(ErpDocumentationRegistryService);
+  private readonly _language = inject(ErpLanguageService);
+  private _documentationLocale = this._language.language();
 
   /** Zalogowany użytkownik — pokazywany w nagłówku (`erp-user-badge`). `null` w krótkim oknie
    * między startem appki a odczytaniem danych z tokenu, choć guard tras i tak nie wpuszcza tu
@@ -93,7 +99,7 @@ export class ShellLayoutComponent {
   public readonly unreadJobs = this._jobService.unreadCount;
 
   /** Nieprzeczytane powiadomienia osobiste (Faza 5, `UserNotification`) — badge dzwonka
-   * `erp-notifications`. Niezależny licznik, osobny widżet — patrz docs/frontend/notifications.md §10.1. */
+   * `erp-notifications`. Niezależny licznik, osobny widżet — patrz docs/guides/frontend/notifications.md §10.1. */
   public readonly unreadNotificationsCount = this._userNotifications.unreadCount;
 
   /** Czy cokolwiek jeszcze się wykonuje — przycisk zadań zamienia wtedy ikonę na wskaźnik pracy. */
@@ -152,11 +158,18 @@ export class ShellLayoutComponent {
       id: `data-lang-${lang.code}`,
       label: lang.name,
       active: computed(() => this._selectedDataLang() === lang.code),
-      fn: () => this._selectedDataLang.set(lang.code)
+      fn: (): void => this._selectedDataLang.set(lang.code)
     }));
   });
 
   public constructor() {
+    effect(() => {
+      const locale = this._language.language();
+      if (locale === this._documentationLocale) return;
+      this._documentationRegistry.clearLocale(this._documentationLocale);
+      this._documentationLocale = locale;
+    });
+
     this.fontSizeControl.valueChanges.subscribe(val => {
       if (val) {
         this._userPreferences.setFontSize(val as 's' | 'm' | 'l' | 'xl');
@@ -179,6 +192,12 @@ export class ShellLayoutComponent {
       .setIconStart('@tui.menu')
       .setFn(() => this.menuOpen.set(true))
   );
+
+  public readonly helpButtonConfig = ErpButtonBuilder.create((builder) => builder
+    .setAppearance('icon')
+    .setIconStart('@tui.circle-question-mark')
+    .setLabel(SHARED_KEYS.documentation.help)
+    .setFn(() => this.openContextHelp()));
 
   public readonly fontSizeControl = new FormControl(this._userPreferences.fontSize || 'm');
 
@@ -300,10 +319,41 @@ export class ShellLayoutComponent {
   }
 
   /**
+   * Otwiera artykuł przypisany do najgłębszej aktywnej trasy. Gdy ekran nie ma własnego
+   * mapowania, prowadzi do przeglądu dokumentacji modułu, a poza modułem — do centrum pomocy.
+   */
+  public async openContextHelp(): Promise<void> {
+    const routePrefix = this._router.url.split(/[/?#]/).filter(Boolean)[0];
+    const descriptor = this._documentationRegistry.modules()
+      .find((module) => module.routePrefix === routePrefix);
+
+    if (!descriptor) {
+      await this._router.navigate(['/help']);
+      return;
+    }
+
+    let snapshot = this._router.routerState.snapshot.root;
+    while (snapshot.firstChild) snapshot = snapshot.firstChild;
+    const articleId = typeof snapshot.data['documentationArticleId'] === 'string'
+      ? snapshot.data['documentationArticleId']
+      : descriptor.overviewArticleId;
+    const loaded = await this._documentationRegistry.loadIndex(descriptor, this._language.language());
+    const article = loaded.entries.find((entry) => entry.articleId === articleId)
+      ?? loaded.entries.find((entry) => entry.articleId === descriptor.overviewArticleId);
+
+    if (!article) {
+      await this._router.navigate(['/help']);
+      return;
+    }
+
+    await this._router.navigate(['/', descriptor.routePrefix, 'documentation', article.slug]);
+  }
+
+  /**
    * Otwarcie panelu powiadomień: dociąga komponent listy z remota (raz na sesję — rejestr
    * cache'uje wynik). Licznik nieprzeczytanych powiadomień gaśnie wyłącznie przez jawną akcję
    * użytkownika w panelu (`markRead`/`markAllReadAsync`) — `UserNotificationService` nie ma
-   * odpowiednika `JobService.markAllSeen()` (patrz docs/frontend/notifications.md §10.2).
+   * odpowiednika `JobService.markAllSeen()` (patrz docs/guides/frontend/notifications.md §10.2).
    */
   public async openNotifications(): Promise<void> {
     if (this.notificationsWidget()) {

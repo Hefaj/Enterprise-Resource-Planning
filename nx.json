@@ -10,11 +10,11 @@
     },
     "@nx/vitest:test": {
       "cache": true,
-      "inputs": ["default", "^default"]
+      "inputs": ["default", "^default", "userDocumentation"]
     },
     "@angular/build:application": {
       "cache": true,
-      "inputs": ["production", "^production"]
+      "inputs": ["production", "^production", "userDocumentation"]
     }
   },
   "plugins": [
@@ -50,6 +50,11 @@
   },
   "namedInputs": {
     "default": ["{projectRoot}/**/*"],
+    "userDocumentation": [
+      "{workspaceRoot}/frontend/libs/modules/*/feature/src/lib/documentation/**/*.md",
+      "{workspaceRoot}/frontend/libs/modules/*/feature/src/lib/documentation/**/documentation.manifest.json",
+      "{workspaceRoot}/tools/scripts/documentation/**/*"
+    ],
     "production": [
       "default",
       "!{projectRoot}/**/*.Tests/**/*",

@@ -4,7 +4,7 @@ import { ErpSelectionScope, ErpSelectionState } from '@erp/shared/ui';
 
 /**
  * Stan strony `/identity/roles`. Bez filtrów (w odróżnieniu od `UsersStore`) — strona ładuje
- * WSZYSTKIE role na starcie (dziesiątki, nie tysiące, patrz `docs/backend/identity-authz.md`
+ * WSZYSTKIE role na starcie (dziesiątki, nie tysiące, patrz `docs/architecture/security.md`
  * §2), bo `RoleOrchestrator.getContainerRoles()` ("zawarta w") wymaga pełnego zbioru
  * załadowanego w cache, żeby dać poprawny wynik.
  *
@@ -12,7 +12,7 @@ import { ErpSelectionScope, ErpSelectionState } from '@erp/shared/ui';
  * w trybie `client` (`IdentityRolesTableComponent`) — CAŁY zbiór jest już w pamięci, więc
  * „Zaznacz wszystko" nie opisuje filtra o nieznanej liczności: `ErpTableComponent` i tak zwraca
  * kompletną, natychmiastową listę `selectedIds` niezależnie od `isAllSelected`. Zasięg `query`
- * (materializacja, próbka, baner ostrzegawczy z `docs/frontend/selection-scope.md` §2) nie ma
+ * (materializacja, próbka, baner ostrzegawczy z `docs/guides/frontend/selection-scope.md` §2) nie ma
  * tu odpowiednika — nie ma czego materializować, gdy wszystko już jest w cache.
  */
 @Injectable()

@@ -15,7 +15,7 @@ namespace TaskManagement.Domain.Issues;
 ///     załącznikiem zgłoszenia, dokładnie jak w YouTracku;</item>
 ///   <item>sprzątanie jest deterministyczne — plik znika razem ze zgłoszeniem, w tej samej
 ///     transakcji, bez parsowania treści i bez workera zamiatającego po zerowej referencji
-///     (<c>docs/backend/media-storage.md</c> §4c).</item>
+///     (<c>docs/guides/backend/media-storage.md</c> §4c).</item>
 /// </list>
 ///
 /// <para>Dlatego nie ma tu odpowiednika <c>MultimediaOwnership</c>: każdy plik jest „owned",

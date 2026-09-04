@@ -6,10 +6,9 @@ import { ERP_PERMISSIONS } from '@erp/shared/auth';
  * („Dashboard Analityczny Zadań") nie miała żadnego i prowadziła do pustego ekranu.
  *
  * Karta zgłoszenia (`/issue/:key`) nie ma pozycji w menu: wchodzi się na nią z listy albo
- * z linku (`docs/frontend/task-management-pages.md` §7). Pozycja „Tablica" prowadzi do trasy
+ * z linku (`docs/modules/task-management/screens.md` §7). Pozycja „Tablica" prowadzi do trasy
  * bez uuid-a, która rozwiązuje tablicę domyślną i podmienia adres — menu nie ma skąd wziąć
- * identyfikatora konkretnej tablicy. Grupa „Konfiguracja" dochodzi w swojej fazie — pozycja
- * w menu bez działającej strony to dokładnie ten błąd, który usuwamy tą zmianą.
+ * identyfikatora konkretnej tablicy. Pozycja w menu pojawia się dopiero razem z działającą trasą.
  */
 export const remoteMenu: ErpNavigationItem[] = [
   {
@@ -41,5 +40,12 @@ export const remoteMenu: ErpNavigationItem[] = [
     iconId: 'chart-bar',
     route: 'report',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.ReportReadAll,
+  },
+  {
+    label: 'shared.documentation.navigationLabel',
+    labelKey: 'shared.documentation.navigationLabel',
+    iconId: 'book-open',
+    route: 'documentation',
+    requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
 ];

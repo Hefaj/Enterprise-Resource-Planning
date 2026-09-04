@@ -6,7 +6,7 @@ import { IdentityGrantAuditTableComponent } from '../../components/tables/identi
 /**
  * Treść obszaru "content" siatki strony: tabela dziennika audytu. Bez paska akcji — dziennik
  * jest wyłącznie do odczytu, bez zaznaczeń i operacji masowych (patrz
- * `docs/backend/events-outbox.md`).
+ * `docs/architecture/integration-events.md`).
  */
 @Component({
   selector: 'erp-identity-grant-audit-list',

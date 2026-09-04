@@ -6,7 +6,7 @@
  * trzeba dopisać tutaj.
  *
  * Human — projekcja JIT przy logowaniu człowieka. Service — konto serwisowe (klucz
- * integracyjny, API-003) — patrz `docs/backend/identity-authz.md` §2.
+ * integracyjny, API-003) — patrz `docs/architecture/security.md` §2.
  */
 export const USER_ACCOUNT_KIND = {
   Human: 0,

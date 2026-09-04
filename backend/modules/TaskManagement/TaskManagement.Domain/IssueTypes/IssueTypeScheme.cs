@@ -5,7 +5,7 @@ namespace TaskManagement.Domain.IssueTypes;
 /// <summary>
 /// Zestaw typów zgłoszeń dostępnych w projekcie — tak samo jak <c>WorkflowScheme</c> i
 /// <c>FieldScheme</c>, <b>dana, nie klasa</b>: nowy typ <c>Incydent</c> dodany z UI pojawia
-/// się w modalu tworzenia zgłoszenia bez wdrożenia (<c>docs/backend/task-management-requirements.md</c>
+/// się w modalu tworzenia zgłoszenia bez wdrożenia (<c>docs/modules/task-management/requirements.md</c>
 /// TYP-002).
 /// </summary>
 public sealed class IssueTypeScheme : AggregateRoot

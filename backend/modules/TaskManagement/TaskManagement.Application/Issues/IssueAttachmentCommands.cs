@@ -40,7 +40,7 @@ public sealed class IssueAttachmentCreateCommand : ICommand<Guid>, IAggregateCom
 /// <para><b>Promocja idzie PRZED zatwierdzeniem transakcji.</b> Odwrotna kolejność zostawiałaby
 /// przy awarii wiersz wskazujący na poczekalnię, którą lifecycle sprząta po dobie — czyli
 /// zepsuty obrazek u użytkownika. Ta kolejność zostawia w najgorszym razie obiekt bez wiersza:
-/// niewidoczny dla nikogo (<c>docs/backend/media-storage.md</c> §4d).</para>
+/// niewidoczny dla nikogo (<c>docs/guides/backend/media-storage.md</c> §4d).</para>
 /// </summary>
 public sealed class IssueAttachmentCreateCommandHandler : CommandHandler<IssueAttachmentCreateCommand, Guid>
 {
@@ -150,7 +150,7 @@ public sealed class IssueRemoveAttachmentCommand : ICommand<Guid>, IAggregateCom
 /// wywołaniem <c>DeleteAsync</c> tutaj</b>. Baza i MinIO nie są w jednej transakcji: rollback tej
 /// komendy nie może zostawić wiszącego wywołania do magazynu, a padnięcie magazynu nie może
 /// zablokować usunięcia wiersza. <see cref="ArtifactDeletionRequested"/> idzie tą samą drogą,
-/// co w Catalogu (<c>docs/backend/media-storage.md</c> §4b) — konsument
+/// co w Catalogu (<c>docs/guides/backend/media-storage.md</c> §4b) — konsument
 /// (<c>ArtifactDeletionRequestedHandler</c>) woła <c>DeleteAsync</c> po zatwierdzeniu transakcji,
 /// z ponowieniami, tolerując brak obiektu.
 /// </summary>

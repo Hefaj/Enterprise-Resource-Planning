@@ -23,7 +23,7 @@ export interface ErpToastConfig {
    *
    * Przetłumaczenie w miejscu wywołania zamraża język w chwili wystrzelenia — przełączenie
    * języka nie odświeżyłoby widocznego toasta. Poza tym łamałoby regułę „zero hardcoded
-   * stringów" (patrz docs/frontend/translations.md).
+   * stringów" (patrz docs/guides/frontend/translations.md).
    */
   message: MaybeSignal<Translatable>;
 

@@ -1,3 +1,18 @@
+---
+id: architecture.frontend
+title: Architektura frontendu
+summary: Architektura frontendu Angular NX, Native Federation i pięciu warstw modułów.
+kind: architecture
+scope: frontend
+audience:
+  - frontend
+  - agent
+triggers:
+  - architektura frontendu
+  - Native Federation lub granice bibliotek Nx
+related: []
+---
+
 # Architektura frontendu
 
 Frontend to **Angular NX Monorepo** złożony z mikrofrontendów spinanych przez **Native Federation** (federacja modułów oparta o natywne ESM przeglądarki i Esbuild — nie mylić z Webpack Module Federation, mimo podobnego API). Ten dokument opisuje, jak to jest poukładane i dlaczego — skrócona wersja jest wciągnięta wprost do [`CLAUDE.md`](../../CLAUDE.md) (sekcja "Architektura").
@@ -162,10 +177,10 @@ Konsekwencja praktyczna: jeśli edytujesz coś w `libs/shared/**` i zmiana się 
 
 ## 6. Powiązane dokumenty
 
-- [Nowy moduł](./new-module.md) — jak powstaje moduł opisany wyżej, krok po kroku.
-- [Struktura `feature`](./feature-structure.md) → [Page dla agregatu](./pages.md) → [Smart tabele](./smart-tables.md) → [Zasięg zaznaczenia](./selection-scope.md) — ścieżka od katalogu do gotowego ekranu listy.
-- [Orkiestratory (`data-access`)](./orchestrators.md) — jak moduły pobierają, cache'ują i wzbogacają dane agregatów.
-- [Modale](./modals.md), [Atomy UI](./atoms.md), [Tłumaczenia](./translations.md) — pozostałe przepisy zadaniowe, zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md).
-- [Podział na strony w DMS](./dms-pages.md) — 📐 projekt; przykład rozpisania całego modułu na ekrany, razem z modelem domenowym w [`dms-workflow.md`](../backend/dms-workflow.md).
-- Backend: [architektura](../backend/architecture.md), [uprawnienia i bramkowanie UI](../backend/identity-authz.md).
+- [Nowy moduł](../guides/frontend/new-module.md) — jak powstaje moduł opisany wyżej, krok po kroku.
+- [Struktura `feature`](../guides/frontend/feature-structure.md) → [Page dla agregatu](../guides/frontend/pages.md) → [Smart tabele](../guides/frontend/smart-tables.md) → [Zasięg zaznaczenia](../guides/frontend/selection-scope.md) — ścieżka od katalogu do gotowego ekranu listy.
+- [Orkiestratory (`data-access`)](../guides/frontend/orchestrators.md) — jak moduły pobierają, cache'ują i wzbogacają dane agregatów.
+- [Modale](../guides/frontend/modals.md), [Atomy UI](../guides/frontend/atoms.md), [Tłumaczenia](../guides/frontend/translations.md) — pozostałe przepisy zadaniowe, zaindeksowane w [`CLAUDE.md`](../../CLAUDE.md).
+- [Podział na strony w DMS](../modules/dms/screens.md) — 📐 projekt; przykład rozpisania całego modułu na ekrany, razem z modelem domenowym w [`dms-workflow.md`](../modules/dms/domain-workflow.md).
+- Backend: [architektura](backend.md), [uprawnienia i bramkowanie UI](security.md).
 - Praca z komponentami TaigaUI: [`.agents/skills/taiga-ui/SKILL.md`](../../.agents/skills/taiga-ui/SKILL.md).

@@ -15,8 +15,8 @@ public enum ProjectMemberRole
 ///
 /// <para>Identity odpowiada „czy w ogóle wolno ci ruszać zgłoszenia”, ten wiersz —
 /// „w których projektach”. Odwrotny podział (kod uprawnienia per projekt) rozsadza katalog
-/// uprawnień z liczbą działów, patrz <c>docs/backend/identity-authz.md</c> §9
-/// i <c>docs/backend/task-management.md</c> §10.2.</para>
+/// uprawnień z liczbą działów, patrz <c>docs/architecture/security.md</c> §9
+/// i <c>docs/modules/task-management/domain.md</c> §10.2.</para>
 /// </summary>
 public sealed class ProjectMember : Entity
 {

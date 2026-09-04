@@ -3,7 +3,7 @@ import { SignalrSyncService } from '../sync/signalr-sync.service';
 
 /**
  * Licznik nieprzeczytanych powiadomień osobistych (`UserNotification` — Faza 5,
- * `docs/backend/user-notifications.md`) — mieszka w `shared`, tak samo jak {@link JobService}
+ * `docs/modules/notification/user-notifications.md`) — mieszka w `shared`, tak samo jak {@link JobService}
  * i z tego samego powodu: dzwonek stoi w shellu (`scope:host`) i musi znać licznik, zanim
  * ktokolwiek pociągnie zdalny komponent listy z modułu `notification`.
  *

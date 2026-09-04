@@ -21,7 +21,7 @@ export interface ErpTagChipItem {
 
 /**
  * Chipsy — przygotowane pod tagi (faza 6), używane już teraz dla typu i priorytetu
- * (`docs/frontend/task-management-pages.md` §10).
+ * (`docs/modules/task-management/screens.md` §10).
  */
 export interface ErpTagChipsConfig {
   items: MaybeSignal<readonly ErpTagChipItem[]>;

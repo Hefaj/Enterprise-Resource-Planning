@@ -14,7 +14,7 @@ export const PRODUCT_SCOPE_PREVIEW_LIMIT = ERP_SCOPE_PREVIEW_LIMIT;
  *
  * Cała mechanika (zasięg, próbka w trybie `query`, blokada granularnego wyboru, modele widoku
  * po UUID, unieważnianie podzaznaczenia) mieszka w `ErpScopeTabStore` — wspólnym dla wszystkich
- * stron aplikacji, patrz `docs/frontend/pages.md` §6. Tutaj zostaje wyłącznie podłączenie
+ * stron aplikacji, patrz `docs/guides/frontend/pages.md` §6. Tutaj zostaje wyłącznie podłączenie
  * zasięgu strony produktów i orkiestratora produktów oraz aliasy nazw z domeny („produkt"
  * zamiast ogólnego „rodzic"), żeby zakładki czytały się dziedzinowo.
  */

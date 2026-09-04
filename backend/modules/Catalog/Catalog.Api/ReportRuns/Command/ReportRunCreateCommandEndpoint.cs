@@ -53,7 +53,7 @@ public sealed class ReportRunCreateCommandEndpoint : Endpoint<ReportRunCreateCom
         ArgumentNullException.ThrowIfNull(req);
 
         // Granicę transakcji wyznacza pipeline komend — handler świadomie nie woła IUnitOfWork
-        // (patrz docs/backend/cqrs.md §3). Powtórzone żądanie z tym samym `X-Request-Id` nie
+        // (patrz docs/guides/backend/cqrs.md §3). Powtórzone żądanie z tym samym `X-Request-Id` nie
         // zleci drugiego raportu, tylko odda identyfikator pierwszego przebiegu.
         var runUuid = await _dispatcher.SendAsync<ReportRunCreateCommand, Guid>(req, ct);
 

@@ -32,8 +32,8 @@ import {
   TaskManagementIssueOrchestrator,
   TaskManagementTagOrchestrator,
 } from '@erp/task-management/data-access';
-import { CUSTOM_FIELD_DATA_TYPE, ISSUE_PRIORITY } from '@erp/task-management/util';
-import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
+import { CUSTOM_FIELD_DATA_TYPE } from '@erp/task-management/util';
+import { ErpIssuePriorityCellComponent, ErpIssueTagsCellComponent } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS } from '../../../translation';
 import { IssueKeyCellComponent } from './issue-key-cell.component';
@@ -181,7 +181,8 @@ export class TaskManagementIssueTableComponent {
       .addColumn((c) =>
         c
           .setId('priority')
-          .setAccessorFn((row) => this._priorityLabel(row.priority))
+          .setAccessorKey('priority')
+          .setCell(ErpIssuePriorityCellComponent)
           .setHeader(ISSUE_KEYS.table.columns.priority)
           .setSize(130)
           .setGrow(0),
@@ -208,10 +209,10 @@ export class TaskManagementIssueTableComponent {
       .addColumn((c) =>
         c
           .setId('tags')
-          .setAccessorFn((row: IssueVM) => this._tagLabels(row))
           .setHeader(ISSUE_KEYS.table.columns.tags)
           .setEnableSorting(false)
-          .setSize(180),
+          .setSize(180)
+          .setCell(ErpIssueTagsCellComponent, { getTagName: (uuid: string) => this._tagName(uuid) }),
       )
 
       .setOnStateChange((state) => {
@@ -384,35 +385,10 @@ export class TaskManagementIssueTableComponent {
     return true;
   }
 
-  /** Nazwy tagów, przecinkiem — pełne chipsy wg `erp-tag-chips` idą na karcie zgłoszenia
-   * (`IssueTagsComponent`); tabela dostaje tanią odmianę tekstową, bo wiersz ma stałą wysokość
-   * i nie ma tu miejsca na zawijające się chipsy w gęstej liście. */
-  private _tagLabels(row: IssueVM): string {
-    if (!row.tagUuids?.length) {
-      return '';
-    }
-
-    const viewModels = this._tags.getViewModel()();
-
-    return row.tagUuids
-      .map((uuid) => viewModels.get(uuid)?.name)
-      .filter((name): name is string => !!name)
-      .join(', ');
-  }
-
-  private _priorityLabel(priority: number | undefined): string {
-    switch (priority) {
-      case ISSUE_PRIORITY.Critical:
-        return this._transloco.translate(TASKMANAGEMENT_KEYS.priority.critical);
-      case ISSUE_PRIORITY.High:
-        return this._transloco.translate(TASKMANAGEMENT_KEYS.priority.high);
-      case ISSUE_PRIORITY.Low:
-        return this._transloco.translate(TASKMANAGEMENT_KEYS.priority.low);
-      case ISSUE_PRIORITY.Lowest:
-        return this._transloco.translate(TASKMANAGEMENT_KEYS.priority.lowest);
-      default:
-        return this._transloco.translate(TASKMANAGEMENT_KEYS.priority.normal);
-    }
+  /** Nazwa tagu po uuid — komórka `erp-issue-tags-cell` (task-management/ui) woła to jako
+   * statyczną funkcję z `cellInputs`, bo sama nie zna orkiestratora tagów. */
+  private _tagName(uuid: string): string | undefined {
+    return this._tags.getViewModel()().get(uuid)?.name;
   }
 
   private _toSorts(tableState: ErpTableState | null): SortOption[] | undefined {

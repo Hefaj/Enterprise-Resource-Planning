@@ -71,7 +71,7 @@ interface CustomFieldControl {
             } @else if (item.pickerConfig) {
               <erp-input-picker [config]="item.pickerConfig" [control]="item.control" />
             } @else if (item.inputConfig) {
-              <erp-input [config]="item.inputConfig" [formControl]="item.control" />
+              <erp-input [config]="item.inputConfig" [control]="item.control" />
             }
           }
         </div>

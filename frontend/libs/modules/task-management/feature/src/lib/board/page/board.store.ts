@@ -101,6 +101,17 @@ export class BoardStore {
   /** Karta chwycona w tej chwili — po niej liczą się kolumny dozwolone. */
   public readonly draggedCardUuid: Signal<string | null> = this._draggedCardUuid.asReadonly();
 
+  /** Karta z własnym ruchem w toku (nakładka optymistyczna, jeszcze niepotwierdzona przez
+   * serwer) — widok wygasza ją i blokuje drugie przeciągnięcie nad tym samym wierszem. */
+  public readonly pendingCardUuid = computed<string | null>(() => {
+    const board = this._boards.board();
+    if (!board) {
+      return null;
+    }
+
+    return this._optimistic.project<PendingMove>(BOARD_POSITION_SCOPE, board.uuid, undefined)?.cardUuid ?? null;
+  });
+
   /**
    * Kolumny z kartami. Kolumna karty <b>wynika ze stanu zgłoszenia</b>, nie jest przechowywana
    * przy karcie — zduplikowanie jej dałoby dwa źródła prawdy, rozjeżdżające się przy każdej

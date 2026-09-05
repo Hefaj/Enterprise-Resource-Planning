@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 
 import {
@@ -7,6 +7,7 @@ import {
   ErpActionToolbarContextDirective,
   ErpActionToolbarZoneDirective,
   ErpModalService,
+  Translatable,
   erpBuildBatchTargets,
   erpSelectionScopeCount,
 } from '@erp/shared/ui';
@@ -38,6 +39,32 @@ import { TaskManagementIssueTableComponent } from '../../components/tables/task-
 import { ISSUE_KEYS } from '../../translation';
 
 /**
+ * Konfiguracja kontekstu, w którym `IssueTabComponent` jest reużywany — dziś Issue i Request
+ * (`RequestComponent`) dzielą ten sam komponent w całości (`docs/modules/task-management/screens.md`
+ * §3.1: zlecenie to zgłoszenie w projekcie `Intake`, nie osobny agregat). Bez tej konfiguracji
+ * obie strony dzieliłyby też `stateKey`/`menuId` tabeli — kolizja, przez którą szerokości kolumn,
+ * sortowanie i stan menu kolumn jednej listy nadpisywałyby drugą w preferencjach użytkownika.
+ */
+export interface IssueTabContext {
+  readonly stateKey: string;
+  readonly toolbarMenuId: string;
+  readonly createLabel: Translatable;
+  /**
+   * Identyfikatory akcji paska, które w tym kontekście mają zostać całkowicie ukryte —
+   * np. „Ustaw projekt" na liście Zleceń (`docs/modules/task-management/screens.md` §3.1):
+   * przeniesienie do dowolnego projektu pozwoliłoby po cichu wyprowadzić zlecenie poza
+   * rejestry Intake, gdzie już go nie widać.
+   */
+  readonly hiddenActionIds?: readonly string[];
+}
+
+const ISSUE_TAB_CONTEXT_ISSUE: IssueTabContext = {
+  stateKey: 'taskmgmt-issue-list',
+  toolbarMenuId: 'taskmgmt-issue-toolbar',
+  createLabel: ISSUE_KEYS.commands.create.label,
+};
+
+/**
  * Pasek akcji + tabela listy zgłoszeń.
  *
  * <p>Zaznaczenie z tabeli trafia do store'a, nie zostaje lokalne — to jedyna droga, którą zasięg
@@ -61,12 +88,12 @@ import { ISSUE_KEYS } from '../../translation';
   ],
   template: `
     <div class="flex flex-col h-full w-full min-h-0 gap-3 p-4">
-      <div class="flex-1 min-h-0 flex flex-col gap-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar">
-        <erp-action-toolbar [config]="actionToolbar" />
+      <div class="flex-1 min-h-0 flex flex-col gap-2" erpActionToolbarZone [erpActionToolbarContext]="actionToolbar()">
+        <erp-action-toolbar [config]="actionToolbar()" />
 
         <div class="flex-1 min-h-0">
           <erp-task-management-issue-table
-            stateKey="taskmgmt-issue-list"
+            [stateKey]="context().stateKey"
             [filters]="store.filters()"
             (loadingChange)="store.setLoading($event)"
             (selectionChange)="store.setSelection($event)"
@@ -80,6 +107,8 @@ import { ISSUE_KEYS } from '../../translation';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IssueTabComponent {
+  public readonly context = input<IssueTabContext>(ISSUE_TAB_CONTEXT_ISSUE);
+
   protected readonly store = inject(IssueStore);
 
   private readonly _orchestrator = inject(TaskManagementIssueOrchestrator);
@@ -95,9 +124,13 @@ export class IssueTabComponent {
   private readonly _canCreate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueCreate));
   private readonly _canUpdate = computed(() => !this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate));
 
-  protected readonly actionToolbar = ErpActionToolbarBuilder.create((b) =>
+  private _isActionHidden(id: string): boolean {
+    return this._canUpdate() || (this.context().hiddenActionIds?.includes(id) ?? false);
+  }
+
+  protected readonly actionToolbar = computed(() => ErpActionToolbarBuilder.create((b) =>
     b
-      .setMenuId('taskmgmt-issue-toolbar')
+      .setMenuId(this.context().toolbarMenuId)
       .addDefaultGroup((g) =>
         g
           .setId('issue-default')
@@ -106,7 +139,7 @@ export class IssueTabComponent {
           .addAction((a) =>
             a
               .setId('create-issue')
-              .setLabel(ISSUE_KEYS.commands.create.label)
+              .setLabel(this.context().createLabel)
               .setIcon('@tui.plus')
               .setAppearance('success')
               .setHidden(this._canCreate)
@@ -181,7 +214,7 @@ export class IssueTabComponent {
               .setId('set-project')
               .setLabel(ISSUE_KEYS.commands.setProject.label)
               .setIcon('@tui.folder-symlink')
-              .setHidden(this._canUpdate)
+              .setHidden(this._isActionHidden('set-project'))
               .setFn(() => this._openSetProjectModal()),
           ),
       )
@@ -193,7 +226,7 @@ export class IssueTabComponent {
         this._table()?.clearSelection();
       })
       .setPinnedActionIds(['create-issue', 'set-state', 'assign-to-me']),
-  );
+  ));
 
   /** Dwuklik w wiersz otwiera kartę — po KLUCZU czytelnym, nie po uuid, bo ta sama trasa krąży
    * w mailach i commitach (`docs/modules/task-management/screens.md` §2.3). */

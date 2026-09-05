@@ -10270,6 +10270,8 @@ export interface BoardCardDto {
     parentUuid: string | undefined;
     parentTitle: string | undefined;
     swimlaneFieldValue: string | undefined;
+    tagUuids: string[];
+    estimateMinutes: number | undefined;
 
     [key: string]: any;
 }

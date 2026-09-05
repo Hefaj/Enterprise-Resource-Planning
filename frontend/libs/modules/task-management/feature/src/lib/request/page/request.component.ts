@@ -2,10 +2,21 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ErpGridLayoutBuilder, ErpGridLayoutComponent } from '@erp/shared/ui';
 
 import { IssueStore } from '../../issue/page/issue.store';
-import { IssueTabComponent } from '../../issue/page/content/issue-tab.component';
+import { IssueTabComponent, IssueTabContext } from '../../issue/page/content/issue-tab.component';
 import { provideIssueTranslations } from '../../issue/translation';
 import { RequestFilterComponent } from './filters/request-filter.component';
-import { provideRequestTranslations } from '../translation';
+import { provideRequestTranslations, REQUEST_KEYS } from '../translation';
+
+/** Osobny `stateKey`/`menuId` od listy zgłoszeń — inaczej obie strony nadpisywałyby sobie
+ * nawzajem szerokości kolumn, sortowanie i stan menu kolumn w preferencjach użytkownika. */
+/** „Ustaw projekt" jest ukryte tutaj — przeniosłoby zlecenie do dowolnego projektu, nie tylko
+ * Intake, co po cichu zamieniłoby je w zwykłe zgłoszenie i wyprowadziło z tej listy. */
+const REQUEST_TAB_CONTEXT: IssueTabContext = {
+  stateKey: 'taskmgmt-request-list',
+  toolbarMenuId: 'taskmgmt-request-toolbar',
+  createLabel: REQUEST_KEYS.submitRequest,
+  hiddenActionIds: ['set-project'],
+};
 
 /**
  * Strona `/task-management/request` — zlecenia międzydziałowe (faza 5, REQ-002).
@@ -53,6 +64,6 @@ export class RequestComponent {
         gap: '0',
       })
       .fill('filter', RequestFilterComponent)
-      .fill('content', IssueTabComponent),
+      .fill('content', IssueTabComponent, { context: REQUEST_TAB_CONTEXT }),
   );
 }

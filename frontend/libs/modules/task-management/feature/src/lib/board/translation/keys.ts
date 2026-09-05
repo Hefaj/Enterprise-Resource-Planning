@@ -19,10 +19,13 @@ export const BOARD_KEYS = {
     column: {
       count: 'board.column.count',
       wipExceeded: 'board.column.wipExceeded',
+      cardKeyboardHint: 'board.column.cardKeyboardHint',
     },
     swimlane: {
       unassigned: 'board.swimlane.unassigned',
       groupBy: 'board.swimlane.groupBy',
+      expand: 'board.swimlane.expand',
+      collapse: 'board.swimlane.collapse',
       mode: {
         none: 'board.swimlane.mode.none',
         assignee: 'board.swimlane.mode.assignee',

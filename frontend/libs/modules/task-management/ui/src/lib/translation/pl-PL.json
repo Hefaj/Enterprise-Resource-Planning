@@ -1,4 +1,14 @@
 {
+  "navigation": {
+    "module": "Zarządzanie pracą",
+    "issues": "Zgłoszenia",
+    "requests": "Zlecenia",
+    "projects": "Projekty",
+    "boards": "Tablice",
+    "backlog": "Backlog",
+    "reports": "Raport godzin",
+    "configuration": "Konfiguracja"
+  },
   "workflow": {
     "states": {
       "todo": "Do zrobienia",

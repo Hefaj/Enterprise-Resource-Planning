@@ -16,12 +16,10 @@ related: []
 
 # Task Management — podział na strony
 
-**Stan: ✅ fazy 0–1 wdrożone; pozostałe strony 📐 projekt.** Istnieją dwie trasy — lista
-`/task-management/issue` (filtr, tabela serwerowa, akcje masowe) i karta `/task-management/issue/:key`
-(opis w `erp-rich-text`, przejścia stanów ze schematu projektu, załączniki, wątek komentarzy
-i historia zmian). Zaślepka **„Dashboard Analityczny Zadań"** zniknęła z `entry.menu.ts` razem
-z fazą 0 (dashboard robiony pierwszy przez pół roku świeci pustkami). Tablicy, zleceń i grupy „Konfiguracja" w menu nie ma —
-pozycja bez działającej strony jest błędem nawigacji i nie może zostać opublikowana.
+**Stan: ✅ zaimplementowane są lista i karta zgłoszeń, zlecenia, lista i karta projektu,
+tablice z backlogiem, raporty oraz konfiguracja projektu.** Menu publikuje wyłącznie te trasy,
+które mają działający widok i wymagane uprawnienie; nie zawiera zaślepki „Dashboard Analityczny
+Zadań".
 
 Model domenowy, automat stanów, sloty pól i mechanika kolejności na tablicy →
 [`docs/modules/task-management/domain.md`](domain.md).
@@ -56,7 +54,14 @@ menu — pierwsze dwie są przeniesieniem rozstrzygnięć z DMS-u, trzecia jest 
 Lista serwerowa: `erp-grid-layout` + filtr + smart tabela + action toolbar ([`pages.md`](../../guides/frontend/pages.md)).
 Dwa przełączniki nad tabelą:
 
-- **zakres**: `Moje` / `Zgłoszone przeze mnie` / `Obserwowane` / `Mojego zespołu` / `Wszystkie dostępne`,
+- **zakres**: docelowo pięć wartości — `Moje` / `Zgłoszone przeze mnie` / `Wszystkie dostępne` /
+  `Obserwowane` / `Mojego zespołu`. **Dziś dostępne są cztery** — `Obserwowane` (`IssueScope.Watched`)
+  filtruje po istniejącej encji `IssueWatcher` (aktywny wpis, bez rezygnacji). Brakuje wyłącznie
+  `Mojego zespołu`: żaden moduł (Task Management ani Identity) nie ma dziś pojęcia zespołu czy
+  przełożonego — wymaga to nowego agregatu domenowego, nie samego wariantu enuma, więc zostaje
+  świadomie odłożone. Rozszerzenie zakresu zawsze idzie przez kontrakt (`IssueScope`, `searchIssue`)
+  i, gdy backend niesie nazwy wariantów, regenerację klienta NSwag — nigdy przez lokalny filtr po
+  stronie przeglądarki, który dawałby niepełne wyniki na stronicowanej liście.
 - **projekt**: zmienia zestaw kolumn (pola niestandardowe) i **resetuje sortowanie oraz filtry
   projekto-specyficzne** — inaczej front wyśle `sort` po kolumnie, której w nowym kontekście nie
   ma, i backend odrzuci żądanie na whiteliście.
@@ -76,7 +81,8 @@ stanu, przypisanie i dodanie do sprintu na kilkuset zgłoszeniach to zwykłe zad
 żeby przy review nie wyglądało na niedbalstwo. Drugi taki przypadek w systemie po edytorze
 szablonu obiegu w DMS.
 
-Kolumny wyprowadzone ze stanów schematu projektu, swimlane'y (po przypisanym / epiku / priorytecie),
+Kolumny wyprowadzone ze stanów schematu projektu, swimlane'y (po przypisanym / epiku / priorytecie
+/ polu niestandardowym),
 karty przeciągane między kolumnami i w pionie.
 
 Trzy rzeczy, których nie robi dziś żaden inny ekran w systemie:
@@ -101,11 +107,9 @@ Trzy rzeczy, których nie robi dziś żaden inny ekran w systemie:
    Poznanie tego dopiero z błędu po upuszczeniu jest wrogie użytkownikowi.
 
 Przejście wymagające pól (`required_fields`) otwiera modal przed potwierdzeniem ruchu — karta
-wisi w stanie „w toku" do zamknięcia modala.
-
-**Bieżące ograniczenia:** brak swimlane'ów (drugiego wymiaru grupowania nad tym samym
-mechanizmem kolejności) i modala pól wymaganych przy przejściu. Strona rysuje dziś kolumny wprost
-ze stanów schematu projektu.
+wisi w stanie „w toku" do zamknięcia modala. Swimlane'y są pełnym drugim wymiarem grupowania;
+przy trybie pola niestandardowego użytkownik podaje kod pola, który jest trwałą konfiguracją
+tablicy.
 
 ### 2.3 Karta zgłoszenia — `/task-management/issue/:key`
 **Osobna strona, nie prawy panel przy tabeli.** Powód jest praktyczny: opis, komentarze i historia
@@ -131,14 +135,12 @@ przeniesione z multimediów Catalogu i jedną własną:
 - **podgląd przez `blob:`**, nie przez adres endpointu w `src` — zawartość jest za uprawnieniem,
   a `<img>` nie dokłada nagłówka `Authorization` ([`multimedia.md` §3](../../guides/frontend/multimedia.md#3-miniaturki-blob-nie-adres-endpointu));
   miniatur pochodnych tu nie ma, więc adres zamawia dopiero kafelek obrazu, nie każdy wiersz;
-- **usuwania nie ma i nie jest to przeoczenie** — plik należy do zgłoszenia i znika razem z nim
-  w tej samej transakcji ([`media-storage.md` §4c](../../guides/backend/media-storage.md)), więc backend
-  nie wystawia komendy kasującej pojedynczy załącznik.
+- **usunięcie pojedynczego pliku wymaga potwierdzenia**; frontend wysyła wyłącznie komendę domenową,
+  a backend usuwa bajty przez outbox i prefiks postojowy — nigdy bezpośrednim wywołaniem magazynu.
 
-**Komentarze** (`erp-task-management-issue-comments`) i **historia** (`…-issue-history`) to dziś
-dwie osobne sekcje pod załącznikami. Docelowy układ łączy je w jeden strumień aktywności z filtrem
-(`Wszystko / Komentarze / Historia / Czas`) — powód i docelowy układ w [§9.1](#91-karta-zgłoszenia--dwie-kolumny-jeden-strumień).
-Trzy rzeczy warte zapamiętania niezależnie od układu:
+**Komentarze**, **historia** i **czas** są jednym strumieniem aktywności z filtrem
+(`Wszystko / Komentarze / Historia / Czas`) i zakotwiczonym kompozytorem. Trzy rzeczy warte
+zapamiętania:
 
 - **wątek jest jednopoziomowy**, bo taka jest reguła domeny, a nie uproszczenie widoku
   ([`task-management.md` §11](domain.md#11-historia-zmian-i-komentarze));
@@ -155,16 +157,15 @@ Trzy rzeczy warte zapamiętania niezależnie od układu:
   jako parametr drugiego `erpTranslate` (Transloco nie rozwiązuje kluczy zagnieżdżonych
   w parametrach — złożenie tego w TS wypisałoby użytkownikowi surowy klucz).
 
-> **Uuid zamiast nazwiska.** Autor komentarza, aktor zmiany i przypisany pokazują się dziś jako
-> uuid — front nie ma katalogu użytkowników w żadnym module. To jeden wspólny problem,
-> nie trzy: rozwiązuje ją wspólny słownik z Identity, nie lokalne obejście na karcie.
+> **Autor, aktor i przypisany pokazują nazwę, nie uuid.** Wspólny katalog użytkowników
+> (`ERP_USER_DIRECTORY`, [`user-directory.md`](../../guides/frontend/user-directory.md)) resolwuje
+> uuid do `displayName` przez `erp-user-name`/`erp-user-avatar`; skrócony uuid pojawia się wyłącznie
+> gdy katalog nie potrafi rozwiązać wpisu (np. skasowane konto Keycloak).
 
-> **Obrazki osadzone w treści opisu to osobna pozycja, jeszcze niezrobiona.** Backend jest na nie
-> gotowy (`GET issue/attachment/content/{uuid}` z trwałym adresem), ale ten adres wymaga tokenu,
-> więc `<img>` w zapisanym HTML-u sam się nie wyrenderuje. Wymaga to podmiany `src` na `blob:`
-> przy wyświetlaniu i z powrotem przy zapisie — w obu kierunkach i w obu trybach (podgląd
-> i edytor). Do czasu tej decyzji `TuiEditorTool.Img` świadomie nie wchodzi do żadnego zestawu
-> narzędzi `erp-rich-text`, a pliki dopina się obok treści.
+> **Obrazki osadzone w treści opisu są obsługiwane.** Port uploadu `erp-rich-text` rejestruje
+> plik jako załącznik zgłoszenia, a renderer zamienia chronione adresy na `blob:` przy podglądzie
+> i przywraca kanoniczne referencje przed zapisem. Dzięki temu obraz działa zarówno po wklejeniu,
+> jak i po ponownym otwarciu edytora.
 
 ### 2.4 Backlog i planowanie sprintu — `/task-management/board/:uuid/backlog`
 Podstrona tablicy scrumowej, nie osobna pozycja w menu: dwie listy obok siebie (backlog ↔ sprint),
@@ -202,23 +203,25 @@ Lista projektów: kod, typ (`Delivery`/`Intake`), lead, liczba otwartych zgłosz
 schemat stanów.
 
 ### 4.2 Karta projektu — `/task-management/project/:uuid`
-Master-detail z zakładkami: **pola** (definicje + **mapowanie na sloty**), **stany** (wybór
-schematu), **tablice**, **członkowie** (`project_member` z rolą), **SLA**.
+Master-detail z zakładkami: **pola** (definicje + **mapowanie na sloty**), **typy**, **tagi**,
+**SLA**, **workflow**, **automatyzacje**, **webhooki** oraz **powiadomienia**. Każda zakładka
+korzysta ze wspólnego nagłówka konfiguracji; jedynie feature dostarcza dane oraz komendy.
 
 Zakładka pojawia się dopiero razem z działającym przebiegiem, który ją wypełnia — pustych
 zaślepek nie publikujemy.
 
-**Znany chropowaty brzeg**: pole zakładane z UI podaje `nameKey`, czyli klucz tłumaczenia.
-Klucz, którego nikt nie dopisał do `translation/*.json`, wyświetla się użytkownikowi dosłownie.
-Dla schematów systemowych (seed) jest to poprawne, dla pól zakładanych ręcznie — nie; właściwą
-odpowiedzią jest nazwa jako zwykły tekst obok opcjonalnego klucza, a nie zamiast niego.
+Formularz dodania pola niestandardowego zbiera **nazwę jako zwykły tekst** (wymaganą, z domyślnym
+fallbackiem na kod pola) oraz **opcjonalny `nameKey`** — klucz tłumaczenia dla pól seedowanych,
+gdzie ta sama nazwa musi wyjść po polsku i angielsku. Tabela pól wyświetla `nameKey ?? name`, więc
+pole założone ręcznie bez klucza pokazuje wpisaną nazwę wprost.
 
 Tu żyje ostrzeżenie „slot już użyty, mapowania nie zmienisz"
 ([`task-management.md` §6](domain.md#6-pola-niestandardowe)) — identyczne co do
 treści z ostrzeżeniem przy typach dokumentów w DMS.
 
-### 4.3 Schematy stanów — `/task-management/workflow-scheme/:uuid`
-Edytor stanów i przejść. **Nie canvas grafu** — automat jest sekwencyjny, więc dwie listy
+### 4.3 Workflow projektu
+Edytor stanów i przejść działa jako zakładka konkretnego projektu, a nie niezależna trasa.
+**Nie canvas grafu** — automat jest sekwencyjny, więc dwie listy
 (stany, przejścia) plus macierz „z → do" są czytelniejsze i tańsze niż rysowanie
 ([`task-management.md` §5.4](domain.md#54-dlaczego-nie-silnik-z-dms-u)).
 To świadoma różnica względem edytora obiegu w DMS, nie niedoróbka.
@@ -237,7 +240,7 @@ zatwierdzenie uruchamia zadanie masowe z postępem
 | Strona per projekt / per dział w menu | Kontekst projektu na jednej liście — inaczej N kopii tego samego ekranu |
 | Osobna lista podzadań | Hierarchia to tryb drzewa na liście zgłoszeń i pasek powiązań na karcie |
 | „Uprawnienia i role" | Identity ([`identity-authz.md`](../../architecture/security.md)). Tu zostaje wyłącznie zakładka członków na karcie projektu |
-| Dashboard / burndown / raporty | Dopiero gdy istnieją dane czasu i iteracji oraz działający raport; bez zaślepki w menu |
+| Dashboard | Bez działających wskaźników byłby zaślepką; raporty są dostępne jako osobna, uprawniona strona |
 | Osobna strona sprintów | Sprint to podstrona tablicy — poza tablicą nie ma sensu |
 
 ---
@@ -270,17 +273,17 @@ zadania musiałby przeliczać porządek przy każdej zmianie tytułu.
 
 ## 7. Menu i uprawnienia
 
-Każda pozycja `entry.menu.ts` dostaje `requiredPermission` — obecna zaślepka nie ma żadnego
-(dla porównania: menu Catalogu ma je na każdej pozycji). Grupa „Konfiguracja" musi być niewidoczna
-dla zwykłego członka zespołu.
+Każda pozycja `entry.menu.ts` dostaje `requiredPermission`, tak jak pozycje menu Catalogu.
+Grupa „Konfiguracja" jest niewidoczna dla zwykłego członka zespołu.
 
 ```
 Zgłoszenia                → /task-management/issue          (taskmgmt.issue.read)
-Tablice                   → /task-management/board          (taskmgmt.issue.read)
 Zlecenia                  → /task-management/request        (taskmgmt.issue.read)
-Konfiguracja
-  ├ Projekty              → /task-management/project        (taskmgmt.project.manage)
-  └ Schematy stanów       → /task-management/workflow-scheme(taskmgmt.scheme.manage)
+Konfiguracja                                                 (taskmgmt.project.manage)
+  └ Projekty              → /task-management/project        (taskmgmt.project.manage)
+Tablice                   → /task-management/board          (taskmgmt.issue.read)
+Raporty                   → /task-management/report         (taskmgmt.report.read_all)
+Dokumentacja              → /task-management/documentation  (taskmgmt.issue.read)
 ```
 
 Karta zgłoszenia (`/issue/:key`) i konkretna tablica (`/board/:uuid`) nie mają pozycji w menu —
@@ -378,8 +381,11 @@ przy wierszu (nie tekst), tagi jako chipsy, zaznaczenie z paskiem akcji masowych
 └───────────────────────────────────────────────────────────┘
 ```
 
-Karta niesie: klucz, tytuł, znacznik typu, awatar przypisanego, tagi jako chipsy, estymatę.
-Nagłówek kolumny: nazwa + licznik kart + limit WIP, gdy ustawiony. Swimlane'y są zwijane.
+Karta niesie: klucz, tytuł, znacznik typu, priorytet, tagi, estymatę i awatar przypisanego —
+`BoardCardDto` niesie `TagUuids`/`EstimateMinutes` razem z nagłówkiem zgłoszenia, jednym
+zapytaniem. Karta z własnym ruchem w toku (nakładka optymistyczna, jeszcze niepotwierdzona przez
+serwer) jest wygaszona i nie startuje drugiego przeciągnięcia. Nagłówek kolumny: nazwa + licznik
+kart + limit WIP, gdy ustawiony. Swimlane'y są zwijane.
 
 ### 9.4 Raport godzin
 
@@ -411,17 +417,32 @@ w `@erp/shared/ui` (z portem na wgrywanie, który moduł wypełnia własnym bile
 lokalny handler `paste` na karcie zgłoszenia — inaczej DMS i Catalog dostaną drugą i trzecią
 kopię tego samego kodu.
 
-**Stan dzisiaj to dług:** `libs/modules/task-management/ui` zawiera wyłącznie tłumaczenia, a karta
-tablicy, kolumna tablicy, wątek komentarzy i historia leżą w `feature`. Kandydaci do przeniesienia
-i do utworzenia wraz z realnym użyciem:
+`libs/modules/task-management/ui` zawiera już prezentacyjne komponenty domenowe. Smart komponenty
+w `feature` dostarczają im tylko modele, komendy i adaptują zdarzenia do orkiestratorów; UI nie
+importuje DTO, store'ów ani serwisów danych.
 
 | Komponent w `ui` | Zastępuje / obsługuje |
 |---|---|
-| `erp-issue-card` | karta na tablicy (dziś `feature/board/components/board-card`) |
+| `erp-issue-card` | karta na tablicy, backlogu i sprincie |
 | `erp-issue-key` | klucz + ikona typu, używany w tabeli, na karcie i w powiązaniach |
 | `erp-activity-stream` | strumień aktywności z filtrem (§10.1) |
 | `erp-field-panel` | prawy panel pól budowany z profilu projektu |
 | `erp-link-list` | pasek powiązań |
 | `erp-tag-chips` | tagi na liście, karcie i kafelku |
+| `erp-board-column` | kolumna kanban oraz rozciągnięta lista backlogu/sprintu; feature zostawia CDK payload i komendy |
+| `erp-board-toolbar` | pasek nad tablicą: nazwa, wybór swimlane'a, link do backlogu |
+| `erp-work-log-panel` | estymata z edycją inline, lista wpisów czasu, formularz dodania |
+| `erp-workflow-editor` | macierz przejść „z → do" i panel edycji wybranej komórki |
+| `erp-automation-rule-editor` | formularz dodania/edycji reguły automatyzacji: wyzwalacz, grupy warunków, akcje zależne od rodzaju |
+| `erp-project-configuration-section` | wspólny nagłówek oraz układ zakładek konfiguracji projektu |
+| `erp-issue-detail-header` | pasek kontekstu karty zgłoszenia: powrót, klucz, ograniczenie i obserwowanie |
+| `erp-workflow-transition-cell` | komórka macierzy przejść: nazwa, wymagane uprawnienie i wymagane pola |
+| `erp-report-pivot-label-cell` | etykieta wiersza spłaszczonej tabeli przestawnej raportu godzin: rozwijanie działu albo wcięty wiersz zagadnienia |
+| `erp-project-tag-list` | katalog tagów z prezentacją edycji nazwy i scalania w kontekście wiersza |
+
+Tabele konfiguracji i raportów (typy/pola/stany/webhooki/CSV/pivot) renderuje bezpośrednio
+wspólny `erp-table` (`@erp/shared/ui`) —
+moduł nie utrzymuje już własnych `erp-configuration-data-table`/`erp-report-data-table`/
+`erp-report-pivot-table`.
 
 ---

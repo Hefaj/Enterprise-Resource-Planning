@@ -71,6 +71,10 @@ public enum IssueScope
 
     /// <summary>Zgłoszone przeze mnie.</summary>
     ReportedByMe = 2,
+
+    /// <summary>Obserwowane przeze mnie — aktywny wpis w <see cref="TaskManagement.Domain.Issues.Issue.Watchers"/>
+    /// (bez jawnej rezygnacji).</summary>
+    Watched = 3,
 }
 
 /// <summary>

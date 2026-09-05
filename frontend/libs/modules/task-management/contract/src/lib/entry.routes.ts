@@ -1,12 +1,12 @@
 import { Route } from '@angular/router';
 import { ERP_PERMISSIONS, erpAuthGuard, erpPermissionGuard } from '@erp/shared/auth';
-import { provideTaskManagementTranslations } from '@erp/task-management/ui';
+import { provideTaskManagementTranslations, TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 import { TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS } from '@erp/task-management/util';
 
 export const remoteRoutes: Route[] = [
   {
     path: '',
-    data: { breadcrumb: 'Zarządzanie pracą' },
+    data: { breadcrumb: TASKMANAGEMENT_KEYS.navigation.module },
     canActivate: [erpAuthGuard],
     // Scope `taskManagement` (stany/priorytety/rodzaje) jest wspólny dla listy, tablicy, karty
     // i konfiguracji projektu — cztery różne agregaty feature. Rejestracja tutaj, na trasie
@@ -17,7 +17,7 @@ export const remoteRoutes: Route[] = [
       {
         path: 'issue',
         data: {
-          breadcrumb: 'Zgłoszenia',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.issues,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.issues.list,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
@@ -27,7 +27,7 @@ export const remoteRoutes: Route[] = [
         path: 'request',
         pathMatch: 'full',
         data: {
-          breadcrumb: 'Zlecenia',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.requests,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.requests,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
@@ -37,10 +37,10 @@ export const remoteRoutes: Route[] = [
         path: 'project',
         pathMatch: 'full',
         data: {
-          breadcrumb: 'Projekty',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.projects,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.projects.list,
         },
-        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
+        canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.ProjectManage)],
         loadComponent: () => import('@erp/task-management/feature').then((m) => m.ProjectComponent),
       },
       {
@@ -48,7 +48,7 @@ export const remoteRoutes: Route[] = [
         // zmienić), a link do konfiguracji nie może przestać działać po jego zmianie.
         path: 'project/:uuid',
         data: {
-          breadcrumb: 'Projekt',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.projects,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.projects.detail,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.ProjectManage)],
@@ -60,7 +60,7 @@ export const remoteRoutes: Route[] = [
         path: 'board',
         pathMatch: 'full',
         data: {
-          breadcrumb: 'Tablice',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.boards,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.boards.list,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
@@ -71,7 +71,7 @@ export const remoteRoutes: Route[] = [
         // która byłaby unikalna, a jej link krąży między zakładkami, nie w mailach.
         path: 'board/:uuid',
         data: {
-          breadcrumb: 'Tablica',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.boards,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.boards.board,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
@@ -82,7 +82,7 @@ export const remoteRoutes: Route[] = [
         // w kontekście konkretnej tablicy scrumowej (docs/modules/task-management/screens.md §2.4).
         path: 'board/:uuid/backlog',
         data: {
-          breadcrumb: 'Backlog',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.backlog,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.boards.backlog,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
@@ -93,7 +93,7 @@ export const remoteRoutes: Route[] = [
         // w mailach i commitach (docs/modules/task-management/screens.md §2.3).
         path: 'issue/:key',
         data: {
-          breadcrumb: 'Zgłoszenie',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.issues,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.issues.detail,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.IssueRead)],
@@ -106,7 +106,7 @@ export const remoteRoutes: Route[] = [
         path: 'report',
         pathMatch: 'full',
         data: {
-          breadcrumb: 'Raport godzin',
+          breadcrumb: TASKMANAGEMENT_KEYS.navigation.reports,
           documentationArticleId: TASK_MANAGEMENT_DOCUMENTATION_ARTICLE_IDS.reports.hours,
         },
         canActivate: [erpPermissionGuard(ERP_PERMISSIONS.TaskManagement.ReportReadAll)],

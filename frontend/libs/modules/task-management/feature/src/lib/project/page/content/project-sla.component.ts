@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ErpButtonComponent, ErpButtonConfig, ErpCheckboxComponent, ErpInputBuilder, ErpInputComponent, ErpInputConfig, ErpTranslatePipe } from '@erp/shared/ui';
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
 import { SLA_WORKING_DAYS, SLA_WORKING_DAYS_DEFAULT } from '@erp/task-management/util';
+import { ErpProjectConfigurationSectionComponent, ErpProjectConfigurationSectionConfig } from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
@@ -17,16 +18,15 @@ import { PROJECT_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-project-sla',
   standalone: true,
-  imports: [ErpButtonComponent, ErpCheckboxComponent, ErpInputComponent, ErpTranslatePipe, ReactiveFormsModule],
+  imports: [ErpButtonComponent, ErpCheckboxComponent, ErpInputComponent, ErpProjectConfigurationSectionComponent, ErpTranslatePipe, ReactiveFormsModule],
   template: `
-    <section class="flex flex-col gap-4">
-      <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.sla.title | erpTranslate }}</span>
+    <erp-project-configuration-section [config]="this.sectionConfig">
 
       <div class="grid grid-cols-2 gap-3">
-        <erp-input [config]="responseInput" [formControl]="responseControl" />
-        <erp-input [config]="resolutionInput" [formControl]="resolutionControl" />
-        <erp-input [config]="startTimeInput" [formControl]="startTimeControl" />
-        <erp-input [config]="endTimeInput" [formControl]="endTimeControl" />
+        <erp-input [config]="responseInput" [control]="responseControl" />
+        <erp-input [config]="resolutionInput" [control]="resolutionControl" />
+        <erp-input [config]="startTimeInput" [control]="startTimeControl" />
+        <erp-input [config]="endTimeInput" [control]="endTimeControl" />
       </div>
 
       <div class="flex flex-col gap-2">
@@ -34,25 +34,26 @@ import { PROJECT_KEYS } from '../../translation';
           {{ PROJECT_KEYS.detail.sla.workingDays | erpTranslate }}
         </span>
         <div class="flex flex-wrap gap-4">
-          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.monday }" [formControl]="mondayControl" />
-          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.tuesday }" [formControl]="tuesdayControl" />
-          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.wednesday }" [formControl]="wednesdayControl" />
-          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.thursday }" [formControl]="thursdayControl" />
-          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.friday }" [formControl]="fridayControl" />
-          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.saturday }" [formControl]="saturdayControl" />
-          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.sunday }" [formControl]="sundayControl" />
+          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.monday }" [control]="mondayControl" />
+          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.tuesday }" [control]="tuesdayControl" />
+          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.wednesday }" [control]="wednesdayControl" />
+          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.thursday }" [control]="thursdayControl" />
+          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.friday }" [control]="fridayControl" />
+          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.saturday }" [control]="saturdayControl" />
+          <erp-checkbox [config]="{ label: PROJECT_KEYS.detail.sla.days.sunday }" [control]="sundayControl" />
         </div>
       </div>
 
       <div class="flex justify-end">
         <erp-button [config]="saveButton" />
       </div>
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectSlaComponent {
   protected readonly PROJECT_KEYS = PROJECT_KEYS;
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = { title: PROJECT_KEYS.detail.sla.title };
 
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
 

@@ -13,11 +13,14 @@
   },
   "column": {
     "count": "kart: {{count}}",
-    "wipExceeded": "Przekroczono limit WIP ({{count}}/{{limit}})"
+    "wipExceeded": "Przekroczono limit WIP ({{count}}/{{limit}})",
+    "cardKeyboardHint": "Karta zgłoszenia. Strzałka w prawo lub w lewo przenosi do sąsiedniej kolumny."
   },
   "swimlane": {
     "unassigned": "Bez przypisania",
     "groupBy": "Grupuj wiersze",
+    "expand": "Rozwiń wiersz",
+    "collapse": "Zwiń wiersz",
     "mode": {
       "none": "Bez grupowania",
       "assignee": "Po przypisanym",

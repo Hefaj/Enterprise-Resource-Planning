@@ -49,6 +49,7 @@ export * from './lib/molecules/erp-filter';
 export * from './lib/molecules/erp-action-toolbar';
 export * from './lib/molecules/erp-documentation-article';
 export * from './lib/molecules/erp-documentation-search';
+export * from './lib/molecules/erp-file-upload-list';
 
 // // Organisms
 export * from './lib/atoms/erp-modal';

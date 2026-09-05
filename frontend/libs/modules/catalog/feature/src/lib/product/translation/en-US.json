@@ -203,6 +203,7 @@
       "submitButton": "Attach to products",
       "cancelButton": "Cancel",
       "dropHint": "Drop files here or click to browse",
+      "empty": "No files selected yet.",
       "uploading": "Uploading files…",
       "uploadProgress": "Uploaded {{ uploaded }} of {{ total }}",
       "uploadFailed": "Upload failed. Please try again.",

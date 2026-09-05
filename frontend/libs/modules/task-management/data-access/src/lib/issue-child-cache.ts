@@ -36,7 +36,7 @@ export abstract class IssueChildCache<T extends { uuid: string }> {
   /** Stała referencja pustej listy — `itemsOf` musi zwracać ZAWSZE ten sam obiekt dla „jeszcze
    * nic nie ma", inaczej `computed()` widziałby „zmianę" przy każdej reewaluacji `_byIssue`
    * (nawet wywołanej przez INNE zgłoszenie) i budził wszystkich konsumentów w nieskończoność. */
-  private static readonly _EMPTY: readonly never[] = [];
+  private static readonly _empty: readonly never[] = [];
 
   /** Sygnały `itemsOf` cache’owane per uuid — bez tego każde wywołanie tworzyłoby nowy
    * `computed()`, tracąc pamięć poprzedniej wartości i wymuszając pełną reewaluację od zera. */
@@ -63,15 +63,15 @@ export abstract class IssueChildCache<T extends { uuid: string }> {
    */
   public itemsOf(issueUuid: string | null | undefined): Signal<readonly T[]> {
     if (!issueUuid) {
-      return computed(() => IssueChildCache._EMPTY);
+      return computed(() => IssueChildCache._empty);
     }
 
     let entry = this._itemsSignals.get(issueUuid);
 
     if (!entry) {
       entry = computed(() => {
-        const base = this._byIssue().get(issueUuid) ?? IssueChildCache._EMPTY;
-        return this._optimistic.project<readonly T[]>(this.signature, issueUuid, base) ?? IssueChildCache._EMPTY;
+        const base = this._byIssue().get(issueUuid) ?? IssueChildCache._empty;
+        return this._optimistic.project<readonly T[]>(this.signature, issueUuid, base) ?? IssueChildCache._empty;
       });
       this._itemsSignals.set(issueUuid, entry);
     }

@@ -17,6 +17,7 @@ export const ISSUE_KEYS = {
         available: 'issue.filters.scope.available',
         assignedToMe: 'issue.filters.scope.assignedToMe',
         reportedByMe: 'issue.filters.scope.reportedByMe',
+        watched: 'issue.filters.scope.watched',
       },
       project: {
         label: 'issue.filters.project.label',
@@ -151,6 +152,12 @@ export const ISSUE_KEYS = {
       descriptionSaveFailed: 'issue.detail.descriptionSaveFailed',
       header: {
         createdByLabel: 'issue.detail.header.createdByLabel',
+        updatedAtLabel: 'issue.detail.header.updatedAtLabel',
+        editTitle: 'issue.detail.header.editTitle',
+        titlePlaceholder: 'issue.detail.header.titlePlaceholder',
+        saveTitle: 'issue.detail.header.saveTitle',
+        cancelTitle: 'issue.detail.header.cancelTitle',
+        titleSaveFailed: 'issue.detail.header.titleSaveFailed',
       },
       description: {
         label: 'issue.detail.description.label',
@@ -203,6 +210,8 @@ export const ISSUE_KEYS = {
         watch: 'issue.detail.sidebar.watch',
         unwatch: 'issue.detail.sidebar.unwatch',
         watcherCount: 'issue.detail.sidebar.watcherCount',
+        showPanel: 'issue.detail.sidebar.showPanel',
+        hidePanel: 'issue.detail.sidebar.hidePanel',
       },
       attachments: {
         label: 'issue.detail.attachments.label',

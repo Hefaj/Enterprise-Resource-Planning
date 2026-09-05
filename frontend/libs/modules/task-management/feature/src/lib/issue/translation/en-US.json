@@ -11,7 +11,8 @@
       "label": "Scope",
       "available": "All available",
       "assignedToMe": "Mine",
-      "reportedByMe": "Reported by me"
+      "reportedByMe": "Reported by me",
+      "watched": "Watched"
     },
     "project": {
       "label": "Project",
@@ -142,7 +143,13 @@
     "loading": "Loading issue…",
     "backToList": "Back to the list",
     "header": {
-      "createdByLabel": "Created by"
+      "createdByLabel": "Created by",
+      "updatedAtLabel": "updated",
+      "editTitle": "Edit title",
+      "titlePlaceholder": "Issue title",
+      "saveTitle": "Save title",
+      "cancelTitle": "Cancel title editing",
+      "titleSaveFailed": "Could not save the issue title."
     },
     "description": {
       "label": "Description",
@@ -194,7 +201,9 @@
       "restricted": "Restricted issue",
       "watch": "Watch",
       "unwatch": "Stop watching",
-      "watcherCount": "Watchers: {{ count }}"
+      "watcherCount": "Watchers: {{ count }}",
+      "showPanel": "Fields & state",
+      "hidePanel": "Hide panel"
     },
     "attachments": {
       "label": "Attachments",

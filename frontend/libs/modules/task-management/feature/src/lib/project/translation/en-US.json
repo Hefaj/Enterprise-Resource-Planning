@@ -137,6 +137,8 @@
     "automations": {
       "title": "Automations",
       "empty": "This project has no automation rules yet.",
+      "loadError": "Could not load the automation rule list.",
+      "retry": "Retry",
       "addRule": "Add rule",
       "executedCount": "Executions: {{count}}",
       "enable": "Enable",
@@ -284,6 +286,9 @@
     "workflow": {
       "title": "Workflow scheme",
       "noScheme": "This project has no workflow scheme attached yet.",
+      "loading": "Loading scheme…",
+      "loadError": "Could not load the workflow scheme.",
+      "retry": "Retry",
       "states": {
         "title": "States",
         "empty": "This scheme has no states yet.",

@@ -5,6 +5,7 @@
  */
 export const REQUEST_KEYS = {
     title: 'request.title',
+    submitRequest: 'request.submitRequest',
     empty: 'request.empty',
     filters: {
       text: {

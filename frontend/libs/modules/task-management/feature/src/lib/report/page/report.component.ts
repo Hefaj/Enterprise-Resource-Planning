@@ -12,13 +12,25 @@ import {
   ErpInputPickerBuilder,
   ErpInputPickerComponent,
   ErpInputPickerConfig,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
   ErpTranslatePipe,
   injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import { ERP_USER_DIRECTORY } from '@erp/shared/util';
+import { ErpReportPivotLabelCellComponent, ErpReportPivotRow } from '@erp/task-management/ui';
 
 import { REPORT_KEYS, provideReportTranslations } from '../translation';
 import { REPORT_DEFINITIONS, ReportStore } from './report.store';
+import { ReportPivotData, ReportRowsData } from './report-pivot';
+
+/** Wiersz generycznej tabeli CSV, opakowany indeksem — potrzebny jako stabilny `rowIdAccessor`,
+ * bo same wartości `readonly string[]` mogą się powtórzyć między wierszami. */
+interface ReportRow {
+  readonly index: number;
+  readonly values: readonly string[];
+}
 
 /** Nagłówki CSV, których wartość jest wyłącznie identyfikatorem powtórzonym obok czytelnej
  * kolumny (`type_uuid` obok `type_name`, `sprint_uuid` obok `sprint_name`) — generyczna tabela
@@ -84,6 +96,7 @@ const COLUMN_LABEL_KEYS: Record<string, string> = {
     ErpDatePickerComponent,
     ErpEmptyStateComponent,
     ErpInputPickerComponent,
+    ErpTableComponent,
     ErpTranslatePipe,
     ReactiveFormsModule,
   ],
@@ -107,6 +120,10 @@ const COLUMN_LABEL_KEYS: Record<string, string> = {
         }
 
         <erp-button [config]="generateButtonConfig()" />
+
+        @if (this.store.canDownloadCsv()) {
+          <erp-button [config]="downloadButtonConfig()" />
+        }
       </div>
 
       @if (!this.store.isDateRangeValid() && (this.store.dateFrom() || this.store.dateTo())) {
@@ -138,48 +155,7 @@ const COLUMN_LABEL_KEYS: Record<string, string> = {
           } @else if (this.store.pivot()!.departments.length === 0) {
             <erp-empty-state [config]="{ icon: '@tui.inbox', message: REPORT_KEYS.noData }" />
           } @else {
-            @let pivot = this.store.pivot()!;
-
-            <table class="w-full border-collapse text-sm">
-              <thead>
-                <tr class="border-b border-[var(--tui-border-normal)] text-left">
-                  <th class="p-2">{{ REPORT_KEYS.table.department | erpTranslate }}</th>
-                  @for (period of pivot.periods; track period) {
-                    <th class="p-2 text-right">{{ period }}</th>
-                  }
-                  <th class="p-2 text-right">{{ REPORT_KEYS.table.total | erpTranslate }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (dept of pivot.departments; track dept.code) {
-                  <tr
-                    class="cursor-pointer border-b border-[var(--tui-border-normal)] font-medium hover:bg-[var(--tui-background-neutral-1)]"
-                    (click)="this.toggleDepartment(dept.code)"
-                  >
-                    <td class="p-2">
-                      <span class="mr-1">{{ this.isExpanded(dept.code) ? '▾' : '▸' }}</span>
-                      {{ dept.code }} — {{ dept.name }}
-                    </td>
-                    @for (period of pivot.periods; track period) {
-                      <td class="p-2 text-right">{{ dept.hoursByPeriod.get(period) ?? 0 }}</td>
-                    }
-                    <td class="p-2 text-right">{{ dept.total }}</td>
-                  </tr>
-
-                  @if (this.isExpanded(dept.code)) {
-                    @for (zag of dept.zagadnienia; track zag.key) {
-                      <tr class="border-b border-[var(--tui-border-normal)] text-[var(--tui-text-secondary)]">
-                        <td class="p-2 pl-8">{{ zag.key }}</td>
-                        @for (period of pivot.periods; track period) {
-                          <td class="p-2 text-right">{{ zag.hoursByPeriod.get(period) ?? 0 }}</td>
-                        }
-                        <td class="p-2 text-right">{{ zag.total }}</td>
-                      </tr>
-                    }
-                  }
-                }
-              </tbody>
-            </table>
+            <erp-table class="block h-full w-full" [config]="this.pivotTableConfig(this.store.pivot()!)" />
           }
         } @else {
           @if (!this.store.rows()) {
@@ -187,27 +163,7 @@ const COLUMN_LABEL_KEYS: Record<string, string> = {
           } @else if (this.store.rows()!.rows.length === 0) {
             <erp-empty-state [config]="{ icon: '@tui.inbox', message: REPORT_KEYS.noData }" />
           } @else {
-            @let data = this.store.rows()!;
-            @let visibleIdx = this.visibleColumnIndexes(data.headers);
-
-            <table class="w-full border-collapse text-sm">
-              <thead>
-                <tr class="border-b border-[var(--tui-border-normal)] text-left">
-                  @for (idx of visibleIdx; track idx) {
-                    <th class="p-2">{{ this.columnLabel(data.headers[idx]) | erpTranslate }}</th>
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of data.rows; track $index) {
-                  <tr class="border-b border-[var(--tui-border-normal)]">
-                    @for (idx of visibleIdx; track idx) {
-                      <td class="p-2">{{ this.cellValue(data.headers[idx], row[idx]) }}</td>
-                    }
-                  </tr>
-                }
-              </tbody>
-            </table>
+            <erp-table class="block h-full w-full" [config]="this.rowsTableConfig(this.store.rows()!)" />
           }
         }
       </div>
@@ -240,14 +196,16 @@ export class ReportComponent {
   protected readonly dateFromControl = new FormControl<TuiDay | null>(null);
   protected readonly dateToControl = new FormControl<TuiDay | null>(null);
 
-  private readonly _expandedDepartments = signal<ReadonlySet<string>>(new Set());
-
   protected readonly reportPickerConfig: ReturnType<typeof computed<ErpInputPickerConfig>>;
   protected readonly departmentPickerConfig: ReturnType<typeof computed<ErpInputPickerConfig>>;
   protected readonly dateFromPickerConfig;
   protected readonly dateToPickerConfig;
   protected readonly generateButtonConfig;
   protected readonly refreshButtonConfig;
+  protected readonly downloadButtonConfig;
+
+  /** Kody grup (działów) rozwiniętych w spłaszczonej tabeli przestawnej. */
+  private readonly _expandedGroups = signal<ReadonlySet<string>>(new Set());
 
   public constructor() {
     this.reportPickerConfig = computed(() => {
@@ -327,41 +285,160 @@ export class ReportComponent {
           .setFn(() => this.store.refreshAsync()),
       ),
     );
+
+    // RPT-009: pobranie CSV do wewnętrznego renderowania (fetch w store) nie zastępuje
+    // świadomej akcji „zapisz na dysk" widocznej na stronie.
+    this.downloadButtonConfig = computed(() =>
+      ErpButtonBuilder.create((b) =>
+        b
+          .setLabel(REPORT_KEYS.status.download)
+          .setAppearance('secondary')
+          .setSize('m')
+          .setIconStart('@tui.download')
+          .setFn(() => this.store.downloadCsv()),
+      ),
+    );
   }
 
-  protected toggleDepartment(code: string): void {
-    this._expandedDepartments.update((current) => {
-      const next = new Set(current);
-      if (next.has(code)) {
-        next.delete(code);
-      } else {
-        next.add(code);
+  /**
+   * Spłaszcza dział+zagadnienia w jedną listę wierszy klienckich `erp-table` — kolumny okresów
+   * i sumy niosą liczby dla WIERSZA GRUPY, nie tylko liścia (`ErpGroupedRowsConfig` renderuje
+   * rodzica jako czysty tytuł, bez kolumn — dział bez sumy per okres byłby regresją względem
+   * poprzedniego, bespoke renderera). Rozwiń/zwiń jest więc zwykłym filtrem `items`, nie
+   * wbudowanym mechanizmem grupowania.
+   */
+  protected pivotTableConfig(pivot: ReportPivotData): ErpTableConfig<ErpReportPivotRow> {
+    const expanded = this._expandedGroups();
+
+    const rows: ErpReportPivotRow[] = pivot.departments.flatMap((department) => {
+      const groupRow: ErpReportPivotRow = {
+        kind: 'group',
+        code: department.code,
+        name: department.name,
+        hoursByPeriod: department.hoursByPeriod,
+        total: department.total,
+      };
+
+      if (!expanded.has(department.code)) {
+        return [groupRow];
       }
+
+      return [
+        groupRow,
+        ...department.zagadnienia.map(
+          (leaf): ErpReportPivotRow => ({
+            kind: 'leaf',
+            groupCode: department.code,
+            key: leaf.key,
+            hoursByPeriod: leaf.hoursByPeriod,
+            total: leaf.total,
+          }),
+        ),
+      ];
+    });
+
+    const builder = new ErpTableBuilder<ErpReportPivotRow>()
+      .setMode('client')
+      .setRowIdAccessor((row) => (row.kind === 'group' ? `g:${row.code}` : `l:${row.groupCode}:${row.key}`))
+      .setItems(rows)
+      .setSelectionMode('none')
+      .setEnableColumnResizing(false)
+      .setEmptyMessage(REPORT_KEYS.noData)
+      .addColumn((c) =>
+        c
+          .setId('label')
+          .setHeader(REPORT_KEYS.table.department)
+          .setEnableSorting(false)
+          .setSize(280)
+          .setCell(ErpReportPivotLabelCellComponent, {
+            isExpanded: (row: ErpReportPivotRow) => row.kind === 'group' && expanded.has(row.code),
+            onToggle: (row: ErpReportPivotRow) => this._toggleGroup(row),
+          }),
+      );
+
+    for (const period of pivot.periods) {
+      builder.addColumn((c) =>
+        c
+          .setId(period)
+          .setAccessorFn((row) => row.hoursByPeriod.get(period) ?? 0)
+          .setHeader(period)
+          .setAlign('right')
+          .setSize(100)
+          .setGrow(0),
+      );
+    }
+
+    builder.addColumn((c) =>
+      c
+        .setId('total')
+        .setAccessorFn((row) => row.total)
+        .setHeader(REPORT_KEYS.table.total)
+        .setAlign('right')
+        .setSize(100)
+        .setGrow(0),
+    );
+
+    return builder.build();
+  }
+
+  private _toggleGroup(row: ErpReportPivotRow): void {
+    if (row.kind !== 'group') {
+      return;
+    }
+
+    this._expandedGroups.update((current) => {
+      const next = new Set(current);
+
+      if (next.has(row.code)) {
+        next.delete(row.code);
+      } else {
+        next.add(row.code);
+      }
+
       return next;
     });
   }
 
-  protected isExpanded(code: string): boolean {
-    return this._expandedDepartments().has(code);
+  protected rowsTableConfig(data: ReportRowsData): ErpTableConfig<ReportRow> {
+    const items: ReportRow[] = data.rows.map((values, index) => ({ index, values }));
+    const visible = this._visibleColumnIndexes(data.headers);
+
+    const builder = new ErpTableBuilder<ReportRow>()
+      .setMode('client')
+      .setRowIdAccessor((row) => String(row.index))
+      .setItems(items)
+      .setSelectionMode('none')
+      .setEmptyMessage(REPORT_KEYS.noData);
+
+    for (const idx of visible) {
+      const header = data.headers[idx];
+
+      builder.addColumn((c) =>
+        c
+          .setId(header)
+          .setAccessorFn((row) => this._cellValue(header, row.values[idx]))
+          .setHeader(this._columnLabel(header)),
+      );
+    }
+
+    return builder.build();
   }
 
-  protected visibleColumnIndexes(headers: readonly string[]): number[] {
+  private _visibleColumnIndexes(headers: readonly string[]): number[] {
     return headers.map((_, idx) => idx).filter((idx) => !HIDDEN_COLUMNS.has(headers[idx]));
   }
 
-  protected columnLabel(header: string): string {
-    return COLUMN_LABEL_KEYS[header] ?? header;
-  }
+  private readonly _columnLabel = (header: string): string => COLUMN_LABEL_KEYS[header] ?? header;
 
   /** `assignee_uuid` jest jedynym identyfikatorem osoby w wynikach generycznej tabeli — rozwiązany
    * na nazwisko przez katalog użytkowników (opcjonalny port, patrz `ERP_USER_DIRECTORY`), z uuidem
    * jako fallback dopóki paczka nazwisk nie dojedzie albo gdy katalog nie jest dostępny. */
-  protected cellValue(header: string, value: string): string {
+  private readonly _cellValue = (header: string, value: string): string => {
     if (header === 'assignee_uuid' && value) {
       const user = this._directory?.getOne(value)();
       return user?.displayName ?? value;
     }
 
     return value;
-  }
+  };
 }

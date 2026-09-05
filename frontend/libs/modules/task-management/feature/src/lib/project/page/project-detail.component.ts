@@ -9,6 +9,9 @@ import {
   ErpButtonConfig,
   ErpConfirmDialogService,
   ErpEmptyStateComponent,
+  ErpInputBuilder,
+  ErpInputComponent,
+  ErpInputConfig,
   ErpTabsComponent,
   ErpTabsConfig,
   ErpTranslatePipe,
@@ -29,15 +32,14 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
 /**
  * Karta projektu — `/task-management/project/:uuid`.
  *
- * <p>Docelowo master-detail z zakładkami: pola, typy, SLA, stany, tablice, członkowie
- * (`docs/modules/task-management/screens.md` §4.2). Zakładka SLA dochodzi w fazie 5
- * (`SLA-001`); stany, tablice i członkowie zostają zaślepką, dopóki nie wejdzie faza, która je
- * wypełnia.</p>
+ * <p>Master-detail z działającymi zakładkami pól, typów, tagów, SLA, workflow, automatyzacji,
+ * webhooków i powiadomień (`docs/modules/task-management/screens.md` §4.2). Każda jest
+ * wydzielonym smart komponentem; układ nagłówka konfiguracji zapewnia modułowe UI.</p>
  */
 @Component({
   selector: 'erp-task-management-project-detail',
   standalone: true,
-  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpTabsComponent, ErpTranslatePipe, ReactiveFormsModule],
+  imports: [ErpButtonComponent, ErpEmptyStateComponent, ErpInputComponent, ErpTabsComponent, ErpTranslatePipe, ReactiveFormsModule],
   providers: [provideProjectTranslations()],
   template: `
     @let project = this.project();
@@ -52,13 +54,7 @@ import { PROJECT_KEYS, provideProjectTranslations } from '../translation';
           <erp-button [config]="backButton" />
 
           @if (this.editingCode()) {
-            <input
-              class="w-24 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-0.5 font-mono text-sm"
-              type="text"
-              [formControl]="this.codeControl"
-              [placeholder]="PROJECT_KEYS.detail.codePlaceholder | erpTranslate"
-              (keydown.enter)="this.saveCodeAsync(project.uuid)"
-            />
+            <erp-input class="w-28" [config]="this.codeInputConfig" [control]="this.codeControl" />
             <erp-button [config]="this.saveCodeButton(project.uuid)" />
             <erp-button [config]="this.cancelCodeButton" />
           } @else {
@@ -126,9 +122,8 @@ export class ProjectDetailComponent {
   );
 
   /**
-   * Master-detail z zakładkami (`docs/modules/task-management/screens.md` §4.2) — dziś „pola"
-   * i „typy" (`TYP-001`); pozostałe (stany, tablice, członkowie, SLA) wchodzą razem z fazami,
-   * które je wypełniają.
+   * Master-detail z zakładkami (`docs/modules/task-management/screens.md` §4.2). Konfiguracja
+   * jest podzielona po odpowiedzialności domenowej, bez pustych zaślepek.
    */
   protected readonly tabsConfig = computed<ErpTabsConfig>(() => {
     const project = this.project();
@@ -202,6 +197,10 @@ export class ProjectDetailComponent {
 
   protected readonly editingCode = signal<boolean>(false);
   protected readonly codeControl = new FormControl<string>('', { nonNullable: true });
+
+  protected readonly codeInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setPlaceholder(PROJECT_KEYS.detail.codePlaceholder).setSize('s'),
+  );
 
   protected readonly editCodeButton: ErpButtonConfig = {
     label: PROJECT_KEYS.detail.editCode,

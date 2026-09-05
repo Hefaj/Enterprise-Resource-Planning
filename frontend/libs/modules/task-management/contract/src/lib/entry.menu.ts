@@ -1,5 +1,6 @@
 import { ErpNavigationItem } from '@erp/shared/data-access';
 import { ERP_PERMISSIONS } from '@erp/shared/auth';
+import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
 
 /**
  * Menu modułu. Każda pozycja ma `requiredPermission` — poprzednia zaślepka
@@ -12,31 +13,44 @@ import { ERP_PERMISSIONS } from '@erp/shared/auth';
  */
 export const remoteMenu: ErpNavigationItem[] = [
   {
-    label: 'Zgłoszenia',
+    label: TASKMANAGEMENT_KEYS.navigation.issues,
+    labelKey: TASKMANAGEMENT_KEYS.navigation.issues,
     iconId: 'list-checks',
     route: 'issue',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
   {
-    label: 'Zlecenia',
+    label: TASKMANAGEMENT_KEYS.navigation.requests,
+    labelKey: TASKMANAGEMENT_KEYS.navigation.requests,
     iconId: 'send',
     route: 'request',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
   {
-    label: 'Projekty',
-    iconId: 'folder-kanban',
-    route: 'project',
-    requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
+    label: TASKMANAGEMENT_KEYS.navigation.configuration,
+    labelKey: TASKMANAGEMENT_KEYS.navigation.configuration,
+    iconId: 'settings',
+    requiredPermission: ERP_PERMISSIONS.TaskManagement.ProjectManage,
+    children: [
+      {
+        label: TASKMANAGEMENT_KEYS.navigation.projects,
+        labelKey: TASKMANAGEMENT_KEYS.navigation.projects,
+        iconId: 'folder-kanban',
+        route: 'project',
+        requiredPermission: ERP_PERMISSIONS.TaskManagement.ProjectManage,
+      },
+    ],
   },
   {
-    label: 'Tablica',
+    label: TASKMANAGEMENT_KEYS.navigation.boards,
+    labelKey: TASKMANAGEMENT_KEYS.navigation.boards,
     iconId: 'columns-3',
     route: 'board',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.IssueRead,
   },
   {
-    label: 'Raport godzin',
+    label: TASKMANAGEMENT_KEYS.navigation.reports,
+    labelKey: TASKMANAGEMENT_KEYS.navigation.reports,
     iconId: 'chart-bar',
     route: 'report',
     requiredPermission: ERP_PERMISSIONS.TaskManagement.ReportReadAll,

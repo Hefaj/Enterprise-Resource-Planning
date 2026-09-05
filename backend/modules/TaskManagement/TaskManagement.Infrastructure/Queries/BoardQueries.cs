@@ -118,7 +118,9 @@ public sealed class BoardQueries : IBoardQueries
                     : swimlaneSlot == FieldSlot.Text2 ? issue.Text2
                     : swimlaneSlot == FieldSlot.Text3 ? issue.Text3
                     : swimlaneSlot == FieldSlot.Text4 ? issue.Text4
-                    : null);
+                    : null,
+                issue.Tags.Select(t => t.TagUuid).ToList(),
+                issue.EstimateMinutes);
 
         if (request.Uuids is { Count: > 0 })
         {

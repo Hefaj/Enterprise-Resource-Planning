@@ -54,7 +54,8 @@
   "status": {
     "generating": "Generowanie raportu…",
     "fetchingArtifact": "Wczytywanie wyniku…",
-    "refresh": "Odśwież"
+    "refresh": "Odśwież",
+    "download": "Pobierz CSV"
   },
   "table": {
     "department": "Dział",

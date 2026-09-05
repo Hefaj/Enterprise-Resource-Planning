@@ -54,7 +54,8 @@
   "status": {
     "generating": "Generating report…",
     "fetchingArtifact": "Loading result…",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "download": "Download CSV"
   },
   "table": {
     "department": "Department",

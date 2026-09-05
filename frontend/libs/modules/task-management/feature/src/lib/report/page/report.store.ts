@@ -105,6 +105,10 @@ export class ReportStore {
   private readonly _runUuid = signal<string | null>(null);
   private _pivotFetchedForRun: string | null = null;
 
+  /** CSV surowe, zapamiętane po pobraniu artefaktu — `downloadCsv()` zapisuje TEN SAM plik,
+   * który front sparsował do wyświetlenia, zamiast wywoływać drugie żądanie do magazynu. */
+  private _csvText: string | null = null;
+
   public readonly isDateRangeValid = computed(() => {
     if (!this.currentDefinition().needsDateRange) {
       return true;
@@ -159,6 +163,27 @@ export class ReportStore {
     this.rows.set(null);
     this._runUuid.set(null);
     this._pivotFetchedForRun = null;
+    this._csvText = null;
+  }
+
+  /** Czy jest co pobrać — dopiero po udanym pobraniu i sparsowaniu artefaktu. */
+  public readonly canDownloadCsv = computed(() => (this.pivot() !== null || this.rows() !== null));
+
+  /** Akcja pobrania widoczna na stronie, osobna od wewnętrznego fetchu do renderowania —
+   * pobranie do wyświetlenia w tabeli nie jest tym samym, co świadome „zapisz na dysk”
+   * użytkownika. */
+  public downloadCsv(): void {
+    if (!this._csvText) {
+      return;
+    }
+
+    const blob = new Blob([this._csvText], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${this.reportKey()}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   public async generateAsync(): Promise<void> {
@@ -172,6 +197,7 @@ export class ReportStore {
     this.pivot.set(null);
     this.rows.set(null);
     this._pivotFetchedForRun = null;
+    this._csvText = null;
     this.isGenerating.set(true);
 
     const parameters: Record<string, unknown> = {};
@@ -256,6 +282,7 @@ export class ReportStore {
       }
 
       const csvText = await response.text();
+      this._csvText = csvText;
 
       if (this.currentDefinition().hasPivot) {
         this.pivot.set(parseReportCsvToPivot(csvText));

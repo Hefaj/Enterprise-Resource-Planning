@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
@@ -11,6 +11,9 @@ import {
   ErpButtonConfig,
   ErpConfirmDialogService,
   ErpEmptyStateComponent,
+  ErpInputBuilder,
+  ErpInputComponent,
+  ErpInputConfig,
   ErpModalService,
   ErpRichTextBuilder,
   ErpRichTextComponent,
@@ -38,7 +41,13 @@ import {
   resolveIssueRichTextHtmlAsync,
 } from '@erp/task-management/data-access';
 import { ISSUE_PRIORITY, WORKFLOW_REQUIRED_FIELDS_MODAL_ID, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
-import { ErpFieldPanelComponent, ErpFieldPanelConfig, ErpIssueKeyComponent, TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
+import {
+  ErpFieldPanelComponent,
+  ErpFieldPanelConfig,
+  ErpIssueDetailHeaderComponent,
+  ErpIssueKeyConfig,
+  TASKMANAGEMENT_KEYS,
+} from '@erp/task-management/ui';
 
 import { ISSUE_KEYS, provideIssueTranslations } from '../translation';
 import { IssueAttachmentsComponent } from './content/issue-attachments.component';
@@ -70,7 +79,8 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
     ErpButtonComponent,
     ErpEmptyStateComponent,
     ErpFieldPanelComponent,
-    ErpIssueKeyComponent,
+    ErpInputComponent,
+    ErpIssueDetailHeaderComponent,
     ErpRichTextComponent,
     ErpTranslatePipe,
     ErpUserAvatarComponent,
@@ -92,37 +102,36 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
     } @else if (!issue) {
       <erp-empty-state [config]="{ icon: '@tui.search-x', message: ISSUE_KEYS.detail.notFound.message }" />
     } @else {
-      <div class="flex h-full min-h-0 w-full flex-col gap-4 p-6">
-        <div class="flex items-center gap-3">
-          <erp-button [config]="backButton" />
-          <erp-issue-key
-            [config]="{
-              issueKey: issue.key,
-              typeIcon: issue.typeIcon,
-              typeName: issue.typeName,
-              title: issue.title,
-              link: undefined,
-              copyable: true,
-            }"
-          />
-          @if (issue.isRestricted) {
-            <span class="rounded bg-[var(--tui-background-neutral-1)] px-2 py-0.5 text-xs">
-              {{ ISSUE_KEYS.detail.sidebar.restricted | erpTranslate }}
-            </span>
-          }
+      <div class="flex h-full min-h-0 w-full flex-col gap-4 p-4 sm:p-6">
+        <erp-issue-detail-header
+          [backButton]="backButton"
+          [issueKey]="issueKeyConfig(issue)"
+          [restricted]="issue.isRestricted"
+          [restrictedLabelKey]="ISSUE_KEYS.detail.sidebar.restricted"
+          [watchButton]="watchButton()"
+          [watcherCount]="issue.watcherCount"
+          [watcherCountLabelKey]="ISSUE_KEYS.detail.sidebar.watcherCount"
+        />
 
-          <span class="flex-1"></span>
-
-          <erp-button [config]="watchButton()" />
-          <span class="text-xs text-[var(--tui-text-secondary)]">
-            {{ ISSUE_KEYS.detail.sidebar.watcherCount | erpTranslate: { count: issue.watcherCount } }}
-          </span>
+        <div class="xl:hidden">
+          <erp-button [config]="togglePanelButton()" />
         </div>
 
-        <div class="grid min-h-0 flex-1 grid-cols-[1fr_320px] gap-6 overflow-hidden">
+        <div class="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto xl:grid-cols-[minmax(0,1fr)_320px] xl:overflow-hidden">
           <div class="flex min-h-0 flex-col gap-4 overflow-y-auto">
             <div class="flex flex-col gap-1">
-              <h1 class="m-0 text-2xl font-semibold">{{ issue.title }}</h1>
+              <div class="flex items-center gap-2">
+                @if (editingTitle()) {
+                  <erp-input #titleInputHost class="min-w-0 flex-1" [config]="titleInputConfig" [control]="titleControl" (keydown.escape)="cancelTitleButton.fn?.()" />
+                  <erp-button [config]="saveTitleButton" />
+                  <erp-button [config]="cancelTitleButton" />
+                } @else {
+                  <h1 class="m-0 text-2xl font-semibold">{{ issue.title }}</h1>
+                  @if (canEdit()) {
+                    <erp-button #editTitleButtonHost [config]="editTitleButton" />
+                  }
+                }
+              </div>
 
               <div class="flex items-center gap-2 text-xs text-[var(--tui-text-secondary)]">
                 <erp-user-avatar size="s" [uuid]="issue.reporterUuid" />
@@ -130,6 +139,10 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
                 <erp-user-name [uuid]="issue.reporterUuid" />
                 <span>·</span>
                 <span>{{ issue.createdAt | date: 'medium' }}</span>
+                @if (issue.updatedAt) {
+                  <span>·</span>
+                  <span>{{ ISSUE_KEYS.detail.header.updatedAtLabel | erpTranslate }} {{ issue.updatedAt | date: 'medium' }}</span>
+                }
               </div>
             </div>
 
@@ -179,13 +192,29 @@ import { WorkflowRequiredFieldsCommand, WorkflowRequiredFieldsMetadata } from '.
             <erp-task-management-issue-activity [issueUuid]="issue.uuid" [canWrite]="canEdit()" />
           </div>
 
-          <erp-field-panel
-            [config]="this.fieldPanelConfig()"
-            (transitionClick)="this.applyTransitionAsync($event)"
-            (typeChange)="this.changeTypeAsync($event)"
+          <div
+            class="fixed inset-y-0 right-0 z-40 w-[85vw] max-w-sm transform overflow-y-auto bg-[var(--tui-background-base)] p-4 shadow-xl transition-transform duration-200 xl:static xl:z-auto xl:w-auto xl:max-w-none xl:translate-x-0 xl:overflow-visible xl:bg-transparent xl:p-0 xl:shadow-none xl:transition-none"
+            [class.translate-x-0]="mobilePanelOpen()"
+            [class.translate-x-full]="!mobilePanelOpen()"
           >
-            <erp-task-management-issue-custom-fields [issue]="issue" />
-          </erp-field-panel>
+            <erp-field-panel
+              class="block border-t border-[var(--tui-border-normal)] pt-4 xl:border-t-0 xl:pt-0"
+              [config]="this.fieldPanelConfig()"
+              (transitionClick)="this.applyTransitionAsync($event)"
+              (typeChange)="this.changeTypeAsync($event)"
+            >
+              <erp-task-management-issue-custom-fields [issue]="issue" />
+            </erp-field-panel>
+          </div>
+
+          @if (mobilePanelOpen()) {
+            <button
+              type="button"
+              class="fixed inset-0 z-30 cursor-default border-0 bg-black/30 p-0 xl:hidden"
+              [attr.aria-label]="ISSUE_KEYS.detail.sidebar.hidePanel | erpTranslate"
+              (click)="mobilePanelOpen.set(false)"
+            ></button>
+          }
         </div>
       </div>
     }
@@ -281,7 +310,6 @@ export class IssueDetailComponent {
           avatarUuid: issue?.assigneeUuid ?? undefined,
         },
         { labelKey: ISSUE_KEYS.detail.sidebar.dueAt, value: issue?.dueAt ? new Date(issue.dueAt).toLocaleDateString() : this._transloco.translate(ISSUE_KEYS.table.unassigned) },
-        { labelKey: ISSUE_KEYS.detail.sidebar.updatedAt, value: issue?.updatedAt ? new Date(issue.updatedAt).toLocaleString() : '' },
       ],
     };
   });
@@ -327,6 +355,36 @@ export class IssueDetailComponent {
   });
 
   // ── Opis: podgląd ↔ edycja ───────────────────────────────────────────────────────────────
+
+  protected readonly editingTitle = signal<boolean>(false);
+  private readonly _titleInputHost = viewChild<ElementRef<HTMLElement>>('titleInputHost');
+  private readonly _editTitleButtonHost = viewChild<ElementRef<HTMLElement>>('editTitleButtonHost');
+  protected readonly titleControl = new FormControl<string>('', { nonNullable: true });
+  protected readonly titleInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setPlaceholder(ISSUE_KEYS.detail.header.titlePlaceholder),
+  );
+  protected readonly editTitleButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.detail.header.editTitle,
+    appearance: 'flat',
+    size: 'xs',
+    iconStart: '@tui.pencil',
+    fn: (): void => {
+      this.titleControl.setValue(this.issue()?.title ?? '');
+      this.editingTitle.set(true);
+    },
+  };
+  protected readonly saveTitleButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.detail.header.saveTitle,
+    appearance: 'primary',
+    size: 'xs',
+    fn: (): Promise<void> => this._saveTitle(),
+  };
+  protected readonly cancelTitleButton: ErpButtonConfig = {
+    label: ISSUE_KEYS.detail.header.cancelTitle,
+    appearance: 'flat',
+    size: 'xs',
+    fn: (): void => this.editingTitle.set(false),
+  };
 
   protected readonly editingDescription = signal<boolean>(false);
 
@@ -399,6 +457,23 @@ export class IssueDetailComponent {
     };
   });
 
+  /** Panel pól poniżej `xl` jest zasuwką (drawer), nie samym przeniesieniem pod treść —
+   * na wąskim ekranie stan i przejścia byłyby inaczej ostatnią rzeczą do przewinięcia, mimo że
+   * to one są najczęstszą akcją na karcie. */
+  protected readonly mobilePanelOpen = signal<boolean>(false);
+
+  protected readonly togglePanelButton = computed<ErpButtonConfig>(() => {
+    const open = this.mobilePanelOpen();
+
+    return {
+      label: open ? ISSUE_KEYS.detail.sidebar.hidePanel : ISSUE_KEYS.detail.sidebar.showPanel,
+      appearance: 'outline',
+      size: 's',
+      iconStart: open ? '@tui.x' : '@tui.panel-right',
+      fn: (): void => this.mobilePanelOpen.update((current) => !current),
+    };
+  });
+
   protected readonly backButton: ErpButtonConfig = {
     label: ISSUE_KEYS.detail.backToList,
     appearance: 'flat',
@@ -409,6 +484,17 @@ export class IssueDetailComponent {
     },
   };
 
+  protected issueKeyConfig(issue: IssueVM): ErpIssueKeyConfig {
+    return {
+      issueKey: issue.key,
+      typeIcon: issue.typeIcon,
+      typeName: issue.typeName,
+      title: issue.title,
+      link: undefined,
+      copyable: true,
+    };
+  }
+
   public constructor() {
     effect(() => {
       const key = this.key();
@@ -418,6 +504,20 @@ export class IssueDetailComponent {
     effect(() => {
       const description = this.issue()?.description;
       untracked(() => void this._resolveDescriptionAsync(description));
+    });
+
+    // Przejęcie focusu przez edytor tytułu, wejście i wyjście — bez tego klawiatura zostawia
+    // fokus na przycisku „Edytuj", a klik myszą jest jedyną drogą do pola tekstowego.
+    effect(() => {
+      const editing = this.editingTitle();
+
+      untracked(() => {
+        if (editing) {
+          this._titleInputHost()?.nativeElement.querySelector('input')?.focus();
+        } else {
+          this._editTitleButtonHost()?.nativeElement.querySelector('button')?.focus();
+        }
+      });
     });
 
     void this._typeSchemes.searchAsync({}, { autoLoad: true });
@@ -484,6 +584,22 @@ export class IssueDetailComponent {
       },
       failureMessage: ISSUE_KEYS.detail.descriptionSaveFailed,
     });
+  }
+
+  private async _saveTitle(): Promise<void> {
+    const issue = this.issue();
+    const title = this.titleControl.value.trim();
+    if (!issue || !title || title === issue.title) {
+      this.editingTitle.set(false);
+      return;
+    }
+
+    try {
+      await this._orchestrator.setTitleAsync({ uuid: issue.uuid, title });
+      this.editingTitle.set(false);
+    } catch (error) {
+      console.error('[IssueDetailComponent] Nie udało się zapisać tytułu.', error);
+    }
   }
 
   /**

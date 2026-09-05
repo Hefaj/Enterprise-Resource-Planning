@@ -1,5 +1,6 @@
 {
   "title": "Zlecenia",
+  "submitRequest": "Złóż zlecenie",
   "empty": "Brak zleceń — projekt typu „rejestr zleceń” jeszcze nie istnieje albo nie masz do niego dostępu.",
   "filters": {
     "text": {

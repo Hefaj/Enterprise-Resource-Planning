@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, untracked } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
-import { ErpCheckboxComponent, ErpTranslatePipe } from '@erp/shared/ui';
+import { ErpCheckboxComponent } from '@erp/shared/ui';
 import { ProjectVM, TaskManagementProjectOrchestrator } from '@erp/task-management/data-access';
+import { ErpProjectConfigurationSectionComponent, ErpProjectConfigurationSectionConfig } from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
@@ -21,16 +22,15 @@ import { PROJECT_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-project-notifications',
   standalone: true,
-  imports: [ErpCheckboxComponent, ErpTranslatePipe, ReactiveFormsModule],
+  imports: [ErpCheckboxComponent, ErpProjectConfigurationSectionComponent, ReactiveFormsModule],
   template: `
-    <section class="flex flex-col gap-4">
-      <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.notifications.title | erpTranslate }}</span>
+    <erp-project-configuration-section [config]="this.sectionConfig">
 
       <erp-checkbox
         [config]="{ label: PROJECT_KEYS.detail.notifications.muteLabel, hint: PROJECT_KEYS.detail.notifications.muteHint }"
         [formControl]="mutedControl"
       />
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,6 +40,7 @@ export class ProjectNotificationsComponent {
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
 
   public readonly project = input.required<ProjectVM>();
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = { title: PROJECT_KEYS.detail.notifications.title };
 
   protected readonly mutedControl = new FormControl<boolean>(false, { nonNullable: true });
 

@@ -203,6 +203,7 @@
       "submitButton": "Dopnij do produktów",
       "cancelButton": "Anuluj",
       "dropHint": "Przeciągnij pliki tutaj albo kliknij, aby wybrać",
+      "empty": "Nie wybrano jeszcze żadnych plików.",
       "uploading": "Wgrywanie plików…",
       "uploadProgress": "Wgrano {{ uploaded }} z {{ total }}",
       "uploadFailed": "Nie udało się wgrać plików. Spróbuj ponownie.",

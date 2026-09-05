@@ -1,38 +1,35 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
 import {
-  ErpButtonComponent,
   ErpButtonConfig,
   ErpConfirmDialogService,
   ErpGroupCardComponent,
   ErpGroupCardConfig,
   ErpInputBuilder,
-  ErpInputComponent,
   ErpInputConfig,
   ErpInputNumberBuilder,
-  ErpInputNumberComponent,
   ErpInputNumberConfig,
   ErpInputPickerBuilder,
-  ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpToastService,
-  ErpTranslatePipe,
+  Translatable,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import {
-  IssueWorkLogDto,
   IssueWorkLogService,
   TaskManagementIssueOrchestrator,
   TaskManagementWorkTypeOrchestrator,
   WorkTypeVM,
 } from '@erp/task-management/data-access';
+import { ErpWorkLogEntryRow, ErpWorkLogPanelComponent, ErpWorkLogPanelConfig } from '@erp/task-management/ui';
 
 import { ISSUE_KEYS } from '../../translation';
 
 /**
- * Sekcja czasu na karcie zgłoszenia (TIME-001/002).
+ * Sekcja czasu na karcie zgłoszenia (TIME-001/002) — adapter domenowy nad `erp-work-log-panel`
+ * (task-management/ui, etap 3): dostarcza dane, komendy, kontrolki formularza i klucze
+ * tłumaczeń, panel tylko renderuje.
  *
  * <p><b>Dodanie wpisu w dwóch krokach</b> (TIME-001 AC3): rodzaj pracy jest wstępnie wybrany
  * (pierwszy dostępny), więc zostaje wpisanie minut i zatwierdzenie — `Enter` w polu minut albo
@@ -45,97 +42,10 @@ import { ISSUE_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-issue-time',
   standalone: true,
-  imports: [
-    DatePipe,
-    ErpButtonComponent,
-    ErpGroupCardComponent,
-    ErpInputComponent,
-    ErpInputNumberComponent,
-    ErpInputPickerComponent,
-    ErpTranslatePipe,
-    ReactiveFormsModule,
-  ],
+  imports: [ErpGroupCardComponent, ErpWorkLogPanelComponent],
   template: `
     <erp-group-card [config]="this.cardConfig()">
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <span>
-            {{ ISSUE_KEYS.detail.time.estimateLabel | erpTranslate }}:
-            @if (editingEstimate()) {
-              <erp-input-number
-                class="w-20"
-                [config]="this.estimateInputConfig"
-                [control]="this.estimateControl"
-                (keydown.enter)="this.saveEstimateAsync()"
-              />
-              <erp-button [config]="this.saveEstimateButton" />
-              <erp-button [config]="this.cancelEstimateButton" />
-            } @else {
-              <strong>
-                @if (this.estimateMinutesOrNull() !== null) {
-                  {{ ISSUE_KEYS.detail.time.minutesFormat | erpTranslate: { minutes: this.estimateMinutesOrNull() } }}
-                } @else {
-                  {{ ISSUE_KEYS.detail.time.noEstimate | erpTranslate }}
-                }
-              </strong>
-              @if (this.canEdit()) {
-                <erp-button [config]="this.editEstimateButton" />
-              }
-            }
-          </span>
-
-          <span>
-            {{ ISSUE_KEYS.detail.time.loggedLabel | erpTranslate }}:
-            <strong>{{ ISSUE_KEYS.detail.time.minutesFormat | erpTranslate: { minutes: this.loggedMinutes() } }}</strong>
-          </span>
-
-          @if (this.remainingMinutes() !== null) {
-            <span>
-              {{ ISSUE_KEYS.detail.time.remainingLabel | erpTranslate }}:
-              <strong>{{ ISSUE_KEYS.detail.time.minutesFormat | erpTranslate: { minutes: this.remainingMinutes() } }}</strong>
-            </span>
-          }
-        </div>
-
-        @if (this.entries().length > 0) {
-          <ul class="m-0 flex flex-col gap-1 p-0 text-sm">
-            @for (entry of this.entries(); track entry.uuid) {
-              <li class="flex items-center gap-2">
-                <span class="text-[var(--tui-text-secondary)]">{{ entry.loggedOn | date: 'yyyy-MM-dd' }}</span>
-                <span>{{ this.workTypeName(entry.workTypeUuid) }}</span>
-                <strong>{{ ISSUE_KEYS.detail.time.minutesFormat | erpTranslate: { minutes: entry.minutes } }}</strong>
-                @if (entry.description) {
-                  <span class="text-[var(--tui-text-secondary)]">— {{ entry.description }}</span>
-                }
-                @if (entry.isMine) {
-                  <erp-button [config]="this.removeButton(entry)" />
-                }
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="m-0 text-[var(--tui-text-secondary)]">{{ ISSUE_KEYS.detail.time.noEntries | erpTranslate }}</p>
-        }
-
-        @if (this.canEdit()) {
-          <div class="flex flex-wrap items-center gap-2">
-            <erp-input-picker class="min-w-32" [config]="this.workTypePickerConfig()" [control]="this.workTypeControl" />
-            <erp-input-number
-              class="w-24"
-              [config]="this.minutesInputConfig"
-              [control]="this.minutesControl"
-              (keydown.enter)="this.addWorkLogAsync()"
-            />
-            <erp-input
-              class="min-w-32 flex-1"
-              [config]="this.descriptionInputConfig"
-              [control]="this.descriptionControl"
-              (keydown.enter)="this.addWorkLogAsync()"
-            />
-            <erp-button [config]="this.addButton" />
-          </div>
-        }
-      </div>
+      <erp-work-log-panel [config]="this.panelConfig()" />
     </erp-group-card>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -158,9 +68,20 @@ export class IssueTimeComponent {
 
   protected readonly canEdit = computed(() => this._permissionStore.has(ERP_PERMISSIONS.TaskManagement.IssueUpdate));
 
-  protected readonly entries = computed(() => this._workLogs.workLogsOf(this.issueUuid())());
+  private readonly _entries = computed(() => this._workLogs.workLogsOf(this.issueUuid())());
 
-  protected readonly loggedMinutes = computed(() => this.entries().reduce((sum, entry) => sum + entry.minutes, 0));
+  protected readonly entries = computed<ErpWorkLogEntryRow[]>(() =>
+    this._entries().map((entry) => ({
+      uuid: entry.uuid,
+      loggedOn: entry.loggedOn,
+      workTypeName: this.workTypeName(entry.workTypeUuid),
+      minutes: entry.minutes,
+      description: entry.description,
+      isMine: entry.isMine,
+    })),
+  );
+
+  protected readonly loggedMinutes = computed(() => this._entries().reduce((sum, entry) => sum + entry.minutes, 0));
 
   /** `null` znaczy „brak estymaty" — odróżnione od `0`, które jest poprawną wartością. */
   protected readonly estimateMinutesOrNull = computed(() => this.estimateMinutes() ?? null);
@@ -177,12 +98,10 @@ export class IssueTimeComponent {
     return estimate === null ? null : estimate - this.loggedMinutes();
   });
 
-  private readonly _cardConfig = computed<ErpGroupCardConfig>(() => ({
+  protected readonly cardConfig = computed<ErpGroupCardConfig>(() => ({
     title: { key: ISSUE_KEYS.detail.time.titleWithCount, params: { count: this.entries().length } },
     icon: '@tui.clock',
   }));
-
-  protected readonly cardConfig = this._cardConfig;
 
   // ── Estymata ──
 
@@ -254,6 +173,36 @@ export class IssueTimeComponent {
     fn: (): Promise<void> => this.addWorkLogAsync(),
   };
 
+  protected readonly panelConfig = computed<ErpWorkLogPanelConfig>(() => ({
+    entries: this.entries(),
+    loggedMinutes: this.loggedMinutes(),
+    estimateMinutesOrNull: this.estimateMinutesOrNull(),
+    remainingMinutes: this.remainingMinutes(),
+    canEdit: this.canEdit(),
+    editingEstimate: this.editingEstimate(),
+    estimateLabel: ISSUE_KEYS.detail.time.estimateLabel,
+    loggedLabel: ISSUE_KEYS.detail.time.loggedLabel,
+    remainingLabel: ISSUE_KEYS.detail.time.remainingLabel,
+    noEstimateLabel: ISSUE_KEYS.detail.time.noEstimate,
+    noEntriesLabel: ISSUE_KEYS.detail.time.noEntries,
+    formatMinutes: (minutes: number): Translatable => ({ key: ISSUE_KEYS.detail.time.minutesFormat, params: { minutes } }),
+    estimateControl: this.estimateControl,
+    estimateInputConfig: this.estimateInputConfig,
+    editEstimateButton: this.editEstimateButton,
+    saveEstimateButton: this.saveEstimateButton,
+    cancelEstimateButton: this.cancelEstimateButton,
+    onSaveEstimate: (): void => void this.saveEstimateAsync(),
+    workTypeControl: this.workTypeControl,
+    workTypePickerConfig: this.workTypePickerConfig(),
+    minutesControl: this.minutesControl,
+    minutesInputConfig: this.minutesInputConfig,
+    descriptionControl: this.descriptionControl,
+    descriptionInputConfig: this.descriptionInputConfig,
+    addButton: this.addButton,
+    onAddWorkLog: (): void => void this.addWorkLogAsync(),
+    getRemoveButton: (entry: ErpWorkLogEntryRow): ErpButtonConfig => this.removeButton(entry.uuid),
+  }));
+
   public constructor() {
     effect(() => {
       const issueUuid = this.issueUuid();
@@ -270,13 +219,13 @@ export class IssueTimeComponent {
     return (this._workTypes.getViewModel()().get(workTypeUuid) as WorkTypeVM | undefined)?.name ?? workTypeUuid;
   }
 
-  protected removeButton(entry: IssueWorkLogDto): ErpButtonConfig {
+  protected removeButton(workLogUuid: string): ErpButtonConfig {
     return {
       label: '',
       appearance: 'flat',
       size: 'xs',
       iconStart: '@tui.trash',
-      fn: (): Promise<void> => this._removeWorkLogAsync(entry.uuid),
+      fn: (): Promise<void> => this._removeWorkLogAsync(workLogUuid),
     };
   }
 

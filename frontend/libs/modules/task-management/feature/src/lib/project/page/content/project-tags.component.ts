@@ -2,16 +2,22 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import {
-  ErpButtonComponent,
   ErpButtonConfig,
   ErpConfirmDialogService,
+  ErpInputBuilder,
+  ErpInputConfig,
   ErpInputPickerBuilder,
-  ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpTranslatePipe,
 } from '@erp/shared/ui';
-import { ERP_PERMISSIONS, ErpHasPermissionDirective } from '@erp/shared/auth';
+import { ERP_PERMISSIONS, PermissionStore } from '@erp/shared/auth';
 import { ProjectVM, TagDto, TaskManagementTagOrchestrator } from '@erp/task-management/data-access';
+import {
+  ErpProjectConfigurationSectionComponent,
+  ErpProjectConfigurationSectionConfig,
+  ErpProjectTagListComponent,
+  ErpProjectTagListConfig,
+} from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
@@ -30,92 +36,33 @@ import { PROJECT_KEYS } from '../../translation';
   selector: 'erp-task-management-project-tags',
   standalone: true,
   imports: [
-    ErpButtonComponent,
-    ErpHasPermissionDirective,
-    ErpInputPickerComponent,
+    ErpProjectConfigurationSectionComponent,
+    ErpProjectTagListComponent,
     ErpTranslatePipe,
     ReactiveFormsModule,
   ],
   template: `
-    <section class="flex flex-col gap-4">
-      <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.tags.title | erpTranslate }}</span>
+    <erp-project-configuration-section [config]="this.sectionConfig">
 
       @if (this.tags().length === 0) {
         <span class="text-sm text-[var(--tui-text-secondary)]">
           {{ PROJECT_KEYS.detail.tags.empty | erpTranslate }}
         </span>
       } @else {
-        <table class="w-full text-sm">
-          <tbody>
-            @for (tag of this.tags(); track tag.uuid) {
-              <tr class="border-t border-[var(--tui-border-normal)]">
-                <td class="w-6 py-2">
-                  <span class="inline-block h-3 w-3 rounded-full" [style.background-color]="tag.color"></span>
-                </td>
-
-                <td class="py-2">
-                  @if (this.renamingUuid() === tag.uuid) {
-                    <input
-                      class="w-48 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-0.5 text-sm"
-                      type="text"
-                      [formControl]="this.renameControl"
-                      [placeholder]="PROJECT_KEYS.detail.tags.rename.placeholder | erpTranslate"
-                      (keydown.enter)="this.confirmRenameAsync(tag)"
-                      (keydown.escape)="this.renamingUuid.set(null)"
-                    />
-                  } @else {
-                    {{ tag.name }}
-                  }
-                </td>
-
-                <td class="py-2 text-right">
-                  <ng-container *erpHasPermission="ERP_PERMISSIONS.TaskManagement.TagManage">
-                    @if (this.renamingUuid() === tag.uuid) {
-                      <erp-button [config]="this.confirmRenameButton(tag)" />
-                      <erp-button [config]="this.cancelRenameButton" />
-                    } @else if (this.mergingUuid() === tag.uuid) {
-                      <erp-button [config]="this.cancelMergeButton" />
-                    } @else {
-                      <erp-button [config]="this.renameButton(tag)" />
-                      <erp-button [config]="this.mergeButton(tag)" />
-                    }
-                  </ng-container>
-                </td>
-              </tr>
-
-              @if (this.mergingUuid() === tag.uuid) {
-                <tr>
-                  <td colspan="3" class="pb-3">
-                    <div class="flex flex-col gap-2 rounded-md border border-[var(--tui-border-normal)] p-3">
-                      <span class="text-xs text-[var(--tui-text-secondary)]">
-                        {{ PROJECT_KEYS.detail.tags.merge.confirmMessage | erpTranslate: { name: tag.name } }}
-                      </span>
-                      <erp-input-picker
-                        class="w-64"
-                        [config]="this.mergeTargetPickerConfig(tag)"
-                        [control]="this.mergeTargetControl"
-                      />
-                      <div class="flex justify-end">
-                        <erp-button [config]="this.confirmMergeButton(tag)" />
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
+        <erp-project-tag-list [config]="this.tagListConfig()" />
       }
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectTagsComponent {
   protected readonly PROJECT_KEYS = PROJECT_KEYS;
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = { title: PROJECT_KEYS.detail.tags.title };
   protected readonly ERP_PERMISSIONS = ERP_PERMISSIONS;
 
   private readonly _tags = inject(TaskManagementTagOrchestrator);
   private readonly _confirm = inject(ErpConfirmDialogService);
+  private readonly _permissions = inject(PermissionStore);
 
   public readonly project = input.required<ProjectVM>();
 
@@ -128,6 +75,9 @@ export class ProjectTagsComponent {
 
   protected readonly renameControl = new FormControl<string>('', { nonNullable: true });
   protected readonly mergeTargetControl = new FormControl<string | null>(null);
+  protected readonly renameInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setPlaceholder(PROJECT_KEYS.detail.tags.rename.placeholder).setSize('s'),
+  );
 
   protected readonly tags = computed<TagDto[]>(() => {
     const viewModels = this._tags.getViewModel()();
@@ -137,6 +87,39 @@ export class ProjectTagsComponent {
       .filter((tag): tag is TagDto => tag !== undefined)
       .sort((a, b) => a.name.localeCompare(b.name));
   });
+
+  protected readonly tagListConfig = computed<ErpProjectTagListConfig>(() => ({
+    renameControl: this.renameControl,
+    renameInputConfig: this.renameInputConfig,
+    rows: this.tags().map((tag) => {
+      const editing = this.renamingUuid() === tag.uuid;
+      const merging = this.mergingUuid() === tag.uuid;
+      const canManage = this._permissions.has(ERP_PERMISSIONS.TaskManagement.TagManage);
+
+      return {
+        id: tag.uuid,
+        name: tag.name,
+        color: tag.color,
+        editing,
+        merging,
+        actions: !canManage
+          ? []
+          : editing
+            ? [this.confirmRenameButton(tag), this.cancelRenameButton]
+            : merging
+              ? [this.cancelMergeButton]
+              : [this.renameButton(tag), this.mergeButton(tag)],
+        merge: merging
+          ? {
+              message: { key: PROJECT_KEYS.detail.tags.merge.confirmMessage, params: { name: tag.name } },
+              pickerConfig: this.mergeTargetPickerConfig(tag),
+              pickerControl: this.mergeTargetControl,
+              confirmButton: this.confirmMergeButton(tag),
+            }
+          : undefined,
+      };
+    }),
+  }));
 
   public constructor() {
     // `project` jest inputem wymaganym, ale nie jest jeszcze zamontowany w chwili wykonania

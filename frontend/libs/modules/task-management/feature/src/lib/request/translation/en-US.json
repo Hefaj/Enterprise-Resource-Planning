@@ -1,5 +1,6 @@
 {
   "title": "Requests",
+  "submitRequest": "Submit request",
   "empty": "No requests — no \"intake register\" project exists yet, or you have no access to it.",
   "filters": {
     "text": {

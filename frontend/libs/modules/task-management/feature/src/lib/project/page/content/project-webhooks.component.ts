@@ -6,13 +6,20 @@ import { TranslocoService } from '@jsverse/transloco';
 import {
   ErpButtonComponent,
   ErpButtonConfig,
+  ErpCheckboxBuilder,
+  ErpCheckboxComponent,
+  ErpCheckboxConfig,
   ErpConfirmDialogService,
+  ErpInputBuilder,
+  ErpInputComponent,
+  ErpInputConfig,
   ErpTranslatePipe,
   injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, ErpHasPermissionDirective } from '@erp/shared/auth';
 import { ProjectVM, TaskManagementWebhookOrchestrator, WebhookDeliveryDto, WebhookDto } from '@erp/task-management/data-access';
 import { AUTOMATION_TRIGGER_KIND, AutomationTriggerKindValue, WEBHOOK_DELIVERY_STATUS } from '@erp/task-management/util';
+import { ErpProjectConfigurationSectionComponent, ErpProjectConfigurationSectionConfig } from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
@@ -27,9 +34,9 @@ import { PROJECT_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-project-webhooks',
   standalone: true,
-  imports: [DatePipe, ErpButtonComponent, ErpHasPermissionDirective, ErpTranslatePipe, ReactiveFormsModule],
+  imports: [DatePipe, ErpButtonComponent, ErpCheckboxComponent, ErpHasPermissionDirective, ErpInputComponent, ErpProjectConfigurationSectionComponent, ErpTranslatePipe, ReactiveFormsModule],
   template: `
-    <section class="flex flex-col gap-4">
+    <erp-project-configuration-section [config]="this.sectionConfig">
       <div class="flex items-center justify-between">
         <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.webhooks.title | erpTranslate }}</span>
 
@@ -101,40 +108,15 @@ import { PROJECT_KEYS } from '../../translation';
 
       @if (this.editingUuid() !== null) {
         <div class="flex flex-col gap-3 rounded-md border border-[var(--tui-border-normal)] p-3">
-          <div class="flex flex-col gap-1">
-            <span class="text-xs font-medium">{{ PROJECT_KEYS.detail.webhooks.editor.urlLabel | erpTranslate }}</span>
-            <input
-              class="w-full rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-              type="text"
-              [formControl]="this.urlControl"
-              [placeholder]="PROJECT_KEYS.detail.webhooks.editor.urlPlaceholder | erpTranslate"
-            />
-          </div>
+          <erp-input [config]="this.urlInputConfig" [control]="this.urlControl" />
 
-          <div class="flex flex-col gap-1">
-            <span class="text-xs font-medium">{{ PROJECT_KEYS.detail.webhooks.editor.secretLabel | erpTranslate }}</span>
-            <input
-              class="w-full rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-              type="text"
-              [formControl]="this.secretControl"
-            />
-            <span class="text-xs text-[var(--tui-text-secondary)]">
-              {{ PROJECT_KEYS.detail.webhooks.editor.secretHint | erpTranslate }}
-            </span>
-          </div>
+          <erp-input [config]="this.secretInputConfig" [control]="this.secretControl" />
 
           <div class="flex flex-col gap-1">
             <span class="text-xs font-medium">{{ PROJECT_KEYS.detail.webhooks.editor.eventsLabel | erpTranslate }}</span>
             <div class="flex flex-wrap gap-3">
               @for (event of this.eventOptions(); track event.value) {
-                <label class="flex items-center gap-1 text-xs">
-                  <input
-                    type="checkbox"
-                    [checked]="this.selectedEvents().includes(event.value)"
-                    (change)="this.toggleEvent(event.value)"
-                  />
-                  {{ event.label }}
-                </label>
+                <erp-checkbox [config]="this.eventCheckboxConfig(event)" [control]="this.eventControl(event.value)" />
               }
             </div>
 
@@ -154,12 +136,13 @@ import { PROJECT_KEYS } from '../../translation';
           </div>
         </div>
       }
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectWebhooksComponent {
   protected readonly PROJECT_KEYS = PROJECT_KEYS;
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = { title: PROJECT_KEYS.detail.webhooks.title };
   protected readonly ERP_PERMISSIONS = ERP_PERMISSIONS;
   protected readonly WEBHOOK_DELIVERY_STATUS = WEBHOOK_DELIVERY_STATUS;
 
@@ -180,6 +163,13 @@ export class ProjectWebhooksComponent {
   protected readonly urlControl = new FormControl<string>('', { nonNullable: true });
   protected readonly secretControl = new FormControl<string>('', { nonNullable: true });
   protected readonly selectedEvents = signal<AutomationTriggerKindValue[]>([]);
+  private readonly _eventControls = new Map<AutomationTriggerKindValue, FormControl<boolean>>();
+  protected readonly urlInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setLabel(PROJECT_KEYS.detail.webhooks.editor.urlLabel).setPlaceholder(PROJECT_KEYS.detail.webhooks.editor.urlPlaceholder),
+  );
+  protected readonly secretInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setLabel(PROJECT_KEYS.detail.webhooks.editor.secretLabel).setHint(PROJECT_KEYS.detail.webhooks.editor.secretHint),
+  );
 
   protected readonly webhooks = computed<WebhookDto[]>(() => {
     const viewModels = this._webhooks.getViewModel()();
@@ -191,17 +181,16 @@ export class ProjectWebhooksComponent {
   });
 
   protected readonly eventOptions = computed(() => {
-    this._translationsReady();
     return [
-      { value: AUTOMATION_TRIGGER_KIND.IssueCreated, label: this._transloco.translate(PROJECT_KEYS.detail.webhooks.event.issueCreated) },
+      { value: AUTOMATION_TRIGGER_KIND.IssueCreated, labelKey: PROJECT_KEYS.detail.webhooks.event.issueCreated },
       {
         value: AUTOMATION_TRIGGER_KIND.IssueStateChanged,
-        label: this._transloco.translate(PROJECT_KEYS.detail.webhooks.event.issueStateChanged),
+        labelKey: PROJECT_KEYS.detail.webhooks.event.issueStateChanged,
       },
-      { value: AUTOMATION_TRIGGER_KIND.CommentAdded, label: this._transloco.translate(PROJECT_KEYS.detail.webhooks.event.commentAdded) },
+      { value: AUTOMATION_TRIGGER_KIND.CommentAdded, labelKey: PROJECT_KEYS.detail.webhooks.event.commentAdded },
       {
         value: AUTOMATION_TRIGGER_KIND.DueDateElapsed,
-        label: this._transloco.translate(PROJECT_KEYS.detail.webhooks.event.dueDateElapsed),
+        labelKey: PROJECT_KEYS.detail.webhooks.event.dueDateElapsed,
       },
     ];
   });
@@ -216,7 +205,25 @@ export class ProjectWebhooksComponent {
   });
 
   protected eventLabel(kind: number): string {
-    return this.eventOptions().find((option) => option.value === kind)?.label ?? '';
+    this._translationsReady();
+    const key = this.eventOptions().find((option) => option.value === kind)?.labelKey;
+    return key ? this._transloco.translate(key) : '';
+  }
+
+  protected eventCheckboxConfig(event: { labelKey: string }): ErpCheckboxConfig {
+    return ErpCheckboxBuilder.create((builder) => builder.setLabel(event.labelKey).setSize('s'));
+  }
+
+  protected eventControl(kind: AutomationTriggerKindValue): FormControl<boolean> {
+    const existing = this._eventControls.get(kind);
+    if (existing) {
+      return existing;
+    }
+
+    const control = new FormControl(this.selectedEvents().includes(kind), { nonNullable: true });
+    control.valueChanges.subscribe((selected) => this._setEventSelected(kind, selected));
+    this._eventControls.set(kind, control);
+    return control;
   }
 
   protected statusLabel(status: number): string {
@@ -303,20 +310,26 @@ export class ProjectWebhooksComponent {
     this.editingUuid.set('new');
     this.urlControl.setValue('');
     this.secretControl.setValue('');
-    this.selectedEvents.set([AUTOMATION_TRIGGER_KIND.IssueCreated]);
+    this._setSelectedEvents([AUTOMATION_TRIGGER_KIND.IssueCreated]);
   }
 
   protected startEdit(webhook: WebhookDto): void {
     this.editingUuid.set(webhook.uuid);
     this.urlControl.setValue(webhook.url);
     this.secretControl.setValue('');
-    this.selectedEvents.set(webhook.eventKinds as AutomationTriggerKindValue[]);
+    this._setSelectedEvents(webhook.eventKinds as AutomationTriggerKindValue[]);
   }
 
-  protected toggleEvent(kind: AutomationTriggerKindValue): void {
-    this.selectedEvents.update((kinds) =>
-      kinds.includes(kind) ? kinds.filter((k) => k !== kind) : [...kinds, kind],
-    );
+  private _setEventSelected(kind: AutomationTriggerKindValue, selected: boolean): void {
+    this._setSelectedEvents(selected ? [...this.selectedEvents(), kind] : this.selectedEvents().filter((item) => item !== kind));
+  }
+
+  private _setSelectedEvents(kinds: readonly AutomationTriggerKindValue[]): void {
+    const uniqueKinds = [...new Set(kinds)];
+    this.selectedEvents.set(uniqueKinds);
+    for (const [kind, control] of this._eventControls) {
+      control.setValue(uniqueKinds.includes(kind), { emitEvent: false });
+    }
   }
 
   private async _saveAsync(): Promise<void> {

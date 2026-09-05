@@ -1,4 +1,14 @@
 {
+  "navigation": {
+    "module": "Work management",
+    "issues": "Issues",
+    "requests": "Requests",
+    "projects": "Projects",
+    "boards": "Boards",
+    "backlog": "Backlog",
+    "reports": "Hours report",
+    "configuration": "Configuration"
+  },
   "workflow": {
     "states": {
       "todo": "To do",

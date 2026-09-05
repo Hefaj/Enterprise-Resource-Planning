@@ -64,7 +64,11 @@ public sealed record BoardCardDto(
     string? ParentTitle,
     /// <summary>Wartość pola niestandardowego wskazanego przez <c>Board.SwimlaneFieldCode</c> —
     /// puste, gdy tablica nie grupuje po polu własnym albo zgłoszenie nie ma wartości.</summary>
-    string? SwimlaneFieldValue);
+    string? SwimlaneFieldValue,
+    /// <summary>Tagi zgłoszenia — front pokazuje je jako chipsy na karcie, bez osobnego
+    /// odpytania (`docs/modules/task-management/screens.md` §9.3).</summary>
+    IReadOnlyList<Guid> TagUuids,
+    int? EstimateMinutes);
 
 /// <summary>Żądanie listy tablic. Pusty <see cref="ProjectUuid"/> zwraca wszystkie widoczne.</summary>
 public sealed class SearchBoardRequest

@@ -174,6 +174,7 @@ public sealed class IssueQueries : IIssueQueries
         {
             IssueScope.AssignedToMe => query.Where(i => i.AssigneeUuid == me),
             IssueScope.ReportedByMe => query.Where(i => i.ReporterUuid == me),
+            IssueScope.Watched => query.Where(i => i.Watchers.Any(w => w.UserUuid == me && w.OptedOutAt == null)),
             _ => query,
         };
 

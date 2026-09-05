@@ -14,6 +14,10 @@ import {
   ErpInputPickerBuilder,
   ErpInputPickerComponent,
   ErpInputPickerConfig,
+  ErpRowActionsCellComponent,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
   ErpTranslatePipe,
   injectTranslationsReadySignal,
 } from '@erp/shared/ui';
@@ -28,6 +32,10 @@ import {
   TaskManagementProjectOrchestrator,
 } from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE, FIELD_SLOT } from '@erp/task-management/util';
+import {
+  ErpProjectConfigurationSectionComponent,
+  ErpProjectConfigurationSectionConfig,
+} from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
@@ -49,12 +57,13 @@ import { PROJECT_KEYS } from '../../translation';
     ErpCheckboxComponent,
     ErpInputComponent,
     ErpInputPickerComponent,
+    ErpProjectConfigurationSectionComponent,
+    ErpTableComponent,
     ErpTranslatePipe,
     ReactiveFormsModule,
   ],
   template: `
-    <section class="flex flex-col gap-4">
-      <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.fields.title | erpTranslate }}</span>
+    <erp-project-configuration-section [config]="this.sectionConfig">
 
       <div class="flex items-end gap-3">
         <erp-input-picker class="w-80" [config]="schemePickerConfig()" [control]="schemeControl" />
@@ -70,32 +79,7 @@ import { PROJECT_KEYS } from '../../translation';
           {{ PROJECT_KEYS.detail.fields.scheme.empty | erpTranslate }}
         </span>
       } @else {
-        <table class="w-full text-sm">
-          <thead class="text-left text-xs uppercase text-[var(--tui-text-tertiary)]">
-            <tr>
-              <th class="py-1">{{ PROJECT_KEYS.detail.fields.columns.code | erpTranslate }}</th>
-              <th class="py-1">{{ PROJECT_KEYS.detail.fields.columns.name | erpTranslate }}</th>
-              <th class="py-1">{{ PROJECT_KEYS.detail.fields.columns.type | erpTranslate }}</th>
-              <th class="py-1">{{ PROJECT_KEYS.detail.fields.columns.slot | erpTranslate }}</th>
-              <th class="py-1">{{ PROJECT_KEYS.detail.fields.columns.required | erpTranslate }}</th>
-              <th class="py-1"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (field of this.fields(); track field.uuid) {
-              <tr class="border-t border-[var(--tui-border-normal)]">
-                <td class="py-2 font-mono text-xs">{{ field.code }}</td>
-                <td class="py-2">{{ (field.nameKey ?? field.name) | erpTranslate }}</td>
-                <td class="py-2">{{ this.typeLabel(field.dataType) | erpTranslate }}</td>
-                <td class="py-2 font-mono text-xs">{{ this.slotLabel(field.slot) }}</td>
-                <td class="py-2">{{ field.isRequired ? '✓' : '' }}</td>
-                <td class="py-2 text-right">
-                  <erp-button [config]="this.removeButton(field)" />
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        <erp-table class="block h-80 w-full" [config]="this.fieldsTableConfig()" />
       }
 
       @if (this.scheme()) {
@@ -113,15 +97,15 @@ import { PROJECT_KEYS } from '../../translation';
           }
 
           <div class="grid grid-cols-2 gap-3">
-            <erp-input [config]="codeInput" [formControl]="codeControl" />
-            <erp-input [config]="nameInput" [formControl]="nameControl" />
-            <erp-input [config]="nameKeyInput" [formControl]="nameKeyControl" />
+            <erp-input [config]="codeInput" [control]="codeControl" />
+            <erp-input [config]="nameInput" [control]="nameControl" />
+            <erp-input [config]="nameKeyInput" [control]="nameKeyControl" />
             <erp-input-picker [config]="typePickerConfig()" [control]="typeControl" />
             <erp-input-picker [config]="slotPickerConfig()" [control]="slotControl" />
             @if (this.isSelect()) {
-              <erp-input [config]="optionsInput" [formControl]="optionsControl" />
+              <erp-input [config]="optionsInput" [control]="optionsControl" />
             }
-            <erp-checkbox [config]="requiredCheckbox" [formControl]="requiredControl" />
+            <erp-checkbox [config]="requiredCheckbox" [control]="requiredControl" />
           </div>
 
           <div class="flex justify-end">
@@ -129,7 +113,7 @@ import { PROJECT_KEYS } from '../../translation';
           </div>
         </div>
       }
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -144,6 +128,10 @@ export class ProjectFieldsComponent {
   private readonly _translationsReady = injectTranslationsReadySignal();
 
   public readonly project = input.required<ProjectVM>();
+
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = {
+    title: PROJECT_KEYS.detail.fields.title,
+  };
 
   private readonly _saving = signal<boolean>(false);
 
@@ -175,6 +163,56 @@ export class ProjectFieldsComponent {
   });
 
   protected readonly fields = computed<FieldDefinitionDto[]>(() => this.scheme()?.fields ?? []);
+
+  protected readonly fieldsTableConfig = computed<ErpTableConfig<FieldDefinitionDto>>(() =>
+    new ErpTableBuilder<FieldDefinitionDto>()
+      .setMode('client')
+      .setRowIdAccessor((row) => row.uuid)
+      .setItems(this.fields())
+      .setSelectionMode('none')
+      .setEmptyMessage(PROJECT_KEYS.detail.fields.scheme.empty)
+      .addColumn((c) =>
+        c.setId('code').setAccessorKey('code').setHeader(PROJECT_KEYS.detail.fields.columns.code).setCellClass('font-mono text-xs'),
+      )
+      .addColumn((c) =>
+        c
+          .setId('name')
+          .setAccessorFn((row) => this._t(row.nameKey ?? row.name))
+          .setHeader(PROJECT_KEYS.detail.fields.columns.name),
+      )
+      .addColumn((c) =>
+        c
+          .setId('type')
+          .setAccessorFn((row) => this._t(this.typeLabel(row.dataType)))
+          .setHeader(PROJECT_KEYS.detail.fields.columns.type),
+      )
+      .addColumn((c) =>
+        c
+          .setId('slot')
+          .setAccessorFn((row) => this.slotLabel(row.slot))
+          .setHeader(PROJECT_KEYS.detail.fields.columns.slot)
+          .setCellClass('font-mono text-xs'),
+      )
+      .addColumn((c) =>
+        c
+          .setId('required')
+          .setAccessorFn((row) => (row.isRequired ? '✓' : ''))
+          .setHeader(PROJECT_KEYS.detail.fields.columns.required)
+          .setEnableSorting(false)
+          .setSize(90)
+          .setGrow(0),
+      )
+      .addColumn((c) =>
+        c
+          .setId('actions')
+          .setHeader('')
+          .setEnableSorting(false)
+          .setSize(90)
+          .setGrow(0)
+          .setCell(ErpRowActionsCellComponent, { getActions: (row: FieldDefinitionDto) => [this.removeButton(row)] }),
+      )
+      .build(),
+  );
 
   protected readonly schemePickerConfig = computed<ErpInputPickerConfig>(() =>
     ErpInputPickerBuilder.create((b) =>

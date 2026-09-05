@@ -11,7 +11,8 @@
       "label": "Zakres",
       "available": "Wszystkie dostępne",
       "assignedToMe": "Moje",
-      "reportedByMe": "Zgłoszone przeze mnie"
+      "reportedByMe": "Zgłoszone przeze mnie",
+      "watched": "Obserwowane"
     },
     "project": {
       "label": "Projekt",
@@ -145,7 +146,13 @@
     "watchToggleFailed": "Nie udało się zmienić obserwacji zgłoszenia.",
     "descriptionSaveFailed": "Nie udało się zapisać opisu zgłoszenia.",
     "header": {
-      "createdByLabel": "Utworzone przez"
+      "createdByLabel": "Utworzone przez",
+      "updatedAtLabel": "zm.",
+      "editTitle": "Edytuj tytuł",
+      "titlePlaceholder": "Tytuł zgłoszenia",
+      "saveTitle": "Zapisz tytuł",
+      "cancelTitle": "Anuluj edycję tytułu",
+      "titleSaveFailed": "Nie udało się zapisać tytułu zgłoszenia."
     },
     "description": {
       "label": "Opis",
@@ -197,7 +204,9 @@
       "restricted": "Zgłoszenie prywatne",
       "watch": "Obserwuj",
       "unwatch": "Przestań obserwować",
-      "watcherCount": "Obserwujący: {{ count }}"
+      "watcherCount": "Obserwujący: {{ count }}",
+      "showPanel": "Pola i stan",
+      "hidePanel": "Ukryj panel"
     },
     "attachments": {
       "label": "Załączniki",

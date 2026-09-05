@@ -13,10 +13,12 @@ import { ERP_USER_DIRECTORY } from '@erp/shared/util';
 import {
   ProjectFieldDto,
   ProjectVM,
+  SavedViewDto,
   SearchIssueRequest,
   TagVM,
   TaskManagementIssueOrchestrator,
   TaskManagementProjectOrchestrator,
+  TaskManagementSavedViewOrchestrator,
   TaskManagementTagOrchestrator,
 } from '@erp/task-management/data-access';
 import { CUSTOM_FIELD_DATA_TYPE, ISSUE_SCOPE, ISSUE_PRIORITY } from '@erp/task-management/util';
@@ -57,6 +59,7 @@ export class IssueFilterComponent implements OnInit {
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
   private readonly _tags = inject(TaskManagementTagOrchestrator);
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
+  private readonly _savedViews = inject(TaskManagementSavedViewOrchestrator);
   private readonly _router = inject(Router);
   private readonly _transloco = inject(TranslocoService);
   private readonly _translationsReady = injectTranslationsReadySignal();
@@ -96,6 +99,7 @@ export class IssueFilterComponent implements OnInit {
       { value: ISSUE_SCOPE.Available, label: this._transloco.translate(ISSUE_KEYS.filters.scope.available) },
       { value: ISSUE_SCOPE.AssignedToMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.assignedToMe) },
       { value: ISSUE_SCOPE.ReportedByMe, label: this._transloco.translate(ISSUE_KEYS.filters.scope.reportedByMe) },
+      { value: ISSUE_SCOPE.Watched, label: this._transloco.translate(ISSUE_KEYS.filters.scope.watched) },
     ];
   });
 
@@ -123,6 +127,18 @@ export class IssueFilterComponent implements OnInit {
 
   private readonly _initialValues = computed(() => this._store.filters());
 
+  /** Zapisane widoki widoczne w kontekście: własne oraz współdzielone na projekcie
+   * (`TaskManagementSavedViewOrchestrator.searchViewsAsync` zwraca obie grupy jednym wywołaniem).
+   * Przeładowywane razem z tagami, przy zmianie projektu — poza projektem widać tylko własne. */
+  private readonly _views = signal<SavedViewDto[]>([]);
+
+  /** `erp-filter` renderuje listę wyboru/usuwania z kluczy tego słownika — nazwa widoku jest
+   * jedynym identyfikatorem widocznym w UI, więc dwa własne widoki o tej samej nazwie nie mają
+   * tu jak współistnieć (zapis pod istniejącą nazwą aktualizuje, nie duplikuje). */
+  private readonly _savedPresets = computed<Record<string, unknown>>(() =>
+    Object.fromEntries(this._views().map((view) => [view.name, this._tryParseFilterJson(view.filterJson)])),
+  );
+
   /**
    * Konfiguracja filtra jest <b>przeliczana</b>, bo pola projekto-specyficzne dochodzą i znikają
    * razem z kontekstem projektu. Przebudowa tworzy nową grupę formularza — i tak jest to
@@ -138,6 +154,10 @@ export class IssueFilterComponent implements OnInit {
       .setInitialValues(this._initialValues)
       .setOnSearch((val) => this.onSearch(val))
       .setLoading(this._store.loading)
+      .setSavedPresets(this._savedPresets)
+      .setOnSavePreset((event) => void this._saveViewAsync(event.name, event.value))
+      .setOnLoadPreset((name) => this._loadView(name))
+      .setOnDeletePreset((name) => void this._deleteViewAsync(name))
       .addFormField('text', 'text', (f) =>
         f.setLabel(ISSUE_KEYS.filters.text.label).setPlaceholder(ISSUE_KEYS.filters.text.placeholder),
       )
@@ -214,6 +234,7 @@ export class IssueFilterComponent implements OnInit {
       const projectUuid = this._store.filters().projectUuid;
       untracked(() => {
         void this._loadTagsAsync(projectUuid);
+        void this._loadViewsAsync(projectUuid);
       });
     });
   }
@@ -228,6 +249,68 @@ export class IssueFilterComponent implements OnInit {
       this._tagUuids.set(tags.map((tag) => tag.uuid));
     } catch (error) {
       console.error('[IssueFilterComponent] Nie udało się pobrać listy tagów.', error);
+    }
+  }
+
+  private async _loadViewsAsync(projectUuid: string | undefined): Promise<void> {
+    try {
+      const views = await this._savedViews.searchViewsAsync({ projectUuid });
+      this._views.set(views);
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się pobrać zapisanych widoków.', error);
+    }
+  }
+
+  /** Zapis pod nazwą własnego, już istniejącego widoku aktualizuje go — nazwa jest jedynym
+   * identyfikatorem widocznym w UI `erp-filter`, więc dwa własne widoki pod tą samą nazwą
+   * wprowadzałyby w błąd, który z nich się właśnie wczytuje. */
+  private async _saveViewAsync(name: string, value: unknown): Promise<void> {
+    const filterJson = JSON.stringify(value ?? {});
+    const projectUuid = this._store.filters().projectUuid;
+    const mode = (value as { treeMode?: boolean } | null)?.treeMode ? 1 : 0;
+    const existing = this._views().find((view) => view.isOwn && view.name === name);
+
+    try {
+      if (existing) {
+        await this._savedViews.setAsync({ uuid: existing.uuid, name, filterJson, columns: existing.columns, mode });
+      } else {
+        await this._savedViews.createAsync({ uuid: crypto.randomUUID(), projectUuid, name, filterJson, columns: [], mode });
+      }
+
+      await this._loadViewsAsync(projectUuid);
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się zapisać widoku.', error);
+    }
+  }
+
+  private _loadView(name: string): void {
+    const value = this._savedPresets()[name];
+
+    if (value && typeof value === 'object') {
+      this._store.updateFilters(value as Partial<SearchIssueRequest>);
+    }
+  }
+
+  private async _deleteViewAsync(name: string): Promise<void> {
+    const view = this._views().find((candidate) => candidate.isOwn && candidate.name === name);
+
+    if (!view) {
+      return;
+    }
+
+    try {
+      await this._savedViews.removeAsync({ uuid: view.uuid });
+      await this._loadViewsAsync(this._store.filters().projectUuid);
+    } catch (error) {
+      console.error('[IssueFilterComponent] Nie udało się usunąć widoku.', error);
+    }
+  }
+
+  private _tryParseFilterJson(json: string): unknown {
+    try {
+      return JSON.parse(json);
+    } catch {
+      return {};
     }
   }
 

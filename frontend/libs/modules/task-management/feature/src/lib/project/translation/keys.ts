@@ -142,6 +142,8 @@ export const PROJECT_KEYS = {
       automations: {
         title: 'project.detail.automations.title',
         empty: 'project.detail.automations.empty',
+        loadError: 'project.detail.automations.loadError',
+        retry: 'project.detail.automations.retry',
         addRule: 'project.detail.automations.addRule',
         executedCount: 'project.detail.automations.executedCount',
         enable: 'project.detail.automations.enable',
@@ -289,6 +291,9 @@ export const PROJECT_KEYS = {
       workflow: {
         title: 'project.detail.workflow.title',
         noScheme: 'project.detail.workflow.noScheme',
+        loading: 'project.detail.workflow.loading',
+        loadError: 'project.detail.workflow.loadError',
+        retry: 'project.detail.workflow.retry',
         states: {
           title: 'project.detail.workflow.states.title',
           empty: 'project.detail.workflow.states.empty',

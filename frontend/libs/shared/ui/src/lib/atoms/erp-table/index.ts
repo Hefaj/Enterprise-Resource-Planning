@@ -18,6 +18,7 @@ export { isColumnGroupDef } from './erp-table.types';
 export { ErpTableBuilder, ErpColumnBuilder, ErpColumnGroupBuilder, ErpGroupedRowsBuilder } from './erp-table.builder';
 export { ErpTableComponent } from './erp-table.component';
 export { ErpChipCellComponent } from './erp-chip-cell.component';
+export { ErpRowActionsCellComponent } from './erp-row-actions-cell.component';
 export type {
   ErpBatchTargets,
   ErpBatchMetadata,

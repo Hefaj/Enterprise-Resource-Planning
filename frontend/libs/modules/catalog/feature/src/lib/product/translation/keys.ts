@@ -208,6 +208,7 @@ export const PRODUCT_KEYS = {
         submitButton: 'product.commands.addMultimedia.submitButton',
         cancelButton: 'product.commands.addMultimedia.cancelButton',
         dropHint: 'product.commands.addMultimedia.dropHint',
+        empty: 'product.commands.addMultimedia.empty',
         uploading: 'product.commands.addMultimedia.uploading',
         uploadProgress: 'product.commands.addMultimedia.uploadProgress',
         uploadFailed: 'product.commands.addMultimedia.uploadFailed',

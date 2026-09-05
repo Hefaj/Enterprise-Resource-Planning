@@ -1,30 +1,16 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Signal,
-  computed,
-  effect,
-  inject,
-  input,
-  signal,
-  untracked,
-} from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TuiIcon } from '@taiga-ui/core';
-import { TuiFileLike, TuiFiles } from '@taiga-ui/kit';
+import { ChangeDetectionStrategy, Component, Signal, computed, effect, inject, input, signal, untracked } from '@angular/core';
 
 import {
-  ErpButtonComponent,
-  ErpButtonConfig,
   ErpConfirmDialogService,
+  ErpFileUploadListComponent,
+  ErpFileUploadListBuilder,
+  ErpFileUploadListConfig,
+  ErpFileUploadListItem,
   ErpGroupCardComponent,
   ErpGroupCardConfig,
   ErpMediaPreviewItem,
   ErpMediaPreviewService,
   ErpToastService,
-  ErpTranslatePipe,
 } from '@erp/shared/ui';
 import {
   ISSUE_ATTACHMENT_MAX_FILES_PER_REQUEST,
@@ -36,16 +22,12 @@ import {
 
 import { ISSUE_KEYS } from '../../translation';
 
-/** Wiersz sekcji: DTO plus adres podglądu, który dojeżdża osobno. */
-interface IssueAttachmentRow {
-  readonly dto: IssueAttachmentDto;
-
-  /** `blob:`-URL podglądu albo `undefined` — dla nieobrazów zawsze `undefined`. */
-  readonly url: string | undefined;
-}
-
 /**
  * Załączniki zgłoszenia — lista plików pod opisem na karcie.
+ *
+ * Wybór/postęp/lista/błędy renderuje wspólny port `erp-file-upload-list` (shared/ui). Ten
+ * komponent zostaje adapterem domenowym: zamienia DTO na `ErpFileUploadListItem`, dostarcza
+ * bilet uploadu i komendy.
  *
  * <p><b>Pliki wgrywają się od razu po wybraniu, a nie przy jakimkolwiek „zapisz”</b> — karta
  * zgłoszenia nie ma przycisku zapisu całości, a rejestracja plików jest osobną komendą wobec
@@ -60,73 +42,10 @@ interface IssueAttachmentRow {
 @Component({
   selector: 'erp-task-management-issue-attachments',
   standalone: true,
-  imports: [DatePipe, ReactiveFormsModule, TuiFiles, TuiIcon, ErpButtonComponent, ErpGroupCardComponent, ErpTranslatePipe],
+  imports: [ErpGroupCardComponent, ErpFileUploadListComponent],
   template: `
-    <erp-group-card [config]="this.cardConfig()">
-      <div class="flex flex-col gap-2">
-        @if (canEdit()) {
-          <label tuiInputFiles>
-            <input
-              tuiInputFiles
-              multiple
-              [formControl]="filesControl"
-              [attr.aria-label]="ISSUE_KEYS.detail.attachments.add | erpTranslate"
-            />
-          </label>
-        }
-
-        @if (uploading()) {
-          <p class="m-0 text-sm text-[var(--tui-text-secondary)]">
-            {{ ISSUE_KEYS.detail.attachments.uploading | erpTranslate: { uploaded: uploaded(), total: total() } }}
-          </p>
-        }
-
-        @if (rows().length === 0) {
-          <p class="m-0 text-sm text-[var(--tui-text-secondary)]">
-            {{ ISSUE_KEYS.detail.attachments.empty | erpTranslate }}
-          </p>
-        } @else {
-          <ul class="m-0 flex list-none flex-wrap gap-3 p-0">
-            @for (row of rows(); track row.dto.uuid) {
-            <li class="flex w-72 items-center gap-3 rounded border border-[var(--tui-border-normal)] p-2">
-              @if (row.dto.isImage) {
-                <button
-                  type="button"
-                  class="h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded border-0 bg-[var(--tui-background-neutral-1)] p-0"
-                  [attr.aria-label]="ISSUE_KEYS.detail.attachments.preview | erpTranslate"
-                  (click)="openPreview(row.dto.uuid)"
-                >
-                  @if (row.url) {
-                    <img [src]="row.url" [alt]="row.dto.fileName" class="h-full w-full object-cover" />
-                  }
-                </button>
-              } @else {
-                <!-- Ikona typu pliku zamiast udawanego podglądu: dokumentu ani archiwum
-                     przeglądarka i tak by tu nie narysowała. -->
-                <span
-                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-[var(--tui-background-neutral-1)] text-[var(--tui-text-secondary)]"
-                  aria-hidden="true"
-                >
-                  <tui-icon icon="@tui.file" />
-                </span>
-              }
-
-              <div class="flex min-w-0 flex-1 flex-col">
-                <span class="truncate text-sm" [title]="row.dto.fileName">{{ row.dto.fileName }}</span>
-                <span class="text-xs text-[var(--tui-text-secondary)]">
-                  {{ formatSize(row.dto.fileSize) }} · {{ row.dto.createdAt | date: 'short' }}
-                </span>
-              </div>
-
-              <erp-button [config]="downloadButton(row.dto)" />
-              @if (canEdit()) {
-                <erp-button [config]="removeButton(row.dto)" />
-              }
-            </li>
-            }
-          </ul>
-        }
-      </div>
+    <erp-group-card [config]="cardConfig()">
+      <erp-file-upload-list [config]="uploadListConfig()" />
     </erp-group-card>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -147,14 +66,6 @@ export class IssueAttachmentsComponent {
   private readonly _issues = inject(TaskManagementIssueOrchestrator);
   private readonly _confirm = inject(ErpConfirmDialogService);
 
-  protected readonly filesControl = new FormControl<TuiFileLike | readonly TuiFileLike[] | null>(null);
-
-  private readonly _selection = toSignal(this.filesControl.valueChanges, { initialValue: null });
-
-  protected readonly uploading = signal<boolean>(false);
-  protected readonly uploaded = signal<number>(0);
-  protected readonly total = signal<number>(0);
-
   private readonly _list = computed(() => this._attachments.attachmentsOf(this.issueUuid())());
 
   /**
@@ -163,15 +74,43 @@ export class IssueAttachmentsComponent {
    */
   private readonly _urls = signal<ReadonlyMap<string, Signal<string | undefined>>>(new Map());
 
-  protected readonly rows = computed<IssueAttachmentRow[]>(() => {
+  protected readonly items = computed<ErpFileUploadListItem[]>(() => {
     const urls = this._urls();
-    return this._list().map((dto) => ({ dto, url: urls.get(dto.uuid)?.() }));
+    return this._list().map((dto) => ({
+      id: dto.uuid,
+      fileName: dto.fileName,
+      fileSize: dto.fileSize,
+      createdAt: dto.createdAt,
+      isImage: dto.isImage,
+      previewUrl: urls.get(dto.uuid),
+    }));
   });
 
   protected readonly cardConfig = computed<ErpGroupCardConfig>(() => ({
-    title: { key: ISSUE_KEYS.detail.attachments.titleWithCount, params: { count: this.rows().length } },
+    title: { key: ISSUE_KEYS.detail.attachments.titleWithCount, params: { count: this.items().length } },
     icon: '@tui.paperclip',
   }));
+
+  protected readonly uploadListConfig = computed<ErpFileUploadListConfig>(() =>
+    ErpFileUploadListBuilder.create((b) =>
+      b
+        .setItems(this.items())
+        .setCanEdit(this.canEdit())
+        .setAddLabel(ISSUE_KEYS.detail.attachments.add)
+        .setEmptyLabel(ISSUE_KEYS.detail.attachments.empty)
+        .setPreviewLabel(ISSUE_KEYS.detail.attachments.preview)
+        .setDownloadLabel(ISSUE_KEYS.detail.attachments.download)
+        .setRemoveLabel(ISSUE_KEYS.detail.attachments.remove)
+        .setUploadingLabel((uploaded, total) => ({ key: ISSUE_KEYS.detail.attachments.uploading, params: { uploaded, total } }))
+        .setUploadFailedLabel(ISSUE_KEYS.detail.attachments.uploadFailed)
+        .setTooManyFilesLabel(ISSUE_KEYS.detail.attachments.tooManyFiles)
+        .setMaxFilesPerSelection(ISSUE_ATTACHMENT_MAX_FILES_PER_REQUEST)
+        .setOnUpload((files, onProgress) => this._uploadAsync(files, onProgress))
+        .setOnPreview((item) => this._openPreview(item.id))
+        .setOnDownload((item) => this._downloadAsync(item.id))
+        .setOnRemove((item) => this._removeAsync(item.id)),
+    ),
+  );
 
   public constructor() {
     effect(() => {
@@ -190,44 +129,25 @@ export class IssueAttachmentsComponent {
       // bez tego pierwszy zapis wywołałby go ponownie i zamówił pobrania drugi raz.
       untracked(() => this._ensureUrls(list));
     });
-
-    effect(() => {
-      const selection = this._selection();
-      const files = selection === null ? [] : Array.isArray(selection) ? selection : [selection];
-
-      untracked(() => void this._upload(files as File[]));
-    });
   }
 
-  protected downloadButton(dto: IssueAttachmentDto): ErpButtonConfig {
-    return {
-      label: ISSUE_KEYS.detail.attachments.download,
-      appearance: 'flat',
-      size: 'xs',
-      iconStart: '@tui.download',
-      fn: async (): Promise<void> => {
-        if (!(await this._content.downloadAsync(dto))) {
-          this._toasts.show({
-            message: ISSUE_KEYS.detail.attachments.downloadFailed,
-            appearance: 'negative',
-          });
-        }
-      },
-    };
+  private async _downloadAsync(attachmentUuid: string): Promise<void> {
+    const dto = this._list().find((candidate) => candidate.uuid === attachmentUuid);
+
+    if (!dto) {
+      return;
+    }
+
+    if (!(await this._content.downloadAsync(dto))) {
+      this._toasts.show({
+        message: ISSUE_KEYS.detail.attachments.downloadFailed,
+        appearance: 'negative',
+      });
+    }
   }
 
   /** ATT-002 — usunięcie idzie przez prefiks postojowy/outbox po stronie backendu, nie przez
    * gołe kasowanie w magazynie; tutaj tylko potwierdzenie i wywołanie komendy. */
-  protected removeButton(dto: IssueAttachmentDto): ErpButtonConfig {
-    return {
-      label: '',
-      appearance: 'flat',
-      size: 'xs',
-      iconStart: '@tui.trash',
-      fn: (): Promise<void> => this._removeAsync(dto.uuid),
-    };
-  }
-
   private async _removeAsync(attachmentUuid: string): Promise<void> {
     const confirmed = await this._confirm.confirmAsync({
       title: ISSUE_KEYS.detail.attachments.removeConfirmTitle,
@@ -248,7 +168,7 @@ export class IssueAttachmentsComponent {
    * strzałkami przez pliki, których nie da się narysować, byłoby serią komunikatów o braku
    * podglądu.
    */
-  protected openPreview(startId: string): void {
+  private _openPreview(startId: string): void {
     const urls = this._urls();
 
     const items: ErpMediaPreviewItem[] = this._list()
@@ -281,10 +201,6 @@ export class IssueAttachmentsComponent {
       .subscribe();
   }
 
-  protected formatSize(bytes: number): string {
-    return formatSize(bytes);
-  }
-
   private _ensureUrls(list: readonly IssueAttachmentDto[]): void {
     const current = this._urls();
     const missing = list.filter((dto) => dto.isImage && !current.has(dto.uuid));
@@ -301,40 +217,14 @@ export class IssueAttachmentsComponent {
     this._urls.set(next);
   }
 
-  private async _upload(files: readonly File[]): Promise<void> {
+  private async _uploadAsync(files: readonly File[], onProgress: (uploaded: number) => void): Promise<void> {
     const issueUuid = this.issueUuid();
 
-    if (!issueUuid || files.length === 0) {
+    if (!issueUuid) {
       return;
     }
 
-    if (files.length > ISSUE_ATTACHMENT_MAX_FILES_PER_REQUEST) {
-      this._toasts.show({
-        message: ISSUE_KEYS.detail.attachments.tooManyFiles,
-        appearance: 'negative',
-      });
-      this.filesControl.setValue(null, { emitEvent: false });
-      return;
-    }
-
-    this.uploading.set(true);
-    this.uploaded.set(0);
-    this.total.set(files.length);
-
-    try {
-      await this._attachments.uploadAsync(issueUuid, files, (uploaded) => this.uploaded.set(uploaded));
-    } catch (error) {
-      console.error('[IssueAttachmentsComponent] Nie udało się wgrać załączników.', error);
-      this._toasts.show({
-        message: ISSUE_KEYS.detail.attachments.uploadFailed,
-        appearance: 'negative',
-      });
-    } finally {
-      this.uploading.set(false);
-      // Wybór czyścimy zawsze: lista pod spodem pokazuje już stan faktyczny, a zostawiony
-      // wgrałby te same pliki jeszcze raz przy następnej zmianie kontrolki.
-      this.filesControl.setValue(null, { emitEvent: false });
-    }
+    await this._attachments.uploadAsync(issueUuid, files, onProgress);
   }
 }
 

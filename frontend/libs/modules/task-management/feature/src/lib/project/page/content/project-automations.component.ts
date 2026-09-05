@@ -1,16 +1,18 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
 
 import {
   ErpButtonComponent,
   ErpButtonConfig,
   ErpConfirmDialogService,
+  ErpInputBuilder,
+  ErpInputConfig,
   ErpInputPickerBuilder,
-  ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpTranslatePipe,
+  Translatable,
   injectTranslationsReadySignal,
 } from '@erp/shared/ui';
 import { ERP_PERMISSIONS, ErpHasPermissionDirective } from '@erp/shared/auth';
@@ -30,30 +32,24 @@ import {
   AutomationTriggerKindValue,
   ISSUE_PRIORITY,
 } from '@erp/task-management/util';
-import { TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
+import {
+  ErpAutomationActionRow,
+  ErpAutomationConditionRow,
+  ErpAutomationRuleEditorComponent,
+  ErpAutomationRuleEditorConfig,
+  ErpProjectConfigurationSectionComponent,
+  ErpProjectConfigurationSectionConfig,
+  TASKMANAGEMENT_KEYS,
+} from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
 /** Wiersz warunku edytowany w formularzu — jeszcze nie zwalidowany, jeszcze nie AST. */
-interface ConditionRowState {
-  field: string;
-  operator: number;
-  literal: string;
-}
+type ConditionRowState = ErpAutomationConditionRow;
 
 /** Wiersz akcji edytowany w formularzu — pola per rodzaj trzymane naraz, serializowane do
  * `configJson` dopiero przy zapisie (tylko te właściwe dla wybranego `kind`). */
-interface ActionRowState {
-  uuid: string;
-  kind: AutomationActionKindValue;
-  priority: number;
-  stateUuid: string;
-  assigneeUuid: string;
-  tagUuid: string;
-  commentBody: string;
-  subtaskTypeUuid: string;
-  subtaskTitle: string;
-}
+type ActionRowState = ErpAutomationActionRow;
 
 function newActionRow(): ActionRowState {
   return {
@@ -85,14 +81,14 @@ function newActionRow(): ActionRowState {
   standalone: true,
   imports: [
     DatePipe,
+    ErpAutomationRuleEditorComponent,
     ErpButtonComponent,
     ErpHasPermissionDirective,
-    ErpInputPickerComponent,
+    ErpProjectConfigurationSectionComponent,
     ErpTranslatePipe,
-    ReactiveFormsModule,
   ],
   template: `
-    <section class="flex flex-col gap-4">
+    <erp-project-configuration-section [config]="this.sectionConfig">
       <div class="flex items-center justify-between">
         <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.automations.title | erpTranslate }}</span>
 
@@ -103,7 +99,14 @@ function newActionRow(): ActionRowState {
         </ng-container>
       </div>
 
-      @if (this.rules().length === 0 && this.editingUuid() === null) {
+      @if (this.rulesLoadError()) {
+        <div class="flex flex-col items-start gap-2">
+          <span class="text-sm text-[var(--tui-status-negative)]">
+            {{ PROJECT_KEYS.detail.automations.loadError | erpTranslate }}
+          </span>
+          <erp-button [config]="retryRulesButton" />
+        </div>
+      } @else if (this.rules().length === 0 && this.editingUuid() === null) {
         <span class="text-sm text-[var(--tui-text-secondary)]">
           {{ PROJECT_KEYS.detail.automations.empty | erpTranslate }}
         </span>
@@ -154,171 +157,9 @@ function newActionRow(): ActionRowState {
       }
 
       @if (this.editingUuid() !== null) {
-        <div class="flex flex-col gap-3 rounded-md border border-[var(--tui-border-normal)] p-3">
-          <input
-            class="w-full rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-sm"
-            type="text"
-            [formControl]="this.nameControl"
-            [placeholder]="PROJECT_KEYS.detail.automations.editor.namePlaceholder | erpTranslate"
-          />
-
-          <erp-input-picker class="w-64" [config]="this.triggerPickerConfig()" [control]="this.triggerControl" />
-
-          <div class="flex flex-col gap-2">
-            <span class="text-xs font-medium">{{ PROJECT_KEYS.detail.automations.editor.conditionTitle | erpTranslate }}</span>
-            <span class="text-xs text-[var(--tui-text-secondary)]">
-              {{ PROJECT_KEYS.detail.automations.editor.conditionHint | erpTranslate }}
-            </span>
-
-            @for (group of this.conditionGroups(); track $index; let groupIndex = $index) {
-              @if (groupIndex > 0) {
-                <span class="text-xs font-medium text-[var(--tui-text-tertiary)]">
-                  {{ PROJECT_KEYS.detail.automations.editor.orSeparator | erpTranslate }}
-                </span>
-              }
-
-              @for (row of group; track $index; let rowIndex = $index) {
-                <div class="flex flex-wrap items-center gap-2">
-                  <select
-                    class="rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                    [value]="row.field"
-                    (change)="this.updateConditionRow(groupIndex, rowIndex, { field: $any($event.target).value })"
-                  >
-                    @for (field of this.fieldOptions; track field.value) {
-                      <option [value]="field.value">{{ field.label | erpTranslate }}</option>
-                    }
-                  </select>
-
-                  <select
-                    class="rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                    [value]="row.operator"
-                    (change)="this.updateConditionRow(groupIndex, rowIndex, { operator: +$any($event.target).value })"
-                  >
-                    @for (op of this.operatorOptions; track op.value) {
-                      <option [value]="op.value">{{ op.label | erpTranslate }}</option>
-                    }
-                  </select>
-
-                  <input
-                    class="w-40 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                    type="text"
-                    [value]="row.literal"
-                    [placeholder]="PROJECT_KEYS.detail.automations.editor.literalPlaceholder | erpTranslate"
-                    (input)="this.updateConditionRow(groupIndex, rowIndex, { literal: $any($event.target).value })"
-                  />
-
-                  <erp-button [config]="this.removeConditionRowButton(groupIndex, rowIndex)" />
-                </div>
-              }
-            }
-
-            <div class="flex gap-2">
-              <erp-button [config]="this.addConditionRowButton" />
-              <erp-button [config]="this.addConditionGroupButton" />
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <span class="text-xs font-medium">{{ PROJECT_KEYS.detail.automations.editor.actionsTitle | erpTranslate }}</span>
-
-            @for (action of this.actionRows(); track action.uuid; let actionIndex = $index) {
-              <div class="flex flex-wrap items-center gap-2 rounded border border-[var(--tui-border-normal)] p-2">
-                <select
-                  class="rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                  [value]="action.kind"
-                  (change)="this.updateAction(actionIndex, { kind: $any(+$any($event.target).value) })"
-                >
-                  @for (kind of this.actionKindOptions; track kind.value) {
-                    <option [value]="kind.value">{{ kind.label | erpTranslate }}</option>
-                  }
-                </select>
-
-                @switch (action.kind) {
-                  @case (AUTOMATION_ACTION_KIND.SetPriority) {
-                    <select
-                      class="rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                      [value]="action.priority"
-                      (change)="this.updateAction(actionIndex, { priority: +$any($event.target).value })"
-                    >
-                      @for (priority of this.priorityOptions(); track priority.value) {
-                        <option [value]="priority.value">{{ priority.label }}</option>
-                      }
-                    </select>
-                  }
-                  @case (AUTOMATION_ACTION_KIND.SetState) {
-                    <input
-                      class="w-56 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                      type="text"
-                      [value]="action.stateUuid"
-                      [placeholder]="PROJECT_KEYS.detail.automations.editor.config.stateUuid | erpTranslate"
-                      (input)="this.updateAction(actionIndex, { stateUuid: $any($event.target).value })"
-                    />
-                  }
-                  @case (AUTOMATION_ACTION_KIND.AssignTo) {
-                    <input
-                      class="w-56 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                      type="text"
-                      [value]="action.assigneeUuid"
-                      [placeholder]="PROJECT_KEYS.detail.automations.editor.config.assigneeUuid | erpTranslate"
-                      (input)="this.updateAction(actionIndex, { assigneeUuid: $any($event.target).value })"
-                    />
-                  }
-                  @case (AUTOMATION_ACTION_KIND.AddTag) {
-                    <input
-                      class="w-56 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                      type="text"
-                      [value]="action.tagUuid"
-                      [placeholder]="PROJECT_KEYS.detail.automations.editor.config.tagUuid | erpTranslate"
-                      (input)="this.updateAction(actionIndex, { tagUuid: $any($event.target).value })"
-                    />
-                  }
-                  @case (AUTOMATION_ACTION_KIND.AddComment) {
-                    <input
-                      class="w-72 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                      type="text"
-                      [value]="action.commentBody"
-                      [placeholder]="PROJECT_KEYS.detail.automations.editor.config.commentBody | erpTranslate"
-                      (input)="this.updateAction(actionIndex, { commentBody: $any($event.target).value })"
-                    />
-                  }
-                  @case (AUTOMATION_ACTION_KIND.CreateSubtask) {
-                    <input
-                      class="w-56 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                      type="text"
-                      [value]="action.subtaskTypeUuid"
-                      [placeholder]="PROJECT_KEYS.detail.automations.editor.config.subtaskTypeUuid | erpTranslate"
-                      (input)="this.updateAction(actionIndex, { subtaskTypeUuid: $any($event.target).value })"
-                    />
-                    <input
-                      class="w-56 rounded border border-[var(--tui-border-normal)] bg-transparent px-2 py-1 text-xs"
-                      type="text"
-                      [value]="action.subtaskTitle"
-                      [placeholder]="PROJECT_KEYS.detail.automations.editor.config.subtaskTitle | erpTranslate"
-                      (input)="this.updateAction(actionIndex, { subtaskTitle: $any($event.target).value })"
-                    />
-                  }
-                }
-
-                <erp-button [config]="this.removeActionButton(actionIndex)" />
-              </div>
-            }
-
-            <erp-button [config]="this.addActionButton" />
-
-            @if (this.actionRows().length === 0) {
-              <span class="text-xs text-[var(--tui-status-negative)]">
-                {{ PROJECT_KEYS.detail.automations.editor.actionRequired | erpTranslate }}
-              </span>
-            }
-          </div>
-
-          <div class="flex justify-end gap-2">
-            <erp-button [config]="this.cancelEditButton" />
-            <erp-button [config]="this.saveRuleButton" />
-          </div>
-        </div>
+        <erp-automation-rule-editor [config]="this.editorConfig()" />
       }
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -334,7 +175,20 @@ export class ProjectAutomationsComponent {
 
   public readonly project = input.required<ProjectVM>();
 
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = {
+    title: PROJECT_KEYS.detail.automations.title,
+  };
+
   private readonly _ruleUuids = signal<string[]>([]);
+  /** Błąd nie może udawać „brak reguł" — inaczej użytkownik konfiguruje od zera coś, co już
+   * istnieje, tylko przejściowo niedostępne. */
+  protected readonly rulesLoadError = signal<boolean>(false);
+  protected readonly retryRulesButton: ErpButtonConfig = {
+    label: PROJECT_KEYS.detail.automations.retry,
+    appearance: 'outline',
+    size: 's',
+    fn: (): Promise<void> => this._loadAsync(),
+  };
   private readonly _saving = signal<boolean>(false);
 
   protected readonly logUuid = signal<string | null>(null);
@@ -342,11 +196,16 @@ export class ProjectAutomationsComponent {
 
   protected readonly editingUuid = signal<string | null>(null);
   protected readonly nameControl = new FormControl<string>('', { nonNullable: true });
+  protected readonly nameInputConfig: ErpInputConfig = ErpInputBuilder.create((b) =>
+    b.setPlaceholder(PROJECT_KEYS.detail.automations.editor.namePlaceholder),
+  );
   protected readonly triggerControl = new FormControl<AutomationTriggerKindValue>(AUTOMATION_TRIGGER_KIND.IssueCreated, {
     nonNullable: true,
   });
   protected readonly conditionGroups = signal<ConditionRowState[][]>([]);
   protected readonly actionRows = signal<ActionRowState[]>([]);
+  private readonly _conditionControls = new Map<string, FormControl<string | number>>();
+  private readonly _actionControls = new Map<string, FormControl<string | number>>();
 
   protected readonly rules = computed<AutomationRuleDto[]>(() => {
     const viewModels = this._rules.getViewModel()();
@@ -395,6 +254,49 @@ export class ProjectAutomationsComponent {
       { value: ISSUE_PRIORITY.Critical, label: this._transloco.translate(TASKMANAGEMENT_KEYS.priority.critical) },
     ];
   });
+
+  protected readonly actionKindPickerConfig = computed<ErpInputPickerConfig>(() => {
+    this._translationsReady();
+    return ErpInputPickerBuilder.create((builder) =>
+      builder
+        .setItems(this.actionKindOptions.map((item) => ({ value: item.value, label: this._transloco.translate(item.label) })))
+        .setLabelKey('label')
+        .setValueKey('value')
+        .setStrategy('single'),
+    );
+  });
+
+  protected readonly priorityPickerConfig = computed<ErpInputPickerConfig>(() =>
+    ErpInputPickerBuilder.create((builder) =>
+      builder.setItems(this.priorityOptions()).setLabelKey('label').setValueKey('value').setStrategy('single'),
+    ),
+  );
+
+  protected readonly conditionFieldPickerConfig = computed<ErpInputPickerConfig>(() => {
+    this._translationsReady();
+    return ErpInputPickerBuilder.create((builder) =>
+      builder
+        .setItems(this.fieldOptions.map((item) => ({ value: item.value, label: this._transloco.translate(item.label) })))
+        .setLabelKey('label')
+        .setValueKey('value')
+        .setStrategy('single'),
+    );
+  });
+
+  protected readonly conditionOperatorPickerConfig = computed<ErpInputPickerConfig>(() => {
+    this._translationsReady();
+    return ErpInputPickerBuilder.create((builder) =>
+      builder
+        .setItems(this.operatorOptions.map((item) => ({ value: item.value, label: this._transloco.translate(item.label) })))
+        .setLabelKey('label')
+        .setValueKey('value')
+        .setStrategy('single'),
+    );
+  });
+
+  protected readonly literalInputConfig: ErpInputConfig = ErpInputBuilder.create((builder) =>
+    builder.setPlaceholder(PROJECT_KEYS.detail.automations.editor.literalPlaceholder).setSize('s'),
+  );
 
   protected readonly triggerPickerConfig = computed<ErpInputPickerConfig>(() => {
     this._translationsReady();
@@ -492,7 +394,7 @@ export class ProjectAutomationsComponent {
     label: PROJECT_KEYS.detail.automations.editor.addOrGroup,
     appearance: 'flat',
     size: 'xs',
-    fn: (): void => this.conditionGroups.update((groups) => [...groups, [this._emptyConditionRow()]]),
+    fn: (): void => this.addConditionGroup(),
   };
 
   protected removeConditionRowButton(groupIndex: number, rowIndex: number): ErpButtonConfig {
@@ -536,6 +438,61 @@ export class ProjectAutomationsComponent {
     fn: (): Promise<void> => this._saveAsync(),
   };
 
+  /** Adapter granicy feature → ui dla `erp-automation-rule-editor`: stan wierszy, cache
+   * kontrolek per komórka i komendy zostają tutaj. */
+  protected readonly editorConfig = computed<ErpAutomationRuleEditorConfig>(() => ({
+    conditionTitle: PROJECT_KEYS.detail.automations.editor.conditionTitle,
+    conditionHint: PROJECT_KEYS.detail.automations.editor.conditionHint,
+    orSeparator: PROJECT_KEYS.detail.automations.editor.orSeparator,
+    actionsTitle: PROJECT_KEYS.detail.automations.editor.actionsTitle,
+    actionRequiredLabel: PROJECT_KEYS.detail.automations.editor.actionRequired,
+
+    nameControl: this.nameControl,
+    nameInputConfig: this.nameInputConfig,
+    triggerControl: this.triggerControl,
+    triggerPickerConfig: this.triggerPickerConfig(),
+
+    conditionGroups: this.conditionGroups(),
+    fieldPickerConfig: this.conditionFieldPickerConfig(),
+    operatorPickerConfig: this.conditionOperatorPickerConfig(),
+    literalInputConfig: this.literalInputConfig,
+    getFieldControl: (row, groupIndex, rowIndex): FormControl<string | number> => this.conditionFieldControl(row, groupIndex, rowIndex),
+    getOperatorControl: (row, groupIndex, rowIndex): FormControl<string | number> => this.conditionOperatorControl(row, groupIndex, rowIndex),
+    getLiteralControl: (row, groupIndex, rowIndex): FormControl<string | number> => this.conditionLiteralControl(row, groupIndex, rowIndex),
+    getRemoveConditionRowButton: (groupIndex, rowIndex): ErpButtonConfig => this.removeConditionRowButton(groupIndex, rowIndex),
+    addConditionRowButton: this.addConditionRowButton,
+    addConditionGroupButton: this.addConditionGroupButton,
+
+    actionKindValues: {
+      setPriority: AUTOMATION_ACTION_KIND.SetPriority,
+      setState: AUTOMATION_ACTION_KIND.SetState,
+      assignTo: AUTOMATION_ACTION_KIND.AssignTo,
+      addTag: AUTOMATION_ACTION_KIND.AddTag,
+      addComment: AUTOMATION_ACTION_KIND.AddComment,
+      createSubtask: AUTOMATION_ACTION_KIND.CreateSubtask,
+    },
+    actionRows: this.actionRows(),
+    actionKindPickerConfig: this.actionKindPickerConfig(),
+    priorityPickerConfig: this.priorityPickerConfig(),
+    getActionKindControl: (action): FormControl<string | number> => this.actionKindControl(action),
+    getActionPriorityControl: (action): FormControl<string | number> => this.actionPriorityControl(action),
+    getActionTextControl: (action, field): FormControl<string | number> => this.actionTextControl(action, field),
+    actionInputConfig: (placeholder): ErpInputConfig => this.actionInputConfig(placeholder),
+    configLabels: {
+      stateUuid: PROJECT_KEYS.detail.automations.editor.config.stateUuid,
+      assigneeUuid: PROJECT_KEYS.detail.automations.editor.config.assigneeUuid,
+      tagUuid: PROJECT_KEYS.detail.automations.editor.config.tagUuid,
+      commentBody: PROJECT_KEYS.detail.automations.editor.config.commentBody,
+      subtaskTypeUuid: PROJECT_KEYS.detail.automations.editor.config.subtaskTypeUuid,
+      subtaskTitle: PROJECT_KEYS.detail.automations.editor.config.subtaskTitle,
+    },
+    getRemoveActionButton: (index): ErpButtonConfig => this.removeActionButton(index),
+    addActionButton: this.addActionButton,
+
+    cancelButton: this.cancelEditButton,
+    saveButton: this.saveRuleButton,
+  }));
+
   public constructor() {
     // `project` jest inputem wymaganym, ale nie jest jeszcze zamontowany w chwili wykonania
     // konstruktora — odczyt wprost tutaj kończy się `NG0950`, ten sam błąd co przy
@@ -547,6 +504,8 @@ export class ProjectAutomationsComponent {
   }
 
   protected startCreate(): void {
+    this._actionControls.clear();
+    this._conditionControls.clear();
     this.editingUuid.set('new');
     this.nameControl.setValue('');
     this.triggerControl.setValue(AUTOMATION_TRIGGER_KIND.IssueCreated);
@@ -555,6 +514,8 @@ export class ProjectAutomationsComponent {
   }
 
   protected startEdit(rule: AutomationRuleDto): void {
+    this._actionControls.clear();
+    this._conditionControls.clear();
     this.editingUuid.set(rule.uuid);
     this.nameControl.setValue(rule.name);
     this.triggerControl.setValue(rule.triggerKind as AutomationTriggerKindValue);
@@ -592,6 +553,12 @@ export class ProjectAutomationsComponent {
       next[next.length - 1].push(this._emptyConditionRow());
       return next;
     });
+    this._conditionControls.clear();
+  }
+
+  protected addConditionGroup(): void {
+    this.conditionGroups.update((groups) => [...groups, [this._emptyConditionRow()]]);
+    this._conditionControls.clear();
   }
 
   protected removeConditionRow(groupIndex: number, rowIndex: number): void {
@@ -600,6 +567,7 @@ export class ProjectAutomationsComponent {
       next[groupIndex].splice(rowIndex, 1);
       return next.filter((group) => group.length > 0);
     });
+    this._conditionControls.clear();
   }
 
   protected updateConditionRow(groupIndex: number, rowIndex: number, patch: Partial<ConditionRowState>): void {
@@ -608,14 +576,89 @@ export class ProjectAutomationsComponent {
       next[groupIndex][rowIndex] = { ...next[groupIndex][rowIndex], ...patch };
       return next;
     });
+    this._conditionControls.clear();
+  }
+
+  protected conditionFieldControl(row: ConditionRowState, groupIndex: number, rowIndex: number): FormControl<string | number> {
+    return this._conditionControl(row, groupIndex, rowIndex, 'field', row.field, (value) => ({ field: String(value) }));
+  }
+
+  protected conditionOperatorControl(row: ConditionRowState, groupIndex: number, rowIndex: number): FormControl<string | number> {
+    return this._conditionControl(row, groupIndex, rowIndex, 'operator', row.operator, (value) => ({ operator: Number(value) }));
+  }
+
+  protected conditionLiteralControl(row: ConditionRowState, groupIndex: number, rowIndex: number): FormControl<string | number> {
+    return this._conditionControl(row, groupIndex, rowIndex, 'literal', row.literal, (value) => ({ literal: String(value) }));
   }
 
   protected updateAction(index: number, patch: Partial<ActionRowState>): void {
     this.actionRows.update((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
+  protected actionKindControl(action: ActionRowState): FormControl<string | number> {
+    return this._actionControl(action, 'kind', action.kind, (value) => ({ kind: Number(value) as AutomationActionKindValue }));
+  }
+
+  protected actionPriorityControl(action: ActionRowState): FormControl<string | number> {
+    return this._actionControl(action, 'priority', action.priority, (value) => ({ priority: Number(value) }));
+  }
+
+  protected actionTextControl(
+    action: ActionRowState,
+    field: 'stateUuid' | 'assigneeUuid' | 'tagUuid' | 'commentBody' | 'subtaskTypeUuid' | 'subtaskTitle',
+  ): FormControl<string | number> {
+    return this._actionControl(action, field, action[field], (value) => ({ [field]: String(value) }));
+  }
+
+  protected actionInputConfig(placeholder: Translatable): ErpInputConfig {
+    return ErpInputBuilder.create((builder) => builder.setPlaceholder(placeholder).setSize('s'));
+  }
+
   private _emptyConditionRow(): ConditionRowState {
     return { field: AUTOMATION_FIELD_PATH.Priority, operator: AUTOMATION_COMPARISON_OPERATOR.Eq, literal: '' };
+  }
+
+  private _actionControl(
+    action: ActionRowState,
+    field: string,
+    value: string | number,
+    toPatch: (value: string | number) => Partial<ActionRowState>,
+  ): FormControl<string | number> {
+    const key = `${action.uuid}:${field}`;
+    const existing = this._actionControls.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const control = new FormControl<string | number>(value, { nonNullable: true });
+    control.valueChanges.subscribe((nextValue) => {
+      const index = this.actionRows().findIndex((row) => row.uuid === action.uuid);
+      if (index >= 0) {
+        this.updateAction(index, toPatch(nextValue));
+      }
+    });
+    this._actionControls.set(key, control);
+    return control;
+  }
+
+  private _conditionControl(
+    _row: ConditionRowState,
+    groupIndex: number,
+    rowIndex: number,
+    field: string,
+    value: string | number,
+    toPatch: (value: string | number) => Partial<ConditionRowState>,
+  ): FormControl<string | number> {
+    const key = `${groupIndex}:${rowIndex}:${field}`;
+    const existing = this._conditionControls.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const control = new FormControl<string | number>(value, { nonNullable: true });
+    control.valueChanges.subscribe((nextValue) => this.updateConditionRow(groupIndex, rowIndex, toPatch(nextValue)));
+    this._conditionControls.set(key, control);
+    return control;
   }
 
   private _tryParseJson(json: string): Record<string, string | number> {
@@ -736,11 +779,14 @@ export class ProjectAutomationsComponent {
   }
 
   private async _loadAsync(): Promise<void> {
+    this.rulesLoadError.set(false);
+
     try {
       const rules = await this._rules.searchAutomationRulesAsync({ projectUuid: this.project().uuid });
       this._ruleUuids.set(rules.map((rule) => rule.uuid));
     } catch (error) {
       console.error('[ProjectAutomationsComponent] Nie udało się pobrać listy reguł automatyzacji.', error);
+      this.rulesLoadError.set(true);
     }
   }
 }

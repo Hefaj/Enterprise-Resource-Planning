@@ -137,6 +137,8 @@
     "automations": {
       "title": "Automatyzacje",
       "empty": "Ten projekt nie ma jeszcze żadnych reguł automatyzacji.",
+      "loadError": "Nie udało się pobrać listy reguł automatyzacji.",
+      "retry": "Ponów",
       "addRule": "Dodaj regułę",
       "executedCount": "Wykonania: {{count}}",
       "enable": "Włącz",
@@ -284,6 +286,9 @@
     "workflow": {
       "title": "Schemat stanów",
       "noScheme": "Ten projekt nie ma jeszcze podpiętego schematu stanów.",
+      "loading": "Wczytywanie schematu…",
+      "loadError": "Nie udało się wczytać schematu workflow.",
+      "retry": "Ponów",
       "states": {
         "title": "Stany",
         "empty": "Schemat nie ma jeszcze żadnych stanów.",

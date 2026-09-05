@@ -155,6 +155,7 @@ export const ISSUE_SCOPE = {
   Available: 0,
   AssignedToMe: 1,
   ReportedByMe: 2,
+  Watched: 3,
 } as const;
 
 export type IssueScopeValue = (typeof ISSUE_SCOPE)[keyof typeof ISSUE_SCOPE];

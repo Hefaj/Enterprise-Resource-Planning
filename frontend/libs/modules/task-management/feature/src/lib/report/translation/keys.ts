@@ -60,6 +60,7 @@ export const REPORT_KEYS = {
       generating: 'report.status.generating',
       fetchingArtifact: 'report.status.fetchingArtifact',
       refresh: 'report.status.refresh',
+      download: 'report.status.download',
     },
     table: {
       department: 'report.table.department',

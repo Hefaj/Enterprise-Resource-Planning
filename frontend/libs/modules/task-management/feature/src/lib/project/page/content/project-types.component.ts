@@ -12,6 +12,10 @@ import {
   ErpInputPickerBuilder,
   ErpInputPickerComponent,
   ErpInputPickerConfig,
+  ErpRowActionsCellComponent,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
   ErpTranslatePipe,
 } from '@erp/shared/ui';
 import {
@@ -23,6 +27,10 @@ import {
   TaskManagementProjectOrchestrator,
 } from '@erp/task-management/data-access';
 import { ISSUE_TYPE_CATEGORY, issueTypeCategoryKey } from '@erp/task-management/util';
+import {
+  ErpProjectConfigurationSectionComponent,
+  ErpProjectConfigurationSectionConfig,
+} from '@erp/task-management/ui';
 
 import { PROJECT_KEYS } from '../../translation';
 
@@ -37,10 +45,9 @@ import { PROJECT_KEYS } from '../../translation';
 @Component({
   selector: 'erp-task-management-project-types',
   standalone: true,
-  imports: [ErpButtonComponent, ErpInputComponent, ErpInputPickerComponent, ErpTranslatePipe, ReactiveFormsModule],
+  imports: [ErpButtonComponent, ErpInputComponent, ErpInputPickerComponent, ErpProjectConfigurationSectionComponent, ErpTableComponent, ErpTranslatePipe, ReactiveFormsModule],
   template: `
-    <section class="flex flex-col gap-4">
-      <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.types.title | erpTranslate }}</span>
+    <erp-project-configuration-section [config]="this.sectionConfig">
 
       <div class="flex items-end gap-3">
         <erp-input-picker class="w-80" [config]="this.schemePickerConfig()" [control]="this.schemeControl" />
@@ -52,28 +59,7 @@ import { PROJECT_KEYS } from '../../translation';
           {{ PROJECT_KEYS.detail.types.empty | erpTranslate }}
         </span>
       } @else {
-        <table class="w-full text-sm">
-          <thead class="text-left text-xs uppercase text-[var(--tui-text-tertiary)]">
-            <tr>
-              <th class="py-1">{{ PROJECT_KEYS.detail.types.columns.name | erpTranslate }}</th>
-              <th class="py-1">{{ PROJECT_KEYS.detail.types.columns.category | erpTranslate }}</th>
-              <th class="py-1">{{ PROJECT_KEYS.detail.types.columns.icon | erpTranslate }}</th>
-              <th class="py-1"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (type of this.types(); track type.uuid) {
-              <tr class="border-t border-[var(--tui-border-normal)]">
-                <td class="py-2">{{ type.name }}</td>
-                <td class="py-2">{{ this.categoryKey(type.category) | erpTranslate }}</td>
-                <td class="py-2 font-mono text-xs">{{ type.icon }}</td>
-                <td class="py-2 text-right">
-                  <erp-button [config]="this.removeButton(type)" />
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        <erp-table class="block h-80 w-full" [config]="this.typesTableConfig()" />
       }
 
       @if (this.scheme()) {
@@ -81,8 +67,8 @@ import { PROJECT_KEYS } from '../../translation';
           <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.types.add.title | erpTranslate }}</span>
 
           <div class="grid grid-cols-2 gap-3">
-            <erp-input [config]="this.nameInput" [formControl]="this.nameControl" />
-            <erp-input [config]="this.iconInput" [formControl]="this.iconControl" />
+            <erp-input [config]="this.nameInput" [control]="this.nameControl" />
+            <erp-input [config]="this.iconInput" [control]="this.iconControl" />
             <erp-input-picker [config]="this.categoryPickerConfig()" [control]="this.categoryControl" />
           </div>
 
@@ -91,12 +77,13 @@ import { PROJECT_KEYS } from '../../translation';
           </div>
         </div>
       }
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectTypesComponent {
   protected readonly PROJECT_KEYS = PROJECT_KEYS;
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = { title: PROJECT_KEYS.detail.types.title };
 
   private readonly _schemes = inject(TaskManagementIssueTypeSchemeOrchestrator);
   private readonly _projects = inject(TaskManagementProjectOrchestrator);
@@ -119,6 +106,40 @@ export class ProjectTypesComponent {
   });
 
   protected readonly types = computed<IssueTypeDto[]>(() => this.scheme()?.types ?? []);
+
+  protected readonly typesTableConfig = computed<ErpTableConfig<IssueTypeDto>>(() =>
+    new ErpTableBuilder<IssueTypeDto>()
+      .setMode('client')
+      .setRowIdAccessor((row) => row.uuid)
+      .setItems(this.types())
+      .setSelectionMode('none')
+      .setEmptyMessage(PROJECT_KEYS.detail.types.empty)
+      .addColumn((c) => c.setId('name').setAccessorKey('name').setHeader(PROJECT_KEYS.detail.types.columns.name))
+      .addColumn((c) =>
+        c
+          .setId('category')
+          .setAccessorFn((row) => this._t(this.categoryKey(row.category)))
+          .setHeader(PROJECT_KEYS.detail.types.columns.category),
+      )
+      .addColumn((c) =>
+        c
+          .setId('icon')
+          .setAccessorKey('icon')
+          .setHeader(PROJECT_KEYS.detail.types.columns.icon)
+          .setEnableSorting(false)
+          .setCellClass('font-mono text-xs'),
+      )
+      .addColumn((c) =>
+        c
+          .setId('actions')
+          .setHeader('')
+          .setEnableSorting(false)
+          .setSize(90)
+          .setGrow(0)
+          .setCell(ErpRowActionsCellComponent, { getActions: (row: IssueTypeDto) => [this.removeButton(row)] }),
+      )
+      .build(),
+  );
 
   protected readonly schemePickerConfig = computed<ErpInputPickerConfig>(() =>
     ErpInputPickerBuilder.create((b) =>

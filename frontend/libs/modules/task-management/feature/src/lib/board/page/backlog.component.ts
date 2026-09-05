@@ -5,9 +5,10 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ErpButtonComponent, ErpButtonConfig, ErpEmptyStateComponent, ErpTranslatePipe } from '@erp/shared/ui';
-import { SPRINT_STATUS } from '@erp/task-management/util';
+import { ISSUE_PRIORITY, SPRINT_STATUS } from '@erp/task-management/util';
+import { ErpBoardColumnComponent, ErpBoardColumnConfig, ErpIssueCardConfig, TASKMANAGEMENT_KEYS } from '@erp/task-management/ui';
+import { BoardCardVM, TaskManagementTagOrchestrator } from '@erp/task-management/data-access';
 
-import { BacklogListComponent } from '../components/backlog-list.component';
 import { BOARD_KEYS, provideBoardTranslations } from '../translation';
 import { BacklogStore } from './backlog.store';
 
@@ -26,7 +27,7 @@ const BACKLOG_LIST_ID = 'backlog';
 @Component({
   selector: 'erp-task-management-backlog',
   standalone: true,
-  imports: [BacklogListComponent, CdkDropListGroup, ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe],
+  imports: [ErpBoardColumnComponent, CdkDropListGroup, ErpButtonComponent, ErpEmptyStateComponent, ErpTranslatePipe],
   providers: [BacklogStore, provideBoardTranslations()],
   template: `
     @let board = this.store.board();
@@ -45,13 +46,11 @@ const BACKLOG_LIST_ID = 'backlog';
         </div>
 
         <div class="flex min-h-0 flex-1 gap-3" cdkDropListGroup>
-          <erp-backlog-list
+          <erp-board-column
             class="flex min-h-0 flex-1"
-            [title]="BOARD_KEYS.backlog.backlogColumn.title"
-            [emptyLabel]="BOARD_KEYS.backlog.backlogColumn.empty"
-            [listId]="BACKLOG_LIST_ID"
-            [cards]="this.store.backlogCards()"
+            [config]="this.listConfig(BACKLOG_LIST_ID, BOARD_KEYS.backlog.backlogColumn.title, BOARD_KEYS.backlog.backlogColumn.empty, this.store.backlogCards())"
             (dropped)="this.onDropped($event)"
+            (cardMoveRequested)="this.onCardMoveRequested(BACKLOG_LIST_ID, $event)"
           />
 
           <div class="flex min-h-0 flex-1 flex-col gap-2">
@@ -72,13 +71,11 @@ const BACKLOG_LIST_ID = 'backlog';
               }
             </div>
 
-            <erp-backlog-list
+            <erp-board-column
               class="flex min-h-0 flex-1"
-              [title]="BOARD_KEYS.backlog.title"
-              [emptyLabel]="BOARD_KEYS.backlog.sprintColumn.empty"
-              [listId]="currentSprint?.uuid ?? ''"
-              [cards]="this.store.sprintCards()"
+              [config]="this.listConfig(currentSprint?.uuid ?? '', BOARD_KEYS.backlog.title, BOARD_KEYS.backlog.sprintColumn.empty, this.store.sprintCards())"
               (dropped)="this.onDropped($event)"
+              (cardMoveRequested)="this.onCardMoveRequested(currentSprint?.uuid ?? '', $event)"
             />
           </div>
         </div>
@@ -106,6 +103,7 @@ export class BacklogComponent {
   protected readonly store = inject(BacklogStore);
 
   private readonly _route = inject(ActivatedRoute);
+  private readonly _tags = inject(TaskManagementTagOrchestrator);
 
   protected readonly uuid = toSignal(this._route.paramMap.pipe(map((params) => params.get('uuid') ?? '')), {
     initialValue: '',
@@ -155,6 +153,12 @@ export class BacklogComponent {
         }
       });
     });
+
+    // Tagi widoczne na projekcie tablicy — te same nazwy co na kartach kanban.
+    effect(() => {
+      const projectUuid = this.store.board()?.projectUuid;
+      untracked(() => void this._tags.searchTagsAsync({ projectUuid }));
+    });
   }
 
   /** Upuszczenie karty w jednej z dwóch list — `container.data` rozstrzyga, czy karta trafia
@@ -170,6 +174,66 @@ export class BacklogComponent {
       void this.store.dropToBacklogAsync(cardUuid, event.currentIndex);
     } else {
       void this.store.dropToSprintAsync(cardUuid, event.currentIndex);
+    }
+  }
+
+  protected listConfig(uuid: string, name: string, emptyLabelKey: string, cards: readonly BoardCardVM[]): ErpBoardColumnConfig {
+    return {
+      uuid,
+      name,
+      cards: cards.map((card) => ({ uuid: card.uuid, card: this._cardConfig(card) })),
+      enabled: true,
+      fillAvailableWidth: true,
+      countLabelKey: BOARD_KEYS.column.count,
+      wipExceededLabelKey: BOARD_KEYS.column.wipExceeded,
+      emptyLabelKey,
+      cardKeyboardHintKey: BOARD_KEYS.column.cardKeyboardHint,
+    };
+  }
+
+  /** Klawiaturowa alternatywa przeciągania (WCAG 2.1.1) — tylko dwie listy istnieją, więc
+   * kierunek nie ma znaczenia: karta zawsze przenosi się do TEJ DRUGIEJ. */
+  protected onCardMoveRequested(fromListId: string, event: { cardUuid: string }): void {
+    if (fromListId === BACKLOG_LIST_ID) {
+      void this.store.dropToSprintAsync(event.cardUuid, 0);
+    } else {
+      void this.store.dropToBacklogAsync(event.cardUuid, 0);
+    }
+  }
+
+  private _cardConfig(card: BoardCardVM): ErpIssueCardConfig {
+    return {
+      issueKey: card.key,
+      title: card.title,
+      typeIcon: card.typeIcon,
+      typeName: card.typeName,
+      priority: card.priority,
+      priorityLabelKey: this._priorityKey(card.priority),
+      assigneeUuid: card.assigneeUuid,
+      assigneeEmptyLabel: BOARD_KEYS.card.unassigned,
+      link: ['/task-management/issue', card.key],
+      tags: this._tagChips(card.tagUuids),
+      estimateMinutes: card.estimateMinutes,
+    };
+  }
+
+  /** Nazwy tagów rozwiązane z orkiestratora — karta dostaje chipsy gotowe do narysowania. */
+  private _tagChips(tagUuids: readonly string[]): { value: string; label: string; translate: false }[] {
+    const viewModels = this._tags.getViewModel()();
+
+    return tagUuids
+      .map((uuid) => viewModels.get(uuid)?.name)
+      .filter((name): name is string => !!name)
+      .map((name) => ({ value: name, label: name, translate: false as const }));
+  }
+
+  private _priorityKey(priority: number): string {
+    switch (priority) {
+      case ISSUE_PRIORITY.Critical: return TASKMANAGEMENT_KEYS.priority.critical;
+      case ISSUE_PRIORITY.High: return TASKMANAGEMENT_KEYS.priority.high;
+      case ISSUE_PRIORITY.Low: return TASKMANAGEMENT_KEYS.priority.low;
+      case ISSUE_PRIORITY.Lowest: return TASKMANAGEMENT_KEYS.priority.lowest;
+      default: return TASKMANAGEMENT_KEYS.priority.normal;
     }
   }
 

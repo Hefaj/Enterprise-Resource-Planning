@@ -13,11 +13,14 @@
   },
   "column": {
     "count": "cards: {{count}}",
-    "wipExceeded": "WIP limit exceeded ({{count}}/{{limit}})"
+    "wipExceeded": "WIP limit exceeded ({{count}}/{{limit}})",
+    "cardKeyboardHint": "Issue card. Right or left arrow moves it to the adjacent column."
   },
   "swimlane": {
     "unassigned": "Unassigned",
     "groupBy": "Group rows",
+    "expand": "Expand row",
+    "collapse": "Collapse row",
     "mode": {
       "none": "No grouping",
       "assignee": "By assignee",

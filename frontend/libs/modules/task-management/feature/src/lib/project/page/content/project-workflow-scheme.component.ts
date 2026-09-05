@@ -13,6 +13,10 @@ import {
   ErpInputPickerComponent,
   ErpInputPickerConfig,
   ErpModalService,
+  ErpRowActionsCellComponent,
+  ErpTableBuilder,
+  ErpTableComponent,
+  ErpTableConfig,
   ErpTranslatePipe,
 } from '@erp/shared/ui';
 import {
@@ -23,6 +27,14 @@ import {
   WorkflowTransitionDto,
 } from '@erp/task-management/data-access';
 import { WORKFLOW_SCHEME_PUBLISH_MODAL_ID, WORKFLOW_STATE_CATEGORY } from '@erp/task-management/util';
+import {
+  ErpProjectConfigurationSectionComponent,
+  ErpProjectConfigurationSectionConfig,
+  ErpWorkflowEditorComponent,
+  ErpWorkflowEditorConfig,
+  ErpWorkflowEditorSelectedCell,
+  ErpWorkflowTransitionCellConfig,
+} from '@erp/task-management/ui';
 
 import { WorkflowSchemePublishMetadata } from '../../modal/workflow-scheme-publish/workflow-scheme-publish.definition';
 import { PROJECT_KEYS } from '../../translation';
@@ -54,14 +66,28 @@ interface MatrixCell {
     ErpButtonComponent,
     ErpInputComponent,
     ErpInputPickerComponent,
+    ErpProjectConfigurationSectionComponent,
+    ErpTableComponent,
     ErpTranslatePipe,
+    ErpWorkflowEditorComponent,
     ReactiveFormsModule,
   ],
   template: `
-    <section class="flex flex-col gap-6">
+    <erp-project-configuration-section [config]="this.sectionConfig" class="block">
       @let scheme = this.scheme();
 
-      @if (!scheme) {
+      @if (this.loadingScheme()) {
+        <span class="text-sm text-[var(--tui-text-secondary)]">
+          {{ PROJECT_KEYS.detail.workflow.loading | erpTranslate }}
+        </span>
+      } @else if (this.schemeLoadError()) {
+        <div class="flex flex-col items-start gap-2">
+          <span class="text-sm text-[var(--tui-status-negative)]">
+            {{ PROJECT_KEYS.detail.workflow.loadError | erpTranslate }}
+          </span>
+          <erp-button [config]="retrySchemeButton" />
+        </div>
+      } @else if (!scheme) {
         <span class="text-sm text-[var(--tui-text-secondary)]">
           {{ PROJECT_KEYS.detail.workflow.noScheme | erpTranslate }}
         </span>
@@ -75,36 +101,15 @@ interface MatrixCell {
               {{ PROJECT_KEYS.detail.workflow.states.empty | erpTranslate }}
             </span>
           } @else {
-            <table class="w-full text-sm">
-              <thead class="text-left text-xs uppercase text-[var(--tui-text-tertiary)]">
-                <tr>
-                  <th class="py-1">{{ PROJECT_KEYS.detail.workflow.states.columns.code | erpTranslate }}</th>
-                  <th class="py-1">{{ PROJECT_KEYS.detail.workflow.states.columns.name | erpTranslate }}</th>
-                  <th class="py-1">{{ PROJECT_KEYS.detail.workflow.states.columns.category | erpTranslate }}</th>
-                  <th class="py-1"></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (state of this.states(); track state.uuid) {
-                  <tr class="border-t border-[var(--tui-border-normal)]">
-                    <td class="py-2 font-mono text-xs">{{ state.code }}</td>
-                    <td class="py-2">{{ state.nameKey | erpTranslate }}</td>
-                    <td class="py-2">{{ this.categoryKey(state.category) | erpTranslate }}</td>
-                    <td class="py-2 text-right">
-                      <erp-button [config]="this.removeStateButton(scheme, state)" />
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+            <erp-table class="block h-64 w-full" [config]="this.statesTableConfig(scheme)" />
           }
 
           <div class="flex flex-col gap-3 rounded-md border border-[var(--tui-border-normal)] p-4">
             <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.workflow.states.add.title | erpTranslate }}</span>
 
             <div class="grid grid-cols-3 gap-3">
-              <erp-input [config]="this.stateCodeInput" [formControl]="this.stateCodeControl" />
-              <erp-input [config]="this.stateNameKeyInput" [formControl]="this.stateNameKeyControl" />
+              <erp-input [config]="this.stateCodeInput" [control]="this.stateCodeControl" />
+              <erp-input [config]="this.stateNameKeyInput" [control]="this.stateNameKeyControl" />
               <erp-input-picker [config]="this.categoryPickerConfig()" [control]="this.stateCategoryControl" />
             </div>
 
@@ -115,101 +120,15 @@ interface MatrixCell {
         </div>
 
         <!-- Przejścia: macierz z → do -->
-        <div class="flex flex-col gap-3">
-          <span class="text-sm font-medium">{{ PROJECT_KEYS.detail.workflow.transitions.title | erpTranslate }}</span>
-          <span class="text-xs text-[var(--tui-text-secondary)]">
-            {{ PROJECT_KEYS.detail.workflow.transitions.matrixHint | erpTranslate }}
-          </span>
-
-          @if (this.states().length < 2) {
-            <span class="text-sm text-[var(--tui-text-secondary)]">
-              {{ PROJECT_KEYS.detail.workflow.transitions.empty | erpTranslate }}
-            </span>
-          } @else {
-            <div class="overflow-x-auto">
-              <table class="text-sm">
-                <thead>
-                  <tr>
-                    <th class="p-2"></th>
-                    @for (toState of this.states(); track toState.uuid) {
-                      <th class="p-2 text-left text-xs uppercase text-[var(--tui-text-tertiary)]">
-                        {{ toState.code }}
-                      </th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (fromState of this.states(); track fromState.uuid) {
-                    <tr class="border-t border-[var(--tui-border-normal)]">
-                      <th class="p-2 text-left text-xs uppercase text-[var(--tui-text-tertiary)]">
-                        {{ fromState.code }}
-                      </th>
-                      @for (toState of this.states(); track toState.uuid) {
-                        <td class="p-2">
-                          @if (fromState.uuid !== toState.uuid) {
-                            <button
-                              type="button"
-                              class="min-w-24 rounded border border-[var(--tui-border-normal)] px-2 py-1 text-left text-xs hover:bg-[var(--tui-background-neutral-1)]"
-                              (click)="this.selectCell(fromState, toState)"
-                            >
-                              @if (this.cellTransition(fromState, toState); as transition) {
-                                <span class="block truncate">{{ transition.nameKey | erpTranslate }}</span>
-                                <span class="flex gap-1 text-[10px] text-[var(--tui-text-tertiary)]">
-                                  @if (transition.requiredPermission) {
-                                    <span>🔒 {{ PROJECT_KEYS.detail.workflow.transitions.cellPermissionBadge | erpTranslate }}</span>
-                                  }
-                                  @if (transition.requiredFields.length > 0) {
-                                    <span>📋 {{ PROJECT_KEYS.detail.workflow.transitions.cellFieldsBadge | erpTranslate }}</span>
-                                  }
-                                </span>
-                              } @else {
-                                <span class="text-[var(--tui-text-tertiary)]">
-                                  {{ PROJECT_KEYS.detail.workflow.transitions.cellAdd | erpTranslate }}
-                                </span>
-                              }
-                            </button>
-                          }
-                        </td>
-                      }
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-
-          @if (this.selectedCell(); as cell) {
-            <div class="flex flex-col gap-3 rounded-md border border-[var(--tui-border-normal)] p-4">
-              <span class="text-sm font-medium">
-                {{
-                  PROJECT_KEYS.detail.workflow.transitions.form.title
-                    | erpTranslate: { from: cell.fromState.code, to: cell.toState.code }
-                }}
-              </span>
-
-              <div class="grid grid-cols-2 gap-3">
-                <erp-input [config]="this.transitionNameKeyInput" [formControl]="this.transitionNameKeyControl" />
-                <erp-input [config]="this.transitionPermissionInput" [formControl]="this.transitionPermissionControl" />
-                <erp-input [config]="this.transitionFieldsInput" [formControl]="this.transitionFieldsControl" />
-              </div>
-
-              <div class="flex justify-end gap-2">
-                @if (cell.transition) {
-                  <erp-button [config]="this.removeTransitionButton(scheme, cell.transition)" />
-                }
-                <erp-button [config]="this.cancelCellButton" />
-                <erp-button [config]="this.saveTransitionButton(scheme, cell)" />
-              </div>
-            </div>
-          }
-        </div>
+        <erp-workflow-editor [config]="this.editorConfig(scheme)" />
       }
-    </section>
+    </erp-project-configuration-section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectWorkflowSchemeComponent {
   protected readonly PROJECT_KEYS = PROJECT_KEYS;
+  protected readonly sectionConfig: ErpProjectConfigurationSectionConfig = { title: PROJECT_KEYS.detail.workflow.title };
 
   private readonly _schemes = inject(TaskManagementWorkflowSchemeOrchestrator);
   private readonly _confirm = inject(ErpConfirmDialogService);
@@ -225,11 +144,57 @@ export class ProjectWorkflowSchemeComponent {
     return uuid ? this._schemes.getOne(uuid)() : undefined;
   });
 
+  /** Błąd nie może udawać „brak schematu" — inaczej użytkownik widzi zachętę do skonfigurowania
+   * czegoś, co jest w rzeczywistości już podpięte, tylko przejściowo niedostępne. */
+  protected readonly loadingScheme = signal<boolean>(false);
+  protected readonly schemeLoadError = signal<boolean>(false);
+  protected readonly retrySchemeButton: ErpButtonConfig = {
+    label: PROJECT_KEYS.detail.workflow.retry,
+    appearance: 'outline',
+    size: 's',
+    fn: (): void => this.retrySchemeLoad(),
+  };
+
   protected readonly states = computed<WorkflowStateDto[]>(() =>
     [...(this.scheme()?.states ?? [])].sort((a, b) => a.orderNo - b.orderNo),
   );
 
   protected readonly transitions = computed<WorkflowTransitionDto[]>(() => this.scheme()?.transitions ?? []);
+
+  protected statesTableConfig(scheme: WorkflowSchemeDto): ErpTableConfig<WorkflowStateDto> {
+    return new ErpTableBuilder<WorkflowStateDto>()
+      .setMode('client')
+      .setRowIdAccessor((row) => row.uuid)
+      .setItems(this.states())
+      .setSelectionMode('none')
+      .setEmptyMessage(PROJECT_KEYS.detail.workflow.states.empty)
+      .addColumn((c) =>
+        c
+          .setId('code')
+          .setAccessorKey('code')
+          .setHeader(PROJECT_KEYS.detail.workflow.states.columns.code)
+          .setCellClass('font-mono text-xs'),
+      )
+      .addColumn((c) =>
+        c.setId('name').setAccessorFn((row) => this._t(row.nameKey)).setHeader(PROJECT_KEYS.detail.workflow.states.columns.name),
+      )
+      .addColumn((c) =>
+        c
+          .setId('category')
+          .setAccessorFn((row) => this._t(this.categoryKey(row.category)))
+          .setHeader(PROJECT_KEYS.detail.workflow.states.columns.category),
+      )
+      .addColumn((c) =>
+        c
+          .setId('actions')
+          .setHeader('')
+          .setEnableSorting(false)
+          .setSize(90)
+          .setGrow(0)
+          .setCell(ErpRowActionsCellComponent, { getActions: (row: WorkflowStateDto) => [this.removeStateButton(scheme, row)] }),
+      )
+      .build();
+  }
 
   // ── Formularz dodania stanu ──
 
@@ -328,6 +293,22 @@ export class ProjectWorkflowSchemeComponent {
     return this.transitions().find((t) => t.fromStateUuid === fromState.uuid && t.toStateUuid === toState.uuid);
   }
 
+  protected transitionCellConfig(
+    fromState: WorkflowStateDto,
+    toState: WorkflowStateDto,
+  ): ErpWorkflowTransitionCellConfig {
+    const transition = this.cellTransition(fromState, toState);
+    return {
+      transitionNameKey: transition?.nameKey,
+      requiredPermission: Boolean(transition?.requiredPermission),
+      requiredFieldsCount: transition?.requiredFields.length ?? 0,
+      addLabelKey: PROJECT_KEYS.detail.workflow.transitions.cellAdd,
+      permissionBadgeKey: PROJECT_KEYS.detail.workflow.transitions.cellPermissionBadge,
+      fieldsBadgeKey: PROJECT_KEYS.detail.workflow.transitions.cellFieldsBadge,
+      onSelect: () => this.selectCell(fromState, toState),
+    };
+  }
+
   protected selectCell(fromState: WorkflowStateDto, toState: WorkflowStateDto): void {
     const transition = this.cellTransition(fromState, toState);
 
@@ -357,16 +338,70 @@ export class ProjectWorkflowSchemeComponent {
     };
   }
 
+  /** Adapter granicy feature → ui dla `erp-workflow-editor`: DTO i orkiestracja zostają tutaj. */
+  protected editorConfig(scheme: WorkflowSchemeDto): ErpWorkflowEditorConfig {
+    const cell = this.selectedCell();
+
+    return {
+      title: PROJECT_KEYS.detail.workflow.transitions.title,
+      matrixHint: PROJECT_KEYS.detail.workflow.transitions.matrixHint,
+      emptyLabel: PROJECT_KEYS.detail.workflow.transitions.empty,
+      states: this.states(),
+      getCellConfig: (fromState, toState) =>
+        this.transitionCellConfig(fromState as WorkflowStateDto, toState as WorkflowStateDto),
+      selectedCell: cell
+        ? { fromStateCode: cell.fromState.code, toStateCode: cell.toState.code, hasExistingTransition: !!cell.transition }
+        : null,
+      formTitle: (selected: ErpWorkflowEditorSelectedCell) => ({
+        key: PROJECT_KEYS.detail.workflow.transitions.form.title,
+        params: { from: selected.fromStateCode, to: selected.toStateCode },
+      }),
+      nameKeyControl: this.transitionNameKeyControl,
+      nameKeyInputConfig: this.transitionNameKeyInput,
+      permissionControl: this.transitionPermissionControl,
+      permissionInputConfig: this.transitionPermissionInput,
+      fieldsControl: this.transitionFieldsControl,
+      fieldsInputConfig: this.transitionFieldsInput,
+      removeButton: cell?.transition ? this.removeTransitionButton(scheme, cell.transition) : undefined,
+      cancelButton: this.cancelCellButton,
+      saveButton: cell ? this.saveTransitionButton(scheme, cell) : this.cancelCellButton,
+    };
+  }
+
   public constructor() {
     effect(() => {
       const uuid = this.project().workflowSchemeUuid;
 
       untracked(() => {
         if (uuid) {
-          void this._schemes.loadAsync([uuid], {});
+          void this._loadSchemeAsync(uuid);
         }
       });
     });
+  }
+
+  /** Wołane z konstruktora oraz z przycisku „Ponów" — ten sam przebieg, żeby ponowienie nie było
+   * osobną, gorzej utrzymaną kopią wczytywania. */
+  protected async _loadSchemeAsync(uuid: string): Promise<void> {
+    this.loadingScheme.set(true);
+    this.schemeLoadError.set(false);
+
+    try {
+      await this._schemes.loadAsync([uuid], {});
+    } catch (error) {
+      console.error('[ProjectWorkflowSchemeComponent] Nie udało się wczytać schematu workflow.', error);
+      this.schemeLoadError.set(true);
+    } finally {
+      this.loadingScheme.set(false);
+    }
+  }
+
+  protected retrySchemeLoad(): void {
+    const uuid = this.project().workflowSchemeUuid;
+
+    if (uuid) {
+      void this._loadSchemeAsync(uuid);
+    }
   }
 
   private _t(key: string): string {
